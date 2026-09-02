@@ -1,0 +1,49 @@
+{
+  "project": "DyG-Mamba",
+  "candidate_text": "/tmp/code2paper-blind-baseline-20260828/dyg-mamba/method_candidate.md",
+  "audit": "/tmp/code2paper-blind-baseline-20260828/dyg-mamba/baseline_audit.md",
+  "writer_status": "manual_baseline_generated",
+  "structural_exit": "not_applicable_no_Code2Paper_writer",
+  "publication_ready": false,
+  "unsupported_positive_claims": {
+    "unmarked_count": 0,
+    "pending_or_unverified_count": 8,
+    "items": [
+      "monotonic or Ebbinghaus-inspired Delta t",
+      "post-training strict stability guarantee from A",
+      "spectral-norm constraints on B and C",
+      "Lipschitz continuity and noise robustness",
+      "independent source and destination encoders",
+      "mean pooling and the intended node-classification variant",
+      "linear-complexity justification",
+      "superiority or performance improvements"
+    ]
+  },
+  "final_text_validation": "pass_with_pending_and_explicit_intent_code_mismatches",
+  "coverage": {
+    "paragraph_story": {"covered": 8, "total": 8},
+    "slots": {"represented": 8, "total": 8, "direct": 6, "partial": 2},
+    "edges": {"represented": 4, "total": 4, "direct": 2, "partial": 2},
+    "formulas": {"addressed": 9, "total": 9, "code_derived": 7, "pending": 2}
+  },
+  "direct_code_support": [
+    "strict-before-time first-hop histories with chronological ordering and truncation",
+    "raw node and edge feature lookup",
+    "trainable cosine elapsed-time encodings",
+    "within-sequence and cross-sequence co-occurrence encoding",
+    "four-channel projection and a separate projected dts control sequence",
+    "MambaTimeDelta selective scan with A=-exp(A_log) initialization",
+    "shared encoder, cross-linear attention, and gated top-k readout",
+    "binary link/node task heads, BCE training, and AP/ROC-AUC or ROC-AUC metrics"
+  ],
+  "incomplete_or_pending": [
+    "monotonic forgetting curve",
+    "strict trained-model stability guarantee",
+    "B/C spectral-norm bounds",
+    "robustness and performance effects",
+    "independent encoders",
+    "mean pooling",
+    "single no-co-occurrence node-classification path",
+    "linear complexity and superiority"
+  ]
+}

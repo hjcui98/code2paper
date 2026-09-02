@@ -1,0 +1,3343 @@
+{
+  "schema_version": "1.0",
+  "status": "incomplete",
+  "plan_digest": "sha256:6cfc04143a1bce59959f56c4d096fa6f16941463d825b037e1839f7dd4920719",
+  "claim_digest": "sha256:a174265f58e104179aa7e794a26724b97dc559b108a07d030ce773a408eb50ba",
+  "section_results": [
+    {
+      "section_id": "MA-S1",
+      "heading": "Dynamic graph encoding: how interaction sequences are represented with heterogeneous features and aligned",
+      "accepted": false,
+      "failures": [
+        "writer_output_incomplete",
+        "missing_writing_research_callback:mechanism_overview",
+        "invalid_writing_research_callback:mechanism_overview@MA-S1/MA-S1:unit-1/executable_hard",
+        "missing_required_briefs:brief:story:O-COMPONENT-06-e711d58d,brief:story:O-METHOD-MAINLINE-01-3011c54d,brief:story:O-RATIONALE-CHECK-04-b41841c3,brief:story:O-RATIONALE-CHECK-05-e1bbed89,brief:story:O-STAGE-01-06d7de36"
+      ],
+      "output": {
+        "section_id": "MA-S1",
+        "heading_text": "Dynamic graph encoding: how interaction sequences are represented with heterogeneous features and aligned",
+        "section_markdown": "## Dynamic graph encoding: how interaction sequences are represented with heterogeneous features and aligned\n\nThe model extracts first-hop interaction sequences for source and destination nodes, padding them to a uniform sequence length $L_{\\text{src}}$ so that heterogeneous features—node identity, edge attributes, absolute temporal context, and co-occurrence signals—are embedded independently and stacked into a unified feature vector per interaction. A routing mechanism computes softmax weights over the sequence dimension; for the source node all weights are retained, while for the destination node only the top-$k$ weights are kept, bounded by $\\text{min}(k, L_{\\text{dst}})$. The final node embeddings are obtained as a weighted sum of the aligned feature vectors: $$\n\\begin{aligned} \\mathbf{E}_{\\text{src}} &= \\sum_{i=1}^{L_{\\text{src}}} \\alpha_{\\text{src},i} \\cdot \\mathbf{h}_{\\text{src},i} \\\\ \\mathbf{E}_{\\text{dst}} &= \\sum_{j=1}^{k} \\alpha_{\\text{dst},j} \\cdot \\mathbf{h}_{\\text{dst},j} \\end{aligned}\n$$ where $\theta_{\\text{src},i}$ and $\theta_{\\text{dst},j}$ denote the routing weights for the $i$-th source interaction and the $j$-th selected destination interaction, $\\text{h}_{\\text{src},i}$ and $\\text{h}_{\\text{dst},j}$ are the aligned, stacked feature vectors, and $k$ is the number of top interactions selected for the destination node.",
+        "rendered_proposition_ids": [],
+        "deferred_proposition_ids": [],
+        "rendered_concept_keys": [],
+        "deferred_concept_keys": [],
+        "rendered_brief_ids": [
+          "brief:story:O-ORGANIZATION-01-42774719"
+        ],
+        "deferred_brief_ids": [],
+        "rendered_from_facet_ids": [],
+        "rendered_field_candidate_ids": [],
+        "deferred_facet_ids": [],
+        "rendered_paragraph_ids": [],
+        "rendered_slot_ids": [],
+        "rendered_edge_ids": [],
+        "used_formula_package_ids": [
+          "pkg:MA-S1:001"
+        ],
+        "used_argument_unit_ids": [],
+        "used_claim_ids": [],
+        "used_equation_ids": [],
+        "used_configuration_ids": [],
+        "completed_rhetorical_moves": [],
+        "new_research_requests": [
+          {
+            "argument_unit_id": "MA-S1:unit-1",
+            "candidate_symbols_or_terms": [
+              "DyGMamba.compute_src_dst_node_temporal_embeddings",
+              "(src_node_embeddings, dst_node_embeddings)",
+              "self.pad_sequences",
+              "node_ids=src_node_ids",
+              "node_interact_times=node_interact_times",
+              "nodes_neighbor_ids_list=src_nodes_neighbor_ids_list",
+              "nodes_edge_ids_list=src_nodes_edge_ids_list",
+              "nodes_neighbor_times_list=src_nodes_neighbor_times_list",
+              "patch_size=self.patch_size",
+              "max_input_sequence_length=self.max_input_sequence_length",
+              "result=(src_padded_nodes_neighbor_ids, src_padded_nodes_edge_ids, src_padded_nodes_neighbor_times)",
+              "F.softmax",
+              "dst_router_logits",
+              "dim=1",
+              "dtype=torch.float",
+              "result=dst_routing_weights",
+              "(src_padded_data * src_routing_weights_expand).sum",
+              "1",
+              "result=src_padded_data",
+              "torch.topk",
+              "dst_routing_weights",
+              "min(self.top_k, dst_seq_len)",
+              "result=(dst_routing_weights, dst_selected_embeddings)",
+              "self.num_channels",
+              "self.channel_embedding_dim",
+              "node_ids=dst_node_ids",
+              "nodes_neighbor_ids_list=dst_nodes_neighbor_ids_list",
+              "nodes_edge_ids_list=dst_nodes_edge_ids_list",
+              "nodes_neighbor_times_list=dst_nodes_neighbor_times_list",
+              "result=(dst_padded_nodes_neighbor_ids, dst_padded_nodes_edge_ids, dst_padded_nodes_neighbor_times)",
+              "torch.stack",
+              "dst_padded_data",
+              "dim=2",
+              "result=dst_padded_data",
+              "src_router_logits",
+              "result=src_routing_weights",
+              "src_padded_data"
+            ],
+            "concept_key": "interaction_sequence_encoding",
+            "exact_question": "How are heterogeneous first-hop interaction features projected to a common dimension and concatenated into a unified representation before routing?",
+            "missing_parts": [
+              "Dynamic graph encoding: how interaction sequences are represented with heterogeneous features and aligned.",
+              "Extract the first-hop interaction sequence of a node and encode it using node, edge, absolute temporal, and co-occurrence signals.",
+              "Pass the aligned encoding through a continuous SSM that has been redesigned to make forgetting depend on the elapsed timespan and to selectively attend to important past inputs.",
+              "Redefine the SSM step size Δt as a learnable, monotonically increasing function of the time gap, inspired by Ebbinghaus’ forgetting curve.",
+              "Initialize the state transition matrix A as a diagonal matrix with negative real-part eigenvalues to guarantee stable exponential decay with increasing timespan.",
+              "Redefine B and C as input-dependent matrices with spectral norm constraints, allowing the model to review important historical interactions while suppressing noise.",
+              "For link prediction, use two independent DyG-Mamba encoders for source and destination nodes, pool their outputs, concatenate, and apply an MLP predictor;",
+              "for node classification, use a single encoder without co-occurrence encoding.",
+              "Dynamic graph encoding: Transform raw interaction sequences into a unified, aligned feature representation that captures temporal and structural context.",
+              "Encoding alignment: Project all encoding types to a common dimension and concatenate them.",
+              "Use co-occurrence frequency encoding as a lightweight structural feature.",
+              "empty mechanism draft",
+              "Process source and destination sequences independently before merging."
+            ],
+            "missing_rhetorical_move": "mechanism_overview",
+            "request_id": "research:MA-S1:unit-1:alignment-projection",
+            "required_authority_lane": "executable_hard",
+            "section_id": "MA-S1",
+            "status": "open",
+            "target_clause_ids": [
+              "clause:O-ORGANIZATION-01-42774719:0",
+              "clause:O-METHOD-MAINLINE-01-3011c54d:0",
+              "clause:O-METHOD-MAINLINE-01-3011c54d:1",
+              "clause:O-METHOD-MAINLINE-01-3011c54d:2",
+              "clause:O-METHOD-MAINLINE-01-3011c54d:3",
+              "clause:O-METHOD-MAINLINE-01-3011c54d:4",
+              "clause:O-METHOD-MAINLINE-01-3011c54d:5",
+              "clause:O-METHOD-MAINLINE-01-3011c54d:6",
+              "clause:O-STAGE-01-06d7de36:0",
+              "clause:O-COMPONENT-06-e711d58d:0",
+              "clause:O-RATIONALE-CHECK-04-b41841c3:0",
+              "clause:O-RATIONALE-CHECK-05-e1bbed89:0"
+            ],
+            "why_needed_for_reader": "The alignment step that projects heterogeneous channel embeddings to a common dimension and concatenates them is referenced in the author specification but has no executable witness in the current repository state.",
+            "target_brief_ids": [
+              "brief:story:O-ORGANIZATION-01-42774719",
+              "brief:story:O-METHOD-MAINLINE-01-3011c54d",
+              "brief:story:O-STAGE-01-06d7de36",
+              "brief:story:O-COMPONENT-06-e711d58d",
+              "brief:story:O-RATIONALE-CHECK-04-b41841c3",
+              "brief:story:O-RATIONALE-CHECK-05-e1bbed89"
+            ],
+            "evidence_refs_used": [
+              "span:models/DyGMamba.py:212:212",
+              "span:models/DyGMamba.py:241:241",
+              "span:models/DyGMamba.py:244:244",
+              "span:models/DyGMamba.py:256:256",
+              "span:models/DyGMamba.py:264:264",
+              "span:models/DyGMamba.py:214:214",
+              "span:models/DyGMamba.py:130:132",
+              "span:models/DyGMamba.py:138:140",
+              "span:models/DyGMamba.py:240:240",
+              "claim:claim-O-METHOD-MAINLINE-01-3011c54d-fact-O-METHOD-MAINLINE-01-3011c54d-node:ca448bd69f3ecd7c",
+              "claim:claim-O-METHOD-MAINLINE-01-3011c54d-fact-O-METHOD-MAINLINE-01-3011c54d-node:54472d179f866c8e",
+              "claim:claim-O-METHOD-MAINLINE-01-3011c54d-fact-O-METHOD-MAINLINE-01-3011c54d-node:7ea80da61a5283ad",
+              "claim:claim-O-METHOD-MAINLINE-01-3011c54d-fact-O-METHOD-MAINLINE-01-3011c54d-node:7de53d3c159884e0",
+              "claim:claim-O-METHOD-MAINLINE-01-3011c54d-fact-O-METHOD-MAINLINE-01-3011c54d-node:00be3f185b0d6ee5",
+              "claim:claim-O-METHOD-MAINLINE-01-3011c54d-fact-O-METHOD-MAINLINE-01-3011c54d-node:b6b250aad804aa69",
+              "claim:claim-O-METHOD-MAINLINE-01-3011c54d-fact-O-METHOD-MAINLINE-01-3011c54d-node:1fac6d99f1534117",
+              "claim:claim-O-METHOD-MAINLINE-01-3011c54d-fact-O-METHOD-MAINLINE-01-3011c54d-node:bc38329edcd3def7",
+              "claim:claim-O-METHOD-MAINLINE-01-3011c54d-fact-O-METHOD-MAINLINE-01-3011c54d-node:dce3beedc15a844d",
+              "span:models/DyGMamba.py:211:211",
+              "span:models/DyGMamba.py:215:215",
+              "claim:claim-O-STAGE-01-06d7de36-fact-O-STAGE-01-06d7de36-node:34eaa0435ab68a62",
+              "claim:claim-O-STAGE-01-06d7de36-fact-O-STAGE-01-06d7de36-node:b6b250aad804aa69",
+              "claim:l2:math:fact-O-METHOD-MAINLINE-01-3011c54d-node:dce3beedc15a844d:normalize",
+              "claim:l2:math:fact-O-METHOD-MAINLINE-01-3011c54d-node:54472d179f866c8e:normalize",
+              "claim:l2:math:fact-O-METHOD-MAINLINE-01-3011c54d-node:7ea80da61a5283ad:topk"
+            ]
+          }
+        ],
+        "self_identified_risks": [],
+        "unresolved_points": [],
+        "paragraphs": [
+          {
+            "paragraph_id": "paragraph:MA-S1:method-unit-1",
+            "paragraph_markdown": "The model extracts first-hop interaction sequences for source and destination nodes, padding them to a uniform sequence length $L_{\text{src}}$ so that heterogeneous features—node identity, edge attributes, absolute temporal context, and co-occurrence signals—are embedded independently and stacked into a unified feature vector per interaction. A routing mechanism computes softmax weights over the sequence dimension; for the source node all weights are retained, while for the destination node only the top-$k$ weights are kept, bounded by $\text{min}(k, L_{\text{dst}})$. The final node embeddings are obtained as a weighted sum of the aligned feature vectors: $$\n\\begin{aligned} \\mathbf{E}_{\\text{src}} &= \\sum_{i=1}^{L_{\\text{src}}} \\alpha_{\\text{src},i} \\cdot \\mathbf{h}_{\\text{src},i} \\\\ \\mathbf{E}_{\\text{dst}} &= \\sum_{j=1}^{k} \\alpha_{\\text{dst},j} \\cdot \\mathbf{h}_{\\text{dst},j} \\end{aligned}\n$$ where $\theta_{\text{src},i}$ and $\theta_{\text{dst},j}$ denote the routing weights for the $i$-th source interaction and the $j$-th selected destination interaction, $\text{h}_{\text{src},i}$ and $\text{h}_{\text{dst},j}$ are the aligned, stacked feature vectors, and $k$ is the number of top interactions selected for the destination node.",
+            "rendered_from_facet_ids": [
+              "facet-e650301f08e6d4b3"
+            ],
+            "rendered_field_candidate_ids": [],
+            "rendered_slot_ids": [
+              "slot:fact-O-METHOD-MAINLINE-01-3011c54d-node:1fac6d99f1534117",
+              "slot:fact-O-METHOD-MAINLINE-01-3011c54d-node:7ea80da61a5283ad",
+              "slot:fact-O-METHOD-MAINLINE-01-3011c54d-node:00be3f185b0d6ee5"
+            ],
+            "rendered_edge_ids": [],
+            "used_formula_package_ids": [
+              "pkg:MA-S1:001"
+            ],
+            "used_claim_ids": [],
+            "used_equation_ids": [],
+            "witnesses": [
+              {
+                "witness_kind": "facet",
+                "target_id": "facet-e650301f08e6d4b3",
+                "exact_text": "The model extracts first-hop interaction sequences for source and destination nodes, padding them to a uniform sequence length $L_{\text{src}}$ so that heterogeneous features—node identity, edge attributes, absolute temporal context, and co-occurrence signals—are embedded independently and stacked into a unified feature vector per interaction."
+              },
+              {
+                "witness_kind": "slot",
+                "target_id": "slot:fact-O-METHOD-MAINLINE-01-3011c54d-node:1fac6d99f1534117",
+                "exact_text": "The model extracts first-hop interaction sequences for source and destination nodes, padding them to a uniform sequence length $L_{\text{src}}$ so that heterogeneous features—node identity, edge attributes, absolute temporal context, and co-occurrence signals—are embedded independently and stacked into a unified feature vector per interaction."
+              },
+              {
+                "witness_kind": "slot",
+                "target_id": "slot:fact-O-METHOD-MAINLINE-01-3011c54d-node:7ea80da61a5283ad",
+                "exact_text": "where $\theta_{\text{src},i}$ and $\theta_{\text{dst},j}$ denote the routing weights for the $i$-th source interaction and the $j$-th selected destination interaction, $\text{h}_{\text{src},i}$ and $\text{h}_{\text{dst},j}$ are the aligned, stacked feature vectors, and $k$ is the number of top interactions selected for the destination node."
+              },
+              {
+                "witness_kind": "slot",
+                "target_id": "slot:fact-O-METHOD-MAINLINE-01-3011c54d-node:00be3f185b0d6ee5",
+                "exact_text": "The model extracts first-hop interaction sequences for source and destination nodes, padding them to a uniform sequence length $L_{\text{src}}$ so that heterogeneous features—node identity, edge attributes, absolute temporal context, and co-occurrence signals—are embedded independently and stacked into a unified feature vector per interaction."
+              },
+              {
+                "witness_kind": "formula",
+                "target_id": "pkg:MA-S1:001",
+                "exact_text": "$$\n\\begin{aligned} \\mathbf{E}_{\\text{src}} &= \\sum_{i=1}^{L_{\\text{src}}} \\alpha_{\\text{src},i} \\cdot \\mathbf{h}_{\\text{src},i} \\\\ \\mathbf{E}_{\\text{dst}} &= \\sum_{j=1}^{k} \\alpha_{\\text{dst},j} \\cdot \\mathbf{h}_{\\text{dst},j} \\end{aligned}\n$$"
+              }
+            ],
+            "formula_disposition": null,
+            "formula_disposition_reason": "",
+            "formula_dispositions": [
+              {
+                "package_id": "pkg:MA-S1:001",
+                "disposition": "consumed",
+                "reason": "Placeholder emitted in paragraph prose; formula block inserted by harness."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "section_id": "MA-S2",
+      "heading": "Motivation: limitations of vanilla SSMs – they ignore irregular timespans and are vulnerable to input noise",
+      "accepted": true,
+      "failures": [
+        "invalid_writing_research_callback:problem_or_local_context@MA-S2/MA-S2:unit/expository_bridge",
+        "Final claim FAC1 reverse validation failed: no_semantically_matching_projected_claim; direct_evidence_missing"
+      ],
+      "output": {
+        "section_id": "MA-S2",
+        "heading_text": "Motivation: limitations of vanilla SSMs – they ignore irregular timespans and are vulnerable to input noise",
+        "section_markdown": "## Motivation: limitations of vanilla SSMs – they ignore irregular timespans and are vulnerable to input noise\n\nStandard SSMs operate on uniformly sampled sequences and lack an explicit mechanism for handling irregular inter-event intervals or suppressing noisy transitions.",
+        "rendered_proposition_ids": [],
+        "deferred_proposition_ids": [],
+        "rendered_concept_keys": [],
+        "deferred_concept_keys": [],
+        "rendered_brief_ids": [
+          "brief:story:O-ORGANIZATION-02-780817ba"
+        ],
+        "deferred_brief_ids": [],
+        "rendered_from_facet_ids": [],
+        "rendered_field_candidate_ids": [],
+        "deferred_facet_ids": [],
+        "rendered_paragraph_ids": [
+          "paragraph:MA-S2:1"
+        ],
+        "rendered_slot_ids": [],
+        "rendered_edge_ids": [],
+        "used_formula_package_ids": [],
+        "used_argument_unit_ids": [],
+        "used_claim_ids": [],
+        "used_equation_ids": [],
+        "used_configuration_ids": [],
+        "completed_rhetorical_moves": [],
+        "new_research_requests": [
+          {
+            "argument_unit_id": "MA-S2:unit",
+            "evidence_refs_used": [],
+            "exact_question": "How does the method address irregular timespans and input noise in SSM state transitions?",
+            "missing_parts": [
+              "Motivation: limitations of vanilla SSMs – they ignore irregular timespans and are vulnerable to input noise."
+            ],
+            "missing_rhetorical_move": "problem_or_local_context",
+            "request_id": "MA-S2:rr-001",
+            "required_authority_lane": "expository_bridge",
+            "section_id": "MA-S2",
+            "status": "open",
+            "target_brief_ids": [
+              "brief:story:O-ORGANIZATION-02-780817ba"
+            ],
+            "target_clause_ids": [
+              "clause:O-ORGANIZATION-02-780817ba:0"
+            ]
+          },
+          {
+            "argument_unit_id": "MA-S2:unit",
+            "evidence_refs_used": [],
+            "exact_question": "How does the method address irregular timespans and input noise in SSM state transitions?",
+            "missing_parts": [
+              "Motivation: limitations of vanilla SSMs – they ignore irregular timespans and are vulnerable to input noise."
+            ],
+            "missing_rhetorical_move": "problem_or_local_context",
+            "request_id": "MA-S2:rr-002",
+            "required_authority_lane": "expository_bridge",
+            "section_id": "MA-S2",
+            "status": "open",
+            "target_brief_ids": [
+              "brief:story:O-ORGANIZATION-02-780817ba"
+            ],
+            "target_clause_ids": [
+              "clause:O-ORGANIZATION-02-780817ba:0"
+            ]
+          }
+        ],
+        "self_identified_risks": [],
+        "unresolved_points": [],
+        "paragraphs": [
+          {
+            "paragraph_id": "paragraph:MA-S2:1",
+            "paragraph_markdown": "Vanilla SSMs assume uniform time steps, so they cannot represent dynamics that unfold over irregular intervals. Additionally, their state transitions are sensitive to input noise, which degrades representation quality when observations are corrupted.",
+            "rendered_from_facet_ids": [],
+            "rendered_field_candidate_ids": [],
+            "rendered_slot_ids": [],
+            "rendered_edge_ids": [],
+            "used_formula_package_ids": [],
+            "used_claim_ids": [],
+            "used_equation_ids": [],
+            "witnesses": [],
+            "formula_disposition": "consumed",
+            "formula_disposition_reason": "",
+            "formula_dispositions": []
+          }
+        ]
+      }
+    },
+    {
+      "section_id": "MA-S3",
+      "heading": "Redesign: timespan-informed Δt and A for temporally aware forgetting",
+      "accepted": false,
+      "failures": [
+        "writer_output_incomplete",
+        "missing_required_briefs:brief:story:O-COMPONENT-01-377afc18,brief:story:O-COMPONENT-01-88e55e54,brief:story:O-COMPONENT-02-c39dd898,brief:story:O-COMPONENT-04-6d73cce5,brief:story:O-COMPONENT-05-8cd85daa,brief:story:O-ORGANIZATION-03-359984b4,brief:story:O-RATIONALE-CHECK-02-653d713f"
+      ],
+      "output": {
+        "section_id": "MA-S3",
+        "heading_text": "",
+        "section_markdown": "## Redesign: timespan-informed Δt and A for temporally aware forgetting\n\nThe timespan-aware forgetting mechanism decouples the discrete time step $Δt$ from input features and instead derives it as a function of the elapsed timespan $τ$ between the interaction and the prediction time, so that the state-space model forgets historical states proportionally to elapsed duration. The state transition matrix $A$ is initialized as $A_0$ with stable decay properties, ensuring that the hidden state decays smoothly over time rather than depending on input-driven gating. The input matrix $B$ and output matrix $C$ are redefined as $B_{\\text{spec}}$ and $C_{\\text{spec}}$ with spectral-norm constraints, which supports robust selective reviewing by bounding the per-interaction contribution to the state update. For temporal encoding, timespans from each interaction to the prediction time are mapped through a trainable cosine-based function, and node representations are obtained from raw features with zero vectors substituted when features are unavailable. The ordered first-hop neighbor events for a target node are extracted up to a prediction timestamp, providing the temporal sequence over which the SSM recurrence operates. The combined mechanism is formalized as $$\n\\Delta t = f_{\\Delta t}(\\tau), \\quad A = A_0, \\quad B = B_{\\text{spec}}, \\quad C = C_{\\text{spec}}\n$$, where $f_{Δt}$ denotes the mapping from timespan to step size and $A_0$ encodes the stable-decay initialization of the state transition matrix.\n\nCo-occurrence frequency encoding captures structural similarity by measuring the frequency of shared neighbors between the target node and each historical neighbor, providing a structural prior that complements the timespan-driven forgetting. The redesign formalizes the timespan-informed mechanism by deriving $Δt$ from the timespan $τ$ via a trainable function $f_{\\text{time}}$, initializing the diagonal state transition matrix $A$ with eigenvalues $λ_i$ satisfying $\\text{Re}(λ_i) < 0$ for stable decay, and constraining the input and output matrices $B$ and $C$ to unit spectral norm for robust selective reviewing. The complete redesign is expressed as $$\n\\Delta t = f_{\\text{time}}(\\tau), \\quad A = \\text{diag}(\\lambda_1, \\dots, \\lambda_n), \\quad \\text{Re}(\\lambda_i) < 0, \\quad \\|B\\|_2 = \\|C\\|_2 = 1\n$$, where $f_{\\text{time}}$ maps the elapsed timespan to the discrete step size and the spectral-norm constraint on $B$ and $C$ bounds the per-interaction contribution to the state update.",
+        "rendered_proposition_ids": [],
+        "deferred_proposition_ids": [],
+        "rendered_concept_keys": [],
+        "deferred_concept_keys": [],
+        "rendered_brief_ids": [
+          "brief:story:O-STAGE-02-e02cd0f2",
+          "brief:story:O-STAGE-02-e02cd0f2",
+          "brief:story:O-STAGE-02-e02cd0f2",
+          "brief:story:O-STAGE-02-e02cd0f2",
+          "brief:story:O-STAGE-02-e02cd0f2",
+          "brief:story:O-STAGE-02-e02cd0f2",
+          "brief:story:O-STAGE-02-e02cd0f2"
+        ],
+        "deferred_brief_ids": [],
+        "rendered_from_facet_ids": [],
+        "rendered_field_candidate_ids": [],
+        "deferred_facet_ids": [],
+        "rendered_paragraph_ids": [],
+        "rendered_slot_ids": [],
+        "rendered_edge_ids": [],
+        "used_formula_package_ids": [
+          "pkg-ma-s3-timespan-forgetting",
+          "pkg-ma-s3-redesign"
+        ],
+        "used_argument_unit_ids": [],
+        "used_claim_ids": [],
+        "used_equation_ids": [],
+        "used_configuration_ids": [],
+        "completed_rhetorical_moves": [],
+        "new_research_requests": [
+          {
+            "argument_unit_id": "MA-S3:unit-1",
+            "exact_question": "How does the timespan-informed Δt mechanism coordinate with the A initialization and spectral-norm B/C constraints to produce temporally aware forgetting and robust selective reviewing as a unified mechanism?",
+            "missing_rhetorical_move": "mechanism_overview",
+            "request_id": "req-ma-s3-mechanism-overview",
+            "required_authority_lane": "executable_hard",
+            "section_id": "MA-S3",
+            "status": "open",
+            "target_brief_ids": [
+              "brief:story:O-ORGANIZATION-03-359984b4",
+              "brief:story:O-STAGE-02-e02cd0f2",
+              "brief:story:O-COMPONENT-01-88e55e54",
+              "brief:story:O-COMPONENT-01-377afc18",
+              "brief:story:O-COMPONENT-02-c39dd898",
+              "brief:story:O-COMPONENT-04-6d73cce5",
+              "brief:story:O-COMPONENT-05-8cd85daa",
+              "brief:story:O-RATIONALE-CHECK-02-653d713f"
+            ],
+            "target_clause_ids": [
+              "clause:O-ORGANIZATION-03-359984b4:0",
+              "clause:O-STAGE-02-e02cd0f2:0",
+              "clause:O-COMPONENT-01-88e55e54:0",
+              "clause:O-COMPONENT-01-377afc18:0",
+              "clause:O-COMPONENT-02-c39dd898:0",
+              "clause:O-COMPONENT-02-c39dd898:1",
+              "clause:O-COMPONENT-04-6d73cce5:0",
+              "clause:O-COMPONENT-05-8cd85daa:0",
+              "clause:O-RATIONALE-CHECK-02-653d713f:0"
+            ],
+            "missing_parts": [
+              "Redesign: timespan-informed Δt and A for temporally aware forgetting, and redefined B/C with spectral norm for robust selective reviewing.",
+              "empty mechanism draft",
+              "Timespan-aware forgetting in SSM: Let the SSM forget historical states proportionally to the elapsed time by making Δt a function of the timespan and initializing A for stable decay.",
+              "Develop a dynamic graph representation learning model that effectively handles continuous-time interaction sequences with irregular time gaps and noisy historical patterns, targeting strong performance on dynamic link prediction and node classification.",
+              "Interaction sequence extraction: Obtain the ordered first-hop neighbor events for a node up to a prediction timestamp.",
+              "Node encoding: Use raw node features;",
+              "zero vectors when unavailable.",
+              "Absolute temporal encoding: Encode timespans from each interaction to the prediction time using a trainable cosine-based function.",
+              "Co-occurrence frequency encoding: Capture structural similarity by encoding the frequency of shared neighbors between the target node and each historical neighbor.",
+              "Initialize A as a diagonal matrix with strictly negative real-part eigenvalues."
+            ],
+            "evidence_refs_used": [
+              "span:models/mamba_simple.py:497:525",
+              "span:models/mamba_simple.py:551:551",
+              "span:models/mamba_simple.py:471:471",
+              "span:models/mamba_simple.py:476:476",
+              "claim:claim-O-STAGE-02-e02cd0f2-fact-O-STAGE-02-e02cd0f2-node:295ccb032c6bffcd",
+              "claim:claim-O-STAGE-02-e02cd0f2-fact-O-STAGE-02-e02cd0f2-node:78fb7cf618388d76",
+              "claim:claim-O-STAGE-02-e02cd0f2-fact-O-STAGE-02-e02cd0f2-node:0a7578f6d67f7f98",
+              "claim:claim-O-STAGE-02-e02cd0f2-fact-O-STAGE-02-e02cd0f2-node:775aa62491c88d60",
+              "claim:l2:math:fact-O-STAGE-02-e02cd0f2-node:775aa62491c88d60:weighted_sum",
+              "span:models/GraphMixer.py:118:118",
+              "span:models/GraphMixer.py:127:127",
+              "span:models/GraphMixer.py:157:157",
+              "span:models/GraphMixer.py:149:149",
+              "span:models/GraphMixer.py:155:155",
+              "span:models/GraphMixer.py:152:152",
+              "claim:claim-O-COMPONENT-01-88e55e54-fact-O-COMPONENT-01-88e55e54-node:58ea41a26b72aecd",
+              "claim:claim-O-COMPONENT-01-88e55e54-fact-O-COMPONENT-01-88e55e54-node:830e7d5fa35fa3d3",
+              "claim:claim-O-COMPONENT-01-88e55e54-fact-O-COMPONENT-01-88e55e54-node:68098537ab741924",
+              "claim:claim-O-COMPONENT-01-88e55e54-fact-O-COMPONENT-01-88e55e54-node:543103e98c8b09ac",
+              "claim:claim-O-COMPONENT-01-88e55e54-fact-O-COMPONENT-01-88e55e54-node:8d16ec0c09d8672a",
+              "claim:claim-O-COMPONENT-01-88e55e54-fact-O-COMPONENT-01-88e55e54-node:d3f7eaba3c4ef777",
+              "claim:claim-O-COMPONENT-01-88e55e54-fact-O-COMPONENT-01-88e55e54-node:f34d89dddb1ab72a",
+              "claim:l2:math:fact-O-COMPONENT-01-88e55e54-node:f34d89dddb1ab72a:weighted_sum",
+              "span:models/DyGFormer.py:207:212",
+              "span:models/DyGFormer.py:166:166",
+              "span:models/DyGFormer.py:174:174",
+              "span:models/DyGFormer.py:197:197",
+              "span:models/DyGFormer.py:212:212",
+              "span:models/DyGFormer.py:176:176",
+              "span:models/DyGFormer.py:85:85",
+              "claim:claim-O-COMPONENT-01-377afc18-fact-O-COMPONENT-01-377afc18-node:0fd895065e12e264",
+              "claim:claim-O-COMPONENT-01-377afc18-fact-O-COMPONENT-01-377afc18-node:64aeddeeeb31460d",
+              "claim:claim-O-COMPONENT-01-377afc18-fact-O-COMPONENT-01-377afc18-node:974c693d1afd67e3",
+              "claim:claim-O-COMPONENT-01-377afc18-fact-O-COMPONENT-01-377afc18-node:3d23fd5c8049a527",
+              "claim:claim-O-COMPONENT-01-377afc18-fact-O-COMPONENT-01-377afc18-node:8bcbfdfd1e8065a5",
+              "claim:claim-O-COMPONENT-01-377afc18-fact-O-COMPONENT-01-377afc18-node:5a3e0bbda94e3188",
+              "claim:claim-O-COMPONENT-01-377afc18-fact-O-COMPONENT-01-377afc18-node:3646d6d14d1b0bce",
+              "claim:l2:math:fact-O-COMPONENT-01-377afc18-node:5a3e0bbda94e3188:weighted_sum",
+              "span:models/DyGFormer.py:168:168",
+              "claim:claim-O-COMPONENT-04-6d73cce5-fact-O-COMPONENT-04-6d73cce5-node:c68488379b2a1d16",
+              "claim:claim-O-COMPONENT-04-6d73cce5-fact-O-COMPONENT-04-6d73cce5-node:24d38c31fe5b60f7",
+              "claim:claim-O-COMPONENT-04-6d73cce5-fact-O-COMPONENT-04-6d73cce5-node:71d292771e6328a2",
+              "claim:claim-O-COMPONENT-04-6d73cce5-fact-O-COMPONENT-04-6d73cce5-node:78ccd95dcfdf5d39",
+              "claim:claim-O-COMPONENT-04-6d73cce5-fact-O-COMPONENT-04-6d73cce5-node:c154359e6a1fa445",
+              "claim:l2:math:fact-O-COMPONENT-04-6d73cce5-node:24d38c31fe5b60f7:weighted_sum",
+              "span:models/DyGFormer.py:181:183",
+              "span:models/DyGFormer.py:169:169",
+              "claim:claim-O-COMPONENT-05-8cd85daa-fact-O-COMPONENT-05-8cd85daa-node:90ccee28c62680e5",
+              "claim:claim-O-COMPONENT-05-8cd85daa-fact-O-COMPONENT-05-8cd85daa-node:20e8a907508376ba",
+              "claim:claim-O-COMPONENT-05-8cd85daa-fact-O-COMPONENT-05-8cd85daa-node:f840ac6d17618216",
+              "claim:claim-O-COMPONENT-05-8cd85daa-fact-O-COMPONENT-05-8cd85daa-node:7f8d0721fd730075",
+              "claim:claim-O-COMPONENT-05-8cd85daa-fact-O-COMPONENT-05-8cd85daa-node:3be9d861ea421d34",
+              "claim:claim-O-COMPONENT-05-8cd85daa-fact-O-COMPONENT-05-8cd85daa-node:f15e98ab7ee96814",
+              "claim:claim-O-COMPONENT-05-8cd85daa-fact-O-COMPONENT-05-8cd85daa-node:2ea85357345e7041",
+              "claim:l2:math:fact-O-COMPONENT-05-8cd85daa-node:f15e98ab7ee96814:weighted_sum"
+            ]
+          }
+        ],
+        "self_identified_risks": [],
+        "unresolved_points": [],
+        "paragraphs": [
+          {
+            "paragraph_id": "paragraph:MA-S3:method-unit-1",
+            "paragraph_markdown": "The timespan-aware forgetting mechanism decouples the discrete time step $Δt$ from input features and instead derives it as a function of the elapsed timespan $τ$ between the interaction and the prediction time, so that the state-space model forgets historical states proportionally to elapsed duration. The state transition matrix $A$ is initialized as $A_0$ with stable decay properties, ensuring that the hidden state decays smoothly over time rather than depending on input-driven gating. The input matrix $B$ and output matrix $C$ are redefined as $B_{\text{spec}}$ and $C_{\text{spec}}$ with spectral-norm constraints, which supports robust selective reviewing by bounding the per-interaction contribution to the state update. For temporal encoding, timespans from each interaction to the prediction time are mapped through a trainable cosine-based function, and node representations are obtained from raw features with zero vectors substituted when features are unavailable. The ordered first-hop neighbor events for a target node are extracted up to a prediction timestamp, providing the temporal sequence over which the SSM recurrence operates. The combined mechanism is formalized as $$\n\\Delta t = f_{\\Delta t}(\\tau), \\quad A = A_0, \\quad B = B_{\\text{spec}}, \\quad C = C_{\\text{spec}}\n$$, where $f_{Δt}$ denotes the mapping from timespan to step size and $A_0$ encodes the stable-decay initialization of the state transition matrix.",
+            "rendered_from_facet_ids": [
+              "facet-fbcc6e92c1b73f4e",
+              "facet-4e742dc0e3b52bae",
+              "facet-9f2ea9661004e61a"
+            ],
+            "rendered_field_candidate_ids": [],
+            "rendered_slot_ids": [],
+            "rendered_edge_ids": [],
+            "used_formula_package_ids": [
+              "pkg-ma-s3-timespan-forgetting"
+            ],
+            "used_claim_ids": [],
+            "used_equation_ids": [],
+            "witnesses": [
+              {
+                "witness_kind": "facet",
+                "target_id": "facet-fbcc6e92c1b73f4e",
+                "exact_text": "The ordered first-hop neighbor events for a target node are extracted up to a prediction timestamp, providing the temporal sequence over which the SSM recurrence operates."
+              },
+              {
+                "witness_kind": "facet",
+                "target_id": "facet-4e742dc0e3b52bae",
+                "exact_text": "For temporal encoding, timespans from each interaction to the prediction time are mapped through a trainable cosine-based function, and node representations are obtained from raw features with zero vectors substituted when features are unavailable."
+              },
+              {
+                "witness_kind": "facet",
+                "target_id": "facet-9f2ea9661004e61a",
+                "exact_text": "For temporal encoding, timespans from each interaction to the prediction time are mapped through a trainable cosine-based function, and node representations are obtained from raw features with zero vectors substituted when features are unavailable."
+              },
+              {
+                "witness_kind": "formula",
+                "target_id": "pkg-ma-s3-timespan-forgetting",
+                "exact_text": "$$\n\\Delta t = f_{\\Delta t}(\\tau), \\quad A = A_0, \\quad B = B_{\\text{spec}}, \\quad C = C_{\\text{spec}}\n$$"
+              }
+            ],
+            "formula_disposition": null,
+            "formula_disposition_reason": "",
+            "formula_dispositions": []
+          },
+          {
+            "paragraph_id": "paragraph:MA-S3:method-unit-2",
+            "paragraph_markdown": "Co-occurrence frequency encoding captures structural similarity by measuring the frequency of shared neighbors between the target node and each historical neighbor, providing a structural prior that complements the timespan-driven forgetting. The redesign formalizes the timespan-informed mechanism by deriving $Δt$ from the timespan $τ$ via a trainable function $f_{\text{time}}$, initializing the diagonal state transition matrix $A$ with eigenvalues $λ_i$ satisfying $\text{Re}(λ_i) < 0$ for stable decay, and constraining the input and output matrices $B$ and $C$ to unit spectral norm for robust selective reviewing. The complete redesign is expressed as $$\n\\Delta t = f_{\\text{time}}(\\tau), \\quad A = \\text{diag}(\\lambda_1, \\dots, \\lambda_n), \\quad \\text{Re}(\\lambda_i) < 0, \\quad \\|B\\|_2 = \\|C\\|_2 = 1\n$$, where $f_{\text{time}}$ maps the elapsed timespan to the discrete step size and the spectral-norm constraint on $B$ and $C$ bounds the per-interaction contribution to the state update.",
+            "rendered_from_facet_ids": [
+              "facet-8ebd977fd8a0b89d",
+              "facet-0564bcda9bc954d9"
+            ],
+            "rendered_field_candidate_ids": [],
+            "rendered_slot_ids": [],
+            "rendered_edge_ids": [],
+            "used_formula_package_ids": [
+              "pkg-ma-s3-redesign"
+            ],
+            "used_claim_ids": [],
+            "used_equation_ids": [],
+            "witnesses": [
+              {
+                "witness_kind": "facet",
+                "target_id": "facet-8ebd977fd8a0b89d",
+                "exact_text": "Co-occurrence frequency encoding captures structural similarity by measuring the frequency of shared neighbors between the target node and each historical neighbor, providing a structural prior that complements the timespan-driven forgetting."
+              },
+              {
+                "witness_kind": "facet",
+                "target_id": "facet-0564bcda9bc954d9",
+                "exact_text": "The redesign formalizes the timespan-informed mechanism by deriving $Δt$ from the timespan $τ$ via a trainable function $f_{\text{time}}$, initializing the diagonal state transition matrix $A$ with eigenvalues $λ_i$ satisfying $\text{Re}(λ_i) < 0$ for stable decay, and constraining the input and output matrices $B$ and $C$ to unit spectral norm for robust selective reviewing."
+              },
+              {
+                "witness_kind": "formula",
+                "target_id": "pkg-ma-s3-redesign",
+                "exact_text": "$$\n\\Delta t = f_{\\text{time}}(\\tau), \\quad A = \\text{diag}(\\lambda_1, \\dots, \\lambda_n), \\quad \\text{Re}(\\lambda_i) < 0, \\quad \\|B\\|_2 = \\|C\\|_2 = 1\n$$"
+              }
+            ],
+            "formula_disposition": null,
+            "formula_disposition_reason": "",
+            "formula_dispositions": []
+          }
+        ]
+      }
+    },
+    {
+      "section_id": "MA-S4",
+      "heading": "Downstream adaptation: link prediction and node classification setups, plus a note on linear computational complexity",
+      "accepted": false,
+      "failures": [
+        "writer_output_incomplete",
+        "missing_writing_research_callback:mechanism_overview",
+        "invalid_writing_research_callback:mechanism_overview@MA-S4/MA-S4:unit-1/formal_derivation",
+        "missing_required_briefs:brief:story:O-COMPONENT-03-2ae65141,brief:story:O-COMPONENT-08-48efa86a,brief:story:O-ORGANIZATION-04-a52145c2,brief:story:O-RATIONALE-CHECK-01-106180a0"
+      ],
+      "output": {
+        "section_id": "MA-S4",
+        "heading_text": "Downstream adaptation: link prediction and node classification setups, plus a note on linear computational complexity",
+        "section_markdown": "## Downstream adaptation: link prediction and node classification setups, plus a note on linear computational complexity\n\nDownstream prediction is realized by reading out fixed-size node embeddings from the sequential output and passing them through a task-specific predictor. For edge encoding, raw edge features are used directly, with zero vectors substituted where features are unavailable. The readout stage applies mean pooling over the sequence dimension to produce a fixed-size representation, which is then fed to a multilayer perceptron for link prediction or node classification. The SSM step size Δt is set equal to the irregular timespan between consecutive interactions, so that the continuous-time dynamics are discretized at the native temporal granularity of the observed event sequence.",
+        "rendered_proposition_ids": [],
+        "deferred_proposition_ids": [],
+        "rendered_concept_keys": [],
+        "deferred_concept_keys": [],
+        "rendered_brief_ids": [
+          "brief:story:O-STAGE-04-a3a3e8ab",
+          "brief:story:O-STAGE-04-a3a3e8ab",
+          "brief:story:O-STAGE-04-a3a3e8ab"
+        ],
+        "deferred_brief_ids": [],
+        "rendered_from_facet_ids": [],
+        "rendered_field_candidate_ids": [],
+        "deferred_facet_ids": [],
+        "rendered_paragraph_ids": [],
+        "rendered_slot_ids": [],
+        "rendered_edge_ids": [],
+        "used_formula_package_ids": [],
+        "used_argument_unit_ids": [],
+        "used_claim_ids": [],
+        "used_equation_ids": [],
+        "used_configuration_ids": [],
+        "completed_rhetorical_moves": [],
+        "new_research_requests": [
+          {
+            "argument_unit_id": "MA-S4:unit-1",
+            "concept_key": "downstream_readout",
+            "exact_question": "What is the precise functional form of the link-prediction and node-classification predictors, and how is linear computational complexity with respect to sequence length maintained?",
+            "missing_parts": [
+              "Downstream adaptation: link prediction and node classification setups, plus a note on linear computational complexity.",
+              "empty mechanism draft",
+              "Downstream prediction: Read out fixed-size node embeddings from the sequential output and produce task-specific predictions.",
+              "Edge encoding: Use raw edge features;",
+              "zero vectors when unavailable.",
+              "Directly couple the SSM step size Δt to the irregular timespans between interactions.",
+              "Readout and predictor: MEAN pooling over the sequence dimension followed by an MLP for link prediction or node classification."
+            ],
+            "missing_rhetorical_move": "mechanism_overview",
+            "request_id": "MA-S4:req-1",
+            "required_authority_lane": "formal_derivation",
+            "section_id": "MA-S4",
+            "status": "open",
+            "target_brief_ids": [
+              "brief:story:O-ORGANIZATION-04-a52145c2",
+              "brief:story:O-STAGE-04-a3a3e8ab",
+              "brief:story:O-COMPONENT-03-2ae65141",
+              "brief:story:O-RATIONALE-CHECK-01-106180a0",
+              "brief:story:O-COMPONENT-08-48efa86a"
+            ],
+            "target_clause_ids": [
+              "clause:O-ORGANIZATION-04-a52145c2:0",
+              "clause:O-STAGE-04-a3a3e8ab:0",
+              "clause:O-COMPONENT-03-2ae65141:0",
+              "clause:O-COMPONENT-03-2ae65141:1",
+              "clause:O-RATIONALE-CHECK-01-106180a0:0",
+              "clause:O-COMPONENT-08-48efa86a:0"
+            ],
+            "evidence_refs_used": [
+              "span:models/EdgeBank.py:18:21",
+              "span:models/EdgeBank.py:23:23",
+              "span:models/EdgeBank.py:14:14",
+              "span:models/EdgeBank.py:108:108",
+              "claim:claim-O-STAGE-04-a3a3e8ab-fact-O-STAGE-04-a3a3e8ab-node:f6a724d2289567f8",
+              "claim:claim-O-STAGE-04-a3a3e8ab-fact-O-STAGE-04-a3a3e8ab-node:b80eaf1b4a605b1f",
+              "claim:claim-O-STAGE-04-a3a3e8ab-fact-O-STAGE-04-a3a3e8ab-node:216cb50998c195b5",
+              "claim:claim-O-STAGE-04-a3a3e8ab-fact-O-STAGE-04-a3a3e8ab-node:992d4e5d074a2eff",
+              "span:models/EdgeBank.py:118:118",
+              "span:models/EdgeBank.py:110:110",
+              "span:models/EdgeBank.py:119:119",
+              "span:models/EdgeBank.py:114:114",
+              "span:models/EdgeBank.py:110:112",
+              "claim:claim-O-COMPONENT-03-2ae65141-fact-O-COMPONENT-03-2ae65141-node:38eb467108658f72",
+              "claim:claim-O-COMPONENT-03-2ae65141-fact-O-COMPONENT-03-2ae65141-node:4a3468105650fd0d",
+              "claim:claim-O-COMPONENT-03-2ae65141-fact-O-COMPONENT-03-2ae65141-node:4bca45170173ce97",
+              "claim:claim-O-COMPONENT-03-2ae65141-fact-O-COMPONENT-03-2ae65141-node:89759dffb850c28d",
+              "claim:claim-O-COMPONENT-03-2ae65141-fact-O-COMPONENT-03-2ae65141-node:97c78cc1158f8083",
+              "claim:claim-O-COMPONENT-03-2ae65141-fact-O-COMPONENT-03-2ae65141-node:c41e9d8122ae541a",
+              "claim:claim-O-COMPONENT-03-2ae65141-fact-O-COMPONENT-03-2ae65141-node:c7e93566614ced8d",
+              "claim:claim-O-COMPONENT-03-2ae65141-fact-O-COMPONENT-03-2ae65141-node:d17e6ce061b2b06a"
+            ]
+          },
+          {
+            "argument_unit_id": "MA-S4:unit-1",
+            "concept_key": "step_size_coupling",
+            "exact_question": "What is the formal expression relating the SSM step size to the irregular timespans between interactions?",
+            "missing_parts": [
+              "Downstream adaptation: link prediction and node classification setups, plus a note on linear computational complexity.",
+              "empty mechanism draft",
+              "Downstream prediction: Read out fixed-size node embeddings from the sequential output and produce task-specific predictions.",
+              "Edge encoding: Use raw edge features;",
+              "zero vectors when unavailable.",
+              "Directly couple the SSM step size Δt to the irregular timespans between interactions.",
+              "Readout and predictor: MEAN pooling over the sequence dimension followed by an MLP for link prediction or node classification."
+            ],
+            "missing_rhetorical_move": "mechanism_overview",
+            "request_id": "MA-S4:req-2",
+            "required_authority_lane": "formal_derivation",
+            "section_id": "MA-S4",
+            "status": "open",
+            "target_brief_ids": [
+              "brief:story:O-ORGANIZATION-04-a52145c2",
+              "brief:story:O-STAGE-04-a3a3e8ab",
+              "brief:story:O-COMPONENT-03-2ae65141",
+              "brief:story:O-RATIONALE-CHECK-01-106180a0",
+              "brief:story:O-COMPONENT-08-48efa86a"
+            ],
+            "target_clause_ids": [
+              "clause:O-ORGANIZATION-04-a52145c2:0",
+              "clause:O-STAGE-04-a3a3e8ab:0",
+              "clause:O-COMPONENT-03-2ae65141:0",
+              "clause:O-COMPONENT-03-2ae65141:1",
+              "clause:O-RATIONALE-CHECK-01-106180a0:0",
+              "clause:O-COMPONENT-08-48efa86a:0"
+            ],
+            "evidence_refs_used": [
+              "span:models/EdgeBank.py:18:21",
+              "span:models/EdgeBank.py:23:23",
+              "span:models/EdgeBank.py:14:14",
+              "span:models/EdgeBank.py:108:108",
+              "claim:claim-O-STAGE-04-a3a3e8ab-fact-O-STAGE-04-a3a3e8ab-node:f6a724d2289567f8",
+              "claim:claim-O-STAGE-04-a3a3e8ab-fact-O-STAGE-04-a3a3e8ab-node:b80eaf1b4a605b1f",
+              "claim:claim-O-STAGE-04-a3a3e8ab-fact-O-STAGE-04-a3a3e8ab-node:216cb50998c195b5",
+              "claim:claim-O-STAGE-04-a3a3e8ab-fact-O-STAGE-04-a3a3e8ab-node:992d4e5d074a2eff",
+              "span:models/EdgeBank.py:118:118",
+              "span:models/EdgeBank.py:110:110",
+              "span:models/EdgeBank.py:119:119",
+              "span:models/EdgeBank.py:114:114",
+              "span:models/EdgeBank.py:110:112",
+              "claim:claim-O-COMPONENT-03-2ae65141-fact-O-COMPONENT-03-2ae65141-node:38eb467108658f72",
+              "claim:claim-O-COMPONENT-03-2ae65141-fact-O-COMPONENT-03-2ae65141-node:4a3468105650fd0d",
+              "claim:claim-O-COMPONENT-03-2ae65141-fact-O-COMPONENT-03-2ae65141-node:4bca45170173ce97",
+              "claim:claim-O-COMPONENT-03-2ae65141-fact-O-COMPONENT-03-2ae65141-node:89759dffb850c28d",
+              "claim:claim-O-COMPONENT-03-2ae65141-fact-O-COMPONENT-03-2ae65141-node:97c78cc1158f8083",
+              "claim:claim-O-COMPONENT-03-2ae65141-fact-O-COMPONENT-03-2ae65141-node:c41e9d8122ae541a",
+              "claim:claim-O-COMPONENT-03-2ae65141-fact-O-COMPONENT-03-2ae65141-node:c7e93566614ced8d",
+              "claim:claim-O-COMPONENT-03-2ae65141-fact-O-COMPONENT-03-2ae65141-node:d17e6ce061b2b06a"
+            ]
+          }
+        ],
+        "self_identified_risks": [],
+        "unresolved_points": [],
+        "paragraphs": [
+          {
+            "paragraph_id": "paragraph:MA-S4:method-unit-1",
+            "paragraph_markdown": "Downstream prediction is realized by reading out fixed-size node embeddings from the sequential output and passing them through a task-specific predictor. For edge encoding, raw edge features are used directly, with zero vectors substituted where features are unavailable. The readout stage applies mean pooling over the sequence dimension to produce a fixed-size representation, which is then fed to a multilayer perceptron for link prediction or node classification. The SSM step size Δt is set equal to the irregular timespan between consecutive interactions, so that the continuous-time dynamics are discretized at the native temporal granularity of the observed event sequence.",
+            "rendered_from_facet_ids": [
+              "facet-500349fe9389866d",
+              "facet-4d1239a88d3c0fce",
+              "facet-9d9902649b1ee4a5"
+            ],
+            "rendered_field_candidate_ids": [],
+            "rendered_slot_ids": [],
+            "rendered_edge_ids": [],
+            "used_formula_package_ids": [],
+            "used_claim_ids": [],
+            "used_equation_ids": [],
+            "witnesses": [
+              {
+                "witness_kind": "facet",
+                "target_id": "facet-500349fe9389866d",
+                "exact_text": "Downstream prediction is realized by reading out fixed-size node embeddings from the sequential output and passing them through a task-specific predictor."
+              },
+              {
+                "witness_kind": "facet",
+                "target_id": "facet-4d1239a88d3c0fce",
+                "exact_text": "For edge encoding, raw edge features are used directly, with zero vectors substituted where features are unavailable."
+              },
+              {
+                "witness_kind": "facet",
+                "target_id": "facet-9d9902649b1ee4a5",
+                "exact_text": "The readout stage applies mean pooling over the sequence dimension to produce a fixed-size representation, which is then fed to a multilayer perceptron for link prediction or node classification."
+              }
+            ],
+            "formula_disposition": null,
+            "formula_disposition_reason": "",
+            "formula_dispositions": []
+          }
+        ]
+      }
+    },
+    {
+      "section_id": "MA-S5",
+      "heading": "Robust selective reviewing",
+      "accepted": false,
+      "failures": [
+        "writer_output_incomplete",
+        "invalid_writing_research_callback:formal_objects_and_notation@MA-S5/MA-S5:unit-1/executable_hard",
+        "missing_required_briefs:brief:story:O-COMPONENT-07-c430eb84,brief:story:O-STAGE-03-d47a86f4"
+      ],
+      "output": {
+        "section_id": "MA-S5",
+        "heading_text": "Robust selective reviewing",
+        "section_markdown": "",
+        "rendered_proposition_ids": [],
+        "deferred_proposition_ids": [],
+        "rendered_concept_keys": [],
+        "deferred_concept_keys": [],
+        "rendered_brief_ids": [
+          "brief:story:O-RATIONALE-CHECK-03-117025ca"
+        ],
+        "deferred_brief_ids": [],
+        "rendered_from_facet_ids": [],
+        "rendered_field_candidate_ids": [],
+        "deferred_facet_ids": [],
+        "rendered_paragraph_ids": [],
+        "rendered_slot_ids": [],
+        "rendered_edge_ids": [],
+        "used_formula_package_ids": [],
+        "used_argument_unit_ids": [],
+        "used_claim_ids": [],
+        "used_equation_ids": [],
+        "used_configuration_ids": [],
+        "completed_rhetorical_moves": [],
+        "new_research_requests": [
+          {
+            "argument_unit_id": "MA-S5:unit-1",
+            "candidate_symbols_or_terms": [
+              "B(t)",
+              "C(t)",
+              "Δt",
+              "A",
+              "W_B",
+              "W_C"
+            ],
+            "current_known_facts": [
+              "The continuous state-space model uses input-dependent B and C matrices.",
+              "Stability is ensured by diagonal initialization of A and spectral norm constraints on B and C.",
+              "The timespan-dependent step size Δt adapts memory decay to temporal context."
+            ],
+            "evidence_refs_used": [
+              "pkg:MA-S5:author_intent:0"
+            ],
+            "exact_question": "How are the input-dependent matrices B(t) and C(t) parameterized as functions of the input x, and what are the explicit spectral norm bounds on W_B and W_C that guarantee stability of the continuous SSM?",
+            "missing_parts": [
+              "explicit parameterization of B(x) and C(x)",
+              "numerical or structural form of the spectral norm constraints"
+            ],
+            "missing_rhetorical_move": "formal_objects_and_notation",
+            "request_id": "MA-S5:unit-1:001",
+            "required_authority_lane": "executable_hard",
+            "section_id": "MA-S5",
+            "status": "open"
+          }
+        ],
+        "self_identified_risks": [],
+        "unresolved_points": [],
+        "paragraphs": [
+          {
+            "paragraph_id": "paragraph:MA-S5:method-unit-1",
+            "paragraph_markdown": "The DyG-Mamba selective reviewing module implements a continuous state-space model in which the input matrix $B(t)$ and output matrix $C(t)$ are rendered input-dependent through a projection $W_{\text{proj}}$ that maps the input tensor $x$ to the timespan-dependent step size $\triangle t$, $B$, and $C$. The state matrix $A$ is initialized as a stable diagonal, ensuring that the hidden state $h_t$ evolves under a memory decay rate that adapts to the temporal context. Spectral norm constraints on the effective weight matrices $W_B$ and $W_C$ bound the influence of the input-dependent projections, so that salient interactions are reinforced while noise is suppressed. Given an input tensor $x$ of shape $[B, L, D]$, the module computes the hidden states via the input projection $W_{\text{in}}$ with bias $b_{\text{in}}$, applies the selective update governed by $\triangle t$ and $A$, and returns the output $y_t$ through the input-dependent output matrix $C(t)$. [[FORMULA:pkg:MA-S5:author_intent:0]]",
+            "rendered_from_facet_ids": [],
+            "rendered_field_candidate_ids": [],
+            "rendered_slot_ids": [],
+            "rendered_edge_ids": [],
+            "used_formula_package_ids": [],
+            "used_claim_ids": [],
+            "used_equation_ids": [],
+            "witnesses": [],
+            "formula_disposition": null,
+            "formula_disposition_reason": "",
+            "formula_dispositions": []
+          }
+        ]
+      }
+    }
+  ],
+  "accepted_section_ids": [
+    "MA-S2"
+  ],
+  "incomplete_section_ids": [
+    "MA-S1",
+    "MA-S2",
+    "MA-S3",
+    "MA-S4",
+    "MA-S5"
+  ],
+  "binding_failures": [
+    "MA-S1:writer_output_incomplete",
+    "MA-S1:missing_writing_research_callback:mechanism_overview",
+    "MA-S1:invalid_writing_research_callback:mechanism_overview@MA-S1/MA-S1:unit-1/executable_hard",
+    "MA-S1:missing_required_briefs:brief:story:O-COMPONENT-06-e711d58d,brief:story:O-METHOD-MAINLINE-01-3011c54d,brief:story:O-RATIONALE-CHECK-04-b41841c3,brief:story:O-RATIONALE-CHECK-05-e1bbed89,brief:story:O-STAGE-01-06d7de36",
+    "MA-S2:invalid_writing_research_callback:problem_or_local_context@MA-S2/MA-S2:unit/expository_bridge",
+    "MA-S3:writer_output_incomplete",
+    "MA-S3:missing_required_briefs:brief:story:O-COMPONENT-01-377afc18,brief:story:O-COMPONENT-01-88e55e54,brief:story:O-COMPONENT-02-c39dd898,brief:story:O-COMPONENT-04-6d73cce5,brief:story:O-COMPONENT-05-8cd85daa,brief:story:O-ORGANIZATION-03-359984b4,brief:story:O-RATIONALE-CHECK-02-653d713f",
+    "MA-S4:writer_output_incomplete",
+    "MA-S4:missing_writing_research_callback:mechanism_overview",
+    "MA-S4:invalid_writing_research_callback:mechanism_overview@MA-S4/MA-S4:unit-1/formal_derivation",
+    "MA-S4:missing_required_briefs:brief:story:O-COMPONENT-03-2ae65141,brief:story:O-COMPONENT-08-48efa86a,brief:story:O-ORGANIZATION-04-a52145c2,brief:story:O-RATIONALE-CHECK-01-106180a0",
+    "MA-S5:writer_output_incomplete",
+    "MA-S5:invalid_writing_research_callback:formal_objects_and_notation@MA-S5/MA-S5:unit-1/executable_hard",
+    "MA-S5:missing_required_briefs:brief:story:O-COMPONENT-07-c430eb84,brief:story:O-STAGE-03-d47a86f4",
+    "rewrite:unknown_style_section:MA-S5",
+    "rewrite:MA-S2:unsafe_positive_or_authority:attempt_budget_exhausted",
+    "rewrite_budget_exhausted_kept_incumbent",
+    "formalization_required_obligation_unresolved:MA-S3:formula:facet:facet-e3de4791afd3b462,formula:facet:facet-0564bcda9bc954d9,formula:facet:facet-45205815214ce81d,formula:section:MA-S3:derivation",
+    "formalization_required_obligation_unresolved:MA-S5:formula:facet:facet-85dd07572b8a77e2,formula:facet:facet-e343d4bc111c5b77,formula:facet:facet-3f8317dd772533f4,formula:facet:facet-e36d367d850a8273,formula:section:MA-S5:derivation",
+    "MA-S5:writer_missing_required_facets:facet-3f8317dd772533f4,facet-85dd07572b8a77e2,facet-9a8892286042413e,facet-e343d4bc111c5b77"
+  ],
+  "writer_aggregate": {
+    "sections": [
+      {
+        "section_id": "MA-S1",
+        "heading": "Dynamic graph encoding: how interaction sequences are represented with heterogeneous features and aligned",
+        "text_length": 1350,
+        "finish_reason": "structured_complete",
+        "extended_budget_used": false,
+        "blocked_reason": "publication_paragraph_transaction_failed:required_target_contract:paragraph:MA-S1:method-unit-1:facet:facet-9a1ed70668b9de25;required_target_contract:paragraph:MA-S1:method-unit-1:facet:facet-474697a48f990b43;required_target_contract:paragraph:MA-S1:method-unit-1:slot:slot:fact-O-STAGE-01-06d7de36-node:b6b250aad804aa69"
+      },
+      {
+        "section_id": "MA-S2",
+        "heading": "Motivation: limitations of vanilla SSMs – they ignore irregular timespans and are vulnerable to input noise",
+        "text_length": 362,
+        "finish_reason": "structured_complete",
+        "extended_budget_used": false,
+        "blocked_reason": ""
+      },
+      {
+        "section_id": "MA-S3",
+        "heading": "Redesign: timespan-informed Δt and A for temporally aware forgetting",
+        "text_length": 2510,
+        "finish_reason": "structured_complete",
+        "extended_budget_used": false,
+        "blocked_reason": "publication_paragraph_transaction_failed:required_target_contract:paragraph:MA-S3:method-unit-1:facet:facet-e3de4791afd3b462;required_target_contract:paragraph:MA-S3:method-unit-1:slot:slot:fact-O-STAGE-02-e02cd0f2-node:0a7578f6d67f7f98;required_target_contract:paragraph:MA-S3:method-unit-1:slot:slot:fact-O-COMPONENT-05-8cd85daa-node:2ea85357345e7041;required_target_contract:paragraph:MA-S3:method-unit-1:slot:slot:fact-O-STAGE-02-e02cd0f2-node:295ccb032c6bffcd;required_target_contract:paragraph:MA-S3:method-unit-1:slot:slot:fact-O-STAGE-02-e02cd0f2-node:78fb7cf618388d76;required_target_contract:paragraph:MA-S3:method-unit-2:facet:facet-45205815214ce81d;required_target_contract:paragraph:MA-S3:method-unit-2:slot:slot:fact-O-COMPONENT-05-8cd85daa-node:20e8a907508376ba;required_target_contract:paragraph:MA-S3:method-unit-2:formula:formula:section:MA-S3:derivation"
+      },
+      {
+        "section_id": "MA-S4",
+        "heading": "Downstream adaptation: link prediction and node classification setups, plus a note on linear computational complexity",
+        "text_length": 804,
+        "finish_reason": "structured_complete",
+        "extended_budget_used": false,
+        "blocked_reason": "publication_paragraph_transaction_failed:required_target_contract:paragraph:MA-S4:method-unit-1:facet:facet-98231f06597ce972;required_target_contract:paragraph:MA-S4:method-unit-1:slot:slot:fact-O-COMPONENT-03-2ae65141-node:4a3468105650fd0d;required_target_contract:paragraph:MA-S4:method-unit-1:slot:slot:fact-O-COMPONENT-03-2ae65141-node:89759dffb850c28d;required_target_contract:paragraph:MA-S4:method-unit-1:slot:slot:fact-O-STAGE-04-a3a3e8ab-node:992d4e5d074a2eff;required_target_contract:paragraph:MA-S4:method-unit-1:slot:slot:fact-O-STAGE-04-a3a3e8ab-node:f6a724d2289567f8;required_target_contract:paragraph:MA-S4:method-unit-1:slot:slot:fact-O-STAGE-04-a3a3e8ab-node:b80eaf1b4a605b1f;required_target_contract:paragraph:MA-S4:method-unit-1:formula:formula:facet:facet-98231f06597ce972"
+      },
+      {
+        "section_id": "MA-S5",
+        "heading": "Robust selective reviewing",
+        "text_length": 1002,
+        "finish_reason": "structured_complete",
+        "extended_budget_used": false,
+        "blocked_reason": "publication_section_binding_failed:formula_placeholder:formula_package_consumer_missing:paragraph:MA-S5:method-unit-2;paragraph:MA-S5:method-unit-1:formula_package_id_duplicate:pkg:MA-S5:author_intent:0"
+      }
+    ],
+    "traces": [
+      {
+        "call_id": "LLM-publication-method-section-0-MA-S1",
+        "prompt_template_id": "phase5_method_writer_section_v1",
+        "role": "method_writer",
+        "provider": "openai",
+        "model": "qwen38-27b-nvfp4",
+        "endpoint_origin": "http://127.0.0.1:8006",
+        "effective_config": {
+          "role": "method_writer",
+          "temperature": 0.7,
+          "max_output_tokens": 8192,
+          "reasoning_effort": "low",
+          "thinking_token_budget": 1024,
+          "top_p": 0.95,
+          "top_k": 20,
+          "seed": 42,
+          "max_input_tokens": null,
+          "prompt_template_version": ""
+        },
+        "finish_reason": "structured_complete",
+        "token_usage": {
+          "completion_tokens": 636
+        },
+        "blocked_reason": "publication_paragraph_transaction_failed:required_target_contract:paragraph:MA-S1:method-unit-1:facet:facet-9a1ed70668b9de25;required_target_contract:paragraph:MA-S1:method-unit-1:facet:facet-474697a48f990b43;required_target_contract:paragraph:MA-S1:method-unit-1:slot:slot:fact-O-STAGE-01-06d7de36-node:b6b250aad804aa69",
+        "cached": false,
+        "response_mode": "native_json_schema",
+        "schema_name": "publication_method_section_v1",
+        "input_hash": "sha256:cb6525afeeb00ef917bd6545932cfdd782bf7e5a2eef80619a2057ffd37bf2ef",
+        "response_hash": "sha256:6e8436ed9d1505ceec3c623542be4ea4a0969e30fd8100a9b25cad79455f4aa9",
+        "prompt_chars": 6143,
+        "input_payload_chars": 8834,
+        "schema_chars": 8917,
+        "thinking_chars": 0,
+        "extended_budget_used": false,
+        "cumulative_budget_consumed": 636
+      },
+      {
+        "call_id": "LLM-publication-method-section-1-MA-S2",
+        "prompt_template_id": "phase5_method_writer_section_v1",
+        "role": "method_writer",
+        "provider": "openai",
+        "model": "qwen38-27b-nvfp4",
+        "endpoint_origin": "http://127.0.0.1:8006",
+        "effective_config": {
+          "role": "method_writer",
+          "temperature": 0.7,
+          "max_output_tokens": 8192,
+          "reasoning_effort": "low",
+          "thinking_token_budget": 1024,
+          "top_p": 0.95,
+          "top_k": 20,
+          "seed": 42,
+          "max_input_tokens": null,
+          "prompt_template_version": ""
+        },
+        "finish_reason": "structured_complete",
+        "token_usage": {},
+        "blocked_reason": "",
+        "cached": false,
+        "response_mode": "native_json_schema",
+        "schema_name": "publication_method_section_v1",
+        "input_hash": "sha256:8d903ffe705c17d126aa066176d96e286d04113a7cf526b3f1df96e1bdaa789a",
+        "response_hash": "sha256:3f0184c8c16e2ced6c6c846ff62ab1fd4ee26ec7b4f595df0d08cf4faa580389",
+        "prompt_chars": 6143,
+        "input_payload_chars": 860,
+        "schema_chars": 7699,
+        "thinking_chars": 0,
+        "extended_budget_used": false,
+        "cumulative_budget_consumed": 726
+      },
+      {
+        "call_id": "LLM-publication-method-section-2-MA-S3",
+        "prompt_template_id": "phase5_method_writer_section_v1",
+        "role": "method_writer",
+        "provider": "openai",
+        "model": "qwen38-27b-nvfp4",
+        "endpoint_origin": "http://127.0.0.1:8006",
+        "effective_config": {
+          "role": "method_writer",
+          "temperature": 0.7,
+          "max_output_tokens": 8192,
+          "reasoning_effort": "low",
+          "thinking_token_budget": 1024,
+          "top_p": 0.95,
+          "top_k": 20,
+          "seed": 42,
+          "max_input_tokens": null,
+          "prompt_template_version": ""
+        },
+        "finish_reason": "structured_complete",
+        "token_usage": {
+          "completion_tokens": 1185
+        },
+        "blocked_reason": "publication_paragraph_transaction_failed:required_target_contract:paragraph:MA-S3:method-unit-1:facet:facet-e3de4791afd3b462;required_target_contract:paragraph:MA-S3:method-unit-1:facet:facet-fbcc6e92c1b73f4e;required_target_contract:paragraph:MA-S3:method-unit-1:slot:slot:fact-O-STAGE-02-e02cd0f2-node:0a7578f6d67f7f98;required_target_contract:paragraph:MA-S3:method-unit-1:slot:slot:fact-O-COMPONENT-05-8cd85daa-node:2ea85357345e7041;required_target_contract:paragraph:MA-S3:method-unit-1:slot:slot:fact-O-STAGE-02-e02cd0f2-node:295ccb032c6bffcd;required_target_contract:paragraph:MA-S3:method-unit-1:slot:slot:fact-O-STAGE-02-e02cd0f2-node:78fb7cf618388d76;required_target_contract:paragraph:MA-S3:method-unit-2:facet:facet-45205815214ce81d;required_target_contract:paragraph:MA-S3:method-unit-2:slot:slot:fact-O-COMPONENT-05-8cd85daa-node:20e8a907508376ba;required_target_contract:paragraph:MA-S3:method-unit-2:formula:formula:section:MA-S3:derivation",
+        "cached": false,
+        "response_mode": "native_json_schema",
+        "schema_name": "publication_method_section_v1",
+        "input_hash": "sha256:0983607f617dbdf943364ec9c64dc2ee02b2293298baf54d4818b72adb44d18e",
+        "response_hash": "sha256:92ad65c09e5c7f385acbd55725f8455c3b386ee9a05ac8fe90f174fcf2d2a1b8",
+        "prompt_chars": 6143,
+        "input_payload_chars": 12709,
+        "schema_chars": 9203,
+        "thinking_chars": 0,
+        "extended_budget_used": false,
+        "cumulative_budget_consumed": 1911
+      },
+      {
+        "call_id": "LLM-publication-method-section-2-MA-S3-content-1",
+        "prompt_template_id": "phase5_method_writer_section_v1_content_repair_v1",
+        "role": "method_writer",
+        "provider": "openai",
+        "model": "qwen38-27b-nvfp4",
+        "endpoint_origin": "http://127.0.0.1:8006",
+        "effective_config": {
+          "role": "method_writer",
+          "temperature": 0.7,
+          "max_output_tokens": 8192,
+          "reasoning_effort": "low",
+          "thinking_token_budget": 1024,
+          "top_p": 0.95,
+          "top_k": 20,
+          "seed": 42,
+          "max_input_tokens": null,
+          "prompt_template_version": ""
+        },
+        "finish_reason": "structured_complete",
+        "token_usage": {
+          "completion_tokens": 1776
+        },
+        "blocked_reason": "publication_paragraph_transaction_failed:required_target_contract:paragraph:MA-S3:method-unit-1:facet:facet-e3de4791afd3b462;required_target_contract:paragraph:MA-S3:method-unit-1:slot:slot:fact-O-STAGE-02-e02cd0f2-node:0a7578f6d67f7f98;required_target_contract:paragraph:MA-S3:method-unit-1:slot:slot:fact-O-STAGE-02-e02cd0f2-node:295ccb032c6bffcd;required_target_contract:paragraph:MA-S3:method-unit-1:slot:slot:fact-O-STAGE-02-e02cd0f2-node:78fb7cf618388d76;required_target_contract:paragraph:MA-S3:method-unit-2:facet:facet-45205815214ce81d;required_target_contract:paragraph:MA-S3:method-unit-2:formula:formula:section:MA-S3:derivation",
+        "cached": false,
+        "response_mode": "native_json_schema",
+        "schema_name": "publication_method_section_v1",
+        "input_hash": "sha256:a1ee88879408928239e0091b9bd3babf76fbfd410bb7acc827a2004a5d78cd48",
+        "response_hash": "sha256:06d3e79a67f91aa859a0c748809ad23dcb605ef4a1bcc69995cbb6ab1bd8d6f7",
+        "prompt_chars": 6143,
+        "input_payload_chars": 41233,
+        "schema_chars": 9203,
+        "thinking_chars": 0,
+        "extended_budget_used": false,
+        "cumulative_budget_consumed": 3687
+      },
+      {
+        "call_id": "LLM-publication-method-section-2-MA-S3-content-2",
+        "prompt_template_id": "phase5_method_writer_section_v1_content_repair_v1",
+        "role": "method_writer",
+        "provider": "openai",
+        "model": "qwen38-27b-nvfp4",
+        "endpoint_origin": "http://127.0.0.1:8006",
+        "effective_config": {
+          "role": "method_writer",
+          "temperature": 0.7,
+          "max_output_tokens": 8192,
+          "reasoning_effort": "low",
+          "thinking_token_budget": 1024,
+          "top_p": 0.95,
+          "top_k": 20,
+          "seed": 42,
+          "max_input_tokens": null,
+          "prompt_template_version": ""
+        },
+        "finish_reason": "structured_complete",
+        "token_usage": {
+          "completion_tokens": 949
+        },
+        "blocked_reason": "publication_paragraph_transaction_failed:required_target_contract:paragraph:MA-S3:method-unit-1:facet:facet-e3de4791afd3b462;required_target_contract:paragraph:MA-S3:method-unit-1:facet:facet-fbcc6e92c1b73f4e;required_target_contract:paragraph:MA-S3:method-unit-1:slot:slot:fact-O-STAGE-02-e02cd0f2-node:0a7578f6d67f7f98;required_target_contract:paragraph:MA-S3:method-unit-1:slot:slot:fact-O-COMPONENT-05-8cd85daa-node:2ea85357345e7041;required_target_contract:paragraph:MA-S3:method-unit-1:slot:slot:fact-O-STAGE-02-e02cd0f2-node:295ccb032c6bffcd;required_target_contract:paragraph:MA-S3:method-unit-1:slot:slot:fact-O-STAGE-02-e02cd0f2-node:78fb7cf618388d76;required_target_contract:paragraph:MA-S3:method-unit-2:facet:facet-45205815214ce81d;required_target_contract:paragraph:MA-S3:method-unit-2:slot:slot:fact-O-COMPONENT-05-8cd85daa-node:20e8a907508376ba;required_target_contract:paragraph:MA-S3:method-unit-2:formula:formula:section:MA-S3:derivation",
+        "cached": false,
+        "response_mode": "native_json_schema",
+        "schema_name": "publication_method_section_v1",
+        "input_hash": "sha256:9504d250208b9ba95cf7533a1e8f659c539b5349e5884fd6a2a08f3cffcf8bd2",
+        "response_hash": "sha256:4cd65e022b674fab78dcaa547706e625d61fc2fde10c0c3db5b16175a83fbebb",
+        "prompt_chars": 6143,
+        "input_payload_chars": 40869,
+        "schema_chars": 9203,
+        "thinking_chars": 0,
+        "extended_budget_used": false,
+        "cumulative_budget_consumed": 4636
+      },
+      {
+        "call_id": "LLM-publication-method-section-2-MA-S3-content-3",
+        "prompt_template_id": "phase5_method_writer_section_v1_content_repair_v1",
+        "role": "method_writer",
+        "provider": "openai",
+        "model": "qwen38-27b-nvfp4",
+        "endpoint_origin": "http://127.0.0.1:8006",
+        "effective_config": {
+          "role": "method_writer",
+          "temperature": 0.7,
+          "max_output_tokens": 8192,
+          "reasoning_effort": "low",
+          "thinking_token_budget": 1024,
+          "top_p": 0.95,
+          "top_k": 20,
+          "seed": 42,
+          "max_input_tokens": null,
+          "prompt_template_version": ""
+        },
+        "finish_reason": "structured_complete",
+        "token_usage": {
+          "completion_tokens": 909
+        },
+        "blocked_reason": "publication_paragraph_transaction_failed:required_target_contract:paragraph:MA-S3:method-unit-1:facet:facet-e3de4791afd3b462;required_target_contract:paragraph:MA-S3:method-unit-1:slot:slot:fact-O-STAGE-02-e02cd0f2-node:0a7578f6d67f7f98;required_target_contract:paragraph:MA-S3:method-unit-1:slot:slot:fact-O-COMPONENT-05-8cd85daa-node:2ea85357345e7041;required_target_contract:paragraph:MA-S3:method-unit-1:slot:slot:fact-O-STAGE-02-e02cd0f2-node:295ccb032c6bffcd;required_target_contract:paragraph:MA-S3:method-unit-1:slot:slot:fact-O-STAGE-02-e02cd0f2-node:78fb7cf618388d76",
+        "cached": false,
+        "response_mode": "native_json_schema",
+        "schema_name": "publication_method_section_v1",
+        "input_hash": "sha256:9d7299890745ac8088ba341f4416ab6e3b8870dc8d24524157b1dcde07f03441",
+        "response_hash": "sha256:344c7f853d049f80302466cef9d0a15a393c7bb85f27b845cf341b8782b0f8ca",
+        "prompt_chars": 6143,
+        "input_payload_chars": 40904,
+        "schema_chars": 9203,
+        "thinking_chars": 0,
+        "extended_budget_used": false,
+        "cumulative_budget_consumed": 5545
+      },
+      {
+        "call_id": "LLM-publication-method-section-3-MA-S4",
+        "prompt_template_id": "phase5_method_writer_section_v1",
+        "role": "method_writer",
+        "provider": "openai",
+        "model": "qwen38-27b-nvfp4",
+        "endpoint_origin": "http://127.0.0.1:8006",
+        "effective_config": {
+          "role": "method_writer",
+          "temperature": 0.7,
+          "max_output_tokens": 8192,
+          "reasoning_effort": "low",
+          "thinking_token_budget": 1024,
+          "top_p": 0.95,
+          "top_k": 20,
+          "seed": 42,
+          "max_input_tokens": null,
+          "prompt_template_version": ""
+        },
+        "finish_reason": "structured_complete",
+        "token_usage": {
+          "completion_tokens": 586
+        },
+        "blocked_reason": "publication_paragraph_transaction_failed:required_target_contract:paragraph:MA-S4:method-unit-1:facet:facet-98231f06597ce972;required_target_contract:paragraph:MA-S4:method-unit-1:slot:slot:fact-O-COMPONENT-03-2ae65141-node:4a3468105650fd0d;required_target_contract:paragraph:MA-S4:method-unit-1:slot:slot:fact-O-COMPONENT-03-2ae65141-node:89759dffb850c28d;required_target_contract:paragraph:MA-S4:method-unit-1:slot:slot:fact-O-STAGE-04-a3a3e8ab-node:992d4e5d074a2eff;required_target_contract:paragraph:MA-S4:method-unit-1:slot:slot:fact-O-STAGE-04-a3a3e8ab-node:f6a724d2289567f8;required_target_contract:paragraph:MA-S4:method-unit-1:slot:slot:fact-O-STAGE-04-a3a3e8ab-node:b80eaf1b4a605b1f;required_target_contract:paragraph:MA-S4:method-unit-1:formula:formula:facet:facet-98231f06597ce972",
+        "cached": false,
+        "response_mode": "native_json_schema",
+        "schema_name": "publication_method_section_v1",
+        "input_hash": "sha256:d0c1781eec99007971585cf67865726cd9734335bd5ec04d68634f1ad7337d44",
+        "response_hash": "sha256:479c5f9c758e9444039198c7c19a6d1fdd6012e3cc668f45fcb21091602dd1c0",
+        "prompt_chars": 6143,
+        "input_payload_chars": 3778,
+        "schema_chars": 8815,
+        "thinking_chars": 0,
+        "extended_budget_used": false,
+        "cumulative_budget_consumed": 6131
+      },
+      {
+        "call_id": "LLM-publication-method-section-4-MA-S5",
+        "prompt_template_id": "phase5_method_writer_section_v1",
+        "role": "method_writer",
+        "provider": "openai",
+        "model": "qwen38-27b-nvfp4",
+        "endpoint_origin": "http://127.0.0.1:8006",
+        "effective_config": {
+          "role": "method_writer",
+          "temperature": 0.7,
+          "max_output_tokens": 8192,
+          "reasoning_effort": "low",
+          "thinking_token_budget": 1024,
+          "top_p": 0.95,
+          "top_k": 20,
+          "seed": 42,
+          "max_input_tokens": null,
+          "prompt_template_version": ""
+        },
+        "finish_reason": "structured_complete",
+        "token_usage": {
+          "completion_tokens": 674
+        },
+        "blocked_reason": "publication_section_binding_failed:formula_placeholder:formula_package_consumer_missing:paragraph:MA-S5:method-unit-2;paragraph:MA-S5:method-unit-1:formula_package_id_duplicate:pkg:MA-S5:author_intent:0",
+        "cached": false,
+        "response_mode": "native_json_schema",
+        "schema_name": "publication_method_section_v1",
+        "input_hash": "sha256:adc22ba51e487ebf0548c7c30fed0f5a7e2eed1799b4739f61e20229cbbb2e34",
+        "response_hash": "sha256:12a2faff03f9180f77732006e9905fdaca8bb7f0140a2d43b7c849fe46044b18",
+        "prompt_chars": 6143,
+        "input_payload_chars": 11049,
+        "schema_chars": 8679,
+        "thinking_chars": 0,
+        "extended_budget_used": false,
+        "cumulative_budget_consumed": 6805
+      },
+      {
+        "call_id": "LLM-publication-method-section-4-MA-S5-representation-retry",
+        "prompt_template_id": "phase5_method_writer_section_v1_representation_repair_v1",
+        "role": "method_writer",
+        "provider": "openai",
+        "model": "qwen38-27b-nvfp4",
+        "endpoint_origin": "http://127.0.0.1:8006",
+        "effective_config": {
+          "role": "method_writer",
+          "temperature": 0.7,
+          "max_output_tokens": 8192,
+          "reasoning_effort": "low",
+          "thinking_token_budget": 1024,
+          "top_p": 0.95,
+          "top_k": 20,
+          "seed": 42,
+          "max_input_tokens": null,
+          "prompt_template_version": ""
+        },
+        "finish_reason": "structured_complete",
+        "token_usage": {
+          "completion_tokens": 663
+        },
+        "blocked_reason": "publication_section_binding_failed:formula_placeholder:paragraph:MA-S5:method-unit-1:formula_package_id_duplicate:pkg:MA-S5:author_intent:0;paragraph:MA-S5:method-unit-1:formula_placeholder_missing:pkg:MA-S5:author_intent:0;paragraph:MA-S5:method-unit-2:formula_package_id_duplicate:pkg:MA-S5:author_intent:0",
+        "cached": false,
+        "response_mode": "native_json_schema",
+        "schema_name": "publication_method_section_v1",
+        "input_hash": "sha256:8506b901638bcde7e51573697b4be28ced8472679908bddeabb432ae1c647f6e",
+        "response_hash": "sha256:8b8f93d2a3ca518f701c3d211dc4a15e0f37e9b1131e15312b84dcb5c50292cc",
+        "prompt_chars": 6143,
+        "input_payload_chars": 11281,
+        "schema_chars": 8679,
+        "thinking_chars": 0,
+        "extended_budget_used": false,
+        "cumulative_budget_consumed": 7468
+      },
+      {
+        "call_id": "LLM-publication-method-section-4-MA-S5-content-1",
+        "prompt_template_id": "phase5_method_writer_section_v1_content_repair_v1",
+        "role": "method_writer",
+        "provider": "openai",
+        "model": "qwen38-27b-nvfp4",
+        "endpoint_origin": "http://127.0.0.1:8006",
+        "effective_config": {
+          "role": "method_writer",
+          "temperature": 0.7,
+          "max_output_tokens": 8192,
+          "reasoning_effort": "low",
+          "thinking_token_budget": 1024,
+          "top_p": 0.95,
+          "top_k": 20,
+          "seed": 42,
+          "max_input_tokens": null,
+          "prompt_template_version": ""
+        },
+        "finish_reason": "structured_complete",
+        "token_usage": {
+          "completion_tokens": 933
+        },
+        "blocked_reason": "publication_section_binding_failed:formula_placeholder:paragraph:MA-S5:method-unit-1:formula_package_id_duplicate:pkg:MA-S5:author_intent:0;paragraph:MA-S5:method-unit-2:formula_package_id_duplicate:pkg:MA-S5:author_intent:0",
+        "cached": false,
+        "response_mode": "native_json_schema",
+        "schema_name": "publication_method_section_v1",
+        "input_hash": "sha256:6c0cdd65e82b587b544bdcdc9d1719451a0a05ed02287138891973cea9e51785",
+        "response_hash": "sha256:01859c9ffa80e56c8c372c5d26491671f71e837ddb4d595d2bfef672d38fe6a8",
+        "prompt_chars": 6143,
+        "input_payload_chars": 31343,
+        "schema_chars": 8679,
+        "thinking_chars": 0,
+        "extended_budget_used": false,
+        "cumulative_budget_consumed": 8401
+      },
+      {
+        "call_id": "LLM-publication-method-section-4-MA-S5-content-2",
+        "prompt_template_id": "phase5_method_writer_section_v1_content_repair_v1",
+        "role": "method_writer",
+        "provider": "openai",
+        "model": "qwen38-27b-nvfp4",
+        "endpoint_origin": "http://127.0.0.1:8006",
+        "effective_config": {
+          "role": "method_writer",
+          "temperature": 0.7,
+          "max_output_tokens": 8192,
+          "reasoning_effort": "low",
+          "thinking_token_budget": 1024,
+          "top_p": 0.95,
+          "top_k": 20,
+          "seed": 42,
+          "max_input_tokens": null,
+          "prompt_template_version": ""
+        },
+        "finish_reason": "structured_complete",
+        "token_usage": {
+          "completion_tokens": 668
+        },
+        "blocked_reason": "publication_section_binding_failed:formula_placeholder:paragraph:MA-S5:method-unit-1:formula_package_id_duplicate:pkg:MA-S5:author_intent:0;paragraph:MA-S5:method-unit-2:formula_package_id_duplicate:pkg:MA-S5:author_intent:0",
+        "cached": false,
+        "response_mode": "native_json_schema",
+        "schema_name": "publication_method_section_v1",
+        "input_hash": "sha256:3e1cadcfba0b7c050f3a191a452d44b6734206e61fbe4e74e92abe466505a58f",
+        "response_hash": "sha256:e6d8ed464cb62f689937ae04b3530517362deeb8ae56025590420feb704fc71b",
+        "prompt_chars": 6143,
+        "input_payload_chars": 31375,
+        "schema_chars": 8679,
+        "thinking_chars": 0,
+        "extended_budget_used": false,
+        "cumulative_budget_consumed": 9069
+      },
+      {
+        "call_id": "LLM-publication-method-section-MA-S1-paragraph:MA-S1:method-unit-1-binder-1",
+        "prompt_template_id": "phase5_publication_paragraph_binder_v1",
+        "role": "semantic_verifier",
+        "provider": "openai",
+        "model": "qwen38-27b-nvfp4",
+        "endpoint_origin": "http://127.0.0.1:8006",
+        "effective_config": {
+          "role": "semantic_verifier",
+          "temperature": 0.0,
+          "max_output_tokens": 1024,
+          "reasoning_effort": "none",
+          "thinking_token_budget": null,
+          "top_p": 0.95,
+          "top_k": 20,
+          "seed": null,
+          "max_input_tokens": null,
+          "prompt_template_version": ""
+        },
+        "finish_reason": "structured_complete",
+        "token_usage": {},
+        "blocked_reason": "",
+        "cached": false,
+        "response_mode": "native_json_schema",
+        "schema_name": "publication_paragraph_binding_v1",
+        "input_hash": "sha256:06af1aae9a79c2ed90ccff4d5b043a4f877cfd1b186b40be355b676a87e641b0",
+        "response_hash": "sha256:d1d14b3245310c38dcd4010006a7c51a52721a3d070434ddce9a2d9f7dc8b49a",
+        "prompt_chars": 998,
+        "input_payload_chars": 4225,
+        "schema_chars": 1350,
+        "thinking_chars": 0,
+        "extended_budget_used": false,
+        "cumulative_budget_consumed": null
+      },
+      {
+        "call_id": "LLM-publication-method-section-MA-S3-paragraph:MA-S3:method-unit-1-binder-1",
+        "prompt_template_id": "phase5_publication_paragraph_binder_v1",
+        "role": "semantic_verifier",
+        "provider": "openai",
+        "model": "qwen38-27b-nvfp4",
+        "endpoint_origin": "http://127.0.0.1:8006",
+        "effective_config": {
+          "role": "semantic_verifier",
+          "temperature": 0.0,
+          "max_output_tokens": 1024,
+          "reasoning_effort": "none",
+          "thinking_token_budget": null,
+          "top_p": 0.95,
+          "top_k": 20,
+          "seed": null,
+          "max_input_tokens": null,
+          "prompt_template_version": ""
+        },
+        "finish_reason": "structured_complete",
+        "token_usage": {},
+        "blocked_reason": "",
+        "cached": false,
+        "response_mode": "native_json_schema",
+        "schema_name": "publication_paragraph_binding_v1",
+        "input_hash": "sha256:7b036a5e0f816e2d4bd84ba3813cf04e6144abf2d0c93d5373a918fff3b38e18",
+        "response_hash": "sha256:cdb62adb892eaaf1c10de454db56f55b5f3c30cef46b73707dc72aa1606499be",
+        "prompt_chars": 998,
+        "input_payload_chars": 5340,
+        "schema_chars": 1350,
+        "thinking_chars": 0,
+        "extended_budget_used": false,
+        "cumulative_budget_consumed": null
+      },
+      {
+        "call_id": "LLM-publication-method-section-MA-S3-paragraph:MA-S3:method-unit-2-binder-1",
+        "prompt_template_id": "phase5_publication_paragraph_binder_v1",
+        "role": "semantic_verifier",
+        "provider": "openai",
+        "model": "qwen38-27b-nvfp4",
+        "endpoint_origin": "http://127.0.0.1:8006",
+        "effective_config": {
+          "role": "semantic_verifier",
+          "temperature": 0.0,
+          "max_output_tokens": 1024,
+          "reasoning_effort": "none",
+          "thinking_token_budget": null,
+          "top_p": 0.95,
+          "top_k": 20,
+          "seed": null,
+          "max_input_tokens": null,
+          "prompt_template_version": ""
+        },
+        "finish_reason": "structured_complete",
+        "token_usage": {},
+        "blocked_reason": "",
+        "cached": false,
+        "response_mode": "native_json_schema",
+        "schema_name": "publication_paragraph_binding_v1",
+        "input_hash": "sha256:6d77c94046030ba13861a09e6b2f8fa668c253f5ecff4b326479fee3935e4a85",
+        "response_hash": "sha256:49fdeb5248ee0b3d40eeef0dc59e9f68136da7dc76db58864036532834be8e08",
+        "prompt_chars": 998,
+        "input_payload_chars": 1798,
+        "schema_chars": 1350,
+        "thinking_chars": 0,
+        "extended_budget_used": false,
+        "cumulative_budget_consumed": null
+      },
+      {
+        "call_id": "LLM-publication-method-section-MA-S3-paragraph:MA-S3:method-unit-1-binder-1",
+        "prompt_template_id": "phase5_publication_paragraph_binder_v1",
+        "role": "semantic_verifier",
+        "provider": "openai",
+        "model": "qwen38-27b-nvfp4",
+        "endpoint_origin": "http://127.0.0.1:8006",
+        "effective_config": {
+          "role": "semantic_verifier",
+          "temperature": 0.0,
+          "max_output_tokens": 1024,
+          "reasoning_effort": "none",
+          "thinking_token_budget": null,
+          "top_p": 0.95,
+          "top_k": 20,
+          "seed": null,
+          "max_input_tokens": null,
+          "prompt_template_version": ""
+        },
+        "finish_reason": "structured_complete",
+        "token_usage": {},
+        "blocked_reason": "",
+        "cached": false,
+        "response_mode": "native_json_schema",
+        "schema_name": "publication_paragraph_binding_v1",
+        "input_hash": "sha256:4591e0c92e669d40ce3dd00d344f615d2605b15823a9cd0940eed118f2b636bf",
+        "response_hash": "sha256:712db616784eabd5493f02f8e6bba98dd3705044ac9e5aeccae0d12a459a8c1f",
+        "prompt_chars": 998,
+        "input_payload_chars": 5099,
+        "schema_chars": 1350,
+        "thinking_chars": 0,
+        "extended_budget_used": false,
+        "cumulative_budget_consumed": null
+      },
+      {
+        "call_id": "LLM-publication-method-section-MA-S3-paragraph:MA-S3:method-unit-1-binder-2",
+        "prompt_template_id": "phase5_publication_paragraph_binder_v1",
+        "role": "semantic_verifier",
+        "provider": "openai",
+        "model": "qwen38-27b-nvfp4",
+        "endpoint_origin": "http://127.0.0.1:8006",
+        "effective_config": {
+          "role": "semantic_verifier",
+          "temperature": 0.0,
+          "max_output_tokens": 1024,
+          "reasoning_effort": "none",
+          "thinking_token_budget": null,
+          "top_p": 0.95,
+          "top_k": 20,
+          "seed": null,
+          "max_input_tokens": null,
+          "prompt_template_version": ""
+        },
+        "finish_reason": "structured_complete",
+        "token_usage": {},
+        "blocked_reason": "",
+        "cached": false,
+        "response_mode": "native_json_schema",
+        "schema_name": "publication_paragraph_binding_v1",
+        "input_hash": "sha256:b99e0d559755d3ae97660002623cdbe6da227c14099fa160662316f66e6c2cf6",
+        "response_hash": "sha256:af1dcdb32f2373bc82229466f4374e4c3cdb248ed8e89247e7633561be537f05",
+        "prompt_chars": 998,
+        "input_payload_chars": 5197,
+        "schema_chars": 1350,
+        "thinking_chars": 0,
+        "extended_budget_used": false,
+        "cumulative_budget_consumed": null
+      },
+      {
+        "call_id": "LLM-publication-method-section-MA-S3-paragraph:MA-S3:method-unit-2-binder-1",
+        "prompt_template_id": "phase5_publication_paragraph_binder_v1",
+        "role": "semantic_verifier",
+        "provider": "openai",
+        "model": "qwen38-27b-nvfp4",
+        "endpoint_origin": "http://127.0.0.1:8006",
+        "effective_config": {
+          "role": "semantic_verifier",
+          "temperature": 0.0,
+          "max_output_tokens": 1024,
+          "reasoning_effort": "none",
+          "thinking_token_budget": null,
+          "top_p": 0.95,
+          "top_k": 20,
+          "seed": null,
+          "max_input_tokens": null,
+          "prompt_template_version": ""
+        },
+        "finish_reason": "structured_complete",
+        "token_usage": {},
+        "blocked_reason": "",
+        "cached": false,
+        "response_mode": "native_json_schema",
+        "schema_name": "publication_paragraph_binding_v1",
+        "input_hash": "sha256:494f4fa748885daab37047800b618e40ec03358618459234d826c9b40dc6642f",
+        "response_hash": "sha256:a82a29d7bbe29b5b6e82296b3bd9fd434030cf5a6c3e77229562f26b6fbed543",
+        "prompt_chars": 998,
+        "input_payload_chars": 1602,
+        "schema_chars": 1350,
+        "thinking_chars": 0,
+        "extended_budget_used": false,
+        "cumulative_budget_consumed": null
+      },
+      {
+        "call_id": "LLM-publication-method-section-MA-S3-paragraph:MA-S3:method-unit-1-binder-1",
+        "prompt_template_id": "phase5_publication_paragraph_binder_v1",
+        "role": "semantic_verifier",
+        "provider": "openai",
+        "model": "qwen38-27b-nvfp4",
+        "endpoint_origin": "http://127.0.0.1:8006",
+        "effective_config": {
+          "role": "semantic_verifier",
+          "temperature": 0.0,
+          "max_output_tokens": 1024,
+          "reasoning_effort": "none",
+          "thinking_token_budget": null,
+          "top_p": 0.95,
+          "top_k": 20,
+          "seed": null,
+          "max_input_tokens": null,
+          "prompt_template_version": ""
+        },
+        "finish_reason": "structured_complete",
+        "token_usage": {},
+        "blocked_reason": "",
+        "cached": false,
+        "response_mode": "native_json_schema",
+        "schema_name": "publication_paragraph_binding_v1",
+        "input_hash": "sha256:ecacfdc04f99d7d3ad72ee4cf77e06ba1d4131c41439f78fe7f3dfca997e5d6a",
+        "response_hash": "sha256:62bdb3e8a326bf20016e9099fcca4759baa2392d72e78c567476fa423cf64aa3",
+        "prompt_chars": 998,
+        "input_payload_chars": 5544,
+        "schema_chars": 1350,
+        "thinking_chars": 0,
+        "extended_budget_used": false,
+        "cumulative_budget_consumed": null
+      },
+      {
+        "call_id": "LLM-publication-method-section-MA-S3-paragraph:MA-S3:method-unit-1-binder-2",
+        "prompt_template_id": "phase5_publication_paragraph_binder_v1",
+        "role": "semantic_verifier",
+        "provider": "openai",
+        "model": "qwen38-27b-nvfp4",
+        "endpoint_origin": "http://127.0.0.1:8006",
+        "effective_config": {
+          "role": "semantic_verifier",
+          "temperature": 0.0,
+          "max_output_tokens": 1024,
+          "reasoning_effort": "none",
+          "thinking_token_budget": null,
+          "top_p": 0.95,
+          "top_k": 20,
+          "seed": null,
+          "max_input_tokens": null,
+          "prompt_template_version": ""
+        },
+        "finish_reason": "structured_complete",
+        "token_usage": {},
+        "blocked_reason": "",
+        "cached": false,
+        "response_mode": "native_json_schema",
+        "schema_name": "publication_paragraph_binding_v1",
+        "input_hash": "sha256:8fa5f9ce71092da9ff6b3a6152b3928b0a6e416f1b79b6a8444b7a4543740bb3",
+        "response_hash": "sha256:14fa7568c6312d224c19974c28d42906ce4dbdccb8b13985bf8cd45c25d1dff5",
+        "prompt_chars": 998,
+        "input_payload_chars": 5642,
+        "schema_chars": 1350,
+        "thinking_chars": 0,
+        "extended_budget_used": false,
+        "cumulative_budget_consumed": null
+      },
+      {
+        "call_id": "LLM-publication-method-section-MA-S3-paragraph:MA-S3:method-unit-2-binder-1",
+        "prompt_template_id": "phase5_publication_paragraph_binder_v1",
+        "role": "semantic_verifier",
+        "provider": "openai",
+        "model": "qwen38-27b-nvfp4",
+        "endpoint_origin": "http://127.0.0.1:8006",
+        "effective_config": {
+          "role": "semantic_verifier",
+          "temperature": 0.0,
+          "max_output_tokens": 1024,
+          "reasoning_effort": "none",
+          "thinking_token_budget": null,
+          "top_p": 0.95,
+          "top_k": 20,
+          "seed": null,
+          "max_input_tokens": null,
+          "prompt_template_version": ""
+        },
+        "finish_reason": "structured_complete",
+        "token_usage": {},
+        "blocked_reason": "",
+        "cached": false,
+        "response_mode": "native_json_schema",
+        "schema_name": "publication_paragraph_binding_v1",
+        "input_hash": "sha256:ec5f0f76133b52232f9b3fedf67ef5813b1ef47149cf6afb8a848a95ec1464ca",
+        "response_hash": "sha256:78598df02eb022e0270b12c8d7dd3ecfca713c04904869b164a3fc30a84829e7",
+        "prompt_chars": 998,
+        "input_payload_chars": 1789,
+        "schema_chars": 1350,
+        "thinking_chars": 0,
+        "extended_budget_used": false,
+        "cumulative_budget_consumed": null
+      },
+      {
+        "call_id": "LLM-publication-method-section-MA-S3-paragraph:MA-S3:method-unit-1-binder-1",
+        "prompt_template_id": "phase5_publication_paragraph_binder_v1",
+        "role": "semantic_verifier",
+        "provider": "openai",
+        "model": "qwen38-27b-nvfp4",
+        "endpoint_origin": "http://127.0.0.1:8006",
+        "effective_config": {
+          "role": "semantic_verifier",
+          "temperature": 0.0,
+          "max_output_tokens": 1024,
+          "reasoning_effort": "none",
+          "thinking_token_budget": null,
+          "top_p": 0.95,
+          "top_k": 20,
+          "seed": null,
+          "max_input_tokens": null,
+          "prompt_template_version": ""
+        },
+        "finish_reason": "structured_complete",
+        "token_usage": {},
+        "blocked_reason": "",
+        "cached": false,
+        "response_mode": "native_json_schema",
+        "schema_name": "publication_paragraph_binding_v1",
+        "input_hash": "sha256:c626c0d461af1ed225347717372bdc414ff47559ff58e7ae5a4ad97adeaebedc",
+        "response_hash": "sha256:bf0d701687d223979739eec16529f18f0fb841000b6d845c915727105ab24ea3",
+        "prompt_chars": 998,
+        "input_payload_chars": 5514,
+        "schema_chars": 1350,
+        "thinking_chars": 0,
+        "extended_budget_used": false,
+        "cumulative_budget_consumed": null
+      },
+      {
+        "call_id": "LLM-publication-method-section-MA-S4-paragraph:MA-S4:method-unit-1-binder-1",
+        "prompt_template_id": "phase5_publication_paragraph_binder_v1",
+        "role": "semantic_verifier",
+        "provider": "openai",
+        "model": "qwen38-27b-nvfp4",
+        "endpoint_origin": "http://127.0.0.1:8006",
+        "effective_config": {
+          "role": "semantic_verifier",
+          "temperature": 0.0,
+          "max_output_tokens": 1024,
+          "reasoning_effort": "none",
+          "thinking_token_budget": null,
+          "top_p": 0.95,
+          "top_k": 20,
+          "seed": null,
+          "max_input_tokens": null,
+          "prompt_template_version": ""
+        },
+        "finish_reason": "structured_complete",
+        "token_usage": {},
+        "blocked_reason": "",
+        "cached": false,
+        "response_mode": "native_json_schema",
+        "schema_name": "publication_paragraph_binding_v1",
+        "input_hash": "sha256:71cf6d2d663ec78009dd9ad724376368e99107c8cc753af38f50cd7611430153",
+        "response_hash": "sha256:32c5b157b1a10900752d55112518ac3487a94cd61cd5c5602fac6023249f7cdc",
+        "prompt_chars": 998,
+        "input_payload_chars": 4618,
+        "schema_chars": 1350,
+        "thinking_chars": 0,
+        "extended_budget_used": false,
+        "cumulative_budget_consumed": null
+      },
+      {
+        "call_id": "LLM-publication-method-section-callback-retry-0-MA-S3",
+        "prompt_template_id": "phase5_method_writer_section_v1",
+        "role": "method_writer",
+        "provider": "openai",
+        "model": "qwen38-27b-nvfp4",
+        "endpoint_origin": "http://127.0.0.1:8006",
+        "effective_config": {
+          "role": "method_writer",
+          "temperature": 0.7,
+          "max_output_tokens": 8192,
+          "reasoning_effort": "low",
+          "thinking_token_budget": 1024,
+          "top_p": 0.95,
+          "top_k": 20,
+          "seed": 42,
+          "max_input_tokens": null,
+          "prompt_template_version": ""
+        },
+        "finish_reason": "structured_complete",
+        "token_usage": {
+          "completion_tokens": 894
+        },
+        "blocked_reason": "publication_paragraph_transaction_failed:required_target_contract:paragraph:MA-S3:method-unit-1:facet:facet-e3de4791afd3b462;required_target_contract:paragraph:MA-S3:method-unit-1:slot:slot:fact-O-STAGE-02-e02cd0f2-node:0a7578f6d67f7f98;required_target_contract:paragraph:MA-S3:method-unit-1:slot:slot:fact-O-COMPONENT-05-8cd85daa-node:2ea85357345e7041;required_target_contract:paragraph:MA-S3:method-unit-1:slot:slot:fact-O-STAGE-02-e02cd0f2-node:295ccb032c6bffcd;required_target_contract:paragraph:MA-S3:method-unit-1:slot:slot:fact-O-STAGE-02-e02cd0f2-node:78fb7cf618388d76;required_target_contract:paragraph:MA-S3:method-unit-2:facet:facet-45205815214ce81d;required_target_contract:paragraph:MA-S3:method-unit-2:slot:slot:fact-O-COMPONENT-05-8cd85daa-node:20e8a907508376ba;required_target_contract:paragraph:MA-S3:method-unit-2:formula:formula:section:MA-S3:derivation",
+        "cached": false,
+        "response_mode": "native_json_schema",
+        "schema_name": "publication_method_section_v1",
+        "input_hash": "sha256:a990e7dd8255441146488f1ec25c09079cb13372136af24b0aee81fa742ae9bc",
+        "response_hash": "sha256:b9627c01a33bb848fe9e0a4c5808b69a6fd06d6c480056f1235eba05a4ba1adc",
+        "prompt_chars": 6143,
+        "input_payload_chars": 16376,
+        "schema_chars": 9203,
+        "thinking_chars": 0,
+        "extended_budget_used": false,
+        "cumulative_budget_consumed": 894
+      },
+      {
+        "call_id": "LLM-publication-method-section-callback-retry-0-MA-S3-content-1",
+        "prompt_template_id": "phase5_method_writer_section_v1_content_repair_v1",
+        "role": "method_writer",
+        "provider": "openai",
+        "model": "qwen38-27b-nvfp4",
+        "endpoint_origin": "http://127.0.0.1:8006",
+        "effective_config": {
+          "role": "method_writer",
+          "temperature": 0.7,
+          "max_output_tokens": 8192,
+          "reasoning_effort": "low",
+          "thinking_token_budget": 1024,
+          "top_p": 0.95,
+          "top_k": 20,
+          "seed": 42,
+          "max_input_tokens": null,
+          "prompt_template_version": ""
+        },
+        "finish_reason": "structured_complete",
+        "token_usage": {
+          "completion_tokens": 910
+        },
+        "blocked_reason": "publication_paragraph_transaction_failed:required_target_contract:paragraph:MA-S3:method-unit-1:facet:facet-e3de4791afd3b462;required_target_contract:paragraph:MA-S3:method-unit-1:facet:facet-fbcc6e92c1b73f4e;required_target_contract:paragraph:MA-S3:method-unit-1:facet:facet-4e742dc0e3b52bae;required_target_contract:paragraph:MA-S3:method-unit-1:slot:slot:fact-O-STAGE-02-e02cd0f2-node:0a7578f6d67f7f98;required_target_contract:paragraph:MA-S3:method-unit-1:slot:slot:fact-O-STAGE-02-e02cd0f2-node:295ccb032c6bffcd;required_target_contract:paragraph:MA-S3:method-unit-1:slot:slot:fact-O-STAGE-02-e02cd0f2-node:78fb7cf618388d76;required_target_contract:paragraph:MA-S3:method-unit-2:facet:facet-0564bcda9bc954d9;required_target_contract:paragraph:MA-S3:method-unit-2:formula:formula:section:MA-S3:derivation",
+        "cached": false,
+        "response_mode": "native_json_schema",
+        "schema_name": "publication_method_section_v1",
+        "input_hash": "sha256:d15653b90e432b2778d10c6a17142967c4b9246de94065f7a14172d39e583609",
+        "response_hash": "sha256:d1217df12c3f8519654004c979b70eea72bba6d974b90cb8aeef928d5845c7d9",
+        "prompt_chars": 6143,
+        "input_payload_chars": 44624,
+        "schema_chars": 9203,
+        "thinking_chars": 0,
+        "extended_budget_used": false,
+        "cumulative_budget_consumed": 1804
+      },
+      {
+        "call_id": "LLM-publication-method-section-callback-retry-MA-S3-paragraph:MA-S3:method-unit-1-binder-1",
+        "prompt_template_id": "phase5_publication_paragraph_binder_v1",
+        "role": "semantic_verifier",
+        "provider": "openai",
+        "model": "qwen38-27b-nvfp4",
+        "endpoint_origin": "http://127.0.0.1:8006",
+        "effective_config": {
+          "role": "semantic_verifier",
+          "temperature": 0.0,
+          "max_output_tokens": 1024,
+          "reasoning_effort": "none",
+          "thinking_token_budget": null,
+          "top_p": 0.95,
+          "top_k": 20,
+          "seed": null,
+          "max_input_tokens": null,
+          "prompt_template_version": ""
+        },
+        "finish_reason": "structured_complete",
+        "token_usage": {},
+        "blocked_reason": "",
+        "cached": false,
+        "response_mode": "native_json_schema",
+        "schema_name": "publication_paragraph_binding_v1",
+        "input_hash": "sha256:b3b1fe971b32ee023f9471b3f0e931b01909932c77d1f04c3d6a98e351718584",
+        "response_hash": "sha256:ecad3962b4c3a65f699313681b781fd3f5715645aa390cb2fd0ba1b680409771",
+        "prompt_chars": 998,
+        "input_payload_chars": 5168,
+        "schema_chars": 1350,
+        "thinking_chars": 0,
+        "extended_budget_used": false,
+        "cumulative_budget_consumed": null
+      },
+      {
+        "call_id": "LLM-publication-method-section-callback-retry-MA-S3-paragraph:MA-S3:method-unit-1-binder-2",
+        "prompt_template_id": "phase5_publication_paragraph_binder_v1",
+        "role": "semantic_verifier",
+        "provider": "openai",
+        "model": "qwen38-27b-nvfp4",
+        "endpoint_origin": "http://127.0.0.1:8006",
+        "effective_config": {
+          "role": "semantic_verifier",
+          "temperature": 0.0,
+          "max_output_tokens": 1024,
+          "reasoning_effort": "none",
+          "thinking_token_budget": null,
+          "top_p": 0.95,
+          "top_k": 20,
+          "seed": null,
+          "max_input_tokens": null,
+          "prompt_template_version": ""
+        },
+        "finish_reason": "structured_complete",
+        "token_usage": {},
+        "blocked_reason": "",
+        "cached": false,
+        "response_mode": "native_json_schema",
+        "schema_name": "publication_paragraph_binding_v1",
+        "input_hash": "sha256:011d027195e28db4f52df1d08d75e1aea1de08192c7b14cac6a9cc21a7569cb6",
+        "response_hash": "sha256:bf0d701687d223979739eec16529f18f0fb841000b6d845c915727105ab24ea3",
+        "prompt_chars": 998,
+        "input_payload_chars": 5266,
+        "schema_chars": 1350,
+        "thinking_chars": 0,
+        "extended_budget_used": false,
+        "cumulative_budget_consumed": null
+      },
+      {
+        "call_id": "LLM-publication-method-section-callback-retry-MA-S3-paragraph:MA-S3:method-unit-2-binder-1",
+        "prompt_template_id": "phase5_publication_paragraph_binder_v1",
+        "role": "semantic_verifier",
+        "provider": "openai",
+        "model": "qwen38-27b-nvfp4",
+        "endpoint_origin": "http://127.0.0.1:8006",
+        "effective_config": {
+          "role": "semantic_verifier",
+          "temperature": 0.0,
+          "max_output_tokens": 1024,
+          "reasoning_effort": "none",
+          "thinking_token_budget": null,
+          "top_p": 0.95,
+          "top_k": 20,
+          "seed": null,
+          "max_input_tokens": null,
+          "prompt_template_version": ""
+        },
+        "finish_reason": "structured_complete",
+        "token_usage": {},
+        "blocked_reason": "",
+        "cached": false,
+        "response_mode": "native_json_schema",
+        "schema_name": "publication_paragraph_binding_v1",
+        "input_hash": "sha256:ec5f0f76133b52232f9b3fedf67ef5813b1ef47149cf6afb8a848a95ec1464ca",
+        "response_hash": "sha256:78598df02eb022e0270b12c8d7dd3ecfca713c04904869b164a3fc30a84829e7",
+        "prompt_chars": 998,
+        "input_payload_chars": 1789,
+        "schema_chars": 1350,
+        "thinking_chars": 0,
+        "extended_budget_used": false,
+        "cumulative_budget_consumed": null
+      },
+      {
+        "call_id": "LLM-publication-method-section-callback-retry-MA-S3-paragraph:MA-S3:method-unit-1-binder-1",
+        "prompt_template_id": "phase5_publication_paragraph_binder_v1",
+        "role": "semantic_verifier",
+        "provider": "openai",
+        "model": "qwen38-27b-nvfp4",
+        "endpoint_origin": "http://127.0.0.1:8006",
+        "effective_config": {
+          "role": "semantic_verifier",
+          "temperature": 0.0,
+          "max_output_tokens": 1024,
+          "reasoning_effort": "none",
+          "thinking_token_budget": null,
+          "top_p": 0.95,
+          "top_k": 20,
+          "seed": null,
+          "max_input_tokens": null,
+          "prompt_template_version": ""
+        },
+        "finish_reason": "structured_complete",
+        "token_usage": {},
+        "blocked_reason": "",
+        "cached": false,
+        "response_mode": "native_json_schema",
+        "schema_name": "publication_paragraph_binding_v1",
+        "input_hash": "sha256:0b82cf8ed39a25b52b111efd04a203c5d8f158773b18d7cab2e435b37719011c",
+        "response_hash": "sha256:630ab856bbb9a3ded61460d24b838ba024981530b7be11c1bde86fef3d9a2784",
+        "prompt_chars": 998,
+        "input_payload_chars": 5331,
+        "schema_chars": 1350,
+        "thinking_chars": 0,
+        "extended_budget_used": false,
+        "cumulative_budget_consumed": null
+      },
+      {
+        "call_id": "LLM-publication-method-section-callback-retry-MA-S3-paragraph:MA-S3:method-unit-1-binder-2",
+        "prompt_template_id": "phase5_publication_paragraph_binder_v1",
+        "role": "semantic_verifier",
+        "provider": "openai",
+        "model": "qwen38-27b-nvfp4",
+        "endpoint_origin": "http://127.0.0.1:8006",
+        "effective_config": {
+          "role": "semantic_verifier",
+          "temperature": 0.0,
+          "max_output_tokens": 1024,
+          "reasoning_effort": "none",
+          "thinking_token_budget": null,
+          "top_p": 0.95,
+          "top_k": 20,
+          "seed": null,
+          "max_input_tokens": null,
+          "prompt_template_version": ""
+        },
+        "finish_reason": "structured_complete",
+        "token_usage": {},
+        "blocked_reason": "",
+        "cached": false,
+        "response_mode": "native_json_schema",
+        "schema_name": "publication_paragraph_binding_v1",
+        "input_hash": "sha256:10b51d9bd2c07609d0e7e7abb991db54fc84af7bc24128e215bd72ab7cbd4664",
+        "response_hash": "sha256:9d40878143891099aee82968d1c3c2796a1d4eaa6ade705c38bd6a06bc883688",
+        "prompt_chars": 998,
+        "input_payload_chars": 5429,
+        "schema_chars": 1350,
+        "thinking_chars": 0,
+        "extended_budget_used": false,
+        "cumulative_budget_consumed": null
+      },
+      {
+        "call_id": "LLM-publication-method-section-callback-retry-MA-S3-paragraph:MA-S3:method-unit-2-binder-1",
+        "prompt_template_id": "phase5_publication_paragraph_binder_v1",
+        "role": "semantic_verifier",
+        "provider": "openai",
+        "model": "qwen38-27b-nvfp4",
+        "endpoint_origin": "http://127.0.0.1:8006",
+        "effective_config": {
+          "role": "semantic_verifier",
+          "temperature": 0.0,
+          "max_output_tokens": 1024,
+          "reasoning_effort": "none",
+          "thinking_token_budget": null,
+          "top_p": 0.95,
+          "top_k": 20,
+          "seed": null,
+          "max_input_tokens": null,
+          "prompt_template_version": ""
+        },
+        "finish_reason": "structured_complete",
+        "token_usage": {},
+        "blocked_reason": "",
+        "cached": false,
+        "response_mode": "native_json_schema",
+        "schema_name": "publication_paragraph_binding_v1",
+        "input_hash": "sha256:6be5a25f14346cd2aa9b4efb6c83d3590cd82a823f9896971a660fd2ef9bb433",
+        "response_hash": "sha256:24ab7ec7c6d8aaacd53cd929aee10b872a10015e20379a1fb4b240f46fc6b2a0",
+        "prompt_chars": 998,
+        "input_payload_chars": 1479,
+        "schema_chars": 1350,
+        "thinking_chars": 0,
+        "extended_budget_used": false,
+        "cumulative_budget_consumed": null
+      },
+      {
+        "call_id": "LLM-publication-method-section-missing-retry-1-0-MA-S5",
+        "prompt_template_id": "phase5_method_writer_section_v1",
+        "role": "method_writer",
+        "provider": "openai",
+        "model": "qwen38-27b-nvfp4",
+        "endpoint_origin": "http://127.0.0.1:8006",
+        "effective_config": {
+          "role": "method_writer",
+          "temperature": 0.7,
+          "max_output_tokens": 8192,
+          "reasoning_effort": "low",
+          "thinking_token_budget": 1024,
+          "top_p": 0.95,
+          "top_k": 20,
+          "seed": 42,
+          "max_input_tokens": null,
+          "prompt_template_version": ""
+        },
+        "finish_reason": "structured_complete",
+        "token_usage": {
+          "completion_tokens": 912
+        },
+        "blocked_reason": "publication_section_binding_failed:formula_placeholder:paragraph:MA-S5:method-unit-1:formula_package_id_duplicate:pkg:MA-S5:author_intent:0;paragraph:MA-S5:method-unit-2:formula_package_id_duplicate:pkg:MA-S5:author_intent:0",
+        "cached": false,
+        "response_mode": "native_json_schema",
+        "schema_name": "publication_method_section_v1",
+        "input_hash": "sha256:0b703ec0f1f85f4128d78cb9de5a84f4829f98a729650c8515f2b3710dd6463a",
+        "response_hash": "sha256:1e9a779f1088be061e8a11b175710989b286d5533f424421193f53aff30c5403",
+        "prompt_chars": 6143,
+        "input_payload_chars": 11157,
+        "schema_chars": 8679,
+        "thinking_chars": 0,
+        "extended_budget_used": false,
+        "cumulative_budget_consumed": 912
+      },
+      {
+        "call_id": "LLM-publication-method-section-missing-retry-1-0-MA-S5-representation-retry",
+        "prompt_template_id": "phase5_method_writer_section_v1_representation_repair_v1",
+        "role": "method_writer",
+        "provider": "openai",
+        "model": "qwen38-27b-nvfp4",
+        "endpoint_origin": "http://127.0.0.1:8006",
+        "effective_config": {
+          "role": "method_writer",
+          "temperature": 0.7,
+          "max_output_tokens": 8192,
+          "reasoning_effort": "low",
+          "thinking_token_budget": 1024,
+          "top_p": 0.95,
+          "top_k": 20,
+          "seed": 42,
+          "max_input_tokens": null,
+          "prompt_template_version": ""
+        },
+        "finish_reason": "structured_complete",
+        "token_usage": {
+          "completion_tokens": 873
+        },
+        "blocked_reason": "publication_section_binding_failed:formula_placeholder:paragraph:MA-S5:method-unit-1:formula_package_id_duplicate:pkg:MA-S5:author_intent:0;paragraph:MA-S5:method-unit-2:formula_package_id_duplicate:pkg:MA-S5:author_intent:0;paragraph:MA-S5:method-unit-2:formula_placeholder_missing:pkg:MA-S5:author_intent:0",
+        "cached": false,
+        "response_mode": "native_json_schema",
+        "schema_name": "publication_method_section_v1",
+        "input_hash": "sha256:93c73f603fa346751adad0cdcccb7d8206e5a47f4406a6c8669900edfd4fa925",
+        "response_hash": "sha256:fbf0680c2178820e351181b279708a3c671ccdf1efa6843fc230bf93cccbfee3",
+        "prompt_chars": 6143,
+        "input_payload_chars": 11344,
+        "schema_chars": 8679,
+        "thinking_chars": 0,
+        "extended_budget_used": false,
+        "cumulative_budget_consumed": 1785
+      },
+      {
+        "call_id": "LLM-publication-method-section-missing-retry-1-0-MA-S5-content-1",
+        "prompt_template_id": "phase5_method_writer_section_v1_content_repair_v1",
+        "role": "method_writer",
+        "provider": "openai",
+        "model": "qwen38-27b-nvfp4",
+        "endpoint_origin": "http://127.0.0.1:8006",
+        "effective_config": {
+          "role": "method_writer",
+          "temperature": 0.7,
+          "max_output_tokens": 8192,
+          "reasoning_effort": "low",
+          "thinking_token_budget": 1024,
+          "top_p": 0.95,
+          "top_k": 20,
+          "seed": 42,
+          "max_input_tokens": null,
+          "prompt_template_version": ""
+        },
+        "finish_reason": "structured_complete",
+        "token_usage": {
+          "completion_tokens": 606
+        },
+        "blocked_reason": "publication_section_binding_failed:formula_placeholder:paragraph:MA-S5:method-unit-1:formula_package_id_duplicate:pkg:MA-S5:author_intent:0;paragraph:MA-S5:method-unit-2:formula_package_id_duplicate:pkg:MA-S5:author_intent:0",
+        "cached": false,
+        "response_mode": "native_json_schema",
+        "schema_name": "publication_method_section_v1",
+        "input_hash": "sha256:2e6f18c8a070d5dfe0bc45d4cfaa2dd7657233f19a5486cd4b1170b3e521f196",
+        "response_hash": "sha256:c3e99505d6c363735d1fe50083e0ee55551e62735e8957166c7fd30592096db6",
+        "prompt_chars": 6143,
+        "input_payload_chars": 30675,
+        "schema_chars": 8679,
+        "thinking_chars": 0,
+        "extended_budget_used": false,
+        "cumulative_budget_consumed": 2391
+      },
+      {
+        "call_id": "LLM-publication-method-section-missing-retry-2-0-MA-S5",
+        "prompt_template_id": "phase5_method_writer_section_v1",
+        "role": "method_writer",
+        "provider": "openai",
+        "model": "qwen38-27b-nvfp4",
+        "endpoint_origin": "http://127.0.0.1:8006",
+        "effective_config": {
+          "role": "method_writer",
+          "temperature": 0.7,
+          "max_output_tokens": 8192,
+          "reasoning_effort": "low",
+          "thinking_token_budget": 1024,
+          "top_p": 0.95,
+          "top_k": 20,
+          "seed": 42,
+          "max_input_tokens": null,
+          "prompt_template_version": ""
+        },
+        "finish_reason": "structured_complete",
+        "token_usage": {
+          "completion_tokens": 912
+        },
+        "blocked_reason": "publication_section_binding_failed:formula_placeholder:paragraph:MA-S5:method-unit-1:formula_package_id_duplicate:pkg:MA-S5:author_intent:0;paragraph:MA-S5:method-unit-2:formula_package_id_duplicate:pkg:MA-S5:author_intent:0",
+        "cached": false,
+        "response_mode": "native_json_schema",
+        "schema_name": "publication_method_section_v1",
+        "input_hash": "sha256:0b703ec0f1f85f4128d78cb9de5a84f4829f98a729650c8515f2b3710dd6463a",
+        "response_hash": "sha256:1e9a779f1088be061e8a11b175710989b286d5533f424421193f53aff30c5403",
+        "prompt_chars": 6143,
+        "input_payload_chars": 11157,
+        "schema_chars": 8679,
+        "thinking_chars": 0,
+        "extended_budget_used": false,
+        "cumulative_budget_consumed": 912
+      },
+      {
+        "call_id": "LLM-publication-method-section-missing-retry-2-0-MA-S5-representation-retry",
+        "prompt_template_id": "phase5_method_writer_section_v1_representation_repair_v1",
+        "role": "method_writer",
+        "provider": "openai",
+        "model": "qwen38-27b-nvfp4",
+        "endpoint_origin": "http://127.0.0.1:8006",
+        "effective_config": {
+          "role": "method_writer",
+          "temperature": 0.7,
+          "max_output_tokens": 8192,
+          "reasoning_effort": "low",
+          "thinking_token_budget": 1024,
+          "top_p": 0.95,
+          "top_k": 20,
+          "seed": 42,
+          "max_input_tokens": null,
+          "prompt_template_version": ""
+        },
+        "finish_reason": "structured_complete",
+        "token_usage": {
+          "completion_tokens": 873
+        },
+        "blocked_reason": "publication_section_binding_failed:formula_placeholder:paragraph:MA-S5:method-unit-1:formula_package_id_duplicate:pkg:MA-S5:author_intent:0;paragraph:MA-S5:method-unit-2:formula_package_id_duplicate:pkg:MA-S5:author_intent:0;paragraph:MA-S5:method-unit-2:formula_placeholder_missing:pkg:MA-S5:author_intent:0",
+        "cached": false,
+        "response_mode": "native_json_schema",
+        "schema_name": "publication_method_section_v1",
+        "input_hash": "sha256:93c73f603fa346751adad0cdcccb7d8206e5a47f4406a6c8669900edfd4fa925",
+        "response_hash": "sha256:fbf0680c2178820e351181b279708a3c671ccdf1efa6843fc230bf93cccbfee3",
+        "prompt_chars": 6143,
+        "input_payload_chars": 11344,
+        "schema_chars": 8679,
+        "thinking_chars": 0,
+        "extended_budget_used": false,
+        "cumulative_budget_consumed": 1785
+      },
+      {
+        "call_id": "LLM-publication-method-section-missing-retry-2-0-MA-S5-content-1",
+        "prompt_template_id": "phase5_method_writer_section_v1_content_repair_v1",
+        "role": "method_writer",
+        "provider": "openai",
+        "model": "qwen38-27b-nvfp4",
+        "endpoint_origin": "http://127.0.0.1:8006",
+        "effective_config": {
+          "role": "method_writer",
+          "temperature": 0.7,
+          "max_output_tokens": 8192,
+          "reasoning_effort": "low",
+          "thinking_token_budget": 1024,
+          "top_p": 0.95,
+          "top_k": 20,
+          "seed": 42,
+          "max_input_tokens": null,
+          "prompt_template_version": ""
+        },
+        "finish_reason": "structured_complete",
+        "token_usage": {
+          "completion_tokens": 759
+        },
+        "blocked_reason": "publication_section_binding_failed:formula_placeholder:paragraph:MA-S5:method-unit-1:formula_package_id_duplicate:pkg:MA-S5:author_intent:0;paragraph:MA-S5:method-unit-2:formula_package_id_duplicate:pkg:MA-S5:author_intent:0",
+        "cached": false,
+        "response_mode": "native_json_schema",
+        "schema_name": "publication_method_section_v1",
+        "input_hash": "sha256:2e6f18c8a070d5dfe0bc45d4cfaa2dd7657233f19a5486cd4b1170b3e521f196",
+        "response_hash": "sha256:5b4097c273c8ec9504927c5624204fc84904513a5db4ecb98b3ac70571658d70",
+        "prompt_chars": 6143,
+        "input_payload_chars": 30675,
+        "schema_chars": 8679,
+        "thinking_chars": 0,
+        "extended_budget_used": false,
+        "cumulative_budget_consumed": 2544
+      }
+    ],
+    "cumulative_budget_consumed": 9069,
+    "cumulative_budget_cap": 24576,
+    "cumulative_budget_exhausted": false,
+    "concatenated_markdown_length": 6530,
+    "incomplete_sections": [
+      "MA-S1",
+      "MA-S4",
+      "MA-S5"
+    ],
+    "research_request_count": 10,
+    "response_recovery_traces": [
+      {
+        "section_id": "MA-S1",
+        "binding_bridge_fields": [],
+        "research_request_bridge_fields": [],
+        "callback_move_bridge_fields": [],
+        "applied": true,
+        "operations": [
+          "extract_or_repair_json_container"
+        ],
+        "original_text_digest": "sha256:6e8436ed9d1505ceec3c623542be4ea4a0969e30fd8100a9b25cad79455f4aa9",
+        "parsed_payload_digest": "sha256:e8f43bedb625aa4ebd078d0645b84cb7b7be08cd0adc8a71cc08317a188a8320"
+      },
+      {
+        "paragraph_id": "paragraph:MA-S1:method-unit-1",
+        "attempt": 1,
+        "response_blocked_reason": "",
+        "parsed": true,
+        "parse_error": "",
+        "bound_count": 0,
+        "unbound_count": 3,
+        "validation_errors": []
+      },
+      {
+        "section_id": "MA-S2",
+        "binding_bridge_fields": [],
+        "research_request_bridge_fields": [],
+        "callback_move_bridge_fields": [],
+        "applied": false,
+        "operations": [],
+        "original_text_digest": "sha256:3f0184c8c16e2ced6c6c846ff62ab1fd4ee26ec7b4f595df0d08cf4faa580389",
+        "parsed_payload_digest": "sha256:99978a1b203d69d07f07b9c532667f91283d09439218acc62735795b8b717451"
+      },
+      {
+        "section_id": "MA-S3",
+        "binding_bridge_fields": [],
+        "research_request_bridge_fields": [],
+        "callback_move_bridge_fields": [],
+        "applied": true,
+        "operations": [
+          "extract_or_repair_json_container"
+        ],
+        "original_text_digest": "sha256:92ad65c09e5c7f385acbd55725f8455c3b386ee9a05ac8fe90f174fcf2d2a1b8",
+        "parsed_payload_digest": "sha256:08d03853b9c8649a86c6693006a15a40a727405786119a1382252e0c4ca8654f"
+      },
+      {
+        "paragraph_id": "paragraph:MA-S3:method-unit-1",
+        "attempt": 1,
+        "response_blocked_reason": "",
+        "parsed": true,
+        "parse_error": "",
+        "bound_count": 0,
+        "unbound_count": 6,
+        "validation_errors": []
+      },
+      {
+        "paragraph_id": "paragraph:MA-S3:method-unit-2",
+        "attempt": 1,
+        "response_blocked_reason": "",
+        "parsed": true,
+        "parse_error": "",
+        "bound_count": 0,
+        "unbound_count": 2,
+        "validation_errors": []
+      },
+      {
+        "section_id": "MA-S3",
+        "binding_bridge_fields": [],
+        "research_request_bridge_fields": [],
+        "callback_move_bridge_fields": [],
+        "applied": true,
+        "operations": [
+          "extract_or_repair_json_container"
+        ],
+        "original_text_digest": "sha256:06d3e79a67f91aa859a0c748809ad23dcb605ef4a1bcc69995cbb6ab1bd8d6f7",
+        "parsed_payload_digest": "sha256:32290c90bcc103c0c04ade9759aa41c21b04234c44d9d8cb038fbdec0386c46b"
+      },
+      {
+        "paragraph_id": "paragraph:MA-S3:method-unit-1",
+        "attempt": 1,
+        "response_blocked_reason": "",
+        "parsed": true,
+        "parse_error": "",
+        "bound_count": 0,
+        "unbound_count": 3,
+        "validation_errors": [
+          "binder_condition_or_polarity_mismatch:facet:facet-e3de4791afd3b462"
+        ]
+      },
+      {
+        "paragraph_id": "paragraph:MA-S3:method-unit-1",
+        "attempt": 2,
+        "response_blocked_reason": "",
+        "parsed": true,
+        "parse_error": "",
+        "bound_count": 0,
+        "unbound_count": 4,
+        "validation_errors": []
+      },
+      {
+        "paragraph_id": "paragraph:MA-S3:method-unit-2",
+        "attempt": 1,
+        "response_blocked_reason": "",
+        "parsed": true,
+        "parse_error": "",
+        "bound_count": 0,
+        "unbound_count": 1,
+        "validation_errors": []
+      },
+      {
+        "section_id": "MA-S3",
+        "binding_bridge_fields": [],
+        "research_request_bridge_fields": [],
+        "callback_move_bridge_fields": [],
+        "applied": true,
+        "operations": [
+          "extract_or_repair_json_container"
+        ],
+        "original_text_digest": "sha256:4cd65e022b674fab78dcaa547706e625d61fc2fde10c0c3db5b16175a83fbebb",
+        "parsed_payload_digest": "sha256:7849d0f5511736d0af493adebcd5410b94c2517536db55a80cdcb905b1d660d9"
+      },
+      {
+        "paragraph_id": "paragraph:MA-S3:method-unit-1",
+        "attempt": 1,
+        "response_blocked_reason": "",
+        "parsed": true,
+        "parse_error": "",
+        "bound_count": 0,
+        "unbound_count": 5,
+        "validation_errors": [
+          "binder_condition_or_polarity_mismatch:facet:facet-e3de4791afd3b462"
+        ]
+      },
+      {
+        "paragraph_id": "paragraph:MA-S3:method-unit-1",
+        "attempt": 2,
+        "response_blocked_reason": "",
+        "parsed": true,
+        "parse_error": "",
+        "bound_count": 0,
+        "unbound_count": 5,
+        "validation_errors": [
+          "binder_condition_or_polarity_mismatch:facet:facet-e3de4791afd3b462"
+        ]
+      },
+      {
+        "paragraph_id": "paragraph:MA-S3:method-unit-2",
+        "attempt": 1,
+        "response_blocked_reason": "",
+        "parsed": true,
+        "parse_error": "",
+        "bound_count": 0,
+        "unbound_count": 2,
+        "validation_errors": []
+      },
+      {
+        "section_id": "MA-S3",
+        "binding_bridge_fields": [],
+        "research_request_bridge_fields": [],
+        "callback_move_bridge_fields": [],
+        "applied": true,
+        "operations": [
+          "extract_or_repair_json_container"
+        ],
+        "original_text_digest": "sha256:344c7f853d049f80302466cef9d0a15a393c7bb85f27b845cf341b8782b0f8ca",
+        "parsed_payload_digest": "sha256:cce14fafa43910a7a91cb1964207390ad1e7faef89293f2f07f4fc4416195730"
+      },
+      {
+        "paragraph_id": "paragraph:MA-S3:method-unit-1",
+        "attempt": 1,
+        "response_blocked_reason": "",
+        "parsed": true,
+        "parse_error": "",
+        "bound_count": 0,
+        "unbound_count": 5,
+        "validation_errors": []
+      },
+      {
+        "section_id": "MA-S4",
+        "binding_bridge_fields": [],
+        "research_request_bridge_fields": [],
+        "callback_move_bridge_fields": [],
+        "applied": false,
+        "operations": [],
+        "original_text_digest": "sha256:479c5f9c758e9444039198c7c19a6d1fdd6012e3cc668f45fcb21091602dd1c0",
+        "parsed_payload_digest": "sha256:daa38199c73949cab7a77ed81d1b42ed1f63e29b3ada8a08482c0cdf0e817a80"
+      },
+      {
+        "paragraph_id": "paragraph:MA-S4:method-unit-1",
+        "attempt": 1,
+        "response_blocked_reason": "",
+        "parsed": true,
+        "parse_error": "",
+        "bound_count": 0,
+        "unbound_count": 6,
+        "validation_errors": []
+      },
+      {
+        "section_id": "MA-S5",
+        "binding_bridge_fields": [],
+        "research_request_bridge_fields": [],
+        "callback_move_bridge_fields": [],
+        "applied": true,
+        "operations": [
+          "extract_or_repair_json_container"
+        ],
+        "original_text_digest": "sha256:12a2faff03f9180f77732006e9905fdaca8bb7f0140a2d43b7c849fe46044b18",
+        "parsed_payload_digest": "sha256:4a7adc0e3fdfe3756ff850b63d7d735ced3726b08b9e05e321de0483a23538f7"
+      },
+      {
+        "section_id": "MA-S5",
+        "binding_bridge_fields": [],
+        "research_request_bridge_fields": [],
+        "callback_move_bridge_fields": [],
+        "applied": true,
+        "operations": [
+          "extract_or_repair_json_container"
+        ],
+        "original_text_digest": "sha256:8b8f93d2a3ca518f701c3d211dc4a15e0f37e9b1131e15312b84dcb5c50292cc",
+        "parsed_payload_digest": "sha256:d97c84385386b4cff8675cc84f990525db1a3f9e216a1f22b4cb98c4dea1419e"
+      },
+      {
+        "section_id": "MA-S5",
+        "binding_bridge_fields": [],
+        "research_request_bridge_fields": [],
+        "callback_move_bridge_fields": [],
+        "applied": true,
+        "operations": [
+          "extract_or_repair_json_container"
+        ],
+        "original_text_digest": "sha256:01859c9ffa80e56c8c372c5d26491671f71e837ddb4d595d2bfef672d38fe6a8",
+        "parsed_payload_digest": "sha256:6cf2fc59bc3ef8399c1650c550bdf0b2ee95f3b8f955b9d54907d016a1df79b2"
+      },
+      {
+        "section_id": "MA-S5",
+        "binding_bridge_fields": [],
+        "research_request_bridge_fields": [],
+        "callback_move_bridge_fields": [],
+        "applied": false,
+        "operations": [],
+        "original_text_digest": "sha256:e6d8ed464cb62f689937ae04b3530517362deeb8ae56025590420feb704fc71b",
+        "parsed_payload_digest": "sha256:2f7ac1ef677b701d81c95eb4b54de513e690aaf1b8a2b3ff595563c0aafc5d74"
+      },
+      {
+        "section_id": "MA-S3",
+        "binding_bridge_fields": [],
+        "research_request_bridge_fields": [],
+        "callback_move_bridge_fields": [],
+        "applied": true,
+        "operations": [
+          "extract_or_repair_json_container"
+        ],
+        "original_text_digest": "sha256:b9627c01a33bb848fe9e0a4c5808b69a6fd06d6c480056f1235eba05a4ba1adc",
+        "parsed_payload_digest": "sha256:8e5f93aac7fbccdcb3f44f1a4513574a8a7a6313b90416f4ad844de4dc2f1d72"
+      },
+      {
+        "paragraph_id": "paragraph:MA-S3:method-unit-1",
+        "attempt": 1,
+        "response_blocked_reason": "",
+        "parsed": true,
+        "parse_error": "",
+        "bound_count": 0,
+        "unbound_count": 4,
+        "validation_errors": [
+          "binder_condition_or_polarity_mismatch:facet:facet-e3de4791afd3b462"
+        ]
+      },
+      {
+        "paragraph_id": "paragraph:MA-S3:method-unit-1",
+        "attempt": 2,
+        "response_blocked_reason": "",
+        "parsed": true,
+        "parse_error": "",
+        "bound_count": 0,
+        "unbound_count": 5,
+        "validation_errors": []
+      },
+      {
+        "paragraph_id": "paragraph:MA-S3:method-unit-2",
+        "attempt": 1,
+        "response_blocked_reason": "",
+        "parsed": true,
+        "parse_error": "",
+        "bound_count": 0,
+        "unbound_count": 2,
+        "validation_errors": []
+      },
+      {
+        "section_id": "MA-S3",
+        "binding_bridge_fields": [],
+        "research_request_bridge_fields": [],
+        "callback_move_bridge_fields": [],
+        "applied": true,
+        "operations": [
+          "extract_or_repair_json_container"
+        ],
+        "original_text_digest": "sha256:d1217df12c3f8519654004c979b70eea72bba6d974b90cb8aeef928d5845c7d9",
+        "parsed_payload_digest": "sha256:01855c518cc31be5b7f3ad9745791ee743b4c8bb916c9a926d59c3615f160e33"
+      },
+      {
+        "paragraph_id": "paragraph:MA-S3:method-unit-1",
+        "attempt": 1,
+        "response_blocked_reason": "",
+        "parsed": true,
+        "parse_error": "",
+        "bound_count": 0,
+        "unbound_count": 5,
+        "validation_errors": [
+          "binder_condition_or_polarity_mismatch:facet:facet-e3de4791afd3b462"
+        ]
+      },
+      {
+        "paragraph_id": "paragraph:MA-S3:method-unit-1",
+        "attempt": 2,
+        "response_blocked_reason": "",
+        "parsed": true,
+        "parse_error": "",
+        "bound_count": 0,
+        "unbound_count": 6,
+        "validation_errors": []
+      },
+      {
+        "paragraph_id": "paragraph:MA-S3:method-unit-2",
+        "attempt": 1,
+        "response_blocked_reason": "",
+        "parsed": true,
+        "parse_error": "",
+        "bound_count": 0,
+        "unbound_count": 1,
+        "validation_errors": []
+      },
+      {
+        "section_id": "MA-S5",
+        "binding_bridge_fields": [],
+        "research_request_bridge_fields": [],
+        "callback_move_bridge_fields": [],
+        "applied": false,
+        "operations": [],
+        "original_text_digest": "sha256:1e9a779f1088be061e8a11b175710989b286d5533f424421193f53aff30c5403",
+        "parsed_payload_digest": "sha256:6f4d0e912298c1341eb88842f3bed42b9feb3970bcf8dd1e03caafac45b30725"
+      },
+      {
+        "section_id": "MA-S5",
+        "binding_bridge_fields": [],
+        "research_request_bridge_fields": [],
+        "callback_move_bridge_fields": [],
+        "applied": false,
+        "operations": [],
+        "original_text_digest": "sha256:fbf0680c2178820e351181b279708a3c671ccdf1efa6843fc230bf93cccbfee3",
+        "parsed_payload_digest": "sha256:bb85a6152229795b4023598e1cf02ed71f7e2b704657e3c5deacb16a1cf6950e"
+      },
+      {
+        "section_id": "MA-S5",
+        "binding_bridge_fields": [],
+        "research_request_bridge_fields": [],
+        "callback_move_bridge_fields": [],
+        "applied": false,
+        "operations": [],
+        "original_text_digest": "sha256:c3e99505d6c363735d1fe50083e0ee55551e62735e8957166c7fd30592096db6",
+        "parsed_payload_digest": "sha256:25fd9156cf6270715be512c6acb1c1d9509b68bb5f9a6238ab407ca71df6fe0b"
+      },
+      {
+        "section_id": "MA-S5",
+        "binding_bridge_fields": [],
+        "research_request_bridge_fields": [],
+        "callback_move_bridge_fields": [],
+        "applied": false,
+        "operations": [],
+        "original_text_digest": "sha256:1e9a779f1088be061e8a11b175710989b286d5533f424421193f53aff30c5403",
+        "parsed_payload_digest": "sha256:6f4d0e912298c1341eb88842f3bed42b9feb3970bcf8dd1e03caafac45b30725"
+      },
+      {
+        "section_id": "MA-S5",
+        "binding_bridge_fields": [],
+        "research_request_bridge_fields": [],
+        "callback_move_bridge_fields": [],
+        "applied": false,
+        "operations": [],
+        "original_text_digest": "sha256:fbf0680c2178820e351181b279708a3c671ccdf1efa6843fc230bf93cccbfee3",
+        "parsed_payload_digest": "sha256:bb85a6152229795b4023598e1cf02ed71f7e2b704657e3c5deacb16a1cf6950e"
+      },
+      {
+        "section_id": "MA-S5",
+        "binding_bridge_fields": [],
+        "research_request_bridge_fields": [],
+        "callback_move_bridge_fields": [],
+        "applied": true,
+        "operations": [
+          "extract_or_repair_json_container"
+        ],
+        "original_text_digest": "sha256:5b4097c273c8ec9504927c5624204fc84904513a5db4ecb98b3ac70571658d70",
+        "parsed_payload_digest": "sha256:ff91c2f642be2063bee56cafad500c3d589651d0a94656209485e8e6869b2e4b"
+      }
+    ],
+    "writer_repair_rounds": 5,
+    "writer_repair_commits": 1,
+    "writer_repair_no_progress_stops": 2,
+    "writer_repair_transaction_rejections": [
+      {
+        "section_id": "MA-S3",
+        "repair_round": 2,
+        "reason": "transaction_invalid_count_regressed",
+        "incumbent_metrics": {
+          "unsafe_uncaveated_positives": 0,
+          "constraint_failures": 0,
+          "negative_validated_propositions": 0,
+          "unrendered_required_propositions": 0,
+          "code_trace_style_failures": 0,
+          "duplicate_sentences": 0,
+          "missing_required_facets": 1,
+          "missing_formula_placeholders": 0
+        },
+        "candidate_metrics": {
+          "unsafe_uncaveated_positives": 0,
+          "constraint_failures": 0,
+          "negative_validated_propositions": 0,
+          "unrendered_required_propositions": 0,
+          "code_trace_style_failures": 0,
+          "duplicate_sentences": 0,
+          "missing_required_facets": 1,
+          "missing_formula_placeholders": 0
+        },
+        "incumbent_digest": "050b8e31400832b5ee121a22f311ca27a459851e56e66098790fcf57e898a342",
+        "candidate_digest": "2b9e4ff7de5647a705ce05abfd4d4e2f9713757e28e2d050ebbc748ebde0869e"
+      },
+      {
+        "section_id": "MA-S3",
+        "repair_round": 3,
+        "reason": "transaction_invalid_count_regressed",
+        "incumbent_metrics": {
+          "unsafe_uncaveated_positives": 0,
+          "constraint_failures": 0,
+          "negative_validated_propositions": 0,
+          "unrendered_required_propositions": 0,
+          "code_trace_style_failures": 0,
+          "duplicate_sentences": 0,
+          "missing_required_facets": 1,
+          "missing_formula_placeholders": 0
+        },
+        "candidate_metrics": {
+          "unsafe_uncaveated_positives": 0,
+          "constraint_failures": 0,
+          "negative_validated_propositions": 0,
+          "unrendered_required_propositions": 0,
+          "code_trace_style_failures": 0,
+          "duplicate_sentences": 0,
+          "missing_required_facets": 1,
+          "missing_formula_placeholders": 0
+        },
+        "incumbent_digest": "050b8e31400832b5ee121a22f311ca27a459851e56e66098790fcf57e898a342",
+        "candidate_digest": "432eec44d6b1ce29d5efb944e0cb6647a31e64e93d5ae3c379af6b63a59adb38"
+      },
+      {
+        "section_id": "MA-S5",
+        "repair_round": 1,
+        "reason": "required_target_coverage_no_gain",
+        "incumbent_metrics": {
+          "unsafe_uncaveated_positives": 0,
+          "constraint_failures": 0,
+          "negative_validated_propositions": 0,
+          "unrendered_required_propositions": 0,
+          "code_trace_style_failures": 0,
+          "duplicate_sentences": 0,
+          "missing_required_facets": 3,
+          "missing_formula_placeholders": 2
+        },
+        "candidate_metrics": {
+          "unsafe_uncaveated_positives": 0,
+          "constraint_failures": 0,
+          "negative_validated_propositions": 0,
+          "unrendered_required_propositions": 0,
+          "code_trace_style_failures": 0,
+          "duplicate_sentences": 1,
+          "missing_required_facets": 3,
+          "missing_formula_placeholders": 2
+        },
+        "incumbent_digest": "669b6c8a6af6b8926ee059934d5b3a84fa513afb6c717893d0fe22e9a029f75b",
+        "candidate_digest": "e44ab33d9d38d429072278e822f5d5305bc10087898210c74009ee83e5458790"
+      },
+      {
+        "section_id": "MA-S5",
+        "repair_round": 2,
+        "reason": "required_target_coverage_no_gain",
+        "incumbent_metrics": {
+          "unsafe_uncaveated_positives": 0,
+          "constraint_failures": 0,
+          "negative_validated_propositions": 0,
+          "unrendered_required_propositions": 0,
+          "code_trace_style_failures": 0,
+          "duplicate_sentences": 0,
+          "missing_required_facets": 3,
+          "missing_formula_placeholders": 2
+        },
+        "candidate_metrics": {
+          "unsafe_uncaveated_positives": 0,
+          "constraint_failures": 0,
+          "negative_validated_propositions": 0,
+          "unrendered_required_propositions": 0,
+          "code_trace_style_failures": 0,
+          "duplicate_sentences": 1,
+          "missing_required_facets": 3,
+          "missing_formula_placeholders": 2
+        },
+        "incumbent_digest": "669b6c8a6af6b8926ee059934d5b3a84fa513afb6c717893d0fe22e9a029f75b",
+        "candidate_digest": "11e600f3b00c2e70c3a0ff40d6ffbbae71e00231bf827e0358d7080fcbda2382"
+      }
+    ]
+  },
+  "response_recovery_traces": [
+    {
+      "section_id": "MA-S1",
+      "binding_bridge_fields": [],
+      "research_request_bridge_fields": [],
+      "callback_move_bridge_fields": [],
+      "applied": true,
+      "operations": [
+        "extract_or_repair_json_container"
+      ],
+      "original_text_digest": "sha256:6e8436ed9d1505ceec3c623542be4ea4a0969e30fd8100a9b25cad79455f4aa9",
+      "parsed_payload_digest": "sha256:e8f43bedb625aa4ebd078d0645b84cb7b7be08cd0adc8a71cc08317a188a8320"
+    },
+    {
+      "paragraph_id": "paragraph:MA-S1:method-unit-1",
+      "attempt": 1,
+      "response_blocked_reason": "",
+      "parsed": true,
+      "parse_error": "",
+      "bound_count": 0,
+      "unbound_count": 3,
+      "validation_errors": []
+    },
+    {
+      "section_id": "MA-S2",
+      "binding_bridge_fields": [],
+      "research_request_bridge_fields": [],
+      "callback_move_bridge_fields": [],
+      "applied": false,
+      "operations": [],
+      "original_text_digest": "sha256:3f0184c8c16e2ced6c6c846ff62ab1fd4ee26ec7b4f595df0d08cf4faa580389",
+      "parsed_payload_digest": "sha256:99978a1b203d69d07f07b9c532667f91283d09439218acc62735795b8b717451"
+    },
+    {
+      "section_id": "MA-S3",
+      "binding_bridge_fields": [],
+      "research_request_bridge_fields": [],
+      "callback_move_bridge_fields": [],
+      "applied": true,
+      "operations": [
+        "extract_or_repair_json_container"
+      ],
+      "original_text_digest": "sha256:92ad65c09e5c7f385acbd55725f8455c3b386ee9a05ac8fe90f174fcf2d2a1b8",
+      "parsed_payload_digest": "sha256:08d03853b9c8649a86c6693006a15a40a727405786119a1382252e0c4ca8654f"
+    },
+    {
+      "paragraph_id": "paragraph:MA-S3:method-unit-1",
+      "attempt": 1,
+      "response_blocked_reason": "",
+      "parsed": true,
+      "parse_error": "",
+      "bound_count": 0,
+      "unbound_count": 6,
+      "validation_errors": []
+    },
+    {
+      "paragraph_id": "paragraph:MA-S3:method-unit-2",
+      "attempt": 1,
+      "response_blocked_reason": "",
+      "parsed": true,
+      "parse_error": "",
+      "bound_count": 0,
+      "unbound_count": 2,
+      "validation_errors": []
+    },
+    {
+      "section_id": "MA-S3",
+      "binding_bridge_fields": [],
+      "research_request_bridge_fields": [],
+      "callback_move_bridge_fields": [],
+      "applied": true,
+      "operations": [
+        "extract_or_repair_json_container"
+      ],
+      "original_text_digest": "sha256:06d3e79a67f91aa859a0c748809ad23dcb605ef4a1bcc69995cbb6ab1bd8d6f7",
+      "parsed_payload_digest": "sha256:32290c90bcc103c0c04ade9759aa41c21b04234c44d9d8cb038fbdec0386c46b"
+    },
+    {
+      "paragraph_id": "paragraph:MA-S3:method-unit-1",
+      "attempt": 1,
+      "response_blocked_reason": "",
+      "parsed": true,
+      "parse_error": "",
+      "bound_count": 0,
+      "unbound_count": 3,
+      "validation_errors": [
+        "binder_condition_or_polarity_mismatch:facet:facet-e3de4791afd3b462"
+      ]
+    },
+    {
+      "paragraph_id": "paragraph:MA-S3:method-unit-1",
+      "attempt": 2,
+      "response_blocked_reason": "",
+      "parsed": true,
+      "parse_error": "",
+      "bound_count": 0,
+      "unbound_count": 4,
+      "validation_errors": []
+    },
+    {
+      "paragraph_id": "paragraph:MA-S3:method-unit-2",
+      "attempt": 1,
+      "response_blocked_reason": "",
+      "parsed": true,
+      "parse_error": "",
+      "bound_count": 0,
+      "unbound_count": 1,
+      "validation_errors": []
+    },
+    {
+      "section_id": "MA-S3",
+      "binding_bridge_fields": [],
+      "research_request_bridge_fields": [],
+      "callback_move_bridge_fields": [],
+      "applied": true,
+      "operations": [
+        "extract_or_repair_json_container"
+      ],
+      "original_text_digest": "sha256:4cd65e022b674fab78dcaa547706e625d61fc2fde10c0c3db5b16175a83fbebb",
+      "parsed_payload_digest": "sha256:7849d0f5511736d0af493adebcd5410b94c2517536db55a80cdcb905b1d660d9"
+    },
+    {
+      "paragraph_id": "paragraph:MA-S3:method-unit-1",
+      "attempt": 1,
+      "response_blocked_reason": "",
+      "parsed": true,
+      "parse_error": "",
+      "bound_count": 0,
+      "unbound_count": 5,
+      "validation_errors": [
+        "binder_condition_or_polarity_mismatch:facet:facet-e3de4791afd3b462"
+      ]
+    },
+    {
+      "paragraph_id": "paragraph:MA-S3:method-unit-1",
+      "attempt": 2,
+      "response_blocked_reason": "",
+      "parsed": true,
+      "parse_error": "",
+      "bound_count": 0,
+      "unbound_count": 5,
+      "validation_errors": [
+        "binder_condition_or_polarity_mismatch:facet:facet-e3de4791afd3b462"
+      ]
+    },
+    {
+      "paragraph_id": "paragraph:MA-S3:method-unit-2",
+      "attempt": 1,
+      "response_blocked_reason": "",
+      "parsed": true,
+      "parse_error": "",
+      "bound_count": 0,
+      "unbound_count": 2,
+      "validation_errors": []
+    },
+    {
+      "section_id": "MA-S3",
+      "binding_bridge_fields": [],
+      "research_request_bridge_fields": [],
+      "callback_move_bridge_fields": [],
+      "applied": true,
+      "operations": [
+        "extract_or_repair_json_container"
+      ],
+      "original_text_digest": "sha256:344c7f853d049f80302466cef9d0a15a393c7bb85f27b845cf341b8782b0f8ca",
+      "parsed_payload_digest": "sha256:cce14fafa43910a7a91cb1964207390ad1e7faef89293f2f07f4fc4416195730"
+    },
+    {
+      "paragraph_id": "paragraph:MA-S3:method-unit-1",
+      "attempt": 1,
+      "response_blocked_reason": "",
+      "parsed": true,
+      "parse_error": "",
+      "bound_count": 0,
+      "unbound_count": 5,
+      "validation_errors": []
+    },
+    {
+      "section_id": "MA-S4",
+      "binding_bridge_fields": [],
+      "research_request_bridge_fields": [],
+      "callback_move_bridge_fields": [],
+      "applied": false,
+      "operations": [],
+      "original_text_digest": "sha256:479c5f9c758e9444039198c7c19a6d1fdd6012e3cc668f45fcb21091602dd1c0",
+      "parsed_payload_digest": "sha256:daa38199c73949cab7a77ed81d1b42ed1f63e29b3ada8a08482c0cdf0e817a80"
+    },
+    {
+      "paragraph_id": "paragraph:MA-S4:method-unit-1",
+      "attempt": 1,
+      "response_blocked_reason": "",
+      "parsed": true,
+      "parse_error": "",
+      "bound_count": 0,
+      "unbound_count": 6,
+      "validation_errors": []
+    },
+    {
+      "section_id": "MA-S5",
+      "binding_bridge_fields": [],
+      "research_request_bridge_fields": [],
+      "callback_move_bridge_fields": [],
+      "applied": true,
+      "operations": [
+        "extract_or_repair_json_container"
+      ],
+      "original_text_digest": "sha256:12a2faff03f9180f77732006e9905fdaca8bb7f0140a2d43b7c849fe46044b18",
+      "parsed_payload_digest": "sha256:4a7adc0e3fdfe3756ff850b63d7d735ced3726b08b9e05e321de0483a23538f7"
+    },
+    {
+      "section_id": "MA-S5",
+      "binding_bridge_fields": [],
+      "research_request_bridge_fields": [],
+      "callback_move_bridge_fields": [],
+      "applied": true,
+      "operations": [
+        "extract_or_repair_json_container"
+      ],
+      "original_text_digest": "sha256:8b8f93d2a3ca518f701c3d211dc4a15e0f37e9b1131e15312b84dcb5c50292cc",
+      "parsed_payload_digest": "sha256:d97c84385386b4cff8675cc84f990525db1a3f9e216a1f22b4cb98c4dea1419e"
+    },
+    {
+      "section_id": "MA-S5",
+      "binding_bridge_fields": [],
+      "research_request_bridge_fields": [],
+      "callback_move_bridge_fields": [],
+      "applied": true,
+      "operations": [
+        "extract_or_repair_json_container"
+      ],
+      "original_text_digest": "sha256:01859c9ffa80e56c8c372c5d26491671f71e837ddb4d595d2bfef672d38fe6a8",
+      "parsed_payload_digest": "sha256:6cf2fc59bc3ef8399c1650c550bdf0b2ee95f3b8f955b9d54907d016a1df79b2"
+    },
+    {
+      "section_id": "MA-S5",
+      "binding_bridge_fields": [],
+      "research_request_bridge_fields": [],
+      "callback_move_bridge_fields": [],
+      "applied": false,
+      "operations": [],
+      "original_text_digest": "sha256:e6d8ed464cb62f689937ae04b3530517362deeb8ae56025590420feb704fc71b",
+      "parsed_payload_digest": "sha256:2f7ac1ef677b701d81c95eb4b54de513e690aaf1b8a2b3ff595563c0aafc5d74"
+    },
+    {
+      "section_id": "MA-S3",
+      "binding_bridge_fields": [],
+      "research_request_bridge_fields": [],
+      "callback_move_bridge_fields": [],
+      "applied": true,
+      "operations": [
+        "extract_or_repair_json_container"
+      ],
+      "original_text_digest": "sha256:b9627c01a33bb848fe9e0a4c5808b69a6fd06d6c480056f1235eba05a4ba1adc",
+      "parsed_payload_digest": "sha256:8e5f93aac7fbccdcb3f44f1a4513574a8a7a6313b90416f4ad844de4dc2f1d72"
+    },
+    {
+      "paragraph_id": "paragraph:MA-S3:method-unit-1",
+      "attempt": 1,
+      "response_blocked_reason": "",
+      "parsed": true,
+      "parse_error": "",
+      "bound_count": 0,
+      "unbound_count": 4,
+      "validation_errors": [
+        "binder_condition_or_polarity_mismatch:facet:facet-e3de4791afd3b462"
+      ]
+    },
+    {
+      "paragraph_id": "paragraph:MA-S3:method-unit-1",
+      "attempt": 2,
+      "response_blocked_reason": "",
+      "parsed": true,
+      "parse_error": "",
+      "bound_count": 0,
+      "unbound_count": 5,
+      "validation_errors": []
+    },
+    {
+      "paragraph_id": "paragraph:MA-S3:method-unit-2",
+      "attempt": 1,
+      "response_blocked_reason": "",
+      "parsed": true,
+      "parse_error": "",
+      "bound_count": 0,
+      "unbound_count": 2,
+      "validation_errors": []
+    },
+    {
+      "section_id": "MA-S3",
+      "binding_bridge_fields": [],
+      "research_request_bridge_fields": [],
+      "callback_move_bridge_fields": [],
+      "applied": true,
+      "operations": [
+        "extract_or_repair_json_container"
+      ],
+      "original_text_digest": "sha256:d1217df12c3f8519654004c979b70eea72bba6d974b90cb8aeef928d5845c7d9",
+      "parsed_payload_digest": "sha256:01855c518cc31be5b7f3ad9745791ee743b4c8bb916c9a926d59c3615f160e33"
+    },
+    {
+      "paragraph_id": "paragraph:MA-S3:method-unit-1",
+      "attempt": 1,
+      "response_blocked_reason": "",
+      "parsed": true,
+      "parse_error": "",
+      "bound_count": 0,
+      "unbound_count": 5,
+      "validation_errors": [
+        "binder_condition_or_polarity_mismatch:facet:facet-e3de4791afd3b462"
+      ]
+    },
+    {
+      "paragraph_id": "paragraph:MA-S3:method-unit-1",
+      "attempt": 2,
+      "response_blocked_reason": "",
+      "parsed": true,
+      "parse_error": "",
+      "bound_count": 0,
+      "unbound_count": 6,
+      "validation_errors": []
+    },
+    {
+      "paragraph_id": "paragraph:MA-S3:method-unit-2",
+      "attempt": 1,
+      "response_blocked_reason": "",
+      "parsed": true,
+      "parse_error": "",
+      "bound_count": 0,
+      "unbound_count": 1,
+      "validation_errors": []
+    },
+    {
+      "section_id": "MA-S5",
+      "binding_bridge_fields": [],
+      "research_request_bridge_fields": [],
+      "callback_move_bridge_fields": [],
+      "applied": false,
+      "operations": [],
+      "original_text_digest": "sha256:1e9a779f1088be061e8a11b175710989b286d5533f424421193f53aff30c5403",
+      "parsed_payload_digest": "sha256:6f4d0e912298c1341eb88842f3bed42b9feb3970bcf8dd1e03caafac45b30725"
+    },
+    {
+      "section_id": "MA-S5",
+      "binding_bridge_fields": [],
+      "research_request_bridge_fields": [],
+      "callback_move_bridge_fields": [],
+      "applied": false,
+      "operations": [],
+      "original_text_digest": "sha256:fbf0680c2178820e351181b279708a3c671ccdf1efa6843fc230bf93cccbfee3",
+      "parsed_payload_digest": "sha256:bb85a6152229795b4023598e1cf02ed71f7e2b704657e3c5deacb16a1cf6950e"
+    },
+    {
+      "section_id": "MA-S5",
+      "binding_bridge_fields": [],
+      "research_request_bridge_fields": [],
+      "callback_move_bridge_fields": [],
+      "applied": false,
+      "operations": [],
+      "original_text_digest": "sha256:c3e99505d6c363735d1fe50083e0ee55551e62735e8957166c7fd30592096db6",
+      "parsed_payload_digest": "sha256:25fd9156cf6270715be512c6acb1c1d9509b68bb5f9a6238ab407ca71df6fe0b"
+    },
+    {
+      "section_id": "MA-S5",
+      "binding_bridge_fields": [],
+      "research_request_bridge_fields": [],
+      "callback_move_bridge_fields": [],
+      "applied": false,
+      "operations": [],
+      "original_text_digest": "sha256:1e9a779f1088be061e8a11b175710989b286d5533f424421193f53aff30c5403",
+      "parsed_payload_digest": "sha256:6f4d0e912298c1341eb88842f3bed42b9feb3970bcf8dd1e03caafac45b30725"
+    },
+    {
+      "section_id": "MA-S5",
+      "binding_bridge_fields": [],
+      "research_request_bridge_fields": [],
+      "callback_move_bridge_fields": [],
+      "applied": false,
+      "operations": [],
+      "original_text_digest": "sha256:fbf0680c2178820e351181b279708a3c671ccdf1efa6843fc230bf93cccbfee3",
+      "parsed_payload_digest": "sha256:bb85a6152229795b4023598e1cf02ed71f7e2b704657e3c5deacb16a1cf6950e"
+    },
+    {
+      "section_id": "MA-S5",
+      "binding_bridge_fields": [],
+      "research_request_bridge_fields": [],
+      "callback_move_bridge_fields": [],
+      "applied": true,
+      "operations": [
+        "extract_or_repair_json_container"
+      ],
+      "original_text_digest": "sha256:5b4097c273c8ec9504927c5624204fc84904513a5db4ecb98b3ac70571658d70",
+      "parsed_payload_digest": "sha256:ff91c2f642be2063bee56cafad500c3d589651d0a94656209485e8e6869b2e4b"
+    },
+    {
+      "section_id": "MA-S1",
+      "applied": true,
+      "provenance": "harness_callback_sidecar",
+      "operations": [
+        "remove_callback_placeholder:candidate_symbols_or_terms",
+        "restore_callback_sidecar:target_brief_ids",
+        "restore_callback_sidecar:target_clause_ids",
+        "restore_callback_sidecar:missing_parts",
+        "restore_callback_sidecar:evidence_refs_used",
+        "restore_callback_sidecar:candidate_symbols_or_terms"
+      ]
+    },
+    {
+      "section_id": "MA-S2",
+      "applied": true,
+      "provenance": "harness_callback_sidecar",
+      "operations": [
+        "restore_callback_sidecar:target_brief_ids",
+        "restore_callback_sidecar:target_clause_ids",
+        "restore_callback_sidecar:missing_parts"
+      ]
+    },
+    {
+      "section_id": "MA-S4",
+      "applied": true,
+      "provenance": "harness_callback_sidecar",
+      "operations": [
+        "restore_callback_sidecar:target_brief_ids",
+        "restore_callback_sidecar:target_clause_ids",
+        "restore_callback_sidecar:missing_parts",
+        "restore_callback_sidecar:evidence_refs_used"
+      ]
+    },
+    {
+      "section_id": "MA-S3",
+      "applied": true,
+      "provenance": "harness_callback_sidecar",
+      "operations": [
+        "restore_callback_sidecar:target_brief_ids",
+        "restore_callback_sidecar:target_clause_ids",
+        "restore_callback_sidecar:missing_parts",
+        "restore_callback_sidecar:evidence_refs_used"
+      ]
+    },
+    {
+      "section_id": "MA-S3",
+      "applied": true,
+      "provenance": "writer_owner_retry",
+      "operations": [
+        "owner_retry_for_missing_writing_callback:mechanism_overview",
+        "model_emitted_writing_callback:mechanism_overview"
+      ],
+      "request_ids": [
+        "req-ma-s3-mechanism-overview"
+      ],
+      "parsed_request_digests": [
+        "sha256:9c285df71a41e8884dd96bd775609cff45bed2f6185411e16be2f08130c153ce"
+      ],
+      "missing_request_moves_after_retry": []
+    },
+    {
+      "section_id": "MA-S1",
+      "applied": false,
+      "provenance": "model_emitted",
+      "operations": [
+        "model_emitted_writing_callback:mechanism_overview"
+      ],
+      "raw_response_hash": "sha256:6e8436ed9d1505ceec3c623542be4ea4a0969e30fd8100a9b25cad79455f4aa9",
+      "request_ids": [
+        "research:MA-S1:unit-1:alignment-projection"
+      ],
+      "parsed_request_digests": [
+        "sha256:66924be082363bc2c0a62299523241151201cf686c463d454893fea694c69e58"
+      ],
+      "dropped_malformed_requests": 0,
+      "missing_request_moves": []
+    },
+    {
+      "section_id": "MA-S2",
+      "applied": false,
+      "provenance": "model_emitted",
+      "operations": [
+        "model_emitted_writing_callback:problem_or_local_context",
+        "model_emitted_writing_callback:problem_or_local_context"
+      ],
+      "raw_response_hash": "sha256:3f0184c8c16e2ced6c6c846ff62ab1fd4ee26ec7b4f595df0d08cf4faa580389",
+      "request_ids": [
+        "MA-S2:rr-001",
+        "MA-S2:rr-002"
+      ],
+      "parsed_request_digests": [
+        "sha256:2136ca1c95866f59725c0c0f225d6afa3c00521216e61dc2ad24536765a5470d",
+        "sha256:aac4c6ac0198c5c226dcdf3dadfc8bfe2c9d3fc7e71e1f58255e4dfe256f82df"
+      ],
+      "dropped_malformed_requests": 0,
+      "missing_request_moves": []
+    },
+    {
+      "section_id": "MA-S3",
+      "applied": false,
+      "provenance": "model_emitted",
+      "operations": [
+        "model_emitted_writing_callback:mechanism_overview"
+      ],
+      "raw_response_hash": "sha256:b9627c01a33bb848fe9e0a4c5808b69a6fd06d6c480056f1235eba05a4ba1adc",
+      "request_ids": [
+        "req-ma-s3-mechanism-overview"
+      ],
+      "parsed_request_digests": [
+        "sha256:9c285df71a41e8884dd96bd775609cff45bed2f6185411e16be2f08130c153ce"
+      ],
+      "dropped_malformed_requests": 0,
+      "missing_request_moves": []
+    },
+    {
+      "section_id": "MA-S4",
+      "applied": false,
+      "provenance": "model_emitted",
+      "operations": [
+        "model_emitted_writing_callback:mechanism_overview",
+        "model_emitted_writing_callback:mechanism_overview"
+      ],
+      "raw_response_hash": "sha256:479c5f9c758e9444039198c7c19a6d1fdd6012e3cc668f45fcb21091602dd1c0",
+      "request_ids": [
+        "MA-S4:req-1",
+        "MA-S4:req-2"
+      ],
+      "parsed_request_digests": [
+        "sha256:0098b0537326638af2aec31f34045e8aa6292a2e7887973ec40ffa6a14bdcdfc",
+        "sha256:1dd01ba4de2759cb027e89ddebdba4241c66d2ed7aadbada9b7679558be0fba8"
+      ],
+      "dropped_malformed_requests": 0,
+      "missing_request_moves": []
+    },
+    {
+      "section_id": "MA-S5",
+      "applied": false,
+      "provenance": "model_emitted",
+      "operations": [
+        "model_emitted_writing_callback:formal_objects_and_notation"
+      ],
+      "raw_response_hash": "sha256:12a2faff03f9180f77732006e9905fdaca8bb7f0140a2d43b7c849fe46044b18",
+      "request_ids": [
+        "MA-S5:unit-1:001"
+      ],
+      "parsed_request_digests": [
+        "sha256:bb1337be2fe742b8c81701dfac76233915956921aa659eee24420ad2aaa077bd"
+      ],
+      "dropped_malformed_requests": 0,
+      "missing_request_moves": []
+    }
+  ],
+  "final_text_digest": "sha256:dbfd98e17fff6b2312ab08fa8c2f9e7ced0e81b9960029ea7ea823f472ca6ed0",
+  "authorship_ledger_digest": "sha256:b5dbb977c8eae6950010000fd3019e95decedde4913341c5c8a45ea896c3efee",
+  "publication_quality_digest": "sha256:d1f463e60f7b3169bca6de116018ed84e7126b001ba04b83060bef6fc4b5d0da",
+  "rewrite_transition_digest": "sha256:1ae0cbc0aa1660f497d4f23251dda8f860671d8be43b5a3affb2331928cc8abc",
+  "callback_bundle_digest": "sha256:528a10203398fc33aa3157992c9f93545a13012fd74ba603d40ab58ad7aa5883",
+  "transaction_assessment_digest": "sha256:d95dc3d81f301895ad5abcb77709adff901606f44d6b57ab0cc5487a3ab9b0c9",
+  "writer_transaction_status": "incomplete",
+  "rendered_text_digest": "sha256:e5aa70a476e1c289ea37e0f37a5d685edd586c3c760efd8711835d7bab3e6527",
+  "resumed_section_ids": [],
+  "blocked_reason": "blocked_authoring_incomplete:MA-S5:facet-3f8317dd772533f4,facet-85dd07572b8a77e2,facet-9a8892286042413e,facet-e343d4bc111c5b77",
+  "candidate_generation_status": "generated",
+  "candidate_available": true,
+  "candidate_validation_status": "warnings",
+  "candidate_warnings_by_severity": {
+    "critical": 2,
+    "major": 88,
+    "minor": 0
+  },
+  "verified_validation_status": "incomplete",
+  "candidate_completion_status": "incomplete",
+  "candidate_complete": false,
+  "verified_complete": false,
+  "candidate_blocking_reasons": [
+    "required_section_incomplete:MA-S1",
+    "required_section_incomplete:MA-S2",
+    "required_section_incomplete:MA-S3",
+    "required_section_incomplete:MA-S4",
+    "required_section_incomplete:MA-S5",
+    "required_section_body_missing:MA-S5",
+    "paragraph_missing:paragraph:MA-S1:method-unit-1:facet:facet-9a1ed70668b9de25",
+    "paragraph_missing:paragraph:MA-S1:method-unit-1:facet:facet-474697a48f990b43",
+    "paragraph_missing:paragraph:MA-S1:method-unit-1:slot:slot:fact-O-STAGE-01-06d7de36-node:b6b250aad804aa69",
+    "paragraph_missing:paragraph:MA-S3:method-unit-1:facet:facet-e3de4791afd3b462",
+    "paragraph_missing:paragraph:MA-S3:method-unit-1:slot:slot:fact-O-STAGE-02-e02cd0f2-node:0a7578f6d67f7f98",
+    "paragraph_missing:paragraph:MA-S3:method-unit-1:slot:slot:fact-O-COMPONENT-05-8cd85daa-node:2ea85357345e7041",
+    "paragraph_missing:paragraph:MA-S3:method-unit-1:slot:slot:fact-O-STAGE-02-e02cd0f2-node:295ccb032c6bffcd",
+    "paragraph_missing:paragraph:MA-S3:method-unit-1:slot:slot:fact-O-STAGE-02-e02cd0f2-node:78fb7cf618388d76",
+    "paragraph_missing:paragraph:MA-S3:method-unit-2:facet:facet-45205815214ce81d",
+    "paragraph_missing:paragraph:MA-S3:method-unit-2:slot:slot:fact-O-COMPONENT-05-8cd85daa-node:20e8a907508376ba",
+    "paragraph_missing:paragraph:MA-S3:method-unit-2:formula:formula:section:MA-S3:derivation",
+    "paragraph_missing:paragraph:MA-S4:method-unit-1:facet:facet-98231f06597ce972",
+    "paragraph_missing:paragraph:MA-S4:method-unit-1:slot:slot:fact-O-COMPONENT-03-2ae65141-node:4a3468105650fd0d",
+    "paragraph_missing:paragraph:MA-S4:method-unit-1:slot:slot:fact-O-COMPONENT-03-2ae65141-node:89759dffb850c28d",
+    "paragraph_missing:paragraph:MA-S4:method-unit-1:slot:slot:fact-O-STAGE-04-a3a3e8ab-node:992d4e5d074a2eff",
+    "paragraph_missing:paragraph:MA-S4:method-unit-1:slot:slot:fact-O-STAGE-04-a3a3e8ab-node:f6a724d2289567f8",
+    "paragraph_missing:paragraph:MA-S4:method-unit-1:slot:slot:fact-O-STAGE-04-a3a3e8ab-node:b80eaf1b4a605b1f",
+    "paragraph_missing:paragraph:MA-S4:method-unit-1:formula:formula:facet:facet-98231f06597ce972",
+    "paragraph_missing:paragraph:MA-S5:method-unit-1:facet:facet-9a8892286042413e",
+    "paragraph_missing:paragraph:MA-S5:method-unit-1:facet:facet-85dd07572b8a77e2",
+    "paragraph_missing:paragraph:MA-S5:method-unit-1:facet:facet-e343d4bc111c5b77",
+    "paragraph_missing:paragraph:MA-S5:method-unit-1:facet:facet-3f8317dd772533f4",
+    "paragraph_missing:paragraph:MA-S5:method-unit-1:slot:slot:fact-O-STAGE-03-d47a86f4-node:1cc294634ea67991",
+    "paragraph_missing:paragraph:MA-S5:method-unit-1:slot:slot:fact-O-STAGE-03-d47a86f4-node:1e4e9796e1140272",
+    "paragraph_missing:paragraph:MA-S5:method-unit-1:slot:slot:fact-O-STAGE-03-d47a86f4-node:d799f697b2fb3ec3",
+    "paragraph_missing:paragraph:MA-S5:method-unit-2:facet:facet-e36d367d850a8273",
+    "paragraph_missing:paragraph:MA-S5:method-unit-2:formula:formula:section:MA-S5:derivation",
+    "required_formula_unresolved:MA-S3:formula:facet:facet-e3de4791afd3b462",
+    "required_formula_unresolved:MA-S3:formula:facet:facet-0564bcda9bc954d9",
+    "required_formula_unresolved:MA-S3:formula:facet:facet-45205815214ce81d",
+    "required_formula_unresolved:MA-S3:formula:section:MA-S3:derivation",
+    "required_formula_unresolved:MA-S5:formula:facet:facet-85dd07572b8a77e2",
+    "required_formula_unresolved:MA-S5:formula:facet:facet-e343d4bc111c5b77",
+    "required_formula_unresolved:MA-S5:formula:facet:facet-3f8317dd772533f4",
+    "required_formula_unresolved:MA-S5:formula:facet:facet-e36d367d850a8273",
+    "required_formula_unresolved:MA-S5:formula:section:MA-S5:derivation",
+    "research_dossier_unresolved:paragraph:MA-S3:method-unit-2:facet_alignment:facet-8ebd977fd8a0b89d",
+    "research_dossier_unresolved:paragraph:MA-S5:method-unit-2:facet_alignment:facet-e36d367d850a8273",
+    "candidate_integrity_failure:rewrite:unknown_style_section:MA-S5"
+  ],
+  "verified_blocking_reasons": [
+    "verified_output_empty",
+    "reverse_validation_failed",
+    "final_integrity_gate_failed",
+    "publication_quality_not_ready",
+    "verified_review_block:review:O-STAGE-03-d47a86f4",
+    "verified_review_block:review:O-COMPONENT-01-377afc18",
+    "verified_review_block:review:O-COMPONENT-06-e711d58d",
+    "verified_review_block:review:O-COMPONENT-07-c430eb84",
+    "verified_review_block:review:O-COMPONENT-08-48efa86a",
+    "verified_review_block:review:O-ORGANIZATION-01-42774719",
+    "verified_review_block:review:O-ORGANIZATION-02-780817ba",
+    "verified_review_block:review:O-ORGANIZATION-03-359984b4",
+    "verified_review_block:review:O-ORGANIZATION-04-a52145c2",
+    "verified_review_block:review:O-RATIONALE-CHECK-01-106180a0",
+    "verified_review_block:review:O-RATIONALE-CHECK-02-653d713f",
+    "verified_review_block:review:O-RATIONALE-CHECK-03-117025ca",
+    "verified_review_block:review:O-RATIONALE-CHECK-04-b41841c3",
+    "verified_review_block:review:O-RATIONALE-CHECK-05-e1bbed89",
+    "verified_review_block:review-sentence:FTU2",
+    "verified_review_block:review-formalization:MA-S2",
+    "verified_review_block:review-formalization:MA-S3",
+    "verified_review_block:review-formalization:MA-S4",
+    "verified_review_block:review-formalization:MA-S5",
+    "verified_review_block:review-writer-missing-facets:MA-S5",
+    "verified_review_block:review-move-unanchored:MA-S1:move-unanchored:MA-S1:configuration_and_branches",
+    "verified_review_block:review-move-unanchored:MA-S3:move-unanchored:MA-S3:configuration_and_branches",
+    "verified_review_block:review-move-unanchored:MA-S4:move-unanchored:MA-S4:configuration_and_branches",
+    "verified_review_block:review-move-unanchored:MA-S4:move-unanchored:MA-S4:equation_or_derivation",
+    "external_research_queue_open",
+    "verified_upstream_failure:MA-S1:writer_output_incomplete",
+    "verified_upstream_failure:MA-S1:missing_writing_research_callback:mechanism_overview",
+    "verified_upstream_failure:MA-S1:invalid_writing_research_callback:mechanism_overview@MA-S1/MA-S1:unit-1/executable_hard",
+    "verified_upstream_failure:MA-S1:missing_required_briefs:brief:story:O-COMPONENT-06-e711d58d,brief:story:O-METHOD-MAINLINE-01-3011c54d,brief:story:O-RATIONALE-CHECK-04-b41841c3,brief:story:O-RATIONALE-CHECK-05-e1bbed89,brief:story:O-STAGE-01-06d7de36",
+    "verified_upstream_failure:MA-S2:invalid_writing_research_callback:problem_or_local_context@MA-S2/MA-S2:unit/expository_bridge",
+    "verified_upstream_failure:MA-S3:writer_output_incomplete",
+    "verified_upstream_failure:MA-S3:missing_required_briefs:brief:story:O-COMPONENT-01-377afc18,brief:story:O-COMPONENT-01-88e55e54,brief:story:O-COMPONENT-02-c39dd898,brief:story:O-COMPONENT-04-6d73cce5,brief:story:O-COMPONENT-05-8cd85daa,brief:story:O-ORGANIZATION-03-359984b4,brief:story:O-RATIONALE-CHECK-02-653d713f",
+    "verified_upstream_failure:MA-S4:writer_output_incomplete",
+    "verified_upstream_failure:MA-S4:missing_writing_research_callback:mechanism_overview",
+    "verified_upstream_failure:MA-S4:invalid_writing_research_callback:mechanism_overview@MA-S4/MA-S4:unit-1/formal_derivation",
+    "verified_upstream_failure:MA-S4:missing_required_briefs:brief:story:O-COMPONENT-03-2ae65141,brief:story:O-COMPONENT-08-48efa86a,brief:story:O-ORGANIZATION-04-a52145c2,brief:story:O-RATIONALE-CHECK-01-106180a0",
+    "verified_upstream_failure:MA-S5:writer_output_incomplete",
+    "verified_upstream_failure:MA-S5:invalid_writing_research_callback:formal_objects_and_notation@MA-S5/MA-S5:unit-1/executable_hard",
+    "verified_upstream_failure:MA-S5:missing_required_briefs:brief:story:O-COMPONENT-07-c430eb84,brief:story:O-STAGE-03-d47a86f4",
+    "verified_upstream_failure:rewrite:unknown_style_section:MA-S5",
+    "verified_upstream_failure:rewrite:MA-S2:unsafe_positive_or_authority:attempt_budget_exhausted",
+    "verified_upstream_failure:rewrite_budget_exhausted_kept_incumbent",
+    "verified_upstream_failure:formalization_required_obligation_unresolved:MA-S3:formula:facet:facet-e3de4791afd3b462,formula:facet:facet-0564bcda9bc954d9,formula:facet:facet-45205815214ce81d,formula:section:MA-S3:derivation",
+    "verified_upstream_failure:formalization_required_obligation_unresolved:MA-S5:formula:facet:facet-85dd07572b8a77e2,formula:facet:facet-e343d4bc111c5b77,formula:facet:facet-3f8317dd772533f4,formula:facet:facet-e36d367d850a8273,formula:section:MA-S5:derivation",
+    "verified_upstream_failure:MA-S5:writer_missing_required_facets:facet-3f8317dd772533f4,facet-85dd07572b8a77e2,facet-9a8892286042413e,facet-e343d4bc111c5b77"
+  ],
+  "publication_ready": false,
+  "content_digest": "sha256:602c838741834515539b1da81e589003c0b6063033ef9a270cd7a94be12d4a70"
+}

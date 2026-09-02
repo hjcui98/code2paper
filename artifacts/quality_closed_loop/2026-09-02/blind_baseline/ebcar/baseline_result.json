@@ -1,0 +1,51 @@
+{
+  "project": "EBCAR",
+  "mode": "direct_blind_baseline",
+  "generation_inputs": {
+    "author_intent": "/data1/users/cuihengjia/code2paper/paperyaml3/EBCAR - Embedding-Based Context-Aware Reranker.yaml",
+    "research_code": "/data1/users/cuihengjia/code2paper/code_final/EBCAR - Embedding-Based Context-Aware Reranker"
+  },
+  "candidate_method": "/tmp/code2paper-blind-baseline-20260828/ebcar/method_candidate.md",
+  "writer_status": "manual_baseline_generated",
+  "structural_exit": "not_applicable_no_Code2Paper_writer",
+  "publication_ready": false,
+  "unsupported_positive_claims": {
+    "unmarked_count": 0,
+    "pending_or_unverified_count": 6,
+    "items": [
+      "speedup over text-based LLM rerankers",
+      "competitiveness on cross-passage tasks",
+      "improved coreference or local coherence",
+      "scalability to unseen documents",
+      "stabilization from a fixed query anchor",
+      "superiority of the combined attention pattern"
+    ]
+  },
+  "final_text_validation": {
+    "status": "pass_with_pending",
+    "scope": "manual provenance audit; not a Code2Paper validator",
+    "unmarked_unsupported_positive_claims": 0
+  },
+  "coverage": {
+    "paragraphs": {"covered": 7, "total": 7},
+    "slots": {"represented": 12, "total": 12, "direct": 8, "partial_or_pending": 4},
+    "edges": {"represented": 6, "total": 6, "direct": 5, "partial": 1},
+    "formulas": {"represented": 5, "total": 5, "direct": 4, "partial": 1}
+  },
+  "direct_code_support": [
+    "Contriever normalized embeddings and Chroma top-k retrieval",
+    "relative document IDs and passage positions",
+    "additive structural augmentation",
+    "shared and dedicated multi-head attention modules",
+    "residual feed-forward encoder layers",
+    "temperature-scaled dot-product scoring",
+    "one-positive log-sum-exp contrastive loss",
+    "descending-score reranking"
+  ],
+  "incomplete_or_pending": [
+    "performance, latency, and ablation effects",
+    "actual document-ID weight freezing",
+    "training/inference equivalence of the dedicated mask",
+    "end-to-end test execution because of evaluation wrapper defects"
+  ]
+}

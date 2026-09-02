@@ -1,0 +1,47 @@
+{
+  "project": "LinearRAG",
+  "candidate_text": "/tmp/code2paper-blind-baseline-20260828/linearrag/method_candidate.md",
+  "audit": "/tmp/code2paper-blind-baseline-20260828/linearrag/baseline_audit.md",
+  "writer_status": "manual_baseline_generated",
+  "structural_exit": "not_applicable_no_Code2Paper_writer",
+  "publication_ready": false,
+  "unsupported_positive_claims": {
+    "unmarked_count": 0,
+    "pending_or_unverified_count": 7,
+    "items": [
+      "complete Tri-Graph with sentence vertices and PageRank mention/contain edges",
+      "in-code passage splitting and lossless sentence hierarchy",
+      "pruning-based efficiency, noise control, or adaptive-depth effect",
+      "robust multi-hop precision/recall effect",
+      "PageRank or two-stage superiority over graph-RAG baselines",
+      "linear scalability",
+      "measured zero-LLM-token indexing cost"
+    ]
+  },
+  "final_text_validation": "pass_with_pending_and_explicit_trigraph_gap",
+  "coverage": {
+    "paragraph_story": {"covered": 7, "total": 7},
+    "slots": {"represented": 6, "total": 6, "direct": 5, "partial": 1},
+    "edges": {"represented": 3, "total": 3, "direct": 2, "partial": 1},
+    "formulas": {"addressed": 9, "total": 9, "code_derived": 9, "pending": 0}
+  },
+  "direct_code_support": [
+    "spaCy NER with ordinal/cardinal filtering for passages and queries",
+    "normalized passage, entity, and sentence embeddings",
+    "auxiliary entity-sentence associations and occurrence-weighted passage-entity edges",
+    "numeric adjacent-passage edges in an undirected igraph",
+    "nearest-embedding query entity seeds and dense no-entity fallback",
+    "thresholded BFS or optional sparse local entity propagation",
+    "hybrid dense/entity passage weights and personalized PageRank",
+    "top-k passage output followed by optional external-LLM answer generation"
+  ],
+  "incomplete_or_pending": [
+    "sentence vertices and PageRank mention/contain edges",
+    "in-code passage splitting and complete hierarchy",
+    "pruning and PPR robustness or quality effects",
+    "multi-hop performance and baseline superiority",
+    "linear scalability",
+    "measured zero-token indexing cost",
+    "numerical retrieval or answer results"
+  ]
+}

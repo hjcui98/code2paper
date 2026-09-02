@@ -1,0 +1,2284 @@
+{
+  "schema_version": "1.0",
+  "status": "incomplete",
+  "plan_digest": "sha256:4c1f7e28f3a72969c582052fc70da25fefb0b3d34d44d3d71a19a757cf49c1a4",
+  "claim_digest": "sha256:aedcf9c3bc6a6469f8dcaf69d51872642eae6e1566b7b343b43d201a422dac08",
+  "section_results": [
+    {
+      "section_id": "MA-S1",
+      "heading": "Motivation: revisit GraphRAG shortcomings from relation extraction errors",
+      "accepted": false,
+      "failures": [
+        "writer_output_incomplete",
+        "invalid_writing_research_callback:design_objective@MA-S1/MA-S1:unit-1/expository_bridge",
+        "missing_required_briefs:brief:story:O-COMPONENT-01-bd3b9454"
+      ],
+      "output": {
+        "section_id": "MA-S1",
+        "heading_text": "Motivation: revisit GraphRAG shortcomings from relation extraction errors",
+        "section_markdown": "## Motivation: revisit GraphRAG shortcomings from relation extraction errors\n\nTri-Graph is a hierarchical graph whose node types span entities, sentences, and passages, connected by sparse contain and message adjacency relations; by grounding the retrieval pipeline in this structure, the system avoids explicit relation extraction entirely.",
+        "rendered_proposition_ids": [],
+        "deferred_proposition_ids": [],
+        "rendered_concept_keys": [],
+        "deferred_concept_keys": [],
+        "rendered_brief_ids": [
+          "brief:story:O-RATIONALE-CHECK-01-c0bb1e93"
+        ],
+        "deferred_brief_ids": [],
+        "rendered_from_facet_ids": [],
+        "rendered_field_candidate_ids": [],
+        "deferred_facet_ids": [],
+        "rendered_paragraph_ids": [],
+        "rendered_slot_ids": [],
+        "rendered_edge_ids": [],
+        "used_formula_package_ids": [],
+        "used_argument_unit_ids": [],
+        "used_claim_ids": [],
+        "used_equation_ids": [],
+        "used_configuration_ids": [],
+        "completed_rhetorical_moves": [],
+        "new_research_requests": [
+          {
+            "argument_unit_id": "MA-S1:unit-1",
+            "evidence_refs_used": [],
+            "exact_question": "How does the Tri-Graph hierarchy with sparse contain/message adjacency eliminate the need for explicit relation extraction in the retrieval pipeline?",
+            "missing_parts": [
+              "formal definition of sparse contain and message adjacency relations over entity-sentence-passage node types"
+            ],
+            "missing_rhetorical_move": "design_objective",
+            "request_id": "MA-S1:unit-1:research-1",
+            "required_authority_lane": "expository_bridge",
+            "section_id": "MA-S1",
+            "status": "open"
+          }
+        ],
+        "self_identified_risks": [],
+        "unresolved_points": [],
+        "paragraphs": [
+          {
+            "paragraph_id": "paragraph:MA-S1:method-unit-1",
+            "paragraph_markdown": "Tri-Graph is a hierarchical graph whose node types span entities, sentences, and passages, connected by sparse contain and message adjacency relations; by grounding the retrieval pipeline in this structure, the system avoids explicit relation extraction entirely.",
+            "rendered_from_facet_ids": [
+              "facet-37ac47cd0b3c324b"
+            ],
+            "rendered_field_candidate_ids": [],
+            "rendered_slot_ids": [],
+            "rendered_edge_ids": [],
+            "used_formula_package_ids": [],
+            "used_claim_ids": [],
+            "used_equation_ids": [],
+            "witnesses": [
+              {
+                "witness_kind": "facet",
+                "target_id": "facet-37ac47cd0b3c324b",
+                "exact_text": "Tri-Graph is a hierarchical graph whose node types span entities, sentences, and passages, connected by sparse contain and message adjacency relations; by grounding the retrieval pipeline in this structure, the system avoids explicit relation extraction entirely."
+              }
+            ],
+            "formula_disposition": null,
+            "formula_disposition_reason": "",
+            "formula_dispositions": []
+          }
+        ]
+      }
+    },
+    {
+      "section_id": "MA-S2",
+      "heading": "LinearRAG overview: Tri‑Graph concept and two‑stage retrieval philosophy",
+      "accepted": false,
+      "failures": [
+        "writer_output_incomplete",
+        "invalid_writing_research_callback:problem_or_local_context@MA-S2/MA-S2:unit/expository_bridge"
+      ],
+      "output": {
+        "section_id": "MA-S2",
+        "heading_text": "LinearRAG overview: Tri‑Graph concept and two‑stage retrieval philosophy",
+        "section_markdown": "## LinearRAG overview: Tri‑Graph concept and two‑stage retrieval philosophy\n\nLinearRAG constructs an offline Tri‑Graph whose node set comprises entities, sentences, and passages, connected by contain and message adjacency matrices that encode structural containment and semantic messaging relations across the three granularities.",
+        "rendered_proposition_ids": [],
+        "deferred_proposition_ids": [],
+        "rendered_concept_keys": [],
+        "deferred_concept_keys": [],
+        "rendered_brief_ids": [
+          "brief:story:O-ORGANIZATION-03-157f229e"
+        ],
+        "deferred_brief_ids": [],
+        "rendered_from_facet_ids": [],
+        "rendered_field_candidate_ids": [],
+        "deferred_facet_ids": [],
+        "rendered_paragraph_ids": [],
+        "rendered_slot_ids": [],
+        "rendered_edge_ids": [],
+        "used_formula_package_ids": [],
+        "used_argument_unit_ids": [],
+        "used_claim_ids": [],
+        "used_equation_ids": [],
+        "used_configuration_ids": [],
+        "completed_rhetorical_moves": [],
+        "new_research_requests": [
+          {
+            "argument_unit_id": "MA-S2:unit",
+            "candidate_symbols_or_terms": [
+              "Tri‑Graph",
+              "contain adjacency matrix",
+              "message adjacency matrix"
+            ],
+            "concept_key": "offline_tri_graph_construction",
+            "evidence_refs_used": [],
+            "exact_question": "What is the formal definition of the offline Tri‑Graph (node set, edge set, and adjacency matrices) that LinearRAG constructs from entities, sentences, and passages?",
+            "missing_parts": [
+              "Offline Tri‑Graph construction (entities, sentences, passages, contain/message adjacency matrices)",
+              "empty mechanism draft"
+            ],
+            "missing_rhetorical_move": "problem_or_local_context",
+            "request_id": "research:MA-S2:offline-tri-graph-definition",
+            "required_authority_lane": "expository_bridge",
+            "section_id": "MA-S2",
+            "status": "open",
+            "target_clause_ids": [
+              "clause:O-ORGANIZATION-03-157f229e:0"
+            ],
+            "why_needed_for_reader": "The Method section must state the precise graph structure (node types, edge semantics, matrix dimensions) before describing any retrieval stage that operates on it.",
+            "target_brief_ids": [
+              "brief:story:O-ORGANIZATION-03-157f229e"
+            ]
+          }
+        ],
+        "self_identified_risks": [],
+        "unresolved_points": [],
+        "paragraphs": [
+          {
+            "paragraph_id": "paragraph:MA-S2:method-unit-1",
+            "paragraph_markdown": "LinearRAG constructs an offline Tri‑Graph whose node set comprises entities, sentences, and passages, connected by contain and message adjacency matrices that encode structural containment and semantic messaging relations across the three granularities.",
+            "rendered_from_facet_ids": [
+              "facet-8ce6e8dabb55bf84"
+            ],
+            "rendered_field_candidate_ids": [],
+            "rendered_slot_ids": [],
+            "rendered_edge_ids": [],
+            "used_formula_package_ids": [],
+            "used_claim_ids": [],
+            "used_equation_ids": [],
+            "witnesses": [
+              {
+                "witness_kind": "facet",
+                "target_id": "facet-8ce6e8dabb55bf84",
+                "exact_text": "LinearRAG constructs an offline Tri‑Graph whose node set comprises entities, sentences, and passages, connected by contain and message adjacency matrices that encode structural containment and semantic messaging relations across the three granularities."
+              }
+            ],
+            "formula_disposition": null,
+            "formula_disposition_reason": "",
+            "formula_dispositions": []
+          }
+        ]
+      }
+    },
+    {
+      "section_id": "MA-S3",
+      "heading": "Offline Tri‑Graph construction",
+      "accepted": false,
+      "failures": [
+        "writer_output_incomplete",
+        "invalid_writing_research_callback:equation_or_derivation@MA-S3/MA-S3:unit-1/formal_derivation",
+        "missing_required_briefs:brief:story:O-RATIONALE-CHECK-02-1a90a997"
+      ],
+      "output": {
+        "section_id": "MA-S3",
+        "heading_text": "Offline Tri‑Graph construction",
+        "section_markdown": "## Offline Tri‑Graph construction\n\nThe Tri-Graph is constructed offline from the corpus by splitting each passage into constituent sentences and extracting entities from both passages and sentences using spaCy. Two sparse adjacency matrices are then formed—a contain matrix linking passages to their entities and a mention matrix linking sentences to their entities—yielding a three-tier hierarchy in which original text units and extracted entities coexist as distinct node sets.",
+        "rendered_proposition_ids": [],
+        "deferred_proposition_ids": [],
+        "rendered_concept_keys": [],
+        "deferred_concept_keys": [],
+        "rendered_brief_ids": [
+          "brief:story:O-STAGE-01-9c8dfe22",
+          "brief:story:O-STAGE-01-9c8dfe22"
+        ],
+        "deferred_brief_ids": [],
+        "rendered_from_facet_ids": [],
+        "rendered_field_candidate_ids": [],
+        "deferred_facet_ids": [],
+        "rendered_paragraph_ids": [],
+        "rendered_slot_ids": [],
+        "rendered_edge_ids": [],
+        "used_formula_package_ids": [],
+        "used_argument_unit_ids": [],
+        "used_claim_ids": [],
+        "used_equation_ids": [],
+        "used_configuration_ids": [],
+        "completed_rhetorical_moves": [],
+        "new_research_requests": [
+          {
+            "argument_unit_id": "MA-S3:unit-1",
+            "candidate_symbols_or_terms": [
+              "contain adjacency matrix",
+              "mention adjacency matrix",
+              "Tri-Graph"
+            ],
+            "exact_question": "What is the formal specification of the Tri-Graph node and edge types, and the precise construction of the contain and mention adjacency matrices from the extracted entity sets?",
+            "missing_rhetorical_move": "equation_or_derivation",
+            "request_id": "MA-S3:unit-1:formula-1",
+            "required_authority_lane": "formal_derivation",
+            "section_id": "MA-S3",
+            "status": "open",
+            "target_brief_ids": [
+              "brief:story:O-STAGE-01-9c8dfe22",
+              "brief:story:O-RATIONALE-CHECK-02-1a90a997"
+            ],
+            "target_clause_ids": [
+              "clause:O-STAGE-01-9c8dfe22:0",
+              "clause:O-RATIONALE-CHECK-02-1a90a997:0"
+            ],
+            "missing_parts": [
+              "Offline Graph Construction: Build a Tri‑Graph from the corpus by splitting passages into sentences, extracting entities with spaCy, and creating sparse contain (passage–entity) and mention (sentence–entity) adjacency matrices.",
+              "Use a hierarchical graph that preserves original text (passages, sentences) alongside entities.",
+              "empty mechanism draft"
+            ],
+            "evidence_refs_used": [
+              "span:src/LinearRAG.py:561:564",
+              "span:src/LinearRAG.py:566:566",
+              "claim:claim-O-STAGE-01-9c8dfe22-fact-O-STAGE-01-9c8dfe22-node:0fd688d75587fdee",
+              "claim:claim-O-STAGE-01-9c8dfe22-fact-O-STAGE-01-9c8dfe22-node:f21427b316d80682",
+              "claim:l2:math:fact-O-STAGE-01-9c8dfe22-node:0fd688d75587fdee:threshold_mask"
+            ]
+          }
+        ],
+        "self_identified_risks": [],
+        "unresolved_points": [],
+        "paragraphs": [
+          {
+            "paragraph_id": "paragraph:MA-S3:method-unit-1",
+            "paragraph_markdown": "The Tri-Graph is constructed offline from the corpus by splitting each passage into constituent sentences and extracting entities from both passages and sentences using spaCy. Two sparse adjacency matrices are then formed—a contain matrix linking passages to their entities and a mention matrix linking sentences to their entities—yielding a three-tier hierarchy in which original text units and extracted entities coexist as distinct node sets.",
+            "rendered_from_facet_ids": [
+              "facet-36188cb856f44d0d"
+            ],
+            "rendered_field_candidate_ids": [],
+            "rendered_slot_ids": [],
+            "rendered_edge_ids": [],
+            "used_formula_package_ids": [],
+            "used_claim_ids": [],
+            "used_equation_ids": [],
+            "witnesses": [
+              {
+                "witness_kind": "facet",
+                "target_id": "facet-36188cb856f44d0d",
+                "exact_text": "The Tri-Graph is constructed offline from the corpus by splitting each passage into constituent sentences and extracting entities from both passages and sentences using spaCy."
+              }
+            ],
+            "formula_disposition": "missing_from_prose",
+            "formula_disposition_reason": "",
+            "formula_dispositions": []
+          }
+        ]
+      }
+    },
+    {
+      "section_id": "MA-S4",
+      "heading": "First retrieval stage: relevant entity activation via local semantic bridging",
+      "accepted": false,
+      "failures": [
+        "writer_output_incomplete",
+        "missing_writing_research_callback:mechanism_overview",
+        "invalid_writing_research_callback:mechanism_overview@MA-S4/MA-S4:unit-1/expository_bridge",
+        "missing_required_briefs:brief:story:O-COMPONENT-03-0c4d02ed,brief:story:O-COMPONENT-04-4f4f1da6,brief:story:O-ORGANIZATION-04-8fc65790,brief:story:O-STAGE-02-93c16851"
+      ],
+      "output": {
+        "section_id": "MA-S4",
+        "heading_text": "First retrieval stage: relevant entity activation via local semantic bridging",
+        "section_markdown": "## First retrieval stage: relevant entity activation via local semantic bridging\n\nEntity activation proceeds through three coupled operations. Entity weights $w_{entity}$ and passage weights $w_{passage}$ are computed from query–entity matching and query–sentence similarity, respectively, and combined into a node weight vector $w_{node}$ that serves as the reset distribution for Personalized PageRank (PPR) on the sentence–entity subgraph $G$. PPR is then iteratively propagated with a damping factor $α$ that controls the decay of relevance across entity–sentence edges, allowing the algorithm to surface latent bridging entities that connect the query to distant passages and thereby support multi-hop retrieval. A threshold-based dynamic pruning step retains only entities whose propagated relevance scores $r$ exceed a cutoff, preventing combinatorial expansion and noise accumulation in subsequent retrieval stages. $$\n\\mathbf{w}_{node} = \\mathbf{w}_{entity} + \\mathbf{w}_{passage}, \\quad \\mathbf{r} = \\text{PPR}(\\mathcal{G}, \\mathbf{w}_{node}, \\alpha)\n$$ This propagation operates on an undirected weighted graph whose edge weights are derived from the similarity scores, and the entire activation is gated by a configuration flag that enables or disables vectorized retrieval.",
+        "rendered_proposition_ids": [],
+        "deferred_proposition_ids": [],
+        "rendered_concept_keys": [],
+        "deferred_concept_keys": [],
+        "rendered_brief_ids": [
+          "brief:story:O-RATIONALE-CHECK-04-9ca078fe"
+        ],
+        "deferred_brief_ids": [],
+        "rendered_from_facet_ids": [],
+        "rendered_field_candidate_ids": [],
+        "deferred_facet_ids": [],
+        "rendered_paragraph_ids": [],
+        "rendered_slot_ids": [],
+        "rendered_edge_ids": [],
+        "used_formula_package_ids": [
+          "pkg-MA-S4-001"
+        ],
+        "used_argument_unit_ids": [],
+        "used_claim_ids": [],
+        "used_equation_ids": [],
+        "used_configuration_ids": [],
+        "completed_rhetorical_moves": [],
+        "new_research_requests": [
+          {
+            "argument_unit_id": "MA-S4:unit-1",
+            "evidence_refs_used": [
+              "span:src/ner.py:36:37",
+              "span:src/LinearRAG.py:194:194",
+              "span:src/LinearRAG.py:192:192",
+              "span:src/ner.py:32:33",
+              "span:src/LinearRAG.py:188:188",
+              "claim:claim-O-STAGE-02-93c16851-fact-O-STAGE-02-93c16851-node:832a80d4d603dfda",
+              "claim:claim-O-STAGE-02-93c16851-fact-O-STAGE-02-93c16851-node:3e4f8dac1595a0af",
+              "claim:claim-O-STAGE-02-93c16851-fact-O-STAGE-02-93c16851-node:d95b504f3885a567",
+              "claim:claim-O-STAGE-02-93c16851-fact-O-STAGE-02-93c16851-node:dbc9e615e1abdb23",
+              "claim:l2:math:fact-O-STAGE-02-93c16851-node:3e4f8dac1595a0af:weighted_sum",
+              "claim:l2:math:fact-O-STAGE-02-93c16851-node:d95b504f3885a567:threshold_mask"
+            ],
+            "exact_question": "What threshold value or criterion governs the dynamic pruning step that filters entities during propagation?",
+            "missing_parts": [
+              "First retrieval stage: relevant entity activation via local semantic bridging (initialization, iterative propagation, dynamic pruning)",
+              "empty mechanism draft",
+              "Entity Activation via Local Semantic Bridging: For a query, activate relevant entities by initializing from matched entities, computing query–sentence similarities, and iteratively propagating scores through the sentence–entity subgraph with dynamic pruning to discover hidden bridging entities.",
+              "Dynamic Pruning: Threshold‑based filtering that retains only strongly relevant entities during propagation, preventing combinatorial expansion and noise.",
+              "Apply dynamic pruning with a fixed relevance threshold during propagation.",
+              "Entity Activation via Semantic Bridging: Iterative propagation of entity relevance through the sentence–entity subgraph based on query–sentence similarity;",
+              "identifies latent intermediate entities for multi‑hop connections."
+            ],
+            "missing_rhetorical_move": "mechanism_overview",
+            "request_id": "research:MA-S4:unit-1:pruning-criterion",
+            "required_authority_lane": "expository_bridge",
+            "section_id": "MA-S4",
+            "status": "open",
+            "target_clause_ids": [
+              "clause:O-ORGANIZATION-04-8fc65790:0",
+              "clause:O-STAGE-02-93c16851:0",
+              "clause:O-COMPONENT-04-4f4f1da6:0",
+              "clause:O-RATIONALE-CHECK-04-9ca078fe:0",
+              "clause:O-COMPONENT-03-0c4d02ed:0",
+              "clause:O-COMPONENT-03-0c4d02ed:1"
+            ],
+            "why_needed_for_reader": "The dynamic pruning step is described qualitatively as threshold-based filtering, but no specific threshold value or criterion is stated, leaving the reader unable to reproduce the entity retention rule.",
+            "target_brief_ids": [
+              "brief:story:O-ORGANIZATION-04-8fc65790",
+              "brief:story:O-STAGE-02-93c16851",
+              "brief:story:O-COMPONENT-04-4f4f1da6",
+              "brief:story:O-RATIONALE-CHECK-04-9ca078fe",
+              "brief:story:O-COMPONENT-03-0c4d02ed"
+            ]
+          }
+        ],
+        "self_identified_risks": [],
+        "unresolved_points": [],
+        "paragraphs": [
+          {
+            "paragraph_id": "paragraph:MA-S4:method-unit-1",
+            "paragraph_markdown": "Entity activation proceeds through three coupled operations. Entity weights $w_{entity}$ and passage weights $w_{passage}$ are computed from query–entity matching and query–sentence similarity, respectively, and combined into a node weight vector $w_{node}$ that serves as the reset distribution for Personalized PageRank (PPR) on the sentence–entity subgraph $G$. PPR is then iteratively propagated with a damping factor $α$ that controls the decay of relevance across entity–sentence edges, allowing the algorithm to surface latent bridging entities that connect the query to distant passages and thereby support multi-hop retrieval. A threshold-based dynamic pruning step retains only entities whose propagated relevance scores $r$ exceed a cutoff, preventing combinatorial expansion and noise accumulation in subsequent retrieval stages. $$\n\\mathbf{w}_{node} = \\mathbf{w}_{entity} + \\mathbf{w}_{passage}, \\quad \\mathbf{r} = \\text{PPR}(\\mathcal{G}, \\mathbf{w}_{node}, \\alpha)\n$$ This propagation operates on an undirected weighted graph whose edge weights are derived from the similarity scores, and the entire activation is gated by a configuration flag that enables or disables vectorized retrieval.",
+            "rendered_from_facet_ids": [
+              "facet-49c35a32b3156393",
+              "facet-397617ae0c814f4c"
+            ],
+            "rendered_field_candidate_ids": [],
+            "rendered_slot_ids": [],
+            "rendered_edge_ids": [],
+            "used_formula_package_ids": [
+              "pkg-MA-S4-001"
+            ],
+            "used_claim_ids": [],
+            "used_equation_ids": [],
+            "witnesses": [
+              {
+                "witness_kind": "facet",
+                "target_id": "facet-49c35a32b3156393",
+                "exact_text": "PPR is then iteratively propagated with a damping factor $α$ that controls the decay of relevance across entity–sentence edges, allowing the algorithm to surface latent bridging entities that connect the query to distant passages and thereby support multi-hop retrieval."
+              },
+              {
+                "witness_kind": "facet",
+                "target_id": "facet-397617ae0c814f4c",
+                "exact_text": "A threshold-based dynamic pruning step retains only entities whose propagated relevance scores $r$ exceed a cutoff, preventing combinatorial expansion and noise accumulation in subsequent retrieval stages."
+              },
+              {
+                "witness_kind": "formula",
+                "target_id": "pkg-MA-S4-001",
+                "exact_text": "$$\n\\mathbf{w}_{node} = \\mathbf{w}_{entity} + \\mathbf{w}_{passage}, \\quad \\mathbf{r} = \\text{PPR}(\\mathcal{G}, \\mathbf{w}_{node}, \\alpha)\n$$"
+              }
+            ],
+            "formula_disposition": null,
+            "formula_disposition_reason": "",
+            "formula_dispositions": [
+              {
+                "package_id": "pkg-MA-S4-001",
+                "disposition": "consumed",
+                "reason": "placeholder emitted in paragraph prose"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "section_id": "MA-S5",
+      "heading": "Second retrieval stage: passage retrieval via global importance aggregation",
+      "accepted": false,
+      "failures": [
+        "writer_output_incomplete",
+        "missing_required_briefs:brief:story:O-COMPONENT-05-29ba03a1,brief:story:O-COMPONENT-06-bf20ec9b,brief:story:O-ORGANIZATION-05-e0c123aa,brief:story:O-RATIONALE-CHECK-03-09c84504,brief:story:O-RATIONALE-CHECK-05-ffcf3556,brief:story:O-RATIONALE-CHECK-06-0f48dc22"
+      ],
+      "output": {
+        "section_id": "MA-S5",
+        "heading_text": "Second retrieval stage: passage retrieval via global importance aggregation",
+        "section_markdown": "## Second retrieval stage: passage retrieval via global importance aggregation\n\nPassage retrieval operates by seeding personalized PageRank on the passage–entity subgraph $G$ with the activated entities, initializing each passage node with a hybrid weight $w_{text{node}} = w_{text{entity}} + w_{text{passage}}$ that combines entity-based scores with direct query–passage similarity. Influence then propagates through the undirected, weighted edges of $G$ under damping factor $\theta$ and reset vector $r_0$, yielding a PageRank score vector $r$ that is sorted in descending order to produce the ranked permutation $\theta$ of passage indices. $$\n\\begin{aligned} \\mathbf{w}_{\\text{node}} &= \\mathbf{w}_{\\text{entity}} + \\mathbf{w}_{\\text{passage}} \\\\ \\mathbf{r} &= \\text{PPR}\\left(G, \\mathbf{w}_{\\text{node}}, \\alpha, \\mathbf{r}_0\\right) \\\\ \\pi &= \\text{argsort}(\\mathbf{r}) \\end{aligned}\n$$ This retrieval path is active when the vectorized-retrieval configuration flag is enabled, which triggers precomputation of sparse adjacency matrices for the subgraph.",
+        "rendered_proposition_ids": [],
+        "deferred_proposition_ids": [],
+        "rendered_concept_keys": [],
+        "deferred_concept_keys": [],
+        "rendered_brief_ids": [
+          "brief:story:O-STAGE-03-8dda66b9"
+        ],
+        "deferred_brief_ids": [],
+        "rendered_from_facet_ids": [],
+        "rendered_field_candidate_ids": [],
+        "deferred_facet_ids": [],
+        "rendered_paragraph_ids": [],
+        "rendered_slot_ids": [],
+        "rendered_edge_ids": [],
+        "used_formula_package_ids": [
+          "pkg-MA-S5-01"
+        ],
+        "used_argument_unit_ids": [],
+        "used_claim_ids": [],
+        "used_equation_ids": [],
+        "used_configuration_ids": [],
+        "completed_rhetorical_moves": [],
+        "new_research_requests": [
+          {
+            "argument_unit_id": "MA-S5:unit-1",
+            "evidence_refs_used": [],
+            "exact_question": "How does the hybrid initialization combine direct query–passage similarity with entity-based statistics to set initial PPR scores for passage nodes?",
+            "missing_parts": [
+              "Second retrieval stage: passage retrieval via global importance aggregation (hybrid passage initialization, personalized PageRank)",
+              "empty mechanism draft",
+              "Hybrid Passage Initialization: Combines direct query–passage similarity with entity‑based statistics (occurrence, level) to set initial PPR scores for passage nodes.",
+              "Decouple retrieval into a local entity‑activation stage and a global passage‑ranking stage.",
+              "Employ personalized PageRank on the passage‑entity graph for passage retrieval.",
+              "Initialize passage PPR scores with a hybrid of direct similarity and entity‑based evidence.",
+              "Personalized PageRank: Global importance aggregation on the passage–entity subgraph;",
+              "ranks passages by propagating influence from activated entities."
+            ],
+            "missing_rhetorical_move": "mechanism_overview",
+            "request_id": "req:MA-S5:unit-1:hybrid-init",
+            "required_authority_lane": "executable_hard",
+            "section_id": "MA-S5",
+            "status": "open",
+            "target_clause_ids": [
+              "clause:O-ORGANIZATION-05-e0c123aa:0",
+              "clause:O-COMPONENT-06-bf20ec9b:0",
+              "clause:O-RATIONALE-CHECK-03-09c84504:0",
+              "clause:O-RATIONALE-CHECK-05-ffcf3556:0",
+              "clause:O-RATIONALE-CHECK-06-0f48dc22:0",
+              "clause:O-COMPONENT-05-29ba03a1:0",
+              "clause:O-COMPONENT-05-29ba03a1:1"
+            ],
+            "target_brief_ids": [
+              "brief:story:O-ORGANIZATION-05-e0c123aa",
+              "brief:story:O-COMPONENT-06-bf20ec9b",
+              "brief:story:O-RATIONALE-CHECK-03-09c84504",
+              "brief:story:O-RATIONALE-CHECK-05-ffcf3556",
+              "brief:story:O-RATIONALE-CHECK-06-0f48dc22",
+              "brief:story:O-COMPONENT-05-29ba03a1"
+            ]
+          }
+        ],
+        "self_identified_risks": [],
+        "unresolved_points": [],
+        "paragraphs": [
+          {
+            "paragraph_id": "paragraph:MA-S5:method-unit-1",
+            "paragraph_markdown": "Passage retrieval operates by seeding personalized PageRank on the passage–entity subgraph $G$ with the activated entities, initializing each passage node with a hybrid weight $w_{text{node}} = w_{text{entity}} + w_{text{passage}}$ that combines entity-based scores with direct query–passage similarity. Influence then propagates through the undirected, weighted edges of $G$ under damping factor $\theta$ and reset vector $r_0$, yielding a PageRank score vector $r$ that is sorted in descending order to produce the ranked permutation $\theta$ of passage indices. $$\n\\begin{aligned} \\mathbf{w}_{\\text{node}} &= \\mathbf{w}_{\\text{entity}} + \\mathbf{w}_{\\text{passage}} \\\\ \\mathbf{r} &= \\text{PPR}\\left(G, \\mathbf{w}_{\\text{node}}, \\alpha, \\mathbf{r}_0\\right) \\\\ \\pi &= \\text{argsort}(\\mathbf{r}) \\end{aligned}\n$$ This retrieval path is active when the vectorized-retrieval configuration flag is enabled, which triggers precomputation of sparse adjacency matrices for the subgraph.",
+            "rendered_from_facet_ids": [
+              "facet-11f57730a8077780",
+              "facet-6c02c195374453b1"
+            ],
+            "rendered_field_candidate_ids": [],
+            "rendered_slot_ids": [],
+            "rendered_edge_ids": [],
+            "used_formula_package_ids": [
+              "pkg-MA-S5-01"
+            ],
+            "used_claim_ids": [],
+            "used_equation_ids": [],
+            "witnesses": [
+              {
+                "witness_kind": "facet",
+                "target_id": "facet-11f57730a8077780",
+                "exact_text": "Passage retrieval operates by seeding personalized PageRank on the passage–entity subgraph $G$ with the activated entities, initializing each passage node with a hybrid weight $w_{text{node}} = w_{text{entity}} + w_{text{passage}}$ that combines entity-based scores with direct query–passage similarity."
+              },
+              {
+                "witness_kind": "facet",
+                "target_id": "facet-6c02c195374453b1",
+                "exact_text": "Passage retrieval operates by seeding personalized PageRank on the passage–entity subgraph $G$ with the activated entities, initializing each passage node with a hybrid weight $w_{text{node}} = w_{text{entity}} + w_{text{passage}}$ that combines entity-based scores with direct query–passage similarity."
+              },
+              {
+                "witness_kind": "formula",
+                "target_id": "pkg-MA-S5-01",
+                "exact_text": "$$\n\\begin{aligned} \\mathbf{w}_{\\text{node}} &= \\mathbf{w}_{\\text{entity}} + \\mathbf{w}_{\\text{passage}} \\\\ \\mathbf{r} &= \\text{PPR}\\left(G, \\mathbf{w}_{\\text{node}}, \\alpha, \\mathbf{r}_0\\right) \\\\ \\pi &= \\text{argsort}(\\mathbf{r}) \\end{aligned}\n$$"
+              }
+            ],
+            "formula_disposition": "consumed",
+            "formula_disposition_reason": "",
+            "formula_dispositions": []
+          }
+        ]
+      }
+    }
+  ],
+  "accepted_section_ids": [],
+  "incomplete_section_ids": [
+    "MA-S1",
+    "MA-S2",
+    "MA-S3",
+    "MA-S4",
+    "MA-S5"
+  ],
+  "binding_failures": [
+    "MA-S1:writer_output_incomplete",
+    "MA-S1:invalid_writing_research_callback:design_objective@MA-S1/MA-S1:unit-1/expository_bridge",
+    "MA-S1:missing_required_briefs:brief:story:O-COMPONENT-01-bd3b9454",
+    "MA-S2:writer_output_incomplete",
+    "MA-S2:invalid_writing_research_callback:problem_or_local_context@MA-S2/MA-S2:unit/expository_bridge",
+    "MA-S3:writer_output_incomplete",
+    "MA-S3:invalid_writing_research_callback:equation_or_derivation@MA-S3/MA-S3:unit-1/formal_derivation",
+    "MA-S3:missing_required_briefs:brief:story:O-RATIONALE-CHECK-02-1a90a997",
+    "MA-S4:writer_output_incomplete",
+    "MA-S4:missing_writing_research_callback:mechanism_overview",
+    "MA-S4:invalid_writing_research_callback:mechanism_overview@MA-S4/MA-S4:unit-1/expository_bridge",
+    "MA-S4:missing_required_briefs:brief:story:O-COMPONENT-03-0c4d02ed,brief:story:O-COMPONENT-04-4f4f1da6,brief:story:O-ORGANIZATION-04-8fc65790,brief:story:O-STAGE-02-93c16851",
+    "MA-S5:writer_output_incomplete",
+    "MA-S5:missing_required_briefs:brief:story:O-COMPONENT-05-29ba03a1,brief:story:O-COMPONENT-06-bf20ec9b,brief:story:O-ORGANIZATION-05-e0c123aa,brief:story:O-RATIONALE-CHECK-03-09c84504,brief:story:O-RATIONALE-CHECK-05-ffcf3556,brief:story:O-RATIONALE-CHECK-06-0f48dc22",
+    "formalization_required_obligation_unresolved:MA-S4:formula:section:MA-S4:derivation",
+    "formalization_required_obligation_unresolved:MA-S5:formula:section:MA-S5:derivation",
+    "no_generation_spans"
+  ],
+  "writer_aggregate": {
+    "sections": [
+      {
+        "section_id": "MA-S1",
+        "heading": "Motivation: revisit GraphRAG shortcomings from relation extraction errors",
+        "text_length": 341,
+        "finish_reason": "structured_complete",
+        "extended_budget_used": false,
+        "blocked_reason": "publication_paragraph_transaction_failed:required_target_contract:paragraph:MA-S1:method-unit-1:slot:slot:fact-O-COMPONENT-01-bd3b9454-node:0cb62ab4a3a7d394;required_target_contract:paragraph:MA-S1:method-unit-1:slot:slot:fact-O-COMPONENT-01-bd3b9454-node:06528ded27aa13a3;required_target_contract:paragraph:MA-S1:method-unit-1:slot:slot:fact-O-COMPONENT-01-bd3b9454-rel:a8fd15dc040083c2;required_target_contract:paragraph:MA-S1:method-unit-1:slot:slot:fact-O-COMPONENT-01-bd3b9454-node:e1288fc52819b915;required_target_contract:paragraph:MA-S1:method-unit-1:slot:slot:fact-O-COMPONENT-01-bd3b9454-node:52765b58d59f93a0;required_target_contract:paragraph:MA-S1:method-unit-1:edge:rel:9c39c339b8028cfc"
+      },
+      {
+        "section_id": "MA-S2",
+        "heading": "LinearRAG overview: Tri‑Graph concept and two‑stage retrieval philosophy",
+        "text_length": 330,
+        "finish_reason": "structured_complete",
+        "extended_budget_used": false,
+        "blocked_reason": "publication_paragraph_transaction_failed:required_target_contract:paragraph:MA-S2:method-unit-1:formula:formula:facet:facet-8ce6e8dabb55bf84"
+      },
+      {
+        "section_id": "MA-S3",
+        "heading": "Offline Tri‑Graph construction",
+        "text_length": 480,
+        "finish_reason": "structured_complete",
+        "extended_budget_used": false,
+        "blocked_reason": "publication_paragraph_transaction_failed:required_target_contract:paragraph:MA-S3:method-unit-1:slot:slot:fact-O-STAGE-01-9c8dfe22-node:f21427b316d80682;required_target_contract:paragraph:MA-S3:method-unit-1:formula:formula:facet:facet-36188cb856f44d0d"
+      },
+      {
+        "section_id": "MA-S4",
+        "heading": "First retrieval stage: relevant entity activation via local semantic bridging",
+        "text_length": 1286,
+        "finish_reason": "structured_complete",
+        "extended_budget_used": false,
+        "blocked_reason": "publication_paragraph_transaction_failed:required_target_contract:paragraph:MA-S4:method-unit-1:facet:facet-dfd9e7cedfe705e0;required_target_contract:paragraph:MA-S4:method-unit-1:slot:slot:fact-O-STAGE-02-93c16851-node:3e4f8dac1595a0af;required_target_contract:paragraph:MA-S4:method-unit-1:slot:slot:fact-O-STAGE-02-93c16851-node:dbc9e615e1abdb23;required_target_contract:paragraph:MA-S4:method-unit-1:slot:slot:fact-O-STAGE-02-93c16851-node:832a80d4d603dfda;required_target_contract:paragraph:MA-S4:method-unit-1:slot:slot:fact-O-STAGE-02-93c16851-node:dbe47970ca704834"
+      },
+      {
+        "section_id": "MA-S5",
+        "heading": "Second retrieval stage: passage retrieval via global importance aggregation",
+        "text_length": 1058,
+        "finish_reason": "structured_complete",
+        "extended_budget_used": false,
+        "blocked_reason": "publication_paragraph_transaction_failed:required_target_contract:paragraph:MA-S5:method-unit-1:facet:facet-aee51cb1cb5c563f;required_target_contract:paragraph:MA-S5:method-unit-1:slot:slot:fact-O-METHOD-MAINLINE-01-79899e6c-node:29c327b051baa4b2;required_target_contract:paragraph:MA-S5:method-unit-1:slot:slot:fact-O-METHOD-MAINLINE-01-79899e6c-node:120e548b0781989f;required_target_contract:paragraph:MA-S5:method-unit-1:slot:slot:fact-O-METHOD-MAINLINE-01-79899e6c-rel:370037831dc97fea;required_target_contract:paragraph:MA-S5:method-unit-1:slot:slot:fact-O-METHOD-MAINLINE-01-79899e6c-node:2cf918d7e93d7113;required_target_contract:paragraph:MA-S5:method-unit-1:slot:slot:fact-O-METHOD-MAINLINE-01-79899e6c-node:ea92b7c26acc5f71"
+      }
+    ],
+    "traces": [
+      {
+        "call_id": "LLM-publication-method-section-0-MA-S1",
+        "prompt_template_id": "phase5_method_writer_section_v1",
+        "role": "method_writer",
+        "provider": "openai",
+        "model": "qwen38-27b-nvfp4",
+        "endpoint_origin": "http://127.0.0.1:8006",
+        "effective_config": {
+          "role": "method_writer",
+          "temperature": 0.7,
+          "max_output_tokens": 8192,
+          "reasoning_effort": "low",
+          "thinking_token_budget": 1024,
+          "top_p": 0.95,
+          "top_k": 20,
+          "seed": 42,
+          "max_input_tokens": null,
+          "prompt_template_version": ""
+        },
+        "finish_reason": "structured_complete",
+        "token_usage": {
+          "completion_tokens": 364
+        },
+        "blocked_reason": "publication_paragraph_transaction_failed:required_target_contract:paragraph:MA-S1:method-unit-1:slot:slot:fact-O-COMPONENT-01-bd3b9454-node:0cb62ab4a3a7d394;required_target_contract:paragraph:MA-S1:method-unit-1:slot:slot:fact-O-COMPONENT-01-bd3b9454-node:06528ded27aa13a3;required_target_contract:paragraph:MA-S1:method-unit-1:slot:slot:fact-O-COMPONENT-01-bd3b9454-rel:a8fd15dc040083c2;required_target_contract:paragraph:MA-S1:method-unit-1:slot:slot:fact-O-COMPONENT-01-bd3b9454-node:e1288fc52819b915;required_target_contract:paragraph:MA-S1:method-unit-1:slot:slot:fact-O-COMPONENT-01-bd3b9454-node:52765b58d59f93a0;required_target_contract:paragraph:MA-S1:method-unit-1:edge:rel:9c39c339b8028cfc",
+        "cached": false,
+        "response_mode": "native_json_schema",
+        "schema_name": "publication_method_section_v1",
+        "input_hash": "sha256:6d617a0ccb0a51509b0e47e5d46c76e207e0200a9a8b812fed86c564ad0fe216",
+        "response_hash": "sha256:52a05747801c0bdd9f69ddd43e073c35014bee23a948b55a03ee590656bc8455",
+        "prompt_chars": 6143,
+        "input_payload_chars": 3811,
+        "schema_chars": 8275,
+        "thinking_chars": 0,
+        "extended_budget_used": false,
+        "cumulative_budget_consumed": 364
+      },
+      {
+        "call_id": "LLM-publication-method-section-1-MA-S2",
+        "prompt_template_id": "phase5_method_writer_section_v1",
+        "role": "method_writer",
+        "provider": "openai",
+        "model": "qwen38-27b-nvfp4",
+        "endpoint_origin": "http://127.0.0.1:8006",
+        "effective_config": {
+          "role": "method_writer",
+          "temperature": 0.7,
+          "max_output_tokens": 8192,
+          "reasoning_effort": "low",
+          "thinking_token_budget": 1024,
+          "top_p": 0.95,
+          "top_k": 20,
+          "seed": 42,
+          "max_input_tokens": null,
+          "prompt_template_version": ""
+        },
+        "finish_reason": "structured_complete",
+        "token_usage": {
+          "completion_tokens": 448
+        },
+        "blocked_reason": "publication_paragraph_transaction_failed:required_target_contract:paragraph:MA-S2:method-unit-1:formula:formula:facet:facet-8ce6e8dabb55bf84",
+        "cached": false,
+        "response_mode": "native_json_schema",
+        "schema_name": "publication_method_section_v1",
+        "input_hash": "sha256:6a39658286447753bfec9a52297b031159321567303e7efbd18bd583bbf715f9",
+        "response_hash": "sha256:d1a9f2c8a651299ec518b2a920fc5697126fca269b815550e81dd2059ffee4dc",
+        "prompt_chars": 6143,
+        "input_payload_chars": 1993,
+        "schema_chars": 8173,
+        "thinking_chars": 0,
+        "extended_budget_used": false,
+        "cumulative_budget_consumed": 812
+      },
+      {
+        "call_id": "LLM-publication-method-section-2-MA-S3",
+        "prompt_template_id": "phase5_method_writer_section_v1",
+        "role": "method_writer",
+        "provider": "openai",
+        "model": "qwen38-27b-nvfp4",
+        "endpoint_origin": "http://127.0.0.1:8006",
+        "effective_config": {
+          "role": "method_writer",
+          "temperature": 0.7,
+          "max_output_tokens": 8192,
+          "reasoning_effort": "low",
+          "thinking_token_budget": 1024,
+          "top_p": 0.95,
+          "top_k": 20,
+          "seed": 42,
+          "max_input_tokens": null,
+          "prompt_template_version": ""
+        },
+        "finish_reason": "structured_complete",
+        "token_usage": {
+          "completion_tokens": 374
+        },
+        "blocked_reason": "publication_paragraph_transaction_failed:required_target_contract:paragraph:MA-S3:method-unit-1:slot:slot:fact-O-STAGE-01-9c8dfe22-node:f21427b316d80682;required_target_contract:paragraph:MA-S3:method-unit-1:formula:formula:facet:facet-36188cb856f44d0d",
+        "cached": false,
+        "response_mode": "native_json_schema",
+        "schema_name": "publication_method_section_v1",
+        "input_hash": "sha256:2510f754c789708a73d4d08b7bacc8470cbbb61f42c01c17122775c9f79066d2",
+        "response_hash": "sha256:037dfb51a30a903796e09cf4805cf454bfbd8bb72f98b3c3883e6e9c1887c268",
+        "prompt_chars": 6143,
+        "input_payload_chars": 2619,
+        "schema_chars": 8441,
+        "thinking_chars": 0,
+        "extended_budget_used": false,
+        "cumulative_budget_consumed": 1186
+      },
+      {
+        "call_id": "LLM-publication-method-section-2-MA-S3-content-1",
+        "prompt_template_id": "phase5_method_writer_section_v1_content_repair_v1",
+        "role": "method_writer",
+        "provider": "openai",
+        "model": "qwen38-27b-nvfp4",
+        "endpoint_origin": "http://127.0.0.1:8006",
+        "effective_config": {
+          "role": "method_writer",
+          "temperature": 0.7,
+          "max_output_tokens": 8192,
+          "reasoning_effort": "low",
+          "thinking_token_budget": 1024,
+          "top_p": 0.95,
+          "top_k": 20,
+          "seed": 42,
+          "max_input_tokens": null,
+          "prompt_template_version": ""
+        },
+        "finish_reason": "structured_complete",
+        "token_usage": {
+          "completion_tokens": 553
+        },
+        "blocked_reason": "publication_paragraph_transaction_failed:required_target_contract:paragraph:MA-S3:method-unit-1:slot:slot:fact-O-STAGE-01-9c8dfe22-node:f21427b316d80682;required_target_contract:paragraph:MA-S3:method-unit-1:formula:formula:facet:facet-36188cb856f44d0d",
+        "cached": false,
+        "response_mode": "native_json_schema",
+        "schema_name": "publication_method_section_v1",
+        "input_hash": "sha256:64e91e7ccb40e2b41e85c79362de3cba818d75d4da93ba9604de9cef10201602",
+        "response_hash": "sha256:bb6124c202f6a74f54119639ac1d29170353ef40b71b7c6c557511660e645313",
+        "prompt_chars": 6143,
+        "input_payload_chars": 8086,
+        "schema_chars": 8441,
+        "thinking_chars": 0,
+        "extended_budget_used": false,
+        "cumulative_budget_consumed": 1739
+      },
+      {
+        "call_id": "LLM-publication-method-section-2-MA-S3-content-2",
+        "prompt_template_id": "phase5_method_writer_section_v1_content_repair_v1",
+        "role": "method_writer",
+        "provider": "openai",
+        "model": "qwen38-27b-nvfp4",
+        "endpoint_origin": "http://127.0.0.1:8006",
+        "effective_config": {
+          "role": "method_writer",
+          "temperature": 0.7,
+          "max_output_tokens": 8192,
+          "reasoning_effort": "low",
+          "thinking_token_budget": 1024,
+          "top_p": 0.95,
+          "top_k": 20,
+          "seed": 42,
+          "max_input_tokens": null,
+          "prompt_template_version": ""
+        },
+        "finish_reason": "structured_complete",
+        "token_usage": {
+          "completion_tokens": 448
+        },
+        "blocked_reason": "publication_paragraph_transaction_failed:required_target_contract:paragraph:MA-S3:method-unit-1:slot:slot:fact-O-STAGE-01-9c8dfe22-node:f21427b316d80682;required_target_contract:paragraph:MA-S3:method-unit-1:formula:formula:facet:facet-36188cb856f44d0d",
+        "cached": false,
+        "response_mode": "native_json_schema",
+        "schema_name": "publication_method_section_v1",
+        "input_hash": "sha256:ef30e53d2221f8bae4037cc8d5ee1e2dcfb061c3b12d989125c15fdbba1f5233",
+        "response_hash": "sha256:591b7823a025fa055a274c56df32d2a9957501cda916e15e30dba374701d72cc",
+        "prompt_chars": 6143,
+        "input_payload_chars": 8118,
+        "schema_chars": 8441,
+        "thinking_chars": 0,
+        "extended_budget_used": false,
+        "cumulative_budget_consumed": 2187
+      },
+      {
+        "call_id": "LLM-publication-method-section-3-MA-S4",
+        "prompt_template_id": "phase5_method_writer_section_v1",
+        "role": "method_writer",
+        "provider": "openai",
+        "model": "qwen38-27b-nvfp4",
+        "endpoint_origin": "http://127.0.0.1:8006",
+        "effective_config": {
+          "role": "method_writer",
+          "temperature": 0.7,
+          "max_output_tokens": 8192,
+          "reasoning_effort": "low",
+          "thinking_token_budget": 1024,
+          "top_p": 0.95,
+          "top_k": 20,
+          "seed": 42,
+          "max_input_tokens": null,
+          "prompt_template_version": ""
+        },
+        "finish_reason": "structured_complete",
+        "token_usage": {
+          "completion_tokens": 631
+        },
+        "blocked_reason": "publication_section_binding_failed:formula_placeholder:paragraph:MA-S4:method-unit-1:formula_placeholder_missing:pkg-MA-S4-001",
+        "cached": false,
+        "response_mode": "native_json_schema",
+        "schema_name": "publication_method_section_v1",
+        "input_hash": "sha256:6d270d45650360d72a681eaf2185188f150eed0fee4d39553ce618c2b8f0da5a",
+        "response_hash": "sha256:abf34bfbeeb2fd05de1847cd8b1067c311aadc2f0b205e56b21ea431d6eb9472",
+        "prompt_chars": 6143,
+        "input_payload_chars": 7374,
+        "schema_chars": 8815,
+        "thinking_chars": 0,
+        "extended_budget_used": false,
+        "cumulative_budget_consumed": 2818
+      },
+      {
+        "call_id": "LLM-publication-method-section-3-MA-S4-representation-retry",
+        "prompt_template_id": "phase5_method_writer_section_v1_representation_repair_v1",
+        "role": "method_writer",
+        "provider": "openai",
+        "model": "qwen38-27b-nvfp4",
+        "endpoint_origin": "http://127.0.0.1:8006",
+        "effective_config": {
+          "role": "method_writer",
+          "temperature": 0.7,
+          "max_output_tokens": 8192,
+          "reasoning_effort": "low",
+          "thinking_token_budget": 1024,
+          "top_p": 0.95,
+          "top_k": 20,
+          "seed": 42,
+          "max_input_tokens": null,
+          "prompt_template_version": ""
+        },
+        "finish_reason": "structured_complete",
+        "token_usage": {
+          "completion_tokens": 760
+        },
+        "blocked_reason": "publication_paragraph_transaction_failed:required_target_contract:paragraph:MA-S4:method-unit-1:facet:facet-49c35a32b3156393;required_target_contract:paragraph:MA-S4:method-unit-1:slot:slot:fact-O-STAGE-02-93c16851-node:3e4f8dac1595a0af;required_target_contract:paragraph:MA-S4:method-unit-1:slot:slot:fact-O-STAGE-02-93c16851-node:dbc9e615e1abdb23;required_target_contract:paragraph:MA-S4:method-unit-1:slot:slot:fact-O-STAGE-02-93c16851-node:832a80d4d603dfda;required_target_contract:paragraph:MA-S4:method-unit-1:slot:slot:fact-O-STAGE-02-93c16851-node:dbe47970ca704834",
+        "cached": false,
+        "response_mode": "native_json_schema",
+        "schema_name": "publication_method_section_v1",
+        "input_hash": "sha256:14fa521266e4790757eb3c973c547e5ae0bfff935a8f959b9cdefa23e7c2ef80",
+        "response_hash": "sha256:e678b600ed42164efa7c6bd911e8936c4370bc652aeee2f4d5b61e42aa63ebb8",
+        "prompt_chars": 6143,
+        "input_payload_chars": 7530,
+        "schema_chars": 8815,
+        "thinking_chars": 0,
+        "extended_budget_used": false,
+        "cumulative_budget_consumed": 3578
+      },
+      {
+        "call_id": "LLM-publication-method-section-3-MA-S4-content-1",
+        "prompt_template_id": "phase5_method_writer_section_v1_content_repair_v1",
+        "role": "method_writer",
+        "provider": "openai",
+        "model": "qwen38-27b-nvfp4",
+        "endpoint_origin": "http://127.0.0.1:8006",
+        "effective_config": {
+          "role": "method_writer",
+          "temperature": 0.7,
+          "max_output_tokens": 8192,
+          "reasoning_effort": "low",
+          "thinking_token_budget": 1024,
+          "top_p": 0.95,
+          "top_k": 20,
+          "seed": 42,
+          "max_input_tokens": null,
+          "prompt_template_version": ""
+        },
+        "finish_reason": "structured_complete",
+        "token_usage": {
+          "completion_tokens": 752
+        },
+        "blocked_reason": "publication_section_binding_failed:formula_placeholder:paragraph:MA-S4:method-unit-1:formula_placeholder_missing:pkg-MA-S4-001",
+        "cached": false,
+        "response_mode": "native_json_schema",
+        "schema_name": "publication_method_section_v1",
+        "input_hash": "sha256:b48ca7c8b4da2a2722c73de9639c06d96bc5f489c4257c080256895ffbd4fcb6",
+        "response_hash": "sha256:e4993f6f857fdeb00673d65eb288590e7faa116b3b5064a79a5b04e00e2f5ae6",
+        "prompt_chars": 6143,
+        "input_payload_chars": 31250,
+        "schema_chars": 8815,
+        "thinking_chars": 0,
+        "extended_budget_used": false,
+        "cumulative_budget_consumed": 4330
+      },
+      {
+        "call_id": "LLM-publication-method-section-3-MA-S4-content-2",
+        "prompt_template_id": "phase5_method_writer_section_v1_content_repair_v1",
+        "role": "method_writer",
+        "provider": "openai",
+        "model": "qwen38-27b-nvfp4",
+        "endpoint_origin": "http://127.0.0.1:8006",
+        "effective_config": {
+          "role": "method_writer",
+          "temperature": 0.7,
+          "max_output_tokens": 8192,
+          "reasoning_effort": "low",
+          "thinking_token_budget": 1024,
+          "top_p": 0.95,
+          "top_k": 20,
+          "seed": 42,
+          "max_input_tokens": null,
+          "prompt_template_version": ""
+        },
+        "finish_reason": "structured_complete",
+        "token_usage": {
+          "completion_tokens": 698
+        },
+        "blocked_reason": "publication_paragraph_transaction_failed:required_target_contract:paragraph:MA-S4:method-unit-1:facet:facet-dfd9e7cedfe705e0;required_target_contract:paragraph:MA-S4:method-unit-1:slot:slot:fact-O-STAGE-02-93c16851-node:3e4f8dac1595a0af;required_target_contract:paragraph:MA-S4:method-unit-1:slot:slot:fact-O-STAGE-02-93c16851-node:dbc9e615e1abdb23;required_target_contract:paragraph:MA-S4:method-unit-1:slot:slot:fact-O-STAGE-02-93c16851-node:832a80d4d603dfda;required_target_contract:paragraph:MA-S4:method-unit-1:slot:slot:fact-O-STAGE-02-93c16851-node:dbe47970ca704834",
+        "cached": false,
+        "response_mode": "native_json_schema",
+        "schema_name": "publication_method_section_v1",
+        "input_hash": "sha256:5b2a73af6a7090b98fb46c59d92cfbfcf4c9ddaa54bccd0fda34680174304ce4",
+        "response_hash": "sha256:0efe84597a338f9560a8c9ba3859622463c54497e66c2e0283268593b0a09733",
+        "prompt_chars": 6143,
+        "input_payload_chars": 31282,
+        "schema_chars": 8815,
+        "thinking_chars": 0,
+        "extended_budget_used": false,
+        "cumulative_budget_consumed": 5028
+      },
+      {
+        "call_id": "LLM-publication-method-section-4-MA-S5",
+        "prompt_template_id": "phase5_method_writer_section_v1",
+        "role": "method_writer",
+        "provider": "openai",
+        "model": "qwen38-27b-nvfp4",
+        "endpoint_origin": "http://127.0.0.1:8006",
+        "effective_config": {
+          "role": "method_writer",
+          "temperature": 0.7,
+          "max_output_tokens": 8192,
+          "reasoning_effort": "low",
+          "thinking_token_budget": 1024,
+          "top_p": 0.95,
+          "top_k": 20,
+          "seed": 42,
+          "max_input_tokens": null,
+          "prompt_template_version": ""
+        },
+        "finish_reason": "structured_complete",
+        "token_usage": {
+          "completion_tokens": 439
+        },
+        "blocked_reason": "publication_paragraph_transaction_failed:required_target_contract:paragraph:MA-S5:method-unit-1:facet:facet-aee51cb1cb5c563f;required_target_contract:paragraph:MA-S5:method-unit-1:slot:slot:fact-O-METHOD-MAINLINE-01-79899e6c-node:29c327b051baa4b2;required_target_contract:paragraph:MA-S5:method-unit-1:slot:slot:fact-O-METHOD-MAINLINE-01-79899e6c-node:120e548b0781989f;required_target_contract:paragraph:MA-S5:method-unit-1:slot:slot:fact-O-METHOD-MAINLINE-01-79899e6c-rel:370037831dc97fea;required_target_contract:paragraph:MA-S5:method-unit-1:slot:slot:fact-O-METHOD-MAINLINE-01-79899e6c-node:2cf918d7e93d7113;required_target_contract:paragraph:MA-S5:method-unit-1:slot:slot:fact-O-METHOD-MAINLINE-01-79899e6c-node:ea92b7c26acc5f71",
+        "cached": false,
+        "response_mode": "native_json_schema",
+        "schema_name": "publication_method_section_v1",
+        "input_hash": "sha256:b048c8b60fd590bc893783b51347889e17ce42232cd3907a65d84c47e894ec26",
+        "response_hash": "sha256:97e77735d7f6ec97fe1c37ecb87a4e74dbd8f151fdca84cf81e33e8c64a41360",
+        "prompt_chars": 6143,
+        "input_payload_chars": 9608,
+        "schema_chars": 8997,
+        "thinking_chars": 0,
+        "extended_budget_used": false,
+        "cumulative_budget_consumed": 5467
+      },
+      {
+        "call_id": "LLM-publication-method-section-MA-S1-paragraph:MA-S1:method-unit-1-binder-1",
+        "prompt_template_id": "phase5_publication_paragraph_binder_v1",
+        "role": "semantic_verifier",
+        "provider": "openai",
+        "model": "qwen38-27b-nvfp4",
+        "endpoint_origin": "http://127.0.0.1:8006",
+        "effective_config": {
+          "role": "semantic_verifier",
+          "temperature": 0.0,
+          "max_output_tokens": 1024,
+          "reasoning_effort": "none",
+          "thinking_token_budget": null,
+          "top_p": 0.95,
+          "top_k": 20,
+          "seed": null,
+          "max_input_tokens": null,
+          "prompt_template_version": ""
+        },
+        "finish_reason": "structured_complete",
+        "token_usage": {},
+        "blocked_reason": "",
+        "cached": false,
+        "response_mode": "native_json_schema",
+        "schema_name": "publication_paragraph_binding_v1",
+        "input_hash": "sha256:0e05d5c603e23a30c7088623911c47f1851ec9f56b2285ff60736a9b0416435f",
+        "response_hash": "sha256:dedbcdccaa8e11c35b0d65ed0ac2760133c9078dcf2ff8aa3a08f13c9a1ac8d9",
+        "prompt_chars": 998,
+        "input_payload_chars": 2478,
+        "schema_chars": 1350,
+        "thinking_chars": 0,
+        "extended_budget_used": false,
+        "cumulative_budget_consumed": null
+      },
+      {
+        "call_id": "LLM-publication-method-section-MA-S3-paragraph:MA-S3:method-unit-1-binder-1",
+        "prompt_template_id": "phase5_publication_paragraph_binder_v1",
+        "role": "semantic_verifier",
+        "provider": "openai",
+        "model": "qwen38-27b-nvfp4",
+        "endpoint_origin": "http://127.0.0.1:8006",
+        "effective_config": {
+          "role": "semantic_verifier",
+          "temperature": 0.0,
+          "max_output_tokens": 1024,
+          "reasoning_effort": "none",
+          "thinking_token_budget": null,
+          "top_p": 0.95,
+          "top_k": 20,
+          "seed": null,
+          "max_input_tokens": null,
+          "prompt_template_version": ""
+        },
+        "finish_reason": "structured_complete",
+        "token_usage": {},
+        "blocked_reason": "",
+        "cached": false,
+        "response_mode": "native_json_schema",
+        "schema_name": "publication_paragraph_binding_v1",
+        "input_hash": "sha256:58e0618e5413e77377e1a0057e4d4fa2eb1ae7fd9916059c320acd8c6e3585c0",
+        "response_hash": "sha256:b9808187137622e075b8c23b0fb1790912803350d3be8a5dbc0a5f4719b33d18",
+        "prompt_chars": 998,
+        "input_payload_chars": 930,
+        "schema_chars": 1350,
+        "thinking_chars": 0,
+        "extended_budget_used": false,
+        "cumulative_budget_consumed": null
+      },
+      {
+        "call_id": "LLM-publication-method-section-MA-S3-paragraph:MA-S3:method-unit-1-binder-1",
+        "prompt_template_id": "phase5_publication_paragraph_binder_v1",
+        "role": "semantic_verifier",
+        "provider": "openai",
+        "model": "qwen38-27b-nvfp4",
+        "endpoint_origin": "http://127.0.0.1:8006",
+        "effective_config": {
+          "role": "semantic_verifier",
+          "temperature": 0.0,
+          "max_output_tokens": 1024,
+          "reasoning_effort": "none",
+          "thinking_token_budget": null,
+          "top_p": 0.95,
+          "top_k": 20,
+          "seed": null,
+          "max_input_tokens": null,
+          "prompt_template_version": ""
+        },
+        "finish_reason": "structured_complete",
+        "token_usage": {},
+        "blocked_reason": "",
+        "cached": false,
+        "response_mode": "native_json_schema",
+        "schema_name": "publication_paragraph_binding_v1",
+        "input_hash": "sha256:b4cbbc8c3a29ccfa8f25746a0cba8308e1fcd0b361aaa872d120bd14693b331f",
+        "response_hash": "sha256:582c62e79326b5a9e4ff6c586eb0512a92d80a824b98ac233c7b6ef4b19f1323",
+        "prompt_chars": 998,
+        "input_payload_chars": 1280,
+        "schema_chars": 1350,
+        "thinking_chars": 0,
+        "extended_budget_used": false,
+        "cumulative_budget_consumed": null
+      },
+      {
+        "call_id": "LLM-publication-method-section-MA-S3-paragraph:MA-S3:method-unit-1-binder-1",
+        "prompt_template_id": "phase5_publication_paragraph_binder_v1",
+        "role": "semantic_verifier",
+        "provider": "openai",
+        "model": "qwen38-27b-nvfp4",
+        "endpoint_origin": "http://127.0.0.1:8006",
+        "effective_config": {
+          "role": "semantic_verifier",
+          "temperature": 0.0,
+          "max_output_tokens": 1024,
+          "reasoning_effort": "none",
+          "thinking_token_budget": null,
+          "top_p": 0.95,
+          "top_k": 20,
+          "seed": null,
+          "max_input_tokens": null,
+          "prompt_template_version": ""
+        },
+        "finish_reason": "structured_complete",
+        "token_usage": {},
+        "blocked_reason": "",
+        "cached": false,
+        "response_mode": "native_json_schema",
+        "schema_name": "publication_paragraph_binding_v1",
+        "input_hash": "sha256:b8cab97ea95fc402906b6484b00fc86cb2bd6a070badbbb8a6c0e8c72d865eab",
+        "response_hash": "sha256:582c62e79326b5a9e4ff6c586eb0512a92d80a824b98ac233c7b6ef4b19f1323",
+        "prompt_chars": 998,
+        "input_payload_chars": 997,
+        "schema_chars": 1350,
+        "thinking_chars": 0,
+        "extended_budget_used": false,
+        "cumulative_budget_consumed": null
+      },
+      {
+        "call_id": "LLM-publication-method-section-MA-S4-paragraph:MA-S4:method-unit-1-binder-1",
+        "prompt_template_id": "phase5_publication_paragraph_binder_v1",
+        "role": "semantic_verifier",
+        "provider": "openai",
+        "model": "qwen38-27b-nvfp4",
+        "endpoint_origin": "http://127.0.0.1:8006",
+        "effective_config": {
+          "role": "semantic_verifier",
+          "temperature": 0.0,
+          "max_output_tokens": 1024,
+          "reasoning_effort": "none",
+          "thinking_token_budget": null,
+          "top_p": 0.95,
+          "top_k": 20,
+          "seed": null,
+          "max_input_tokens": null,
+          "prompt_template_version": ""
+        },
+        "finish_reason": "structured_complete",
+        "token_usage": {},
+        "blocked_reason": "",
+        "cached": false,
+        "response_mode": "native_json_schema",
+        "schema_name": "publication_paragraph_binding_v1",
+        "input_hash": "sha256:9cff546709bf52acdd5d585abf9587b1673e6eb3aca89353e87d2f654629d4ff",
+        "response_hash": "sha256:d830f28fab054a62f722006770b80dd4ec8b410a274f351a70b99414b7716d64",
+        "prompt_chars": 998,
+        "input_payload_chars": 3606,
+        "schema_chars": 1350,
+        "thinking_chars": 0,
+        "extended_budget_used": false,
+        "cumulative_budget_consumed": null
+      },
+      {
+        "call_id": "LLM-publication-method-section-MA-S4-paragraph:MA-S4:method-unit-1-binder-1",
+        "prompt_template_id": "phase5_publication_paragraph_binder_v1",
+        "role": "semantic_verifier",
+        "provider": "openai",
+        "model": "qwen38-27b-nvfp4",
+        "endpoint_origin": "http://127.0.0.1:8006",
+        "effective_config": {
+          "role": "semantic_verifier",
+          "temperature": 0.0,
+          "max_output_tokens": 1024,
+          "reasoning_effort": "none",
+          "thinking_token_budget": null,
+          "top_p": 0.95,
+          "top_k": 20,
+          "seed": null,
+          "max_input_tokens": null,
+          "prompt_template_version": ""
+        },
+        "finish_reason": "structured_complete",
+        "token_usage": {},
+        "blocked_reason": "",
+        "cached": false,
+        "response_mode": "native_json_schema",
+        "schema_name": "publication_paragraph_binding_v1",
+        "input_hash": "sha256:9d9c5acca6f563abe3542f71b3a01f944bbee32f02889ec112f011c34a012dcb",
+        "response_hash": "sha256:a5be207a321effd9c6595280fb09ee809b5a1c90e61e0376f180184e442093d5",
+        "prompt_chars": 998,
+        "input_payload_chars": 5077,
+        "schema_chars": 1350,
+        "thinking_chars": 0,
+        "extended_budget_used": false,
+        "cumulative_budget_consumed": null
+      },
+      {
+        "call_id": "LLM-publication-method-section-MA-S4-paragraph:MA-S4:method-unit-1-binder-2",
+        "prompt_template_id": "phase5_publication_paragraph_binder_v1",
+        "role": "semantic_verifier",
+        "provider": "openai",
+        "model": "qwen38-27b-nvfp4",
+        "endpoint_origin": "http://127.0.0.1:8006",
+        "effective_config": {
+          "role": "semantic_verifier",
+          "temperature": 0.0,
+          "max_output_tokens": 1024,
+          "reasoning_effort": "none",
+          "thinking_token_budget": null,
+          "top_p": 0.95,
+          "top_k": 20,
+          "seed": null,
+          "max_input_tokens": null,
+          "prompt_template_version": ""
+        },
+        "finish_reason": "structured_complete",
+        "token_usage": {},
+        "blocked_reason": "",
+        "cached": false,
+        "response_mode": "native_json_schema",
+        "schema_name": "publication_paragraph_binding_v1",
+        "input_hash": "sha256:e3f62e5dc19e4b319cdce25d4ea78621d449045a26c898a393eeb91bfa815560",
+        "response_hash": "sha256:eb4c3d516f9226110736da13a50ec9d0771dcf89eaab534d8723ae069e52bad8",
+        "prompt_chars": 998,
+        "input_payload_chars": 5164,
+        "schema_chars": 1350,
+        "thinking_chars": 0,
+        "extended_budget_used": false,
+        "cumulative_budget_consumed": null
+      },
+      {
+        "call_id": "LLM-publication-method-section-MA-S5-paragraph:MA-S5:method-unit-1-binder-1",
+        "prompt_template_id": "phase5_publication_paragraph_binder_v1",
+        "role": "semantic_verifier",
+        "provider": "openai",
+        "model": "qwen38-27b-nvfp4",
+        "endpoint_origin": "http://127.0.0.1:8006",
+        "effective_config": {
+          "role": "semantic_verifier",
+          "temperature": 0.0,
+          "max_output_tokens": 1024,
+          "reasoning_effort": "none",
+          "thinking_token_budget": null,
+          "top_p": 0.95,
+          "top_k": 20,
+          "seed": null,
+          "max_input_tokens": null,
+          "prompt_template_version": ""
+        },
+        "finish_reason": "structured_complete",
+        "token_usage": {},
+        "blocked_reason": "",
+        "cached": false,
+        "response_mode": "native_json_schema",
+        "schema_name": "publication_paragraph_binding_v1",
+        "input_hash": "sha256:dea5f4bf086fe018c7e902d959ad2db1a7260f3bc7d40c100e885246db96a6d2",
+        "response_hash": "sha256:2d2b6d748f0bc36da60180bb7c7f72b55608553770bf86cedb5d3e8d5c497c40",
+        "prompt_chars": 998,
+        "input_payload_chars": 6389,
+        "schema_chars": 1350,
+        "thinking_chars": 0,
+        "extended_budget_used": false,
+        "cumulative_budget_consumed": null
+      },
+      {
+        "call_id": "LLM-publication-method-section-callback-retry-0-MA-S4",
+        "prompt_template_id": "phase5_method_writer_section_v1",
+        "role": "method_writer",
+        "provider": "openai",
+        "model": "qwen38-27b-nvfp4",
+        "endpoint_origin": "http://127.0.0.1:8006",
+        "effective_config": {
+          "role": "method_writer",
+          "temperature": 0.7,
+          "max_output_tokens": 8192,
+          "reasoning_effort": "low",
+          "thinking_token_budget": 1024,
+          "top_p": 0.95,
+          "top_k": 20,
+          "seed": 42,
+          "max_input_tokens": null,
+          "prompt_template_version": ""
+        },
+        "finish_reason": "structured_complete",
+        "token_usage": {
+          "completion_tokens": 525
+        },
+        "blocked_reason": "publication_section_binding_failed:formula_placeholder:paragraph:MA-S4:method-unit-1:formula_placeholder_missing:pkg-MA-S4-001",
+        "cached": false,
+        "response_mode": "native_json_schema",
+        "schema_name": "publication_method_section_v1",
+        "input_hash": "sha256:3f37c9257d60711b4bf27c784f37eb911826cd2c64068f6e3ddd96d58d57ae1a",
+        "response_hash": "sha256:03f1a5d4689affaf65d1177eaae3cbd8b353deff50f38bee278b2b916e516578",
+        "prompt_chars": 6143,
+        "input_payload_chars": 8000,
+        "schema_chars": 8815,
+        "thinking_chars": 0,
+        "extended_budget_used": false,
+        "cumulative_budget_consumed": 525
+      },
+      {
+        "call_id": "LLM-publication-method-section-callback-retry-0-MA-S4-representation-retry",
+        "prompt_template_id": "phase5_method_writer_section_v1_representation_repair_v1",
+        "role": "method_writer",
+        "provider": "openai",
+        "model": "qwen38-27b-nvfp4",
+        "endpoint_origin": "http://127.0.0.1:8006",
+        "effective_config": {
+          "role": "method_writer",
+          "temperature": 0.7,
+          "max_output_tokens": 8192,
+          "reasoning_effort": "low",
+          "thinking_token_budget": 1024,
+          "top_p": 0.95,
+          "top_k": 20,
+          "seed": 42,
+          "max_input_tokens": null,
+          "prompt_template_version": ""
+        },
+        "finish_reason": "structured_complete",
+        "token_usage": {
+          "completion_tokens": 440
+        },
+        "blocked_reason": "publication_section_schema_failed:schema_validation_failed:ValueError:no valid JSON object or array found after repair attempts",
+        "cached": false,
+        "response_mode": "native_json_schema",
+        "schema_name": "publication_method_section_v1",
+        "input_hash": "sha256:e2496fa26122b2a497e33ee5e3fbe8ab4874268eb0fb6573cea07d0fd2e77bf0",
+        "response_hash": "sha256:d68bbfecaced4d8bcde1e8cdcd455b44be42a2db719d208beae21da9166c34d5",
+        "prompt_chars": 6143,
+        "input_payload_chars": 8039,
+        "schema_chars": 8815,
+        "thinking_chars": 0,
+        "extended_budget_used": false,
+        "cumulative_budget_consumed": 965
+      },
+      {
+        "call_id": "LLM-publication-method-section-callback-retry-0-MA-S4-content-1",
+        "prompt_template_id": "phase5_method_writer_section_v1_content_repair_v1",
+        "role": "method_writer",
+        "provider": "openai",
+        "model": "qwen38-27b-nvfp4",
+        "endpoint_origin": "http://127.0.0.1:8006",
+        "effective_config": {
+          "role": "method_writer",
+          "temperature": 0.7,
+          "max_output_tokens": 8192,
+          "reasoning_effort": "low",
+          "thinking_token_budget": 1024,
+          "top_p": 0.95,
+          "top_k": 20,
+          "seed": 42,
+          "max_input_tokens": null,
+          "prompt_template_version": ""
+        },
+        "finish_reason": "structured_complete",
+        "token_usage": {
+          "completion_tokens": 778
+        },
+        "blocked_reason": "publication_section_binding_failed:formula_placeholder:paragraph:MA-S4:method-unit-1:formula_placeholder_duplicate:pkg-MA-S4-001",
+        "cached": false,
+        "response_mode": "native_json_schema",
+        "schema_name": "publication_method_section_v1",
+        "input_hash": "sha256:08c98846e1b243355703705b92ea3f8e12a563f0eb01aab62b64c83d2ea27d13",
+        "response_hash": "sha256:f6ddfc7fc08d4e7bde9d446e7e1be7ad18723692614d94766ecc6738c36ae7be",
+        "prompt_chars": 6143,
+        "input_payload_chars": 27923,
+        "schema_chars": 8815,
+        "thinking_chars": 0,
+        "extended_budget_used": false,
+        "cumulative_budget_consumed": 1743
+      },
+      {
+        "call_id": "LLM-publication-method-section-missing-retry-1-0-MA-S4",
+        "prompt_template_id": "phase5_method_writer_section_v1",
+        "role": "method_writer",
+        "provider": "openai",
+        "model": "qwen38-27b-nvfp4",
+        "endpoint_origin": "http://127.0.0.1:8006",
+        "effective_config": {
+          "role": "method_writer",
+          "temperature": 0.7,
+          "max_output_tokens": 8192,
+          "reasoning_effort": "low",
+          "thinking_token_budget": 1024,
+          "top_p": 0.95,
+          "top_k": 20,
+          "seed": 42,
+          "max_input_tokens": null,
+          "prompt_template_version": ""
+        },
+        "finish_reason": "structured_complete",
+        "token_usage": {
+          "completion_tokens": 621
+        },
+        "blocked_reason": "publication_paragraph_transaction_failed:required_target_contract:paragraph:MA-S4:method-unit-1:facet:facet-dfd9e7cedfe705e0;required_target_contract:paragraph:MA-S4:method-unit-1:slot:slot:fact-O-STAGE-02-93c16851-node:3e4f8dac1595a0af;required_target_contract:paragraph:MA-S4:method-unit-1:slot:slot:fact-O-STAGE-02-93c16851-node:dbc9e615e1abdb23;required_target_contract:paragraph:MA-S4:method-unit-1:slot:slot:fact-O-STAGE-02-93c16851-node:832a80d4d603dfda;required_target_contract:paragraph:MA-S4:method-unit-1:slot:slot:fact-O-STAGE-02-93c16851-node:dbe47970ca704834",
+        "cached": false,
+        "response_mode": "native_json_schema",
+        "schema_name": "publication_method_section_v1",
+        "input_hash": "sha256:4fd718bfe8ab0a604d04db2a4b511d006a3a25a5ba832e669c4e137e0c6838cf",
+        "response_hash": "sha256:6a13fac94895324d85407b9ab7ddf179737b7a74eeb6efee11f355c000f1bd94",
+        "prompt_chars": 6143,
+        "input_payload_chars": 7482,
+        "schema_chars": 8815,
+        "thinking_chars": 0,
+        "extended_budget_used": false,
+        "cumulative_budget_consumed": 621
+      },
+      {
+        "call_id": "LLM-publication-method-section-missing-retry-1-MA-S4-paragraph:MA-S4:method-unit-1-binder-1",
+        "prompt_template_id": "phase5_publication_paragraph_binder_v1",
+        "role": "semantic_verifier",
+        "provider": "openai",
+        "model": "qwen38-27b-nvfp4",
+        "endpoint_origin": "http://127.0.0.1:8006",
+        "effective_config": {
+          "role": "semantic_verifier",
+          "temperature": 0.0,
+          "max_output_tokens": 1024,
+          "reasoning_effort": "none",
+          "thinking_token_budget": null,
+          "top_p": 0.95,
+          "top_k": 20,
+          "seed": null,
+          "max_input_tokens": null,
+          "prompt_template_version": ""
+        },
+        "finish_reason": "structured_complete",
+        "token_usage": {},
+        "blocked_reason": "",
+        "cached": false,
+        "response_mode": "native_json_schema",
+        "schema_name": "publication_paragraph_binding_v1",
+        "input_hash": "sha256:79c450fced274bc378b5c5f0f2d113e17bda6adf94d48509271b45d3cfb69ac7",
+        "response_hash": "sha256:d188a8fa9bcae505693c6659f45fee1e63f80a78f1478f89f93e80eddb1220b8",
+        "prompt_chars": 998,
+        "input_payload_chars": 4824,
+        "schema_chars": 1350,
+        "thinking_chars": 0,
+        "extended_budget_used": false,
+        "cumulative_budget_consumed": null
+      }
+    ],
+    "cumulative_budget_consumed": 5467,
+    "cumulative_budget_cap": 24576,
+    "cumulative_budget_exhausted": false,
+    "concatenated_markdown_length": 3397,
+    "incomplete_sections": [
+      "MA-S1",
+      "MA-S2",
+      "MA-S3",
+      "MA-S5"
+    ],
+    "research_request_count": 5,
+    "response_recovery_traces": [
+      {
+        "section_id": "MA-S1",
+        "binding_bridge_fields": [],
+        "research_request_bridge_fields": [],
+        "callback_move_bridge_fields": [],
+        "applied": false,
+        "operations": [],
+        "original_text_digest": "sha256:52a05747801c0bdd9f69ddd43e073c35014bee23a948b55a03ee590656bc8455",
+        "parsed_payload_digest": "sha256:9b7c2bd06ea05df059ed53c202597759f2e76f1d50b21814d0346df042d146dd"
+      },
+      {
+        "paragraph_id": "paragraph:MA-S1:method-unit-1",
+        "attempt": 1,
+        "response_blocked_reason": "",
+        "parsed": true,
+        "parse_error": "",
+        "bound_count": 0,
+        "unbound_count": 6,
+        "validation_errors": []
+      },
+      {
+        "section_id": "MA-S2",
+        "binding_bridge_fields": [],
+        "research_request_bridge_fields": [],
+        "callback_move_bridge_fields": [],
+        "applied": false,
+        "operations": [],
+        "original_text_digest": "sha256:d1a9f2c8a651299ec518b2a920fc5697126fca269b815550e81dd2059ffee4dc",
+        "parsed_payload_digest": "sha256:1ebb41bfc60fba776835f19cc99b4a94dc37e1b3772a28d72199a96533b795dc"
+      },
+      {
+        "section_id": "MA-S3",
+        "binding_bridge_fields": [],
+        "research_request_bridge_fields": [],
+        "callback_move_bridge_fields": [],
+        "applied": false,
+        "operations": [],
+        "original_text_digest": "sha256:037dfb51a30a903796e09cf4805cf454bfbd8bb72f98b3c3883e6e9c1887c268",
+        "parsed_payload_digest": "sha256:64eb4daacbf4ce54ca7441b785728d5b14666c0da0ff568e86f5a93d21d167e6"
+      },
+      {
+        "paragraph_id": "paragraph:MA-S3:method-unit-1",
+        "attempt": 1,
+        "response_blocked_reason": "",
+        "parsed": true,
+        "parse_error": "",
+        "bound_count": 0,
+        "unbound_count": 1,
+        "validation_errors": []
+      },
+      {
+        "section_id": "MA-S3",
+        "binding_bridge_fields": [],
+        "research_request_bridge_fields": [],
+        "callback_move_bridge_fields": [],
+        "applied": false,
+        "operations": [],
+        "original_text_digest": "sha256:bb6124c202f6a74f54119639ac1d29170353ef40b71b7c6c557511660e645313",
+        "parsed_payload_digest": "sha256:ab487c9a7c656d8cb62413a4a0e298beed8735f2e607aa7073b2beb25cadaf10"
+      },
+      {
+        "paragraph_id": "paragraph:MA-S3:method-unit-1",
+        "attempt": 1,
+        "response_blocked_reason": "",
+        "parsed": true,
+        "parse_error": "",
+        "bound_count": 0,
+        "unbound_count": 1,
+        "validation_errors": []
+      },
+      {
+        "section_id": "MA-S3",
+        "binding_bridge_fields": [],
+        "research_request_bridge_fields": [],
+        "callback_move_bridge_fields": [],
+        "applied": false,
+        "operations": [],
+        "original_text_digest": "sha256:591b7823a025fa055a274c56df32d2a9957501cda916e15e30dba374701d72cc",
+        "parsed_payload_digest": "sha256:3775e88bb5d4779f6e5607efd7a3b67b1d41e1067eff1251b906329df7034aff"
+      },
+      {
+        "paragraph_id": "paragraph:MA-S3:method-unit-1",
+        "attempt": 1,
+        "response_blocked_reason": "",
+        "parsed": true,
+        "parse_error": "",
+        "bound_count": 0,
+        "unbound_count": 1,
+        "validation_errors": []
+      },
+      {
+        "section_id": "MA-S4",
+        "binding_bridge_fields": [],
+        "research_request_bridge_fields": [],
+        "callback_move_bridge_fields": [],
+        "applied": false,
+        "operations": [],
+        "original_text_digest": "sha256:abf34bfbeeb2fd05de1847cd8b1067c311aadc2f0b205e56b21ea431d6eb9472",
+        "parsed_payload_digest": "sha256:4cf94b9a6f6bee999ed70f7749b2382162160f3c87c95be54120ca335851232c"
+      },
+      {
+        "section_id": "MA-S4",
+        "binding_bridge_fields": [],
+        "research_request_bridge_fields": [],
+        "callback_move_bridge_fields": [],
+        "applied": false,
+        "operations": [],
+        "original_text_digest": "sha256:e678b600ed42164efa7c6bd911e8936c4370bc652aeee2f4d5b61e42aa63ebb8",
+        "parsed_payload_digest": "sha256:66ca5fac90173ba02bbeb8531e508634b3eeb511bf559674f147919d00cb88d7"
+      },
+      {
+        "paragraph_id": "paragraph:MA-S4:method-unit-1",
+        "attempt": 1,
+        "response_blocked_reason": "",
+        "parsed": true,
+        "parse_error": "",
+        "bound_count": 0,
+        "unbound_count": 5,
+        "validation_errors": []
+      },
+      {
+        "section_id": "MA-S4",
+        "binding_bridge_fields": [],
+        "research_request_bridge_fields": [],
+        "callback_move_bridge_fields": [],
+        "applied": false,
+        "operations": [],
+        "original_text_digest": "sha256:e4993f6f857fdeb00673d65eb288590e7faa116b3b5064a79a5b04e00e2f5ae6",
+        "parsed_payload_digest": "sha256:9bcad4246f5de61dc23ccb3a34a255a6009f88a3002be27f08ec305d50095978"
+      },
+      {
+        "section_id": "MA-S4",
+        "binding_bridge_fields": [],
+        "research_request_bridge_fields": [],
+        "callback_move_bridge_fields": [],
+        "applied": false,
+        "operations": [],
+        "original_text_digest": "sha256:0efe84597a338f9560a8c9ba3859622463c54497e66c2e0283268593b0a09733",
+        "parsed_payload_digest": "sha256:0d021cbe05cf147bac7618970a29b50680ec64932459ff76073c90db1e3ed36e"
+      },
+      {
+        "paragraph_id": "paragraph:MA-S4:method-unit-1",
+        "attempt": 1,
+        "response_blocked_reason": "",
+        "parsed": true,
+        "parse_error": "",
+        "bound_count": 0,
+        "unbound_count": 4,
+        "validation_errors": [
+          "binder_nonunique_substring:facet:facet-dfd9e7cedfe705e0"
+        ]
+      },
+      {
+        "paragraph_id": "paragraph:MA-S4:method-unit-1",
+        "attempt": 2,
+        "response_blocked_reason": "",
+        "parsed": true,
+        "parse_error": "",
+        "bound_count": 0,
+        "unbound_count": 5,
+        "validation_errors": []
+      },
+      {
+        "section_id": "MA-S5",
+        "binding_bridge_fields": [],
+        "research_request_bridge_fields": [],
+        "callback_move_bridge_fields": [],
+        "applied": true,
+        "operations": [
+          "extract_or_repair_json_container"
+        ],
+        "original_text_digest": "sha256:97e77735d7f6ec97fe1c37ecb87a4e74dbd8f151fdca84cf81e33e8c64a41360",
+        "parsed_payload_digest": "sha256:ac331bb0750e42a9c82a68d48c9f0a83da149321c144bd7d34ff8362e6c21971"
+      },
+      {
+        "paragraph_id": "paragraph:MA-S5:method-unit-1",
+        "attempt": 1,
+        "response_blocked_reason": "",
+        "parsed": true,
+        "parse_error": "",
+        "bound_count": 0,
+        "unbound_count": 6,
+        "validation_errors": []
+      },
+      {
+        "section_id": "MA-S4",
+        "binding_bridge_fields": [],
+        "research_request_bridge_fields": [],
+        "callback_move_bridge_fields": [],
+        "applied": false,
+        "operations": [],
+        "original_text_digest": "sha256:03f1a5d4689affaf65d1177eaae3cbd8b353deff50f38bee278b2b916e516578",
+        "parsed_payload_digest": "sha256:6777a759de4f7ba0c277ed6498b7954bc8129be08fc44a4f8bb006ff7843c21d"
+      },
+      {
+        "section_id": "MA-S4",
+        "binding_bridge_fields": [],
+        "research_request_bridge_fields": [],
+        "callback_move_bridge_fields": [],
+        "applied": true,
+        "operations": [
+          "extract_or_repair_json_container"
+        ],
+        "original_text_digest": "sha256:d68bbfecaced4d8bcde1e8cdcd455b44be42a2db719d208beae21da9166c34d5",
+        "parsed_payload_digest": ""
+      },
+      {
+        "section_id": "MA-S4",
+        "binding_bridge_fields": [],
+        "research_request_bridge_fields": [],
+        "callback_move_bridge_fields": [],
+        "applied": false,
+        "operations": [],
+        "original_text_digest": "sha256:f6ddfc7fc08d4e7bde9d446e7e1be7ad18723692614d94766ecc6738c36ae7be",
+        "parsed_payload_digest": "sha256:6fd452f05bf752a649cea6133061265d0d23b4314b61d8f9f9f51a49b1c077eb"
+      },
+      {
+        "section_id": "MA-S4",
+        "binding_bridge_fields": [],
+        "research_request_bridge_fields": [],
+        "callback_move_bridge_fields": [],
+        "applied": false,
+        "operations": [],
+        "original_text_digest": "sha256:6a13fac94895324d85407b9ab7ddf179737b7a74eeb6efee11f355c000f1bd94",
+        "parsed_payload_digest": "sha256:5e0b5eeb2f2b0602000796035c59138ae97ae9785138cf9bdf52f3c273a37f62"
+      },
+      {
+        "paragraph_id": "paragraph:MA-S4:method-unit-1",
+        "attempt": 1,
+        "response_blocked_reason": "",
+        "parsed": true,
+        "parse_error": "",
+        "bound_count": 0,
+        "unbound_count": 5,
+        "validation_errors": []
+      }
+    ],
+    "writer_repair_rounds": 4,
+    "writer_repair_commits": 0,
+    "writer_repair_no_progress_stops": 2,
+    "writer_repair_transaction_rejections": [
+      {
+        "section_id": "MA-S3",
+        "repair_round": 1,
+        "reason": "required_target_coverage_no_gain",
+        "incumbent_metrics": {
+          "unsafe_uncaveated_positives": 0,
+          "constraint_failures": 0,
+          "negative_validated_propositions": 0,
+          "unrendered_required_propositions": 0,
+          "code_trace_style_failures": 0,
+          "duplicate_sentences": 0,
+          "missing_required_facets": 1,
+          "missing_formula_placeholders": 0
+        },
+        "candidate_metrics": {
+          "unsafe_uncaveated_positives": 0,
+          "constraint_failures": 0,
+          "negative_validated_propositions": 0,
+          "unrendered_required_propositions": 0,
+          "code_trace_style_failures": 0,
+          "duplicate_sentences": 0,
+          "missing_required_facets": 1,
+          "missing_formula_placeholders": 0
+        },
+        "incumbent_digest": "3dc466f5b114fc299ed2bc1d6e6db8acbbc206459cd4e0ad9dc511d048d06568",
+        "candidate_digest": "5c2bca5f7abc3bc2109407a07faa1311d81b6169f2b1c2dc8a443c2820c0b756"
+      },
+      {
+        "section_id": "MA-S3",
+        "repair_round": 2,
+        "reason": "required_target_coverage_no_gain",
+        "incumbent_metrics": {
+          "unsafe_uncaveated_positives": 0,
+          "constraint_failures": 0,
+          "negative_validated_propositions": 0,
+          "unrendered_required_propositions": 0,
+          "code_trace_style_failures": 0,
+          "duplicate_sentences": 0,
+          "missing_required_facets": 1,
+          "missing_formula_placeholders": 0
+        },
+        "candidate_metrics": {
+          "unsafe_uncaveated_positives": 0,
+          "constraint_failures": 0,
+          "negative_validated_propositions": 0,
+          "unrendered_required_propositions": 0,
+          "code_trace_style_failures": 0,
+          "duplicate_sentences": 0,
+          "missing_required_facets": 1,
+          "missing_formula_placeholders": 0
+        },
+        "incumbent_digest": "3dc466f5b114fc299ed2bc1d6e6db8acbbc206459cd4e0ad9dc511d048d06568",
+        "candidate_digest": "5e281e94869a96c83279a47405ebca56d4603c5642b794c9b49d71c4eb22202a"
+      },
+      {
+        "section_id": "MA-S4",
+        "repair_round": 1,
+        "reason": "required_target_coverage_no_gain",
+        "incumbent_metrics": {
+          "unsafe_uncaveated_positives": 0,
+          "constraint_failures": 0,
+          "negative_validated_propositions": 0,
+          "unrendered_required_propositions": 0,
+          "code_trace_style_failures": 1,
+          "duplicate_sentences": 0,
+          "missing_required_facets": 0,
+          "missing_formula_placeholders": 1
+        },
+        "candidate_metrics": {
+          "unsafe_uncaveated_positives": 0,
+          "constraint_failures": 0,
+          "negative_validated_propositions": 0,
+          "unrendered_required_propositions": 0,
+          "code_trace_style_failures": 1,
+          "duplicate_sentences": 0,
+          "missing_required_facets": 0,
+          "missing_formula_placeholders": 1
+        },
+        "incumbent_digest": "e6db3e61b4b259ec6b8f732a2a41c2c57a1295cb34d623edfcbb8f298171b576",
+        "candidate_digest": "5dec6d2ef13e91a35140a52206c269578206eccc67df9d85c13fa46997695e77"
+      },
+      {
+        "section_id": "MA-S4",
+        "repair_round": 2,
+        "reason": "transaction_invalid_count_regressed",
+        "incumbent_metrics": {
+          "unsafe_uncaveated_positives": 0,
+          "constraint_failures": 0,
+          "negative_validated_propositions": 0,
+          "unrendered_required_propositions": 0,
+          "code_trace_style_failures": 1,
+          "duplicate_sentences": 0,
+          "missing_required_facets": 0,
+          "missing_formula_placeholders": 1
+        },
+        "candidate_metrics": {
+          "unsafe_uncaveated_positives": 0,
+          "constraint_failures": 0,
+          "negative_validated_propositions": 0,
+          "unrendered_required_propositions": 0,
+          "code_trace_style_failures": 1,
+          "duplicate_sentences": 0,
+          "missing_required_facets": 0,
+          "missing_formula_placeholders": 0
+        },
+        "incumbent_digest": "e6db3e61b4b259ec6b8f732a2a41c2c57a1295cb34d623edfcbb8f298171b576",
+        "candidate_digest": "24cc4a6a2d9e43f32ace7c1b2fadddb4113f76c3990a94b2218643e9ea565acb"
+      }
+    ]
+  },
+  "response_recovery_traces": [
+    {
+      "section_id": "MA-S1",
+      "binding_bridge_fields": [],
+      "research_request_bridge_fields": [],
+      "callback_move_bridge_fields": [],
+      "applied": false,
+      "operations": [],
+      "original_text_digest": "sha256:52a05747801c0bdd9f69ddd43e073c35014bee23a948b55a03ee590656bc8455",
+      "parsed_payload_digest": "sha256:9b7c2bd06ea05df059ed53c202597759f2e76f1d50b21814d0346df042d146dd"
+    },
+    {
+      "paragraph_id": "paragraph:MA-S1:method-unit-1",
+      "attempt": 1,
+      "response_blocked_reason": "",
+      "parsed": true,
+      "parse_error": "",
+      "bound_count": 0,
+      "unbound_count": 6,
+      "validation_errors": []
+    },
+    {
+      "section_id": "MA-S2",
+      "binding_bridge_fields": [],
+      "research_request_bridge_fields": [],
+      "callback_move_bridge_fields": [],
+      "applied": false,
+      "operations": [],
+      "original_text_digest": "sha256:d1a9f2c8a651299ec518b2a920fc5697126fca269b815550e81dd2059ffee4dc",
+      "parsed_payload_digest": "sha256:1ebb41bfc60fba776835f19cc99b4a94dc37e1b3772a28d72199a96533b795dc"
+    },
+    {
+      "section_id": "MA-S3",
+      "binding_bridge_fields": [],
+      "research_request_bridge_fields": [],
+      "callback_move_bridge_fields": [],
+      "applied": false,
+      "operations": [],
+      "original_text_digest": "sha256:037dfb51a30a903796e09cf4805cf454bfbd8bb72f98b3c3883e6e9c1887c268",
+      "parsed_payload_digest": "sha256:64eb4daacbf4ce54ca7441b785728d5b14666c0da0ff568e86f5a93d21d167e6"
+    },
+    {
+      "paragraph_id": "paragraph:MA-S3:method-unit-1",
+      "attempt": 1,
+      "response_blocked_reason": "",
+      "parsed": true,
+      "parse_error": "",
+      "bound_count": 0,
+      "unbound_count": 1,
+      "validation_errors": []
+    },
+    {
+      "section_id": "MA-S3",
+      "binding_bridge_fields": [],
+      "research_request_bridge_fields": [],
+      "callback_move_bridge_fields": [],
+      "applied": false,
+      "operations": [],
+      "original_text_digest": "sha256:bb6124c202f6a74f54119639ac1d29170353ef40b71b7c6c557511660e645313",
+      "parsed_payload_digest": "sha256:ab487c9a7c656d8cb62413a4a0e298beed8735f2e607aa7073b2beb25cadaf10"
+    },
+    {
+      "paragraph_id": "paragraph:MA-S3:method-unit-1",
+      "attempt": 1,
+      "response_blocked_reason": "",
+      "parsed": true,
+      "parse_error": "",
+      "bound_count": 0,
+      "unbound_count": 1,
+      "validation_errors": []
+    },
+    {
+      "section_id": "MA-S3",
+      "binding_bridge_fields": [],
+      "research_request_bridge_fields": [],
+      "callback_move_bridge_fields": [],
+      "applied": false,
+      "operations": [],
+      "original_text_digest": "sha256:591b7823a025fa055a274c56df32d2a9957501cda916e15e30dba374701d72cc",
+      "parsed_payload_digest": "sha256:3775e88bb5d4779f6e5607efd7a3b67b1d41e1067eff1251b906329df7034aff"
+    },
+    {
+      "paragraph_id": "paragraph:MA-S3:method-unit-1",
+      "attempt": 1,
+      "response_blocked_reason": "",
+      "parsed": true,
+      "parse_error": "",
+      "bound_count": 0,
+      "unbound_count": 1,
+      "validation_errors": []
+    },
+    {
+      "section_id": "MA-S4",
+      "binding_bridge_fields": [],
+      "research_request_bridge_fields": [],
+      "callback_move_bridge_fields": [],
+      "applied": false,
+      "operations": [],
+      "original_text_digest": "sha256:abf34bfbeeb2fd05de1847cd8b1067c311aadc2f0b205e56b21ea431d6eb9472",
+      "parsed_payload_digest": "sha256:4cf94b9a6f6bee999ed70f7749b2382162160f3c87c95be54120ca335851232c"
+    },
+    {
+      "section_id": "MA-S4",
+      "binding_bridge_fields": [],
+      "research_request_bridge_fields": [],
+      "callback_move_bridge_fields": [],
+      "applied": false,
+      "operations": [],
+      "original_text_digest": "sha256:e678b600ed42164efa7c6bd911e8936c4370bc652aeee2f4d5b61e42aa63ebb8",
+      "parsed_payload_digest": "sha256:66ca5fac90173ba02bbeb8531e508634b3eeb511bf559674f147919d00cb88d7"
+    },
+    {
+      "paragraph_id": "paragraph:MA-S4:method-unit-1",
+      "attempt": 1,
+      "response_blocked_reason": "",
+      "parsed": true,
+      "parse_error": "",
+      "bound_count": 0,
+      "unbound_count": 5,
+      "validation_errors": []
+    },
+    {
+      "section_id": "MA-S4",
+      "binding_bridge_fields": [],
+      "research_request_bridge_fields": [],
+      "callback_move_bridge_fields": [],
+      "applied": false,
+      "operations": [],
+      "original_text_digest": "sha256:e4993f6f857fdeb00673d65eb288590e7faa116b3b5064a79a5b04e00e2f5ae6",
+      "parsed_payload_digest": "sha256:9bcad4246f5de61dc23ccb3a34a255a6009f88a3002be27f08ec305d50095978"
+    },
+    {
+      "section_id": "MA-S4",
+      "binding_bridge_fields": [],
+      "research_request_bridge_fields": [],
+      "callback_move_bridge_fields": [],
+      "applied": false,
+      "operations": [],
+      "original_text_digest": "sha256:0efe84597a338f9560a8c9ba3859622463c54497e66c2e0283268593b0a09733",
+      "parsed_payload_digest": "sha256:0d021cbe05cf147bac7618970a29b50680ec64932459ff76073c90db1e3ed36e"
+    },
+    {
+      "paragraph_id": "paragraph:MA-S4:method-unit-1",
+      "attempt": 1,
+      "response_blocked_reason": "",
+      "parsed": true,
+      "parse_error": "",
+      "bound_count": 0,
+      "unbound_count": 4,
+      "validation_errors": [
+        "binder_nonunique_substring:facet:facet-dfd9e7cedfe705e0"
+      ]
+    },
+    {
+      "paragraph_id": "paragraph:MA-S4:method-unit-1",
+      "attempt": 2,
+      "response_blocked_reason": "",
+      "parsed": true,
+      "parse_error": "",
+      "bound_count": 0,
+      "unbound_count": 5,
+      "validation_errors": []
+    },
+    {
+      "section_id": "MA-S5",
+      "binding_bridge_fields": [],
+      "research_request_bridge_fields": [],
+      "callback_move_bridge_fields": [],
+      "applied": true,
+      "operations": [
+        "extract_or_repair_json_container"
+      ],
+      "original_text_digest": "sha256:97e77735d7f6ec97fe1c37ecb87a4e74dbd8f151fdca84cf81e33e8c64a41360",
+      "parsed_payload_digest": "sha256:ac331bb0750e42a9c82a68d48c9f0a83da149321c144bd7d34ff8362e6c21971"
+    },
+    {
+      "paragraph_id": "paragraph:MA-S5:method-unit-1",
+      "attempt": 1,
+      "response_blocked_reason": "",
+      "parsed": true,
+      "parse_error": "",
+      "bound_count": 0,
+      "unbound_count": 6,
+      "validation_errors": []
+    },
+    {
+      "section_id": "MA-S4",
+      "binding_bridge_fields": [],
+      "research_request_bridge_fields": [],
+      "callback_move_bridge_fields": [],
+      "applied": false,
+      "operations": [],
+      "original_text_digest": "sha256:03f1a5d4689affaf65d1177eaae3cbd8b353deff50f38bee278b2b916e516578",
+      "parsed_payload_digest": "sha256:6777a759de4f7ba0c277ed6498b7954bc8129be08fc44a4f8bb006ff7843c21d"
+    },
+    {
+      "section_id": "MA-S4",
+      "binding_bridge_fields": [],
+      "research_request_bridge_fields": [],
+      "callback_move_bridge_fields": [],
+      "applied": true,
+      "operations": [
+        "extract_or_repair_json_container"
+      ],
+      "original_text_digest": "sha256:d68bbfecaced4d8bcde1e8cdcd455b44be42a2db719d208beae21da9166c34d5",
+      "parsed_payload_digest": ""
+    },
+    {
+      "section_id": "MA-S4",
+      "binding_bridge_fields": [],
+      "research_request_bridge_fields": [],
+      "callback_move_bridge_fields": [],
+      "applied": false,
+      "operations": [],
+      "original_text_digest": "sha256:f6ddfc7fc08d4e7bde9d446e7e1be7ad18723692614d94766ecc6738c36ae7be",
+      "parsed_payload_digest": "sha256:6fd452f05bf752a649cea6133061265d0d23b4314b61d8f9f9f51a49b1c077eb"
+    },
+    {
+      "section_id": "MA-S4",
+      "binding_bridge_fields": [],
+      "research_request_bridge_fields": [],
+      "callback_move_bridge_fields": [],
+      "applied": false,
+      "operations": [],
+      "original_text_digest": "sha256:6a13fac94895324d85407b9ab7ddf179737b7a74eeb6efee11f355c000f1bd94",
+      "parsed_payload_digest": "sha256:5e0b5eeb2f2b0602000796035c59138ae97ae9785138cf9bdf52f3c273a37f62"
+    },
+    {
+      "paragraph_id": "paragraph:MA-S4:method-unit-1",
+      "attempt": 1,
+      "response_blocked_reason": "",
+      "parsed": true,
+      "parse_error": "",
+      "bound_count": 0,
+      "unbound_count": 5,
+      "validation_errors": []
+    },
+    {
+      "section_id": "MA-S2",
+      "applied": true,
+      "provenance": "harness_callback_sidecar",
+      "operations": [
+        "restore_callback_sidecar:target_brief_ids",
+        "restore_callback_sidecar:target_clause_ids",
+        "restore_callback_sidecar:missing_parts"
+      ]
+    },
+    {
+      "section_id": "MA-S3",
+      "applied": true,
+      "provenance": "harness_callback_sidecar",
+      "operations": [
+        "restore_callback_sidecar:target_brief_ids",
+        "restore_callback_sidecar:target_clause_ids",
+        "restore_callback_sidecar:missing_parts",
+        "restore_callback_sidecar:evidence_refs_used"
+      ]
+    },
+    {
+      "section_id": "MA-S4",
+      "applied": true,
+      "provenance": "harness_callback_sidecar",
+      "operations": [
+        "restore_callback_sidecar:target_brief_ids",
+        "restore_callback_sidecar:target_clause_ids",
+        "restore_callback_sidecar:missing_parts",
+        "restore_callback_sidecar:evidence_refs_used"
+      ]
+    },
+    {
+      "section_id": "MA-S5",
+      "applied": true,
+      "provenance": "harness_callback_sidecar",
+      "operations": [
+        "restore_callback_sidecar:target_brief_ids",
+        "restore_callback_sidecar:target_clause_ids",
+        "restore_callback_sidecar:missing_parts"
+      ]
+    },
+    {
+      "section_id": "MA-S4",
+      "applied": true,
+      "provenance": "harness_callback_sidecar",
+      "operations": [
+        "restore_callback_sidecar:target_brief_ids",
+        "restore_callback_sidecar:target_clause_ids",
+        "restore_callback_sidecar:missing_parts",
+        "restore_callback_sidecar:evidence_refs_used"
+      ]
+    },
+    {
+      "section_id": "MA-S4",
+      "applied": true,
+      "provenance": "writer_owner_retry",
+      "operations": [
+        "owner_retry_for_missing_writing_callback:mechanism_overview",
+        "model_emitted_writing_callback:mechanism_overview"
+      ],
+      "request_ids": [
+        "MA-S4:unit-1:mechanism_overview:1"
+      ],
+      "parsed_request_digests": [
+        "sha256:f243ce1c0a8886ff41fd1cc3d51d00a4e2ab6beae0cc4e58224076f8f954566a"
+      ],
+      "missing_request_moves_after_retry": []
+    },
+    {
+      "section_id": "MA-S1",
+      "applied": false,
+      "provenance": "model_emitted",
+      "operations": [
+        "model_emitted_writing_callback:design_objective"
+      ],
+      "raw_response_hash": "sha256:52a05747801c0bdd9f69ddd43e073c35014bee23a948b55a03ee590656bc8455",
+      "request_ids": [
+        "MA-S1:unit-1:research-1"
+      ],
+      "parsed_request_digests": [
+        "sha256:b5e6f5aeb6ae4bbacbbceb4171260cb44459784963a22f717cf9fcf4230899bc"
+      ],
+      "dropped_malformed_requests": 0,
+      "missing_request_moves": []
+    },
+    {
+      "section_id": "MA-S2",
+      "applied": false,
+      "provenance": "model_emitted",
+      "operations": [
+        "model_emitted_writing_callback:problem_or_local_context"
+      ],
+      "raw_response_hash": "sha256:d1a9f2c8a651299ec518b2a920fc5697126fca269b815550e81dd2059ffee4dc",
+      "request_ids": [
+        "research:MA-S2:offline-tri-graph-definition"
+      ],
+      "parsed_request_digests": [
+        "sha256:3b4cc7c17f504f201cc2515dbc3ea0613bb0f823d91a55ee2ebc4c4d485d3d81"
+      ],
+      "dropped_malformed_requests": 0,
+      "missing_request_moves": []
+    },
+    {
+      "section_id": "MA-S3",
+      "applied": false,
+      "provenance": "model_emitted",
+      "operations": [
+        "model_emitted_writing_callback:equation_or_derivation"
+      ],
+      "raw_response_hash": "sha256:037dfb51a30a903796e09cf4805cf454bfbd8bb72f98b3c3883e6e9c1887c268",
+      "request_ids": [
+        "MA-S3:unit-1:formula-1"
+      ],
+      "parsed_request_digests": [
+        "sha256:3d7d5e7eabbe13ea24e1ca47ae5dd01154ed3b078358c081712a39098a06fa78"
+      ],
+      "dropped_malformed_requests": 0,
+      "missing_request_moves": []
+    },
+    {
+      "section_id": "MA-S4",
+      "applied": true,
+      "provenance": "harness_callback_sidecar",
+      "operations": [
+        "restore_callback_sidecar:target_brief_ids",
+        "restore_callback_sidecar:target_clause_ids",
+        "restore_callback_sidecar:missing_parts",
+        "restore_callback_sidecar:evidence_refs_used"
+      ]
+    },
+    {
+      "section_id": "MA-S4",
+      "applied": false,
+      "provenance": "model_emitted",
+      "operations": [
+        "model_emitted_writing_callback:mechanism_overview"
+      ],
+      "raw_response_hash": "sha256:6a13fac94895324d85407b9ab7ddf179737b7a74eeb6efee11f355c000f1bd94",
+      "request_ids": [
+        "research:MA-S4:unit-1:pruning-criterion"
+      ],
+      "parsed_request_digests": [
+        "sha256:0627f928421b3206c6d51af55dc9c921e014d60e9562b638d78ad12ac4253311"
+      ],
+      "dropped_malformed_requests": 0,
+      "missing_request_moves": []
+    },
+    {
+      "section_id": "MA-S5",
+      "applied": false,
+      "provenance": "model_emitted",
+      "operations": [
+        "model_emitted_writing_callback:mechanism_overview"
+      ],
+      "raw_response_hash": "sha256:97e77735d7f6ec97fe1c37ecb87a4e74dbd8f151fdca84cf81e33e8c64a41360",
+      "request_ids": [
+        "req:MA-S5:unit-1:hybrid-init"
+      ],
+      "parsed_request_digests": [
+        "sha256:24c292952f7d8844446f4ab22954e7861fd0158afff6da0bce6726a11eb3450c"
+      ],
+      "dropped_malformed_requests": 0,
+      "missing_request_moves": []
+    },
+    {
+      "section_id": "MA-S4",
+      "retry_round": 1,
+      "applied": true,
+      "provenance": "writer_missing_section_retry",
+      "operations": [
+        "owner_retry_for_missing_section_output:section_body_missing_or_headings_only"
+      ],
+      "response_hash": "sha256:6a13fac94895324d85407b9ab7ddf179737b7a74eeb6efee11f355c000f1bd94"
+    }
+  ],
+  "final_text_digest": "sha256:91f3e55c774a92785949af8dcbd7682d9fc7bafeef422c1c46b7153d4d6ec298",
+  "authorship_ledger_digest": "sha256:6e93cf130e49ec12ae59cdffc40deb504519cd4350c540a6d41d93a16cbd3e23",
+  "publication_quality_digest": "sha256:135915489b8fe273079ce65b35a013bb219855993cd5f83a3f25e30731768fdf",
+  "rewrite_transition_digest": "",
+  "callback_bundle_digest": "sha256:8eb799c3bd2e0c82e56fa3380b3d17e65da3caa7206ebf295410fd385c7e463f",
+  "transaction_assessment_digest": "sha256:0faf480e0e7aae79cf948b5c9a2add20bb49d04a3693009e038749cbf9a8c848",
+  "writer_transaction_status": "incomplete",
+  "rendered_text_digest": "",
+  "resumed_section_ids": [],
+  "blocked_reason": "",
+  "candidate_generation_status": "generated",
+  "candidate_available": true,
+  "candidate_validation_status": "not_run",
+  "candidate_warnings_by_severity": {
+    "critical": 2,
+    "major": 69,
+    "minor": 0
+  },
+  "verified_validation_status": "not_run",
+  "candidate_completion_status": "incomplete",
+  "candidate_complete": false,
+  "verified_complete": false,
+  "candidate_blocking_reasons": [
+    "required_section_incomplete:MA-S1",
+    "required_section_incomplete:MA-S2",
+    "required_section_incomplete:MA-S3",
+    "required_section_incomplete:MA-S4",
+    "required_section_incomplete:MA-S5",
+    "paragraph_missing:paragraph:MA-S1:method-unit-1:slot:slot:fact-O-COMPONENT-01-bd3b9454-node:0cb62ab4a3a7d394",
+    "paragraph_missing:paragraph:MA-S1:method-unit-1:slot:slot:fact-O-COMPONENT-01-bd3b9454-node:06528ded27aa13a3",
+    "paragraph_missing:paragraph:MA-S1:method-unit-1:slot:slot:fact-O-COMPONENT-01-bd3b9454-rel:a8fd15dc040083c2",
+    "paragraph_missing:paragraph:MA-S1:method-unit-1:slot:slot:fact-O-COMPONENT-01-bd3b9454-node:e1288fc52819b915",
+    "paragraph_missing:paragraph:MA-S1:method-unit-1:slot:slot:fact-O-COMPONENT-01-bd3b9454-node:52765b58d59f93a0",
+    "paragraph_missing:paragraph:MA-S1:method-unit-1:edge:rel:9c39c339b8028cfc",
+    "paragraph_missing:paragraph:MA-S2:method-unit-1:formula:formula:facet:facet-8ce6e8dabb55bf84",
+    "paragraph_missing:paragraph:MA-S3:method-unit-1:slot:slot:fact-O-STAGE-01-9c8dfe22-node:f21427b316d80682",
+    "paragraph_missing:paragraph:MA-S3:method-unit-1:formula:formula:facet:facet-36188cb856f44d0d",
+    "paragraph_missing:paragraph:MA-S4:method-unit-1:facet:facet-dfd9e7cedfe705e0",
+    "paragraph_missing:paragraph:MA-S4:method-unit-1:slot:slot:fact-O-STAGE-02-93c16851-node:3e4f8dac1595a0af",
+    "paragraph_missing:paragraph:MA-S4:method-unit-1:slot:slot:fact-O-STAGE-02-93c16851-node:dbc9e615e1abdb23",
+    "paragraph_missing:paragraph:MA-S4:method-unit-1:slot:slot:fact-O-STAGE-02-93c16851-node:832a80d4d603dfda",
+    "paragraph_missing:paragraph:MA-S4:method-unit-1:slot:slot:fact-O-STAGE-02-93c16851-node:dbe47970ca704834",
+    "paragraph_missing:paragraph:MA-S5:method-unit-1:facet:facet-aee51cb1cb5c563f",
+    "paragraph_missing:paragraph:MA-S5:method-unit-1:slot:slot:fact-O-METHOD-MAINLINE-01-79899e6c-node:29c327b051baa4b2",
+    "paragraph_missing:paragraph:MA-S5:method-unit-1:slot:slot:fact-O-METHOD-MAINLINE-01-79899e6c-node:120e548b0781989f",
+    "paragraph_missing:paragraph:MA-S5:method-unit-1:slot:slot:fact-O-METHOD-MAINLINE-01-79899e6c-rel:370037831dc97fea",
+    "paragraph_missing:paragraph:MA-S5:method-unit-1:slot:slot:fact-O-METHOD-MAINLINE-01-79899e6c-node:2cf918d7e93d7113",
+    "paragraph_missing:paragraph:MA-S5:method-unit-1:slot:slot:fact-O-METHOD-MAINLINE-01-79899e6c-node:ea92b7c26acc5f71",
+    "required_formula_unresolved:MA-S4:formula:section:MA-S4:derivation",
+    "required_formula_unresolved:MA-S5:formula:section:MA-S5:derivation",
+    "research_dossier_unresolved:paragraph:MA-S2:method-unit-1:facet_alignment:facet-8ce6e8dabb55bf84",
+    "research_dossier_unresolved:paragraph:MA-S3:method-unit-1:facet_alignment:facet-36188cb856f44d0d"
+  ],
+  "verified_blocking_reasons": [
+    "verified_output_empty",
+    "reverse_validation_pending",
+    "final_integrity_gate_failed",
+    "publication_quality_not_ready",
+    "verified_review_block:review:O-COMPONENT-01-4e554ef0",
+    "verified_review_block:review:O-COMPONENT-02-8058a7bc",
+    "verified_review_block:review:O-COMPONENT-03-0c4d02ed",
+    "verified_review_block:review:O-COMPONENT-04-4f4f1da6",
+    "verified_review_block:review:O-COMPONENT-05-29ba03a1",
+    "verified_review_block:review:O-COMPONENT-06-bf20ec9b",
+    "verified_review_block:review:O-ORGANIZATION-01-4ee8e0bf",
+    "verified_review_block:review:O-ORGANIZATION-02-1977b399",
+    "verified_review_block:review:O-ORGANIZATION-03-157f229e",
+    "verified_review_block:review:O-ORGANIZATION-04-8fc65790",
+    "verified_review_block:review:O-ORGANIZATION-05-e0c123aa",
+    "verified_review_block:review:O-RATIONALE-CHECK-01-c0bb1e93",
+    "verified_review_block:review:O-RATIONALE-CHECK-02-1a90a997",
+    "verified_review_block:review:O-RATIONALE-CHECK-03-09c84504",
+    "verified_review_block:review:O-RATIONALE-CHECK-04-9ca078fe",
+    "verified_review_block:review:O-RATIONALE-CHECK-05-ffcf3556",
+    "verified_review_block:review:O-RATIONALE-CHECK-06-0f48dc22",
+    "verified_review_block:review-formalization:MA-S1",
+    "verified_review_block:review-formalization:MA-S2",
+    "verified_review_block:review-formalization:MA-S3",
+    "verified_review_block:review-formalization:MA-S4",
+    "verified_review_block:review-formalization:MA-S5",
+    "verified_review_block:review-move-unanchored:MA-S3:move-unanchored:MA-S3:configuration_and_branches",
+    "verified_review_block:review-move-unanchored:MA-S3:move-unanchored:MA-S3:equation_or_derivation",
+    "verified_review_block:review-move-unanchored:MA-S4:move-unanchored:MA-S4:configuration_and_branches",
+    "external_research_queue_open",
+    "verified_upstream_failure:MA-S1:writer_output_incomplete",
+    "verified_upstream_failure:MA-S1:invalid_writing_research_callback:design_objective@MA-S1/MA-S1:unit-1/expository_bridge",
+    "verified_upstream_failure:MA-S1:missing_required_briefs:brief:story:O-COMPONENT-01-bd3b9454",
+    "verified_upstream_failure:MA-S2:writer_output_incomplete",
+    "verified_upstream_failure:MA-S2:invalid_writing_research_callback:problem_or_local_context@MA-S2/MA-S2:unit/expository_bridge",
+    "verified_upstream_failure:MA-S3:writer_output_incomplete",
+    "verified_upstream_failure:MA-S3:invalid_writing_research_callback:equation_or_derivation@MA-S3/MA-S3:unit-1/formal_derivation",
+    "verified_upstream_failure:MA-S3:missing_required_briefs:brief:story:O-RATIONALE-CHECK-02-1a90a997",
+    "verified_upstream_failure:MA-S4:writer_output_incomplete",
+    "verified_upstream_failure:MA-S4:missing_writing_research_callback:mechanism_overview",
+    "verified_upstream_failure:MA-S4:invalid_writing_research_callback:mechanism_overview@MA-S4/MA-S4:unit-1/expository_bridge",
+    "verified_upstream_failure:MA-S4:missing_required_briefs:brief:story:O-COMPONENT-03-0c4d02ed,brief:story:O-COMPONENT-04-4f4f1da6,brief:story:O-ORGANIZATION-04-8fc65790,brief:story:O-STAGE-02-93c16851",
+    "verified_upstream_failure:MA-S5:writer_output_incomplete",
+    "verified_upstream_failure:MA-S5:missing_required_briefs:brief:story:O-COMPONENT-05-29ba03a1,brief:story:O-COMPONENT-06-bf20ec9b,brief:story:O-ORGANIZATION-05-e0c123aa,brief:story:O-RATIONALE-CHECK-03-09c84504,brief:story:O-RATIONALE-CHECK-05-ffcf3556,brief:story:O-RATIONALE-CHECK-06-0f48dc22",
+    "verified_upstream_failure:formalization_required_obligation_unresolved:MA-S4:formula:section:MA-S4:derivation",
+    "verified_upstream_failure:formalization_required_obligation_unresolved:MA-S5:formula:section:MA-S5:derivation",
+    "verified_upstream_failure:no_generation_spans"
+  ],
+  "publication_ready": false,
+  "content_digest": "sha256:de4d780f1edfad9760ccc3df033f085fe739122826fb59c2302b5d76a0d3ab3c"
+}
