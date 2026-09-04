@@ -301,10 +301,53 @@ class MechanismEquationEvidencePackV1(BaseModel):
 # ---------------------------------------------------------------------------
 
 
+def normalize_formula_latex_body(latex: str) -> str:
+    """Representation-only normalization stripping outer display math delimiters.
+
+    Strips outer display wrappers such as $$...$$, \\[...\\],
+    \\begin{equation}...\\end{equation} while leaving mathematical
+    identifiers, operators, aligned/array environments, conditions, and numbers
+    unchanged.
+    """
+
+    body = str(latex or "").strip()
+    if not body:
+        return ""
+    changed = True
+    while changed:
+        changed = False
+        if body.startswith("$$") and body.endswith("$$") and len(body) >= 4:
+            inner = body[2:-2].strip()
+            if "$$" not in inner:
+                body = inner
+                changed = True
+                continue
+        if body.startswith(r"\[") and body.endswith(r"\]") and len(body) >= 4:
+            inner = body[2:-2].strip()
+            if r"\]" not in inner and r"\[" not in inner:
+                body = inner
+                changed = True
+                continue
+        for eq_env in ("equation", "equation*", "displaymath"):
+            begin_tag = rf"\begin{{{eq_env}}}"
+            end_tag = rf"\end{{{eq_env}}}"
+            if (
+                body.startswith(begin_tag)
+                and body.endswith(end_tag)
+                and len(body) >= len(begin_tag) + len(end_tag)
+            ):
+                inner = body[len(begin_tag):-len(end_tag)].strip()
+                if begin_tag not in inner and end_tag not in inner:
+                    body = inner
+                    changed = True
+                    break
+    return body
+
+
 def canonical_formula_markdown_block(latex: str) -> str:
     """Exactly one display-math block; Writer inputs stay off this surface."""
 
-    body = str(latex or "").strip()
+    body = normalize_formula_latex_body(str(latex or "")).strip()
     if not body:
         return ""
     return "$$\n" + body + "\n$$"
@@ -359,6 +402,9 @@ class SectionFormulaPackageV1(BaseModel):
     def _valid(self) -> "SectionFormulaPackageV1":
         if not self.package_id.strip() or not self.section_id.strip():
             raise ValueError("formula package requires package and section ids")
+        normalized_latex = normalize_formula_latex_body(self.latex)
+        if normalized_latex != self.latex:
+            object.__setattr__(self, "latex", normalized_latex)
         if not self.latex.strip():
             raise ValueError("formula package latex must not be empty")
         lane = self.formula_lane
@@ -2422,6 +2468,10 @@ _LATEX_TYPESETTING_COMMANDS = frozenset({
     r"\binom", r"\pmod", r"\bmod",
     r"\rightarrow", r"\leftarrow", r"\Rightarrow", r"\Leftarrow",
     r"\leftrightarrow", r"\Leftrightarrow", r"\iff", r"\implies",
+    r"\uparrow", r"\downarrow", r"\Uparrow", r"\Downarrow", r"\updownarrow",
+    r"\xrightarrow", r"\xleftarrow", r"\longrightarrow", r"\longleftarrow",
+    r"\nearrow", r"\searrow", r"\swarrow", r"\nwarrow",
+    r"\Longrightarrow", r"\Longleftarrow", r"\longleftrightarrow", r"\Longleftrightarrow",
     r"\wedge", r"\vee", r"\neg", r"\land", r"\lor",
     r"\emptyset", r"\varnothing", r"\colon", r"\prime",
     r"\nonumber", r"\not", r"\ast", r"\star",
@@ -2846,9 +2896,9 @@ def _normalize_formalizer_payload(
             # display math.  Extra headings, Symbol Definitions, and prose
             # memos stay in Writer-facing sidecar fields.
             if str(row.get("latex") or "").strip():
-                row["markdown_block"] = canonical_formula_markdown_block(
-                    str(row["latex"])
-                )
+                latex = normalize_formula_latex_body(str(row["latex"]))
+                row["latex"] = latex
+                row["markdown_block"] = canonical_formula_markdown_block(latex)
             normalized.append(row)
         data["packages"] = normalized
     elif str(data.get("outcome") or "") == "unresolved" and not str(
@@ -2865,17 +2915,20 @@ def _normalize_non_code_formula_package(
 ) -> SectionFormulaPackageV1:
     """Canonicalize representation-only residue on review-lane packages."""
 
+    normalized_latex = normalize_formula_latex_body(package.latex)
     if (
         str(package.authority_status or "") == "code_verified"
         or not package.latex.strip()
         or (
             package.markdown_block.strip()
             and package.latex.strip() in package.markdown_block
+            and normalized_latex == package.latex
         )
     ):
         return package
     payload = package.model_dump(mode="json", exclude={"content_digest"})
-    payload["markdown_block"] = canonical_formula_markdown_block(package.latex)
+    payload["latex"] = normalized_latex
+    payload["markdown_block"] = canonical_formula_markdown_block(normalized_latex)
     try:
         return SectionFormulaPackageV1.model_validate(payload)
     except (TypeError, ValueError):
@@ -3760,6 +3813,7 @@ __all__ = [
     "build_deterministic_formula_packages",
     "build_deterministic_operation_formula_packages",
     "canonical_formula_markdown_block",
+    "normalize_formula_latex_body",
     "build_mechanism_equation_evidence_packs",
     "build_formula_obligation_truths",
     "coerce_section_formalizer_response",

@@ -1138,3 +1138,361 @@ def test_candidate_formula_may_be_review_required_without_entering_verified() ->
     )
     assert failures == []
     assert academic.authority_status != "code_verified"
+
+
+def test_formalizer_payload_strips_outer_dollar_display_wrapper() -> None:
+    from code2paper.agentic.formalization_agent import (
+        _normalize_formalizer_payload,
+        canonical_formula_markdown_block,
+        normalize_formula_latex_body,
+    )
+
+    payload = {
+        "section_id": "MA-S1",
+        "packages": [{
+            "package_id": "fp:MA-S1:1",
+            "section_id": "MA-S1",
+            "purpose": "State diagonal matrix representation.",
+            "latex": "$$ A = \\operatorname{diag}(\\lambda_1,\\dots,\\lambda_d) $$",
+            "authority_status": "author_intent",
+            "formula_lane": "author_intent_academic",
+        }],
+    }
+    normalized = _normalize_formalizer_payload(payload, section_id="MA-S1")
+    pkg = normalized["packages"][0]
+    assert pkg["latex"] == "A = \\operatorname{diag}(\\lambda_1,\\dots,\\lambda_d)"
+    assert "$$" not in pkg["latex"]
+    assert pkg["markdown_block"] == canonical_formula_markdown_block(pkg["latex"])
+
+
+def test_formalizer_payload_strips_bracket_display_wrapper() -> None:
+    from code2paper.agentic.formalization_agent import normalize_formula_latex_body
+
+    body = normalize_formula_latex_body(r"\[ x = y + z \]")
+    assert body == "x = y + z"
+
+
+def test_formalizer_payload_keeps_aligned_environment_inside_body() -> None:
+    from code2paper.agentic.formalization_agent import normalize_formula_latex_body
+
+    latex = "$$\n\\begin{aligned}\nx &= 1 \\\\\ny &= 2\n\\end{aligned}\n$$"
+    normalized = normalize_formula_latex_body(latex)
+    assert normalized == "\\begin{aligned}\nx &= 1 \\\\\ny &= 2\n\\end{aligned}"
+    assert "$$" not in normalized
+
+
+def test_formula_normalization_does_not_change_math_body() -> None:
+    from code2paper.agentic.formalization_agent import normalize_formula_latex_body
+
+    raw = "$$ A_t = \\exp(-\\Delta t \\cdot B) + C $$"
+    normalized = normalize_formula_latex_body(raw)
+    assert normalized == "A_t = \\exp(-\\Delta t \\cdot B) + C"
+
+
+def test_normalized_formula_still_runs_all_semantic_guards() -> None:
+    from code2paper.agentic.formalization_agent import (
+        SectionFormulaPackageV1,
+        validate_section_formula_package,
+    )
+
+    pkg = SectionFormulaPackageV1(
+        package_id="pkg:test",
+        section_id="MA-S1",
+        purpose="Compute score with guaranteed optimality.",
+        latex="$$ s = w @ x + b $$",
+        prose_explanation="This proves guaranteed optimality under all distributions.",
+        authority_status="author_intent",
+        formula_lane="author_intent_academic",
+    )
+    failures = validate_section_formula_package(
+        pkg,
+        equations=_equations(),
+        facts=_facts(),
+    )
+    assert "$$" not in pkg.latex
+    assert "latex_contains_display_wrapper" not in failures
+    assert "unsupported_theoretical_upgrade" in failures
+
+
+def test_standard_arrow_commands_are_not_symbols() -> None:
+    from code2paper.agentic.formalization_agent import (
+        SectionFormulaPackageV1,
+        validate_section_formula_package,
+    )
+
+    pkg = SectionFormulaPackageV1(
+        package_id="pkg:arrow",
+        section_id="MA-S1",
+        purpose="Illustrate transition with standard arrow commands.",
+        latex=r"x \xrightarrow{f} y \downarrow z",
+        prose_explanation="Transition maps x to y with downward projection to z.",
+        symbol_definitions=(
+            ("x", "input"),
+            ("y", "output"),
+            ("z", "projection"),
+            ("f", "mapping"),
+        ),
+        authority_status="author_intent",
+        formula_lane="author_intent_academic",
+    )
+    failures = validate_section_formula_package(
+        pkg,
+        equations=_equations(),
+        facts=_facts(),
+    )
+    assert not any("undefined_symbols" in f for f in failures)
+
+
+def test_unknown_custom_command_still_fails_symbol_closure() -> None:
+    from code2paper.agentic.formalization_agent import (
+        SectionFormulaPackageV1,
+        validate_section_formula_package,
+    )
+
+    pkg = SectionFormulaPackageV1(
+        package_id="pkg:custom",
+        section_id="MA-S1",
+        purpose="Formula with unknown macro.",
+        latex=r"x = \myCustomUnknownMacro(y)",
+        prose_explanation="Applies unknown custom macro to y.",
+        symbol_definitions=(("x", "output"), ("y", "input")),
+        authority_status="author_intent",
+        formula_lane="author_intent_academic",
+    )
+    failures = validate_section_formula_package(
+        pkg,
+        equations=_equations(),
+        facts=_facts(),
+    )
+    assert any("undefined_symbols:\\myCustomUnknownMacro" in f for f in failures)
+
+
+def test_code_verified_paper_operator_can_bind_generic_run_callable() -> None:
+    from code2paper.agentic.formalization_agent import (
+        MechanismEquationEvidencePackV1,
+        SectionFormulaPackageV1,
+        validate_section_formula_package,
+    )
+
+    pack = MechanismEquationEvidencePackV1(
+        pack_id="pack:MA-S4",
+        section_id="MA-S4",
+        bound_fact_ids=("fact:ppr",),
+        operation_atoms=(
+            {
+                "fact_id": "fact:ppr",
+                "predicate": "computes_formula",
+                "operation": "self.run_ppr(adj, restart_prob)",
+                "operands": ["self.run_ppr", "adj", "restart_prob"],
+                "result": "ppr_scores",
+            },
+        ),
+        formalizable_signatures=(
+            {
+                "fact_id": "fact:ppr",
+                "predicate": "computes_formula",
+                "operands": ["self.run_ppr", "adj", "restart_prob"],
+                "result": "ppr_scores",
+            },
+        ),
+    )
+    pkg = SectionFormulaPackageV1(
+        package_id="pkg:ppr",
+        section_id="MA-S4",
+        purpose="Compute Personalized PageRank scores.",
+        latex=r"\pi = \operatorname{PPR}(A, \alpha)",
+        prose_explanation="Computes personalized PageRank scores from adjacency matrix and restart probability.",
+        symbol_definitions=(
+            (r"\pi", "personalized PageRank score"),
+            (r"A", "adjacency matrix"),
+            (r"\alpha", "restart probability"),
+        ),
+        authority_status="code_verified",
+        formula_lane="repository_derived",
+        bound_fact_ids=("fact:ppr",),
+    )
+    fact_set = CodeFactSetV1(
+        producer_version="test",
+        repo_snapshot_id="repo:ppr",
+        project_tree_hash="sha256:tree",
+        evidence_packet_digest="sha256:packets",
+        facts=[CodeFactV1(
+            fact_id="fact:ppr",
+            subject="run_ppr",
+            predicate="computes_formula",
+            object="ppr_scores",
+            scope="sym:run_ppr",
+            direct_span_ids=["span:ppr.py:1:10"],
+            semantic_context=["PPR"],
+            exact_source_digest="sha256:src",
+            canonical_identity="sha256:fact:ppr",
+            validation_status="supported",
+        )],
+        content_digest="sha256:facts",
+    )
+    failures = validate_section_formula_package(
+        pkg,
+        equations=None,
+        facts=fact_set,
+        operation_evidence_packs=(pack,),
+    )
+    assert "operation_operand_binding_missing:self.run_ppr" not in failures
+    assert failures == []
+
+
+def test_raw_callable_name_need_not_appear_in_paper_formula() -> None:
+    from code2paper.agentic.formalization_agent import _operation_callable_is_rendered
+
+    assert _operation_callable_is_rendered("self.run_ppr", r"\pi = \operatorname{PPR}(A, \alpha)") is True
+    assert _operation_callable_is_rendered("compute_score", r"s = \operatorname{score}(x)") is True
+    assert _operation_callable_is_rendered("torch.cat", r"z = \operatorname{concat}(a, b)") is True
+
+
+def test_symbol_meaning_can_bind_source_result_semantically() -> None:
+    from code2paper.agentic.formalization_agent import (
+        _operation_binding_tokens,
+        _operation_value_is_bound,
+    )
+
+    meaning_tokens = _operation_binding_tokens("personalized PageRank score")
+    declared_meanings = ((r"\pi", meaning_tokens),)
+    bound = _operation_value_is_bound(
+        "self.run_ppr",
+        surface_tokens={"pi", "a", "alpha"},
+        declared_meanings=declared_meanings,
+    )
+    assert bound is True
+
+
+def test_dtype_rearrange_plumbing_does_not_block_formula() -> None:
+    from code2paper.agentic.formalization_agent import (
+        _is_operation_implementation_plumbing,
+        _operation_source_shapes,
+    )
+
+    plumbing = "rearrange(self.in_proj.bias.to(dtype=xz.dtype), 'd -> d 1')"
+    assert _is_operation_implementation_plumbing(plumbing) is True
+
+    shapes = _operation_source_shapes(({
+        "operation_atoms": [{
+            "shape_or_type_hints": [plumbing, "B x L x d"],
+        }],
+    },))
+    assert plumbing not in shapes
+    assert "B x L x d" in shapes
+
+
+def test_material_branch_condition_still_must_be_preserved() -> None:
+    from code2paper.agentic.formalization_agent import (
+        MechanismEquationEvidencePackV1,
+        SectionFormulaPackageV1,
+        validate_section_formula_package,
+    )
+
+    pack = MechanismEquationEvidencePackV1(
+        pack_id="pack:cond",
+        section_id="MA-S1",
+        bound_fact_ids=("fact:cond",),
+        operation_atoms=({
+            "fact_id": "fact:cond",
+            "predicate": "computes_formula",
+            "operands": ["x", "w"],
+            "result": "y",
+            "conditions": ["threshold > 0.5"],
+        },),
+    )
+    pkg = SectionFormulaPackageV1(
+        package_id="pkg:cond",
+        section_id="MA-S1",
+        purpose="Compute output y = w * x without condition.",
+        latex=r"y = w \cdot x",
+        prose_explanation="Computes y as product of w and x.",
+        symbol_definitions=((r"y", "output"), (r"w", "weights"), (r"x", "input")),
+        authority_status="code_verified",
+        formula_lane="repository_derived",
+        bound_fact_ids=("fact:cond",),
+    )
+    failures = validate_section_formula_package(
+        pkg,
+        equations=None,
+        facts=None,
+        operation_evidence_packs=(pack,),
+    )
+    assert any("operation_condition_missing" in f for f in failures)
+
+
+def test_operator_family_mismatch_still_fails() -> None:
+    from code2paper.agentic.formalization_agent import (
+        MechanismEquationEvidencePackV1,
+        SectionFormulaPackageV1,
+        validate_section_formula_package,
+    )
+
+    pack = MechanismEquationEvidencePackV1(
+        pack_id="pack:mismatch",
+        section_id="MA-S1",
+        bound_fact_ids=("fact:add",),
+        operation_atoms=({
+            "fact_id": "fact:add",
+            "predicate": "computes_formula",
+            "operation": "add",
+            "operands": ["a", "b"],
+            "result": "c",
+        },),
+    )
+    pkg = SectionFormulaPackageV1(
+        package_id="pkg:mismatch",
+        section_id="MA-S1",
+        purpose="Sort a and b.",
+        latex=r"c = \operatorname{sort}(a, b)",
+        prose_explanation="Sorts operands a and b.",
+        symbol_definitions=((r"c", "result"), (r"a", "first"), (r"b", "second")),
+        authority_status="code_verified",
+        formula_lane="repository_derived",
+        bound_fact_ids=("fact:add",),
+    )
+    failures = validate_section_formula_package(
+        pkg,
+        equations=None,
+        facts=None,
+        operation_evidence_packs=(pack,),
+    )
+    assert any("operation_signature_mismatch" in f for f in failures)
+
+
+def test_unbound_fact_still_fails() -> None:
+    from code2paper.agentic.formalization_agent import (
+        MechanismEquationEvidencePackV1,
+        SectionFormulaPackageV1,
+        validate_section_formula_package,
+    )
+
+    pack = MechanismEquationEvidencePackV1(
+        pack_id="pack:known",
+        section_id="MA-S1",
+        bound_fact_ids=("fact:known",),
+        operation_atoms=({
+            "fact_id": "fact:known",
+            "predicate": "computes_formula",
+            "operands": ["a", "b"],
+            "result": "c",
+        },),
+    )
+    pkg = SectionFormulaPackageV1(
+        package_id="pkg:unbound",
+        section_id="MA-S1",
+        purpose="Unbound fact formula.",
+        latex=r"c = a + b",
+        prose_explanation="Adds a and b.",
+        symbol_definitions=((r"c", "result"), (r"a", "first"), (r"b", "second")),
+        authority_status="code_verified",
+        formula_lane="repository_derived",
+        bound_fact_ids=("fact:unbound_other",),
+    )
+    failures = validate_section_formula_package(
+        pkg,
+        equations=None,
+        facts=None,
+        operation_evidence_packs=(pack,),
+    )
+    assert "operation_evidence_unbound" in failures
