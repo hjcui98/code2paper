@@ -12231,14 +12231,16 @@ def _formula_display_math(package: Mapping[str, Any]) -> str:
 
     from code2paper.agentic.formalization_agent import canonical_formula_markdown_block
 
-    latex = str(package.get("latex") or "").strip()
-    if latex:
-        return canonical_formula_markdown_block(latex)
     block = str(package.get("markdown_block") or "").strip()
     if block:
         environments = _FORMULA_ENVIRONMENT_RE.findall(block)
         if environments:
             return "\n\n".join(environments)
+        if block.startswith("$$") and block.endswith("$$"):
+            return block
+    latex = str(package.get("latex") or "").strip()
+    if latex:
+        return canonical_formula_markdown_block(latex)
     return ""
 
 
@@ -12266,8 +12268,9 @@ def _restore_inline_formula_display_math(
             continue
         if text.count(latex) != 1:
             continue
-        block = str(package.get("markdown_block") or "").strip()
-        canonical = block if _DISPLAY_MATH_RE.search(block or "") else f"$$\n{latex}\n$$"
+        canonical = _formula_display_math(package)
+        if not canonical or not _DISPLAY_MATH_RE.search(canonical):
+            canonical = f"$$\n{latex}\n$$"
         if not _DISPLAY_MATH_RE.search(canonical):
             continue
         text = text.replace(latex, canonical, 1)

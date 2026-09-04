@@ -37,6 +37,7 @@ from code2paper.llm.section_writer import (
     _llm_visible_section_payload,
     _normalize_publication_paragraph_transaction,
     _recover_exact_formula_block_representation,
+    _project_operation_to_reader_surface,
     write_publication_method_by_sections,
     write_method_by_sections,
 )
@@ -216,6 +217,84 @@ def test_v2_filters_membership_target_but_keeps_scientific_operation() -> None:
     operations = packet["method_unit"]["ordered_operations"]
     assert any(item.get("predicate") == "aggregates" for item in operations)
     assert not any("edge_memories" in str(item) for item in operations)
+
+
+def test_reader_projection_prefers_semantic_claim_over_raw_operands() -> None:
+    # Semantic-primary mode: raw operands and results are omitted
+    row_with_semantic = {
+        "predicate": "normalizes",
+        "reader_facing_claim": "normalize routing weights across candidate positions",
+        "operands": ["dst_router_logits", "dim=1"],
+        "result": "dst_routing_weights",
+    }
+    projected = _project_operation_to_reader_surface(row_with_semantic)
+    assert projected is not None
+    assert projected["operation"] == "normalize routing weights across candidate positions"
+    assert projected["predicate"] == "normalizes"
+    assert "operands" not in projected
+    assert "result" not in projected
+
+    # Fallback mode without semantic text: scientific symbols are preserved
+    row_without_semantic = {
+        "predicate": "multiplies",
+        "operands": ["W", "x_t"],
+        "result": "h_t",
+    }
+    projected_fallback = _project_operation_to_reader_surface(row_without_semantic)
+    assert projected_fallback is not None
+    assert projected_fallback["predicate"] == "multiplies"
+    assert projected_fallback["operands"] == ["W", "x_t"]
+    assert projected_fallback["result"] == "h_t"
+
+
+def test_motivation_context_section_isolates_raw_implementation_operations() -> None:
+    section = WriterSectionInput(
+        section_id="MA-S1",
+        heading="Motivation",
+        prompt_payload={
+            "section_id": "MA-S1",
+            "authoring_packets_v2": [{
+                "section_id": "MA-S1",
+                "paragraph_id": "paragraph:MA-S1:1",
+                "rhetorical_goal": "problem_or_local_context",
+                "ordered_targets": [],
+                "method_unit": {
+                    "section_heading": "Motivation",
+                    "authority": "code_equivalent",
+                    "ordered_operations": [
+                        {
+                            "source_span_id": "span:model.py:10:12",
+                            "predicate": "computes",
+                            "operands": ["fused_add_norm", "conv_state", "step_hidden_states"],
+                            "result": "ssm_out",
+                        },
+                        {
+                            "source_span_id": "span:model.py:20:22",
+                            "predicate": "analyzes",
+                            "reader_facing_claim": "irregular timestamps hurt uniform-step SSM",
+                        },
+                    ],
+                },
+                "dossier_summary": {
+                    "operation_atoms": [
+                        {
+                            "operation": "fused_add_norm",
+                            "operands": ["conv_state", "step_hidden_states"],
+                        },
+                    ],
+                },
+            }],
+        },
+    )
+    visible = _llm_visible_section_payload(section)
+    packet = visible["authoring_packets_v2"][0]
+    operations = packet["method_unit"]["ordered_operations"]
+    # Explicit rationale is visible
+    assert any("irregular timestamps hurt uniform-step SSM" in str(item.get("operation", "")) for item in operations)
+    # Raw implementation operations (fused_add_norm, conv_state) are suppressed
+    assert not any("fused_add_norm" in str(item) for item in operations)
+    assert not any("conv_state" in str(item) for item in operations)
+
 
 
 def test_formula_placeholder_replacement_preserves_formalizer_block_verbatim() -> None:

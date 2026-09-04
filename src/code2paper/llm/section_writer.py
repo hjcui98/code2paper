@@ -306,7 +306,7 @@ def _strip_implementation_trace_values(value: Any) -> Any:
 # harness side of the publication boundary.
 _READER_INTERNAL_IDENTIFIER_RE = re.compile(
     r"(?i)^(?:[a-z][a-z0-9]*:){1,}[a-z0-9_.:-]+$|"
-    r"^(?:[a-z][a-z0-9]*[._:-]){1,}[a-z][a-z0-9_.:-]*$"
+    r"^(?:[a-z][a-z0-9]*[.:-]){1,}[a-z][a-z0-9_.:-]*$"
 )
 _READER_STORAGE_IDENTIFIER_RE = re.compile(
     r"(?i)(?:^|[_ .-])(?:cache|caches|memory|memories|buffer|buffers|"
@@ -401,25 +401,55 @@ def _project_reader_value(value: Any, *, limit: int = 360) -> Any:
     return text[:limit].rstrip() if len(text) > limit else text
 
 
+def _is_raw_code_identifier(text: Any) -> bool:
+    """Return True if text has the signature of a low-level implementation variable."""
+    if not isinstance(text, str):
+        return False
+    val = text.strip()
+    if not val:
+        return False
+    # Mathematical notation (LaTeX commands, sub/superscript brackets, operators) is scientific
+    if "\\" in val or any(ch in val for ch in ("$", "{", "}", "^", "+", "-", "*", "/")):
+        return False
+    # Space-separated natural language phrases are reader concepts (e.g. "attention mask")
+    if " " in val:
+        return False
+    # Snake_case implementation names: e.g. dst_router_logits, dst_routing_weights, conv_state
+    # Subscripted math symbols (e.g. h_t, x_t, W_q) have a single-letter or uppercase base.
+    if re.fullmatch(r"[a-z0-9_]+", val) and "_" in val:
+        parts = val.split("_")
+        if len(parts[0]) > 1 or any(len(p) > 2 for p in parts[1:]):
+            return True
+    return False
+
+
 def _project_operation_to_reader_surface(value: Mapping[str, Any] | Any) -> dict[str, Any] | None:
     """Compile one raw operation row into the Writer's semantic surface.
 
-    The private operation row may contain source spans and implementation
-    operands.  Only semantic prose, safe predicates, scientific values, and
-    bounded conditions cross into the Writer packet.  Returning ``None`` for
-    a plumbing-only row is preferable to teaching the model to narrate it.
+    When semantic text exists (reader_facing_claim, semantic_atom, description,
+    statement), use semantic-primary projection: keep the academic claim,
+    predicate, material conditions, iteration context, and shape hints; do not
+    expose raw implementation variables.  When no semantic text exists,
+    fall back to structured projection so scientific symbols (such as h_t, W)
+    remain visible.
     """
 
     row = dict(value) if isinstance(value, Mapping) else {}
     semantic = ""
+    has_semantic_claim = False
     for key in (
         "reader_facing_claim", "semantic_atom", "description", "statement",
-        "operation",
     ):
         projected = _project_reader_value(row.get(key))
         if isinstance(projected, str) and projected.strip():
             semantic = projected.strip()
+            has_semantic_claim = True
             break
+    if not semantic:
+        projected = _project_reader_value(row.get("operation"))
+        if isinstance(projected, str) and projected.strip():
+            semantic = projected.strip()
+
     predicate = _project_reader_value(row.get("predicate"), limit=120)
     if not isinstance(predicate, str) or not predicate.strip():
         predicate = ""
@@ -428,6 +458,45 @@ def _project_operation_to_reader_surface(value: Mapping[str, Any] | Any) -> dict
         projected["operation"] = semantic
     if predicate:
         projected["predicate"] = predicate
+
+    if has_semantic_claim:
+        # Semantic-primary mode: keep semantic operation, conditions, shape hints,
+        # but filter out raw implementation code identifiers from operands/result/subject
+        for source_key, output_key in (
+            ("guard", "guard"),
+            ("conditions", "conditions"),
+            ("iteration_context", "iteration_context"),
+            ("shape_or_type_hints", "shape_or_type_hints"),
+        ):
+            value = _project_reader_value(row.get(source_key))
+            if value not in (None, "", [], (), {}):
+                projected[output_key] = value
+
+        for source_key, output_key in (
+            ("subject", "subject"),
+            ("operands", "operands"),
+            ("result", "result"),
+            ("output", "output"),
+            ("return_value", "return_value"),
+        ):
+            raw_val = row.get(source_key)
+            if raw_val is None:
+                continue
+            if isinstance(raw_val, (list, tuple)):
+                filtered_items = [
+                    item for item in raw_val
+                    if not _is_raw_code_identifier(item)
+                ]
+                value = _project_reader_value(filtered_items)
+            else:
+                if _is_raw_code_identifier(raw_val):
+                    continue
+                value = _project_reader_value(raw_val)
+            if value not in (None, "", [], (), {}):
+                projected[output_key] = value
+        return projected
+
+    # Safe-structured fallback mode
     for source_key, output_key in (
         ("subject", "subject"),
         ("operands", "operands"),
@@ -669,6 +738,25 @@ def _compact_writer_facet_coverage_repair_for_llm(
     return compact
 
 
+def _is_context_or_motivation_packet(packet: Mapping[str, Any]) -> bool:
+    """Return True if this packet represents a motivation or context paragraph."""
+    rhetorical_goal = str(packet.get("rhetorical_goal") or "").strip().casefold()
+    if any(k in rhetorical_goal for k in ("motivation", "problem", "context", "background", "limitation")):
+        return True
+    section_id = str(packet.get("section_id") or "").strip().casefold()
+    if any(k in section_id for k in ("motivation", "problem", "context", "background")):
+        return True
+    method_unit = packet.get("method_unit")
+    if isinstance(method_unit, Mapping):
+        heading = str(method_unit.get("section_heading") or method_unit.get("title") or "").strip().casefold()
+        if any(k in heading for k in ("motivation", "context", "problem", "background")):
+            return True
+        role = str(method_unit.get("section_role") or "").strip().casefold()
+        if any(k in role for k in ("motivation", "context", "problem", "background")):
+            return True
+    return False
+
+
 def _compact_authoring_packets_v2_for_llm(
     packets: Any,
 ) -> list[dict[str, Any]]:
@@ -730,11 +818,20 @@ def _compact_authoring_packets_v2_for_llm(
             if key in row
         }
 
-    def compact_operation(value: Any) -> dict[str, Any]:
+    def compact_operation(value: Any, *, is_context: bool = False) -> dict[str, Any]:
         row = dict(value) if isinstance(value, Mapping) else {}
         predicate = str(row.get("predicate") or "").strip().casefold()
         if predicate == "author_specification":
             return {}
+        if is_context:
+            has_explicit_rationale = False
+            for key in ("reader_facing_claim", "semantic_atom", "description", "statement"):
+                text = str(row.get(key) or "").strip()
+                if text:
+                    has_explicit_rationale = True
+                    break
+            if not has_explicit_rationale:
+                return {}
         compact = _project_operation_to_reader_surface(row)
         if not compact:
             return {}
@@ -782,7 +879,7 @@ def _compact_authoring_packets_v2_for_llm(
             compact["placeholder"] = f"[[FORMULA:{package_id}]]"
         return compact
 
-    def compact_method_unit(value: Any) -> dict[str, Any]:
+    def compact_method_unit(value: Any, *, is_context: bool = False) -> dict[str, Any]:
         row = dict(value) if isinstance(value, Mapping) else {}
         compact = {
             key: row[key]
@@ -820,6 +917,13 @@ def _compact_authoring_packets_v2_for_llm(
         for key in ("inputs", "outputs", "conditions", "return_value_descriptors"):
             if key in compact:
                 compact[key] = bounded_items(compact[key])
+        if is_context:
+            for key in ("inputs", "outputs", "return_value_descriptors"):
+                if key in compact:
+                    compact[key] = [
+                        item for item in compact[key]
+                        if not _is_implementation_trace_text(item)
+                    ]
         intent_hints: list[str] = []
         operations: list[dict[str, Any]] = []
         operation_indexes_by_shape: dict[tuple[Any, ...], int] = {}
@@ -928,7 +1032,7 @@ def _compact_authoring_packets_v2_for_llm(
                 if str(hint or "").strip():
                     intent_hints.append(bounded_text(hint, 240))
                 continue
-            display = compact_operation(item)
+            display = compact_operation(item, is_context=is_context)
             if not display:
                 continue
             shape = operation_display_shape(item)
@@ -968,6 +1072,7 @@ def _compact_authoring_packets_v2_for_llm(
     compact_packets: list[dict[str, Any]] = []
     for packet in values:
         row = dict(packet) if isinstance(packet, Mapping) else {}
+        is_context = _is_context_or_motivation_packet(row)
         dossier = row.get("dossier_summary")
         dossier_row = dict(dossier) if isinstance(dossier, Mapping) else {}
         raw_dossier_operations = [
@@ -993,7 +1098,8 @@ def _compact_authoring_packets_v2_for_llm(
             # exists (legacy/intent-only packets).
             "operation_atoms": (
                 [] if has_primary_operation_chain else [
-                    compact_operation(item) for item in raw_dossier_operations
+                    op for item in raw_dossier_operations
+                    if (op := compact_operation(item, is_context=is_context))
                 ]
             ),
             "operation_atom_count": len(raw_dossier_operations),
@@ -1044,7 +1150,7 @@ def _compact_authoring_packets_v2_for_llm(
             "following_paragraph_id": row.get("following_paragraph_id", ""),
         }
         if isinstance(method_unit, Mapping) and method_unit:
-            compact_packet["method_unit"] = compact_method_unit(method_unit)
+            compact_packet["method_unit"] = compact_method_unit(method_unit, is_context=is_context)
         compact_packets.append(compact_packet)
     return compact_packets
 
