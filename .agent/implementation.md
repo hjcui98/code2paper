@@ -8473,3 +8473,119 @@ nohup bash /tmp/c2p-sixrepair-8006-20260901/run_serial.sh \
 
 Monitor: `/tmp/c2p-sixrepair-8006-20260901/serial.log` and per-project
 `replay.stdout.log`. Results to be appended when SERIAL COMPLETE.
+
+## Live parallel replay — local qwen36@8003 (2026-09-03)
+
+User-authorized local replay for the remaining DyG and LinearRAG projects.
+This is prose-quality evidence only; it is not D5 acceptance.  The runs use
+the dirty worktree directly, with `--force-profile` and the legacy
+`AIHUBMIX_BASE_URL`/capability environment cleared so the selected local
+profile is authoritative.
+
+Runtime preflight:
+
+- `http://127.0.0.1:8003/health`: HTTP 200
+- `/v1/models`: `qwen36-27b-nvfp4`, `max_model_len=131072`
+- queue at launch: running=0, waiting=0, KV=0.0%, preemptions=0
+- both frozen roots and repository roots existed with all 12 required
+  research artifacts
+
+Frozen inputs and repository roots:
+
+- DyG: `/tmp/c2p-method-authoring-8006-direct-dyg-v40-20260831`; repository
+  `/data1/users/cuihengjia/code2paper/code_final/DyG-Mamba_ Continuous State Space Modeling on Dynamic Graphs`
+- LinearRAG: `/tmp/c2p-method-authoring-8006-direct-linearrag-20260830`;
+  repository
+  `/data1/users/cuihengjia/code2paper/code_final/LinearRAG - Linear Graph Retrieval-Augmented Generation on Large-scale Corpora`
+
+Exact launch command:
+
+```text
+tmux new-session -d -s c2p-qwen36-dyg-20260903-220323 "cd \"/home/cuihengjia/agent/Code2Paper copy\" && exec env -u AIHUBMIX_BASE_URL -u CODE2PAPER_LLM_CAPABILITY_PROFILE CODE2PAPER_LLM_CAPABILITY_PROFILE=\"/home/cuihengjia/agent/Code2Paper copy/tests/live/profiles/qwen36_vllm_budgeted_capabilities.json\" python -u scripts/run_authoring_replay.py \"/tmp/c2p-method-authoring-8006-direct-dyg-v40-20260831\" \"/tmp/c2p-qwen36-dyg-20260903-220323\" --repo \"/data1/users/cuihengjia/code2paper/code_final/DyG-Mamba_ Continuous State Space Modeling on Dynamic Graphs\" --run-id \"c2p-qwen36-dyg-20260903-220323\" --profile \"/home/cuihengjia/agent/Code2Paper copy/tests/live/profiles/qwen36_vllm_budgeted.example.env\" --force-profile --reuse-derived-authoring --callback-rounds 1 --callback-tool-turns 8 >/tmp/c2p-qwen36-dyg-20260903-220323.log 2>&1"
+tmux new-session -d -s c2p-qwen36-linearrag-20260903-220323 "cd \"/home/cuihengjia/agent/Code2Paper copy\" && exec env -u AIHUBMIX_BASE_URL -u CODE2PAPER_LLM_CAPABILITY_PROFILE CODE2PAPER_LLM_CAPABILITY_PROFILE=\"/home/cuihengjia/agent/Code2Paper copy/tests/live/profiles/qwen36_vllm_budgeted_capabilities.json\" python -u scripts/run_authoring_replay.py \"/tmp/c2p-method-authoring-8006-direct-linearrag-20260830\" \"/tmp/c2p-qwen36-linearrag-20260903-220323\" --repo \"/data1/users/cuihengjia/code2paper/code_final/LinearRAG - Linear Graph Retrieval-Augmented Generation on Large-scale Corpora\" --run-id \"c2p-qwen36-linearrag-20260903-220323\" --profile \"/home/cuihengjia/agent/Code2Paper copy/tests/live/profiles/qwen36_vllm_budgeted.example.env\" --force-profile --reuse-derived-authoring --callback-rounds 1 --callback-tool-turns 8 >/tmp/c2p-qwen36-linearrag-20260903-220323.log 2>&1"
+```
+
+Launch result: both tmux sessions were running; immediate runtime ledgers
+reported `endpoint_origin=http://127.0.0.1:8003`, health 200, and the model
+`qwen36-27b-nvfp4`.  At the immediate post-launch check, vLLM reported two
+running requests, zero waiting, zero preemptions, and KV-cache usage 51.6%.
+
+Fresh roots/logs:
+
+- DyG: `/tmp/c2p-qwen36-dyg-20260903-220323`, log
+  `/tmp/c2p-qwen36-dyg-20260903-220323.log`
+- LinearRAG: `/tmp/c2p-qwen36-linearrag-20260903-220323`, log
+  `/tmp/c2p-qwen36-linearrag-20260903-220323.log`
+
+Results and token sidecars will be under each fresh root after process exit.
+
+## Token usage stream fix and rerun (2026-09-03)
+
+Root cause: loopback structured streaming returned as soon as the first
+complete JSON value was observed.  vLLM emits `prompt_tokens`,
+`completion_tokens`, and `total_tokens` in a later usage-only SSE event, so
+the prior replay recorded 85 calls but zero usage fields.
+
+Implementation: `src/code2paper/llm/client.py` now preserves the first complete
+JSON value, stops accumulating repeated content, and drains the stream through
+the terminal usage event.  The existing replay sidecar aggregation already
+separates and sums input (`prompt_tokens`/`input_tokens`) and output
+(`completion_tokens`/`output_tokens`) counts, then uses provider
+`total_tokens` when available or derives input+output when it is not.
+
+Verification:
+
+```text
+python -m pytest -q tests/test_llm_runtime.py tests/test_agentic_replay_execution_record.py tests/test_llm_generation_trace.py
+# 66 passed in 1.12s; exit 0
+
+python -m compileall -q src tests scripts
+# exit 0
+
+git diff --check
+# exit 0
+```
+
+The old sessions `c2p-qwen36-dyg-20260903-220323` and
+`c2p-qwen36-linearrag-20260903-220323` were explicitly stopped after the fix.
+
+Rerun with the fixed code:
+
+- DyG session: `c2p-qwen36-fixed-dyg-20260903-222325`, PID `426969`
+- LinearRAG session: `c2p-qwen36-fixed-linearrag-20260903-222325`, PID `426972`
+- both sessions: tmux running at launch; runtime `health=200`, endpoint
+  `http://127.0.0.1:8003`
+- DyG fresh root/log: `/tmp/c2p-qwen36-fixed-dyg-20260903-222325`,
+  `/tmp/c2p-qwen36-fixed-dyg-20260903-222325.log`
+- LinearRAG fresh root/log: `/tmp/c2p-qwen36-fixed-linearrag-20260903-222325`,
+  `/tmp/c2p-qwen36-fixed-linearrag-20260903-222325.log`
+
+The final token sidecar for each run is
+`artifacts/06_authoring/token_usage_summary_v1.json` under its fresh root.
+
+## Archived fixed local rerun evidence — 2026-09-04
+
+The completed fixed-token-accounting reruns were reviewed and their key
+diagnostic artifacts were copied to:
+`artifacts/quality_closed_loop/2026-09-03/local-qwen36-fixed/`.
+The complete raw run directories remain in `/tmp` and are intentionally not
+checked into Git.
+
+Final outcomes:
+
+- DyG-Mamba: `exit_code=2`, `writer=incomplete`, publication `incomplete`;
+  structural coverage `17/37` targets and `1/6` required paragraphs; callback
+  fulfilled `0`, stopped `no_progress`; token sidecar `partial` with
+  `414947` input, `42002` output, `456949` captured total, and `3` calls
+  without usage.
+- LinearRAG: `exit_code=2`, `writer=incomplete`, publication `incomplete`;
+  structural coverage `13/29` targets and `0/5` required paragraphs; callback
+  rolled back after coverage regressed `13/29->1/29`; token sidecar `partial`
+  with `1420593` input, `65215` output, `1485808` captured total, and `5`
+  calls without usage.
+
+Both runs used `http://127.0.0.1:8003/v1` with model
+`qwen36-27b-nvfp4`.  The archived execution records bind them to code-state
+digest `sha256:8ab9bf2f14de0180449b392b183640b5e5ae2f908cdac48a3e26da06ece93231`.
+These are diagnostic/prose-quality results only; neither passed the
+publication or D5 gates.

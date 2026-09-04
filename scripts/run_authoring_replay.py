@@ -27,6 +27,7 @@ requested via ``--reuse-authoring-callbacks``.
 
 Usage: run_authoring_replay.py <frozen-root> <fresh-root> [--resume MA-S2]
        [--repo <repo-path>] [--callback-rounds N] [--callback-tool-turns N]
+       [--profile <env-file>] [--force-profile]
        [--rebuild-authoring] [--reuse-authoring-callbacks]
        [--persist-authoring-rebuild-manifest]
 
@@ -367,10 +368,75 @@ def _execution_manifest_digest(
     return _digest_text("\n".join(parts))
 
 
-def _apply_live_profile(profile: str | Path) -> None:
-    """Load a live ``.env`` profile without expanding secrets-bearing ``$`` values."""
+DEFAULT_LIVE_PROFILE = Path("tests/live/profiles/qwen36_vllm_budgeted.example.env")
+TOKEN_USAGE_SUMMARY_FILENAME = "token_usage_summary_v1.json"
 
-    path = Path(profile)
+
+def _is_custom_env_configured() -> bool:
+    """Return True if the user has already configured LLM endpoint/model in environment."""
+    return bool(
+        os.environ.get("CODE2PAPER_OPENAI_BASE_URL")
+        or os.environ.get("AIHUBMIX_BASE_URL")
+        or (os.environ.get("CODE2PAPER_LLM_PROVIDER") and os.environ.get("CODE2PAPER_LLM_PROVIDER") != "none")
+        or os.environ.get("CODE2PAPER_LIVE_PROFILE")
+    )
+
+
+def _snapshot_active_env_profile(target_path: Path) -> Path:
+    """Persist active LLM and CODE2PAPER_* environment variables to a reproducible profile file."""
+    lines = [
+        "# Auto-captured ambient environment profile for replay execution",
+        "# Digest-bound for provenance; secrets are redacted.",
+    ]
+    for key in sorted(os.environ):
+        if key.startswith("CODE2PAPER_") or key in {
+            "OPENAI_API_KEY",
+            "AIHUBMIX_API_KEY",
+            "ANTHROPIC_API_KEY",
+            "GOOGLE_API_KEY",
+            "OPENROUTER_API_KEY",
+        }:
+            raw = os.environ[key]
+            if any(secret_marker in key for secret_marker in ("KEY", "SECRET", "TOKEN")):
+                val = "<redacted>"
+            else:
+                val = raw
+            lines.append(f"export {key}={val}")
+    target_path.parent.mkdir(parents=True, exist_ok=True)
+    target_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    return target_path
+
+
+def _resolve_profile_path(profile_arg: str | Path | None, *, fresh: Path) -> Path:
+    """Resolve the live profile to load and bind into the execution manifest."""
+    # 1. Explicit /dev/null request: snapshot active environment into fresh artifacts
+    if profile_arg and str(profile_arg).strip() in {"/dev/null", os.devnull}:
+        return _snapshot_active_env_profile(fresh / "artifacts" / "06_authoring" / "ambient_profile.env")
+
+    # 2. Explicit profile path given
+    if profile_arg:
+        p = Path(profile_arg).expanduser()
+        if p.is_file():
+            return p
+        return p
+
+    # 3. No profile argument passed: check if environment is already configured
+    if _is_custom_env_configured():
+        return _snapshot_active_env_profile(fresh / "artifacts" / "06_authoring" / "ambient_profile.env")
+
+    # 4. Fallback to default local Qwen profile
+    return DEFAULT_LIVE_PROFILE.expanduser()
+
+
+def _apply_live_profile(profile: str | Path | None, *, overwrite: bool = False) -> None:
+    """Load a live ``.env`` profile without expanding secrets-bearing ``$`` values.
+
+    Existing environment variables take precedence unless overwrite is True.
+    """
+
+    if not profile:
+        return
+    path = Path(profile).expanduser()
     if not path.is_file():
         return
     for line in path.read_text(encoding="utf-8").splitlines():
@@ -382,7 +448,227 @@ def _apply_live_profile(profile: str | Path) -> None:
         key = key.strip()
         value = value.strip().strip("'").strip('"')
         if key and not key.startswith("_") and value and "$" not in value:
-            os.environ[key] = value
+            if overwrite or key not in os.environ:
+                os.environ[key] = value
+
+
+def _apply_replay_profile(
+    profile: str | Path | None,
+    *,
+    force: bool = False,
+) -> None:
+    """Apply a replay profile, optionally making it authoritative.
+
+    The normal loader preserves ambient configuration so an already selected
+    provider is not silently changed.  ``--force-profile`` is the explicit
+    operator escape hatch for live replays: it also removes the legacy
+    ``AIHUBMIX_BASE_URL`` alias, which otherwise takes precedence over the
+    selected OpenAI-compatible base URL.
+    """
+
+    if force:
+        os.environ.pop("AIHUBMIX_BASE_URL", None)
+        os.environ.pop("CODE2PAPER_LLM_CAPABILITY_PROFILE", None)
+        _apply_live_profile(profile, overwrite=True)
+    else:
+        _apply_live_profile(profile)
+
+
+def _positive_int(value: object) -> int | None:
+    """Return a non-negative integer token count when ``value`` is usable."""
+
+    if isinstance(value, bool):
+        return None
+    if isinstance(value, int):
+        return max(0, value)
+    if isinstance(value, float) and value.is_integer():
+        return max(0, int(value))
+    if isinstance(value, str) and value.strip().isdigit():
+        return max(0, int(value.strip()))
+    return None
+
+
+def _usage_count(usage: Mapping[str, Any], keys: tuple[str, ...]) -> int | None:
+    """Read the first provider usage alias present in a normalized payload."""
+
+    for key in keys:
+        count = _positive_int(usage.get(key))
+        if count is not None:
+            return count
+    return None
+
+
+_INPUT_TOKEN_KEYS = (
+    "prompt_tokens",
+    "input_tokens",
+    "prompt_token_count",
+    "input_token_count",
+    "promptTokens",
+    "inputTokens",
+)
+_OUTPUT_TOKEN_KEYS = (
+    "completion_tokens",
+    "output_tokens",
+    "generated_tokens",
+    "completion_token_count",
+    "output_token_count",
+    "completionTokens",
+    "outputTokens",
+)
+_TOTAL_TOKEN_KEYS = (
+    "total_tokens",
+    "total_token_count",
+    "totalTokens",
+)
+_REASONING_TOKEN_KEYS = (
+    "reasoning_tokens",
+    "thinking_tokens",
+    "thinking_token_count",
+    "completion_tokens_details.reasoning_tokens",
+    "completion_tokens_details.reasoningTokens",
+)
+
+
+def _summarize_token_usage(calls: list[Mapping[str, Any]] | tuple[Mapping[str, Any], ...]) -> dict[str, Any]:
+    """Aggregate provider-reported token usage without double-counting breakdowns.
+
+    ``total_tokens`` is authoritative when a provider returns it.  For older
+    OpenAI-compatible responses that expose only input/output counts, the
+    summary derives a per-call total and marks the run as estimated.  Thinking
+    and reasoning counts are retained as a breakdown; they are not added a
+    second time when already included in completion tokens.
+    """
+
+    totals = {
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "total_tokens": 0,
+        "reasoning_tokens": 0,
+    }
+    by_role: dict[str, dict[str, Any]] = {}
+    raw_usage_totals: dict[str, int] = {}
+    calls_with_usage = 0
+    explicit_total_calls = 0
+    estimated_total_calls = 0
+    cached_calls = 0
+    blocked_calls = 0
+    models: set[str] = set()
+    endpoint_origins: set[str] = set()
+
+    for call in calls:
+        raw_usage = call.get("token_usage")
+        usage: Mapping[str, Any] = raw_usage if isinstance(raw_usage, Mapping) else {}
+        if usage:
+            calls_with_usage += 1
+        if bool(call.get("cached")):
+            cached_calls += 1
+        if str(call.get("blocked_reason") or "").strip():
+            blocked_calls += 1
+        model = str(call.get("model") or "").strip()
+        endpoint = str(call.get("endpoint_origin") or "").strip()
+        if model:
+            models.add(model)
+        if endpoint:
+            endpoint_origins.add(endpoint)
+
+        input_tokens = _usage_count(usage, _INPUT_TOKEN_KEYS) or 0
+        output_tokens = _usage_count(usage, _OUTPUT_TOKEN_KEYS) or 0
+        explicit_total = _usage_count(usage, _TOTAL_TOKEN_KEYS)
+        if explicit_total is None:
+            total_tokens = input_tokens + output_tokens
+            if input_tokens or output_tokens:
+                estimated_total_calls += 1
+        else:
+            total_tokens = explicit_total
+            explicit_total_calls += 1
+        reasoning_tokens = _usage_count(usage, _REASONING_TOKEN_KEYS) or 0
+        totals["input_tokens"] += input_tokens
+        totals["output_tokens"] += output_tokens
+        totals["total_tokens"] += total_tokens
+        totals["reasoning_tokens"] += reasoning_tokens
+
+        for key, value in usage.items():
+            count = _positive_int(value)
+            if count is not None:
+                raw_usage_totals[str(key)] = raw_usage_totals.get(str(key), 0) + count
+
+        role = str(call.get("role") or "unknown").strip() or "unknown"
+        role_totals = by_role.setdefault(
+            role,
+            {
+                "calls": 0,
+                "calls_with_usage": 0,
+                "input_tokens": 0,
+                "output_tokens": 0,
+                "total_tokens": 0,
+                "reasoning_tokens": 0,
+            },
+        )
+        role_totals["calls"] += 1
+        role_totals["calls_with_usage"] += int(bool(usage))
+        role_totals["input_tokens"] += input_tokens
+        role_totals["output_tokens"] += output_tokens
+        role_totals["total_tokens"] += total_tokens
+        role_totals["reasoning_tokens"] += reasoning_tokens
+
+    call_count = len(calls)
+    return {
+        "schema_version": "1.0",
+        "artifact": "token_usage_summary_v1",
+        "accounting": (
+            "sum provider total_tokens; derive input_tokens+output_tokens only "
+            "when total_tokens is absent; reasoning_tokens is a non-additive breakdown"
+        ),
+        "status": (
+            "no_calls" if call_count == 0
+            else "complete" if calls_with_usage == call_count
+            else "partial"
+        ),
+        "calls": call_count,
+        "calls_with_usage": calls_with_usage,
+        "calls_without_usage": call_count - calls_with_usage,
+        "explicit_total_token_calls": explicit_total_calls,
+        "estimated_total_token_calls": estimated_total_calls,
+        "cached_calls": cached_calls,
+        "blocked_calls": blocked_calls,
+        "usage_available": calls_with_usage > 0,
+        "total_tokens_is_estimate": estimated_total_calls > 0,
+        **totals,
+        "by_role": dict(sorted(by_role.items())),
+        "raw_usage_totals": dict(sorted(raw_usage_totals.items())),
+        "models": sorted(models),
+        "endpoint_origins": sorted(endpoint_origins),
+        "source": "code2paper.llm.generation_trace",
+    }
+
+
+def _write_token_usage_summary(fresh: Path) -> dict[str, Any]:
+    """Persist the aggregate usage sidecar and return its execution-record view."""
+
+    try:
+        from code2paper.llm.generation_trace import get_run_generation_traces
+
+        calls = get_run_generation_traces()
+    except Exception:
+        calls = []
+    summary = _summarize_token_usage(calls)
+    path = fresh / "artifacts" / "06_authoring" / TOKEN_USAGE_SUMMARY_FILENAME
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(
+        json.dumps(summary, ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8",
+    )
+    result = {**summary, "path": str(path)}
+    print(
+        "[replay] token usage: "
+        f"total={summary['total_tokens']} "
+        f"input={summary['input_tokens']} "
+        f"output={summary['output_tokens']} "
+        f"calls={summary['calls']} "
+        f"usage_calls={summary['calls_with_usage']} "
+        f"path={path}"
+    )
+    return result
 
 
 def _authoring_failure_path(fresh: Path) -> Path:
@@ -640,6 +926,7 @@ def _write_execution_record(
         ),
         "content_chain": telemetry.get("content_chain", {}),
         "structural_exit": telemetry.get("structural_exit", {}),
+        "token_usage": telemetry.get("token_usage", {}),
     }
     fresh.mkdir(parents=True, exist_ok=True)
     (fresh / "execution_record.json").write_text(
@@ -1294,9 +1581,18 @@ def _replay(
 ) -> int:
     telemetry["terminal_stage"] = "input"
     telemetry["terminal_reason"] = ""
+    # A replay is one accounting boundary.  Reset the process-local collector
+    # so direct test calls or a prior in-process run cannot contaminate its
+    # token total.
+    from code2paper.llm.generation_trace import reset_run_generation_traces
+
+    reset_run_generation_traces()
     # Load the live profile into the environment (same as the probe).
-    profile_path = Path(arguments.profile).expanduser()
-    _apply_live_profile(profile_path)
+    profile_path = _resolve_profile_path(arguments.profile, fresh=fresh)
+    _apply_replay_profile(
+        profile_path,
+        force=bool(getattr(arguments, "force_profile", False)),
+    )
 
     from code2paper.llm.providers import load_llm_config_from_env
 
@@ -1941,7 +2237,16 @@ def main(argv: list[str] | None = None) -> int:
                         help="Repository path for Research-Graph callback continuation")
     parser.add_argument("--callback-rounds", type=int, default=2)
     parser.add_argument("--callback-tool-turns", type=int, default=6)
-    parser.add_argument("--profile", default="tests/live/profiles/qwen36_vllm_budgeted.example.env")
+    parser.add_argument(
+        "--profile",
+        default=None,
+        help="Path to an env profile (defaults to tests/live/profiles/qwen36_vllm_budgeted.example.env only if environment is not already configured)",
+    )
+    parser.add_argument(
+        "--force-profile",
+        action="store_true",
+        help="Make the selected profile authoritative and override existing endpoint/model environment variables",
+    )
     parser.add_argument("--run-id", default="replay")
     parser.add_argument(
         "--rebuild-authoring",
@@ -1968,7 +2273,11 @@ def main(argv: list[str] | None = None) -> int:
     frozen = Path(arguments.frozen_root).expanduser().resolve()
     fresh = Path(arguments.fresh_root).expanduser().resolve()
     fresh.mkdir(parents=True, exist_ok=True)
-    _apply_live_profile(arguments.profile)
+    initial_profile_path = _resolve_profile_path(arguments.profile, fresh=fresh)
+    _apply_replay_profile(
+        initial_profile_path,
+        force=bool(arguments.force_profile),
+    )
 
     from run_d5_consolidated_matrix import record_runtime_ledger
 
@@ -2042,6 +2351,10 @@ def main(argv: list[str] | None = None) -> int:
             runtime_end = record_runtime_ledger(fresh, "end")
         except Exception as exc:  # noqa: BLE001 - diagnostics-only
             print(f"[replay] runtime end ledger failed: {exc!r}")
+        try:
+            telemetry["token_usage"] = _write_token_usage_summary(fresh)
+        except Exception as exc:  # noqa: BLE001 - diagnostics-only
+            print(f"[replay] token usage summary failed: {exc!r}")
         structural = telemetry.get("structural_exit") or {}
         writer_status = str(telemetry.get("writer_status") or "")
         failure_needed = bool(

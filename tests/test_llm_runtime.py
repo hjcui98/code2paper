@@ -146,7 +146,7 @@ class LLMRuntimeTests(unittest.TestCase):
         self.assertNotIn("SHOULD_NOT_READ", text)
         self.assertGreaterEqual(len(text) - len(text.rstrip()), 64)
 
-    def test_loopback_structured_stream_stops_after_first_json(self) -> None:
+    def test_loopback_structured_stream_drains_terminal_usage_after_first_json(self) -> None:
         captured = {}
 
         def fake_urlopen(request, timeout=0):  # noqa: ANN001
@@ -155,6 +155,15 @@ class LLMRuntimeTests(unittest.TestCase):
                 {"choices": [{"delta": {"content": '{"ok":'}}]},
                 {"choices": [{"delta": {"content": "true}"}}]},
                 {"choices": [{"delta": {"content": '{"repeat":true}'}}]},
+                {
+                    "choices": [],
+                    "usage": {
+                        "prompt_tokens": 12,
+                        "completion_tokens": 7,
+                        "total_tokens": 19,
+                    },
+                },
+                {"choices": []},
             ]})
 
         config = LLMConfig(provider=LLMProvider.OPENAI, model="local-model", cache=False)
@@ -177,6 +186,10 @@ class LLMRuntimeTests(unittest.TestCase):
         self.assertTrue(captured["payload"]["stream"])
         self.assertEqual(response.text, '{"ok":true}')
         self.assertEqual(response.finish_reason, "structured_complete")
+        self.assertEqual(
+            response.token_usage,
+            {"prompt_tokens": 12, "completion_tokens": 7, "total_tokens": 19},
+        )
 
     def test_loopback_structured_stream_preserves_partial_text_on_premature_end(self) -> None:
         """When the provider ends the stream before a complete JSON value,

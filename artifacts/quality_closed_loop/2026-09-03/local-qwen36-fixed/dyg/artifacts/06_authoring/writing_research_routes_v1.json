@@ -1,0 +1,102 @@
+{
+  "schema_version": "1.0",
+  "routes": [
+    {
+      "route_id": "route:aed0393cb0f505ab4efa",
+      "request_id": "MA-S1:unit-1",
+      "owner": "repository_tools",
+      "section_id": "MA-S1",
+      "argument_unit_id": "MA-S1:unit-1",
+      "scope": [
+        "initialize",
+        "diagonal",
+        "strictly",
+        "negative",
+        "eigenvalues",
+        "expression",
+        "matrix",
+        "real",
+        "part",
+        "formal"
+      ],
+      "required_authority_lane": "executable_hard",
+      "rationale": "The requested move requires the executable_hard lane; resume section MA-S1 after the owning artifact is validated.",
+      "resume_section_only": true,
+      "content_digest": "sha256:728b19c418c309b4a9aab024d8367496b41f9f9998d3c98b041e6bd565c70be8"
+    },
+    {
+      "route_id": "route:e16ff325c1a86c72c41c",
+      "request_id": "req:MA-S5:formula",
+      "owner": "author_confirmation_queue",
+      "section_id": "MA-S5",
+      "argument_unit_id": "MA-S5:unit",
+      "scope": [
+        "expression",
+        "formal"
+      ],
+      "required_authority_lane": "expository_bridge",
+      "rationale": "The requested move requires the expository_bridge lane; resume section MA-S5 after the owning artifact is validated.",
+      "resume_section_only": true,
+      "content_digest": "sha256:2b86d3f20c0e34301e174c7bba2f8ad08f0284957fead7737dffc62944c69a32"
+    },
+    {
+      "route_id": "route:2f31b3c46a0d9b762dfc",
+      "request_id": "research-derived:5087406eaa026753",
+      "owner": "repository_tools",
+      "section_id": "MA-S4",
+      "argument_unit_id": "MA-S4:unit-2",
+      "scope": [
+        "Downstream",
+        "adaptation",
+        "prediction",
+        "classification",
+        "computational",
+        "complexity",
+        "Absolute",
+        "temporal",
+        "encoding",
+        "timespans",
+        "interaction",
+        "trainable",
+        "cosine-based",
+        "function",
+        "Co-occurrence",
+        "frequency"
+      ],
+      "required_authority_lane": "executable_hard",
+      "rationale": "The requested move requires the executable_hard lane; resume section MA-S4 after the owning artifact is validated.",
+      "resume_section_only": true,
+      "content_digest": "sha256:081743607e8d0f7b35727c5d06774cb4284732668688dbd03a17e45be7b8e2b9"
+    },
+    {
+      "route_id": "route:f4d72eecd2e598e760ce",
+      "request_id": "research-derived:f2f6fa0e59d44905",
+      "owner": "repository_tools",
+      "section_id": "MA-S5",
+      "argument_unit_id": "MA-S5:unit",
+      "scope": [
+        "selective",
+        "reviewing",
+        "input-dependent",
+        "filtering",
+        "historical",
+        "information",
+        "important",
+        "interactions",
+        "reinforced",
+        "suppressed",
+        "maintaining",
+        "stability",
+        "spectral",
+        "constraints",
+        "method",
+        "section"
+      ],
+      "required_authority_lane": "executable_hard",
+      "rationale": "The requested move requires the executable_hard lane; resume section MA-S5 after the owning artifact is validated.",
+      "resume_section_only": true,
+      "content_digest": "sha256:b279f88cf86be81ca2de9629661f990d9366cc5ea35e9b2e139746c17f897230"
+    }
+  ],
+  "rejections": []
+}

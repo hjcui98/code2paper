@@ -1,0 +1,62 @@
+{
+  "mode": "agentic-text-evidence-validation-v1",
+  "status": "failed",
+  "input_text_digest": "sha256:c1c19f94007198060add1f0f528386fb354cc267493d82c7d9cfe896edf15809",
+  "projection_digest": "sha256:ac8f1ba0ebf547a98ec8515dde68de6b7e6ed89c4155e384cc87f16d8c6713bd",
+  "repo_snapshot_id": "repo:9b7808f3467cadeb628e63ff7fcbaa570590e9d68fd05e2a1729aa4712092034",
+  "project_tree_hash": "sha256:9b7808f3467cadeb628e63ff7fcbaa570590e9d68fd05e2a1729aa4712092034",
+  "evidence_snapshot_id": "",
+  "evidence_snapshot_digest": "",
+  "checked_factual_claims": 2,
+  "supported_claims": 0,
+  "caveated_claims": 0,
+  "unsupported_claims": 2,
+  "unverified_claims": 0,
+  "semantic_verifier_calls": 0,
+  "verification_mode": "lexical_only",
+  "verdicts": [
+    {
+      "atomic_claim_id": "FAC1",
+      "status": "unsupported",
+      "matched_projection_claim_ids": [],
+      "matched_method_proposition_ids": [
+        "claim-callback:MA-S1:unit-1:mechanism_overview:1-fact-callback:MA-S1:unit-1:mechanism_overview:1-node:3a6de8a6f23f4821"
+      ],
+      "direct_evidence_ids": [],
+      "relation_evidence_ids": [],
+      "supported_fragment": "",
+      "unsupported_fragment": "The transformation applies fused add norm hidden states with weight bias eps to process the input sequence.",
+      "required_qualifiers": [],
+      "deterministic_failures": [
+        "no_semantically_matching_projected_claim",
+        "direct_evidence_missing"
+      ],
+      "model_verdict": "",
+      "rationale": "no_semantically_matching_projected_claim; direct_evidence_missing",
+      "repair_action": "revise_authoring_wording"
+    },
+    {
+      "atomic_claim_id": "FAC2",
+      "status": "unsupported",
+      "matched_projection_claim_ids": [],
+      "matched_method_proposition_ids": [
+        "claim-callback:req:MA-S1:mechanism-overview-fact-callback:req:MA-S1:mechanism-overview-node:e6e27ab4b6034a66"
+      ],
+      "direct_evidence_ids": [],
+      "relation_evidence_ids": [],
+      "supported_fragment": "",
+      "unsupported_fragment": "Subsequently, the method uses step hidden states conv state ssm out to generate the final output representation.",
+      "required_qualifiers": [],
+      "deterministic_failures": [
+        "no_semantically_matching_projected_claim",
+        "direct_evidence_missing"
+      ],
+      "model_verdict": "",
+      "rationale": "no_semantically_matching_projected_claim; direct_evidence_missing",
+      "repair_action": "revise_authoring_wording"
+    }
+  ],
+  "recommended_actions": [
+    "revise_authoring_wording"
+  ]
+}

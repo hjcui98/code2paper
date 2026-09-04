@@ -1,0 +1,84 @@
+{
+  "mode": "agentic-final-text-claims-v1",
+  "input_text_digest": "sha256:c1c19f94007198060add1f0f528386fb354cc267493d82c7d9cfe896edf15809",
+  "units": [
+    {
+      "unit_id": "FTU1",
+      "kind": "heading",
+      "text": "Motivation: limitations of vanilla SSMs – they ignore irregular timespans and are vulnerable to input noise",
+      "line_start": 1,
+      "line_end": 1,
+      "char_start": 3,
+      "char_end": 110,
+      "factual": false,
+      "high_risk_markers": [],
+      "span_digest": "sha256:1fece039c5f0fff7a294c3acbe8aa5682acade9cc34f3a4bc1b4bd3e86bc5172"
+    },
+    {
+      "unit_id": "FTU2",
+      "kind": "sentence",
+      "text": "The transformation applies fused add norm hidden states with weight bias eps to process the input sequence.",
+      "line_start": 3,
+      "line_end": 3,
+      "char_start": 112,
+      "char_end": 219,
+      "factual": true,
+      "high_risk_markers": [],
+      "span_digest": "sha256:e56f2cee48b3bbedb91510e7c05c75bc1be4968ef2f4e9f5a29109f44218d66b"
+    },
+    {
+      "unit_id": "FTU3",
+      "kind": "sentence",
+      "text": "Subsequently, the method uses step hidden states conv state ssm out to generate the final output representation.",
+      "line_start": 3,
+      "line_end": 3,
+      "char_start": 220,
+      "char_end": 332,
+      "factual": true,
+      "high_risk_markers": [],
+      "span_digest": "sha256:1c84e6e54d7e3651f0a18e95a8a31b3e308d6e0774a06871b13c7b0c5354a96b"
+    }
+  ],
+  "atomic_claims": [
+    {
+      "atomic_claim_id": "FAC1",
+      "unit_id": "FTU2",
+      "text": "The transformation applies fused add norm hidden states with weight bias eps to process the input sequence.",
+      "normalized_text": "the transformation applies fused add norm hidden states with weight bias eps to process the input sequence",
+      "line_start": 3,
+      "line_end": 3,
+      "char_start": 112,
+      "char_end": 219,
+      "candidate_projection_claim_ids": [],
+      "candidate_method_proposition_ids": [
+        "claim-callback:MA-S1:unit-1:mechanism_overview:1-fact-callback:MA-S1:unit-1:mechanism_overview:1-node:3a6de8a6f23f4821"
+      ],
+      "candidate_author_attested_ids": [],
+      "candidate_narrative_ids": [],
+      "candidate_direct_evidence_ids": [],
+      "high_risk_markers": [],
+      "claim_digest": "sha256:e56f2cee48b3bbedb91510e7c05c75bc1be4968ef2f4e9f5a29109f44218d66b"
+    },
+    {
+      "atomic_claim_id": "FAC2",
+      "unit_id": "FTU3",
+      "text": "Subsequently, the method uses step hidden states conv state ssm out to generate the final output representation.",
+      "normalized_text": "subsequently the method uses step hidden states conv state ssm out to generate the final output representation",
+      "line_start": 3,
+      "line_end": 3,
+      "char_start": 220,
+      "char_end": 332,
+      "candidate_projection_claim_ids": [],
+      "candidate_method_proposition_ids": [
+        "claim-callback:req:MA-S1:mechanism-overview-fact-callback:req:MA-S1:mechanism-overview-node:e6e27ab4b6034a66"
+      ],
+      "candidate_author_attested_ids": [],
+      "candidate_narrative_ids": [],
+      "candidate_direct_evidence_ids": [],
+      "high_risk_markers": [],
+      "claim_digest": "sha256:1c84e6e54d7e3651f0a18e95a8a31b3e308d6e0774a06871b13c7b0c5354a96b"
+    }
+  ],
+  "deterministic_completeness_passed": true,
+  "completeness_failures": []
+}

@@ -1,0 +1,28 @@
+[
+  {
+    "key": "start",
+    "recorded_at": "2026-09-03T22:23:25+0800",
+    "endpoint_origin": "http://127.0.0.1:8003",
+    "health": 200,
+    "models": [
+      "qwen36-27b-nvfp4"
+    ],
+    "running": 0,
+    "waiting": 0,
+    "gpu_cache_usage_perc": 0.0,
+    "max_model_len": 131072
+  },
+  {
+    "key": "end",
+    "recorded_at": "2026-09-03T22:54:44+0800",
+    "endpoint_origin": "http://127.0.0.1:8003",
+    "health": 200,
+    "models": [
+      "qwen36-27b-nvfp4"
+    ],
+    "running": 0,
+    "waiting": 0,
+    "gpu_cache_usage_perc": 0.0,
+    "max_model_len": 131072
+  }
+]

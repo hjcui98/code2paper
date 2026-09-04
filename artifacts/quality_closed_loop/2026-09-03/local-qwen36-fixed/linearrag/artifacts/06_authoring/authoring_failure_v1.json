@@ -1,0 +1,42 @@
+{
+  "schema_version": "1.0",
+  "artifact": "authoring_failure_v1",
+  "terminal_stage": "writer",
+  "error_code": "writer_boundary_failed",
+  "terminal_reason": "writer_status:incomplete",
+  "section_id": "MA-S1",
+  "paragraph_id": "paragraph:MA-S1:method-unit-1",
+  "target_kind": "slot",
+  "target_id": "slot:fact-O-COMPONENT-01-bd3b9454-node:0cb62ab4a3a7d394",
+  "direct_reason": "required_paragraph_invalid:MA-S1:paragraph:MA-S1:method-unit-1",
+  "cascade_reasons": [
+    "required_target_uncovered:MA-S1:paragraph:MA-S1:method-unit-1:slot",
+    "required_target_uncovered:MA-S1:paragraph:MA-S1:method-unit-1:edge",
+    "required_paragraph_invalid:MA-S2:paragraph:MA-S2:method-unit-1",
+    "required_target_uncovered:MA-S2:paragraph:MA-S2:method-unit-1:formula",
+    "required_paragraph_invalid:MA-S3:paragraph:MA-S3:method-unit-1",
+    "required_target_uncovered:MA-S3:paragraph:MA-S3:method-unit-1:slot",
+    "required_target_uncovered:MA-S3:paragraph:MA-S3:method-unit-1:formula",
+    "required_paragraph_invalid:MA-S4:paragraph:MA-S4:method-unit-1",
+    "required_target_uncovered:MA-S4:paragraph:MA-S4:method-unit-1:slot",
+    "required_target_uncovered:MA-S4:paragraph:MA-S4:method-unit-1:formula",
+    "required_paragraph_invalid:MA-S5:paragraph:MA-S5:method-unit-1",
+    "required_target_uncovered:MA-S5:paragraph:MA-S5:method-unit-1:facet",
+    "required_target_uncovered:MA-S5:paragraph:MA-S5:method-unit-1:formula",
+    "rendered_invalid:5",
+    "required_target_coverage_incomplete",
+    "required_slot_coverage_incomplete",
+    "required_edge_coverage_incomplete"
+  ],
+  "input_summary": {
+    "fresh_root_name": "c2p-qwen36-fixed-linearrag-20260903-222325",
+    "exception_type": "",
+    "exception_message": ""
+  },
+  "downstream_stages": {
+    "research": "completed",
+    "formalizer": "completed",
+    "writer": "failed"
+  },
+  "content_digest": "sha256:92ba985d2662d54095bb694bedd425aafff74aeafafeb75e671e88d988b1af57"
+}

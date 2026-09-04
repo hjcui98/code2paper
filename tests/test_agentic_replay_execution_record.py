@@ -11,6 +11,7 @@ from __future__ import annotations
 import argparse
 import importlib.util
 import json
+import os
 import sys
 from types import SimpleNamespace
 from pathlib import Path
@@ -52,6 +53,12 @@ def test_execution_record_contains_command_exit_code_and_code_binding(
             "writer_resumed_section_ids": [],
             "writer_status": "incomplete",
             "writer_blocked_reason": "",
+            "token_usage": {
+                "total_tokens": 37,
+                "input_tokens": 21,
+                "output_tokens": 16,
+                "calls": 2,
+            },
         },
     )
     record_path = tmp_path / "fresh" / "execution_record.json"
@@ -71,6 +78,7 @@ def test_execution_record_contains_command_exit_code_and_code_binding(
     assert record["runtime"]["start"]["health"] == 200
     assert record["runtime"]["start"]["running"] == 1
     assert record["runtime"]["end"]["running"] == 0
+    assert record["token_usage"]["total_tokens"] == 37
 
 
 def test_authoring_failure_marks_completed_failed_and_not_run_stages(
@@ -546,3 +554,146 @@ def test_method_evidence_rebuild_template_keeps_valid_frozen_file(tmp_path: Path
     assert template.project_id == "repo:frozen"
     assert template.method_name == "DyG-Mamba"
     assert template.method_goal == "Model continuous state on dynamic graphs."
+
+
+def test_apply_live_profile_does_not_overwrite_existing_env(tmp_path: Path, monkeypatch) -> None:
+    module = _load_script()
+    profile = tmp_path / "custom.env"
+    profile.write_text(
+        "export CODE2PAPER_OPENAI_BASE_URL=http://profile-url/v1\n"
+        "export CODE2PAPER_LLM_MODEL=profile-model\n"
+        "export NEW_PROFILE_KEY=profile-val\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("CODE2PAPER_OPENAI_BASE_URL", "https://api.deepseek.com/v1")
+    monkeypatch.setenv("CODE2PAPER_LLM_MODEL", "deepseek-v4-flash")
+
+    module._apply_live_profile(profile, overwrite=False)
+
+    assert os.environ["CODE2PAPER_OPENAI_BASE_URL"] == "https://api.deepseek.com/v1"
+    assert os.environ["CODE2PAPER_LLM_MODEL"] == "deepseek-v4-flash"
+    assert os.environ["NEW_PROFILE_KEY"] == "profile-val"
+
+
+def test_apply_replay_profile_force_overwrites_endpoint_and_clears_alias(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    module = _load_script()
+    profile = tmp_path / "local.env"
+    profile.write_text(
+        "export CODE2PAPER_OPENAI_BASE_URL=http://127.0.0.1:8003/v1\n"
+        "export CODE2PAPER_LLM_MODEL=qwen36-27b-nvfp4\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("AIHUBMIX_BASE_URL", "https://remote.example/v1")
+    monkeypatch.setenv("CODE2PAPER_OPENAI_BASE_URL", "https://remote.example/v1")
+    monkeypatch.setenv("CODE2PAPER_LLM_MODEL", "remote-model")
+
+    module._apply_replay_profile(profile, force=True)
+
+    assert "AIHUBMIX_BASE_URL" not in os.environ
+    assert os.environ["CODE2PAPER_OPENAI_BASE_URL"] == "http://127.0.0.1:8003/v1"
+    assert os.environ["CODE2PAPER_LLM_MODEL"] == "qwen36-27b-nvfp4"
+
+
+def test_summarize_token_usage_prefers_provider_total_and_derives_missing_total() -> None:
+    module = _load_script()
+
+    summary = module._summarize_token_usage([
+        {
+            "role": "method_writer",
+            "model": "local-model",
+            "token_usage": {
+                "prompt_tokens": 10,
+                "completion_tokens": 4,
+                "total_tokens": 14,
+                "completion_tokens_details.reasoning_tokens": 2,
+            },
+        },
+        {
+            "role": "formalizer",
+            "model": "local-model",
+            "token_usage": {"input_tokens": 3, "output_tokens": 2},
+        },
+        {
+            "role": "method_writer",
+            "model": "local-model",
+            "token_usage": {},
+            "blocked_reason": "provider_network_error",
+        },
+    ])
+
+    assert summary["total_tokens"] == 19
+    assert summary["input_tokens"] == 13
+    assert summary["output_tokens"] == 6
+    assert summary["reasoning_tokens"] == 2
+    assert summary["calls"] == 3
+    assert summary["calls_with_usage"] == 2
+    assert summary["explicit_total_token_calls"] == 1
+    assert summary["estimated_total_token_calls"] == 1
+    assert summary["total_tokens_is_estimate"] is True
+    assert summary["by_role"]["method_writer"]["total_tokens"] == 14
+
+
+def test_write_token_usage_summary_persists_sidecar(tmp_path: Path, monkeypatch) -> None:
+    module = _load_script()
+    monkeypatch.setattr(
+        "code2paper.llm.generation_trace.get_run_generation_traces",
+        lambda: [{
+            "role": "method_writer",
+            "model": "qwen36-27b-nvfp4",
+            "endpoint_origin": "http://127.0.0.1:8003",
+            "token_usage": {
+                "prompt_tokens": 100,
+                "completion_tokens": 25,
+                "total_tokens": 125,
+            },
+        }],
+    )
+
+    result = module._write_token_usage_summary(tmp_path / "fresh")
+
+    path = Path(result["path"])
+    assert path.is_file()
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    assert payload["total_tokens"] == 125
+    assert payload["models"] == ["qwen36-27b-nvfp4"]
+    assert result["path"] == str(path)
+
+
+def test_resolve_profile_path_respects_custom_configured_env(tmp_path: Path, monkeypatch) -> None:
+    module = _load_script()
+    monkeypatch.setenv("CODE2PAPER_OPENAI_BASE_URL", "https://api.deepseek.com/v1")
+    monkeypatch.setenv("CODE2PAPER_LLM_MODEL", "deepseek-v4-flash")
+    fresh = tmp_path / "fresh"
+
+    resolved = module._resolve_profile_path(None, fresh=fresh)
+
+    assert resolved.is_file()
+    assert resolved != module.DEFAULT_LIVE_PROFILE
+    content = resolved.read_text(encoding="utf-8")
+    assert "https://api.deepseek.com/v1" in content
+    assert "deepseek-v4-flash" in content
+
+
+def test_resolve_profile_path_handles_dev_null(tmp_path: Path, monkeypatch) -> None:
+    module = _load_script()
+    fresh = tmp_path / "fresh"
+
+    resolved = module._resolve_profile_path("/dev/null", fresh=fresh)
+
+    assert resolved.is_file()
+    assert "ambient_profile.env" in str(resolved)
+
+
+def test_resolve_profile_path_falls_back_when_no_custom_env(tmp_path: Path, monkeypatch) -> None:
+    module = _load_script()
+    monkeypatch.delenv("CODE2PAPER_OPENAI_BASE_URL", raising=False)
+    monkeypatch.delenv("AIHUBMIX_BASE_URL", raising=False)
+    monkeypatch.delenv("CODE2PAPER_LLM_PROVIDER", raising=False)
+    monkeypatch.delenv("CODE2PAPER_LIVE_PROFILE", raising=False)
+    fresh = tmp_path / "fresh"
+
+    resolved = module._resolve_profile_path(None, fresh=fresh)
+
+    assert resolved == module.DEFAULT_LIVE_PROFILE.expanduser()

@@ -1,0 +1,73 @@
+{
+  "schema_version": "1.0",
+  "artifact": "token_usage_summary_v1",
+  "accounting": "sum provider total_tokens; derive input_tokens+output_tokens only when total_tokens is absent; reasoning_tokens is a non-additive breakdown",
+  "status": "partial",
+  "calls": 82,
+  "calls_with_usage": 77,
+  "calls_without_usage": 5,
+  "explicit_total_token_calls": 77,
+  "estimated_total_token_calls": 0,
+  "cached_calls": 0,
+  "blocked_calls": 0,
+  "usage_available": true,
+  "total_tokens_is_estimate": false,
+  "input_tokens": 1420593,
+  "output_tokens": 65215,
+  "total_tokens": 1485808,
+  "reasoning_tokens": 0,
+  "by_role": {
+    "method_mechanism_draft_planner": {
+      "calls": 6,
+      "calls_with_usage": 2,
+      "input_tokens": 2971,
+      "output_tokens": 9308,
+      "total_tokens": 12279,
+      "reasoning_tokens": 0
+    },
+    "method_section_formalizer": {
+      "calls": 16,
+      "calls_with_usage": 16,
+      "input_tokens": 748747,
+      "output_tokens": 17552,
+      "total_tokens": 766299,
+      "reasoning_tokens": 0
+    },
+    "method_writer": {
+      "calls": 10,
+      "calls_with_usage": 10,
+      "input_tokens": 31163,
+      "output_tokens": 14937,
+      "total_tokens": 46100,
+      "reasoning_tokens": 0
+    },
+    "research_supervisor": {
+      "calls": 20,
+      "calls_with_usage": 19,
+      "input_tokens": 87460,
+      "output_tokens": 12136,
+      "total_tokens": 99596,
+      "reasoning_tokens": 0
+    },
+    "semantic_verifier": {
+      "calls": 30,
+      "calls_with_usage": 30,
+      "input_tokens": 550252,
+      "output_tokens": 11282,
+      "total_tokens": 561534,
+      "reasoning_tokens": 0
+    }
+  },
+  "raw_usage_totals": {
+    "completion_tokens": 65215,
+    "prompt_tokens": 1420593,
+    "total_tokens": 1485808
+  },
+  "models": [
+    "qwen36-27b-nvfp4"
+  ],
+  "endpoint_origins": [
+    "http://127.0.0.1:8003"
+  ],
+  "source": "code2paper.llm.generation_trace"
+}

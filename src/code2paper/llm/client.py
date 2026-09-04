@@ -29,7 +29,11 @@ from code2paper.llm.capabilities import LLMCapabilityProfile, StructuredResponse
 from code2paper.llm.retry_policy import RetryPolicy
 from code2paper.schemas import LLMConfig, LLMProvider
 
-_STREAM_METRICS: dict[str, object] = {"usage": None, "thinking_chars": 0}
+_STREAM_METRICS: dict[str, object] = {
+    "usage": None,
+    "thinking_chars": 0,
+    "finish_reason": "",
+}
 
 
 @dataclass(frozen=True)
@@ -464,12 +468,14 @@ def _post_openai_stream_until_complete_json(
     timeout_seconds: int,
     retry_policy: RetryPolicy,
 ) -> str:
-    """Read an OpenAI SSE stream only until its first complete JSON value.
+    """Read an OpenAI SSE stream through its terminal usage event.
 
     Some local guided-decoding stacks repeat an already complete JSON object
-    instead of emitting EOS. Closing the stream after the first balanced outer
-    value preserves the model-authored response and prevents that repetition
-    from consuming the full output budget.
+    instead of emitting EOS. Once the first balanced outer value is observed,
+    preserve it and stop accumulating repeated content while draining the
+    terminal usage event.  This keeps the model-authored response bounded and
+    records both prompt and completion token counts when the provider emits
+    OpenAI-compatible streaming usage.
     """
 
     delay_seconds = max(0.0, retry_policy.initial_delay_seconds)
@@ -477,6 +483,7 @@ def _post_openai_stream_until_complete_json(
     last_error: Exception | None = None
     _STREAM_METRICS["usage"] = None
     _STREAM_METRICS["thinking_chars"] = 0
+    _STREAM_METRICS["finish_reason"] = ""
     for attempt in range(1, attempts + 1):
         request = urllib.request.Request(
             url,
@@ -486,6 +493,7 @@ def _post_openai_stream_until_complete_json(
         )
         try:
             accumulated = ""
+            complete_text: str | None = None
             with urllib.request.urlopen(request, timeout=timeout_seconds) as response:
                 iterator = iter(response)
                 last_content_at = time.monotonic()
@@ -496,6 +504,8 @@ def _post_openai_stream_until_complete_json(
                         time.monotonic() - last_content_at
                     )
                     if inactivity_remaining <= 0:
+                        if complete_text is not None:
+                            return complete_text
                         complete = _first_complete_json(accumulated)
                         if complete is not None:
                             return complete
@@ -533,6 +543,8 @@ def _post_openai_stream_until_complete_json(
                     if not data:
                         continue
                     if data == "[DONE]":
+                        if complete_text is not None:
+                            return complete_text
                         complete = _first_complete_json(accumulated)
                         if complete is not None:
                             return complete
@@ -557,6 +569,9 @@ def _post_openai_stream_until_complete_json(
                         delta = choice.get("delta") or {}
                     except (KeyError, IndexError, TypeError):
                         continue
+                    finish_reason = choice.get("finish_reason")
+                    if finish_reason:
+                        _STREAM_METRICS["finish_reason"] = str(finish_reason)
                     content = delta.get("content")
                     reasoning_content = delta.get("reasoning_content")
                     if isinstance(reasoning_content, str) and reasoning_content:
@@ -566,22 +581,32 @@ def _post_openai_stream_until_complete_json(
                         last_content_at = time.monotonic()
                         received_progress = True
                     if isinstance(content, str):
-                        accumulated += content
                         if content:
                             last_content_at = time.monotonic()
                             received_progress = True
-                        complete = _first_complete_json(accumulated)
-                        if complete is not None:
-                            return complete
-                        if _incomplete_json_has_whitespace_padding(accumulated):
-                            # Guided decoding on this local stack sometimes
-                            # stops mid-string and then pads the rest of
-                            # max_tokens with newlines (finish_reason still
-                            # looks complete).  Close the stream so the GPU
-                            # does not spend a full role budget on padding;
-                            # the owning parser still fail-closes.
-                            return accumulated
-                    if choice.get("finish_reason"):
+                        if complete_text is None:
+                            accumulated += content
+                            complete = _first_complete_json(accumulated)
+                            if complete is not None:
+                                # The usage-only SSE event is normally emitted
+                                # after the final choice event.  Keep draining
+                                # the stream after the first complete JSON value,
+                                # but stop accumulating repeated/padded content.
+                                complete_text = complete
+                            if complete_text is None and _incomplete_json_has_whitespace_padding(accumulated):
+                                # Guided decoding on this local stack sometimes
+                                # stops mid-string and then pads the rest of
+                                # max_tokens with newlines (finish_reason still
+                                # looks complete).  Close the stream so the GPU
+                                # does not spend a full role budget on padding;
+                                # the owning parser still fail-closes.
+                                return accumulated
+                    if finish_reason:
+                        if complete_text is not None:
+                            # Do not return before the usage-only terminal
+                            # event; it carries both prompt and completion
+                            # token counts on vLLM/OpenAI-compatible streams.
+                            continue
                         complete = _first_complete_json(accumulated)
                         if complete is not None:
                             return complete
@@ -596,6 +621,8 @@ def _post_openai_stream_until_complete_json(
                         raise ProviderRuntimeError(
                             "provider_stream_finished_before_complete_json"
                         )
+            if complete_text is not None:
+                return complete_text
             complete = _first_complete_json(accumulated)
             if complete is not None:
                 return complete
@@ -614,6 +641,8 @@ def _post_openai_stream_until_complete_json(
             if attempt >= attempts:
                 raise last_error from exc
         except (TimeoutError, socket.timeout) as exc:
+            if complete_text is not None:
+                return complete_text
             complete = _first_complete_json(accumulated)
             if complete is not None:
                 return complete

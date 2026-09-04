@@ -1,0 +1,255 @@
+{
+  "schema_version": "1.0",
+  "requests": [
+    {
+      "request_id": "MA-S1:unit-1:research_request_1",
+      "section_id": "MA-S1",
+      "argument_unit_id": "MA-S1:unit-1",
+      "missing_rhetorical_move": "problem_or_local_context",
+      "exact_question": "How does this motivation realize Avoid explicit relation extraction entirely?",
+      "required_authority_lane": "expository_bridge",
+      "candidate_symbols_or_terms": [
+        "explicit",
+        "relation",
+        "extraction",
+        "entirely",
+        "Avoid"
+      ],
+      "current_known_facts": [],
+      "why_needed_for_reader": "",
+      "priority": "medium",
+      "status": "open",
+      "fulfilled_artifact_ids": [],
+      "concept_key": "",
+      "missing_parts": [
+        "Avoid explicit relation extraction entirely.",
+        "empty mechanism draft"
+      ],
+      "evidence_refs_used": [],
+      "baseline_span_ids": [],
+      "target_story_node_ids": [
+        "story:O-COMPONENT-01-bd3b9454",
+        "story:O-RATIONALE-CHECK-01-c0bb1e93"
+      ],
+      "target_concept_keys": [],
+      "target_brief_ids": [
+        "brief:story:O-RATIONALE-CHECK-01-c0bb1e93"
+      ],
+      "target_clause_ids": [
+        "clause:O-RATIONALE-CHECK-01-c0bb1e93:0"
+      ],
+      "target_formula_obligation_ids": [],
+      "mandatory_missing_slots": [
+        "relation",
+        "transformation"
+      ],
+      "baseline_fact_fingerprints": [],
+      "baseline_claim_ids": [],
+      "excluded_audit_concept_keys": [],
+      "satisfied_slots": [],
+      "remaining_slots": [],
+      "content_digest": "sha256:014ae753a19236a1e282b59ac386bec64e26fc9c9d15e066ae661be1ee266dc3"
+    },
+    {
+      "request_id": "MA-S4:callback-1",
+      "section_id": "MA-S4",
+      "argument_unit_id": "MA-S4:unit-1",
+      "missing_rhetorical_move": "mechanism_overview",
+      "exact_question": "How is the mechanism overview for the first retrieval stage defined in the repository or author specification?",
+      "required_authority_lane": "expository_bridge",
+      "candidate_symbols_or_terms": [
+        "retrieval",
+        "relevant",
+        "activation",
+        "semantic",
+        "bridging",
+        "initialization",
+        "iterative",
+        "propagation",
+        "activate",
+        "entities",
+        "initializing",
+        "computing",
+        "sentence",
+        "similarities",
+        "iteratively",
+        "propagating"
+      ],
+      "current_known_facts": [],
+      "why_needed_for_reader": "",
+      "priority": "medium",
+      "status": "open",
+      "fulfilled_artifact_ids": [],
+      "concept_key": "",
+      "missing_parts": [
+        "First retrieval stage: relevant entity activation via local semantic bridging (initialization, iterative propagation, dynamic pruning)",
+        "empty mechanism draft",
+        "Entity Activation via Local Semantic Bridging: For a query, activate relevant entities by initializing from matched entities, computing query–sentence similarities, and iteratively propagating scores through the sentence–entity subgraph with dynamic pruning to discover hidden bridging entities.",
+        "Dynamic Pruning: Threshold‑based filtering that retains only strongly relevant entities during propagation, preventing combinatorial expansion and noise.",
+        "Apply dynamic pruning with a fixed relevance threshold during propagation.",
+        "Entity Activation via Semantic Bridging: Iterative propagation of entity relevance through the sentence–entity subgraph based on query–sentence similarity;",
+        "identifies latent intermediate entities for multi‑hop connections."
+      ],
+      "evidence_refs_used": [
+        "span:src/ner.py:36:37",
+        "span:src/LinearRAG.py:194:194",
+        "span:src/LinearRAG.py:192:192",
+        "span:src/ner.py:32:33",
+        "span:src/LinearRAG.py:188:188",
+        "claim:claim-O-STAGE-02-93c16851-fact-O-STAGE-02-93c16851-node:832a80d4d603dfda",
+        "claim:claim-O-STAGE-02-93c16851-fact-O-STAGE-02-93c16851-node:3e4f8dac1595a0af",
+        "claim:claim-O-STAGE-02-93c16851-fact-O-STAGE-02-93c16851-node:d95b504f3885a567",
+        "claim:claim-O-STAGE-02-93c16851-fact-O-STAGE-02-93c16851-node:dbc9e615e1abdb23",
+        "claim:l2:math:fact-O-STAGE-02-93c16851-node:3e4f8dac1595a0af:weighted_sum",
+        "claim:l2:math:fact-O-STAGE-02-93c16851-node:d95b504f3885a567:threshold_mask"
+      ],
+      "baseline_span_ids": [
+        "span:src/LinearRAG.py:188:188",
+        "span:src/LinearRAG.py:192:192",
+        "span:src/LinearRAG.py:194:194",
+        "span:src/ner.py:32:33",
+        "span:src/ner.py:36:37"
+      ],
+      "target_story_node_ids": [
+        "story:O-ORGANIZATION-04-8fc65790",
+        "story:O-STAGE-02-93c16851",
+        "story:O-COMPONENT-04-4f4f1da6",
+        "story:O-RATIONALE-CHECK-04-9ca078fe",
+        "story:O-COMPONENT-03-0c4d02ed"
+      ],
+      "target_concept_keys": [],
+      "target_brief_ids": [
+        "brief:story:O-ORGANIZATION-04-8fc65790",
+        "brief:story:O-STAGE-02-93c16851",
+        "brief:story:O-COMPONENT-04-4f4f1da6",
+        "brief:story:O-RATIONALE-CHECK-04-9ca078fe",
+        "brief:story:O-COMPONENT-03-0c4d02ed"
+      ],
+      "target_clause_ids": [
+        "clause:O-ORGANIZATION-04-8fc65790:0",
+        "clause:O-STAGE-02-93c16851:0",
+        "clause:O-COMPONENT-04-4f4f1da6:0",
+        "clause:O-RATIONALE-CHECK-04-9ca078fe:0",
+        "clause:O-COMPONENT-03-0c4d02ed:0",
+        "clause:O-COMPONENT-03-0c4d02ed:1"
+      ],
+      "target_formula_obligation_ids": [
+        "formula:section:MA-S4:derivation"
+      ],
+      "mandatory_missing_slots": [
+        "transformation"
+      ],
+      "baseline_fact_fingerprints": [],
+      "baseline_claim_ids": [],
+      "excluded_audit_concept_keys": [],
+      "satisfied_slots": [],
+      "remaining_slots": [],
+      "content_digest": "sha256:261216dfb7021b8316dd99557a3563606532bcc50191f11b0da1db966f110a36"
+    },
+    {
+      "request_id": "research-derived:77739371cfb170a8",
+      "section_id": "MA-S2",
+      "argument_unit_id": "MA-S2:unit",
+      "missing_rhetorical_move": "algorithm_or_data_flow",
+      "exact_question": "Which bounded repository trace resolves the missing implementation for the reader goal How does this setup realize Offline Tri‑Graph construction (entities, sentences, passages, contain/message adjacency matrices)? using construction, entities, sentences, passages, adjacency, matrices, setup, realize?",
+      "required_authority_lane": "executable_hard",
+      "candidate_symbols_or_terms": [
+        "construction",
+        "entities",
+        "sentences",
+        "passages",
+        "adjacency",
+        "matrices",
+        "setup",
+        "realize",
+        "Offline",
+        "Tri",
+        "Graph",
+        "contain",
+        "message"
+      ],
+      "current_known_facts": [],
+      "why_needed_for_reader": "The paragraph's mechanism dossier has an unresolved connected repository relation; keep the Candidate scoped and leave Verified closed until the owning lane supplies a validated trace.",
+      "priority": "high",
+      "status": "open",
+      "fulfilled_artifact_ids": [],
+      "concept_key": "",
+      "missing_parts": [
+        "How does this setup realize Offline Tri‑Graph construction (entities, sentences, passages, contain/message adjacency matrices)?",
+        "Offline Tri‑Graph construction (entities, sentences, passages, contain/message adjacency matrices)"
+      ],
+      "evidence_refs_used": [],
+      "baseline_span_ids": [],
+      "target_story_node_ids": [],
+      "target_concept_keys": [],
+      "target_brief_ids": [],
+      "target_clause_ids": [],
+      "target_formula_obligation_ids": [
+        "formula:facet:facet-8ce6e8dabb55bf84"
+      ],
+      "mandatory_missing_slots": [],
+      "baseline_fact_fingerprints": [],
+      "baseline_claim_ids": [],
+      "excluded_audit_concept_keys": [],
+      "satisfied_slots": [],
+      "remaining_slots": [],
+      "content_digest": "sha256:41a12d562b97855a6d7f2832ae6a073d06d64e51eaa07108459772d799397f37"
+    },
+    {
+      "request_id": "research-derived:cbd9954e3aa0b8ca",
+      "section_id": "MA-S3",
+      "argument_unit_id": "MA-S3:unit-1",
+      "missing_rhetorical_move": "algorithm_or_data_flow",
+      "exact_question": "Which bounded repository trace resolves the missing implementation for the reader goal How does this motivation realize Use a hierarchical graph that preserves original text (passages, sentences) alongside entities? using spaCy, motivation, hierarchical, preserves, original, passages, sentences, alongside?",
+      "required_authority_lane": "executable_hard",
+      "candidate_symbols_or_terms": [
+        "spaCy",
+        "motivation",
+        "hierarchical",
+        "preserves",
+        "original",
+        "passages",
+        "sentences",
+        "alongside",
+        "entities",
+        "Construction",
+        "splitting",
+        "extracting",
+        "creating",
+        "sentence",
+        "adjacency",
+        "matrices"
+      ],
+      "current_known_facts": [],
+      "why_needed_for_reader": "The paragraph's mechanism dossier has an unresolved connected repository relation; keep the Candidate scoped and leave Verified closed until the owning lane supplies a validated trace.",
+      "priority": "high",
+      "status": "open",
+      "fulfilled_artifact_ids": [],
+      "concept_key": "",
+      "missing_parts": [
+        "How does this motivation realize Use a hierarchical graph that preserves original text (passages, sentences) alongside entities?",
+        "Offline Graph Construction: Build a Tri‑Graph from the corpus by splitting passages into sentences, extracting entities with spaCy, and creating sparse contain (passage–entity) and mention (sentence–entity) adjacency matrices."
+      ],
+      "evidence_refs_used": [],
+      "baseline_span_ids": [],
+      "target_story_node_ids": [],
+      "target_concept_keys": [],
+      "target_brief_ids": [],
+      "target_clause_ids": [],
+      "target_formula_obligation_ids": [
+        "formula:facet:facet-36188cb856f44d0d"
+      ],
+      "mandatory_missing_slots": [],
+      "baseline_fact_fingerprints": [],
+      "baseline_claim_ids": [],
+      "excluded_audit_concept_keys": [],
+      "satisfied_slots": [],
+      "remaining_slots": [],
+      "content_digest": "sha256:32de1fc0ecdfaf9144bdaa014340a00eb2f77042fac12a5a2de097072120bb00"
+    }
+  ],
+  "artifacts": {},
+  "requested_resume_section_ids": [],
+  "resume_section_ids": [],
+  "content_digest": "sha256:24dfcbcec208ec70b934287e8b4f8c023708a2e8b77dacc94e9980ad3c2f5862"
+}

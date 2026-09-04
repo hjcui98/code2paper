@@ -1,0 +1,231 @@
+{
+  "schema_version": "1.0",
+  "requests": [
+    {
+      "request_id": "MA-S1:unit-1",
+      "section_id": "MA-S1",
+      "argument_unit_id": "MA-S1:unit-1",
+      "missing_rhetorical_move": "formal_objects_and_notation",
+      "exact_question": "How does this motivation realize Initialize A as a diagonal matrix with strictly negative real-part eigenvalues?",
+      "required_authority_lane": "executable_hard",
+      "candidate_symbols_or_terms": [
+        "initialize",
+        "diagonal",
+        "strictly",
+        "negative",
+        "eigenvalues",
+        "expression",
+        "matrix",
+        "real",
+        "part",
+        "formal"
+      ],
+      "current_known_facts": [
+        "dynamic graph encoding transforms raw interaction sequences into a unified aligned feature representation capturing temporal and structural context",
+        "dynamic graph encoding normalizes softmax dst router logits dim 1 dtype float routing weights",
+        "dynamic graph encoding computes formula num channels channel embedding dim",
+        "dynamic graph encoding selects top k topk dst routing weights min top seq len selected embedding",
+        "dynamic graph encoding returns src node embedding dst"
+      ],
+      "why_needed_for_reader": "",
+      "priority": "medium",
+      "status": "open",
+      "fulfilled_artifact_ids": [],
+      "concept_key": "dynamic_graph_encoding",
+      "missing_parts": [
+        "initialize diagonal matrix with strictly negative real part eigenvalues",
+        "formal expression",
+        "formal expression"
+      ],
+      "evidence_refs_used": [],
+      "baseline_span_ids": [],
+      "target_story_node_ids": [
+        "story:O-STAGE-01-06d7de36",
+        "story:O-RATIONALE-CHECK-02-653d713f",
+        "story:O-RATIONALE-CHECK-05-e1bbed89"
+      ],
+      "target_concept_keys": [
+        "dynamic_graph_encoding"
+      ],
+      "target_brief_ids": [],
+      "target_clause_ids": [],
+      "target_formula_obligation_ids": [
+        "formula:section:MA-S1:derivation"
+      ],
+      "mandatory_missing_slots": [
+        "transformation"
+      ],
+      "baseline_fact_fingerprints": [],
+      "baseline_claim_ids": [
+        "dynamic graph encoding transforms raw interaction sequences into a unified aligned feature representation capturing temporal and structural context",
+        "dynamic graph encoding normalizes softmax dst router logits dim 1 dtype float routing weights",
+        "dynamic graph encoding computes formula num channels channel embedding dim",
+        "dynamic graph encoding selects top k topk dst routing weights min top seq len selected embedding",
+        "dynamic graph encoding returns src node embedding dst"
+      ],
+      "excluded_audit_concept_keys": [],
+      "satisfied_slots": [],
+      "remaining_slots": [],
+      "content_digest": "sha256:e1a7900b8f1e8db3190252744d8cab9f26a78c2571bfa88d1f319f8d46e9c710"
+    },
+    {
+      "request_id": "req:MA-S5:formula",
+      "section_id": "MA-S5",
+      "argument_unit_id": "MA-S5:unit",
+      "missing_rhetorical_move": "formal_objects_and_notation",
+      "exact_question": "What method mechanism does this section realize: Robust selective reviewing?",
+      "required_authority_lane": "expository_bridge",
+      "candidate_symbols_or_terms": [
+        "expression",
+        "formal"
+      ],
+      "current_known_facts": [],
+      "why_needed_for_reader": "",
+      "priority": "medium",
+      "status": "open",
+      "fulfilled_artifact_ids": [],
+      "concept_key": "",
+      "missing_parts": [
+        "formal expression",
+        "formal expression"
+      ],
+      "evidence_refs_used": [],
+      "baseline_span_ids": [],
+      "target_story_node_ids": [
+        "story:O-COMPONENT-01-377afc18",
+        "story:O-COMPONENT-01-88e55e54",
+        "story:O-COMPONENT-02-c39dd898",
+        "story:O-COMPONENT-04-6d73cce5",
+        "story:O-COMPONENT-05-8cd85daa",
+        "story:O-METHOD-MAINLINE-01-3011c54d",
+        "story:O-STAGE-03-d47a86f4"
+      ],
+      "target_concept_keys": [],
+      "target_brief_ids": [],
+      "target_clause_ids": [],
+      "target_formula_obligation_ids": [
+        "formula:section:MA-S5:derivation"
+      ],
+      "mandatory_missing_slots": [
+        "transformation"
+      ],
+      "baseline_fact_fingerprints": [],
+      "baseline_claim_ids": [],
+      "excluded_audit_concept_keys": [],
+      "satisfied_slots": [],
+      "remaining_slots": [],
+      "content_digest": "sha256:c32ba58ef5bb310659241147cf308950d8659410c24018840bdae3e75cf3a5f9"
+    },
+    {
+      "request_id": "research-derived:5087406eaa026753",
+      "section_id": "MA-S4",
+      "argument_unit_id": "MA-S4:unit-2",
+      "missing_rhetorical_move": "algorithm_or_data_flow",
+      "exact_question": "Which bounded repository trace resolves the missing implementation for the reader goal How does this setup realize Downstream adaptation: link prediction and node classification setups, plus a note on linear computational complexity? using Downstream, adaptation, prediction, classification, computational, complexity, Absolute, temporal?",
+      "required_authority_lane": "executable_hard",
+      "candidate_symbols_or_terms": [
+        "Downstream",
+        "adaptation",
+        "prediction",
+        "classification",
+        "computational",
+        "complexity",
+        "Absolute",
+        "temporal",
+        "encoding",
+        "timespans",
+        "interaction",
+        "trainable",
+        "cosine-based",
+        "function",
+        "Co-occurrence",
+        "frequency"
+      ],
+      "current_known_facts": [],
+      "why_needed_for_reader": "The paragraph's mechanism dossier has an unresolved connected repository relation; keep the Candidate scoped and leave Verified closed until the owning lane supplies a validated trace.",
+      "priority": "high",
+      "status": "open",
+      "fulfilled_artifact_ids": [],
+      "concept_key": "",
+      "missing_parts": [
+        "How does this setup realize Downstream adaptation: link prediction and node classification setups, plus a note on linear computational complexity?",
+        "Absolute temporal encoding: Encode timespans from each interaction to the prediction time using a trainable cosine-based function.",
+        "Co-occurrence frequency encoding: Capture structural similarity by encoding the frequency of shared neighbors between the target node and each historical neighbor."
+      ],
+      "evidence_refs_used": [],
+      "baseline_span_ids": [],
+      "target_story_node_ids": [],
+      "target_concept_keys": [],
+      "target_brief_ids": [],
+      "target_clause_ids": [],
+      "target_formula_obligation_ids": [
+        "formula:section:MA-S4:derivation"
+      ],
+      "mandatory_missing_slots": [],
+      "baseline_fact_fingerprints": [],
+      "baseline_claim_ids": [],
+      "excluded_audit_concept_keys": [],
+      "satisfied_slots": [],
+      "remaining_slots": [],
+      "content_digest": "sha256:bd49207763536e2d5862e8176640494bcd3ddc814f9b138691e5345e4c9d5164"
+    },
+    {
+      "request_id": "research-derived:f2f6fa0e59d44905",
+      "section_id": "MA-S5",
+      "argument_unit_id": "MA-S5:unit",
+      "missing_rhetorical_move": "algorithm_or_data_flow",
+      "exact_question": "Which bounded repository trace resolves the missing implementation for the reader goal What method mechanism does this section realize: Robust selective reviewing? using selective, reviewing, input-dependent, filtering, historical, information, important, interactions?",
+      "required_authority_lane": "executable_hard",
+      "candidate_symbols_or_terms": [
+        "selective",
+        "reviewing",
+        "input-dependent",
+        "filtering",
+        "historical",
+        "information",
+        "important",
+        "interactions",
+        "reinforced",
+        "suppressed",
+        "maintaining",
+        "stability",
+        "spectral",
+        "constraints",
+        "method",
+        "section"
+      ],
+      "current_known_facts": [],
+      "why_needed_for_reader": "The paragraph's mechanism dossier has an unresolved connected repository relation; keep the Candidate scoped and leave Verified closed until the owning lane supplies a validated trace.",
+      "priority": "high",
+      "status": "open",
+      "fulfilled_artifact_ids": [],
+      "concept_key": "",
+      "missing_parts": [
+        "What method mechanism does this section realize: Robust selective reviewing?",
+        "Robust selective reviewing: Enable input-dependent filtering of historical information so that important interactions are reinforced and noise is suppressed",
+        "while maintaining stability through spectral norm constraints."
+      ],
+      "evidence_refs_used": [],
+      "baseline_span_ids": [],
+      "target_story_node_ids": [],
+      "target_concept_keys": [],
+      "target_brief_ids": [],
+      "target_clause_ids": [],
+      "target_formula_obligation_ids": [
+        "formula:facet:facet-85dd07572b8a77e2",
+        "formula:section:MA-S5:derivation"
+      ],
+      "mandatory_missing_slots": [],
+      "baseline_fact_fingerprints": [],
+      "baseline_claim_ids": [],
+      "excluded_audit_concept_keys": [],
+      "satisfied_slots": [],
+      "remaining_slots": [],
+      "content_digest": "sha256:fec7ffae10cda7209af08cec644b1bd94d0f73817ca3ed5c3d70853397471cae"
+    }
+  ],
+  "artifacts": {},
+  "requested_resume_section_ids": [],
+  "resume_section_ids": [],
+  "content_digest": "sha256:524af288beda57093db0dd5d01ad8f2f5f1b35995e2f5fc10af2b9f487ca1972"
+}
