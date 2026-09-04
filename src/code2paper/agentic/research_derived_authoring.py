@@ -501,6 +501,17 @@ def _shortest_connected_subgraph(
     return tuple(sorted(selected_nodes)), tuple(sorted(selected_relations))
 
 
+def _is_logging_or_filtering_excerpt(text: str) -> bool:
+    """Identify generic helper, logging, or NER filtering excerpts to deprioritize."""
+
+    lowered = text.casefold()
+    if any(marker in lowered for marker in ("logger.", "logging.", "log.info", "log.debug", "log.warning")):
+        return True
+    if any(marker in text for marker in ("ORDINAL", "CARDINAL", "DATE", "TIME", "MONEY")):
+        return True
+    return False
+
+
 class ResearchMechanismDossierV1(BaseModel):
     """A connected, frozen research view for one paragraph."""
 
@@ -864,6 +875,45 @@ def build_research_mechanism_dossiers(
     graph_nodes, graph_relations, unresolved = _graph_parts(behavior_graph)
     config_values = tuple(_get(configurations, "claims", configurations if isinstance(configurations, (list, tuple)) else ()) or ())
     packet_values = tuple(_get(evidence_packets, "packets", evidence_packets if isinstance(evidence_packets, (list, tuple)) else ()) or ())
+    spans_by_id: dict[str, Any] = {}
+    spans_by_symbol: dict[str, list[Any]] = defaultdict(list)
+    for packet in packet_values:
+        for span in _get(packet, "spans", ()) or ():
+            span_id = _text(_get(span, "span_id") or _get(span, "evidence_id"))
+            if span_id:
+                spans_by_id.setdefault(span_id, span)
+            sym = _text(_get(span, "symbol") or _get(span, "symbol_id"))
+            if sym:
+                spans_by_symbol[sym].append(span)
+    for alignment in alignment_items:
+        for excerpt in _get(alignment, "exact_excerpts", ()) or ():
+            span_id = _text(_get(excerpt, "span_id") or _get(excerpt, "source_span_id"))
+            if span_id:
+                spans_by_id.setdefault(span_id, excerpt)
+            sym = _text(_get(excerpt, "symbol") or _get(excerpt, "symbol_id"))
+            if sym:
+                spans_by_symbol[sym].append(excerpt)
+        for binding in _get(alignment, "field_bindings", ()) or ():
+            for excerpt in _get(binding, "exact_excerpts", ()) or ():
+                span_id = _text(_get(excerpt, "span_id") or _get(excerpt, "source_span_id"))
+                if span_id:
+                    spans_by_id.setdefault(span_id, excerpt)
+                sym = _text(_get(excerpt, "symbol") or _get(excerpt, "symbol_id"))
+                if sym:
+                    spans_by_symbol[sym].append(excerpt)
+    for node in graph_nodes.values():
+        span_id = _text(_get(node, "source_span_id"))
+        if span_id:
+            spans_by_id.setdefault(span_id, node)
+        sym = _text(_get(node, "symbol_id"))
+        if sym:
+            spans_by_symbol[sym].append(node)
+    for fact in fact_by_id.values():
+        for span_id in _ids((*(_get(fact, "direct_span_ids", ()) or ()), *(_get(fact, "relation_span_ids", ()) or ()))):
+            spans_by_id.setdefault(span_id, fact)
+        sym = _text(_get(fact, "subject"))
+        if sym:
+            spans_by_symbol[sym].append(fact)
     scope_entries = set(_ids(_get(implementation_scope, "target_entry_symbol_ids", ())))
     scope_target = set(
         _ids(_get(implementation_scope, "target_core_symbol_ids", ()))
@@ -1005,6 +1055,8 @@ def build_research_mechanism_dossiers(
         ):
             continue
         exact_excerpts: list[str] = []
+        direct_excerpts: list[str] = []
+        fallback_excerpts: list[str] = []
         candidate_symbols: set[str] = set()
         alignment_operation_atoms: list[dict[str, Any]] = []
         alignment_conditions: list[str] = []
@@ -1015,7 +1067,7 @@ def build_research_mechanism_dossiers(
         def collect_alignment_excerpt(excerpt: Any) -> None:
             excerpt_text = _text(_get(excerpt, "exact_excerpt") or _get(excerpt, "text"))
             if excerpt_text:
-                exact_excerpts.append(excerpt_text)
+                direct_excerpts.append(excerpt_text)
             span_id = _text(_get(excerpt, "span_id") or _get(excerpt, "source_span_id"))
             if span_id:
                 span_ids.add(span_id)
@@ -1049,7 +1101,7 @@ def build_research_mechanism_dossiers(
             claim_ids.update(_ids(_get(candidate, "bound_claim_ids", ())))
             equation_ids.update(_ids(_get(candidate, "bound_equation_ids", ())))
             span_ids.update(_ids(_get(candidate, "bound_span_ids", ())))
-            exact_excerpts.extend(_ids(_get(candidate, "exact_excerpts", ())))
+            direct_excerpts.extend(_ids(_get(candidate, "exact_excerpts", ())))
             contradiction_ids.update(_ids(_get(candidate, "contradiction_ids", ())))
         for facet_id in facet_ids:
             facet = facet_by_id.get(facet_id)
@@ -1148,7 +1200,7 @@ def build_research_mechanism_dossiers(
                 for span in _get(packet, "spans", ()) or ():
                     excerpt = _text(_get(span, "exact_excerpt") or _get(span, "text"))
                     if excerpt:
-                        exact_excerpts.append(excerpt)
+                        fallback_excerpts.append(excerpt)
 
         for candidate in relevant_candidates:
             for excerpt in _ids(_get(candidate, "exact_excerpts", ())):
@@ -1342,6 +1394,110 @@ def build_research_mechanism_dossiers(
             if item in relation_by_id
             and _text(_get(relation_by_id[item], "kind")).upper() in _CONTROL_RELATIONS
         )
+        # Bounded callee-body expansion for direct call edges (depth=1, max 3 callees, max 75 lines)
+        callee_body_excerpts: list[str] = []
+        call_path_excerpts: list[str] = []
+        data_flow_excerpts: list[str] = []
+
+        caller_symbols = {
+            _text(_get(node, "symbol_id"))
+            for node in operation_nodes
+            if _text(_get(node, "symbol_id"))
+        }
+        visited_callees: set[str] = set()
+
+        candidate_call_relations: list[Any] = [
+            relation_by_id[cid] for cid in call_ids if cid in relation_by_id
+        ]
+        for rel in eligible_relations.values():
+            if _text(_get(rel, "kind")).upper() in _CALL_RELATIONS:
+                src_node = _relation_endpoint(rel, "source", eligible_nodes)
+                if src_node in selected_node_ids and rel not in candidate_call_relations:
+                    candidate_call_relations.append(rel)
+
+        for rel in candidate_call_relations:
+            if len(visited_callees) >= 3:
+                break
+            callee_node_id = _relation_endpoint(rel, "target", eligible_nodes)
+            callee_symbol = _text(_get(rel, "target_symbol_id"))
+            if not callee_symbol and callee_node_id in graph_nodes:
+                callee_symbol = _text(_get(graph_nodes[callee_node_id], "symbol_id"))
+            if not callee_symbol:
+                callee_symbol = callee_node_id
+            if not callee_symbol or callee_symbol in caller_symbols or callee_symbol in visited_callees:
+                continue
+
+            callee_span_id = _text(_get(rel, "target_span_id"))
+            if not callee_span_id and callee_node_id in graph_nodes:
+                callee_span_id = _text(_get(graph_nodes[callee_node_id], "source_span_id"))
+
+            callee_spans = []
+            if callee_span_id and callee_span_id in spans_by_id:
+                callee_spans.append(spans_by_id[callee_span_id])
+            if callee_symbol in spans_by_symbol:
+                callee_spans.extend(spans_by_symbol[callee_symbol])
+            if callee_node_id in graph_nodes:
+                node_span_id = _text(_get(graph_nodes[callee_node_id], "source_span_id"))
+                if node_span_id and node_span_id in spans_by_id:
+                    callee_spans.append(spans_by_id[node_span_id])
+
+            callee_found_excerpt = ""
+            for sp in callee_spans:
+                txt = _text(_get(sp, "exact_excerpt") or _get(sp, "text"))
+                if txt and not _is_logging_or_filtering_excerpt(txt):
+                    callee_found_excerpt = txt
+                    sid = _text(_get(sp, "span_id") or _get(sp, "evidence_id"))
+                    if sid:
+                        span_ids.add(sid)
+                    dig = _text(_get(sp, "file_digest") or _get(sp, "source_digest") or _get(sp, "excerpt_digest"))
+                    pth = _text(_get(sp, "path") or sid)
+                    if pth and dig:
+                        source_digests[pth] = dig
+                    break
+
+            if not callee_found_excerpt and callee_node_id in graph_nodes:
+                txt = _text(_get(graph_nodes[callee_node_id], "code_snippet") or _get(graph_nodes[callee_node_id], "exact_excerpt"))
+                if txt and not _is_logging_or_filtering_excerpt(txt):
+                    callee_found_excerpt = txt
+
+            if callee_found_excerpt:
+                visited_callees.add(callee_symbol)
+                lines = callee_found_excerpt.splitlines()
+                if len(lines) > 75:
+                    callee_found_excerpt = "\n".join(lines[:75])
+                callee_body_excerpts.append(callee_found_excerpt)
+
+        for cid in call_ids:
+            rel = relation_by_id.get(cid)
+            if not rel:
+                continue
+            txt = _text(_get(rel, "exact_excerpt") or _get(rel, "text"))
+            if txt:
+                call_path_excerpts.append(txt)
+
+        for did in data_ids:
+            rel = relation_by_id.get(did)
+            if not rel:
+                continue
+            txt = _text(_get(rel, "exact_excerpt") or _get(rel, "text"))
+            if txt:
+                data_flow_excerpts.append(txt)
+
+        direct_primary = [x for x in direct_excerpts if not _is_logging_or_filtering_excerpt(x)]
+        direct_demoted = [x for x in direct_excerpts if _is_logging_or_filtering_excerpt(x)]
+        regular_fallbacks = [x for x in fallback_excerpts if not _is_logging_or_filtering_excerpt(x)]
+        demoted_fallbacks = [x for x in fallback_excerpts if _is_logging_or_filtering_excerpt(x)]
+
+        ordered_excerpts = [
+            *direct_primary,
+            *callee_body_excerpts,
+            *call_path_excerpts,
+            *data_flow_excerpts,
+            *regular_fallbacks,
+            *direct_demoted,
+            *demoted_fallbacks,
+        ]
+        exact_excerpts = tuple(dict.fromkeys(item for item in ordered_excerpts if str(item).strip()))
         unresolved_ids.extend(
             _text(_get(item, "relation_id"))
             for item in unresolved
@@ -2211,7 +2367,11 @@ def build_publication_authoring_packets(
                     for item in formula_packages
                     if _text(item.get("package_id"))
                 ),
-                method_unit=dict(method_unit_by_paragraph.get(paragraph_id, {})),
+                method_unit={
+                    **dict(method_unit_by_paragraph.get(paragraph_id, {})),
+                    **({"section_heading": _text(_get(section, "heading") or _get(section, "title"))}
+                       if _text(_get(section, "heading") or _get(section, "title")) else {}),
+                },
                 closed_target_ids=target_ids,
                 preceding_paragraph_id=paragraph_ids[index - 1] if index else "",
                 following_paragraph_id=(

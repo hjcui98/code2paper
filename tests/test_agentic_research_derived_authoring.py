@@ -700,3 +700,251 @@ def test_method_unit_rejects_an_empty_mechanism_shell() -> None:
             reader_question="How does the method work?",
             purpose="Explain the method.",
         )
+
+
+def test_callee_body_expansion_in_dossier_with_locality_ranking() -> None:
+    plan = _plan()
+    graph = {
+        "nodes": [
+            {
+                "node_id": "node:graph_search",
+                "symbol_id": "graph_search",
+                "operation_id": "search",
+                "predicate": "CALL",
+                "source_span_id": "span:graph_search",
+            },
+            {
+                "node_id": "node:calculate_entity_scores",
+                "symbol_id": "calculate_entity_scores",
+                "operation_id": "calculate",
+                "predicate": "COMPUTE",
+                "source_span_id": "span:calculate_entity_scores",
+            },
+        ],
+        "relations": [
+            {
+                "relation_id": "rel:search-scores",
+                "kind": "CALLS",
+                "source_node_id": "node:graph_search",
+                "target_node_id": "node:calculate_entity_scores",
+                "source_symbol_id": "graph_search",
+                "target_symbol_id": "calculate_entity_scores",
+            },
+        ],
+        "unresolved_relations": [],
+        "content_digest": "sha256:graph-source",
+    }
+    evidence_packets = {
+        "packets": [{
+            "packet_id": "packet:test",
+            "scope": "test",
+            "anchor_span_ids": ["span:graph_search", "span:calculate_entity_scores", "span:helper"],
+            "relation_span_ids": [],
+            "semantic_span_ids": [],
+            "spans": [
+                {
+                    "span_id": "span:graph_search",
+                    "path": "linear_rag.py",
+                    "symbol": "graph_search",
+                    "exact_excerpt": "scores = self.calculate_entity_scores(query)",
+                    "file_digest": "sha256:f1",
+                    "role": "anchor",
+                },
+                {
+                    "span_id": "span:calculate_entity_scores",
+                    "path": "linear_rag.py",
+                    "symbol": "calculate_entity_scores",
+                    "exact_excerpt": "def calculate_entity_scores():\n    # initialize\n    # similarity\n    # propagate\n    # threshold\n    return scores",
+                    "file_digest": "sha256:f2",
+                    "role": "semantic",
+                },
+                {
+                    "span_id": "span:helper",
+                    "path": "linear_rag.py",
+                    "symbol": "helper",
+                    "exact_excerpt": "logger.info('filter ORDINAL entities')\nreturn filtered",
+                    "file_digest": "sha256:f3",
+                    "role": "relation",
+                },
+            ],
+        }],
+    }
+    candidate = _candidate().model_copy(update={
+        "bound_fact_ids": ("fact:search",),
+        "bound_span_ids": ("span:graph_search",),
+        "exact_excerpts": ("scores = self.calculate_entity_scores(query)",),
+    })
+    facts = {
+        "facts": [{
+            "fact_id": "fact:search",
+            "subject": "graph_search",
+            "predicate": "CALLS",
+            "object": ["calculate_entity_scores"],
+            "scope": "graph_search",
+            "direct_span_ids": ["span:graph_search"],
+            "validation_status": "supported",
+            "claim_ids": ["claim:search"],
+        }],
+        "content_digest": "sha256:facts",
+    }
+    claims = {
+        "claims": [{
+            "claim_id": "claim:search",
+            "fact_ids": ["fact:search"],
+            "span_ids": ["span:graph_search"],
+        }],
+        "content_digest": "sha256:claims",
+    }
+    scope = {
+        "target_entry_symbol_ids": ["graph_search"],
+        "target_core_symbol_ids": ["graph_search", "calculate_entity_scores"],
+        "target_dependency_symbol_ids": [],
+        "comparand_symbol_ids": [],
+        "evaluation_symbol_ids": [],
+        "configuration_symbol_ids": [],
+        "unknown_symbol_ids": [],
+        "content_digest": "sha256:scope",
+    }
+    dossiers = build_research_mechanism_dossiers(
+        plan=plan,
+        field_candidates=[candidate],
+        behavior_graph=graph,
+        evidence_packets=evidence_packets,
+        facts=facts,
+        claims=claims,
+        implementation_scope=scope,
+    )
+    assert len(dossiers) == 1
+    dossier = dossiers[0]
+    # Callee span must be in exact_span_ids
+    assert "span:calculate_entity_scores" in dossier.exact_span_ids
+    # Callee body must be in exact_excerpts
+    assert any("propagate" in ex for ex in dossier.exact_excerpts)
+    # The callsite excerpt is primary, followed by callee body, while logging/helper is demoted
+    excerpts = list(dossier.exact_excerpts)
+    callsite_idx = next(i for i, ex in enumerate(excerpts) if "calculate_entity_scores(query)" in ex)
+    body_idx = next(i for i, ex in enumerate(excerpts) if "propagate" in ex)
+    assert callsite_idx < body_idx
+    if any("ORDINAL" in ex for ex in excerpts):
+        helper_idx = next(i for i, ex in enumerate(excerpts) if "ORDINAL" in ex)
+        assert body_idx < helper_idx
+
+
+def test_callee_expansion_recursive_cycle_prevention() -> None:
+    plan = _plan()
+    # Cyclic call graph: A calls B, B calls A
+    graph = {
+        "nodes": [
+            {
+                "node_id": "node:func_a",
+                "symbol_id": "func_a",
+                "operation_id": "op_a",
+                "predicate": "CALL",
+                "source_span_id": "span:func_a",
+            },
+            {
+                "node_id": "node:func_b",
+                "symbol_id": "func_b",
+                "operation_id": "op_b",
+                "predicate": "CALL",
+                "source_span_id": "span:func_b",
+            },
+        ],
+        "relations": [
+            {
+                "relation_id": "rel:a-calls-b",
+                "kind": "CALLS",
+                "source_node_id": "node:func_a",
+                "target_node_id": "node:func_b",
+                "source_symbol_id": "func_a",
+                "target_symbol_id": "func_b",
+            },
+            {
+                "relation_id": "rel:b-calls-a",
+                "kind": "CALLS",
+                "source_node_id": "node:func_b",
+                "target_node_id": "node:func_a",
+                "source_symbol_id": "func_b",
+                "target_symbol_id": "func_a",
+            },
+        ],
+        "unresolved_relations": [],
+        "content_digest": "sha256:graph-cyclic",
+    }
+    evidence_packets = {
+        "packets": [{
+            "packet_id": "packet:cycle",
+            "scope": "cycle",
+            "anchor_span_ids": ["span:func_a", "span:func_b"],
+            "relation_span_ids": [],
+            "semantic_span_ids": [],
+            "spans": [
+                {
+                    "span_id": "span:func_a",
+                    "path": "cycle.py",
+                    "symbol": "func_a",
+                    "exact_excerpt": "def func_a():\n    return func_b()",
+                    "file_digest": "sha256:fa",
+                    "role": "anchor",
+                },
+                {
+                    "span_id": "span:func_b",
+                    "path": "cycle.py",
+                    "symbol": "func_b",
+                    "exact_excerpt": "def func_b():\n    return func_a()",
+                    "file_digest": "sha256:fb",
+                    "role": "semantic",
+                },
+            ],
+        }],
+    }
+    candidate = _candidate().model_copy(update={
+        "bound_fact_ids": ("fact:func_a",),
+        "bound_span_ids": ("span:func_a",),
+        "exact_excerpts": ("def func_a():\n    return func_b()",),
+    })
+    facts = {
+        "facts": [{
+            "fact_id": "fact:func_a",
+            "subject": "func_a",
+            "predicate": "CALLS",
+            "object": ["func_b"],
+            "scope": "func_a",
+            "direct_span_ids": ["span:func_a"],
+            "validation_status": "supported",
+            "claim_ids": ["claim:func_a"],
+        }],
+        "content_digest": "sha256:facts",
+    }
+    claims = {
+        "claims": [{
+            "claim_id": "claim:func_a",
+            "fact_ids": ["fact:func_a"],
+            "span_ids": ["span:func_a"],
+        }],
+        "content_digest": "sha256:claims",
+    }
+    scope = {
+        "target_entry_symbol_ids": ["func_a"],
+        "target_core_symbol_ids": ["func_a", "func_b"],
+        "target_dependency_symbol_ids": [],
+        "comparand_symbol_ids": [],
+        "evaluation_symbol_ids": [],
+        "configuration_symbol_ids": [],
+        "unknown_symbol_ids": [],
+        "content_digest": "sha256:scope",
+    }
+    # Building dossiers should terminate cleanly without infinite loop or unbounded expansion
+    dossiers = build_research_mechanism_dossiers(
+        plan=plan,
+        field_candidates=[candidate],
+        behavior_graph=graph,
+        evidence_packets=evidence_packets,
+        facts=facts,
+        claims=claims,
+        implementation_scope=scope,
+    )
+    assert len(dossiers) == 1
+    dossier = dossiers[0]
+    # Length of exact_excerpts must be small and bounded
+    assert len(dossier.exact_excerpts) <= 3
