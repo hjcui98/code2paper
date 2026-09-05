@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+import hashlib
+from types import SimpleNamespace
+
 import pytest
 from code2paper.agentic.mechanism_context_models import (
     DetailWitnessAtomV1,
@@ -8,6 +11,8 @@ from code2paper.agentic.mechanism_context_models import (
     MechanismDetailV1,
     MechanismEvidenceClosureV1,
     SourceOperationDispositionV1,
+    compute_consumer_request_digest,
+    compute_shared_payload_digest,
 )
 from code2paper.agentic.mechanism_context_projection import (
     assert_consumer_shared_payload_identity,
@@ -15,6 +20,8 @@ from code2paper.agentic.mechanism_context_projection import (
     build_mechanism_context_view,
     serialize_shared_mechanism_payload,
 )
+from code2paper.agentic.publication_method_writer import _assert_shared_payload_delivery
+from code2paper.llm.section_writer import WriterSectionInput
 
 
 def _make_context() -> MechanismContextV1:
@@ -100,3 +107,85 @@ def test_shared_projection_divergence_fails() -> None:
     corrupted_slice = slices1[0].model_copy(update={"detail_ids": ("d:mutated",)})
     with pytest.raises(ValueError, match="Invariant I8 violation"):
         assert_consumer_shared_payload_identity(slices1, (corrupted_slice,))
+
+
+def test_actual_formalizer_writer_payload_bytes_are_fail_closed() -> None:
+    ctx = _make_context()
+    slices = build_mechanism_context_slices(ctx)
+    payload_bytes = serialize_shared_mechanism_payload(slices)
+    payload_text = payload_bytes.decode("utf-8")
+    shared_digest = compute_shared_payload_digest(tuple(slices))
+    view_digest = build_mechanism_context_view(ctx).view_digest
+    source_digest = ctx.source_context_digest
+    slice_digests = [item.slice_digest for item in slices]
+    bytes_digest = "sha256:" + hashlib.sha256(payload_bytes).hexdigest()
+    mechanism_id = ctx.mechanism_id
+    section_id = "sec:identity"
+
+    formalizer_trace = {
+        "mechanism_id": mechanism_id,
+        "shared_payload": payload_text,
+        "shared_payload_bytes_digest": bytes_digest,
+        "shared_payload_digest": shared_digest,
+        "source_context_digest": source_digest,
+        "view_digest": view_digest,
+        "slice_digests": slice_digests,
+        "consumer_request_digest": compute_consumer_request_digest(
+            shared_digest,
+            {"role": "formalizer", "mechanism_id": mechanism_id, "obligation_ids": []},
+        ),
+    }
+    writer_metadata = {
+        "mechanism_id": mechanism_id,
+        "shared_payload_bytes_digest": bytes_digest,
+        "shared_payload_digest": shared_digest,
+        "source_context_digest": source_digest,
+        "view_digest": view_digest,
+        "slice_digests": slice_digests,
+        "core_detail_ids": [
+            detail_id
+            for item in slices
+            for detail_id in item.core_detail_ids
+        ],
+        "consumer_request_digest": compute_consumer_request_digest(
+            shared_digest,
+            {"role": "writer", "section_id": section_id, "mechanism_id": mechanism_id},
+        ),
+    }
+    writer_input = WriterSectionInput(
+        section_id=section_id,
+        heading="Identity",
+        prompt_payload={
+            "section_id": section_id,
+            "narrative_plan": {"mechanism_ids": [mechanism_id]},
+            "shared_contexts": [payload_text],
+            "shared_context_metadata": [writer_metadata],
+        },
+    )
+
+    records = _assert_shared_payload_delivery(
+        contexts=SimpleNamespace(contexts=(ctx,)),
+        shared_payload_slices={mechanism_id: slices},
+        formalizer_traces=(formalizer_trace,),
+        formula_obligations_by_mech={mechanism_id: ()},
+        writer_inputs=(writer_input,),
+    )
+    assert records[0]["payload_bytes_digest"] == bytes_digest
+    assert records[0]["writer_consumers"][0]["payload_bytes_digest"] == bytes_digest
+
+    tampered_writer = WriterSectionInput(
+        section_id=writer_input.section_id,
+        heading=writer_input.heading,
+        prompt_payload={
+            **writer_input.prompt_payload,
+            "shared_contexts": [payload_text + " "],
+        },
+    )
+    with pytest.raises(ValueError, match="actual shared payload bytes differ"):
+        _assert_shared_payload_delivery(
+            contexts=SimpleNamespace(contexts=(ctx,)),
+            shared_payload_slices={mechanism_id: slices},
+            formalizer_traces=(formalizer_trace,),
+            formula_obligations_by_mech={mechanism_id: ()},
+            writer_inputs=(tampered_writer,),
+        )

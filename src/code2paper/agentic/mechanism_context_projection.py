@@ -312,10 +312,43 @@ def serialize_shared_mechanism_payload(
 
 
 def assert_consumer_shared_payload_identity(
-    formalizer_slices: Sequence[MechanismContextSliceV1],
-    writer_slices: Sequence[MechanismContextSliceV1],
+    formalizer_slices: Sequence[MechanismContextSliceV1] | bytes | str,
+    writer_slices: Sequence[MechanismContextSliceV1] | bytes | str,
 ) -> None:
-    """Verify that Formalizer and Writer receive byte-identical shared payload."""
+    """Verify that Formalizer and Writer receive byte-identical shared payload.
+
+    The normal form accepts canonical slices and validates their complete
+    materialized records.  The production delivery gate may instead pass the
+    actual serialized UTF-8 values recorded by each consumer; in that form
+    this function performs the final cross-consumer byte comparison without
+    reconstructing a second slice model.
+    """
+    raw_payloads = (bytes, str)
+    if isinstance(formalizer_slices, raw_payloads) or isinstance(writer_slices, raw_payloads):
+        if not isinstance(formalizer_slices, raw_payloads) or not isinstance(writer_slices, raw_payloads):
+            raise ValueError(
+                "Invariant I8 violation: serialized and slice payload forms cannot be mixed"
+            )
+        f_bytes = (
+            formalizer_slices
+            if isinstance(formalizer_slices, bytes)
+            else formalizer_slices.encode("utf-8")
+        )
+        w_bytes = (
+            writer_slices
+            if isinstance(writer_slices, bytes)
+            else writer_slices.encode("utf-8")
+        )
+        if not f_bytes or not w_bytes:
+            raise ValueError(
+                "Invariant I8 violation: Formalizer and Writer shared payload bytes must be non-empty"
+            )
+        if f_bytes != w_bytes:
+            raise ValueError(
+                "Invariant I8 violation: Formalizer and Writer actual shared payload bytes differ"
+            )
+        return
+
     f_bytes = serialize_shared_mechanism_payload(formalizer_slices)
     w_bytes = serialize_shared_mechanism_payload(writer_slices)
 

@@ -13790,6 +13790,10 @@ def _writer_section_inputs_v3(
                     sec_slices.append(raw_b.decode("utf-8") if isinstance(raw_b, bytes) else str(raw_b))
                     sec_slice_metadata.append({
                         "mechanism_id": mid_str,
+                        "shared_payload_bytes_digest": (
+                            "sha256:" + hashlib.sha256(raw_b).hexdigest()
+                            if raw_b else ""
+                        ),
                         "shared_payload_digest": str(getattr(m_slice[0], "shared_payload_digest", "")) if m_slice else "",
                         "source_context_digest": str(m_slice[0].technical_payload.get("source_context_digest", "")) if m_slice else "",
                         "view_digest": str(m_slice[0].view_digest) if m_slice else "",
@@ -13954,6 +13958,7 @@ def _assert_shared_payload_delivery(
     )
     from code2paper.agentic.mechanism_context_projection import (
         build_mechanism_context_view,
+        assert_consumer_shared_payload_identity,
         serialize_shared_mechanism_payload,
     )
 
@@ -14044,7 +14049,19 @@ def _assert_shared_payload_delivery(
             or getattr(ctx, "content_digest", "")
         )
         formalizer_trace = trace_by_id[mid]
-        if formalizer_trace.get("shared_payload") != payload_text:
+        formalizer_payload_value = formalizer_trace.get("shared_payload")
+        if isinstance(formalizer_payload_value, bytes):
+            formalizer_payload_bytes = formalizer_payload_value
+        elif isinstance(formalizer_payload_value, str):
+            formalizer_payload_bytes = formalizer_payload_value.encode("utf-8")
+        else:
+            raise ValueError(f"formalizer_payload_bytes_missing:{mid}")
+        formalizer_payload_bytes_digest = (
+            "sha256:" + hashlib.sha256(formalizer_payload_bytes).hexdigest()
+        )
+        if formalizer_trace.get("shared_payload_bytes_digest") != formalizer_payload_bytes_digest:
+            raise ValueError(f"formalizer_payload_bytes_digest_mismatch:{mid}")
+        if formalizer_payload_bytes != payload_bytes:
             raise ValueError(f"formalizer_payload_bytes_mismatch:{mid}")
         if formalizer_trace.get("shared_payload_digest") != shared_digest:
             raise ValueError(f"formalizer_shared_payload_digest_mismatch:{mid}")
@@ -14073,22 +14090,40 @@ def _assert_shared_payload_delivery(
         for writer_input in writer_by_id[mid]:
             payload = writer_input.prompt_payload
             shared_contexts = tuple(payload.get("shared_contexts") or ())
-            if payload_text not in tuple(
-                value.decode("utf-8") if isinstance(value, bytes) else str(value)
-                for value in shared_contexts
-            ):
-                raise ValueError(
-                    f"writer_payload_bytes_mismatch:{mid}:{getattr(writer_input, 'section_id', '')}"
-                )
             metadata_rows = tuple(payload.get("shared_context_metadata") or ())
+            if len(shared_contexts) != len(metadata_rows):
+                raise ValueError(
+                    f"writer_payload_metadata_alignment_mismatch:{mid}:{getattr(writer_input, 'section_id', '')}"
+                )
             matching_metadata = tuple(
-                row for row in metadata_rows
+                (index, row)
+                for index, row in enumerate(metadata_rows)
                 if isinstance(row, Mapping)
                 and str(row.get("mechanism_id") or "").strip() == mid
             )
             if len(matching_metadata) != 1:
                 raise ValueError(f"writer_payload_metadata_missing:{mid}")
-            metadata = matching_metadata[0]
+            metadata_index, metadata = matching_metadata[0]
+            writer_payload_value = shared_contexts[metadata_index]
+            if isinstance(writer_payload_value, bytes):
+                writer_payload_bytes = writer_payload_value
+            elif isinstance(writer_payload_value, str):
+                writer_payload_bytes = writer_payload_value.encode("utf-8")
+            else:
+                raise ValueError(
+                    f"writer_payload_bytes_missing:{mid}:{getattr(writer_input, 'section_id', '')}"
+                )
+            writer_payload_bytes_digest = (
+                "sha256:" + hashlib.sha256(writer_payload_bytes).hexdigest()
+            )
+            assert_consumer_shared_payload_identity(
+                formalizer_payload_bytes,
+                writer_payload_bytes,
+            )
+            if writer_payload_bytes != payload_bytes:
+                raise ValueError(
+                    f"writer_payload_bytes_mismatch:{mid}:{getattr(writer_input, 'section_id', '')}"
+                )
             expected_writer_request_digest = compute_consumer_request_digest(
                 shared_digest,
                 {
@@ -14098,6 +14133,7 @@ def _assert_shared_payload_delivery(
                 },
             )
             for key, expected in (
+                ("shared_payload_bytes_digest", writer_payload_bytes_digest),
                 ("shared_payload_digest", shared_digest),
                 ("source_context_digest", source_context_digest),
                 ("view_digest", view_digest),
@@ -14126,11 +14162,12 @@ def _assert_shared_payload_delivery(
                 "view_digest": view_digest,
                 "slice_digests": list(slice_digests),
                 "consumer_request_digest": expected_writer_request_digest,
-                "payload_bytes_digest": "sha256:" + hashlib.sha256(payload_bytes).hexdigest(),
+                "payload_bytes_digest": writer_payload_bytes_digest,
             })
         records.append({
             "mechanism_id": mid,
-            "payload_bytes_digest": "sha256:" + hashlib.sha256(payload_bytes).hexdigest(),
+            "payload_bytes_digest": formalizer_payload_bytes_digest,
+            "formalizer_payload_bytes_digest": formalizer_payload_bytes_digest,
             "shared_payload_digest": shared_digest,
             "source_context_digest": source_context_digest,
             "view_digest": view_digest,
