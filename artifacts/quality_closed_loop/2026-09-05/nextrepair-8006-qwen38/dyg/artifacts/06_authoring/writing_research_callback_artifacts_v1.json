@@ -1,0 +1,290 @@
+{
+  "schema_version": "1.0",
+  "requests": [
+    {
+      "request_id": "MA-S2:uq-01",
+      "section_id": "MA-S2",
+      "argument_unit_id": "MA-S2:unit",
+      "missing_rhetorical_move": "problem_or_local_context",
+      "exact_question": "What repository evidence supports the claim that vanilla SSM step operations (fused add, norm, conv state, ssm output) are limited by their treatment of irregular timespans and input noise?",
+      "required_authority_lane": "expository_bridge",
+      "candidate_symbols_or_terms": [
+        "SSMs",
+        "Motivation",
+        "limitations",
+        "irregular",
+        "timespans",
+        "vulnerable",
+        "vanilla",
+        "they",
+        "ignore",
+        "input",
+        "noise"
+      ],
+      "current_known_facts": [],
+      "why_needed_for_reader": "The paragraph's motivation claim about SSM limitations requires repository-supported evidence connecting the step operations to specific failure modes under irregular timespans and noisy inputs.",
+      "priority": "high",
+      "status": "open",
+      "fulfilled_artifact_ids": [],
+      "concept_key": "",
+      "missing_parts": [
+        "Motivation: limitations of vanilla SSMs – they ignore irregular timespans and are vulnerable to input noise."
+      ],
+      "evidence_refs_used": [
+        "span:models/mamba_simple.py:476:476",
+        "span:models/mamba_simple.py:507:507",
+        "span:models/mamba_simple.py:525:525",
+        "span:models/mamba_simple.py:466:466",
+        "span:models/DyGMamba.py:868:876",
+        "span:models/DyGMamba.py:867:867",
+        "span:models/DyGMamba.py:859:861",
+        "claim:claim-callback:req:MA-S1:mechanism-overview-fact-callback:req:MA-S1:mechanism-overview-node:5aa3466791d8654f",
+        "claim:claim-callback:req:MA-S1:mechanism-overview-fact-callback:req:MA-S1:mechanism-overview-node:10be86df95d0353c",
+        "claim:claim-callback:req:MA-S1:mechanism-overview-fact-callback:req:MA-S1:mechanism-overview-node:9bebd704e65b776b",
+        "claim:claim-callback:req:MA-S1:mechanism-overview-fact-callback:req:MA-S1:mechanism-overview-node:e6e27ab4b6034a66",
+        "claim:claim-callback:MA-S1:unit-1:mechanism_overview:1-fact-callback:MA-S1:unit-1:mechanism_overview:1-node:3a6de8a6f23f4821",
+        "claim:claim-callback:MA-S1:unit-1:mechanism_overview:1-fact-callback:MA-S1:unit-1:mechanism_overview:1-node:95081304b4af2ce9",
+        "claim:claim-callback:MA-S1:unit-1:mechanism_overview:1-fact-callback:MA-S1:unit-1:mechanism_overview:1-node:e1cebc438f269492"
+      ],
+      "baseline_span_ids": [
+        "span:models/DyGMamba.py:859:861",
+        "span:models/DyGMamba.py:867:867",
+        "span:models/DyGMamba.py:868:876",
+        "span:models/mamba_simple.py:466:466",
+        "span:models/mamba_simple.py:476:476",
+        "span:models/mamba_simple.py:507:507",
+        "span:models/mamba_simple.py:525:525"
+      ],
+      "target_story_node_ids": [
+        "story:O-ORGANIZATION-02-780817ba"
+      ],
+      "target_concept_keys": [],
+      "target_brief_ids": [
+        "brief:story:O-ORGANIZATION-02-780817ba"
+      ],
+      "target_clause_ids": [
+        "clause:O-ORGANIZATION-02-780817ba:0"
+      ],
+      "target_formula_obligation_ids": [],
+      "mandatory_missing_slots": [
+        "input"
+      ],
+      "baseline_fact_fingerprints": [],
+      "baseline_claim_ids": [],
+      "excluded_audit_concept_keys": [],
+      "satisfied_slots": [],
+      "remaining_slots": [],
+      "content_digest": "sha256:642a965e9807eb2c2edb16487253f31a38e0606359fe51ec129e8b213948d92f"
+    },
+    {
+      "request_id": "req:MA-S4:unit-1:cosine-cooccur",
+      "section_id": "MA-S4",
+      "argument_unit_id": "MA-S4:unit-1",
+      "missing_rhetorical_move": "mechanism_overview",
+      "exact_question": "Does the repository contain a trainable cosine-based temporal encoding function that maps timespans from historical interactions to the prediction time, and a co-occurrence frequency encoding that captures structural similarity through shared-neighbor counts between the target node and each historical neighbor?",
+      "required_authority_lane": "executable_hard",
+      "candidate_symbols_or_terms": [
+        "cosine-based",
+        "temporal",
+        "encoding",
+        "function",
+        "co-occurrence",
+        "frequency",
+        "shared-neighbor",
+        "counts"
+      ],
+      "current_known_facts": [],
+      "why_needed_for_reader": "The reader needs the temporal and structural encoding mechanisms to understand how each interaction event in the sequence is represented before the sequential encoder processes it.",
+      "priority": "medium",
+      "status": "open",
+      "fulfilled_artifact_ids": [],
+      "concept_key": "",
+      "missing_parts": [
+        "cosine-based temporal encoding function",
+        "co-occurrence frequency encoding of shared-neighbor counts"
+      ],
+      "evidence_refs_used": [],
+      "baseline_span_ids": [],
+      "target_story_node_ids": [
+        "story:O-ORGANIZATION-04-a52145c2",
+        "story:O-COMPONENT-01-377afc18",
+        "story:O-COMPONENT-01-88e55e54",
+        "story:O-COMPONENT-02-c39dd898",
+        "story:O-COMPONENT-03-2ae65141",
+        "story:O-COMPONENT-04-6d73cce5",
+        "story:O-COMPONENT-05-8cd85daa",
+        "story:O-METHOD-MAINLINE-01-3011c54d",
+        "story:O-STAGE-04-a3a3e8ab"
+      ],
+      "target_concept_keys": [],
+      "target_brief_ids": [],
+      "target_clause_ids": [
+        "facet-9f2ea9661004e61a",
+        "facet-8ebd977fd8a0b89d"
+      ],
+      "target_formula_obligation_ids": [
+        "formula:section:MA-S4:derivation"
+      ],
+      "mandatory_missing_slots": [
+        "transformation"
+      ],
+      "baseline_fact_fingerprints": [],
+      "baseline_claim_ids": [],
+      "excluded_audit_concept_keys": [],
+      "satisfied_slots": [],
+      "remaining_slots": [],
+      "content_digest": "sha256:00c56067951a9b09f262898ffcb17b90fcd398a8caa596eb3e870ba01c8a148e"
+    },
+    {
+      "request_id": "REQ-MA-S5:001",
+      "section_id": "MA-S5",
+      "argument_unit_id": "MA-S5:unit",
+      "missing_rhetorical_move": "equation_or_derivation",
+      "exact_question": "What repository evidence supports the spectral norm bound ρ as a stability threshold for the selective reviewing transformation W_review?",
+      "required_authority_lane": "expository_bridge",
+      "candidate_symbols_or_terms": [],
+      "current_known_facts": [],
+      "why_needed_for_reader": "",
+      "priority": "medium",
+      "status": "open",
+      "fulfilled_artifact_ids": [],
+      "concept_key": "",
+      "missing_parts": [],
+      "evidence_refs_used": [],
+      "baseline_span_ids": [],
+      "target_story_node_ids": [
+        "story:O-COMPONENT-01-377afc18",
+        "story:O-COMPONENT-01-88e55e54",
+        "story:O-COMPONENT-02-c39dd898",
+        "story:O-COMPONENT-04-6d73cce5",
+        "story:O-COMPONENT-05-8cd85daa",
+        "story:O-METHOD-MAINLINE-01-3011c54d",
+        "story:O-STAGE-03-d47a86f4"
+      ],
+      "target_concept_keys": [],
+      "target_brief_ids": [],
+      "target_clause_ids": [],
+      "target_formula_obligation_ids": [
+        "formula:section:MA-S5:derivation"
+      ],
+      "mandatory_missing_slots": [],
+      "baseline_fact_fingerprints": [],
+      "baseline_claim_ids": [],
+      "excluded_audit_concept_keys": [],
+      "satisfied_slots": [],
+      "remaining_slots": [],
+      "content_digest": "sha256:7061d1ed695e6a15b5543165edd8e763c05c3ad1098e698032e5f8060bb396ac"
+    },
+    {
+      "request_id": "research-derived:5087406eaa026753",
+      "section_id": "MA-S4",
+      "argument_unit_id": "MA-S4:unit-2",
+      "missing_rhetorical_move": "algorithm_or_data_flow",
+      "exact_question": "Which bounded repository trace resolves the missing implementation for the reader goal How does this setup realize Downstream adaptation: link prediction and node classification setups, plus a note on linear computational complexity? using Downstream, adaptation, prediction, classification, computational, complexity, Absolute, temporal?",
+      "required_authority_lane": "executable_hard",
+      "candidate_symbols_or_terms": [
+        "Downstream",
+        "adaptation",
+        "prediction",
+        "classification",
+        "computational",
+        "complexity",
+        "Absolute",
+        "temporal",
+        "encoding",
+        "timespans",
+        "interaction",
+        "trainable",
+        "cosine-based",
+        "function",
+        "Co-occurrence",
+        "frequency"
+      ],
+      "current_known_facts": [],
+      "why_needed_for_reader": "The paragraph's mechanism dossier has an unresolved connected repository relation; keep the Candidate scoped and leave Verified closed until the owning lane supplies a validated trace.",
+      "priority": "high",
+      "status": "open",
+      "fulfilled_artifact_ids": [],
+      "concept_key": "",
+      "missing_parts": [
+        "How does this setup realize Downstream adaptation: link prediction and node classification setups, plus a note on linear computational complexity?",
+        "Absolute temporal encoding: Encode timespans from each interaction to the prediction time using a trainable cosine-based function.",
+        "Co-occurrence frequency encoding: Capture structural similarity by encoding the frequency of shared neighbors between the target node and each historical neighbor."
+      ],
+      "evidence_refs_used": [],
+      "baseline_span_ids": [],
+      "target_story_node_ids": [],
+      "target_concept_keys": [],
+      "target_brief_ids": [],
+      "target_clause_ids": [],
+      "target_formula_obligation_ids": [
+        "formula:section:MA-S4:derivation"
+      ],
+      "mandatory_missing_slots": [],
+      "baseline_fact_fingerprints": [],
+      "baseline_claim_ids": [],
+      "excluded_audit_concept_keys": [],
+      "satisfied_slots": [],
+      "remaining_slots": [],
+      "content_digest": "sha256:bd49207763536e2d5862e8176640494bcd3ddc814f9b138691e5345e4c9d5164"
+    },
+    {
+      "request_id": "research-derived:f2f6fa0e59d44905",
+      "section_id": "MA-S5",
+      "argument_unit_id": "MA-S5:unit",
+      "missing_rhetorical_move": "algorithm_or_data_flow",
+      "exact_question": "Which bounded repository trace resolves the missing implementation for the reader goal What method mechanism does this section realize: Robust selective reviewing? using selective, reviewing, input-dependent, filtering, historical, information, important, interactions?",
+      "required_authority_lane": "executable_hard",
+      "candidate_symbols_or_terms": [
+        "selective",
+        "reviewing",
+        "input-dependent",
+        "filtering",
+        "historical",
+        "information",
+        "important",
+        "interactions",
+        "reinforced",
+        "suppressed",
+        "maintaining",
+        "stability",
+        "spectral",
+        "constraints",
+        "method",
+        "section"
+      ],
+      "current_known_facts": [],
+      "why_needed_for_reader": "The paragraph's mechanism dossier has an unresolved connected repository relation; keep the Candidate scoped and leave Verified closed until the owning lane supplies a validated trace.",
+      "priority": "high",
+      "status": "open",
+      "fulfilled_artifact_ids": [],
+      "concept_key": "",
+      "missing_parts": [
+        "What method mechanism does this section realize: Robust selective reviewing?",
+        "Robust selective reviewing: Enable input-dependent filtering of historical information so that important interactions are reinforced and noise is suppressed",
+        "while maintaining stability through spectral norm constraints."
+      ],
+      "evidence_refs_used": [],
+      "baseline_span_ids": [],
+      "target_story_node_ids": [],
+      "target_concept_keys": [],
+      "target_brief_ids": [],
+      "target_clause_ids": [],
+      "target_formula_obligation_ids": [
+        "formula:facet:facet-85dd07572b8a77e2",
+        "formula:section:MA-S5:derivation"
+      ],
+      "mandatory_missing_slots": [],
+      "baseline_fact_fingerprints": [],
+      "baseline_claim_ids": [],
+      "excluded_audit_concept_keys": [],
+      "satisfied_slots": [],
+      "remaining_slots": [],
+      "content_digest": "sha256:fec7ffae10cda7209af08cec644b1bd94d0f73817ca3ed5c3d70853397471cae"
+    }
+  ],
+  "artifacts": {},
+  "requested_resume_section_ids": [],
+  "resume_section_ids": [],
+  "content_digest": "sha256:abb566497cdead9f5ab2fad6a162a02bb5d79d80650216c74aaf3bef4c3b4370"
+}

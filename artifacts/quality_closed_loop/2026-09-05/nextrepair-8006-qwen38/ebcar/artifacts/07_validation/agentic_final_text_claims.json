@@ -1,0 +1,296 @@
+{
+  "mode": "agentic-final-text-claims-v1",
+  "input_text_digest": "sha256:310e110f8087f5474e81172316abc6dca95e0a880668c34a4f78cd743a2045d4",
+  "units": [
+    {
+      "unit_id": "FTU1",
+      "kind": "heading",
+      "text": "Motivation: efficiency and cross‑passage inference challenges in existing rerankers.",
+      "line_start": 1,
+      "line_end": 1,
+      "char_start": 3,
+      "char_end": 87,
+      "factual": false,
+      "high_risk_markers": [],
+      "span_digest": "sha256:00897fc70bcbcb6b6b0f9ee5d7f1b44b6aa86a5a814a82ca54369a97afb26c80"
+    },
+    {
+      "unit_id": "FTU2",
+      "kind": "sentence",
+      "text": "Existing rerankers face efficiency constraints and limited capacity for cross-passage inference, document-wide context, and structural reasoning.",
+      "line_start": 3,
+      "line_end": 3,
+      "char_start": 89,
+      "char_end": 234,
+      "factual": true,
+      "high_risk_markers": [],
+      "span_digest": "sha256:a7a91b75372d12778802aa38961ad3035b47c1d835d6dabe97ec44dce98de66c"
+    },
+    {
+      "unit_id": "FTU3",
+      "kind": "sentence",
+      "text": "To address these challenges, the ConTEB benchmark is introduced as an evaluation suite that isolates these demanding inference requirements, thereby exposing the specific limitations of current systems.",
+      "line_start": 3,
+      "line_end": 3,
+      "char_start": 235,
+      "char_end": 437,
+      "factual": true,
+      "high_risk_markers": [],
+      "span_digest": "sha256:cec3a921c249808c8ae7c4792210c0cd513ffa6c552cf47888683f87bdc67025"
+    },
+    {
+      "unit_id": "FTU4",
+      "kind": "heading",
+      "text": "Embedding‑based reranking formulation and overall framework.",
+      "line_start": 5,
+      "line_end": 5,
+      "char_start": 442,
+      "char_end": 502,
+      "factual": false,
+      "high_risk_markers": [],
+      "span_digest": "sha256:6aae68510fc2391da7609321460b417f6d4189d27b005a9d86c3c3bec671188e"
+    },
+    {
+      "unit_id": "FTU5",
+      "kind": "sentence",
+      "text": "Embedding-based reranking maps candidate items into a shared representational space, where a learned scoring function assigns a relevance score by comparing the query embedding against each candidate embedding.",
+      "line_start": 7,
+      "line_end": 7,
+      "char_start": 504,
+      "char_end": 714,
+      "factual": true,
+      "high_risk_markers": [],
+      "span_digest": "sha256:190166df79b6061ffd2e38ff0f1b898f6d942f604b83776285ed2c880f1ac4e9"
+    },
+    {
+      "unit_id": "FTU6",
+      "kind": "sentence",
+      "text": "Within the overall framework, this reranking stage is positioned between an upstream retrieval component and a downstream consumer, with the embedding model serving as the central mechanism that determines which candidates advance to subsequent processing stages.",
+      "line_start": 7,
+      "line_end": 7,
+      "char_start": 715,
+      "char_end": 978,
+      "factual": true,
+      "high_risk_markers": [],
+      "span_digest": "sha256:5edd47e8dda3661765bb8ba9d1215dd9fa9a6c5c1d6a3eaaf84be2c99c22a985"
+    },
+    {
+      "unit_id": "FTU7",
+      "kind": "heading",
+      "text": "Inference procedure.",
+      "line_start": 9,
+      "line_end": 9,
+      "char_start": 983,
+      "char_end": 1003,
+      "factual": false,
+      "high_risk_markers": [],
+      "span_digest": "sha256:28871d6cc597b273b6d8acf71a18baf49dd8094c961bfb4a02e778ab8af27ab2"
+    },
+    {
+      "unit_id": "FTU8",
+      "kind": "sentence",
+      "text": "At inference time, the scoring function computes the dot product between the unchanged query embedding $q$ and each contextualized passage embedding $p_i$, yielding a scalar relevance score $s_i$ for every passage in the candidate set.",
+      "line_start": 11,
+      "line_end": 11,
+      "char_start": 1005,
+      "char_end": 1240,
+      "factual": true,
+      "high_risk_markers": [
+        "formula"
+      ],
+      "span_digest": "sha256:b8891a39992a73182684e15cdae47d746123c8b06d8135483895e37aeb962dd1"
+    },
+    {
+      "unit_id": "FTU9",
+      "kind": "sentence",
+      "text": "Passages are then ranked by a descending sort over these scores, producing a permutation $π$ that orders passages from most to least relevant.",
+      "line_start": 11,
+      "line_end": 11,
+      "char_start": 1241,
+      "char_end": 1383,
+      "factual": true,
+      "high_risk_markers": [
+        "formula"
+      ],
+      "span_digest": "sha256:1deb7bd30c6c5354918b184f62d098bc7c76604e786141ba8c4bc5f6c4c4ccc4"
+    },
+    {
+      "unit_id": "FTU10",
+      "kind": "sentence",
+      "text": "This procedure avoids full-text processing and autoregressive generation to reduce inference latency.",
+      "line_start": 11,
+      "line_end": 11,
+      "char_start": 1384,
+      "char_end": 1485,
+      "factual": true,
+      "high_risk_markers": [],
+      "span_digest": "sha256:3c94d2aa5ca2a1ed36c0cdb9805aed997ebde7eeaf58f7ccb3294c97bd2a019f"
+    },
+    {
+      "unit_id": "FTU11",
+      "kind": "sentence",
+      "text": "The scoring and ranking operations are formalized as follows: $$s_i = q^T p_i, π = argsort_i(s_i, descending)$$",
+      "line_start": 11,
+      "line_end": 11,
+      "char_start": 1486,
+      "char_end": 1597,
+      "factual": true,
+      "high_risk_markers": [
+        "formula"
+      ],
+      "span_digest": "sha256:10a192574b507ba5770c081d490eb9929deb54f1ae4d2d5fb86d154cd42e58cd"
+    }
+  ],
+  "atomic_claims": [
+    {
+      "atomic_claim_id": "FAC1",
+      "unit_id": "FTU2",
+      "text": "Existing rerankers face efficiency constraints and limited capacity for cross-passage inference, document-wide context, and structural reasoning.",
+      "normalized_text": "existing rerankers face efficiency constraints and limited capacity for cross passage inference document wide context and structural reasoning",
+      "line_start": 3,
+      "line_end": 3,
+      "char_start": 89,
+      "char_end": 234,
+      "candidate_projection_claim_ids": [],
+      "candidate_method_proposition_ids": [],
+      "candidate_author_attested_ids": [],
+      "candidate_narrative_ids": [],
+      "candidate_direct_evidence_ids": [],
+      "high_risk_markers": [],
+      "claim_digest": "sha256:a7a91b75372d12778802aa38961ad3035b47c1d835d6dabe97ec44dce98de66c"
+    },
+    {
+      "atomic_claim_id": "FAC2",
+      "unit_id": "FTU3",
+      "text": "To address these challenges, the ConTEB benchmark is introduced as an evaluation suite that isolates these demanding inference requirements, thereby exposing the specific limitations of current systems.",
+      "normalized_text": "to address these challenges the conteb benchmark is introduced as an evaluation suite that isolates these demanding inference requirements thereby exposing the specific limitations of current systems",
+      "line_start": 3,
+      "line_end": 3,
+      "char_start": 235,
+      "char_end": 437,
+      "candidate_projection_claim_ids": [],
+      "candidate_method_proposition_ids": [],
+      "candidate_author_attested_ids": [],
+      "candidate_narrative_ids": [],
+      "candidate_direct_evidence_ids": [],
+      "high_risk_markers": [],
+      "claim_digest": "sha256:cec3a921c249808c8ae7c4792210c0cd513ffa6c552cf47888683f87bdc67025"
+    },
+    {
+      "atomic_claim_id": "FAC3",
+      "unit_id": "FTU5",
+      "text": "Embedding-based reranking maps candidate items into a shared representational space, where a learned scoring function assigns a relevance score by comparing the query embedding against each candidate embedding.",
+      "normalized_text": "embedding based reranking maps candidate items into a shared representational space where a learned scoring function assigns a relevance score by comparing the query embedding against each candidate embedding",
+      "line_start": 7,
+      "line_end": 7,
+      "char_start": 504,
+      "char_end": 714,
+      "candidate_projection_claim_ids": [],
+      "candidate_method_proposition_ids": [],
+      "candidate_author_attested_ids": [],
+      "candidate_narrative_ids": [],
+      "candidate_direct_evidence_ids": [],
+      "high_risk_markers": [],
+      "claim_digest": "sha256:190166df79b6061ffd2e38ff0f1b898f6d942f604b83776285ed2c880f1ac4e9"
+    },
+    {
+      "atomic_claim_id": "FAC4",
+      "unit_id": "FTU6",
+      "text": "Within the overall framework, this reranking stage is positioned between an upstream retrieval component and a downstream consumer, with the embedding model serving as the central mechanism that determines which candidates advance to subsequent processing stages.",
+      "normalized_text": "within the overall framework this reranking stage is positioned between an upstream retrieval component and a downstream consumer with the embedding model serving as the central mechanism that determines which candidates advance to subsequent processing stages",
+      "line_start": 7,
+      "line_end": 7,
+      "char_start": 715,
+      "char_end": 978,
+      "candidate_projection_claim_ids": [],
+      "candidate_method_proposition_ids": [],
+      "candidate_author_attested_ids": [],
+      "candidate_narrative_ids": [],
+      "candidate_direct_evidence_ids": [],
+      "high_risk_markers": [],
+      "claim_digest": "sha256:5edd47e8dda3661765bb8ba9d1215dd9fa9a6c5c1d6a3eaaf84be2c99c22a985"
+    },
+    {
+      "atomic_claim_id": "FAC5",
+      "unit_id": "FTU8",
+      "text": "At inference time, the scoring function computes the dot product between the unchanged query embedding $q$ and each contextualized passage embedding $p_i$, yielding a scalar relevance score $s_i$ for every passage in the candidate set.",
+      "normalized_text": "at inference time the scoring function computes the dot product between the unchanged query embedding q and each contextualized passage embedding p_i yielding a scalar relevance score s_i for every passage in the candidate set",
+      "line_start": 11,
+      "line_end": 11,
+      "char_start": 1005,
+      "char_end": 1240,
+      "candidate_projection_claim_ids": [],
+      "candidate_method_proposition_ids": [
+        "claim-O-STAGE-05-5b3d398a-fact-O-STAGE-05-5b3d398a-node:5ff7f276f04b71a8"
+      ],
+      "candidate_author_attested_ids": [],
+      "candidate_narrative_ids": [],
+      "candidate_direct_evidence_ids": [],
+      "high_risk_markers": [
+        "formula"
+      ],
+      "claim_digest": "sha256:b8891a39992a73182684e15cdae47d746123c8b06d8135483895e37aeb962dd1"
+    },
+    {
+      "atomic_claim_id": "FAC6",
+      "unit_id": "FTU9",
+      "text": "Passages are then ranked by a descending sort over these scores, producing a permutation $π$ that orders passages from most to least relevant.",
+      "normalized_text": "passages are then ranked by a descending sort over these scores producing a permutation that orders passages from most to least relevant",
+      "line_start": 11,
+      "line_end": 11,
+      "char_start": 1241,
+      "char_end": 1383,
+      "candidate_projection_claim_ids": [],
+      "candidate_method_proposition_ids": [
+        "claim-O-STAGE-05-5b3d398a-fact-O-STAGE-05-5b3d398a-node:8e87e1804f77f50f"
+      ],
+      "candidate_author_attested_ids": [],
+      "candidate_narrative_ids": [],
+      "candidate_direct_evidence_ids": [],
+      "high_risk_markers": [
+        "formula"
+      ],
+      "claim_digest": "sha256:1deb7bd30c6c5354918b184f62d098bc7c76604e786141ba8c4bc5f6c4c4ccc4"
+    },
+    {
+      "atomic_claim_id": "FAC7",
+      "unit_id": "FTU10",
+      "text": "This procedure avoids full-text processing and autoregressive generation to reduce inference latency.",
+      "normalized_text": "this procedure avoids full text processing and autoregressive generation to reduce inference latency",
+      "line_start": 11,
+      "line_end": 11,
+      "char_start": 1384,
+      "char_end": 1485,
+      "candidate_projection_claim_ids": [],
+      "candidate_method_proposition_ids": [],
+      "candidate_author_attested_ids": [],
+      "candidate_narrative_ids": [],
+      "candidate_direct_evidence_ids": [],
+      "high_risk_markers": [],
+      "claim_digest": "sha256:3c94d2aa5ca2a1ed36c0cdb9805aed997ebde7eeaf58f7ccb3294c97bd2a019f"
+    },
+    {
+      "atomic_claim_id": "FAC8",
+      "unit_id": "FTU11",
+      "text": "The scoring and ranking operations are formalized as follows: $$s_i = q^T p_i, π = argsort_i(s_i, descending)$$",
+      "normalized_text": "the scoring and ranking operations are formalized as follows s_i q t p_i argsort_i s_i descending",
+      "line_start": 11,
+      "line_end": 11,
+      "char_start": 1486,
+      "char_end": 1597,
+      "candidate_projection_claim_ids": [],
+      "candidate_method_proposition_ids": [
+        "claim-O-STAGE-05-5b3d398a-fact-O-STAGE-05-5b3d398a-node:8e87e1804f77f50f"
+      ],
+      "candidate_author_attested_ids": [],
+      "candidate_narrative_ids": [],
+      "candidate_direct_evidence_ids": [],
+      "high_risk_markers": [
+        "formula"
+      ],
+      "claim_digest": "sha256:10a192574b507ba5770c081d490eb9929deb54f1ae4d2d5fb86d154cd42e58cd"
+    }
+  ],
+  "deterministic_completeness_passed": true,
+  "completeness_failures": []
+}

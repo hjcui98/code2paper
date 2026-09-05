@@ -1,0 +1,779 @@
+{
+  "schema_version": "1.0",
+  "repo_snapshot_id": "repo:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+  "project_tree_hash": "sha256:6dce099b479221cbfee738e430aae425e5482143923c7a567021f2000be72d89",
+  "fact_digest": "sha256:306171914145de302997a6e9b4e9831b7ab081c8684654fa6b5b6168e2a6a7c7",
+  "equation_digest": "sha256:9f82d1b4f375fe152062a795a66a701958c25769ed7e830f2bde1ffdfcfffc23",
+  "symbols": [
+    {
+      "symbol": "LinearRAG.graph_search_with_seed_entities",
+      "meaning": "operand of loads_weights",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-79899e6c-node:29c327b051baa4b2"
+      ],
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:187:187",
+        "span:src/LinearRAG.py:187:190",
+        "span:src/LinearRAG.py:187:187"
+      ],
+      "conditions": [
+        "self.config.use_vectorized_retrieval"
+      ]
+    },
+    {
+      "symbol": "self.config.use_vectorized_retrieval",
+      "meaning": "operand of loads_weights",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-79899e6c-node:29c327b051baa4b2"
+      ],
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:187:187",
+        "span:src/LinearRAG.py:187:190",
+        "span:src/LinearRAG.py:187:187"
+      ],
+      "conditions": [
+        "self.config.use_vectorized_retrieval"
+      ]
+    },
+    {
+      "symbol": "entity_weights",
+      "meaning": "operand of computes_formula",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-79899e6c-node:39e89cf9b1ab8f58"
+      ],
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:192:192"
+      ],
+      "conditions": [
+        "self.config.use_vectorized_retrieval"
+      ]
+    },
+    {
+      "symbol": "passage_weights",
+      "meaning": "operand of computes_formula",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-79899e6c-node:39e89cf9b1ab8f58"
+      ],
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:192:192"
+      ],
+      "conditions": [
+        "self.config.use_vectorized_retrieval"
+      ]
+    },
+    {
+      "symbol": "result=node_weights",
+      "meaning": "operand of computes_formula",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-79899e6c-node:39e89cf9b1ab8f58"
+      ],
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:192:192"
+      ],
+      "conditions": [
+        "self.config.use_vectorized_retrieval"
+      ]
+    },
+    {
+      "symbol": "self.run_ppr",
+      "meaning": "operand of calls",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-79899e6c-node:120e548b0781989f"
+      ],
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:193:193"
+      ],
+      "conditions": [
+        "self.config.use_vectorized_retrieval"
+      ]
+    },
+    {
+      "symbol": "node_weights",
+      "meaning": "operand of calls",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-79899e6c-node:120e548b0781989f"
+      ],
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:193:193"
+      ],
+      "conditions": [
+        "self.config.use_vectorized_retrieval"
+      ]
+    },
+    {
+      "symbol": "result=(ppr_sorted_passage_indices, ppr_sorted_passage_scores)",
+      "meaning": "operand of calls",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-79899e6c-node:120e548b0781989f"
+      ],
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:193:193"
+      ],
+      "conditions": [
+        "self.config.use_vectorized_retrieval"
+      ]
+    },
+    {
+      "symbol": "(ppr_sorted_passage_indices, ppr_sorted_passage_scores)",
+      "meaning": "operand of returns",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-79899e6c-node:ea92b7c26acc5f71"
+      ],
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:194:194"
+      ],
+      "conditions": [
+        "self.config.use_vectorized_retrieval"
+      ]
+    },
+    {
+      "symbol": "LinearRAG.index",
+      "meaning": "operand of branches_on",
+      "fact_ids": [
+        "fact-O-STAGE-01-9c8dfe22-node:0fd688d75587fdee"
+      ],
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:561:564"
+      ],
+      "conditions": [
+        "len(new_passage_hash_ids) > 0"
+      ]
+    },
+    {
+      "symbol": "len(new_passage_hash_ids) > 0",
+      "meaning": "operand of branches_on",
+      "fact_ids": [
+        "fact-O-STAGE-01-9c8dfe22-node:0fd688d75587fdee"
+      ],
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:561:564"
+      ],
+      "conditions": [
+        "len(new_passage_hash_ids) > 0"
+      ]
+    },
+    {
+      "symbol": "self.extract_nodes_and_edges",
+      "meaning": "operand of calls",
+      "fact_ids": [
+        "fact-O-STAGE-01-9c8dfe22-node:f21427b316d80682"
+      ],
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:566:566"
+      ],
+      "conditions": [
+        "len(new_passage_hash_ids) > 0"
+      ]
+    },
+    {
+      "symbol": "existing_passage_hash_id_to_entities",
+      "meaning": "operand of calls",
+      "fact_ids": [
+        "fact-O-STAGE-01-9c8dfe22-node:f21427b316d80682"
+      ],
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:566:566"
+      ],
+      "conditions": [
+        "len(new_passage_hash_ids) > 0"
+      ]
+    },
+    {
+      "symbol": "existing_sentence_to_entities",
+      "meaning": "operand of calls",
+      "fact_ids": [
+        "fact-O-STAGE-01-9c8dfe22-node:f21427b316d80682"
+      ],
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:566:566"
+      ],
+      "conditions": [
+        "len(new_passage_hash_ids) > 0"
+      ]
+    },
+    {
+      "symbol": "result=(entity_nodes, sentence_nodes, passage_hash_id_to_entities, self.entity_to_sentence, self.sentence_to_entity)",
+      "meaning": "operand of calls",
+      "fact_ids": [
+        "fact-O-STAGE-01-9c8dfe22-node:f21427b316d80682"
+      ],
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:566:566"
+      ],
+      "conditions": [
+        "len(new_passage_hash_ids) > 0"
+      ]
+    },
+    {
+      "symbol": "self.calculate_entity_scores_vectorized",
+      "meaning": "operand of calls",
+      "fact_ids": [
+        "fact-O-STAGE-02-93c16851-node:dbc9e615e1abdb23"
+      ],
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:188:188"
+      ],
+      "conditions": [
+        "ent.label_ == 'ORDINAL' or ent.label_ == 'CARDINAL'",
+        "ent_text not in sentence_to_entities[sent_text]"
+      ]
+    },
+    {
+      "symbol": "question_embedding",
+      "meaning": "operand of calls",
+      "fact_ids": [
+        "fact-O-STAGE-02-93c16851-node:dbc9e615e1abdb23"
+      ],
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:188:188"
+      ],
+      "conditions": [
+        "ent.label_ == 'ORDINAL' or ent.label_ == 'CARDINAL'",
+        "ent_text not in sentence_to_entities[sent_text]"
+      ]
+    },
+    {
+      "symbol": "seed_entity_indices",
+      "meaning": "operand of calls",
+      "fact_ids": [
+        "fact-O-STAGE-02-93c16851-node:dbc9e615e1abdb23"
+      ],
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:188:188"
+      ],
+      "conditions": [
+        "ent.label_ == 'ORDINAL' or ent.label_ == 'CARDINAL'",
+        "ent_text not in sentence_to_entities[sent_text]"
+      ]
+    },
+    {
+      "symbol": "seed_entities",
+      "meaning": "operand of calls",
+      "fact_ids": [
+        "fact-O-STAGE-02-93c16851-node:dbc9e615e1abdb23"
+      ],
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:188:188"
+      ],
+      "conditions": [
+        "ent.label_ == 'ORDINAL' or ent.label_ == 'CARDINAL'",
+        "ent_text not in sentence_to_entities[sent_text]"
+      ]
+    },
+    {
+      "symbol": "seed_entity_hash_ids",
+      "meaning": "operand of calls",
+      "fact_ids": [
+        "fact-O-STAGE-02-93c16851-node:dbc9e615e1abdb23"
+      ],
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:188:188"
+      ],
+      "conditions": [
+        "ent.label_ == 'ORDINAL' or ent.label_ == 'CARDINAL'",
+        "ent_text not in sentence_to_entities[sent_text]"
+      ]
+    },
+    {
+      "symbol": "seed_entity_scores",
+      "meaning": "operand of calls",
+      "fact_ids": [
+        "fact-O-STAGE-02-93c16851-node:dbc9e615e1abdb23"
+      ],
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:188:188"
+      ],
+      "conditions": [
+        "ent.label_ == 'ORDINAL' or ent.label_ == 'CARDINAL'",
+        "ent_text not in sentence_to_entities[sent_text]"
+      ]
+    },
+    {
+      "symbol": "result=(entity_weights, actived_entities)",
+      "meaning": "operand of calls",
+      "fact_ids": [
+        "fact-O-STAGE-02-93c16851-node:dbc9e615e1abdb23"
+      ],
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:188:188"
+      ],
+      "conditions": [
+        "ent.label_ == 'ORDINAL' or ent.label_ == 'CARDINAL'",
+        "ent_text not in sentence_to_entities[sent_text]"
+      ]
+    },
+    {
+      "symbol": "SpacyNER.extract_entities_sentences",
+      "meaning": "operand of filters_by",
+      "fact_ids": [
+        "fact-O-STAGE-02-93c16851-node:d95b504f3885a567"
+      ],
+      "source_artifact_ids": [
+        "span:src/ner.py:32:33"
+      ],
+      "conditions": [
+        "ent.label_ == 'ORDINAL' or ent.label_ == 'CARDINAL'",
+        "ent_text not in sentence_to_entities[sent_text]"
+      ]
+    },
+    {
+      "symbol": "ent.label_ == 'ORDINAL' or ent.label_ == 'CARDINAL'",
+      "meaning": "operand of filters_by",
+      "fact_ids": [
+        "fact-O-STAGE-02-93c16851-node:d95b504f3885a567"
+      ],
+      "source_artifact_ids": [
+        "span:src/ner.py:32:33"
+      ],
+      "conditions": [
+        "ent.label_ == 'ORDINAL' or ent.label_ == 'CARDINAL'",
+        "ent_text not in sentence_to_entities[sent_text]"
+      ]
+    },
+    {
+      "symbol": "ent_text not in sentence_to_entities[sent_text]",
+      "meaning": "operand of branches_on",
+      "fact_ids": [
+        "fact-O-STAGE-02-93c16851-node:832a80d4d603dfda"
+      ],
+      "source_artifact_ids": [
+        "span:src/ner.py:36:37"
+      ],
+      "conditions": [
+        "ent_text not in sentence_to_entities[sent_text]",
+        "ent.label_ == 'ORDINAL' or ent.label_ == 'CARDINAL'"
+      ]
+    },
+    {
+      "symbol": "LinearRAG.run_ppr",
+      "meaning": "operand of propagates",
+      "fact_ids": [
+        "fact-O-STAGE-03-8dda66b9-node:ee035e622f3173b0"
+      ],
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:198:205"
+      ],
+      "conditions": [
+        "self.config.use_vectorized_retrieval"
+      ]
+    },
+    {
+      "symbol": "self.graph.personalized_pagerank",
+      "meaning": "operand of propagates",
+      "fact_ids": [
+        "fact-O-STAGE-03-8dda66b9-node:ee035e622f3173b0"
+      ],
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:198:205"
+      ],
+      "conditions": [
+        "self.config.use_vectorized_retrieval"
+      ]
+    },
+    {
+      "symbol": "vertices=range(len(self.node_name_to_vertex_idx))",
+      "meaning": "operand of propagates",
+      "fact_ids": [
+        "fact-O-STAGE-03-8dda66b9-node:ee035e622f3173b0"
+      ],
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:198:205"
+      ],
+      "conditions": [
+        "self.config.use_vectorized_retrieval"
+      ]
+    },
+    {
+      "symbol": "damping=self.config.damping",
+      "meaning": "operand of propagates",
+      "fact_ids": [
+        "fact-O-STAGE-03-8dda66b9-node:ee035e622f3173b0"
+      ],
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:198:205"
+      ],
+      "conditions": [
+        "self.config.use_vectorized_retrieval"
+      ]
+    },
+    {
+      "symbol": "directed=False",
+      "meaning": "operand of propagates",
+      "fact_ids": [
+        "fact-O-STAGE-03-8dda66b9-node:ee035e622f3173b0"
+      ],
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:198:205"
+      ],
+      "conditions": [
+        "self.config.use_vectorized_retrieval"
+      ]
+    },
+    {
+      "symbol": "weights='weight'",
+      "meaning": "operand of propagates",
+      "fact_ids": [
+        "fact-O-STAGE-03-8dda66b9-node:ee035e622f3173b0"
+      ],
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:198:205"
+      ],
+      "conditions": [
+        "self.config.use_vectorized_retrieval"
+      ]
+    },
+    {
+      "symbol": "reset=reset_prob",
+      "meaning": "operand of propagates",
+      "fact_ids": [
+        "fact-O-STAGE-03-8dda66b9-node:ee035e622f3173b0"
+      ],
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:198:205"
+      ],
+      "conditions": [
+        "self.config.use_vectorized_retrieval"
+      ]
+    },
+    {
+      "symbol": "implementation='prpack'",
+      "meaning": "operand of propagates",
+      "fact_ids": [
+        "fact-O-STAGE-03-8dda66b9-node:ee035e622f3173b0"
+      ],
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:198:205"
+      ],
+      "conditions": [
+        "self.config.use_vectorized_retrieval"
+      ]
+    },
+    {
+      "symbol": "result=pagerank_scores",
+      "meaning": "operand of propagates",
+      "fact_ids": [
+        "fact-O-STAGE-03-8dda66b9-node:ee035e622f3173b0"
+      ],
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:198:205"
+      ],
+      "conditions": [
+        "self.config.use_vectorized_retrieval"
+      ]
+    },
+    {
+      "symbol": "np.argsort",
+      "meaning": "operand of sorts_by",
+      "fact_ids": [
+        "fact-O-STAGE-03-8dda66b9-node:34d6c89a89d120d3"
+      ],
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:208:208"
+      ],
+      "conditions": [
+        "self.config.use_vectorized_retrieval"
+      ]
+    },
+    {
+      "symbol": "doc_scores",
+      "meaning": "operand of sorts_by",
+      "fact_ids": [
+        "fact-O-STAGE-03-8dda66b9-node:34d6c89a89d120d3"
+      ],
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:208:208"
+      ],
+      "conditions": [
+        "self.config.use_vectorized_retrieval"
+      ]
+    },
+    {
+      "symbol": "result=sorted_indices_in_doc_scores",
+      "meaning": "operand of sorts_by",
+      "fact_ids": [
+        "fact-O-STAGE-03-8dda66b9-node:34d6c89a89d120d3"
+      ],
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:208:208"
+      ],
+      "conditions": [
+        "self.config.use_vectorized_retrieval"
+      ]
+    },
+    {
+      "symbol": "LinearRAG.retrieve",
+      "meaning": "operand of loads_weights",
+      "fact_ids": [
+        "fact-O-COMPONENT-01-bd3b9454-node:0cb62ab4a3a7d394"
+      ],
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:95:95",
+        "span:src/LinearRAG.py:95:105",
+        "span:src/LinearRAG.py:95:95"
+      ],
+      "conditions": [
+        "self.config.use_vectorized_retrieval"
+      ]
+    },
+    {
+      "symbol": "logger.info",
+      "meaning": "operand of calls",
+      "fact_ids": [
+        "fact-O-COMPONENT-01-bd3b9454-node:e26239e5bf03dc87"
+      ],
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:96:96",
+        "span:src/LinearRAG.py:95:105",
+        "span:src/LinearRAG.py:96:96"
+      ],
+      "conditions": [
+        "self.config.use_vectorized_retrieval"
+      ]
+    },
+    {
+      "symbol": "'Precomputing sparse adjacency matrices for vectorized retrieval...'",
+      "meaning": "operand of calls",
+      "fact_ids": [
+        "fact-O-COMPONENT-01-bd3b9454-node:e26239e5bf03dc87"
+      ],
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:96:96",
+        "span:src/LinearRAG.py:95:105",
+        "span:src/LinearRAG.py:96:96"
+      ],
+      "conditions": [
+        "self.config.use_vectorized_retrieval"
+      ]
+    },
+    {
+      "symbol": "e2s_shape[0]",
+      "meaning": "operand of computes_formula",
+      "fact_ids": [
+        "fact-O-COMPONENT-01-bd3b9454-node:06528ded27aa13a3"
+      ],
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:103:103"
+      ],
+      "conditions": [
+        "self.config.use_vectorized_retrieval"
+      ]
+    },
+    {
+      "symbol": "e2s_shape[1]",
+      "meaning": "operand of computes_formula",
+      "fact_ids": [
+        "fact-O-COMPONENT-01-bd3b9454-node:06528ded27aa13a3"
+      ],
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:103:103"
+      ],
+      "conditions": [
+        "self.config.use_vectorized_retrieval"
+      ]
+    },
+    {
+      "symbol": "retrieval_results",
+      "meaning": "operand of returns",
+      "fact_ids": [
+        "fact-O-COMPONENT-01-bd3b9454-node:52765b58d59f93a0"
+      ],
+      "source_artifact_ids": [
+        "span:src/LinearRAG.py:129:129"
+      ],
+      "conditions": [
+        "self.config.use_vectorized_retrieval"
+      ]
+    }
+  ],
+  "equations": [
+    {
+      "equation_id": "equation:fact-O-METHOD-MAINLINE-01-79899e6c-node:39e89cf9b1ab8f58",
+      "expression": "x + y",
+      "prose_claim_id": "claim-O-METHOD-MAINLINE-01-79899e6c-fact-O-METHOD-MAINLINE-01-79899e6c-node:39e89cf9b1ab8f58",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-79899e6c-node:39e89cf9b1ab8f58"
+      ],
+      "symbol_bindings": [
+        {
+          "symbol": "x",
+          "fact_id": "fact-O-METHOD-MAINLINE-01-79899e6c-node:39e89cf9b1ab8f58",
+          "operand_role": "object",
+          "operand_value": "entity_weights"
+        },
+        {
+          "symbol": "y",
+          "fact_id": "fact-O-METHOD-MAINLINE-01-79899e6c-node:39e89cf9b1ab8f58",
+          "operand_role": "object",
+          "operand_value": "passage_weights"
+        }
+      ],
+      "conditions": [
+        "self.config.use_vectorized_retrieval"
+      ],
+      "operation_predicates": [
+        "computes_formula"
+      ],
+      "operation_descriptors": [
+        "add"
+      ],
+      "relation_evidence_ids": [],
+      "exact_source_digests": [
+        "sha256:2f69216f2b42bb552ad4f346620eae0261dbf6c7d8ccdf7a92192509ef6da971"
+      ],
+      "formula_role": "incidental",
+      "canonical_identity": "sha256:a173c98c034592ded2ece64755962c647dcd1e432297bfabff7eac49c1867c9b",
+      "validation_status": "supported",
+      "validation_failures": []
+    },
+    {
+      "equation_id": "equation:fact-O-STAGE-02-93c16851-node:3e4f8dac1595a0af",
+      "expression": "x + y",
+      "prose_claim_id": "claim-O-STAGE-02-93c16851-fact-O-STAGE-02-93c16851-node:3e4f8dac1595a0af",
+      "fact_ids": [
+        "fact-O-STAGE-02-93c16851-node:3e4f8dac1595a0af"
+      ],
+      "symbol_bindings": [
+        {
+          "symbol": "x",
+          "fact_id": "fact-O-STAGE-02-93c16851-node:3e4f8dac1595a0af",
+          "operand_role": "object",
+          "operand_value": "entity_weights"
+        },
+        {
+          "symbol": "y",
+          "fact_id": "fact-O-STAGE-02-93c16851-node:3e4f8dac1595a0af",
+          "operand_role": "object",
+          "operand_value": "passage_weights"
+        }
+      ],
+      "conditions": [
+        "ent.label_ == 'ORDINAL' or ent.label_ == 'CARDINAL'",
+        "ent_text not in sentence_to_entities[sent_text]"
+      ],
+      "operation_predicates": [
+        "computes_formula"
+      ],
+      "operation_descriptors": [
+        "add"
+      ],
+      "relation_evidence_ids": [],
+      "exact_source_digests": [
+        "sha256:2f69216f2b42bb552ad4f346620eae0261dbf6c7d8ccdf7a92192509ef6da971"
+      ],
+      "formula_role": "incidental",
+      "canonical_identity": "sha256:cd9635814c7a259072191a5703d35c4ee68fdd320b669a1c6a4dfd51e45c7713",
+      "validation_status": "supported",
+      "validation_failures": []
+    },
+    {
+      "equation_id": "equation:fact-O-COMPONENT-01-bd3b9454-node:06528ded27aa13a3",
+      "expression": "x * y",
+      "prose_claim_id": "claim-O-COMPONENT-01-bd3b9454-fact-O-COMPONENT-01-bd3b9454-node:06528ded27aa13a3",
+      "fact_ids": [
+        "fact-O-COMPONENT-01-bd3b9454-node:06528ded27aa13a3"
+      ],
+      "symbol_bindings": [
+        {
+          "symbol": "x",
+          "fact_id": "fact-O-COMPONENT-01-bd3b9454-node:06528ded27aa13a3",
+          "operand_role": "object",
+          "operand_value": "e2s_shape[0]"
+        },
+        {
+          "symbol": "y",
+          "fact_id": "fact-O-COMPONENT-01-bd3b9454-node:06528ded27aa13a3",
+          "operand_role": "object",
+          "operand_value": "e2s_shape[1]"
+        }
+      ],
+      "conditions": [
+        "self.config.use_vectorized_retrieval"
+      ],
+      "operation_predicates": [
+        "computes_formula"
+      ],
+      "operation_descriptors": [
+        "mult"
+      ],
+      "relation_evidence_ids": [],
+      "exact_source_digests": [
+        "sha256:67a843dc2a355f9a9c270c936bf962daa007a2719b7558593913a6126ea171ed"
+      ],
+      "formula_role": "incidental",
+      "canonical_identity": "sha256:7458e85d8f6094c854d925063f46a7d60deeb36acbf9c9322452d0947f9a7285",
+      "validation_status": "supported",
+      "validation_failures": []
+    }
+  ],
+  "proof_obligations": [
+    {
+      "proof_obligation_id": "proof:equation:fact-O-METHOD-MAINLINE-01-79899e6c-node:39e89cf9b1ab8f58",
+      "statement": "The displayed expression is equivalent to the selected code operations for equation:fact-O-METHOD-MAINLINE-01-79899e6c-node:39e89cf9b1ab8f58.",
+      "assumptions": [
+        "self.config.use_vectorized_retrieval"
+      ],
+      "conclusion": "x + y",
+      "supporting_fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-79899e6c-node:39e89cf9b1ab8f58"
+      ],
+      "derivation_steps": [
+        "Bind x to entity_weights from fact-O-METHOD-MAINLINE-01-79899e6c-node:39e89cf9b1ab8f58.",
+        "Bind y to passage_weights from fact-O-METHOD-MAINLINE-01-79899e6c-node:39e89cf9b1ab8f58."
+      ],
+      "status": "supported",
+      "authority_lane": "formal_derivation",
+      "limitations": [],
+      "content_digest": "sha256:7d306d0b659e3e1fa9a59ddd4b1ea7dbaeb1dbca5755df4840fa67e44b6ae184"
+    },
+    {
+      "proof_obligation_id": "proof:equation:fact-O-STAGE-02-93c16851-node:3e4f8dac1595a0af",
+      "statement": "The displayed expression is equivalent to the selected code operations for equation:fact-O-STAGE-02-93c16851-node:3e4f8dac1595a0af.",
+      "assumptions": [
+        "ent.label_ == 'ORDINAL' or ent.label_ == 'CARDINAL'",
+        "ent_text not in sentence_to_entities[sent_text]"
+      ],
+      "conclusion": "x + y",
+      "supporting_fact_ids": [
+        "fact-O-STAGE-02-93c16851-node:3e4f8dac1595a0af"
+      ],
+      "derivation_steps": [
+        "Bind x to entity_weights from fact-O-STAGE-02-93c16851-node:3e4f8dac1595a0af.",
+        "Bind y to passage_weights from fact-O-STAGE-02-93c16851-node:3e4f8dac1595a0af."
+      ],
+      "status": "supported",
+      "authority_lane": "formal_derivation",
+      "limitations": [],
+      "content_digest": "sha256:a9e5e6d3dd5141e6d53ef074c34deef6a31e8bf21f31308e93c2d2599bf29f15"
+    },
+    {
+      "proof_obligation_id": "proof:equation:fact-O-COMPONENT-01-bd3b9454-node:06528ded27aa13a3",
+      "statement": "The displayed expression is equivalent to the selected code operations for equation:fact-O-COMPONENT-01-bd3b9454-node:06528ded27aa13a3.",
+      "assumptions": [
+        "self.config.use_vectorized_retrieval"
+      ],
+      "conclusion": "x * y",
+      "supporting_fact_ids": [
+        "fact-O-COMPONENT-01-bd3b9454-node:06528ded27aa13a3"
+      ],
+      "derivation_steps": [
+        "Bind x to e2s_shape[0] from fact-O-COMPONENT-01-bd3b9454-node:06528ded27aa13a3.",
+        "Bind y to e2s_shape[1] from fact-O-COMPONENT-01-bd3b9454-node:06528ded27aa13a3."
+      ],
+      "status": "supported",
+      "authority_lane": "formal_derivation",
+      "limitations": [],
+      "content_digest": "sha256:ee940ca20e68130b5cc679ce1333ef01b1d552395cc3f2e0f112fe66de1c3bd8"
+    }
+  ],
+  "risks": [
+    {
+      "risk_id": "risk:missing_assumptions",
+      "kind": "missing_assumptions",
+      "message": "A formal expression is available, but no independent assumptions were supplied.",
+      "fact_ids": [],
+      "blocking": false
+    }
+  ],
+  "proposal_items": [],
+  "content_digest": "sha256:8835eca9f7bc180246c837a5aa5b2b14de1d33ca8d04c92d0c4c2b1e4e22b0b7"
+}

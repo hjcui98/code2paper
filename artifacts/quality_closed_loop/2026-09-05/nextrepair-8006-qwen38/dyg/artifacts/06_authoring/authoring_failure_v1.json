@@ -1,0 +1,39 @@
+{
+  "schema_version": "1.0",
+  "artifact": "authoring_failure_v1",
+  "terminal_stage": "writer",
+  "error_code": "writer_boundary_failed",
+  "terminal_reason": "writer_status:incomplete",
+  "section_id": "MA-S1",
+  "paragraph_id": "paragraph:MA-S1:method-unit-1",
+  "target_kind": "formula",
+  "target_id": "formula:facet:facet-45205815214ce81d",
+  "direct_reason": "required_paragraph_invalid:MA-S1:paragraph:MA-S1:method-unit-1",
+  "cascade_reasons": [
+    "required_target_uncovered:MA-S1:paragraph:MA-S1:method-unit-1:facet",
+    "required_target_uncovered:MA-S1:paragraph:MA-S1:method-unit-1:formula",
+    "required_paragraph_invalid:MA-S3:paragraph:MA-S3:method-unit-1",
+    "required_target_uncovered:MA-S3:paragraph:MA-S3:method-unit-1:facet",
+    "required_target_uncovered:MA-S3:paragraph:MA-S3:method-unit-1:slot",
+    "required_paragraph_invalid:MA-S4:paragraph:MA-S4:method-unit-1",
+    "required_target_uncovered:MA-S4:paragraph:MA-S4:method-unit-1:slot",
+    "required_paragraph_invalid:MA-S5:paragraph:MA-S5:method-unit-1",
+    "required_target_uncovered:MA-S5:paragraph:MA-S5:method-unit-1:facet",
+    "required_target_uncovered:MA-S5:paragraph:MA-S5:method-unit-1:formula",
+    "rendered_invalid:4",
+    "required_target_coverage_incomplete",
+    "required_slot_coverage_incomplete",
+    "required_formula_unresolved:formula:section:MA-S5:derivation"
+  ],
+  "input_summary": {
+    "fresh_root_name": "c2p-nextrepair-8006-dyg-20260905-012937",
+    "exception_type": "",
+    "exception_message": ""
+  },
+  "downstream_stages": {
+    "research": "completed",
+    "formalizer": "completed",
+    "writer": "failed"
+  },
+  "content_digest": "sha256:90bb35817f9c7057a33abaa0a8eddd6b688d7c0d921204cc89cdb81dd8e0917a"
+}

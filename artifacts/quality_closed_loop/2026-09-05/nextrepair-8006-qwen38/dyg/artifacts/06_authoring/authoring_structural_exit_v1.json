@@ -1,0 +1,43 @@
+{
+  "schema_version": "1.0",
+  "eligible": false,
+  "reasons": [
+    "required_paragraph_invalid:MA-S1:paragraph:MA-S1:method-unit-1",
+    "required_target_uncovered:MA-S1:paragraph:MA-S1:method-unit-1:facet",
+    "required_target_uncovered:MA-S1:paragraph:MA-S1:method-unit-1:formula",
+    "required_paragraph_invalid:MA-S3:paragraph:MA-S3:method-unit-1",
+    "required_target_uncovered:MA-S3:paragraph:MA-S3:method-unit-1:facet",
+    "required_target_uncovered:MA-S3:paragraph:MA-S3:method-unit-1:slot",
+    "required_paragraph_invalid:MA-S4:paragraph:MA-S4:method-unit-1",
+    "required_target_uncovered:MA-S4:paragraph:MA-S4:method-unit-1:slot",
+    "required_paragraph_invalid:MA-S5:paragraph:MA-S5:method-unit-1",
+    "required_target_uncovered:MA-S5:paragraph:MA-S5:method-unit-1:facet",
+    "required_target_uncovered:MA-S5:paragraph:MA-S5:method-unit-1:formula",
+    "rendered_invalid:4",
+    "required_target_coverage_incomplete",
+    "required_slot_coverage_incomplete",
+    "required_formula_unresolved:formula:section:MA-S5:derivation"
+  ],
+  "plan_digest": "sha256:a0775440544710a5d3cdccbb4c97c849b2710946cb073b4cfdef560d9bee9245",
+  "trace_digest": "sha256:3db09609438d77696eeee001ae2fd39f5da276b39cd6feeb3b744c17f5eaa0ee",
+  "assessment_digest": "sha256:ed59d70164c7361b25f9c1a8e1dcc0387145ef7bd3326c6fae47029aee196437",
+  "candidate_digest": "sha256:cfb5f61c6064551dc0ed20047bdf4236c17f3359c9706fb52481b66e0a43cb2e",
+  "required_paragraphs": 6,
+  "valid_required_paragraphs": 2,
+  "required_targets": 31,
+  "valid_targets": 20,
+  "required_slots": 15,
+  "witnessed_slots": 10,
+  "required_edges": 0,
+  "witnessed_edges": 0,
+  "invalid_paragraphs": 4,
+  "blocked_representation": 0,
+  "accepted_formula_packages": 0,
+  "consumed_formula_packages": 0,
+  "unresolved_required_formula_obligations": [
+    "formula:section:MA-S5:derivation"
+  ],
+  "open_callback_requests": 5,
+  "scoped_callback_requests": 5,
+  "content_digest": "sha256:688a37c8950727057d4335ebc97cefbd0f3968465f24d0db4ac472a71335b38c"
+}

@@ -1,0 +1,359 @@
+{
+  "mode": "agentic-text-evidence-validation-v1",
+  "status": "failed",
+  "input_text_digest": "sha256:40923b5b68597d99be5781ad18e492ac42215187c8bdf3fc6a6268326260e50d",
+  "projection_digest": "sha256:ac8f1ba0ebf547a98ec8515dde68de6b7e6ed89c4155e384cc87f16d8c6713bd",
+  "repo_snapshot_id": "repo:9b7808f3467cadeb628e63ff7fcbaa570590e9d68fd05e2a1729aa4712092034",
+  "project_tree_hash": "sha256:9b7808f3467cadeb628e63ff7fcbaa570590e9d68fd05e2a1729aa4712092034",
+  "evidence_snapshot_id": "",
+  "evidence_snapshot_digest": "",
+  "checked_factual_claims": 14,
+  "supported_claims": 0,
+  "caveated_claims": 5,
+  "unsupported_claims": 9,
+  "unverified_claims": 0,
+  "semantic_verifier_calls": 0,
+  "verification_mode": "lexical_only",
+  "verdicts": [
+    {
+      "atomic_claim_id": "FAC1",
+      "status": "unsupported",
+      "matched_projection_claim_ids": [],
+      "matched_method_proposition_ids": [
+        "claim-callback:MA-S1:unit-1:mechanism_overview:1-fact-callback:MA-S1:unit-1:mechanism_overview:1-node:3a6de8a6f23f4821"
+      ],
+      "direct_evidence_ids": [],
+      "relation_evidence_ids": [],
+      "supported_fragment": "",
+      "unsupported_fragment": "Standard SSM step operations—fused add and norm applied to hidden states with learned weight, bias",
+      "required_qualifiers": [],
+      "deterministic_failures": [
+        "no_semantically_matching_projected_claim",
+        "direct_evidence_missing"
+      ],
+      "model_verdict": "",
+      "rationale": "no_semantically_matching_projected_claim; direct_evidence_missing",
+      "repair_action": "revise_authoring_wording"
+    },
+    {
+      "atomic_claim_id": "FAC2",
+      "status": "caveated",
+      "matched_projection_claim_ids": [
+        "l2:math:fact-O-STAGE-02-e02cd0f2-node:775aa62491c88d60:weighted_sum",
+        "l2:math:fact-O-STAGE-03-d47a86f4-node:1cc294634ea67991:weighted_sum",
+        "l2:math:fact-O-COMPONENT-01-88e55e54-node:f34d89dddb1ab72a:weighted_sum",
+        "l2:math:fact-O-COMPONENT-01-377afc18-node:5a3e0bbda94e3188:weighted_sum",
+        "l2:math:fact-O-COMPONENT-04-6d73cce5-node:24d38c31fe5b60f7:weighted_sum",
+        "l2:math:fact-O-COMPONENT-05-8cd85daa-node:f15e98ab7ee96814:weighted_sum"
+      ],
+      "matched_method_proposition_ids": [
+        "claim-callback:req:MA-S1:mechanism-overview-fact-callback:req:MA-S1:mechanism-overview-node:e6e27ab4b6034a66"
+      ],
+      "direct_evidence_ids": [
+        "span:models/mamba_simple.py:476:476",
+        "span:models/FreeDyG.py:335:335",
+        "span:models/GraphMixer.py:152:152",
+        "span:models/DyGFormer.py:176:176"
+      ],
+      "relation_evidence_ids": [],
+      "supported_fragment": "epsilon parameters, followed by convolutional state and SSM output computation—assume a uniform sampling grid over the input sequence.",
+      "unsupported_fragment": "",
+      "required_qualifiers": [],
+      "deterministic_failures": [],
+      "model_verdict": "",
+      "rationale": "Direct evidence and projection constraints passed.",
+      "repair_action": ""
+    },
+    {
+      "atomic_claim_id": "FAC3",
+      "status": "unsupported",
+      "matched_projection_claim_ids": [],
+      "matched_method_proposition_ids": [
+        "claim-callback:req:MA-S1:mechanism-overview-fact-callback:req:MA-S1:mechanism-overview-node:e6e27ab4b6034a66"
+      ],
+      "direct_evidence_ids": [],
+      "relation_evidence_ids": [],
+      "supported_fragment": "",
+      "unsupported_fragment": "This assumption renders them insensitive to irregular timespans between observations, and the absence of an explicit noise-robustness mechanism makes the hidden-state trajectory vulnerable to input perturbation.",
+      "required_qualifiers": [],
+      "deterministic_failures": [
+        "no_semantically_matching_projected_claim",
+        "direct_evidence_missing"
+      ],
+      "model_verdict": "",
+      "rationale": "no_semantically_matching_projected_claim; direct_evidence_missing",
+      "repair_action": "revise_authoring_wording"
+    },
+    {
+      "atomic_claim_id": "FAC4",
+      "status": "caveated",
+      "matched_projection_claim_ids": [
+        "l2:math:fact-O-STAGE-02-e02cd0f2-node:775aa62491c88d60:weighted_sum",
+        "l2:math:fact-O-STAGE-03-d47a86f4-node:1cc294634ea67991:weighted_sum",
+        "l2:math:fact-O-COMPONENT-01-88e55e54-node:f34d89dddb1ab72a:weighted_sum",
+        "l2:math:fact-O-COMPONENT-01-377afc18-node:5a3e0bbda94e3188:weighted_sum",
+        "l2:math:fact-O-COMPONENT-04-6d73cce5-node:24d38c31fe5b60f7:weighted_sum",
+        "l2:math:fact-O-COMPONENT-05-8cd85daa-node:f15e98ab7ee96814:weighted_sum"
+      ],
+      "matched_method_proposition_ids": [
+        "claim-O-COMPONENT-04-6d73cce5-fact-O-COMPONENT-04-6d73cce5-node:24d38c31fe5b60f7"
+      ],
+      "direct_evidence_ids": [
+        "span:models/mamba_simple.py:476:476",
+        "span:models/FreeDyG.py:335:335",
+        "span:models/GraphMixer.py:152:152",
+        "span:models/DyGFormer.py:176:176"
+      ],
+      "relation_evidence_ids": [],
+      "supported_fragment": "Downstream tasks consume fixed-size node embeddings produced by a readout function applied to the sequential output of the encoder.",
+      "unsupported_fragment": "",
+      "required_qualifiers": [],
+      "deterministic_failures": [],
+      "model_verdict": "",
+      "rationale": "Direct evidence and projection constraints passed.",
+      "repair_action": ""
+    },
+    {
+      "atomic_claim_id": "FAC5",
+      "status": "unsupported",
+      "matched_projection_claim_ids": [],
+      "matched_method_proposition_ids": [
+        "claim-O-COMPONENT-01-377afc18-fact-O-COMPONENT-01-377afc18-node:3646d6d14d1b0bce"
+      ],
+      "direct_evidence_ids": [],
+      "relation_evidence_ids": [],
+      "supported_fragment": "",
+      "unsupported_fragment": "For a target node, the interaction sequence is extracted as the ordered list of first-hop neighbor events up to a prediction timestamp, with each event carrying raw node and edge features; when a feature vector is unavailable, a zero vector is substituted.",
+      "required_qualifiers": [],
+      "deterministic_failures": [
+        "no_semantically_matching_projected_claim",
+        "direct_evidence_missing"
+      ],
+      "model_verdict": "",
+      "rationale": "no_semantically_matching_projected_claim; direct_evidence_missing",
+      "repair_action": "revise_authoring_wording"
+    },
+    {
+      "atomic_claim_id": "FAC6",
+      "status": "caveated",
+      "matched_projection_claim_ids": [
+        "l2:math:fact-O-STAGE-02-e02cd0f2-node:775aa62491c88d60:weighted_sum",
+        "l2:math:fact-O-STAGE-03-d47a86f4-node:1cc294634ea67991:weighted_sum",
+        "l2:math:fact-O-COMPONENT-01-88e55e54-node:f34d89dddb1ab72a:weighted_sum",
+        "l2:math:fact-O-COMPONENT-01-377afc18-node:5a3e0bbda94e3188:weighted_sum",
+        "l2:math:fact-O-COMPONENT-04-6d73cce5-node:24d38c31fe5b60f7:weighted_sum",
+        "l2:math:fact-O-COMPONENT-05-8cd85daa-node:f15e98ab7ee96814:weighted_sum"
+      ],
+      "matched_method_proposition_ids": [
+        "claim-O-COMPONENT-01-377afc18-fact-O-COMPONENT-01-377afc18-node:3646d6d14d1b0bce"
+      ],
+      "direct_evidence_ids": [
+        "span:models/mamba_simple.py:476:476",
+        "span:models/FreeDyG.py:335:335",
+        "span:models/GraphMixer.py:152:152",
+        "span:models/DyGFormer.py:176:176"
+      ],
+      "relation_evidence_ids": [],
+      "supported_fragment": "In the case-study protocol, a neighbor sampler retrieves all first-hop neighbors for the destination node set, and an edge bank with unlimited memory stores historical source-node records so that a query pair is resolved by checking whether the pair appears in the stored edge memories.",
+      "unsupported_fragment": "",
+      "required_qualifiers": [],
+      "deterministic_failures": [],
+      "model_verdict": "",
+      "rationale": "Direct evidence and projection constraints passed.",
+      "repair_action": ""
+    },
+    {
+      "atomic_claim_id": "FAC7",
+      "status": "caveated",
+      "matched_projection_claim_ids": [
+        "l2:math:fact-O-STAGE-02-e02cd0f2-node:775aa62491c88d60:weighted_sum",
+        "l2:math:fact-O-STAGE-03-d47a86f4-node:1cc294634ea67991:weighted_sum",
+        "l2:math:fact-O-COMPONENT-01-88e55e54-node:f34d89dddb1ab72a:weighted_sum",
+        "l2:math:fact-O-COMPONENT-01-377afc18-node:5a3e0bbda94e3188:weighted_sum",
+        "l2:math:fact-O-COMPONENT-04-6d73cce5-node:24d38c31fe5b60f7:weighted_sum",
+        "l2:math:fact-O-COMPONENT-05-8cd85daa-node:f15e98ab7ee96814:weighted_sum"
+      ],
+      "matched_method_proposition_ids": [
+        "claim-O-STAGE-04-a3a3e8ab-fact-O-STAGE-04-a3a3e8ab-node:992d4e5d074a2eff"
+      ],
+      "direct_evidence_ids": [
+        "span:models/mamba_simple.py:476:476",
+        "span:models/FreeDyG.py:335:335",
+        "span:models/GraphMixer.py:152:152",
+        "span:models/DyGFormer.py:176:176"
+      ],
+      "relation_evidence_ids": [],
+      "supported_fragment": "The readout function maps the encoded sequence to a fixed-size embedding suitable for link prediction (by comparing embeddings of two candidate nodes) or node classification (by applying a classifier to a single embedding)",
+      "unsupported_fragment": "",
+      "required_qualifiers": [],
+      "deterministic_failures": [],
+      "model_verdict": "",
+      "rationale": "Direct evidence and projection constraints passed.",
+      "repair_action": ""
+    },
+    {
+      "atomic_claim_id": "FAC8",
+      "status": "unsupported",
+      "matched_projection_claim_ids": [],
+      "matched_method_proposition_ids": [
+        "claim-O-COMPONENT-05-8cd85daa-fact-O-COMPONENT-05-8cd85daa-node:90ccee28c62680e5"
+      ],
+      "direct_evidence_ids": [],
+      "relation_evidence_ids": [],
+      "supported_fragment": "",
+      "unsupported_fragment": "in the case-study protocol the procedure returns both the source and destination node embeddings for downstream scoring.",
+      "required_qualifiers": [],
+      "deterministic_failures": [
+        "no_semantically_matching_projected_claim",
+        "direct_evidence_missing"
+      ],
+      "model_verdict": "",
+      "rationale": "no_semantically_matching_projected_claim; direct_evidence_missing",
+      "repair_action": "revise_authoring_wording"
+    },
+    {
+      "atomic_claim_id": "FAC9",
+      "status": "unsupported",
+      "matched_projection_claim_ids": [
+        "l2:math:fact-O-STAGE-02-e02cd0f2-node:775aa62491c88d60:weighted_sum",
+        "l2:math:fact-O-STAGE-03-d47a86f4-node:1cc294634ea67991:weighted_sum",
+        "l2:math:fact-O-COMPONENT-01-88e55e54-node:f34d89dddb1ab72a:weighted_sum",
+        "l2:math:fact-O-COMPONENT-01-377afc18-node:5a3e0bbda94e3188:weighted_sum",
+        "l2:math:fact-O-COMPONENT-04-6d73cce5-node:24d38c31fe5b60f7:weighted_sum",
+        "l2:math:fact-O-COMPONENT-05-8cd85daa-node:f15e98ab7ee96814:weighted_sum"
+      ],
+      "matched_method_proposition_ids": [
+        "claim-O-COMPONENT-03-2ae65141-fact-O-COMPONENT-03-2ae65141-node:c7e93566614ced8d"
+      ],
+      "direct_evidence_ids": [
+        "span:models/mamba_simple.py:476:476",
+        "span:models/FreeDyG.py:335:335",
+        "span:models/GraphMixer.py:152:152",
+        "span:models/DyGFormer.py:176:176"
+      ],
+      "relation_evidence_ids": [],
+      "supported_fragment": "",
+      "unsupported_fragment": "The node embedding $h_u^t$ at prediction time $t$ is obtained by applying a readout function to the sequential encoding of the interaction history: $$",
+      "required_qualifiers": [],
+      "deterministic_failures": [
+        "formula_not_in_direct_evidence"
+      ],
+      "model_verdict": "",
+      "rationale": "formula_not_in_direct_evidence",
+      "repair_action": "revise_authoring_wording"
+    },
+    {
+      "atomic_claim_id": "FAC10",
+      "status": "unsupported",
+      "matched_projection_claim_ids": [],
+      "matched_method_proposition_ids": [
+        "claim-callback:req:MA-S1:mechanism-overview-fact-callback:req:MA-S1:mechanism-overview-node:5aa3466791d8654f"
+      ],
+      "direct_evidence_ids": [],
+      "relation_evidence_ids": [],
+      "supported_fragment": "",
+      "unsupported_fragment": "\\mathbf{h}_{u}^{t} = \\text{ReadOut}\\left( \\text{SeqEnc}\\left( \\{ (\\mathbf{x}_{v}, \\mathbf{e}_{uv}, \\Delta t_{uv}) \\}_{v \\in \\mathcal{N}_{u}^{t}} \\right) \\right)",
+      "required_qualifiers": [],
+      "deterministic_failures": [
+        "no_semantically_matching_projected_claim",
+        "direct_evidence_missing"
+      ],
+      "model_verdict": "",
+      "rationale": "no_semantically_matching_projected_claim; direct_evidence_missing",
+      "repair_action": "revise_authoring_wording"
+    },
+    {
+      "atomic_claim_id": "FAC11",
+      "status": "unsupported",
+      "matched_projection_claim_ids": [],
+      "matched_method_proposition_ids": [
+        "claim-O-COMPONENT-04-6d73cce5-fact-O-COMPONENT-04-6d73cce5-node:78ccd95dcfdf5d39"
+      ],
+      "direct_evidence_ids": [],
+      "relation_evidence_ids": [],
+      "supported_fragment": "",
+      "unsupported_fragment": "$$ Here $h_u^t$ denotes the fixed-size embedding for node $u$ at time $t$, $N_u^t$ is the set of first-hop neighbors of $u$ up to time $t$, $x_v$ and $e_{uv}$ are the raw node and edge features, and $t_{uv}$ is the timespan from the interaction to the prediction time.",
+      "required_qualifiers": [],
+      "deterministic_failures": [
+        "no_semantically_matching_projected_claim",
+        "direct_evidence_missing",
+        "formula_not_in_direct_evidence"
+      ],
+      "model_verdict": "",
+      "rationale": "no_semantically_matching_projected_claim; direct_evidence_missing; formula_not_in_direct_evidence",
+      "repair_action": "revise_authoring_wording"
+    },
+    {
+      "atomic_claim_id": "FAC12",
+      "status": "unsupported",
+      "matched_projection_claim_ids": [],
+      "matched_method_proposition_ids": [
+        "claim-O-COMPONENT-05-8cd85daa-fact-O-COMPONENT-05-8cd85daa-node:90ccee28c62680e5"
+      ],
+      "direct_evidence_ids": [],
+      "relation_evidence_ids": [],
+      "supported_fragment": "",
+      "unsupported_fragment": "The timespan is encoded via a trainable cosine-based function that captures the absolute temporal offset between each historical interaction and the query time.",
+      "required_qualifiers": [],
+      "deterministic_failures": [
+        "no_semantically_matching_projected_claim",
+        "direct_evidence_missing"
+      ],
+      "model_verdict": "",
+      "rationale": "no_semantically_matching_projected_claim; direct_evidence_missing",
+      "repair_action": "revise_authoring_wording"
+    },
+    {
+      "atomic_claim_id": "FAC13",
+      "status": "caveated",
+      "matched_projection_claim_ids": [
+        "l2:math:fact-O-STAGE-02-e02cd0f2-node:775aa62491c88d60:weighted_sum",
+        "l2:math:fact-O-STAGE-03-d47a86f4-node:1cc294634ea67991:weighted_sum",
+        "l2:math:fact-O-COMPONENT-01-88e55e54-node:f34d89dddb1ab72a:weighted_sum",
+        "l2:math:fact-O-COMPONENT-01-377afc18-node:5a3e0bbda94e3188:weighted_sum",
+        "l2:math:fact-O-COMPONENT-04-6d73cce5-node:24d38c31fe5b60f7:weighted_sum",
+        "l2:math:fact-O-COMPONENT-05-8cd85daa-node:f15e98ab7ee96814:weighted_sum"
+      ],
+      "matched_method_proposition_ids": [
+        "claim-O-COMPONENT-05-8cd85daa-fact-O-COMPONENT-05-8cd85daa-node:20e8a907508376ba"
+      ],
+      "direct_evidence_ids": [
+        "span:models/mamba_simple.py:476:476",
+        "span:models/FreeDyG.py:335:335",
+        "span:models/GraphMixer.py:152:152",
+        "span:models/DyGFormer.py:176:176"
+      ],
+      "relation_evidence_ids": [],
+      "supported_fragment": "In addition, a co-occurrence frequency encoding captures structural similarity by representing the number of shared neighbors between the target node",
+      "unsupported_fragment": "",
+      "required_qualifiers": [],
+      "deterministic_failures": [],
+      "model_verdict": "",
+      "rationale": "Direct evidence and projection constraints passed.",
+      "repair_action": ""
+    },
+    {
+      "atomic_claim_id": "FAC14",
+      "status": "unsupported",
+      "matched_projection_claim_ids": [],
+      "matched_method_proposition_ids": [
+        "claim-O-COMPONENT-05-8cd85daa-fact-O-COMPONENT-05-8cd85daa-node:90ccee28c62680e5"
+      ],
+      "direct_evidence_ids": [],
+      "relation_evidence_ids": [],
+      "supported_fragment": "",
+      "unsupported_fragment": "each historical neighbor; in the case-study protocol this feature is concatenated with the source-node embedding when the interaction index is zero.",
+      "required_qualifiers": [],
+      "deterministic_failures": [
+        "no_semantically_matching_projected_claim",
+        "direct_evidence_missing"
+      ],
+      "model_verdict": "",
+      "rationale": "no_semantically_matching_projected_claim; direct_evidence_missing",
+      "repair_action": "revise_authoring_wording"
+    }
+  ],
+  "recommended_actions": [
+    "revise_authoring_wording"
+  ]
+}

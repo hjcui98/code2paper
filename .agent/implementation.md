@@ -8589,3 +8589,27 @@ Both runs used `http://127.0.0.1:8003/v1` with model
 digest `sha256:8ab9bf2f14de0180449b392b183640b5e5ae2f908cdac48a3e26da06ece93231`.
 These are diagnostic/prose-quality results only; neither passed the
 publication or D5 gates.
+
+## Latest next-repair replay evidence — 2026-09-05
+
+The latest three user-authorized qwen38@8006 replays completed and their key
+results and necessary logs were archived under
+`artifacts/quality_closed_loop/2026-09-05/nextrepair-8006-qwen38/`.
+The full raw directories remain outside Git under `/tmp`.
+
+- DyG-Mamba: `exit_code=2`, `writer=incomplete`, structural `2/6` paragraphs,
+  `20/31` targets, `10/15` slots; callback `no_progress`; token subtotal
+  `542567` (`507067` input + `35500` output), with 8 calls missing usage.
+- LinearRAG: `exit_code=2`, `writer=incomplete`, structural `0/5` paragraphs,
+  `8/27` targets, `0/15` slots; callback rollback `8/27->0/27`; token
+  subtotal `1232329` (`1154235` input + `78094` output), with 5 calls
+  missing usage.
+- EBCAR: `exit_code=2`, `writer=incomplete`, structural `3/7` paragraphs,
+  `19/26` targets, `5/9` slots; callback rollback `19/26->9/27`; token
+  subtotal `1164319` (`1060800` input + `103519` output), with 14 calls
+  missing usage.
+
+All three used endpoint `http://127.0.0.1:8006` and model
+`qwen38-27b-nvfp4`; the execution records bind them to code-state digest
+`sha256:5c103f3400e5118ba4ff579601909af6bd483290b70efcd66dde3c909b626b6d`.
+All remained fail-closed and are diagnostic/prose-quality evidence only.

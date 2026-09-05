@@ -1,0 +1,11 @@
+{
+  "schema_version": "1.0",
+  "final_text_digest": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "spans": [],
+  "unowned_token_ranges": [],
+  "failures": [
+    "no_generation_spans"
+  ],
+  "hard_gate_passed": false,
+  "content_digest": "sha256:6e93cf130e49ec12ae59cdffc40deb504519cd4350c540a6d41d93a16cbd3e23"
+}

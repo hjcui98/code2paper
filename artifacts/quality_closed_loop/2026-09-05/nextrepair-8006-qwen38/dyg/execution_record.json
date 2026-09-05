@@ -1,0 +1,269 @@
+{
+  "schema_version": "1.0",
+  "run_id": "c2p-nextrepair-8006-dyg-20260905-012937",
+  "command": "scripts/run_authoring_replay.py /tmp/c2p-method-authoring-8006-direct-dyg-v40-20260831 /tmp/c2p-nextrepair-8006-dyg-20260905-012937 --repo /data1/users/cuihengjia/code2paper/code_final/DyG-Mamba_ Continuous State Space Modeling on Dynamic Graphs --run-id c2p-nextrepair-8006-dyg-20260905-012937 --reuse-derived-authoring --profile tests/live/profiles/qwen38_vllm_budgeted.example.env --force-profile --callback-rounds 1 --callback-tool-turns 8",
+  "argv": [
+    "scripts/run_authoring_replay.py",
+    "/tmp/c2p-method-authoring-8006-direct-dyg-v40-20260831",
+    "/tmp/c2p-nextrepair-8006-dyg-20260905-012937",
+    "--repo",
+    "/data1/users/cuihengjia/code2paper/code_final/DyG-Mamba_ Continuous State Space Modeling on Dynamic Graphs",
+    "--run-id",
+    "c2p-nextrepair-8006-dyg-20260905-012937",
+    "--reuse-derived-authoring",
+    "--profile",
+    "tests/live/profiles/qwen38_vllm_budgeted.example.env",
+    "--force-profile",
+    "--callback-rounds",
+    "1",
+    "--callback-tool-turns",
+    "8"
+  ],
+  "exit_code": 2,
+  "frozen_root": "/tmp/c2p-method-authoring-8006-direct-dyg-v40-20260831",
+  "fresh_root": "/tmp/c2p-nextrepair-8006-dyg-20260905-012937",
+  "resume_section_ids": [],
+  "code_state_digest": "sha256:5c103f3400e5118ba4ff579601909af6bd483290b70efcd66dde3c909b626b6d",
+  "runtime": {
+    "start": {
+      "key": "start",
+      "recorded_at": "2026-09-05T01:29:37+0800",
+      "endpoint_origin": "http://127.0.0.1:8006",
+      "health": 200,
+      "models": [
+        "qwen38-27b-nvfp4"
+      ],
+      "running": 0,
+      "waiting": 0,
+      "gpu_cache_usage_perc": 0.0,
+      "max_model_len": 131072
+    },
+    "end": {
+      "key": "end",
+      "recorded_at": "2026-09-05T01:42:04+0800",
+      "endpoint_origin": "http://127.0.0.1:8006",
+      "health": 200,
+      "models": [
+        "qwen38-27b-nvfp4"
+      ],
+      "running": 0,
+      "waiting": 0,
+      "gpu_cache_usage_perc": 0.0,
+      "max_model_len": 131072
+    }
+  },
+  "reused_fulfilled_callback_ids": [],
+  "writer_resumed_section_ids": [],
+  "writer_status": "incomplete",
+  "writer_transaction_status": "incomplete",
+  "publication_status": "incomplete",
+  "writer_blocked_reason": "callback_candidate_rolled_back:no_safe_quality_gain",
+  "terminal_stage": "writer",
+  "terminal_reason": "writer_status:incomplete",
+  "terminal_error_code": "writer_boundary_failed",
+  "first_failed_stage": "writer",
+  "first_failed_reason": "writer_status:incomplete",
+  "first_failed_error_code": "writer_boundary_failed",
+  "failure_artifact": "/tmp/c2p-nextrepair-8006-dyg-20260905-012937/artifacts/06_authoring/authoring_failure_v1.json",
+  "candidate_digest": "sha256:cfb5f61c6064551dc0ed20047bdf4236c17f3359c9706fb52481b66e0a43cb2e",
+  "research_continuation_seed": {
+    "path": "/tmp/c2p-nextrepair-8006-dyg-20260905-012937/artifacts/research_product/research_continuation_seed_v1.json",
+    "schema_version": "1.0",
+    "run_id": "stage6-dyg",
+    "repo_snapshot_id": "repo:9b7808f3467cadeb628e63ff7fcbaa570590e9d68fd05e2a1729aa4712092034",
+    "project_tree_hash": "sha256:9b7808f3467cadeb628e63ff7fcbaa570590e9d68fd05e2a1729aa4712092034",
+    "origin": "reconstructed_from_frozen_authority",
+    "past_decision_trace_available": false,
+    "source_digests": {
+      "intent_obligation_graph_v2": "sha256:d4324c37181fdee92389dbe82992aa42c58bde9d095c81ec2304d20984fb84f5",
+      "research_agenda_v1": "sha256:eb2b863b71358f5a38790ff00dadf996ed1579df15554108a0669f6e14d46b4a",
+      "evidence_packets_v3": "sha256:a7eed40332388c8186fd2eb0c4c03671758f019f00e77a6b94bcbc75efc1444b",
+      "code_facts_v1": "sha256:d5da7469c62e9bd87d5c6d28f01358e5a88c4d834d7dab6378bf18162a9978fc",
+      "atomic_claims_v3": "sha256:af80caed2487a89e67663ab1c7179b4ce94209e4a1e7cff906858d6ea0cb7195",
+      "equation_claims_v1": "sha256:6350783f410322382a99657abc642184a8f97a13bf622d9bc0523327789bfb82",
+      "configuration_claims_v1": "sha256:034ba9a549aa459befbab019fcf517ed226d175d33f5ea1560ed90e02d8e4d3c",
+      "method_argument_briefs_v1": "sha256:08d67685b6f78503b8b3e2d3486bb0dd5a9f9606bda61d5c66cf6ba8b8e41276",
+      "method_argument_facets_v1": "sha256:810033f7599f1faceb902b88325ad25e5c079d46c46b0cde5ae4cdc8abf7f847",
+      "facet_evidence_alignments_v1": "sha256:d95a8952169b719a77d3c3cf8105b05061120b85184c3159dddc661d1ff189fe",
+      "candidate_facet_policies_v1": "sha256:4727a9ffeb8700729acc40fb4df5f8e04fe8fbb536cdfffc51ae6dd2b40114f7"
+    },
+    "source_paths": {
+      "intent_obligation_graph_v2": "/tmp/c2p-nextrepair-8006-dyg-20260905-012937/artifacts/intent_obligation_graph_v2.json",
+      "research_agenda_v1": "/tmp/c2p-nextrepair-8006-dyg-20260905-012937/artifacts/research_agenda_v1.json",
+      "evidence_packets_v3": "/tmp/c2p-nextrepair-8006-dyg-20260905-012937/artifacts/evidence_packets_v3.json",
+      "code_facts_v1": "/tmp/c2p-nextrepair-8006-dyg-20260905-012937/artifacts/code_facts_v1.json",
+      "atomic_claims_v3": "/tmp/c2p-nextrepair-8006-dyg-20260905-012937/artifacts/atomic_claims_v3.json",
+      "equation_claims_v1": "/tmp/c2p-nextrepair-8006-dyg-20260905-012937/artifacts/equation_claims_v1.json",
+      "configuration_claims_v1": "/tmp/c2p-nextrepair-8006-dyg-20260905-012937/artifacts/configuration_claims_v1.json",
+      "method_argument_briefs_v1": "/tmp/c2p-nextrepair-8006-dyg-20260905-012937/artifacts/method_argument_briefs_v1.json",
+      "method_argument_facets_v1": "/tmp/c2p-nextrepair-8006-dyg-20260905-012937/artifacts/method_argument_facets_v1.json",
+      "facet_evidence_alignments_v1": "/tmp/c2p-nextrepair-8006-dyg-20260905-012937/artifacts/facet_evidence_alignments_v1.json",
+      "candidate_facet_policies_v1": "/tmp/c2p-nextrepair-8006-dyg-20260905-012937/artifacts/candidate_facet_policies_v1.json"
+    },
+    "intent_digest": "sha256:d4324c37181fdee92389dbe82992aa42c58bde9d095c81ec2304d20984fb84f5",
+    "agenda_digest": "sha256:eb2b863b71358f5a38790ff00dadf996ed1579df15554108a0669f6e14d46b4a",
+    "evidence_digest": "sha256:c7c09d0a80bc04f64263ef111ce7f74ebae643ae3b067919d193b2413a3146ce",
+    "content_digest": "sha256:6cd4fab2a2a0c89d8d15d253a49b83aff8573d9195b5be0d2ba101cdf23962b2"
+  },
+  "callback_fulfillment": {
+    "rounds_attempted": 1,
+    "local_requests_seen": 3,
+    "local_requests_fulfilled": 0,
+    "external_requests_seen": 2,
+    "resumed_section_ids": [],
+    "stopped_reason": "quality_regression_incumbent_restored",
+    "trace_path": ""
+  },
+  "product_authoring_state": {
+    "path": "/tmp/c2p-nextrepair-8006-dyg-20260905-012937/artifacts/06_authoring/product_authoring_state_v1.json",
+    "digest": "sha256:cc425930bb1c277979249eeb8734795fbc73342eddca25cfd6329feda07ca21d"
+  },
+  "content_chain": {
+    "rows": 6,
+    "sections": 5,
+    "planned_paragraphs": 6,
+    "rendered_paragraphs": 2,
+    "planned_story_nodes": 16,
+    "rendered_story_nodes": 10,
+    "planned_slots": 15,
+    "rendered_slots": 3,
+    "rendered_field_candidates": 0,
+    "planned_edges": 0,
+    "rendered_edges": 0,
+    "formula_obligations": 9,
+    "rendered_formula_obligations": 1,
+    "consumed_formula_packages": 1,
+    "duplicate_formula_consumers": 0,
+    "field_bound_rows": 3,
+    "condition_polarity_witness_rows": 0,
+    "not_discovered": 0,
+    "discovered_partial": 0,
+    "discovered_bound": 0,
+    "planned": 0,
+    "rendered": 2,
+    "rendered_invalid": 4,
+    "blocked_representation": 0,
+    "intent_code_mismatch": 0,
+    "deferred_with_reason": 0,
+    "content_digest": "sha256:3db09609438d77696eeee001ae2fd39f5da276b39cd6feeb3b744c17f5eaa0ee",
+    "trace_path": "/tmp/c2p-nextrepair-8006-dyg-20260905-012937/artifacts/research_product/method_content_trace_v1.json"
+  },
+  "structural_exit": {
+    "path": "/tmp/c2p-nextrepair-8006-dyg-20260905-012937/artifacts/06_authoring/authoring_structural_exit_v1.json",
+    "schema_version": "1.0",
+    "eligible": false,
+    "reasons": [
+      "required_paragraph_invalid:MA-S1:paragraph:MA-S1:method-unit-1",
+      "required_target_uncovered:MA-S1:paragraph:MA-S1:method-unit-1:facet",
+      "required_target_uncovered:MA-S1:paragraph:MA-S1:method-unit-1:formula",
+      "required_paragraph_invalid:MA-S3:paragraph:MA-S3:method-unit-1",
+      "required_target_uncovered:MA-S3:paragraph:MA-S3:method-unit-1:facet",
+      "required_target_uncovered:MA-S3:paragraph:MA-S3:method-unit-1:slot",
+      "required_paragraph_invalid:MA-S4:paragraph:MA-S4:method-unit-1",
+      "required_target_uncovered:MA-S4:paragraph:MA-S4:method-unit-1:slot",
+      "required_paragraph_invalid:MA-S5:paragraph:MA-S5:method-unit-1",
+      "required_target_uncovered:MA-S5:paragraph:MA-S5:method-unit-1:facet",
+      "required_target_uncovered:MA-S5:paragraph:MA-S5:method-unit-1:formula",
+      "rendered_invalid:4",
+      "required_target_coverage_incomplete",
+      "required_slot_coverage_incomplete",
+      "required_formula_unresolved:formula:section:MA-S5:derivation"
+    ],
+    "plan_digest": "sha256:a0775440544710a5d3cdccbb4c97c849b2710946cb073b4cfdef560d9bee9245",
+    "trace_digest": "sha256:3db09609438d77696eeee001ae2fd39f5da276b39cd6feeb3b744c17f5eaa0ee",
+    "assessment_digest": "sha256:ed59d70164c7361b25f9c1a8e1dcc0387145ef7bd3326c6fae47029aee196437",
+    "candidate_digest": "sha256:cfb5f61c6064551dc0ed20047bdf4236c17f3359c9706fb52481b66e0a43cb2e",
+    "required_paragraphs": 6,
+    "valid_required_paragraphs": 2,
+    "required_targets": 31,
+    "valid_targets": 20,
+    "required_slots": 15,
+    "witnessed_slots": 10,
+    "required_edges": 0,
+    "witnessed_edges": 0,
+    "invalid_paragraphs": 4,
+    "blocked_representation": 0,
+    "accepted_formula_packages": 0,
+    "consumed_formula_packages": 0,
+    "unresolved_required_formula_obligations": [
+      "formula:section:MA-S5:derivation"
+    ],
+    "open_callback_requests": 5,
+    "scoped_callback_requests": 5,
+    "content_digest": "sha256:688a37c8950727057d4335ebc97cefbd0f3968465f24d0db4ac472a71335b38c"
+  },
+  "token_usage": {
+    "schema_version": "1.0",
+    "artifact": "token_usage_summary_v1",
+    "accounting": "sum provider total_tokens; derive input_tokens+output_tokens only when total_tokens is absent; reasoning_tokens is a non-additive breakdown",
+    "status": "partial",
+    "calls": 56,
+    "calls_with_usage": 48,
+    "calls_without_usage": 8,
+    "explicit_total_token_calls": 48,
+    "estimated_total_token_calls": 0,
+    "cached_calls": 0,
+    "blocked_calls": 0,
+    "usage_available": true,
+    "total_tokens_is_estimate": false,
+    "input_tokens": 507067,
+    "output_tokens": 35500,
+    "total_tokens": 542567,
+    "reasoning_tokens": 0,
+    "by_role": {
+      "method_section_formalizer": {
+        "calls": 10,
+        "calls_with_usage": 10,
+        "input_tokens": 252905,
+        "output_tokens": 8736,
+        "total_tokens": 261641,
+        "reasoning_tokens": 0
+      },
+      "method_writer": {
+        "calls": 10,
+        "calls_with_usage": 6,
+        "input_tokens": 35895,
+        "output_tokens": 9814,
+        "total_tokens": 45709,
+        "reasoning_tokens": 0
+      },
+      "research_supervisor": {
+        "calls": 26,
+        "calls_with_usage": 22,
+        "input_tokens": 150484,
+        "output_tokens": 15085,
+        "total_tokens": 165569,
+        "reasoning_tokens": 0
+      },
+      "semantic_verifier": {
+        "calls": 9,
+        "calls_with_usage": 9,
+        "input_tokens": 7419,
+        "output_tokens": 940,
+        "total_tokens": 8359,
+        "reasoning_tokens": 0
+      },
+      "unknown": {
+        "calls": 1,
+        "calls_with_usage": 1,
+        "input_tokens": 60364,
+        "output_tokens": 925,
+        "total_tokens": 61289,
+        "reasoning_tokens": 0
+      }
+    },
+    "raw_usage_totals": {
+      "completion_tokens": 35500,
+      "prompt_tokens": 507067,
+      "total_tokens": 542567
+    },
+    "models": [
+      "qwen38-27b-nvfp4"
+    ],
+    "endpoint_origins": [
+      "http://127.0.0.1:8006"
+    ],
+    "source": "code2paper.llm.generation_trace",
+    "path": "/tmp/c2p-nextrepair-8006-dyg-20260905-012937/artifacts/06_authoring/token_usage_summary_v1.json"
+  }
+}

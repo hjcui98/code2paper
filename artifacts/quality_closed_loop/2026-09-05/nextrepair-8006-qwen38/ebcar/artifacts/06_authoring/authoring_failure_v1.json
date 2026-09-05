@@ -1,0 +1,36 @@
+{
+  "schema_version": "1.0",
+  "artifact": "authoring_failure_v1",
+  "terminal_stage": "writer",
+  "error_code": "writer_boundary_failed",
+  "terminal_reason": "writer_status:incomplete",
+  "section_id": "MA-S3",
+  "paragraph_id": "paragraph:MA-S3:method-unit-1",
+  "target_kind": "slot",
+  "target_id": "slot:fact-O-METHOD-MAINLINE-01-c8146479-node:b6468fc08c848936",
+  "direct_reason": "required_paragraph_invalid:MA-S3:paragraph:MA-S3:method-unit-1",
+  "cascade_reasons": [
+    "required_target_uncovered:MA-S3:paragraph:MA-S3:method-unit-1:slot",
+    "required_paragraph_invalid:MA-S3:paragraph:MA-S3:method-unit-2",
+    "required_target_uncovered:MA-S3:paragraph:MA-S3:method-unit-2:facet",
+    "required_paragraph_invalid:MA-S3:paragraph:MA-S3:method-unit-3",
+    "required_target_uncovered:MA-S3:paragraph:MA-S3:method-unit-3:formula",
+    "required_paragraph_invalid:MA-S4:paragraph:MA-S4:method-unit-1",
+    "required_target_uncovered:MA-S4:paragraph:MA-S4:method-unit-1:facet",
+    "required_target_uncovered:MA-S4:paragraph:MA-S4:method-unit-1:slot",
+    "rendered_invalid:4",
+    "required_target_coverage_incomplete",
+    "required_slot_coverage_incomplete"
+  ],
+  "input_summary": {
+    "fresh_root_name": "c2p-nextrepair-8006-ebcar-20260905-012937",
+    "exception_type": "",
+    "exception_message": ""
+  },
+  "downstream_stages": {
+    "research": "completed",
+    "formalizer": "completed",
+    "writer": "failed"
+  },
+  "content_digest": "sha256:cc961b57f29a77110620a39178e26019f7109cf0a284bd50014f824a7128d045"
+}

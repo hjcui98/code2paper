@@ -1,0 +1,445 @@
+{
+  "schema_version": "1.0",
+  "rows": [
+    {
+      "content_unit_id": "MA-S1:paragraph:MA-S1:method-unit-1",
+      "source_story_node_ids": [
+        "story:O-COMPONENT-01-bd3b9454",
+        "story:O-RATIONALE-CHECK-01-c0bb1e93"
+      ],
+      "source_facet_ids": [
+        "facet-37ac47cd0b3c324b"
+      ],
+      "source_authority_lane": "",
+      "field_bindings": [
+        {
+          "field_name": "operation",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": "The evidence confirms entity, sentence, and passage nodes with sparse adjacency structures (entity_to_sentence, sentence_to_entity) and that they anchor the retrieval pipeline. However, the specific term 'Tri-Graph' is not found in any evidence, and 'message adjacency' is not explicitly evidenced — only 'contain' adjacency (entity-to-sentence, sentence-to-entity) is shown. The hierarchical structure is implied but not explicitly labeled as such in the code excerpts."
+        }
+      ],
+      "required_field_candidate_ids": [],
+      "semantic_frame_id": "frame:MA-S1:unit-1",
+      "ordered_slot_ids": [
+        "slot:fact-O-COMPONENT-01-bd3b9454-node:06528ded27aa13a3",
+        "slot:fact-O-COMPONENT-01-bd3b9454-node:0cb62ab4a3a7d394",
+        "slot:fact-O-COMPONENT-01-bd3b9454-node:52765b58d59f93a0",
+        "slot:fact-O-COMPONENT-01-bd3b9454-node:e1288fc52819b915",
+        "slot:fact-O-COMPONENT-01-bd3b9454-node:e26239e5bf03dc87",
+        "slot:fact-O-COMPONENT-01-bd3b9454-rel:a8fd15dc040083c2"
+      ],
+      "required_publication_slot_ids": [
+        "slot:fact-O-COMPONENT-01-bd3b9454-node:0cb62ab4a3a7d394",
+        "slot:fact-O-COMPONENT-01-bd3b9454-node:06528ded27aa13a3",
+        "slot:fact-O-COMPONENT-01-bd3b9454-rel:a8fd15dc040083c2",
+        "slot:fact-O-COMPONENT-01-bd3b9454-node:e1288fc52819b915",
+        "slot:fact-O-COMPONENT-01-bd3b9454-node:52765b58d59f93a0"
+      ],
+      "required_edge_ids": [
+        "rel:9c39c339b8028cfc"
+      ],
+      "argument_unit_id": "MA-S1:unit-1",
+      "section_id": "MA-S1",
+      "paragraph_id": "paragraph:MA-S1:method-unit-1",
+      "formula_obligation_ids": [],
+      "accepted_formula_package_ids": [],
+      "writer_rendered_span_refs": [],
+      "writer_rendered_field_candidate_refs": [],
+      "writer_rendered_edge_refs": [],
+      "final_validation_refs": [
+        "/tmp/c2p-nextrepair-8006-linearrag-20260905-012937/artifacts/07_validation/publication_quality_report_v1.json"
+      ],
+      "terminal_state": "rendered_invalid",
+      "owner": "architect",
+      "stop_reason": "paragraph_transaction_witness_missing",
+      "content_digest": "sha256:5ce99a28e1d10ff65f547f2f3e4cd27b67ae80fa27c7898b70be2de8c0fd89cd"
+    },
+    {
+      "content_unit_id": "MA-S2:paragraph:MA-S2:method-unit-1",
+      "source_story_node_ids": [
+        "story:O-ORGANIZATION-03-157f229e"
+      ],
+      "source_facet_ids": [
+        "facet-8ce6e8dabb55bf84"
+      ],
+      "source_authority_lane": "",
+      "field_bindings": [
+        {
+          "field_name": "formula_goal",
+          "status": "unresolved",
+          "polarity": "negative",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": ""
+        }
+      ],
+      "required_field_candidate_ids": [],
+      "semantic_frame_id": "frame:MA-S2:unit",
+      "ordered_slot_ids": [],
+      "required_publication_slot_ids": [],
+      "required_edge_ids": [],
+      "argument_unit_id": "MA-S2:unit",
+      "section_id": "MA-S2",
+      "paragraph_id": "paragraph:MA-S2:method-unit-1",
+      "formula_obligation_ids": [
+        "formula:facet:facet-8ce6e8dabb55bf84"
+      ],
+      "accepted_formula_package_ids": [],
+      "writer_rendered_span_refs": [],
+      "writer_rendered_field_candidate_refs": [],
+      "writer_rendered_edge_refs": [],
+      "final_validation_refs": [
+        "/tmp/c2p-nextrepair-8006-linearrag-20260905-012937/artifacts/07_validation/publication_quality_report_v1.json"
+      ],
+      "terminal_state": "rendered_invalid",
+      "owner": "architect",
+      "stop_reason": "paragraph_transaction_witness_missing",
+      "content_digest": "sha256:1c4ecb40b4f760159e3872e0746f571171b000fc95b9c4927b9d09673627f23f"
+    },
+    {
+      "content_unit_id": "MA-S3:paragraph:MA-S3:method-unit-1",
+      "source_story_node_ids": [
+        "story:O-STAGE-01-9c8dfe22",
+        "story:O-RATIONALE-CHECK-02-1a90a997"
+      ],
+      "source_facet_ids": [
+        "facet-36188cb856f44d0d"
+      ],
+      "source_authority_lane": "",
+      "field_bindings": [
+        {
+          "field_name": "formula_goal",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": "The evidence confirms extraction of entities via spaCy (SpacyNER.extract_entities_sentences), creation of sparse entity-to-sentence and sentence-to-entity adjacency matrices (torch.sparse_coo_tensor calls in _precompute_sparse_matrices), and passage-to-entity mapping (passage_hash_id_to_entities). However, no evidence shows explicit splitting of passages into sentences as a distinct step, and no evidence describes a 'Tri-Graph' structure. The formula_goal describes a composite offline graph construction pipeline that is only partially evidenced: entity extraction and sparse matrix creation are supported, but the sentence-splitting step and the Tri-Graph framing are not directly evidenced in the supplied excerpts."
+        }
+      ],
+      "required_field_candidate_ids": [],
+      "semantic_frame_id": "frame:MA-S3:unit-1",
+      "ordered_slot_ids": [
+        "slot:fact-O-STAGE-01-9c8dfe22-node:f21427b316d80682"
+      ],
+      "required_publication_slot_ids": [
+        "slot:fact-O-STAGE-01-9c8dfe22-node:f21427b316d80682"
+      ],
+      "required_edge_ids": [],
+      "argument_unit_id": "MA-S3:unit-1",
+      "section_id": "MA-S3",
+      "paragraph_id": "paragraph:MA-S3:method-unit-1",
+      "formula_obligation_ids": [
+        "formula:facet:facet-36188cb856f44d0d"
+      ],
+      "accepted_formula_package_ids": [],
+      "writer_rendered_span_refs": [],
+      "writer_rendered_field_candidate_refs": [],
+      "writer_rendered_edge_refs": [],
+      "final_validation_refs": [
+        "/tmp/c2p-nextrepair-8006-linearrag-20260905-012937/artifacts/07_validation/publication_quality_report_v1.json"
+      ],
+      "terminal_state": "rendered_invalid",
+      "owner": "architect",
+      "stop_reason": "paragraph_transaction_witness_missing",
+      "content_digest": "sha256:e60b141b769c0d3ab78f4a624e3a73bd9f5be5db05010416346399abbe891a52"
+    },
+    {
+      "content_unit_id": "MA-S4:paragraph:MA-S4:method-unit-1",
+      "source_story_node_ids": [
+        "story:O-ORGANIZATION-04-8fc65790",
+        "story:O-STAGE-02-93c16851",
+        "story:O-COMPONENT-04-4f4f1da6",
+        "story:O-RATIONALE-CHECK-04-9ca078fe",
+        "story:O-COMPONENT-03-0c4d02ed"
+      ],
+      "source_facet_ids": [
+        "facet-dfd9e7cedfe705e0",
+        "facet-49c35a32b3156393",
+        "facet-397617ae0c814f4c"
+      ],
+      "source_authority_lane": "",
+      "field_bindings": [
+        {
+          "field_name": "operation",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": "The evidence supports iterative propagation through the sentence-entity subgraph with dynamic pruning (threshold masking, top-k selection, used_sentence_mask deduplication) and initialization from seed entities, but no evidence in the closed set demonstrates 'computing query-sentence similarities' as a distinct step. The sentence_similarities variable is used in the code but its computation from the query embedding is not shown in any supplied evidence span. The propagation mechanism (E2S matrix multiplication, top-k selection, S2E back-propagation, threshold-based pruning) is well-supported, but the query-sentence similarity computation step is absent from the evidence set, making the full operation description only partially supported."
+        },
+        {
+          "field_name": "operation",
+          "status": "partial",
+          "polarity": "positive",
+          "bound_claim_ids": [
+            "claim-O-METHOD-MAINLINE-01-79899e6c-fact-O-METHOD-MAINLINE-01-79899e6c-node:eb5bce05f1e6a912"
+          ],
+          "bound_fact_ids": [
+            "fact-O-METHOD-MAINLINE-01-79899e6c-node:eb5bce05f1e6a912"
+          ],
+          "bound_span_ids": [
+            "span:src/LinearRAG.py:306:466"
+          ],
+          "bound_equation_ids": [],
+          "exact_excerpts": [
+            {
+              "facet_id": "facet-49c35a32b3156393",
+              "span_id": "span:src/LinearRAG.py:306:466",
+              "path": "src/LinearRAG.py",
+              "symbol": "sym:641dae5fb3420711",
+              "line_start": 306,
+              "line_end": 466,
+              "exact_excerpt": "        for iteration in range(1, self.config.max_iterations):\n            # Convert sparse tensor to dense for threshold operation\n            current_entity_scores_dense = current_entity_scores_sparse.to_dense()\n            \n            # Apply threshold to current scores\n            current_entity_scores_dense = torch.where(\n                current_entity_scores_dense >= self.config.iteration_threshold, \n                current_entity_scores_dense, \n                torch.zeros_like(current_entity_scores_dense)\n            )\n            \n            # Get non-zero indices for sparse representation\n            nonzero_mask = current_entity_scores_dense > 0\n            nonzero_indices = torch.nonzero(nonzero_mask, as_tuple=False).squeeze(-1)\n            \n            if len(nonzero_indices) == 0:\n                break\n            \n            # Extract non-zero values and create sparse tensor\n            nonzero_values = current_entity_scores_dense[nonzero_indices]\n            current_entity_scores_sparse = torch.sparse_coo_tensor(\n                nonzero_indices.unsqueeze(0), nonzero_values, (num_entities,), device=self.device\n            ).coalesce()\n            \n            # Step 1: Sparse entity scores @ Sparse E2S matrix\n            # Convert sparse vector to 2D for matrix multiplication\n            current_scores_2d = torch.sparse_coo_tensor(\n                torch.stack([nonzero_indices, torch.zeros_like(nonzero_indices)]),\n                nonzero_values,\n                (num_entities, 1),\n                device=self.device\n            ).coalesce()\n            \n            # E @ E2S -> sentence activation scores (sparse @ sparse = dense)\n            sentence_activation = torch.sparse.mm(\n                self.entity_to_sentence_sparse.t(),\n                current_scores_2d\n            )\n            # Convert to dense before squeeze to avoid CUDA sparse tensor issues\n            if sentence_activation.is_sparse:\n                sentence_activation = sentence_activation.to_dense()\n            sentence_activation = sentence_activation.squeeze()\n            \n            # Apply sentence deduplication: mask out used sentences\n            sentence_activation = torch.where(\n                used_sentence_mask,\n                torch.zeros_like(sentence_activation),\n                sentence_activation\n            )\n            \n            # Step 2: Per-entity top-k sentence selection\n            # This matches BFS behavior: each entity independently selects its top-k sentences\n            selected_sentence_indices_list = []\n            \n            if len(nonzero_indices) > 0 and self.config.top_k_sentence > 0:\n                # Iterate through each active entity\n                for i, entity_idx in enumerate(nonzero_indices):\n                    entity_score = nonzero_values[i]\n                    \n                    # Get sentences connected to this entity from the sparse matrix\n                    # entity_to_sentence_sparse shape: (num_entities, num_sentences)\n                    entity_row = self.entity_to_sentence_sparse[entity_idx].coalesce()\n                    entity_sentence_indices = entity_row.indices()[0]  # Get column indices\n                    \n                    if len(entity_sentence_indices) == 0:\n                        continue\n                    \n                    # Filter out already used sentences\n                    sentence_mask = ~used_sentence_mask[entity_sentence_indices]\n                    available_sentence_indices = entity_sentence_indices[sentence_mask]\n                    \n                    if len(available_sentence_indices) == 0:\n                        continue\n                    \n                    # Get sentence similarities (for ranking)\n                    sentence_sims = sentence_similarities[available_sentence_indices]\n                    \n                    # Select top-k sentences based ONLY on sentence similarity (matches BFS line 240)\n                    # NOT weighted by entity_score at selection time\n                    k = min(self.config.top_k_sentence, len(sentence_sims))\n                    if k > 0:\n                        top_k_values, top_k_local_indices = torch.topk(sentence_sims, k)\n                        top_k_sentence_indices = available_sentence_indices[top_k_local_indices]\n                        selected_sentence_indices_list.append(top_k_sentence_indices)\n                \n                # Merge all selected sentences (with deduplication via unique)\n                if len(selected_sentence_indices_list) > 0:\n                    all_selected_sentences = torch.cat(selected_sentence_indices_list)\n                    unique_selected_sentences = torch.unique(all_selected_sentences)\n                    \n                    # Mark selected sentences as used\n                    used_sentence_mask[unique_selected_sentences] = True\n                    \n                    # Compute weighted sentence scores for propagation\n                    # weighted_score = sentence_activation * sentence_similarity\n                    weighted_sentence_scores = sentence_activation * sentence_similarities\n                    \n                    # Zero out non-selected sentences\n                    mask = torch.zeros(num_sentences, dtype=torch.bool, device=self.device)\n                    mask[unique_selected_sentences] = True\n                    weighted_sentence_scores = torch.where(\n                        mask,\n                        weighted_sentence_scores,\n                        torch.zeros_like(weighted_sentence_scores)\n                    )\n                else:\n                    # No sentences selected, create zero vector\n                    weighted_sentence_scores = torch.zeros(num_sentences, dtype=torch.float32, device=self.device)\n            else:\n                # No active entities or top_k_sentence is 0\n                weighted_sentence_scores = torch.zeros(num_sentences, dtype=torch.float32, device=self.device)\n            \n            # Step 3: Weighted sentences @ S2E -> propagate to next entities\n            # Convert to sparse for more efficient computation\n            weighted_nonzero_mask = weighted_sentence_scores > 0\n            weighted_nonzero_indices = torch.nonzero(weighted_nonzero_mask, as_tuple=False).squeeze(-1)\n            \n            if len(weighted_nonzero_indices) > 0:\n                weighted_nonzero_values = weighted_sentence_scores[weighted_nonzero_indices]\n                weighted_scores_2d = torch.sparse_coo_tensor(\n                    torch.stack([weighted_nonzero_indices, torch.zeros_like(weighted_nonzero_indices)]),\n                    weighted_nonzero_values,\n                    (num_sentences, 1),\n                    device=self.device\n                ).coalesce()\n                \n                next_entity_scores_result = torch.sparse.mm(\n                    self.sentence_to_entity_sparse.t(),\n                    weighted_scores_2d\n                )\n                # Convert to dense before squeeze to avoid CUDA sparse tensor issues\n                if next_entity_scores_result.is_sparse:\n                    next_entity_scores_result = next_entity_scores_result.to_dense()\n                next_entity_scores_dense = next_entity_scores_result.squeeze()\n            else:\n                next_entity_scores_dense = torch.zeros(num_entities, dtype=torch.float32, device=self.device)\n            \n            # Update entity scores (accumulate in dense format)\n            entity_scores_dense += next_entity_scores_dense\n            \n            # Update actived_entities dictionary (record last trigger like BFS)\n            # This matches BFS behavior: unconditionally update for entities above threshold\n            next_entity_scores_np = next_entity_scores_dense.cpu().numpy()\n            active_indices = np.where(next_entity_scores_np >= self.config.iteration_threshold)[0]\n            for entity_idx in active_indices:\n                score = next_entity_scores_np[entity_idx]\n                entity_hash_id = self.entity_hash_ids[entity_idx]\n                # Unconditionally update to record the last trigger (matches BFS line 252)\n                actived_entities[entity_hash_id] = (entity_idx, float(score), iteration)\n            \n            # Prepare sparse tensor for next iteration\n            next_nonzero_mask = next_entity_scores_dense > 0\n            next_nonzero_indices = torch.nonzero(next_nonzero_mask, as_tuple=False).squeeze(-1)\n            if len(next_nonzero_indices) > 0:\n                next_nonzero_values = next_entity_scores_dense[next_nonzero_indices]\n                current_entity_scores_sparse = torch.sparse_coo_tensor(\n                    next_nonzero_indices.unsqueeze(0), next_nonzero_values, \n                    (num_entities,), device=self.device\n                ).coalesce()\n            else:\n                break\n",
+              "excerpt_digest": "sha256:e118c8c3aa337a636ca67a6320ff372dec6834b6f0b367ff278d0bb73e4e2925",
+              "file_digest": "sha256:7cd48aa9805c04e9e32e988adba398a0edcb7e1142633ff21a8e2f290fe9542c",
+              "fact_ids": [
+                "fact-O-METHOD-MAINLINE-01-79899e6c-node:eb5bce05f1e6a912"
+              ],
+              "equation_ids": [],
+              "fact_atoms": [],
+              "equation_atoms": [],
+              "operation_atoms": []
+            }
+          ],
+          "active_path_conditions": [],
+          "unsupported_reason": ""
+        },
+        {
+          "field_name": "operation",
+          "status": "partial",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [
+            "fact-O-METHOD-MAINLINE-01-79899e6c-node:eb5bce05f1e6a912"
+          ],
+          "bound_span_ids": [
+            "span:src/LinearRAG.py:306:466"
+          ],
+          "bound_equation_ids": [],
+          "exact_excerpts": [
+            {
+              "facet_id": "facet-397617ae0c814f4c",
+              "span_id": "span:src/LinearRAG.py:306:466",
+              "path": "src/LinearRAG.py",
+              "symbol": "sym:641dae5fb3420711",
+              "line_start": 306,
+              "line_end": 466,
+              "exact_excerpt": "        for iteration in range(1, self.config.max_iterations):\n            # Convert sparse tensor to dense for threshold operation\n            current_entity_scores_dense = current_entity_scores_sparse.to_dense()\n            \n            # Apply threshold to current scores\n            current_entity_scores_dense = torch.where(\n                current_entity_scores_dense >= self.config.iteration_threshold, \n                current_entity_scores_dense, \n                torch.zeros_like(current_entity_scores_dense)\n            )\n            \n            # Get non-zero indices for sparse representation\n            nonzero_mask = current_entity_scores_dense > 0\n            nonzero_indices = torch.nonzero(nonzero_mask, as_tuple=False).squeeze(-1)\n            \n            if len(nonzero_indices) == 0:\n                break\n            \n            # Extract non-zero values and create sparse tensor\n            nonzero_values = current_entity_scores_dense[nonzero_indices]\n            current_entity_scores_sparse = torch.sparse_coo_tensor(\n                nonzero_indices.unsqueeze(0), nonzero_values, (num_entities,), device=self.device\n            ).coalesce()\n            \n            # Step 1: Sparse entity scores @ Sparse E2S matrix\n            # Convert sparse vector to 2D for matrix multiplication\n            current_scores_2d = torch.sparse_coo_tensor(\n                torch.stack([nonzero_indices, torch.zeros_like(nonzero_indices)]),\n                nonzero_values,\n                (num_entities, 1),\n                device=self.device\n            ).coalesce()\n            \n            # E @ E2S -> sentence activation scores (sparse @ sparse = dense)\n            sentence_activation = torch.sparse.mm(\n                self.entity_to_sentence_sparse.t(),\n                current_scores_2d\n            )\n            # Convert to dense before squeeze to avoid CUDA sparse tensor issues\n            if sentence_activation.is_sparse:\n                sentence_activation = sentence_activation.to_dense()\n            sentence_activation = sentence_activation.squeeze()\n            \n            # Apply sentence deduplication: mask out used sentences\n            sentence_activation = torch.where(\n                used_sentence_mask,\n                torch.zeros_like(sentence_activation),\n                sentence_activation\n            )\n            \n            # Step 2: Per-entity top-k sentence selection\n            # This matches BFS behavior: each entity independently selects its top-k sentences\n            selected_sentence_indices_list = []\n            \n            if len(nonzero_indices) > 0 and self.config.top_k_sentence > 0:\n                # Iterate through each active entity\n                for i, entity_idx in enumerate(nonzero_indices):\n                    entity_score = nonzero_values[i]\n                    \n                    # Get sentences connected to this entity from the sparse matrix\n                    # entity_to_sentence_sparse shape: (num_entities, num_sentences)\n                    entity_row = self.entity_to_sentence_sparse[entity_idx].coalesce()\n                    entity_sentence_indices = entity_row.indices()[0]  # Get column indices\n                    \n                    if len(entity_sentence_indices) == 0:\n                        continue\n                    \n                    # Filter out already used sentences\n                    sentence_mask = ~used_sentence_mask[entity_sentence_indices]\n                    available_sentence_indices = entity_sentence_indices[sentence_mask]\n                    \n                    if len(available_sentence_indices) == 0:\n                        continue\n                    \n                    # Get sentence similarities (for ranking)\n                    sentence_sims = sentence_similarities[available_sentence_indices]\n                    \n                    # Select top-k sentences based ONLY on sentence similarity (matches BFS line 240)\n                    # NOT weighted by entity_score at selection time\n                    k = min(self.config.top_k_sentence, len(sentence_sims))\n                    if k > 0:\n                        top_k_values, top_k_local_indices = torch.topk(sentence_sims, k)\n                        top_k_sentence_indices = available_sentence_indices[top_k_local_indices]\n                        selected_sentence_indices_list.append(top_k_sentence_indices)\n                \n                # Merge all selected sentences (with deduplication via unique)\n                if len(selected_sentence_indices_list) > 0:\n                    all_selected_sentences = torch.cat(selected_sentence_indices_list)\n                    unique_selected_sentences = torch.unique(all_selected_sentences)\n                    \n                    # Mark selected sentences as used\n                    used_sentence_mask[unique_selected_sentences] = True\n                    \n                    # Compute weighted sentence scores for propagation\n                    # weighted_score = sentence_activation * sentence_similarity\n                    weighted_sentence_scores = sentence_activation * sentence_similarities\n                    \n                    # Zero out non-selected sentences\n                    mask = torch.zeros(num_sentences, dtype=torch.bool, device=self.device)\n                    mask[unique_selected_sentences] = True\n                    weighted_sentence_scores = torch.where(\n                        mask,\n                        weighted_sentence_scores,\n                        torch.zeros_like(weighted_sentence_scores)\n                    )\n                else:\n                    # No sentences selected, create zero vector\n                    weighted_sentence_scores = torch.zeros(num_sentences, dtype=torch.float32, device=self.device)\n            else:\n                # No active entities or top_k_sentence is 0\n                weighted_sentence_scores = torch.zeros(num_sentences, dtype=torch.float32, device=self.device)\n            \n            # Step 3: Weighted sentences @ S2E -> propagate to next entities\n            # Convert to sparse for more efficient computation\n            weighted_nonzero_mask = weighted_sentence_scores > 0\n            weighted_nonzero_indices = torch.nonzero(weighted_nonzero_mask, as_tuple=False).squeeze(-1)\n            \n            if len(weighted_nonzero_indices) > 0:\n                weighted_nonzero_values = weighted_sentence_scores[weighted_nonzero_indices]\n                weighted_scores_2d = torch.sparse_coo_tensor(\n                    torch.stack([weighted_nonzero_indices, torch.zeros_like(weighted_nonzero_indices)]),\n                    weighted_nonzero_values,\n                    (num_sentences, 1),\n                    device=self.device\n                ).coalesce()\n                \n                next_entity_scores_result = torch.sparse.mm(\n                    self.sentence_to_entity_sparse.t(),\n                    weighted_scores_2d\n                )\n                # Convert to dense before squeeze to avoid CUDA sparse tensor issues\n                if next_entity_scores_result.is_sparse:\n                    next_entity_scores_result = next_entity_scores_result.to_dense()\n                next_entity_scores_dense = next_entity_scores_result.squeeze()\n            else:\n                next_entity_scores_dense = torch.zeros(num_entities, dtype=torch.float32, device=self.device)\n            \n            # Update entity scores (accumulate in dense format)\n            entity_scores_dense += next_entity_scores_dense\n            \n            # Update actived_entities dictionary (record last trigger like BFS)\n            # This matches BFS behavior: unconditionally update for entities above threshold\n            next_entity_scores_np = next_entity_scores_dense.cpu().numpy()\n            active_indices = np.where(next_entity_scores_np >= self.config.iteration_threshold)[0]\n            for entity_idx in active_indices:\n                score = next_entity_scores_np[entity_idx]\n                entity_hash_id = self.entity_hash_ids[entity_idx]\n                # Unconditionally update to record the last trigger (matches BFS line 252)\n                actived_entities[entity_hash_id] = (entity_idx, float(score), iteration)\n            \n            # Prepare sparse tensor for next iteration\n            next_nonzero_mask = next_entity_scores_dense > 0\n            next_nonzero_indices = torch.nonzero(next_nonzero_mask, as_tuple=False).squeeze(-1)\n            if len(next_nonzero_indices) > 0:\n                next_nonzero_values = next_entity_scores_dense[next_nonzero_indices]\n                current_entity_scores_sparse = torch.sparse_coo_tensor(\n                    next_nonzero_indices.unsqueeze(0), next_nonzero_values, \n                    (num_entities,), device=self.device\n                ).coalesce()\n            else:\n                break\n",
+              "excerpt_digest": "sha256:e118c8c3aa337a636ca67a6320ff372dec6834b6f0b367ff278d0bb73e4e2925",
+              "file_digest": "sha256:7cd48aa9805c04e9e32e988adba398a0edcb7e1142633ff21a8e2f290fe9542c",
+              "fact_ids": [
+                "fact-O-METHOD-MAINLINE-01-79899e6c-node:eb5bce05f1e6a912"
+              ],
+              "equation_ids": [],
+              "fact_atoms": [],
+              "equation_atoms": [],
+              "operation_atoms": []
+            }
+          ],
+          "active_path_conditions": [],
+          "unsupported_reason": ""
+        }
+      ],
+      "required_field_candidate_ids": [],
+      "semantic_frame_id": "frame:MA-S4:unit-2",
+      "ordered_slot_ids": [
+        "slot:fact-O-STAGE-02-93c16851-node:3e4f8dac1595a0af",
+        "slot:fact-O-STAGE-02-93c16851-node:832a80d4d603dfda",
+        "slot:fact-O-STAGE-02-93c16851-node:d95b504f3885a567",
+        "slot:fact-O-STAGE-02-93c16851-node:dbc9e615e1abdb23",
+        "slot:fact-O-STAGE-02-93c16851-node:dbe47970ca704834"
+      ],
+      "required_publication_slot_ids": [
+        "slot:fact-O-STAGE-02-93c16851-node:3e4f8dac1595a0af",
+        "slot:fact-O-STAGE-02-93c16851-node:dbc9e615e1abdb23",
+        "slot:fact-O-STAGE-02-93c16851-node:832a80d4d603dfda",
+        "slot:fact-O-STAGE-02-93c16851-node:dbe47970ca704834"
+      ],
+      "required_edge_ids": [],
+      "argument_unit_id": "MA-S4:unit-2",
+      "section_id": "MA-S4",
+      "paragraph_id": "paragraph:MA-S4:method-unit-1",
+      "formula_obligation_ids": [
+        "formula:section:MA-S4:derivation"
+      ],
+      "accepted_formula_package_ids": [],
+      "writer_rendered_span_refs": [],
+      "writer_rendered_field_candidate_refs": [],
+      "writer_rendered_edge_refs": [],
+      "final_validation_refs": [
+        "/tmp/c2p-nextrepair-8006-linearrag-20260905-012937/artifacts/07_validation/publication_quality_report_v1.json"
+      ],
+      "terminal_state": "rendered_invalid",
+      "owner": "architect",
+      "stop_reason": "paragraph_transaction_witness_missing",
+      "content_digest": "sha256:bf05ee33ce0688eb4fac9aee1904d4006f680d5b9ecf41f3b1b182b40a26b20a"
+    },
+    {
+      "content_unit_id": "MA-S5:paragraph:MA-S5:method-unit-1",
+      "source_story_node_ids": [
+        "story:O-ORGANIZATION-05-e0c123aa",
+        "story:O-STAGE-03-8dda66b9",
+        "story:O-COMPONENT-06-bf20ec9b",
+        "story:O-RATIONALE-CHECK-03-09c84504",
+        "story:O-RATIONALE-CHECK-05-ffcf3556",
+        "story:O-RATIONALE-CHECK-06-0f48dc22",
+        "story:O-COMPONENT-05-29ba03a1"
+      ],
+      "source_facet_ids": [
+        "facet-aee51cb1cb5c563f",
+        "facet-11f57730a8077780",
+        "facet-6c02c195374453b1"
+      ],
+      "source_authority_lane": "",
+      "field_bindings": [
+        {
+          "field_name": "operation",
+          "status": "partial",
+          "polarity": "positive",
+          "bound_claim_ids": [
+            "claim-O-METHOD-MAINLINE-01-79899e6c-fact-O-METHOD-MAINLINE-01-79899e6c-node:eb5bce05f1e6a912"
+          ],
+          "bound_fact_ids": [
+            "fact-O-METHOD-MAINLINE-01-79899e6c-node:eb5bce05f1e6a912"
+          ],
+          "bound_span_ids": [
+            "span:src/LinearRAG.py:306:466"
+          ],
+          "bound_equation_ids": [],
+          "exact_excerpts": [
+            {
+              "facet_id": "facet-aee51cb1cb5c563f",
+              "span_id": "span:src/LinearRAG.py:306:466",
+              "path": "src/LinearRAG.py",
+              "symbol": "sym:641dae5fb3420711",
+              "line_start": 306,
+              "line_end": 466,
+              "exact_excerpt": "        for iteration in range(1, self.config.max_iterations):\n            # Convert sparse tensor to dense for threshold operation\n            current_entity_scores_dense = current_entity_scores_sparse.to_dense()\n            \n            # Apply threshold to current scores\n            current_entity_scores_dense = torch.where(\n                current_entity_scores_dense >= self.config.iteration_threshold, \n                current_entity_scores_dense, \n                torch.zeros_like(current_entity_scores_dense)\n            )\n            \n            # Get non-zero indices for sparse representation\n            nonzero_mask = current_entity_scores_dense > 0\n            nonzero_indices = torch.nonzero(nonzero_mask, as_tuple=False).squeeze(-1)\n            \n            if len(nonzero_indices) == 0:\n                break\n            \n            # Extract non-zero values and create sparse tensor\n            nonzero_values = current_entity_scores_dense[nonzero_indices]\n            current_entity_scores_sparse = torch.sparse_coo_tensor(\n                nonzero_indices.unsqueeze(0), nonzero_values, (num_entities,), device=self.device\n            ).coalesce()\n            \n            # Step 1: Sparse entity scores @ Sparse E2S matrix\n            # Convert sparse vector to 2D for matrix multiplication\n            current_scores_2d = torch.sparse_coo_tensor(\n                torch.stack([nonzero_indices, torch.zeros_like(nonzero_indices)]),\n                nonzero_values,\n                (num_entities, 1),\n                device=self.device\n            ).coalesce()\n            \n            # E @ E2S -> sentence activation scores (sparse @ sparse = dense)\n            sentence_activation = torch.sparse.mm(\n                self.entity_to_sentence_sparse.t(),\n                current_scores_2d\n            )\n            # Convert to dense before squeeze to avoid CUDA sparse tensor issues\n            if sentence_activation.is_sparse:\n                sentence_activation = sentence_activation.to_dense()\n            sentence_activation = sentence_activation.squeeze()\n            \n            # Apply sentence deduplication: mask out used sentences\n            sentence_activation = torch.where(\n                used_sentence_mask,\n                torch.zeros_like(sentence_activation),\n                sentence_activation\n            )\n            \n            # Step 2: Per-entity top-k sentence selection\n            # This matches BFS behavior: each entity independently selects its top-k sentences\n            selected_sentence_indices_list = []\n            \n            if len(nonzero_indices) > 0 and self.config.top_k_sentence > 0:\n                # Iterate through each active entity\n                for i, entity_idx in enumerate(nonzero_indices):\n                    entity_score = nonzero_values[i]\n                    \n                    # Get sentences connected to this entity from the sparse matrix\n                    # entity_to_sentence_sparse shape: (num_entities, num_sentences)\n                    entity_row = self.entity_to_sentence_sparse[entity_idx].coalesce()\n                    entity_sentence_indices = entity_row.indices()[0]  # Get column indices\n                    \n                    if len(entity_sentence_indices) == 0:\n                        continue\n                    \n                    # Filter out already used sentences\n                    sentence_mask = ~used_sentence_mask[entity_sentence_indices]\n                    available_sentence_indices = entity_sentence_indices[sentence_mask]\n                    \n                    if len(available_sentence_indices) == 0:\n                        continue\n                    \n                    # Get sentence similarities (for ranking)\n                    sentence_sims = sentence_similarities[available_sentence_indices]\n                    \n                    # Select top-k sentences based ONLY on sentence similarity (matches BFS line 240)\n                    # NOT weighted by entity_score at selection time\n                    k = min(self.config.top_k_sentence, len(sentence_sims))\n                    if k > 0:\n                        top_k_values, top_k_local_indices = torch.topk(sentence_sims, k)\n                        top_k_sentence_indices = available_sentence_indices[top_k_local_indices]\n                        selected_sentence_indices_list.append(top_k_sentence_indices)\n                \n                # Merge all selected sentences (with deduplication via unique)\n                if len(selected_sentence_indices_list) > 0:\n                    all_selected_sentences = torch.cat(selected_sentence_indices_list)\n                    unique_selected_sentences = torch.unique(all_selected_sentences)\n                    \n                    # Mark selected sentences as used\n                    used_sentence_mask[unique_selected_sentences] = True\n                    \n                    # Compute weighted sentence scores for propagation\n                    # weighted_score = sentence_activation * sentence_similarity\n                    weighted_sentence_scores = sentence_activation * sentence_similarities\n                    \n                    # Zero out non-selected sentences\n                    mask = torch.zeros(num_sentences, dtype=torch.bool, device=self.device)\n                    mask[unique_selected_sentences] = True\n                    weighted_sentence_scores = torch.where(\n                        mask,\n                        weighted_sentence_scores,\n                        torch.zeros_like(weighted_sentence_scores)\n                    )\n                else:\n                    # No sentences selected, create zero vector\n                    weighted_sentence_scores = torch.zeros(num_sentences, dtype=torch.float32, device=self.device)\n            else:\n                # No active entities or top_k_sentence is 0\n                weighted_sentence_scores = torch.zeros(num_sentences, dtype=torch.float32, device=self.device)\n            \n            # Step 3: Weighted sentences @ S2E -> propagate to next entities\n            # Convert to sparse for more efficient computation\n            weighted_nonzero_mask = weighted_sentence_scores > 0\n            weighted_nonzero_indices = torch.nonzero(weighted_nonzero_mask, as_tuple=False).squeeze(-1)\n            \n            if len(weighted_nonzero_indices) > 0:\n                weighted_nonzero_values = weighted_sentence_scores[weighted_nonzero_indices]\n                weighted_scores_2d = torch.sparse_coo_tensor(\n                    torch.stack([weighted_nonzero_indices, torch.zeros_like(weighted_nonzero_indices)]),\n                    weighted_nonzero_values,\n                    (num_sentences, 1),\n                    device=self.device\n                ).coalesce()\n                \n                next_entity_scores_result = torch.sparse.mm(\n                    self.sentence_to_entity_sparse.t(),\n                    weighted_scores_2d\n                )\n                # Convert to dense before squeeze to avoid CUDA sparse tensor issues\n                if next_entity_scores_result.is_sparse:\n                    next_entity_scores_result = next_entity_scores_result.to_dense()\n                next_entity_scores_dense = next_entity_scores_result.squeeze()\n            else:\n                next_entity_scores_dense = torch.zeros(num_entities, dtype=torch.float32, device=self.device)\n            \n            # Update entity scores (accumulate in dense format)\n            entity_scores_dense += next_entity_scores_dense\n            \n            # Update actived_entities dictionary (record last trigger like BFS)\n            # This matches BFS behavior: unconditionally update for entities above threshold\n            next_entity_scores_np = next_entity_scores_dense.cpu().numpy()\n            active_indices = np.where(next_entity_scores_np >= self.config.iteration_threshold)[0]\n            for entity_idx in active_indices:\n                score = next_entity_scores_np[entity_idx]\n                entity_hash_id = self.entity_hash_ids[entity_idx]\n                # Unconditionally update to record the last trigger (matches BFS line 252)\n                actived_entities[entity_hash_id] = (entity_idx, float(score), iteration)\n            \n            # Prepare sparse tensor for next iteration\n            next_nonzero_mask = next_entity_scores_dense > 0\n            next_nonzero_indices = torch.nonzero(next_nonzero_mask, as_tuple=False).squeeze(-1)\n            if len(next_nonzero_indices) > 0:\n                next_nonzero_values = next_entity_scores_dense[next_nonzero_indices]\n                current_entity_scores_sparse = torch.sparse_coo_tensor(\n                    next_nonzero_indices.unsqueeze(0), next_nonzero_values, \n                    (num_entities,), device=self.device\n                ).coalesce()\n            else:\n                break\n",
+              "excerpt_digest": "sha256:e118c8c3aa337a636ca67a6320ff372dec6834b6f0b367ff278d0bb73e4e2925",
+              "file_digest": "sha256:7cd48aa9805c04e9e32e988adba398a0edcb7e1142633ff21a8e2f290fe9542c",
+              "fact_ids": [
+                "fact-O-METHOD-MAINLINE-01-79899e6c-node:eb5bce05f1e6a912"
+              ],
+              "equation_ids": [],
+              "fact_atoms": [],
+              "equation_atoms": [],
+              "operation_atoms": []
+            }
+          ],
+          "active_path_conditions": [],
+          "unsupported_reason": ""
+        },
+        {
+          "field_name": "operation",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": "The evidence confirms Personalized PageRank is invoked via self.graph.personalized_pagerank (evidence 15) and that it operates on the graph with vertices, damping, and reset parameters. However, the specific claim of 'global importance aggregation on the passage-entity subgraph' is not directly evidenced. The code shows PPR runs on the full graph (vertices=range(len(self.node_name_to_vertex_idx))) rather than a restricted 'passage-entity subgraph'. The 'ranks passages by propagating influence from activated entities' part is supported by the reset_prob mechanism (evidence 15) and the downstream sorting of doc_scores (evidence 32), but the 'subgraph' qualifier is not confirmed by any evidence excerpt. The operation is partially supported: PPR is confirmed, passage ranking is confirmed, but "
+        },
+        {
+          "field_name": "operation",
+          "status": "unresolved",
+          "polarity": "positive",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": ""
+        }
+      ],
+      "required_field_candidate_ids": [],
+      "semantic_frame_id": "frame:MA-S5:unit-2",
+      "ordered_slot_ids": [
+        "slot:fact-O-METHOD-MAINLINE-01-79899e6c-node:120e548b0781989f",
+        "slot:fact-O-METHOD-MAINLINE-01-79899e6c-node:29c327b051baa4b2",
+        "slot:fact-O-METHOD-MAINLINE-01-79899e6c-node:2cf918d7e93d7113",
+        "slot:fact-O-METHOD-MAINLINE-01-79899e6c-node:39e89cf9b1ab8f58",
+        "slot:fact-O-METHOD-MAINLINE-01-79899e6c-node:ea92b7c26acc5f71",
+        "slot:fact-O-METHOD-MAINLINE-01-79899e6c-rel:370037831dc97fea",
+        "slot:fact-O-STAGE-03-8dda66b9-node:34d6c89a89d120d3",
+        "slot:fact-O-STAGE-03-8dda66b9-node:ee035e622f3173b0"
+      ],
+      "required_publication_slot_ids": [
+        "slot:fact-O-METHOD-MAINLINE-01-79899e6c-node:29c327b051baa4b2",
+        "slot:fact-O-METHOD-MAINLINE-01-79899e6c-node:120e548b0781989f",
+        "slot:fact-O-METHOD-MAINLINE-01-79899e6c-rel:370037831dc97fea",
+        "slot:fact-O-METHOD-MAINLINE-01-79899e6c-node:2cf918d7e93d7113",
+        "slot:fact-O-METHOD-MAINLINE-01-79899e6c-node:ea92b7c26acc5f71"
+      ],
+      "required_edge_ids": [],
+      "argument_unit_id": "MA-S5:unit-2",
+      "section_id": "MA-S5",
+      "paragraph_id": "paragraph:MA-S5:method-unit-1",
+      "formula_obligation_ids": [
+        "formula:section:MA-S5:derivation"
+      ],
+      "accepted_formula_package_ids": [],
+      "writer_rendered_span_refs": [],
+      "writer_rendered_field_candidate_refs": [],
+      "writer_rendered_edge_refs": [],
+      "final_validation_refs": [
+        "/tmp/c2p-nextrepair-8006-linearrag-20260905-012937/artifacts/07_validation/publication_quality_report_v1.json"
+      ],
+      "terminal_state": "rendered_invalid",
+      "owner": "architect",
+      "stop_reason": "paragraph_transaction_witness_missing",
+      "content_digest": "sha256:9b84ba27396cb80cfe645a2d48da5006cb68da377dd94c3637df1804e18cf677"
+    }
+  ],
+  "summary": {
+    "rows": 5,
+    "sections": 5,
+    "planned_paragraphs": 5,
+    "rendered_paragraphs": 0,
+    "planned_story_nodes": 17,
+    "rendered_story_nodes": 0,
+    "planned_slots": 15,
+    "rendered_slots": 0,
+    "rendered_field_candidates": 0,
+    "planned_edges": 1,
+    "rendered_edges": 0,
+    "formula_obligations": 4,
+    "rendered_formula_obligations": 0,
+    "consumed_formula_packages": 0,
+    "duplicate_formula_consumers": 0,
+    "field_bound_rows": 2,
+    "condition_polarity_witness_rows": 0,
+    "not_discovered": 0,
+    "discovered_partial": 0,
+    "discovered_bound": 0,
+    "planned": 0,
+    "rendered": 0,
+    "rendered_invalid": 5,
+    "blocked_representation": 0,
+    "intent_code_mismatch": 0,
+    "deferred_with_reason": 0
+  },
+  "transaction_assessment_digest": "sha256:2804922f7ae83320d24dc5c9a1cad57a67e3072a2951f0184b2402889d9a0a99",
+  "content_digest": "sha256:e4725b5bb17a7378e88056dcd0d0f7692114d946a55f7818240f768c675185a5"
+}

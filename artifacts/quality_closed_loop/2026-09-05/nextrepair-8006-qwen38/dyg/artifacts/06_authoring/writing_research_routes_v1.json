@@ -1,0 +1,121 @@
+{
+  "schema_version": "1.0",
+  "routes": [
+    {
+      "route_id": "route:28df45954253dcda9459",
+      "request_id": "MA-S2:uq-01",
+      "owner": "author_confirmation_queue",
+      "section_id": "MA-S2",
+      "argument_unit_id": "MA-S2:unit",
+      "scope": [
+        "SSMs",
+        "Motivation",
+        "limitations",
+        "irregular",
+        "timespans",
+        "vulnerable",
+        "vanilla",
+        "they",
+        "ignore",
+        "input",
+        "noise"
+      ],
+      "required_authority_lane": "expository_bridge",
+      "rationale": "The requested move requires the expository_bridge lane; resume section MA-S2 after the owning artifact is validated.",
+      "resume_section_only": true,
+      "content_digest": "sha256:d731041e5bf960895e51899feaa1fe5f18fbfab3e69618c1b20f0ab6eface820"
+    },
+    {
+      "route_id": "route:0f0e0db0a431bab074ff",
+      "request_id": "req:MA-S4:unit-1:cosine-cooccur",
+      "owner": "repository_tools",
+      "section_id": "MA-S4",
+      "argument_unit_id": "MA-S4:unit-1",
+      "scope": [
+        "cosine-based",
+        "temporal",
+        "encoding",
+        "function",
+        "co-occurrence",
+        "frequency",
+        "shared-neighbor",
+        "counts"
+      ],
+      "required_authority_lane": "executable_hard",
+      "rationale": "The requested move requires the executable_hard lane; resume section MA-S4 after the owning artifact is validated.",
+      "resume_section_only": true,
+      "content_digest": "sha256:4cc1644894d5c430371756597fd60348fc15ed8bcb6c5fe0ed25cf134a7915dc"
+    },
+    {
+      "route_id": "route:2db7573062d42ea61238",
+      "request_id": "REQ-MA-S5:001",
+      "owner": "author_confirmation_queue",
+      "section_id": "MA-S5",
+      "argument_unit_id": "MA-S5:unit",
+      "scope": [],
+      "required_authority_lane": "expository_bridge",
+      "rationale": "The requested move requires the expository_bridge lane; resume section MA-S5 after the owning artifact is validated.",
+      "resume_section_only": true,
+      "content_digest": "sha256:d81bd777cfcddbf95a2fb252010c318dba1de741e83eaf64797b7469d69d32a4"
+    },
+    {
+      "route_id": "route:2f31b3c46a0d9b762dfc",
+      "request_id": "research-derived:5087406eaa026753",
+      "owner": "repository_tools",
+      "section_id": "MA-S4",
+      "argument_unit_id": "MA-S4:unit-2",
+      "scope": [
+        "Downstream",
+        "adaptation",
+        "prediction",
+        "classification",
+        "computational",
+        "complexity",
+        "Absolute",
+        "temporal",
+        "encoding",
+        "timespans",
+        "interaction",
+        "trainable",
+        "cosine-based",
+        "function",
+        "Co-occurrence",
+        "frequency"
+      ],
+      "required_authority_lane": "executable_hard",
+      "rationale": "The requested move requires the executable_hard lane; resume section MA-S4 after the owning artifact is validated.",
+      "resume_section_only": true,
+      "content_digest": "sha256:081743607e8d0f7b35727c5d06774cb4284732668688dbd03a17e45be7b8e2b9"
+    },
+    {
+      "route_id": "route:f4d72eecd2e598e760ce",
+      "request_id": "research-derived:f2f6fa0e59d44905",
+      "owner": "repository_tools",
+      "section_id": "MA-S5",
+      "argument_unit_id": "MA-S5:unit",
+      "scope": [
+        "selective",
+        "reviewing",
+        "input-dependent",
+        "filtering",
+        "historical",
+        "information",
+        "important",
+        "interactions",
+        "reinforced",
+        "suppressed",
+        "maintaining",
+        "stability",
+        "spectral",
+        "constraints",
+        "method",
+        "section"
+      ],
+      "required_authority_lane": "executable_hard",
+      "rationale": "The requested move requires the executable_hard lane; resume section MA-S5 after the owning artifact is validated.",
+      "resume_section_only": true,
+      "content_digest": "sha256:b279f88cf86be81ca2de9629661f990d9366cc5ea35e9b2e139746c17f897230"
+    }
+  ],
+  "rejections": []
+}

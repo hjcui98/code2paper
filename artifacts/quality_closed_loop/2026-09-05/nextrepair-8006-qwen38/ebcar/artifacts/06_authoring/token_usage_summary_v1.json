@@ -1,0 +1,81 @@
+{
+  "schema_version": "1.0",
+  "artifact": "token_usage_summary_v1",
+  "accounting": "sum provider total_tokens; derive input_tokens+output_tokens only when total_tokens is absent; reasoning_tokens is a non-additive breakdown",
+  "status": "partial",
+  "calls": 135,
+  "calls_with_usage": 121,
+  "calls_without_usage": 14,
+  "explicit_total_token_calls": 121,
+  "estimated_total_token_calls": 0,
+  "cached_calls": 0,
+  "blocked_calls": 0,
+  "usage_available": true,
+  "total_tokens_is_estimate": false,
+  "input_tokens": 1060800,
+  "output_tokens": 103519,
+  "total_tokens": 1164319,
+  "reasoning_tokens": 0,
+  "by_role": {
+    "method_mechanism_draft_planner": {
+      "calls": 8,
+      "calls_with_usage": 7,
+      "input_tokens": 20235,
+      "output_tokens": 21455,
+      "total_tokens": 41690,
+      "reasoning_tokens": 0
+    },
+    "method_section_formalizer": {
+      "calls": 18,
+      "calls_with_usage": 18,
+      "input_tokens": 269781,
+      "output_tokens": 17919,
+      "total_tokens": 287700,
+      "reasoning_tokens": 0
+    },
+    "method_writer": {
+      "calls": 12,
+      "calls_with_usage": 10,
+      "input_tokens": 42235,
+      "output_tokens": 14499,
+      "total_tokens": 56734,
+      "reasoning_tokens": 0
+    },
+    "research_supervisor": {
+      "calls": 60,
+      "calls_with_usage": 51,
+      "input_tokens": 265879,
+      "output_tokens": 37590,
+      "total_tokens": 303469,
+      "reasoning_tokens": 0
+    },
+    "semantic_verifier": {
+      "calls": 35,
+      "calls_with_usage": 33,
+      "input_tokens": 444605,
+      "output_tokens": 11611,
+      "total_tokens": 456216,
+      "reasoning_tokens": 0
+    },
+    "unknown": {
+      "calls": 2,
+      "calls_with_usage": 2,
+      "input_tokens": 18065,
+      "output_tokens": 445,
+      "total_tokens": 18510,
+      "reasoning_tokens": 0
+    }
+  },
+  "raw_usage_totals": {
+    "completion_tokens": 103519,
+    "prompt_tokens": 1060800,
+    "total_tokens": 1164319
+  },
+  "models": [
+    "qwen38-27b-nvfp4"
+  ],
+  "endpoint_origins": [
+    "http://127.0.0.1:8006"
+  ],
+  "source": "code2paper.llm.generation_trace"
+}

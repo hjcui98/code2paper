@@ -1,0 +1,2127 @@
+{
+  "schema_version": "1.0",
+  "status": "incomplete",
+  "plan_digest": "sha256:a0775440544710a5d3cdccbb4c97c849b2710946cb073b4cfdef560d9bee9245",
+  "claim_digest": "sha256:8129aabd3a5314bc9ed2a0a226fd33b263eaa904107c3b26c99469d4fde70baa",
+  "section_results": [
+    {
+      "section_id": "MA-S2",
+      "heading": "Motivation: limitations of vanilla SSMs – they ignore irregular timespans and are vulnerable to input noise",
+      "accepted": true,
+      "failures": [
+        "invalid_writing_research_callback:problem_or_local_context@MA-S2/MA-S2:unit/expository_bridge",
+        "Final claim FAC1 reverse validation failed: no_semantically_matching_projected_claim; direct_evidence_missing",
+        "Final claim FAC3 reverse validation failed: no_semantically_matching_projected_claim; direct_evidence_missing"
+      ],
+      "output": {
+        "section_id": "MA-S2",
+        "heading_text": "Motivation: limitations of vanilla SSMs – they ignore irregular timespans and are vulnerable to input noise",
+        "section_markdown": "## Motivation: limitations of vanilla SSMs – they ignore irregular timespans and are vulnerable to input noise\n\nStandard SSM step operations—fused add and norm applied to hidden states with learned weight, bias, and epsilon parameters, followed by convolutional state and SSM output computation—assume a uniform sampling grid over the input sequence. This assumption renders them insensitive to irregular timespans between observations, and the absence of an explicit noise-robustness mechanism makes the hidden-state trajectory vulnerable to input perturbation.",
+        "rendered_proposition_ids": [],
+        "deferred_proposition_ids": [],
+        "rendered_concept_keys": [],
+        "deferred_concept_keys": [],
+        "rendered_brief_ids": [
+          "brief:story:O-ORGANIZATION-02-780817ba"
+        ],
+        "deferred_brief_ids": [],
+        "rendered_from_facet_ids": [],
+        "rendered_field_candidate_ids": [],
+        "deferred_facet_ids": [],
+        "rendered_paragraph_ids": [
+          "paragraph:MA-S2:1"
+        ],
+        "rendered_slot_ids": [
+          "slot:fact-callback:MA-S1:unit-1:mechanism_overview:1-node:3a6de8a6f23f4821",
+          "slot:fact-callback:req:MA-S1:mechanism-overview-node:e6e27ab4b6034a66"
+        ],
+        "rendered_edge_ids": [],
+        "used_formula_package_ids": [],
+        "used_argument_unit_ids": [],
+        "used_claim_ids": [
+          "claim-O-METHOD-MAINLINE-01-3011c54d-fact-O-METHOD-MAINLINE-01-3011c54d-node:984301f19358e752",
+          "claim-O-STAGE-03-d47a86f4-fact-O-STAGE-03-d47a86f4-node:d799f697b2fb3ec3",
+          "claim-O-STAGE-03-d47a86f4-fact-O-STAGE-03-d47a86f4-node:1cc294634ea67991",
+          "claim-callback:req:MA-S1:mechanism-overview-fact-callback:req:MA-S1:mechanism-overview-node:63f59de1265b6b3a",
+          "claim-O-METHOD-MAINLINE-01-3011c54d-fact-O-METHOD-MAINLINE-01-3011c54d-node:b3b7d8d2e4b61dc4"
+        ],
+        "used_equation_ids": [],
+        "used_configuration_ids": [],
+        "completed_rhetorical_moves": [],
+        "new_research_requests": [
+          {
+            "argument_unit_id": "MA-S2:unit",
+            "evidence_refs_used": [
+              "span:models/mamba_simple.py:476:476",
+              "span:models/mamba_simple.py:507:507",
+              "span:models/mamba_simple.py:525:525",
+              "span:models/mamba_simple.py:466:466",
+              "span:models/DyGMamba.py:868:876",
+              "span:models/DyGMamba.py:867:867",
+              "span:models/DyGMamba.py:859:861",
+              "claim:claim-callback:req:MA-S1:mechanism-overview-fact-callback:req:MA-S1:mechanism-overview-node:5aa3466791d8654f",
+              "claim:claim-callback:req:MA-S1:mechanism-overview-fact-callback:req:MA-S1:mechanism-overview-node:10be86df95d0353c",
+              "claim:claim-callback:req:MA-S1:mechanism-overview-fact-callback:req:MA-S1:mechanism-overview-node:9bebd704e65b776b",
+              "claim:claim-callback:req:MA-S1:mechanism-overview-fact-callback:req:MA-S1:mechanism-overview-node:e6e27ab4b6034a66",
+              "claim:claim-callback:MA-S1:unit-1:mechanism_overview:1-fact-callback:MA-S1:unit-1:mechanism_overview:1-node:3a6de8a6f23f4821",
+              "claim:claim-callback:MA-S1:unit-1:mechanism_overview:1-fact-callback:MA-S1:unit-1:mechanism_overview:1-node:95081304b4af2ce9",
+              "claim:claim-callback:MA-S1:unit-1:mechanism_overview:1-fact-callback:MA-S1:unit-1:mechanism_overview:1-node:e1cebc438f269492"
+            ],
+            "exact_question": "What repository evidence supports the claim that vanilla SSM step operations (fused add, norm, conv state, ssm output) are limited by their treatment of irregular timespans and input noise?",
+            "missing_parts": [
+              "Motivation: limitations of vanilla SSMs – they ignore irregular timespans and are vulnerable to input noise."
+            ],
+            "missing_rhetorical_move": "problem_or_local_context",
+            "priority": "high",
+            "request_id": "MA-S2:uq-01",
+            "required_authority_lane": "expository_bridge",
+            "section_id": "MA-S2",
+            "status": "open",
+            "target_clause_ids": [
+              "clause:O-ORGANIZATION-02-780817ba:0"
+            ],
+            "why_needed_for_reader": "The paragraph's motivation claim about SSM limitations requires repository-supported evidence connecting the step operations to specific failure modes under irregular timespans and noisy inputs.",
+            "target_brief_ids": [
+              "brief:story:O-ORGANIZATION-02-780817ba"
+            ]
+          }
+        ],
+        "self_identified_risks": [],
+        "unresolved_points": [],
+        "paragraphs": [
+          {
+            "paragraph_id": "paragraph:MA-S2:1",
+            "paragraph_markdown": "Standard SSM step operations—fused add and norm applied to hidden states with learned weight, bias, and epsilon parameters, followed by convolutional state and SSM output computation—assume a uniform sampling grid over the input sequence. This assumption renders them insensitive to irregular timespans between observations, and the absence of an explicit noise-robustness mechanism makes the hidden-state trajectory vulnerable to input perturbation.",
+            "rendered_from_facet_ids": [],
+            "rendered_field_candidate_ids": [],
+            "rendered_slot_ids": [
+              "slot:fact-callback:MA-S1:unit-1:mechanism_overview:1-node:3a6de8a6f23f4821",
+              "slot:fact-callback:req:MA-S1:mechanism-overview-node:e6e27ab4b6034a66"
+            ],
+            "rendered_edge_ids": [],
+            "used_formula_package_ids": [],
+            "used_claim_ids": [],
+            "used_equation_ids": [],
+            "witnesses": [
+              {
+                "witness_kind": "slot",
+                "target_id": "slot:fact-callback:MA-S1:unit-1:mechanism_overview:1-node:3a6de8a6f23f4821",
+                "exact_text": "Standard SSM step operations—fused add and norm applied to hidden states with learned weight, bias, and epsilon parameters, followed by convolutional state and SSM output computation—assume a uniform sampling grid over the input sequence."
+              },
+              {
+                "witness_kind": "slot",
+                "target_id": "slot:fact-callback:req:MA-S1:mechanism-overview-node:e6e27ab4b6034a66",
+                "exact_text": "Standard SSM step operations—fused add and norm applied to hidden states with learned weight, bias, and epsilon parameters, followed by convolutional state and SSM output computation—assume a uniform sampling grid over the input sequence."
+              }
+            ],
+            "formula_disposition": null,
+            "formula_disposition_reason": "",
+            "formula_dispositions": []
+          }
+        ]
+      }
+    },
+    {
+      "section_id": "MA-S1",
+      "heading": "Dynamic graph encoding: how interaction sequences are represented with heterogeneous features and aligned",
+      "accepted": false,
+      "failures": [
+        "writer_output_incomplete",
+        "invalid_writing_research_callback:mechanism_overview@MA-S1/MA-S1:unit-1/executable_hard",
+        "missing_required_briefs:brief:story:O-RATIONALE-CHECK-02-653d713f,brief:story:O-RATIONALE-CHECK-05-e1bbed89"
+      ],
+      "output": {
+        "section_id": "MA-S1",
+        "heading_text": "Dynamic graph encoding: how interaction sequences are represented with heterogeneous features and aligned",
+        "section_markdown": "## Dynamic graph encoding: how interaction sequences are represented with heterogeneous features and aligned\n\nThe dynamic graph encoder transforms raw interaction sequences into a unified, aligned feature representation that captures temporal and structural context. Router logits are normalized via softmax to produce routing weights, from which a top-k subset is selected to form the selected embeddings; the number of channels is computed from the channel embedding dimension. The encoder returns source and destination node embeddings as its output.",
+        "rendered_proposition_ids": [],
+        "deferred_proposition_ids": [],
+        "rendered_concept_keys": [],
+        "deferred_concept_keys": [],
+        "rendered_brief_ids": [
+          "brief:story:O-STAGE-01-06d7de36",
+          "brief:story:O-STAGE-01-06d7de36"
+        ],
+        "deferred_brief_ids": [],
+        "rendered_from_facet_ids": [],
+        "rendered_field_candidate_ids": [],
+        "deferred_facet_ids": [],
+        "rendered_paragraph_ids": [],
+        "rendered_slot_ids": [],
+        "rendered_edge_ids": [],
+        "used_formula_package_ids": [],
+        "used_argument_unit_ids": [],
+        "used_claim_ids": [],
+        "used_equation_ids": [],
+        "used_configuration_ids": [],
+        "completed_rhetorical_moves": [],
+        "new_research_requests": [
+          {
+            "argument_unit_id": "MA-S1:unit-1",
+            "candidate_symbols_or_terms": [
+              "A",
+              "negative real-part eigenvalues"
+            ],
+            "evidence_refs_used": [],
+            "exact_question": "How does the dynamic graph encoder initialize the adjacency matrix A as a diagonal matrix with strictly negative real-part eigenvalues, and what role does this initialization play in the alignment of temporal and structural features?",
+            "missing_parts": [
+              "formal definition of A",
+              "eigenvalue constraint",
+              "relation to alignment"
+            ],
+            "missing_rhetorical_move": "mechanism_overview",
+            "request_id": "MA-S1:unit-1:diagonal-init",
+            "required_authority_lane": "executable_hard",
+            "section_id": "MA-S1",
+            "status": "open"
+          }
+        ],
+        "self_identified_risks": [],
+        "unresolved_points": [],
+        "paragraphs": [
+          {
+            "paragraph_id": "paragraph:MA-S1:method-unit-1",
+            "paragraph_markdown": "The dynamic graph encoder transforms raw interaction sequences into a unified, aligned feature representation that captures temporal and structural context. Router logits are normalized via softmax to produce routing weights, from which a top-k subset is selected to form the selected embeddings; the number of channels is computed from the channel embedding dimension. The encoder returns source and destination node embeddings as its output.",
+            "rendered_from_facet_ids": [
+              "facet-e650301f08e6d4b3"
+            ],
+            "rendered_field_candidate_ids": [],
+            "rendered_slot_ids": [
+              "slot:fact-O-METHOD-MAINLINE-01-3011c54d-node:54472d179f866c8e",
+              "slot:fact-O-STAGE-01-06d7de36-node:b6b250aad804aa69",
+              "slot:fact-O-METHOD-MAINLINE-01-3011c54d-node:7ea80da61a5283ad",
+              "slot:fact-O-METHOD-MAINLINE-01-3011c54d-node:00be3f185b0d6ee5"
+            ],
+            "rendered_edge_ids": [],
+            "used_formula_package_ids": [],
+            "used_claim_ids": [],
+            "used_equation_ids": [],
+            "witnesses": [
+              {
+                "witness_kind": "facet",
+                "target_id": "facet-e650301f08e6d4b3",
+                "exact_text": "The dynamic graph encoder transforms raw interaction sequences into a unified, aligned feature representation that captures temporal and structural context."
+              },
+              {
+                "witness_kind": "slot",
+                "target_id": "slot:fact-O-METHOD-MAINLINE-01-3011c54d-node:54472d179f866c8e",
+                "exact_text": "Router logits are normalized via softmax to produce routing weights, from which a top-k subset is selected to form the selected embeddings; the number of channels is computed from the channel embedding dimension."
+              },
+              {
+                "witness_kind": "slot",
+                "target_id": "slot:fact-O-STAGE-01-06d7de36-node:b6b250aad804aa69",
+                "exact_text": "Router logits are normalized via softmax to produce routing weights, from which a top-k subset is selected to form the selected embeddings; the number of channels is computed from the channel embedding dimension."
+              },
+              {
+                "witness_kind": "slot",
+                "target_id": "slot:fact-O-METHOD-MAINLINE-01-3011c54d-node:7ea80da61a5283ad",
+                "exact_text": "Router logits are normalized via softmax to produce routing weights, from which a top-k subset is selected to form the selected embeddings; the number of channels is computed from the channel embedding dimension."
+              },
+              {
+                "witness_kind": "slot",
+                "target_id": "slot:fact-O-METHOD-MAINLINE-01-3011c54d-node:00be3f185b0d6ee5",
+                "exact_text": "The encoder returns source and destination node embeddings as its output."
+              }
+            ],
+            "formula_disposition": null,
+            "formula_disposition_reason": "",
+            "formula_dispositions": []
+          }
+        ]
+      }
+    },
+    {
+      "section_id": "MA-S3",
+      "heading": "Redesign: timespan-informed Δt and A for temporally aware forgetting",
+      "accepted": false,
+      "failures": [
+        "writer_output_incomplete",
+        "missing_required_briefs:brief:story:O-METHOD-MAINLINE-01-3011c54d,brief:story:O-ORGANIZATION-03-359984b4"
+      ],
+      "output": {
+        "section_id": "MA-S3",
+        "heading_text": "Redesign: timespan-informed Δt and A for temporally aware forgetting",
+        "section_markdown": "## Redesign: timespan-informed Δt and A for temporally aware forgetting\n\nThe redesigned SSM encodes a node's first-hop interaction sequence by passing aligned node, edge, absolute temporal, and co-occurrence signals through a continuous-state recurrence whose step size $Δt_i$ is a learnable, monotonically increasing function of the inter-event time gap $τ_i$ and whose state-transition matrix $A$ is initialized as a diagonal matrix with negative real-part eigenvalues to ensure stable decay. $$\nh_{i} = \\exp(\\Delta t_i A) h_{i-1} + \\Delta t_i B_i x_i, \\quad y_i = C_i h_i + D x_i\n$$ In this expression, $h_i$ is the hidden state at step $i$, $x_i$ is the input element, $y_i$ is the output, $B_i$ and $C_i$ are input-dependent matrices redefined with spectral norm constraints, and $D$ is the skip-connection matrix. The term $e^{Δt_i A}$ governs the forgetting of historical states proportionally to the elapsed time, while $Δt_i B_i x_i$ represents the input-dependent update that enables temporally aware selective reviewing.",
+        "rendered_proposition_ids": [],
+        "deferred_proposition_ids": [],
+        "rendered_concept_keys": [],
+        "deferred_concept_keys": [],
+        "rendered_brief_ids": [
+          "brief:story:O-STAGE-02-e02cd0f2",
+          "brief:story:O-STAGE-02-e02cd0f2"
+        ],
+        "deferred_brief_ids": [],
+        "rendered_from_facet_ids": [],
+        "rendered_field_candidate_ids": [],
+        "deferred_facet_ids": [],
+        "rendered_paragraph_ids": [],
+        "rendered_slot_ids": [],
+        "rendered_edge_ids": [],
+        "used_formula_package_ids": [
+          "pkg-ma-s3-redesign"
+        ],
+        "used_argument_unit_ids": [],
+        "used_claim_ids": [],
+        "used_equation_ids": [],
+        "used_configuration_ids": [],
+        "completed_rhetorical_moves": [],
+        "new_research_requests": [],
+        "self_identified_risks": [],
+        "unresolved_points": [],
+        "paragraphs": [
+          {
+            "paragraph_id": "paragraph:MA-S3:method-unit-1",
+            "paragraph_markdown": "The redesigned SSM encodes a node's first-hop interaction sequence by passing aligned node, edge, absolute temporal, and co-occurrence signals through a continuous-state recurrence whose step size $Δt_i$ is a learnable, monotonically increasing function of the inter-event time gap $τ_i$ and whose state-transition matrix $A$ is initialized as a diagonal matrix with negative real-part eigenvalues to ensure stable decay. $$\nh_{i} = \\exp(\\Delta t_i A) h_{i-1} + \\Delta t_i B_i x_i, \\quad y_i = C_i h_i + D x_i\n$$ In this expression, $h_i$ is the hidden state at step $i$, $x_i$ is the input element, $y_i$ is the output, $B_i$ and $C_i$ are input-dependent matrices redefined with spectral norm constraints, and $D$ is the skip-connection matrix. The term $e^{Δt_i A}$ governs the forgetting of historical states proportionally to the elapsed time, while $Δt_i B_i x_i$ represents the input-dependent update that enables temporally aware selective reviewing.",
+            "rendered_from_facet_ids": [
+              "facet-9a1ed70668b9de25",
+              "facet-0564bcda9bc954d9"
+            ],
+            "rendered_field_candidate_ids": [],
+            "rendered_slot_ids": [],
+            "rendered_edge_ids": [],
+            "used_formula_package_ids": [
+              "pkg-ma-s3-redesign"
+            ],
+            "used_claim_ids": [],
+            "used_equation_ids": [],
+            "witnesses": [
+              {
+                "witness_kind": "facet",
+                "target_id": "facet-9a1ed70668b9de25",
+                "exact_text": "The redesigned SSM encodes a node's first-hop interaction sequence by passing aligned node, edge, absolute temporal, and co-occurrence signals through a continuous-state recurrence whose step size $Δt_i$ is a learnable, monotonically increasing function of the inter-event time gap $τ_i$ and whose state-transition matrix $A$ is initialized as a diagonal matrix with negative real-part eigenvalues to ensure stable decay."
+              },
+              {
+                "witness_kind": "facet",
+                "target_id": "facet-0564bcda9bc954d9",
+                "exact_text": "The term $e^{Δt_i A}$ governs the forgetting of historical states proportionally to the elapsed time, while $Δt_i B_i x_i$ represents the input-dependent update that enables temporally aware selective reviewing."
+              },
+              {
+                "witness_kind": "formula",
+                "target_id": "pkg-ma-s3-redesign",
+                "exact_text": "$$\nh_{i} = \\exp(\\Delta t_i A) h_{i-1} + \\Delta t_i B_i x_i, \\quad y_i = C_i h_i + D x_i\n$$"
+              }
+            ],
+            "formula_disposition": null,
+            "formula_disposition_reason": "",
+            "formula_dispositions": []
+          }
+        ]
+      }
+    },
+    {
+      "section_id": "MA-S4",
+      "heading": "Downstream adaptation: link prediction and node classification setups",
+      "accepted": true,
+      "failures": [
+        "invalid_writing_research_callback:mechanism_overview@MA-S4/MA-S4:unit-1/executable_hard",
+        "missing_required_briefs:brief:story:O-COMPONENT-01-377afc18,brief:story:O-COMPONENT-01-88e55e54,brief:story:O-COMPONENT-02-c39dd898,brief:story:O-COMPONENT-03-2ae65141,brief:story:O-COMPONENT-04-6d73cce5,brief:story:O-COMPONENT-05-8cd85daa,brief:story:O-STAGE-04-a3a3e8ab",
+        "Final claim FAC5 reverse validation failed: no_semantically_matching_projected_claim; direct_evidence_missing",
+        "Final claim FAC8 reverse validation failed: no_semantically_matching_projected_claim; direct_evidence_missing",
+        "Final claim FAC9 reverse validation failed: formula_not_in_direct_evidence",
+        "Final claim FAC10 reverse validation failed: no_semantically_matching_projected_claim; direct_evidence_missing",
+        "Final claim FAC11 reverse validation failed: no_semantically_matching_projected_claim; direct_evidence_missing; formula_not_in_direct_evidence",
+        "Final claim FAC12 reverse validation failed: no_semantically_matching_projected_claim; direct_evidence_missing",
+        "Final claim FAC14 reverse validation failed: no_semantically_matching_projected_claim; direct_evidence_missing"
+      ],
+      "output": {
+        "section_id": "MA-S4",
+        "heading_text": "Downstream adaptation: link prediction and node classification setups",
+        "section_markdown": "## Downstream adaptation: link prediction and node classification setups\n\nDownstream tasks consume fixed-size node embeddings produced by a readout function applied to the sequential output of the encoder. For a target node, the interaction sequence is extracted as the ordered list of first-hop neighbor events up to a prediction timestamp, with each event carrying raw node and edge features; when a feature vector is unavailable, a zero vector is substituted. In the case-study protocol, a neighbor sampler retrieves all first-hop neighbors for the destination node set, and an edge bank with unlimited memory stores historical source-node records so that a query pair is resolved by checking whether the pair appears in the stored edge memories. The readout function maps the encoded sequence to a fixed-size embedding suitable for link prediction (by comparing embeddings of two candidate nodes) or node classification (by applying a classifier to a single embedding); in the case-study protocol the procedure returns both the source and destination node embeddings for downstream scoring.\n\nThe node embedding $h_u^t$ at prediction time $t$ is obtained by applying a readout function to the sequential encoding of the interaction history: $$\n\\mathbf{h}_{u}^{t} = \\text{ReadOut}\\left( \\text{SeqEnc}\\left( \\{ (\\mathbf{x}_{v}, \\mathbf{e}_{uv}, \\Delta t_{uv}) \\}_{v \\in \\mathcal{N}_{u}^{t}} \\right) \\right)\n$$ Here $h_u^t$ denotes the fixed-size embedding for node $u$ at time $t$, $N_u^t$ is the set of first-hop neighbors of $u$ up to time $t$, $x_v$ and $e_{uv}$ are the raw node and edge features, and $t_{uv}$ is the timespan from the interaction to the prediction time. The timespan is encoded via a trainable cosine-based function that captures the absolute temporal offset between each historical interaction and the query time. In addition, a co-occurrence frequency encoding captures structural similarity by representing the number of shared neighbors between the target node and each historical neighbor; in the case-study protocol this feature is concatenated with the source-node embedding when the interaction index is zero.",
+        "rendered_proposition_ids": [],
+        "deferred_proposition_ids": [],
+        "rendered_concept_keys": [],
+        "deferred_concept_keys": [],
+        "rendered_brief_ids": [
+          "brief:story:O-ORGANIZATION-04-a52145c2",
+          "brief:story:O-ORGANIZATION-04-a52145c2"
+        ],
+        "deferred_brief_ids": [],
+        "rendered_from_facet_ids": [
+          "facet-500349fe9389866d",
+          "facet-fbcc6e92c1b73f4e",
+          "facet-4e742dc0e3b52bae",
+          "facet-4d1239a88d3c0fce",
+          "facet-9f2ea9661004e61a",
+          "facet-8ebd977fd8a0b89d"
+        ],
+        "rendered_field_candidate_ids": [],
+        "deferred_facet_ids": [],
+        "rendered_paragraph_ids": [
+          "p",
+          "a",
+          "r",
+          "g",
+          "h",
+          ":",
+          "M",
+          "A",
+          "-",
+          "S",
+          "4",
+          "m",
+          "e",
+          "t",
+          "o",
+          "d",
+          "u",
+          "n",
+          "i",
+          "1",
+          "7"
+        ],
+        "rendered_slot_ids": [
+          "slot:fact-O-COMPONENT-03-2ae65141-node:4a3468105650fd0d",
+          "slot:fact-O-COMPONENT-01-377afc18-node:3646d6d14d1b0bce",
+          "slot:fact-O-COMPONENT-01-377afc18-node:8bcbfdfd1e8065a5",
+          "slot:fact-O-COMPONENT-05-8cd85daa-node:20e8a907508376ba"
+        ],
+        "rendered_edge_ids": [],
+        "used_formula_package_ids": [
+          "pkg:MA-S4:author_intent:0"
+        ],
+        "used_argument_unit_ids": [],
+        "used_claim_ids": [],
+        "used_equation_ids": [],
+        "used_configuration_ids": [],
+        "completed_rhetorical_moves": [],
+        "new_research_requests": [
+          {
+            "argument_unit_id": "MA-S4:unit-1",
+            "candidate_symbols_or_terms": [
+              "zero vectors when unavailable",
+              "robust_rate"
+            ],
+            "evidence_refs_used": [],
+            "exact_question": "What is the formal specification of the fallback encoding for missing node or edge features, and what is the role of the robust_rate parameter in the interaction sequence extraction?",
+            "missing_parts": [
+              "formal definition of zero-vector fallback for missing features",
+              "semantic role of robust_rate in sequence extraction"
+            ],
+            "missing_rhetorical_move": "mechanism_overview",
+            "request_id": "req:MA-S4:unit-1:1",
+            "required_authority_lane": "executable_hard",
+            "section_id": "MA-S4",
+            "status": "open"
+          },
+          {
+            "argument_unit_id": "MA-S4:unit-1",
+            "exact_question": "Does the repository contain a trainable cosine-based temporal encoding function that maps timespans from historical interactions to the prediction time, and a co-occurrence frequency encoding that captures structural similarity through shared-neighbor counts between the target node and each historical neighbor?",
+            "missing_parts": [
+              "cosine-based temporal encoding function",
+              "co-occurrence frequency encoding of shared-neighbor counts"
+            ],
+            "missing_rhetorical_move": "mechanism_overview",
+            "request_id": "req:MA-S4:unit-1:cosine-cooccur",
+            "required_authority_lane": "executable_hard",
+            "section_id": "MA-S4",
+            "status": "open",
+            "target_clause_ids": [
+              "facet-9f2ea9661004e61a",
+              "facet-8ebd977fd8a0b89d"
+            ],
+            "why_needed_for_reader": "The reader needs the temporal and structural encoding mechanisms to understand how each interaction event in the sequence is represented before the sequential encoder processes it."
+          }
+        ],
+        "self_identified_risks": [],
+        "unresolved_points": [],
+        "paragraphs": [
+          {
+            "paragraph_id": "paragraph:MA-S4:method-unit-1",
+            "paragraph_markdown": "Downstream tasks consume fixed-size node embeddings produced by a readout function applied to the sequential output of the encoder. For a target node, the interaction sequence is extracted as the ordered list of first-hop neighbor events up to a prediction timestamp, with each event carrying raw node and edge features; when a feature vector is unavailable, a zero vector is substituted. In the case-study protocol, a neighbor sampler retrieves all first-hop neighbors for the destination node set, and an edge bank with unlimited memory stores historical source-node records so that a query pair is resolved by checking whether the pair appears in the stored edge memories. The readout function maps the encoded sequence to a fixed-size embedding suitable for link prediction (by comparing embeddings of two candidate nodes) or node classification (by applying a classifier to a single embedding); in the case-study protocol the procedure returns both the source and destination node embeddings for downstream scoring.",
+            "rendered_from_facet_ids": [
+              "facet-500349fe9389866d",
+              "facet-fbcc6e92c1b73f4e",
+              "facet-4e742dc0e3b52bae",
+              "facet-4d1239a88d3c0fce"
+            ],
+            "rendered_field_candidate_ids": [],
+            "rendered_slot_ids": [
+              "slot:fact-O-COMPONENT-03-2ae65141-node:4a3468105650fd0d",
+              "slot:fact-O-COMPONENT-01-377afc18-node:3646d6d14d1b0bce",
+              "slot:fact-O-COMPONENT-01-377afc18-node:8bcbfdfd1e8065a5"
+            ],
+            "rendered_edge_ids": [],
+            "used_formula_package_ids": [],
+            "used_claim_ids": [],
+            "used_equation_ids": [],
+            "witnesses": [
+              {
+                "witness_kind": "facet",
+                "target_id": "facet-500349fe9389866d",
+                "exact_text": "Downstream tasks consume fixed-size node embeddings produced by a readout function applied to the sequential output of the encoder."
+              },
+              {
+                "witness_kind": "facet",
+                "target_id": "facet-fbcc6e92c1b73f4e",
+                "exact_text": "For a target node, the interaction sequence is extracted as the ordered list of first-hop neighbor events up to a prediction timestamp, with each event carrying raw node and edge features; when a feature vector is unavailable, a zero vector is substituted."
+              },
+              {
+                "witness_kind": "facet",
+                "target_id": "facet-4e742dc0e3b52bae",
+                "exact_text": "For a target node, the interaction sequence is extracted as the ordered list of first-hop neighbor events up to a prediction timestamp, with each event carrying raw node and edge features; when a feature vector is unavailable, a zero vector is substituted."
+              },
+              {
+                "witness_kind": "facet",
+                "target_id": "facet-4d1239a88d3c0fce",
+                "exact_text": "For a target node, the interaction sequence is extracted as the ordered list of first-hop neighbor events up to a prediction timestamp, with each event carrying raw node and edge features; when a feature vector is unavailable, a zero vector is substituted."
+              },
+              {
+                "witness_kind": "slot",
+                "target_id": "slot:fact-O-COMPONENT-03-2ae65141-node:4a3468105650fd0d",
+                "exact_text": "In the case-study protocol, a neighbor sampler retrieves all first-hop neighbors for the destination node set, and an edge bank with unlimited memory stores historical source-node records so that a query pair is resolved by checking whether the pair appears in the stored edge memories."
+              },
+              {
+                "witness_kind": "slot",
+                "target_id": "slot:fact-O-COMPONENT-01-377afc18-node:3646d6d14d1b0bce",
+                "exact_text": "In the case-study protocol, a neighbor sampler retrieves all first-hop neighbors for the destination node set, and an edge bank with unlimited memory stores historical source-node records so that a query pair is resolved by checking whether the pair appears in the stored edge memories."
+              },
+              {
+                "witness_kind": "slot",
+                "target_id": "slot:fact-O-COMPONENT-01-377afc18-node:8bcbfdfd1e8065a5",
+                "exact_text": "The readout function maps the encoded sequence to a fixed-size embedding suitable for link prediction (by comparing embeddings of two candidate nodes) or node classification (by applying a classifier to a single embedding); in the case-study protocol the procedure returns both the source and destination node embeddings for downstream scoring."
+              }
+            ],
+            "formula_disposition": "consumed",
+            "formula_disposition_reason": "",
+            "formula_dispositions": []
+          },
+          {
+            "paragraph_id": "paragraph:MA-S4:7",
+            "paragraph_markdown": "The node embedding $h_u^t$ at prediction time $t$ is obtained by applying a readout function to the sequential encoding of the interaction history: $$\n\\mathbf{h}_{u}^{t} = \\text{ReadOut}\\left( \\text{SeqEnc}\\left( \\{ (\\mathbf{x}_{v}, \\mathbf{e}_{uv}, \\Delta t_{uv}) \\}_{v \\in \\mathcal{N}_{u}^{t}} \\right) \\right)\n$$ Here $h_u^t$ denotes the fixed-size embedding for node $u$ at time $t$, $N_u^t$ is the set of first-hop neighbors of $u$ up to time $t$, $x_v$ and $e_{uv}$ are the raw node and edge features, and $t_{uv}$ is the timespan from the interaction to the prediction time. The timespan is encoded via a trainable cosine-based function that captures the absolute temporal offset between each historical interaction and the query time. In addition, a co-occurrence frequency encoding captures structural similarity by representing the number of shared neighbors between the target node and each historical neighbor; in the case-study protocol this feature is concatenated with the source-node embedding when the interaction index is zero.",
+            "rendered_from_facet_ids": [
+              "facet-9f2ea9661004e61a",
+              "facet-8ebd977fd8a0b89d"
+            ],
+            "rendered_field_candidate_ids": [],
+            "rendered_slot_ids": [
+              "slot:fact-O-COMPONENT-05-8cd85daa-node:20e8a907508376ba"
+            ],
+            "rendered_edge_ids": [],
+            "used_formula_package_ids": [
+              "pkg:MA-S4:author_intent:0"
+            ],
+            "used_claim_ids": [],
+            "used_equation_ids": [],
+            "witnesses": [
+              {
+                "witness_kind": "facet",
+                "target_id": "facet-9f2ea9661004e61a",
+                "exact_text": "The timespan is encoded via a trainable cosine-based function that captures the absolute temporal offset between each historical interaction and the query time."
+              },
+              {
+                "witness_kind": "facet",
+                "target_id": "facet-8ebd977fd8a0b89d",
+                "exact_text": "In addition, a co-occurrence frequency encoding captures structural similarity by representing the number of shared neighbors between the target node and each historical neighbor; in the case-study protocol this feature is concatenated with the source-node embedding when the interaction index is zero."
+              },
+              {
+                "witness_kind": "slot",
+                "target_id": "slot:fact-O-COMPONENT-05-8cd85daa-node:20e8a907508376ba",
+                "exact_text": "In addition, a co-occurrence frequency encoding captures structural similarity by representing the number of shared neighbors between the target node and each historical neighbor; in the case-study protocol this feature is concatenated with the source-node embedding when the interaction index is zero."
+              },
+              {
+                "witness_kind": "formula",
+                "target_id": "pkg:MA-S4:author_intent:0",
+                "exact_text": "$$\n\\mathbf{h}_{u}^{t} = \\text{ReadOut}\\left( \\text{SeqEnc}\\left( \\{ (\\mathbf{x}_{v}, \\mathbf{e}_{uv}, \\Delta t_{uv}) \\}_{v \\in \\mathcal{N}_{u}^{t}} \\right) \\right)\n$$"
+              }
+            ],
+            "formula_disposition": "consumed",
+            "formula_disposition_reason": "",
+            "formula_dispositions": []
+          }
+        ]
+      }
+    },
+    {
+      "section_id": "MA-S5",
+      "heading": "Robust selective reviewing",
+      "accepted": false,
+      "failures": [
+        "writer_output_incomplete",
+        "invalid_writing_research_callback:equation_or_derivation@MA-S5/MA-S5:unit/expository_bridge"
+      ],
+      "output": {
+        "section_id": "MA-S5",
+        "heading_text": "Robust selective reviewing",
+        "section_markdown": "## Robust selective reviewing\n\nThe selective reviewing mechanism performs input-dependent filtering over historical information, reinforcing salient interactions while suppressing noise. Stability of this filtering is maintained by constraining the spectral norm of the reviewing transformation $W_{\\text{review}}$ so that it does not exceed a positive scalar bound $\\text{rho}$, where $\\text{W}_{\\text{review}}$ denotes the weight matrix or transformation operator associated with the selective reviewing module, $|\\text{cdot}|_2$ denotes the spectral norm (maximum singular value), and $\\text{rho}$ is the stability threshold. $$\n\\|W_{\\text{review}}\\|_2 \\le \\rho\n$$ This constraint ensures that the selective review process does not amplify errors or signals beyond a stable range.",
+        "rendered_proposition_ids": [],
+        "deferred_proposition_ids": [],
+        "rendered_concept_keys": [],
+        "deferred_concept_keys": [],
+        "rendered_brief_ids": [
+          "brief:story:O-STAGE-03-d47a86f4"
+        ],
+        "deferred_brief_ids": [],
+        "rendered_from_facet_ids": [],
+        "rendered_field_candidate_ids": [],
+        "deferred_facet_ids": [],
+        "rendered_paragraph_ids": [],
+        "rendered_slot_ids": [],
+        "rendered_edge_ids": [],
+        "used_formula_package_ids": [
+          "pkg:MA-S5:author_intent:0"
+        ],
+        "used_argument_unit_ids": [],
+        "used_claim_ids": [],
+        "used_equation_ids": [],
+        "used_configuration_ids": [],
+        "completed_rhetorical_moves": [],
+        "new_research_requests": [
+          {
+            "argument_unit_id": "MA-S5:unit",
+            "evidence_refs_used": [],
+            "exact_question": "What repository evidence supports the spectral norm bound ρ as a stability threshold for the selective reviewing transformation W_review?",
+            "missing_parts": [],
+            "missing_rhetorical_move": "equation_or_derivation",
+            "request_id": "REQ-MA-S5:001",
+            "required_authority_lane": "expository_bridge",
+            "section_id": "MA-S5",
+            "status": "open"
+          }
+        ],
+        "self_identified_risks": [],
+        "unresolved_points": [],
+        "paragraphs": [
+          {
+            "paragraph_id": "paragraph:MA-S5:method-unit-1",
+            "paragraph_markdown": "The selective reviewing mechanism performs input-dependent filtering over historical information, reinforcing salient interactions while suppressing noise. Stability of this filtering is maintained by constraining the spectral norm of the reviewing transformation $W_{\text{review}}$ so that it does not exceed a positive scalar bound $\text{rho}$, where $\text{W}_{\text{review}}$ denotes the weight matrix or transformation operator associated with the selective reviewing module, $|\text{cdot}|_2$ denotes the spectral norm (maximum singular value), and $\text{rho}$ is the stability threshold. $$\n\\|W_{\\text{review}}\\|_2 \\le \\rho\n$$ This constraint ensures that the selective review process does not amplify errors or signals beyond a stable range.",
+            "rendered_from_facet_ids": [
+              "facet-9a8892286042413e"
+            ],
+            "rendered_field_candidate_ids": [],
+            "rendered_slot_ids": [],
+            "rendered_edge_ids": [],
+            "used_formula_package_ids": [
+              "pkg:MA-S5:author_intent:0"
+            ],
+            "used_claim_ids": [],
+            "used_equation_ids": [],
+            "witnesses": [
+              {
+                "witness_kind": "facet",
+                "target_id": "facet-9a8892286042413e",
+                "exact_text": "The selective reviewing mechanism performs input-dependent filtering over historical information, reinforcing salient interactions while suppressing noise."
+              },
+              {
+                "witness_kind": "formula",
+                "target_id": "pkg:MA-S5:author_intent:0",
+                "exact_text": "$$\n\\|W_{\\text{review}}\\|_2 \\le \\rho\n$$"
+              }
+            ],
+            "formula_disposition": null,
+            "formula_disposition_reason": "",
+            "formula_dispositions": []
+          }
+        ]
+      }
+    }
+  ],
+  "accepted_section_ids": [
+    "MA-S2",
+    "MA-S4"
+  ],
+  "incomplete_section_ids": [
+    "MA-S2",
+    "MA-S1",
+    "MA-S3",
+    "MA-S4",
+    "MA-S5"
+  ],
+  "binding_failures": [
+    "MA-S2:invalid_writing_research_callback:problem_or_local_context@MA-S2/MA-S2:unit/expository_bridge",
+    "MA-S1:writer_output_incomplete",
+    "MA-S1:invalid_writing_research_callback:mechanism_overview@MA-S1/MA-S1:unit-1/executable_hard",
+    "MA-S1:missing_required_briefs:brief:story:O-RATIONALE-CHECK-02-653d713f,brief:story:O-RATIONALE-CHECK-05-e1bbed89",
+    "MA-S3:writer_output_incomplete",
+    "MA-S3:missing_required_briefs:brief:story:O-METHOD-MAINLINE-01-3011c54d,brief:story:O-ORGANIZATION-03-359984b4",
+    "MA-S4:invalid_writing_research_callback:mechanism_overview@MA-S4/MA-S4:unit-1/executable_hard",
+    "MA-S4:missing_required_briefs:brief:story:O-COMPONENT-01-377afc18,brief:story:O-COMPONENT-01-88e55e54,brief:story:O-COMPONENT-02-c39dd898,brief:story:O-COMPONENT-03-2ae65141,brief:story:O-COMPONENT-04-6d73cce5,brief:story:O-COMPONENT-05-8cd85daa,brief:story:O-STAGE-04-a3a3e8ab",
+    "MA-S5:writer_output_incomplete",
+    "MA-S5:invalid_writing_research_callback:equation_or_derivation@MA-S5/MA-S5:unit/expository_bridge",
+    "editor:editor_patch_schema_failed:ValueError",
+    "formalization_required_obligation_unresolved:MA-S1:formula:facet:facet-45205815214ce81d,formula:section:MA-S1:derivation",
+    "formalization_required_obligation_unresolved:MA-S3:formula:facet:facet-9a1ed70668b9de25,formula:facet:facet-e3de4791afd3b462,formula:facet:facet-0564bcda9bc954d9,formula:section:MA-S3:derivation",
+    "formalization_required_obligation_unresolved:MA-S4:formula:section:MA-S4:derivation",
+    "formalization_required_obligation_unresolved:MA-S5:formula:facet:facet-85dd07572b8a77e2,formula:section:MA-S5:derivation"
+  ],
+  "writer_aggregate": {
+    "sections": [
+      {
+        "section_id": "MA-S2",
+        "heading": "Motivation: limitations of vanilla SSMs – they ignore irregular timespans and are vulnerable to input noise",
+        "text_length": 562,
+        "finish_reason": "structured_complete",
+        "extended_budget_used": false,
+        "blocked_reason": ""
+      },
+      {
+        "section_id": "MA-S1",
+        "heading": "Dynamic graph encoding: how interaction sequences are represented with heterogeneous features and aligned",
+        "text_length": 553,
+        "finish_reason": "structured_complete",
+        "extended_budget_used": false,
+        "blocked_reason": "publication_paragraph_transaction_failed:required_target_contract:paragraph:MA-S1:method-unit-1:facet:facet-45205815214ce81d;required_target_contract:paragraph:MA-S1:method-unit-1:formula:formula:facet:facet-45205815214ce81d;required_target_contract:paragraph:MA-S1:method-unit-1:formula:formula:section:MA-S1:derivation"
+      },
+      {
+        "section_id": "MA-S3",
+        "heading": "Redesign: timespan-informed Δt and A for temporally aware forgetting",
+        "text_length": 1031,
+        "finish_reason": "structured_complete",
+        "extended_budget_used": false,
+        "blocked_reason": "publication_paragraph_transaction_failed:required_target_contract:paragraph:MA-S3:method-unit-1:facet:facet-e3de4791afd3b462;required_target_contract:paragraph:MA-S3:method-unit-1:slot:slot:fact-callback:req:MA-S1:mechanism-overview-node:5aa3466791d8654f;required_target_contract:paragraph:MA-S3:method-unit-1:slot:slot:fact-O-STAGE-02-e02cd0f2-node:775aa62491c88d60;required_target_contract:paragraph:MA-S3:method-unit-1:slot:slot:fact-O-STAGE-02-e02cd0f2-node:295ccb032c6bffcd;required_target_contract:paragraph:MA-S3:method-unit-1:slot:slot:fact-O-STAGE-02-e02cd0f2-node:78fb7cf618388d76"
+      },
+      {
+        "section_id": "MA-S4",
+        "heading": "Downstream adaptation: link prediction and node classification setups",
+        "text_length": 2140,
+        "finish_reason": "structured_complete",
+        "extended_budget_used": false,
+        "blocked_reason": null
+      },
+      {
+        "section_id": "MA-S5",
+        "heading": "Robust selective reviewing",
+        "text_length": 777,
+        "finish_reason": "structured_complete",
+        "extended_budget_used": false,
+        "blocked_reason": "publication_paragraph_transaction_failed:required_target_contract:paragraph:MA-S5:method-unit-1:facet:facet-85dd07572b8a77e2;required_target_contract:paragraph:MA-S5:method-unit-1:formula:formula:section:MA-S5:derivation"
+      }
+    ],
+    "traces": [
+      {
+        "call_id": "LLM-publication-method-section-0-MA-S2",
+        "prompt_template_id": "phase5_method_writer_section_v1",
+        "role": "method_writer",
+        "provider": "openai",
+        "model": "qwen38-27b-nvfp4",
+        "endpoint_origin": "http://127.0.0.1:8006",
+        "effective_config": {
+          "role": "method_writer",
+          "temperature": 0.7,
+          "max_output_tokens": 8192,
+          "reasoning_effort": "low",
+          "thinking_token_budget": 1024,
+          "top_p": 0.95,
+          "top_k": 20,
+          "seed": 42,
+          "max_input_tokens": null,
+          "prompt_template_version": ""
+        },
+        "finish_reason": "structured_complete",
+        "token_usage": {
+          "prompt_tokens": 1595,
+          "total_tokens": 3086,
+          "completion_tokens": 1491
+        },
+        "blocked_reason": "",
+        "cached": false,
+        "response_mode": "native_json_schema",
+        "schema_name": "publication_method_section_v1",
+        "input_hash": "sha256:102b7ee67c954f30361b6079db2f7042738e3eb57f9fbea1b258ff514cb0ad0a",
+        "response_hash": "sha256:bea3a525df35daa96bc0becc7a9f127a38048dcb89c4609864c717a23e024f8e",
+        "prompt_chars": 6412,
+        "input_payload_chars": 1484,
+        "schema_chars": 7699,
+        "thinking_chars": 0,
+        "extended_budget_used": false,
+        "cumulative_budget_consumed": 1491
+      },
+      {
+        "call_id": "LLM-publication-method-section-1-MA-S1",
+        "prompt_template_id": "phase5_method_writer_section_v1",
+        "role": "method_writer",
+        "provider": "openai",
+        "model": "qwen38-27b-nvfp4",
+        "endpoint_origin": "http://127.0.0.1:8006",
+        "effective_config": {
+          "role": "method_writer",
+          "temperature": 0.7,
+          "max_output_tokens": 8192,
+          "reasoning_effort": "low",
+          "thinking_token_budget": 1024,
+          "top_p": 0.95,
+          "top_k": 20,
+          "seed": 42,
+          "max_input_tokens": null,
+          "prompt_template_version": ""
+        },
+        "finish_reason": "structured_complete",
+        "token_usage": {
+          "prompt_tokens": 2427,
+          "total_tokens": 3827,
+          "completion_tokens": 1400
+        },
+        "blocked_reason": "publication_paragraph_transaction_failed:required_target_contract:paragraph:MA-S1:method-unit-1:facet:facet-45205815214ce81d;required_target_contract:paragraph:MA-S1:method-unit-1:formula:formula:facet:facet-45205815214ce81d;required_target_contract:paragraph:MA-S1:method-unit-1:formula:formula:section:MA-S1:derivation",
+        "cached": false,
+        "response_mode": "native_json_schema",
+        "schema_name": "publication_method_section_v1",
+        "input_hash": "sha256:6777938d099e3a4e3392da0d95329fc3226f6b3dd06b1f9c4004977e3353476e",
+        "response_hash": "sha256:52506a79fc7317bb785e04deb83cd42b2c5fd3492b45f55c0bf1fb48eceb36c2",
+        "prompt_chars": 6412,
+        "input_payload_chars": 5204,
+        "schema_chars": 8607,
+        "thinking_chars": 0,
+        "extended_budget_used": false,
+        "cumulative_budget_consumed": 2891
+      },
+      {
+        "call_id": "LLM-publication-method-section-2-MA-S3",
+        "prompt_template_id": "phase5_method_writer_section_v1",
+        "role": "method_writer",
+        "provider": "openai",
+        "model": "qwen38-27b-nvfp4",
+        "endpoint_origin": "http://127.0.0.1:8006",
+        "effective_config": {
+          "role": "method_writer",
+          "temperature": 0.7,
+          "max_output_tokens": 8192,
+          "reasoning_effort": "low",
+          "thinking_token_budget": 1024,
+          "top_p": 0.95,
+          "top_k": 20,
+          "seed": 42,
+          "max_input_tokens": null,
+          "prompt_template_version": ""
+        },
+        "finish_reason": "structured_complete",
+        "token_usage": {
+          "prompt_tokens": 3791,
+          "total_tokens": 5554,
+          "completion_tokens": 1763
+        },
+        "blocked_reason": "publication_paragraph_transaction_failed:required_target_contract:paragraph:MA-S3:method-unit-1:facet:facet-e3de4791afd3b462;required_target_contract:paragraph:MA-S3:method-unit-1:slot:slot:fact-callback:req:MA-S1:mechanism-overview-node:5aa3466791d8654f;required_target_contract:paragraph:MA-S3:method-unit-1:slot:slot:fact-O-STAGE-02-e02cd0f2-node:775aa62491c88d60;required_target_contract:paragraph:MA-S3:method-unit-1:slot:slot:fact-O-STAGE-02-e02cd0f2-node:295ccb032c6bffcd;required_target_contract:paragraph:MA-S3:method-unit-1:slot:slot:fact-O-STAGE-02-e02cd0f2-node:78fb7cf618388d76",
+        "cached": false,
+        "response_mode": "native_json_schema",
+        "schema_name": "publication_method_section_v1",
+        "input_hash": "sha256:daaef6e8a53f51b8f3e0cfe17ececc048dedecff36ba2ee2b7c7e0378ecfb13d",
+        "response_hash": "sha256:90f441d3a95d7670f9b3f04177ecf104196bc2c9c22f1757524fa983de7f5d55",
+        "prompt_chars": 6412,
+        "input_payload_chars": 10036,
+        "schema_chars": 8611,
+        "thinking_chars": 0,
+        "extended_budget_used": false,
+        "cumulative_budget_consumed": 4654
+      },
+      {
+        "call_id": "LLM-publication-method-section-2-MA-S3-content-1",
+        "prompt_template_id": "phase5_method_writer_section_v1_content_repair_v1",
+        "role": "method_writer",
+        "provider": "openai",
+        "model": "qwen38-27b-nvfp4",
+        "endpoint_origin": "http://127.0.0.1:8006",
+        "effective_config": {
+          "role": "method_writer",
+          "temperature": 0.7,
+          "max_output_tokens": 8192,
+          "reasoning_effort": "low",
+          "thinking_token_budget": 1024,
+          "top_p": 0.95,
+          "top_k": 20,
+          "seed": 42,
+          "max_input_tokens": null,
+          "prompt_template_version": ""
+        },
+        "finish_reason": "structured_complete",
+        "token_usage": {
+          "prompt_tokens": 10119,
+          "total_tokens": 11607,
+          "completion_tokens": 1488
+        },
+        "blocked_reason": "publication_section_binding_failed:formula_placeholder:paragraph:MA-S3:method-unit-1:formula_placeholder_missing:pkg-ma-s3-redesign",
+        "cached": false,
+        "response_mode": "native_json_schema",
+        "schema_name": "publication_method_section_v1",
+        "input_hash": "sha256:69985fbb1c57b424e0939162148a72a79f3c6df259d650cdf4ee2c3e884b4730",
+        "response_hash": "sha256:67067810195ebc773f8fb909e5667644eb468cbd3a5e345f99f38794bafbd5d6",
+        "prompt_chars": 6412,
+        "input_payload_chars": 33571,
+        "schema_chars": 8611,
+        "thinking_chars": 0,
+        "extended_budget_used": false,
+        "cumulative_budget_consumed": 6142
+      },
+      {
+        "call_id": "LLM-publication-method-section-2-MA-S3-content-2",
+        "prompt_template_id": "phase5_method_writer_section_v1_content_repair_v1",
+        "role": "method_writer",
+        "provider": "openai",
+        "model": "qwen38-27b-nvfp4",
+        "endpoint_origin": "http://127.0.0.1:8006",
+        "effective_config": {
+          "role": "method_writer",
+          "temperature": 0.7,
+          "max_output_tokens": 8192,
+          "reasoning_effort": "low",
+          "thinking_token_budget": 1024,
+          "top_p": 0.95,
+          "top_k": 20,
+          "seed": 42,
+          "max_input_tokens": null,
+          "prompt_template_version": ""
+        },
+        "finish_reason": "structured_complete",
+        "token_usage": {
+          "prompt_tokens": 9174,
+          "total_tokens": 10911,
+          "completion_tokens": 1737
+        },
+        "blocked_reason": "publication_paragraph_transaction_failed:required_target_contract:paragraph:MA-S3:method-unit-1:facet:facet-e3de4791afd3b462;required_target_contract:paragraph:MA-S3:method-unit-1:slot:slot:fact-callback:req:MA-S1:mechanism-overview-node:5aa3466791d8654f;required_target_contract:paragraph:MA-S3:method-unit-1:slot:slot:fact-O-STAGE-02-e02cd0f2-node:775aa62491c88d60;required_target_contract:paragraph:MA-S3:method-unit-1:slot:slot:fact-O-STAGE-02-e02cd0f2-node:295ccb032c6bffcd;required_target_contract:paragraph:MA-S3:method-unit-1:slot:slot:fact-O-STAGE-02-e02cd0f2-node:78fb7cf618388d76",
+        "cached": false,
+        "response_mode": "native_json_schema",
+        "schema_name": "publication_method_section_v1",
+        "input_hash": "sha256:dabf16513e4166cd16ade290b3376d4c991bebc57ad5fbce6e74d6b1ef39e355",
+        "response_hash": "sha256:de93749ae8819dd77c6fea3b476d80736d5440a8acd4b3d4b3419cf0034a9766",
+        "prompt_chars": 6412,
+        "input_payload_chars": 30671,
+        "schema_chars": 8611,
+        "thinking_chars": 0,
+        "extended_budget_used": false,
+        "cumulative_budget_consumed": 7879
+      },
+      {
+        "call_id": "LLM-publication-method-section-3-MA-S4",
+        "prompt_template_id": "phase5_method_writer_section_v1",
+        "role": "method_writer",
+        "provider": "openai",
+        "model": "qwen38-27b-nvfp4",
+        "endpoint_origin": "http://127.0.0.1:8006",
+        "effective_config": {
+          "role": "method_writer",
+          "temperature": 0.7,
+          "max_output_tokens": 8192,
+          "reasoning_effort": "low",
+          "thinking_token_budget": 1024,
+          "top_p": 0.95,
+          "top_k": 20,
+          "seed": 42,
+          "max_input_tokens": null,
+          "prompt_template_version": ""
+        },
+        "finish_reason": "structured_complete",
+        "token_usage": {
+          "completion_tokens": 751
+        },
+        "blocked_reason": "publication_paragraph_transaction_failed:required_target_contract:paragraph:MA-S4:method-unit-1:slot:slot:fact-O-COMPONENT-01-377afc18-node:3646d6d14d1b0bce;required_target_contract:paragraph:MA-S4:method-unit-1:slot:slot:fact-O-STAGE-04-a3a3e8ab-node:992d4e5d074a2eff;required_target_contract:paragraph:MA-S4:method-unit-1:slot:slot:fact-O-COMPONENT-01-377afc18-node:8bcbfdfd1e8065a5;required_target_contract:paragraph:MA-S4:7:facet:facet-8ebd977fd8a0b89d;required_target_contract:paragraph:MA-S4:7:slot:slot:fact-O-COMPONENT-05-8cd85daa-node:20e8a907508376ba",
+        "cached": false,
+        "response_mode": "native_json_schema",
+        "schema_name": "publication_method_section_v1",
+        "input_hash": "sha256:822dadb7c2808ac99c8e1a00695820c9a951f8f6a6243352f4e6657fc4baf912",
+        "response_hash": "sha256:350653f4b6b47486808d3ef66924c0fc7a913220bcae814480cfe642c1b4a251",
+        "prompt_chars": 6412,
+        "input_payload_chars": 8419,
+        "schema_chars": 9109,
+        "thinking_chars": 0,
+        "extended_budget_used": false,
+        "cumulative_budget_consumed": 8630
+      },
+      {
+        "call_id": "LLM-publication-method-section-3-MA-S4-content-1",
+        "prompt_template_id": "phase5_method_writer_section_v1_content_repair_v1",
+        "role": "method_writer",
+        "provider": "openai",
+        "model": "qwen38-27b-nvfp4",
+        "endpoint_origin": "http://127.0.0.1:8006",
+        "effective_config": {
+          "role": "method_writer",
+          "temperature": 0.7,
+          "max_output_tokens": 8192,
+          "reasoning_effort": "low",
+          "thinking_token_budget": 1024,
+          "top_p": 0.95,
+          "top_k": 20,
+          "seed": 42,
+          "max_input_tokens": null,
+          "prompt_template_version": ""
+        },
+        "finish_reason": "structured_complete",
+        "token_usage": {
+          "prompt_tokens": 8789,
+          "total_tokens": 10724,
+          "completion_tokens": 1935
+        },
+        "blocked_reason": "publication_paragraph_transaction_failed:consumed_formula_not_declared:paragraph:MA-S4:method-unit-1:pkg:MA-S4:author_intent:0;required_target_contract:paragraph:MA-S4:method-unit-1:slot:slot:fact-O-STAGE-04-a3a3e8ab-node:992d4e5d074a2eff",
+        "cached": false,
+        "response_mode": "native_json_schema",
+        "schema_name": "publication_method_section_v1",
+        "input_hash": "sha256:cdf4aae8b946ba0d3c8e1f9c626425eb317b7330e9d8dd01fe1d03d0610c55f9",
+        "response_hash": "sha256:6cbbab502dd4c94669bea1e83d4e04486becf2b61efaafc0b756ed0fb5079225",
+        "prompt_chars": 6412,
+        "input_payload_chars": 29504,
+        "schema_chars": 9109,
+        "thinking_chars": 0,
+        "extended_budget_used": false,
+        "cumulative_budget_consumed": 10565
+      },
+      {
+        "call_id": "LLM-publication-method-section-4-MA-S5",
+        "prompt_template_id": "phase5_method_writer_section_v1",
+        "role": "method_writer",
+        "provider": "openai",
+        "model": "qwen38-27b-nvfp4",
+        "endpoint_origin": "http://127.0.0.1:8006",
+        "effective_config": {
+          "role": "method_writer",
+          "temperature": 0.7,
+          "max_output_tokens": 8192,
+          "reasoning_effort": "low",
+          "thinking_token_budget": 1024,
+          "top_p": 0.95,
+          "top_k": 20,
+          "seed": 42,
+          "max_input_tokens": null,
+          "prompt_template_version": ""
+        },
+        "finish_reason": "structured_complete",
+        "token_usage": {
+          "completion_tokens": 435
+        },
+        "blocked_reason": "publication_paragraph_transaction_failed:required_target_contract:paragraph:MA-S5:method-unit-1:facet:facet-85dd07572b8a77e2;required_target_contract:paragraph:MA-S5:method-unit-1:formula:formula:section:MA-S5:derivation",
+        "cached": false,
+        "response_mode": "native_json_schema",
+        "schema_name": "publication_method_section_v1",
+        "input_hash": "sha256:93db3e2652937e56ce2f180228c0f22774387ea6c894b1198d8c32f75d158a09",
+        "response_hash": "sha256:9ac971c9a11f47f2ec20efebc5f15b86aa140d8b0f8e5f5dc3f74628a7bbb378",
+        "prompt_chars": 6412,
+        "input_payload_chars": 4418,
+        "schema_chars": 8363,
+        "thinking_chars": 0,
+        "extended_budget_used": false,
+        "cumulative_budget_consumed": 11000
+      },
+      {
+        "call_id": "LLM-publication-method-section-4-MA-S5-content-1",
+        "prompt_template_id": "phase5_method_writer_section_v1_content_repair_v1",
+        "role": "method_writer",
+        "provider": "openai",
+        "model": "qwen38-27b-nvfp4",
+        "endpoint_origin": "http://127.0.0.1:8006",
+        "effective_config": {
+          "role": "method_writer",
+          "temperature": 0.7,
+          "max_output_tokens": 8192,
+          "reasoning_effort": "low",
+          "thinking_token_budget": 1024,
+          "top_p": 0.95,
+          "top_k": 20,
+          "seed": 42,
+          "max_input_tokens": null,
+          "prompt_template_version": ""
+        },
+        "finish_reason": "structured_complete",
+        "token_usage": {
+          "completion_tokens": 419
+        },
+        "blocked_reason": "publication_paragraph_transaction_failed:required_target_contract:paragraph:MA-S5:method-unit-1:facet:facet-85dd07572b8a77e2;required_target_contract:paragraph:MA-S5:method-unit-1:formula:formula:section:MA-S5:derivation",
+        "cached": false,
+        "response_mode": "native_json_schema",
+        "schema_name": "publication_method_section_v1",
+        "input_hash": "sha256:32f86964ce12acfa63393f0d1a518623905ee576b3a2556ceb55972642452dda",
+        "response_hash": "sha256:42994b4c8719516261cfc09686483552c323f3673107e3d1dc53933d69541ad2",
+        "prompt_chars": 6412,
+        "input_payload_chars": 14463,
+        "schema_chars": 8363,
+        "thinking_chars": 0,
+        "extended_budget_used": false,
+        "cumulative_budget_consumed": 11419
+      },
+      {
+        "call_id": "LLM-publication-method-section-4-MA-S5-content-2",
+        "prompt_template_id": "phase5_method_writer_section_v1_content_repair_v1",
+        "role": "method_writer",
+        "provider": "openai",
+        "model": "qwen38-27b-nvfp4",
+        "endpoint_origin": "http://127.0.0.1:8006",
+        "effective_config": {
+          "role": "method_writer",
+          "temperature": 0.7,
+          "max_output_tokens": 8192,
+          "reasoning_effort": "low",
+          "thinking_token_budget": 1024,
+          "top_p": 0.95,
+          "top_k": 20,
+          "seed": 42,
+          "max_input_tokens": null,
+          "prompt_template_version": ""
+        },
+        "finish_reason": "structured_complete",
+        "token_usage": {
+          "completion_tokens": 439
+        },
+        "blocked_reason": "publication_paragraph_transaction_failed:required_target_contract:paragraph:MA-S5:method-unit-1:facet:facet-85dd07572b8a77e2;required_target_contract:paragraph:MA-S5:method-unit-1:formula:formula:section:MA-S5:derivation",
+        "cached": false,
+        "response_mode": "native_json_schema",
+        "schema_name": "publication_method_section_v1",
+        "input_hash": "sha256:2fede5977a694d9229d9d7a52769ade1bc555f56b56597d69197bdff13f6fb7f",
+        "response_hash": "sha256:ca8bb5ad778cfe350962220c698482ab102ac5d8cb1f0b7cf3315723632ac30d",
+        "prompt_chars": 6412,
+        "input_payload_chars": 14495,
+        "schema_chars": 8363,
+        "thinking_chars": 0,
+        "extended_budget_used": false,
+        "cumulative_budget_consumed": 11858
+      },
+      {
+        "call_id": "LLM-publication-method-section-MA-S1-paragraph:MA-S1:method-unit-1-binder-1",
+        "prompt_template_id": "phase5_publication_paragraph_binder_v1",
+        "role": "semantic_verifier",
+        "provider": "openai",
+        "model": "qwen38-27b-nvfp4",
+        "endpoint_origin": "http://127.0.0.1:8006",
+        "effective_config": {
+          "role": "semantic_verifier",
+          "temperature": 0.0,
+          "max_output_tokens": 1024,
+          "reasoning_effort": "none",
+          "thinking_token_budget": null,
+          "top_p": 0.95,
+          "top_k": 20,
+          "seed": null,
+          "max_input_tokens": null,
+          "prompt_template_version": ""
+        },
+        "finish_reason": "structured_complete",
+        "token_usage": {
+          "prompt_tokens": 411,
+          "total_tokens": 468,
+          "completion_tokens": 57
+        },
+        "blocked_reason": "",
+        "cached": false,
+        "response_mode": "native_json_schema",
+        "schema_name": "publication_paragraph_binding_v1",
+        "input_hash": "sha256:437f19b04ee132137450fd23ed8b3cb27e5527cd8e097a1302643598127aef31",
+        "response_hash": "sha256:628297ae2c1dff1c0cf3ee0080d9be3a5e1d89a11fee541636cda1a151ce0e1e",
+        "prompt_chars": 998,
+        "input_payload_chars": 839,
+        "schema_chars": 1350,
+        "thinking_chars": 0,
+        "extended_budget_used": false,
+        "cumulative_budget_consumed": null
+      },
+      {
+        "call_id": "LLM-publication-method-section-MA-S3-paragraph:MA-S3:method-unit-1-binder-1",
+        "prompt_template_id": "phase5_publication_paragraph_binder_v1",
+        "role": "semantic_verifier",
+        "provider": "openai",
+        "model": "qwen38-27b-nvfp4",
+        "endpoint_origin": "http://127.0.0.1:8006",
+        "effective_config": {
+          "role": "semantic_verifier",
+          "temperature": 0.0,
+          "max_output_tokens": 1024,
+          "reasoning_effort": "none",
+          "thinking_token_budget": null,
+          "top_p": 0.95,
+          "top_k": 20,
+          "seed": null,
+          "max_input_tokens": null,
+          "prompt_template_version": ""
+        },
+        "finish_reason": "structured_complete",
+        "token_usage": {
+          "prompt_tokens": 1767,
+          "total_tokens": 1969,
+          "completion_tokens": 202
+        },
+        "blocked_reason": "",
+        "cached": false,
+        "response_mode": "native_json_schema",
+        "schema_name": "publication_paragraph_binding_v1",
+        "input_hash": "sha256:68e901096ab53c57153361a512de1bb6927a77295c00be0fd11e023eee7af691",
+        "response_hash": "sha256:6f6f26f6c0632f4d5bc57f0bce15fbf1104a4615f36ec207bbf9630690583c09",
+        "prompt_chars": 998,
+        "input_payload_chars": 5182,
+        "schema_chars": 1350,
+        "thinking_chars": 0,
+        "extended_budget_used": false,
+        "cumulative_budget_consumed": null
+      },
+      {
+        "call_id": "LLM-publication-method-section-MA-S3-paragraph:MA-S3:method-unit-1-binder-1",
+        "prompt_template_id": "phase5_publication_paragraph_binder_v1",
+        "role": "semantic_verifier",
+        "provider": "openai",
+        "model": "qwen38-27b-nvfp4",
+        "endpoint_origin": "http://127.0.0.1:8006",
+        "effective_config": {
+          "role": "semantic_verifier",
+          "temperature": 0.0,
+          "max_output_tokens": 1024,
+          "reasoning_effort": "none",
+          "thinking_token_budget": null,
+          "top_p": 0.95,
+          "top_k": 20,
+          "seed": null,
+          "max_input_tokens": null,
+          "prompt_template_version": ""
+        },
+        "finish_reason": "structured_complete",
+        "token_usage": {
+          "prompt_tokens": 1846,
+          "total_tokens": 2027,
+          "completion_tokens": 181
+        },
+        "blocked_reason": "",
+        "cached": false,
+        "response_mode": "native_json_schema",
+        "schema_name": "publication_paragraph_binding_v1",
+        "input_hash": "sha256:520395d08cefc433b8578dc5839f59f7ea3aafa7641f13aff5d69faa54810489",
+        "response_hash": "sha256:ca1d7c1a7b1831d9122dbb7b3cf8bef4ef1d83d0598d9dcc35e5b250dad48f33",
+        "prompt_chars": 998,
+        "input_payload_chars": 5597,
+        "schema_chars": 1350,
+        "thinking_chars": 0,
+        "extended_budget_used": false,
+        "cumulative_budget_consumed": null
+      },
+      {
+        "call_id": "LLM-publication-method-section-MA-S4-paragraph:MA-S4:method-unit-1-binder-1",
+        "prompt_template_id": "phase5_publication_paragraph_binder_v1",
+        "role": "semantic_verifier",
+        "provider": "openai",
+        "model": "qwen38-27b-nvfp4",
+        "endpoint_origin": "http://127.0.0.1:8006",
+        "effective_config": {
+          "role": "semantic_verifier",
+          "temperature": 0.0,
+          "max_output_tokens": 1024,
+          "reasoning_effort": "none",
+          "thinking_token_budget": null,
+          "top_p": 0.95,
+          "top_k": 20,
+          "seed": null,
+          "max_input_tokens": null,
+          "prompt_template_version": ""
+        },
+        "finish_reason": "structured_complete",
+        "token_usage": {
+          "prompt_tokens": 700,
+          "total_tokens": 850,
+          "completion_tokens": 150
+        },
+        "blocked_reason": "",
+        "cached": false,
+        "response_mode": "native_json_schema",
+        "schema_name": "publication_paragraph_binding_v1",
+        "input_hash": "sha256:272ad14443fdf9c483c0291f723cda18e3316ca8dc67ae2c50667b3cbc493750",
+        "response_hash": "sha256:f2a6b774b919b03639d7600add1be052aa1ced9701b4fb4ee00cdddeeaec6d2e",
+        "prompt_chars": 998,
+        "input_payload_chars": 1858,
+        "schema_chars": 1350,
+        "thinking_chars": 0,
+        "extended_budget_used": false,
+        "cumulative_budget_consumed": null
+      },
+      {
+        "call_id": "LLM-publication-method-section-MA-S4-paragraph:MA-S4:7-binder-1",
+        "prompt_template_id": "phase5_publication_paragraph_binder_v1",
+        "role": "semantic_verifier",
+        "provider": "openai",
+        "model": "qwen38-27b-nvfp4",
+        "endpoint_origin": "http://127.0.0.1:8006",
+        "effective_config": {
+          "role": "semantic_verifier",
+          "temperature": 0.0,
+          "max_output_tokens": 1024,
+          "reasoning_effort": "none",
+          "thinking_token_budget": null,
+          "top_p": 0.95,
+          "top_k": 20,
+          "seed": null,
+          "max_input_tokens": null,
+          "prompt_template_version": ""
+        },
+        "finish_reason": "structured_complete",
+        "token_usage": {
+          "prompt_tokens": 702,
+          "total_tokens": 795,
+          "completion_tokens": 93
+        },
+        "blocked_reason": "",
+        "cached": false,
+        "response_mode": "native_json_schema",
+        "schema_name": "publication_paragraph_binding_v1",
+        "input_hash": "sha256:38355c3c7f2d7d8b3dc91ede3e209eceb8b3fd0178dc8434d7357d0d5a08cc66",
+        "response_hash": "sha256:084e5212816048f20d924152858d3a81e954019cca72bd31edab14a5192e77ae",
+        "prompt_chars": 998,
+        "input_payload_chars": 1641,
+        "schema_chars": 1350,
+        "thinking_chars": 0,
+        "extended_budget_used": false,
+        "cumulative_budget_consumed": null
+      },
+      {
+        "call_id": "LLM-publication-method-section-MA-S4-paragraph:MA-S4:method-unit-1-binder-1",
+        "prompt_template_id": "phase5_publication_paragraph_binder_v1",
+        "role": "semantic_verifier",
+        "provider": "openai",
+        "model": "qwen38-27b-nvfp4",
+        "endpoint_origin": "http://127.0.0.1:8006",
+        "effective_config": {
+          "role": "semantic_verifier",
+          "temperature": 0.0,
+          "max_output_tokens": 1024,
+          "reasoning_effort": "none",
+          "thinking_token_budget": null,
+          "top_p": 0.95,
+          "top_k": 20,
+          "seed": null,
+          "max_input_tokens": null,
+          "prompt_template_version": ""
+        },
+        "finish_reason": "structured_complete",
+        "token_usage": {
+          "prompt_tokens": 554,
+          "total_tokens": 632,
+          "completion_tokens": 78
+        },
+        "blocked_reason": "",
+        "cached": false,
+        "response_mode": "native_json_schema",
+        "schema_name": "publication_paragraph_binding_v1",
+        "input_hash": "sha256:35abb52e9ae044483caa34207cdda85d6cbcf0605c08693ad79310cac72bed73",
+        "response_hash": "sha256:320a112804ab47689bf589a0f641eade2377eb2479f49954c0f9b18e55b2ba48",
+        "prompt_chars": 998,
+        "input_payload_chars": 1495,
+        "schema_chars": 1350,
+        "thinking_chars": 0,
+        "extended_budget_used": false,
+        "cumulative_budget_consumed": null
+      },
+      {
+        "call_id": "LLM-publication-method-section-MA-S5-paragraph:MA-S5:method-unit-1-binder-1",
+        "prompt_template_id": "phase5_publication_paragraph_binder_v1",
+        "role": "semantic_verifier",
+        "provider": "openai",
+        "model": "qwen38-27b-nvfp4",
+        "endpoint_origin": "http://127.0.0.1:8006",
+        "effective_config": {
+          "role": "semantic_verifier",
+          "temperature": 0.0,
+          "max_output_tokens": 1024,
+          "reasoning_effort": "none",
+          "thinking_token_budget": null,
+          "top_p": 0.95,
+          "top_k": 20,
+          "seed": null,
+          "max_input_tokens": null,
+          "prompt_template_version": ""
+        },
+        "finish_reason": "structured_complete",
+        "token_usage": {
+          "prompt_tokens": 494,
+          "total_tokens": 551,
+          "completion_tokens": 57
+        },
+        "blocked_reason": "",
+        "cached": false,
+        "response_mode": "native_json_schema",
+        "schema_name": "publication_paragraph_binding_v1",
+        "input_hash": "sha256:c3e0f222e5eed6ea41ae1ff71f428f36f688cf16b6dec5ce87f2c1e869156fc2",
+        "response_hash": "sha256:46fb701ce940f8e5d636d68e124df523842eb8ae8d8b31e6cb65d81208f635bc",
+        "prompt_chars": 998,
+        "input_payload_chars": 1145,
+        "schema_chars": 1350,
+        "thinking_chars": 0,
+        "extended_budget_used": false,
+        "cumulative_budget_consumed": null
+      },
+      {
+        "call_id": "LLM-publication-method-section-MA-S5-paragraph:MA-S5:method-unit-1-binder-1",
+        "prompt_template_id": "phase5_publication_paragraph_binder_v1",
+        "role": "semantic_verifier",
+        "provider": "openai",
+        "model": "qwen38-27b-nvfp4",
+        "endpoint_origin": "http://127.0.0.1:8006",
+        "effective_config": {
+          "role": "semantic_verifier",
+          "temperature": 0.0,
+          "max_output_tokens": 1024,
+          "reasoning_effort": "none",
+          "thinking_token_budget": null,
+          "top_p": 0.95,
+          "top_k": 20,
+          "seed": null,
+          "max_input_tokens": null,
+          "prompt_template_version": ""
+        },
+        "finish_reason": "structured_complete",
+        "token_usage": {
+          "prompt_tokens": 477,
+          "total_tokens": 534,
+          "completion_tokens": 57
+        },
+        "blocked_reason": "",
+        "cached": false,
+        "response_mode": "native_json_schema",
+        "schema_name": "publication_paragraph_binding_v1",
+        "input_hash": "sha256:0d6445c8129f90fa87d5dddea23e4b30ad645877849df8bf8da8d307654f481f",
+        "response_hash": "sha256:46fb701ce940f8e5d636d68e124df523842eb8ae8d8b31e6cb65d81208f635bc",
+        "prompt_chars": 998,
+        "input_payload_chars": 1071,
+        "schema_chars": 1350,
+        "thinking_chars": 0,
+        "extended_budget_used": false,
+        "cumulative_budget_consumed": null
+      },
+      {
+        "call_id": "LLM-publication-method-section-MA-S5-paragraph:MA-S5:method-unit-1-binder-1",
+        "prompt_template_id": "phase5_publication_paragraph_binder_v1",
+        "role": "semantic_verifier",
+        "provider": "openai",
+        "model": "qwen38-27b-nvfp4",
+        "endpoint_origin": "http://127.0.0.1:8006",
+        "effective_config": {
+          "role": "semantic_verifier",
+          "temperature": 0.0,
+          "max_output_tokens": 1024,
+          "reasoning_effort": "none",
+          "thinking_token_budget": null,
+          "top_p": 0.95,
+          "top_k": 20,
+          "seed": null,
+          "max_input_tokens": null,
+          "prompt_template_version": ""
+        },
+        "finish_reason": "structured_complete",
+        "token_usage": {
+          "prompt_tokens": 468,
+          "total_tokens": 533,
+          "completion_tokens": 65
+        },
+        "blocked_reason": "",
+        "cached": false,
+        "response_mode": "native_json_schema",
+        "schema_name": "publication_paragraph_binding_v1",
+        "input_hash": "sha256:fe427c53ad1d91bb8234df9b8081a99dfb7051685b1f071077c8ff1a7a727a04",
+        "response_hash": "sha256:78bd2269a24380c3182d367eb2c9fe5ebcff079f42783cb91ffde78dcb33db18",
+        "prompt_chars": 998,
+        "input_payload_chars": 1051,
+        "schema_chars": 1350,
+        "thinking_chars": 0,
+        "extended_budget_used": false,
+        "cumulative_budget_consumed": null
+      }
+    ],
+    "cumulative_budget_consumed": 11858,
+    "cumulative_budget_cap": 24576,
+    "cumulative_budget_exhausted": false,
+    "concatenated_markdown_length": 5071,
+    "incomplete_sections": [
+      "MA-S1",
+      "MA-S3",
+      "MA-S5"
+    ],
+    "research_request_count": 6,
+    "response_recovery_traces": [
+      {
+        "section_id": "MA-S2",
+        "binding_bridge_fields": [],
+        "research_request_bridge_fields": [],
+        "callback_move_bridge_fields": [],
+        "applied": false,
+        "operations": [],
+        "original_text_digest": "sha256:bea3a525df35daa96bc0becc7a9f127a38048dcb89c4609864c717a23e024f8e",
+        "parsed_payload_digest": "sha256:5677cc53008b5886b41550729cf4364835081ce7183b91bcbb405c130374600b"
+      },
+      {
+        "section_id": "MA-S1",
+        "binding_bridge_fields": [],
+        "research_request_bridge_fields": [],
+        "callback_move_bridge_fields": [],
+        "applied": false,
+        "operations": [],
+        "original_text_digest": "sha256:52506a79fc7317bb785e04deb83cd42b2c5fd3492b45f55c0bf1fb48eceb36c2",
+        "parsed_payload_digest": "sha256:3b4bf0fc9cb1447997ea58f693c858cf002d7d8c12306f0024abd11f680f8bb9"
+      },
+      {
+        "paragraph_id": "paragraph:MA-S1:method-unit-1",
+        "attempt": 1,
+        "response_blocked_reason": "",
+        "parsed": true,
+        "parse_error": "",
+        "bound_count": 0,
+        "unbound_count": 1,
+        "validation_errors": []
+      },
+      {
+        "section_id": "MA-S3",
+        "binding_bridge_fields": [],
+        "research_request_bridge_fields": [],
+        "callback_move_bridge_fields": [],
+        "applied": false,
+        "operations": [],
+        "original_text_digest": "sha256:90f441d3a95d7670f9b3f04177ecf104196bc2c9c22f1757524fa983de7f5d55",
+        "parsed_payload_digest": "sha256:f76d6b78be45ae58d4d5e5b68d7de061d19a2992c5a2d3a79e0a0e92cbf2fb7d"
+      },
+      {
+        "paragraph_id": "paragraph:MA-S3:method-unit-1",
+        "attempt": 1,
+        "response_blocked_reason": "",
+        "parsed": true,
+        "parse_error": "",
+        "bound_count": 0,
+        "unbound_count": 5,
+        "validation_errors": []
+      },
+      {
+        "section_id": "MA-S3",
+        "binding_bridge_fields": [],
+        "research_request_bridge_fields": [],
+        "callback_move_bridge_fields": [],
+        "applied": false,
+        "operations": [],
+        "original_text_digest": "sha256:67067810195ebc773f8fb909e5667644eb468cbd3a5e345f99f38794bafbd5d6",
+        "parsed_payload_digest": "sha256:8302dee86bdd34b67718c276d5fba881017a2ce75bac1bec419c99133915766c"
+      },
+      {
+        "section_id": "MA-S3",
+        "binding_bridge_fields": [],
+        "research_request_bridge_fields": [],
+        "callback_move_bridge_fields": [],
+        "applied": false,
+        "operations": [],
+        "original_text_digest": "sha256:de93749ae8819dd77c6fea3b476d80736d5440a8acd4b3d4b3419cf0034a9766",
+        "parsed_payload_digest": "sha256:2f642842a6e962cb55cc4c7b8a90554dc6e040b2e8afd2d9a173439199eeed56"
+      },
+      {
+        "paragraph_id": "paragraph:MA-S3:method-unit-1",
+        "attempt": 1,
+        "response_blocked_reason": "",
+        "parsed": true,
+        "parse_error": "",
+        "bound_count": 0,
+        "unbound_count": 5,
+        "validation_errors": []
+      },
+      {
+        "section_id": "MA-S4",
+        "binding_bridge_fields": [],
+        "research_request_bridge_fields": [],
+        "callback_move_bridge_fields": [],
+        "applied": true,
+        "operations": [
+          "extract_or_repair_json_container"
+        ],
+        "original_text_digest": "sha256:350653f4b6b47486808d3ef66924c0fc7a913220bcae814480cfe642c1b4a251",
+        "parsed_payload_digest": "sha256:193c469f22bb1e90a0258c63ca79364c84cd132dc8c4e2d64d49757e64b84b84"
+      },
+      {
+        "paragraph_id": "paragraph:MA-S4:method-unit-1",
+        "attempt": 1,
+        "response_blocked_reason": "",
+        "parsed": true,
+        "parse_error": "",
+        "bound_count": 0,
+        "unbound_count": 3,
+        "validation_errors": []
+      },
+      {
+        "paragraph_id": "paragraph:MA-S4:7",
+        "attempt": 1,
+        "response_blocked_reason": "",
+        "parsed": true,
+        "parse_error": "",
+        "bound_count": 0,
+        "unbound_count": 2,
+        "validation_errors": []
+      },
+      {
+        "section_id": "MA-S4",
+        "binding_bridge_fields": [],
+        "research_request_bridge_fields": [],
+        "callback_move_bridge_fields": [],
+        "applied": false,
+        "operations": [],
+        "original_text_digest": "sha256:6cbbab502dd4c94669bea1e83d4e04486becf2b61efaafc0b756ed0fb5079225",
+        "parsed_payload_digest": "sha256:4311cb65cc522cdd68153556b27a4ea769928093c259e2ece8a2fa6bbd90b3e5"
+      },
+      {
+        "paragraph_id": "paragraph:MA-S4:method-unit-1",
+        "attempt": 1,
+        "response_blocked_reason": "",
+        "parsed": true,
+        "parse_error": "",
+        "bound_count": 0,
+        "unbound_count": 1,
+        "validation_errors": []
+      },
+      {
+        "section_id": "MA-S5",
+        "binding_bridge_fields": [],
+        "research_request_bridge_fields": [],
+        "callback_move_bridge_fields": [],
+        "applied": true,
+        "operations": [
+          "extract_or_repair_json_container"
+        ],
+        "original_text_digest": "sha256:9ac971c9a11f47f2ec20efebc5f15b86aa140d8b0f8e5f5dc3f74628a7bbb378",
+        "parsed_payload_digest": "sha256:a5f350c1c00ea44cc11aa5eb3234c7bccb80b8de4fa457340603fc6a40398d0e"
+      },
+      {
+        "paragraph_id": "paragraph:MA-S5:method-unit-1",
+        "attempt": 1,
+        "response_blocked_reason": "",
+        "parsed": true,
+        "parse_error": "",
+        "bound_count": 0,
+        "unbound_count": 1,
+        "validation_errors": []
+      },
+      {
+        "section_id": "MA-S5",
+        "binding_bridge_fields": [],
+        "research_request_bridge_fields": [],
+        "callback_move_bridge_fields": [],
+        "applied": true,
+        "operations": [
+          "extract_or_repair_json_container"
+        ],
+        "original_text_digest": "sha256:42994b4c8719516261cfc09686483552c323f3673107e3d1dc53933d69541ad2",
+        "parsed_payload_digest": "sha256:4326896de43d54b17c5e9d767393fc8fe5fba18be473fc5aafcfd9ef51832761"
+      },
+      {
+        "paragraph_id": "paragraph:MA-S5:method-unit-1",
+        "attempt": 1,
+        "response_blocked_reason": "",
+        "parsed": true,
+        "parse_error": "",
+        "bound_count": 0,
+        "unbound_count": 1,
+        "validation_errors": []
+      },
+      {
+        "section_id": "MA-S5",
+        "binding_bridge_fields": [],
+        "research_request_bridge_fields": [],
+        "callback_move_bridge_fields": [],
+        "applied": true,
+        "operations": [
+          "extract_or_repair_json_container"
+        ],
+        "original_text_digest": "sha256:ca8bb5ad778cfe350962220c698482ab102ac5d8cb1f0b7cf3315723632ac30d",
+        "parsed_payload_digest": "sha256:a71c6d0e5922d8a0ef669aab0de94dc595ba732d260250db44cf14ba277b3da2"
+      },
+      {
+        "paragraph_id": "paragraph:MA-S5:method-unit-1",
+        "attempt": 1,
+        "response_blocked_reason": "",
+        "parsed": true,
+        "parse_error": "",
+        "bound_count": 0,
+        "unbound_count": 1,
+        "validation_errors": []
+      }
+    ],
+    "writer_repair_rounds": 5,
+    "writer_repair_commits": 1,
+    "writer_repair_no_progress_stops": 2,
+    "writer_repair_transaction_rejections": [
+      {
+        "section_id": "MA-S3",
+        "repair_round": 1,
+        "reason": "invalid_witnesses_regressed",
+        "incumbent_metrics": {
+          "unsafe_uncaveated_positives": 0,
+          "constraint_failures": 0,
+          "negative_validated_propositions": 0,
+          "unrendered_required_propositions": 0,
+          "code_trace_style_failures": 1,
+          "duplicate_sentences": 0,
+          "missing_required_facets": 1,
+          "missing_formula_placeholders": 0
+        },
+        "candidate_metrics": {
+          "unsafe_uncaveated_positives": 0,
+          "constraint_failures": 0,
+          "negative_validated_propositions": 0,
+          "unrendered_required_propositions": 0,
+          "code_trace_style_failures": 0,
+          "duplicate_sentences": 0,
+          "missing_required_facets": 1,
+          "missing_formula_placeholders": 1
+        },
+        "incumbent_digest": "676e7656d26158f6c952aca9e481916605d9551ae8f3eccb581920e45a02d0fd",
+        "candidate_digest": "8f94ff7bea42d3f8b8d29b349ce92d88789ef5c9c0e533e8f9b8e9f1fd76bc9a"
+      },
+      {
+        "section_id": "MA-S3",
+        "repair_round": 2,
+        "reason": "required_target_coverage_no_gain",
+        "incumbent_metrics": {
+          "unsafe_uncaveated_positives": 0,
+          "constraint_failures": 0,
+          "negative_validated_propositions": 0,
+          "unrendered_required_propositions": 0,
+          "code_trace_style_failures": 1,
+          "duplicate_sentences": 0,
+          "missing_required_facets": 1,
+          "missing_formula_placeholders": 0
+        },
+        "candidate_metrics": {
+          "unsafe_uncaveated_positives": 0,
+          "constraint_failures": 0,
+          "negative_validated_propositions": 0,
+          "unrendered_required_propositions": 0,
+          "code_trace_style_failures": 1,
+          "duplicate_sentences": 0,
+          "missing_required_facets": 1,
+          "missing_formula_placeholders": 0
+        },
+        "incumbent_digest": "676e7656d26158f6c952aca9e481916605d9551ae8f3eccb581920e45a02d0fd",
+        "candidate_digest": "2b1fad3aa5d99c2ce8a7d2f2e5187a1ba22b0c1e159a50e9c466eab0eb88987c"
+      },
+      {
+        "section_id": "MA-S5",
+        "repair_round": 1,
+        "reason": "required_target_coverage_no_gain",
+        "incumbent_metrics": {
+          "unsafe_uncaveated_positives": 0,
+          "constraint_failures": 0,
+          "negative_validated_propositions": 0,
+          "unrendered_required_propositions": 0,
+          "code_trace_style_failures": 0,
+          "duplicate_sentences": 0,
+          "missing_required_facets": 1,
+          "missing_formula_placeholders": 0
+        },
+        "candidate_metrics": {
+          "unsafe_uncaveated_positives": 0,
+          "constraint_failures": 0,
+          "negative_validated_propositions": 0,
+          "unrendered_required_propositions": 0,
+          "code_trace_style_failures": 0,
+          "duplicate_sentences": 0,
+          "missing_required_facets": 1,
+          "missing_formula_placeholders": 0
+        },
+        "incumbent_digest": "b88090f10bb7abe5672e53c50a7d1ef1c52177bc040f36480466974f408a50b6",
+        "candidate_digest": "e7b16ef88e0bf1367a14ae2ef2ecf21795236a1f8d73b5812f5d57ef90d8e825"
+      },
+      {
+        "section_id": "MA-S5",
+        "repair_round": 2,
+        "reason": "required_target_coverage_no_gain",
+        "incumbent_metrics": {
+          "unsafe_uncaveated_positives": 0,
+          "constraint_failures": 0,
+          "negative_validated_propositions": 0,
+          "unrendered_required_propositions": 0,
+          "code_trace_style_failures": 0,
+          "duplicate_sentences": 0,
+          "missing_required_facets": 1,
+          "missing_formula_placeholders": 0
+        },
+        "candidate_metrics": {
+          "unsafe_uncaveated_positives": 0,
+          "constraint_failures": 0,
+          "negative_validated_propositions": 0,
+          "unrendered_required_propositions": 0,
+          "code_trace_style_failures": 0,
+          "duplicate_sentences": 0,
+          "missing_required_facets": 1,
+          "missing_formula_placeholders": 0
+        },
+        "incumbent_digest": "b88090f10bb7abe5672e53c50a7d1ef1c52177bc040f36480466974f408a50b6",
+        "candidate_digest": "ad73ba71b1083fb8654264a0f0cf79633b3db8f142b5941c5dccd9dccfe994c3"
+      }
+    ]
+  },
+  "response_recovery_traces": [
+    {
+      "section_id": "MA-S2",
+      "binding_bridge_fields": [],
+      "research_request_bridge_fields": [],
+      "callback_move_bridge_fields": [],
+      "applied": false,
+      "operations": [],
+      "original_text_digest": "sha256:bea3a525df35daa96bc0becc7a9f127a38048dcb89c4609864c717a23e024f8e",
+      "parsed_payload_digest": "sha256:5677cc53008b5886b41550729cf4364835081ce7183b91bcbb405c130374600b"
+    },
+    {
+      "section_id": "MA-S1",
+      "binding_bridge_fields": [],
+      "research_request_bridge_fields": [],
+      "callback_move_bridge_fields": [],
+      "applied": false,
+      "operations": [],
+      "original_text_digest": "sha256:52506a79fc7317bb785e04deb83cd42b2c5fd3492b45f55c0bf1fb48eceb36c2",
+      "parsed_payload_digest": "sha256:3b4bf0fc9cb1447997ea58f693c858cf002d7d8c12306f0024abd11f680f8bb9"
+    },
+    {
+      "paragraph_id": "paragraph:MA-S1:method-unit-1",
+      "attempt": 1,
+      "response_blocked_reason": "",
+      "parsed": true,
+      "parse_error": "",
+      "bound_count": 0,
+      "unbound_count": 1,
+      "validation_errors": []
+    },
+    {
+      "section_id": "MA-S3",
+      "binding_bridge_fields": [],
+      "research_request_bridge_fields": [],
+      "callback_move_bridge_fields": [],
+      "applied": false,
+      "operations": [],
+      "original_text_digest": "sha256:90f441d3a95d7670f9b3f04177ecf104196bc2c9c22f1757524fa983de7f5d55",
+      "parsed_payload_digest": "sha256:f76d6b78be45ae58d4d5e5b68d7de061d19a2992c5a2d3a79e0a0e92cbf2fb7d"
+    },
+    {
+      "paragraph_id": "paragraph:MA-S3:method-unit-1",
+      "attempt": 1,
+      "response_blocked_reason": "",
+      "parsed": true,
+      "parse_error": "",
+      "bound_count": 0,
+      "unbound_count": 5,
+      "validation_errors": []
+    },
+    {
+      "section_id": "MA-S3",
+      "binding_bridge_fields": [],
+      "research_request_bridge_fields": [],
+      "callback_move_bridge_fields": [],
+      "applied": false,
+      "operations": [],
+      "original_text_digest": "sha256:67067810195ebc773f8fb909e5667644eb468cbd3a5e345f99f38794bafbd5d6",
+      "parsed_payload_digest": "sha256:8302dee86bdd34b67718c276d5fba881017a2ce75bac1bec419c99133915766c"
+    },
+    {
+      "section_id": "MA-S3",
+      "binding_bridge_fields": [],
+      "research_request_bridge_fields": [],
+      "callback_move_bridge_fields": [],
+      "applied": false,
+      "operations": [],
+      "original_text_digest": "sha256:de93749ae8819dd77c6fea3b476d80736d5440a8acd4b3d4b3419cf0034a9766",
+      "parsed_payload_digest": "sha256:2f642842a6e962cb55cc4c7b8a90554dc6e040b2e8afd2d9a173439199eeed56"
+    },
+    {
+      "paragraph_id": "paragraph:MA-S3:method-unit-1",
+      "attempt": 1,
+      "response_blocked_reason": "",
+      "parsed": true,
+      "parse_error": "",
+      "bound_count": 0,
+      "unbound_count": 5,
+      "validation_errors": []
+    },
+    {
+      "section_id": "MA-S4",
+      "binding_bridge_fields": [],
+      "research_request_bridge_fields": [],
+      "callback_move_bridge_fields": [],
+      "applied": true,
+      "operations": [
+        "extract_or_repair_json_container"
+      ],
+      "original_text_digest": "sha256:350653f4b6b47486808d3ef66924c0fc7a913220bcae814480cfe642c1b4a251",
+      "parsed_payload_digest": "sha256:193c469f22bb1e90a0258c63ca79364c84cd132dc8c4e2d64d49757e64b84b84"
+    },
+    {
+      "paragraph_id": "paragraph:MA-S4:method-unit-1",
+      "attempt": 1,
+      "response_blocked_reason": "",
+      "parsed": true,
+      "parse_error": "",
+      "bound_count": 0,
+      "unbound_count": 3,
+      "validation_errors": []
+    },
+    {
+      "paragraph_id": "paragraph:MA-S4:7",
+      "attempt": 1,
+      "response_blocked_reason": "",
+      "parsed": true,
+      "parse_error": "",
+      "bound_count": 0,
+      "unbound_count": 2,
+      "validation_errors": []
+    },
+    {
+      "section_id": "MA-S4",
+      "binding_bridge_fields": [],
+      "research_request_bridge_fields": [],
+      "callback_move_bridge_fields": [],
+      "applied": false,
+      "operations": [],
+      "original_text_digest": "sha256:6cbbab502dd4c94669bea1e83d4e04486becf2b61efaafc0b756ed0fb5079225",
+      "parsed_payload_digest": "sha256:4311cb65cc522cdd68153556b27a4ea769928093c259e2ece8a2fa6bbd90b3e5"
+    },
+    {
+      "paragraph_id": "paragraph:MA-S4:method-unit-1",
+      "attempt": 1,
+      "response_blocked_reason": "",
+      "parsed": true,
+      "parse_error": "",
+      "bound_count": 0,
+      "unbound_count": 1,
+      "validation_errors": []
+    },
+    {
+      "section_id": "MA-S5",
+      "binding_bridge_fields": [],
+      "research_request_bridge_fields": [],
+      "callback_move_bridge_fields": [],
+      "applied": true,
+      "operations": [
+        "extract_or_repair_json_container"
+      ],
+      "original_text_digest": "sha256:9ac971c9a11f47f2ec20efebc5f15b86aa140d8b0f8e5f5dc3f74628a7bbb378",
+      "parsed_payload_digest": "sha256:a5f350c1c00ea44cc11aa5eb3234c7bccb80b8de4fa457340603fc6a40398d0e"
+    },
+    {
+      "paragraph_id": "paragraph:MA-S5:method-unit-1",
+      "attempt": 1,
+      "response_blocked_reason": "",
+      "parsed": true,
+      "parse_error": "",
+      "bound_count": 0,
+      "unbound_count": 1,
+      "validation_errors": []
+    },
+    {
+      "section_id": "MA-S5",
+      "binding_bridge_fields": [],
+      "research_request_bridge_fields": [],
+      "callback_move_bridge_fields": [],
+      "applied": true,
+      "operations": [
+        "extract_or_repair_json_container"
+      ],
+      "original_text_digest": "sha256:42994b4c8719516261cfc09686483552c323f3673107e3d1dc53933d69541ad2",
+      "parsed_payload_digest": "sha256:4326896de43d54b17c5e9d767393fc8fe5fba18be473fc5aafcfd9ef51832761"
+    },
+    {
+      "paragraph_id": "paragraph:MA-S5:method-unit-1",
+      "attempt": 1,
+      "response_blocked_reason": "",
+      "parsed": true,
+      "parse_error": "",
+      "bound_count": 0,
+      "unbound_count": 1,
+      "validation_errors": []
+    },
+    {
+      "section_id": "MA-S5",
+      "binding_bridge_fields": [],
+      "research_request_bridge_fields": [],
+      "callback_move_bridge_fields": [],
+      "applied": true,
+      "operations": [
+        "extract_or_repair_json_container"
+      ],
+      "original_text_digest": "sha256:ca8bb5ad778cfe350962220c698482ab102ac5d8cb1f0b7cf3315723632ac30d",
+      "parsed_payload_digest": "sha256:a71c6d0e5922d8a0ef669aab0de94dc595ba732d260250db44cf14ba277b3da2"
+    },
+    {
+      "paragraph_id": "paragraph:MA-S5:method-unit-1",
+      "attempt": 1,
+      "response_blocked_reason": "",
+      "parsed": true,
+      "parse_error": "",
+      "bound_count": 0,
+      "unbound_count": 1,
+      "validation_errors": []
+    },
+    {
+      "section_id": "MA-S2",
+      "applied": true,
+      "provenance": "harness_callback_sidecar",
+      "operations": [
+        "restore_callback_sidecar:target_brief_ids",
+        "restore_callback_sidecar:target_clause_ids",
+        "restore_callback_sidecar:missing_parts",
+        "restore_callback_sidecar:evidence_refs_used"
+      ]
+    },
+    {
+      "section_id": "MA-S3",
+      "applied": false,
+      "provenance": "rejected_missing",
+      "operations": [
+        "rejected_malformed_writing_research_request:1"
+      ],
+      "raw_response_hash": "sha256:90f441d3a95d7670f9b3f04177ecf104196bc2c9c22f1757524fa983de7f5d55",
+      "request_ids": [],
+      "parsed_request_digests": [],
+      "dropped_malformed_requests": 1,
+      "missing_request_moves": []
+    },
+    {
+      "section_id": "MA-S2",
+      "applied": false,
+      "provenance": "model_emitted",
+      "operations": [
+        "model_emitted_writing_callback:problem_or_local_context"
+      ],
+      "raw_response_hash": "sha256:bea3a525df35daa96bc0becc7a9f127a38048dcb89c4609864c717a23e024f8e",
+      "request_ids": [
+        "MA-S2:uq-01"
+      ],
+      "parsed_request_digests": [
+        "sha256:8f07615018278c432390580d2b0a35766a3d33a626aa27b32be63b3e79818360"
+      ],
+      "dropped_malformed_requests": 0,
+      "missing_request_moves": []
+    },
+    {
+      "section_id": "MA-S1",
+      "applied": false,
+      "provenance": "model_emitted",
+      "operations": [
+        "model_emitted_writing_callback:mechanism_overview"
+      ],
+      "raw_response_hash": "sha256:52506a79fc7317bb785e04deb83cd42b2c5fd3492b45f55c0bf1fb48eceb36c2",
+      "request_ids": [
+        "MA-S1:unit-1:diagonal-init"
+      ],
+      "parsed_request_digests": [
+        "sha256:6638d1ecdf71355a48b97ce56e0fbaf95c176b84ef5fda16d2b265e335215adf"
+      ],
+      "dropped_malformed_requests": 0,
+      "missing_request_moves": []
+    },
+    {
+      "section_id": "MA-S4",
+      "applied": false,
+      "provenance": "model_emitted",
+      "operations": [
+        "model_emitted_writing_callback:mechanism_overview",
+        "model_emitted_writing_callback:mechanism_overview"
+      ],
+      "raw_response_hash": "sha256:6cbbab502dd4c94669bea1e83d4e04486becf2b61efaafc0b756ed0fb5079225",
+      "request_ids": [
+        "req:MA-S4:unit-1:1",
+        "req:MA-S4:unit-1:cosine-cooccur"
+      ],
+      "parsed_request_digests": [
+        "sha256:eb1101d4157929984f9ff0383d9b1a03df45922108faeb0989dd81897666b823",
+        "sha256:3a98f45bf31d92d9d30cc917939e32a7f45046716d54d8784506619dec7c5011"
+      ],
+      "dropped_malformed_requests": 0,
+      "missing_request_moves": []
+    },
+    {
+      "section_id": "MA-S5",
+      "applied": false,
+      "provenance": "model_emitted",
+      "operations": [
+        "model_emitted_writing_callback:equation_or_derivation"
+      ],
+      "raw_response_hash": "sha256:9ac971c9a11f47f2ec20efebc5f15b86aa140d8b0f8e5f5dc3f74628a7bbb378",
+      "request_ids": [
+        "REQ-MA-S5:001"
+      ],
+      "parsed_request_digests": [
+        "sha256:549cab3c4be4afd688657ffb385a2cbec0acbcac04121911b255dd26248d795e"
+      ],
+      "dropped_malformed_requests": 0,
+      "missing_request_moves": []
+    }
+  ],
+  "final_text_digest": "sha256:cfb5f61c6064551dc0ed20047bdf4236c17f3359c9706fb52481b66e0a43cb2e",
+  "authorship_ledger_digest": "sha256:d1b6d351d26e700e84206a730ecc1b8e979f0f295f54a287bb6458b90aec50f9",
+  "publication_quality_digest": "sha256:664d7a44a8a8e848632ae65e5dc4854ab91a52e46e28cc1c34e4f695e96a6479",
+  "rewrite_transition_digest": "",
+  "callback_bundle_digest": "sha256:abb566497cdead9f5ab2fad6a162a02bb5d79d80650216c74aaf3bef4c3b4370",
+  "transaction_assessment_digest": "sha256:ed59d70164c7361b25f9c1a8e1dcc0387145ef7bd3326c6fae47029aee196437",
+  "writer_transaction_status": "incomplete",
+  "rendered_text_digest": "sha256:40923b5b68597d99be5781ad18e492ac42215187c8bdf3fc6a6268326260e50d",
+  "resumed_section_ids": [],
+  "blocked_reason": "",
+  "candidate_generation_status": "generated",
+  "candidate_available": true,
+  "candidate_validation_status": "warnings",
+  "candidate_warnings_by_severity": {
+    "critical": 10,
+    "major": 100,
+    "minor": 6
+  },
+  "verified_validation_status": "incomplete",
+  "candidate_completion_status": "incomplete",
+  "candidate_complete": false,
+  "verified_complete": false,
+  "candidate_blocking_reasons": [
+    "required_section_incomplete:MA-S1",
+    "required_section_incomplete:MA-S2",
+    "required_section_incomplete:MA-S3",
+    "required_section_incomplete:MA-S4",
+    "required_section_incomplete:MA-S5",
+    "paragraph_missing:paragraph:MA-S1:method-unit-1:facet:facet-45205815214ce81d",
+    "paragraph_missing:paragraph:MA-S1:method-unit-1:formula:formula:facet:facet-45205815214ce81d",
+    "paragraph_missing:paragraph:MA-S1:method-unit-1:formula:formula:section:MA-S1:derivation",
+    "paragraph_missing:paragraph:MA-S3:method-unit-1:facet:facet-e3de4791afd3b462",
+    "paragraph_missing:paragraph:MA-S3:method-unit-1:slot:slot:fact-callback:req:MA-S1:mechanism-overview-node:5aa3466791d8654f",
+    "paragraph_missing:paragraph:MA-S3:method-unit-1:slot:slot:fact-O-STAGE-02-e02cd0f2-node:775aa62491c88d60",
+    "paragraph_missing:paragraph:MA-S3:method-unit-1:slot:slot:fact-O-STAGE-02-e02cd0f2-node:295ccb032c6bffcd",
+    "paragraph_missing:paragraph:MA-S3:method-unit-1:slot:slot:fact-O-STAGE-02-e02cd0f2-node:78fb7cf618388d76",
+    "paragraph_missing:paragraph:MA-S4:method-unit-1:slot:slot:fact-O-STAGE-04-a3a3e8ab-node:992d4e5d074a2eff",
+    "paragraph_missing:paragraph:MA-S5:method-unit-1:facet:facet-85dd07572b8a77e2",
+    "paragraph_missing:paragraph:MA-S5:method-unit-1:formula:formula:section:MA-S5:derivation",
+    "required_formula_unresolved:MA-S1:formula:facet:facet-45205815214ce81d",
+    "required_formula_unresolved:MA-S1:formula:section:MA-S1:derivation",
+    "required_formula_unresolved:MA-S3:formula:facet:facet-9a1ed70668b9de25",
+    "required_formula_unresolved:MA-S3:formula:facet:facet-e3de4791afd3b462",
+    "required_formula_unresolved:MA-S3:formula:facet:facet-0564bcda9bc954d9",
+    "required_formula_unresolved:MA-S3:formula:section:MA-S3:derivation",
+    "required_formula_unresolved:MA-S4:formula:section:MA-S4:derivation",
+    "required_formula_unresolved:MA-S5:formula:facet:facet-85dd07572b8a77e2",
+    "required_formula_unresolved:MA-S5:formula:section:MA-S5:derivation",
+    "research_dossier_unresolved:paragraph:MA-S4:7:facet_alignment:facet-9f2ea9661004e61a",
+    "research_dossier_unresolved:paragraph:MA-S5:method-unit-1:facet_alignment:facet-9a8892286042413e"
+  ],
+  "verified_blocking_reasons": [
+    "verified_output_empty",
+    "reverse_validation_failed",
+    "final_integrity_gate_failed",
+    "publication_quality_not_ready",
+    "verified_review_block:review:O-COMPONENT-01-377afc18",
+    "verified_review_block:review:O-COMPONENT-07-c430eb84",
+    "verified_review_block:review:O-ORGANIZATION-03-359984b4",
+    "verified_review_block:review:O-RATIONALE-CHECK-01-106180a0",
+    "verified_review_block:review:O-RATIONALE-CHECK-02-653d713f",
+    "verified_review_block:review:O-RATIONALE-CHECK-03-117025ca",
+    "verified_review_block:review:O-RATIONALE-CHECK-04-b41841c3",
+    "verified_review_block:review:O-RATIONALE-CHECK-05-e1bbed89",
+    "verified_review_block:review-sentence:FTU2",
+    "verified_review_block:review-sentence:FTU3",
+    "verified_review_block:review-sentence:FTU5",
+    "verified_review_block:review-sentence:FTU6",
+    "verified_review_block:review-sentence:FTU7",
+    "verified_review_block:review-sentence:FTU8",
+    "verified_review_block:review-sentence:FTU9",
+    "verified_review_block:review-sentence:FTU10",
+    "verified_review_block:review-sentence:FTU11",
+    "verified_review_block:review-sentence:FTU12",
+    "verified_review_block:review-sentence:FTU13",
+    "verified_review_block:review-formalization:MA-S2",
+    "verified_review_block:review-formalization:MA-S1",
+    "verified_review_block:review-formalization:MA-S3",
+    "verified_review_block:review-formalization:MA-S4",
+    "verified_review_block:review-formalization:MA-S5",
+    "verified_review_block:review-move-unanchored:MA-S1:move-unanchored:MA-S1:configuration_and_branches",
+    "verified_review_block:review-move-unanchored:MA-S3:move-unanchored:MA-S3:configuration_and_branches",
+    "verified_review_block:review-move-unanchored:MA-S4:move-unanchored:MA-S4:configuration_and_branches",
+    "verified_review_block:review-move-unanchored:MA-S5:move-unanchored:MA-S5:configuration_and_branches",
+    "external_research_queue_open",
+    "verified_upstream_failure:MA-S2:invalid_writing_research_callback:problem_or_local_context@MA-S2/MA-S2:unit/expository_bridge",
+    "verified_upstream_failure:MA-S1:writer_output_incomplete",
+    "verified_upstream_failure:MA-S1:invalid_writing_research_callback:mechanism_overview@MA-S1/MA-S1:unit-1/executable_hard",
+    "verified_upstream_failure:MA-S1:missing_required_briefs:brief:story:O-RATIONALE-CHECK-02-653d713f,brief:story:O-RATIONALE-CHECK-05-e1bbed89",
+    "verified_upstream_failure:MA-S3:writer_output_incomplete",
+    "verified_upstream_failure:MA-S3:missing_required_briefs:brief:story:O-METHOD-MAINLINE-01-3011c54d,brief:story:O-ORGANIZATION-03-359984b4",
+    "verified_upstream_failure:MA-S4:invalid_writing_research_callback:mechanism_overview@MA-S4/MA-S4:unit-1/executable_hard",
+    "verified_upstream_failure:MA-S4:missing_required_briefs:brief:story:O-COMPONENT-01-377afc18,brief:story:O-COMPONENT-01-88e55e54,brief:story:O-COMPONENT-02-c39dd898,brief:story:O-COMPONENT-03-2ae65141,brief:story:O-COMPONENT-04-6d73cce5,brief:story:O-COMPONENT-05-8cd85daa,brief:story:O-STAGE-04-a3a3e8ab",
+    "verified_upstream_failure:MA-S5:writer_output_incomplete",
+    "verified_upstream_failure:MA-S5:invalid_writing_research_callback:equation_or_derivation@MA-S5/MA-S5:unit/expository_bridge",
+    "verified_upstream_failure:editor:editor_patch_schema_failed:ValueError",
+    "verified_upstream_failure:formalization_required_obligation_unresolved:MA-S1:formula:facet:facet-45205815214ce81d,formula:section:MA-S1:derivation",
+    "verified_upstream_failure:formalization_required_obligation_unresolved:MA-S3:formula:facet:facet-9a1ed70668b9de25,formula:facet:facet-e3de4791afd3b462,formula:facet:facet-0564bcda9bc954d9,formula:section:MA-S3:derivation",
+    "verified_upstream_failure:formalization_required_obligation_unresolved:MA-S4:formula:section:MA-S4:derivation",
+    "verified_upstream_failure:formalization_required_obligation_unresolved:MA-S5:formula:facet:facet-85dd07572b8a77e2,formula:section:MA-S5:derivation"
+  ],
+  "publication_ready": false,
+  "content_digest": "sha256:dbaec0e1061e48a131c6cb707f27b79231c14e3fb20a6df464218d0ff6222d69"
+}

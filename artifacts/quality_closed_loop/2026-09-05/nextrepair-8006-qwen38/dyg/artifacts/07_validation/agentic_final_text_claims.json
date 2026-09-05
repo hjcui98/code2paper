@@ -1,0 +1,440 @@
+{
+  "mode": "agentic-final-text-claims-v1",
+  "input_text_digest": "sha256:40923b5b68597d99be5781ad18e492ac42215187c8bdf3fc6a6268326260e50d",
+  "units": [
+    {
+      "unit_id": "FTU1",
+      "kind": "heading",
+      "text": "Motivation: limitations of vanilla SSMs – they ignore irregular timespans and are vulnerable to input noise",
+      "line_start": 1,
+      "line_end": 1,
+      "char_start": 3,
+      "char_end": 110,
+      "factual": false,
+      "high_risk_markers": [],
+      "span_digest": "sha256:1fece039c5f0fff7a294c3acbe8aa5682acade9cc34f3a4bc1b4bd3e86bc5172"
+    },
+    {
+      "unit_id": "FTU2",
+      "kind": "sentence",
+      "text": "Standard SSM step operations—fused add and norm applied to hidden states with learned weight, bias, and epsilon parameters, followed by convolutional state and SSM output computation—assume a uniform sampling grid over the input sequence.",
+      "line_start": 3,
+      "line_end": 3,
+      "char_start": 112,
+      "char_end": 350,
+      "factual": true,
+      "high_risk_markers": [],
+      "span_digest": "sha256:adad57b6c12357002a29fb451c8f3850188c68a386790781055f1c95d4f8398f"
+    },
+    {
+      "unit_id": "FTU3",
+      "kind": "sentence",
+      "text": "This assumption renders them insensitive to irregular timespans between observations, and the absence of an explicit noise-robustness mechanism makes the hidden-state trajectory vulnerable to input perturbation.",
+      "line_start": 3,
+      "line_end": 3,
+      "char_start": 351,
+      "char_end": 562,
+      "factual": true,
+      "high_risk_markers": [],
+      "span_digest": "sha256:5a012b951fa958ccbe7d5b17f20a2d7f9c79b7deb556a4cc50f129b07ed501fc"
+    },
+    {
+      "unit_id": "FTU4",
+      "kind": "heading",
+      "text": "Downstream adaptation: link prediction and node classification setups",
+      "line_start": 5,
+      "line_end": 5,
+      "char_start": 567,
+      "char_end": 636,
+      "factual": false,
+      "high_risk_markers": [],
+      "span_digest": "sha256:99466d4e936df949f53c8729601b441a2b7d68c998671d97d94cd7e49a0a4154"
+    },
+    {
+      "unit_id": "FTU5",
+      "kind": "sentence",
+      "text": "Downstream tasks consume fixed-size node embeddings produced by a readout function applied to the sequential output of the encoder.",
+      "line_start": 7,
+      "line_end": 7,
+      "char_start": 638,
+      "char_end": 769,
+      "factual": true,
+      "high_risk_markers": [],
+      "span_digest": "sha256:95316a902624f90a230d1ddf80fef723b3f4360f39f2b2e3f0797dba691cf5e7"
+    },
+    {
+      "unit_id": "FTU6",
+      "kind": "sentence",
+      "text": "For a target node, the interaction sequence is extracted as the ordered list of first-hop neighbor events up to a prediction timestamp, with each event carrying raw node and edge features; when a feature vector is unavailable, a zero vector is substituted.",
+      "line_start": 7,
+      "line_end": 7,
+      "char_start": 770,
+      "char_end": 1026,
+      "factual": true,
+      "high_risk_markers": [],
+      "span_digest": "sha256:cb5e34d49e52fa5839dd93559e7f3b6c309bf528a34846c5bb5af18a019bee2e"
+    },
+    {
+      "unit_id": "FTU7",
+      "kind": "sentence",
+      "text": "In the case-study protocol, a neighbor sampler retrieves all first-hop neighbors for the destination node set, and an edge bank with unlimited memory stores historical source-node records so that a query pair is resolved by checking whether the pair appears in the stored edge memories.",
+      "line_start": 7,
+      "line_end": 7,
+      "char_start": 1027,
+      "char_end": 1313,
+      "factual": true,
+      "high_risk_markers": [],
+      "span_digest": "sha256:e19aa6b0bdee969ab546990ebd67ad55b250e1f753e8d5393f6024fe35f3c5e4"
+    },
+    {
+      "unit_id": "FTU8",
+      "kind": "sentence",
+      "text": "The readout function maps the encoded sequence to a fixed-size embedding suitable for link prediction (by comparing embeddings of two candidate nodes) or node classification (by applying a classifier to a single embedding); in the case-study protocol the procedure returns both the source and destination node embeddings for downstream scoring.",
+      "line_start": 7,
+      "line_end": 7,
+      "char_start": 1314,
+      "char_end": 1658,
+      "factual": true,
+      "high_risk_markers": [],
+      "span_digest": "sha256:ff28db7ce5d2db9512b1ba30775d4854a304d047b4e279292c337cf8692af4b8"
+    },
+    {
+      "unit_id": "FTU9",
+      "kind": "sentence",
+      "text": "The node embedding $h_u^t$ at prediction time $t$ is obtained by applying a readout function to the sequential encoding of the interaction history: $$",
+      "line_start": 9,
+      "line_end": 9,
+      "char_start": 1660,
+      "char_end": 1810,
+      "factual": true,
+      "high_risk_markers": [
+        "formula"
+      ],
+      "span_digest": "sha256:a2f0a54d136c66af4de4f122fa6b1a08de1d0114053e7e5846b329190ef4acfb"
+    },
+    {
+      "unit_id": "FTU10",
+      "kind": "sentence",
+      "text": "\\mathbf{h}_{u}^{t} = \\text{ReadOut}\\left( \\text{SeqEnc}\\left( \\{ (\\mathbf{x}_{v}, \\mathbf{e}_{uv}, \\Delta t_{uv}) \\}_{v \\in \\mathcal{N}_{u}^{t}} \\right) \\right)",
+      "line_start": 10,
+      "line_end": 10,
+      "char_start": 1811,
+      "char_end": 1971,
+      "factual": true,
+      "high_risk_markers": [],
+      "span_digest": "sha256:b2c4bbe32a4d578d0dd5be0d9407829c872b315b8fa31a41be181134ba1832c2"
+    },
+    {
+      "unit_id": "FTU11",
+      "kind": "formula",
+      "text": "$$ Here $h_u^t$ denotes the fixed-size embedding for node $u$ at time $t$, $N_u^t$ is the set of first-hop neighbors of $u$ up to time $t$, $x_v$ and $e_{uv}$ are the raw node and edge features, and $t_{uv}$ is the timespan from the interaction to the prediction time.",
+      "line_start": 11,
+      "line_end": 11,
+      "char_start": 1972,
+      "char_end": 2240,
+      "factual": true,
+      "high_risk_markers": [
+        "formula"
+      ],
+      "span_digest": "sha256:cc1a5c5b046337c50de48cbf39f7a44fbdffefe4729028f87d75155f41ba4a0a"
+    },
+    {
+      "unit_id": "FTU12",
+      "kind": "formula",
+      "text": "The timespan is encoded via a trainable cosine-based function that captures the absolute temporal offset between each historical interaction and the query time.",
+      "line_start": 11,
+      "line_end": 11,
+      "char_start": 2241,
+      "char_end": 2401,
+      "factual": true,
+      "high_risk_markers": [],
+      "span_digest": "sha256:1e5849726b5d42b8fb08166682df6ebedc2adf595a22c4dfabd653242b9795ca"
+    },
+    {
+      "unit_id": "FTU13",
+      "kind": "formula",
+      "text": "In addition, a co-occurrence frequency encoding captures structural similarity by representing the number of shared neighbors between the target node and each historical neighbor; in the case-study protocol this feature is concatenated with the source-node embedding when the interaction index is zero.",
+      "line_start": 11,
+      "line_end": 11,
+      "char_start": 2402,
+      "char_end": 2704,
+      "factual": true,
+      "high_risk_markers": [],
+      "span_digest": "sha256:bd6bbf6257c9273a032155b93cb7a201cc2c3c75d674f52203eea72d79b430a2"
+    }
+  ],
+  "atomic_claims": [
+    {
+      "atomic_claim_id": "FAC1",
+      "unit_id": "FTU2",
+      "text": "Standard SSM step operations—fused add and norm applied to hidden states with learned weight, bias",
+      "normalized_text": "standard ssm step operations fused add and norm applied to hidden states with learned weight bias",
+      "line_start": 3,
+      "line_end": 3,
+      "char_start": 112,
+      "char_end": 210,
+      "candidate_projection_claim_ids": [],
+      "candidate_method_proposition_ids": [
+        "claim-callback:MA-S1:unit-1:mechanism_overview:1-fact-callback:MA-S1:unit-1:mechanism_overview:1-node:3a6de8a6f23f4821"
+      ],
+      "candidate_author_attested_ids": [],
+      "candidate_narrative_ids": [],
+      "candidate_direct_evidence_ids": [],
+      "high_risk_markers": [],
+      "claim_digest": "sha256:01bca33eb1186d4c7d008fe4b4d59ec853d21da034243fbf92c389da7fa823df"
+    },
+    {
+      "atomic_claim_id": "FAC2",
+      "unit_id": "FTU2",
+      "text": "epsilon parameters, followed by convolutional state and SSM output computation—assume a uniform sampling grid over the input sequence.",
+      "normalized_text": "epsilon parameters followed by convolutional state and ssm output computation assume a uniform sampling grid over the input sequence",
+      "line_start": 3,
+      "line_end": 3,
+      "char_start": 216,
+      "char_end": 350,
+      "candidate_projection_claim_ids": [],
+      "candidate_method_proposition_ids": [
+        "claim-callback:req:MA-S1:mechanism-overview-fact-callback:req:MA-S1:mechanism-overview-node:e6e27ab4b6034a66"
+      ],
+      "candidate_author_attested_ids": [],
+      "candidate_narrative_ids": [],
+      "candidate_direct_evidence_ids": [],
+      "high_risk_markers": [],
+      "claim_digest": "sha256:13a86ed056eed3caa169641f2e871f1a1c7bf8c8c767166fba84e9f017f06e1a"
+    },
+    {
+      "atomic_claim_id": "FAC3",
+      "unit_id": "FTU3",
+      "text": "This assumption renders them insensitive to irregular timespans between observations, and the absence of an explicit noise-robustness mechanism makes the hidden-state trajectory vulnerable to input perturbation.",
+      "normalized_text": "this assumption renders them insensitive to irregular timespans between observations and the absence of an explicit noise robustness mechanism makes the hidden state trajectory vulnerable to input perturbation",
+      "line_start": 3,
+      "line_end": 3,
+      "char_start": 351,
+      "char_end": 562,
+      "candidate_projection_claim_ids": [],
+      "candidate_method_proposition_ids": [
+        "claim-callback:req:MA-S1:mechanism-overview-fact-callback:req:MA-S1:mechanism-overview-node:e6e27ab4b6034a66"
+      ],
+      "candidate_author_attested_ids": [],
+      "candidate_narrative_ids": [],
+      "candidate_direct_evidence_ids": [],
+      "high_risk_markers": [],
+      "claim_digest": "sha256:5a012b951fa958ccbe7d5b17f20a2d7f9c79b7deb556a4cc50f129b07ed501fc"
+    },
+    {
+      "atomic_claim_id": "FAC4",
+      "unit_id": "FTU5",
+      "text": "Downstream tasks consume fixed-size node embeddings produced by a readout function applied to the sequential output of the encoder.",
+      "normalized_text": "downstream tasks consume fixed size node embeddings produced by a readout function applied to the sequential output of the encoder",
+      "line_start": 7,
+      "line_end": 7,
+      "char_start": 638,
+      "char_end": 769,
+      "candidate_projection_claim_ids": [],
+      "candidate_method_proposition_ids": [
+        "claim-O-COMPONENT-04-6d73cce5-fact-O-COMPONENT-04-6d73cce5-node:24d38c31fe5b60f7"
+      ],
+      "candidate_author_attested_ids": [],
+      "candidate_narrative_ids": [],
+      "candidate_direct_evidence_ids": [],
+      "high_risk_markers": [],
+      "claim_digest": "sha256:95316a902624f90a230d1ddf80fef723b3f4360f39f2b2e3f0797dba691cf5e7"
+    },
+    {
+      "atomic_claim_id": "FAC5",
+      "unit_id": "FTU6",
+      "text": "For a target node, the interaction sequence is extracted as the ordered list of first-hop neighbor events up to a prediction timestamp, with each event carrying raw node and edge features; when a feature vector is unavailable, a zero vector is substituted.",
+      "normalized_text": "for a target node the interaction sequence is extracted as the ordered list of first hop neighbor events up to a prediction timestamp with each event carrying raw node and edge features when a feature vector is unavailable a zero vector is substituted",
+      "line_start": 7,
+      "line_end": 7,
+      "char_start": 770,
+      "char_end": 1026,
+      "candidate_projection_claim_ids": [],
+      "candidate_method_proposition_ids": [
+        "claim-O-COMPONENT-01-377afc18-fact-O-COMPONENT-01-377afc18-node:3646d6d14d1b0bce"
+      ],
+      "candidate_author_attested_ids": [],
+      "candidate_narrative_ids": [],
+      "candidate_direct_evidence_ids": [],
+      "high_risk_markers": [],
+      "claim_digest": "sha256:cb5e34d49e52fa5839dd93559e7f3b6c309bf528a34846c5bb5af18a019bee2e"
+    },
+    {
+      "atomic_claim_id": "FAC6",
+      "unit_id": "FTU7",
+      "text": "In the case-study protocol, a neighbor sampler retrieves all first-hop neighbors for the destination node set, and an edge bank with unlimited memory stores historical source-node records so that a query pair is resolved by checking whether the pair appears in the stored edge memories.",
+      "normalized_text": "in the case study protocol a neighbor sampler retrieves all first hop neighbors for the destination node set and an edge bank with unlimited memory stores historical source node records so that a query pair is resolved by checking whether the pair appears in the stored edge memories",
+      "line_start": 7,
+      "line_end": 7,
+      "char_start": 1027,
+      "char_end": 1313,
+      "candidate_projection_claim_ids": [],
+      "candidate_method_proposition_ids": [
+        "claim-O-COMPONENT-01-377afc18-fact-O-COMPONENT-01-377afc18-node:3646d6d14d1b0bce"
+      ],
+      "candidate_author_attested_ids": [],
+      "candidate_narrative_ids": [],
+      "candidate_direct_evidence_ids": [],
+      "high_risk_markers": [],
+      "claim_digest": "sha256:e19aa6b0bdee969ab546990ebd67ad55b250e1f753e8d5393f6024fe35f3c5e4"
+    },
+    {
+      "atomic_claim_id": "FAC7",
+      "unit_id": "FTU8",
+      "text": "The readout function maps the encoded sequence to a fixed-size embedding suitable for link prediction (by comparing embeddings of two candidate nodes) or node classification (by applying a classifier to a single embedding)",
+      "normalized_text": "the readout function maps the encoded sequence to a fixed size embedding suitable for link prediction by comparing embeddings of two candidate nodes or node classification by applying a classifier to a single embedding",
+      "line_start": 7,
+      "line_end": 7,
+      "char_start": 1314,
+      "char_end": 1536,
+      "candidate_projection_claim_ids": [],
+      "candidate_method_proposition_ids": [
+        "claim-O-STAGE-04-a3a3e8ab-fact-O-STAGE-04-a3a3e8ab-node:992d4e5d074a2eff"
+      ],
+      "candidate_author_attested_ids": [],
+      "candidate_narrative_ids": [],
+      "candidate_direct_evidence_ids": [],
+      "high_risk_markers": [],
+      "claim_digest": "sha256:d06d51d3a9651e53ff63fbf0669802cba6bf490ff9a9be3e3852500caf5a3aaa"
+    },
+    {
+      "atomic_claim_id": "FAC8",
+      "unit_id": "FTU8",
+      "text": "in the case-study protocol the procedure returns both the source and destination node embeddings for downstream scoring.",
+      "normalized_text": "in the case study protocol the procedure returns both the source and destination node embeddings for downstream scoring",
+      "line_start": 7,
+      "line_end": 7,
+      "char_start": 1538,
+      "char_end": 1658,
+      "candidate_projection_claim_ids": [],
+      "candidate_method_proposition_ids": [
+        "claim-O-COMPONENT-05-8cd85daa-fact-O-COMPONENT-05-8cd85daa-node:90ccee28c62680e5"
+      ],
+      "candidate_author_attested_ids": [],
+      "candidate_narrative_ids": [],
+      "candidate_direct_evidence_ids": [],
+      "high_risk_markers": [],
+      "claim_digest": "sha256:e2ab7845a28630449e90607a9311f42cb09fcd3364060597dc74f5ae1977a52f"
+    },
+    {
+      "atomic_claim_id": "FAC9",
+      "unit_id": "FTU9",
+      "text": "The node embedding $h_u^t$ at prediction time $t$ is obtained by applying a readout function to the sequential encoding of the interaction history: $$",
+      "normalized_text": "the node embedding h_u t at prediction time t is obtained by applying a readout function to the sequential encoding of the interaction history",
+      "line_start": 9,
+      "line_end": 9,
+      "char_start": 1660,
+      "char_end": 1810,
+      "candidate_projection_claim_ids": [],
+      "candidate_method_proposition_ids": [
+        "claim-O-COMPONENT-03-2ae65141-fact-O-COMPONENT-03-2ae65141-node:c7e93566614ced8d"
+      ],
+      "candidate_author_attested_ids": [],
+      "candidate_narrative_ids": [],
+      "candidate_direct_evidence_ids": [],
+      "high_risk_markers": [
+        "formula"
+      ],
+      "claim_digest": "sha256:a2f0a54d136c66af4de4f122fa6b1a08de1d0114053e7e5846b329190ef4acfb"
+    },
+    {
+      "atomic_claim_id": "FAC10",
+      "unit_id": "FTU10",
+      "text": "\\mathbf{h}_{u}^{t} = \\text{ReadOut}\\left( \\text{SeqEnc}\\left( \\{ (\\mathbf{x}_{v}, \\mathbf{e}_{uv}, \\Delta t_{uv}) \\}_{v \\in \\mathcal{N}_{u}^{t}} \\right) \\right)",
+      "normalized_text": "mathbf h _ u t text readout left text seqenc left mathbf x _ v mathbf e _ uv delta t_ uv _ v in mathcal n _ u t right right",
+      "line_start": 10,
+      "line_end": 10,
+      "char_start": 1811,
+      "char_end": 1971,
+      "candidate_projection_claim_ids": [],
+      "candidate_method_proposition_ids": [
+        "claim-callback:req:MA-S1:mechanism-overview-fact-callback:req:MA-S1:mechanism-overview-node:5aa3466791d8654f"
+      ],
+      "candidate_author_attested_ids": [],
+      "candidate_narrative_ids": [],
+      "candidate_direct_evidence_ids": [],
+      "high_risk_markers": [],
+      "claim_digest": "sha256:b2c4bbe32a4d578d0dd5be0d9407829c872b315b8fa31a41be181134ba1832c2"
+    },
+    {
+      "atomic_claim_id": "FAC11",
+      "unit_id": "FTU11",
+      "text": "$$ Here $h_u^t$ denotes the fixed-size embedding for node $u$ at time $t$, $N_u^t$ is the set of first-hop neighbors of $u$ up to time $t$, $x_v$ and $e_{uv}$ are the raw node and edge features, and $t_{uv}$ is the timespan from the interaction to the prediction time.",
+      "normalized_text": "here h_u t denotes the fixed size embedding for node u at time t n_u t is the set of first hop neighbors of u up to time t x_v and e_ uv are the raw node and edge features and t_ uv is the timespan from the interaction to the prediction time",
+      "line_start": 11,
+      "line_end": 11,
+      "char_start": 1972,
+      "char_end": 2240,
+      "candidate_projection_claim_ids": [],
+      "candidate_method_proposition_ids": [
+        "claim-O-COMPONENT-04-6d73cce5-fact-O-COMPONENT-04-6d73cce5-node:78ccd95dcfdf5d39"
+      ],
+      "candidate_author_attested_ids": [],
+      "candidate_narrative_ids": [],
+      "candidate_direct_evidence_ids": [],
+      "high_risk_markers": [
+        "formula"
+      ],
+      "claim_digest": "sha256:cc1a5c5b046337c50de48cbf39f7a44fbdffefe4729028f87d75155f41ba4a0a"
+    },
+    {
+      "atomic_claim_id": "FAC12",
+      "unit_id": "FTU12",
+      "text": "The timespan is encoded via a trainable cosine-based function that captures the absolute temporal offset between each historical interaction and the query time.",
+      "normalized_text": "the timespan is encoded via a trainable cosine based function that captures the absolute temporal offset between each historical interaction and the query time",
+      "line_start": 11,
+      "line_end": 11,
+      "char_start": 2241,
+      "char_end": 2401,
+      "candidate_projection_claim_ids": [],
+      "candidate_method_proposition_ids": [
+        "claim-O-COMPONENT-05-8cd85daa-fact-O-COMPONENT-05-8cd85daa-node:90ccee28c62680e5"
+      ],
+      "candidate_author_attested_ids": [],
+      "candidate_narrative_ids": [],
+      "candidate_direct_evidence_ids": [],
+      "high_risk_markers": [],
+      "claim_digest": "sha256:1e5849726b5d42b8fb08166682df6ebedc2adf595a22c4dfabd653242b9795ca"
+    },
+    {
+      "atomic_claim_id": "FAC13",
+      "unit_id": "FTU13",
+      "text": "In addition, a co-occurrence frequency encoding captures structural similarity by representing the number of shared neighbors between the target node",
+      "normalized_text": "in addition a co occurrence frequency encoding captures structural similarity by representing the number of shared neighbors between the target node",
+      "line_start": 11,
+      "line_end": 11,
+      "char_start": 2402,
+      "char_end": 2551,
+      "candidate_projection_claim_ids": [],
+      "candidate_method_proposition_ids": [
+        "claim-O-COMPONENT-05-8cd85daa-fact-O-COMPONENT-05-8cd85daa-node:20e8a907508376ba"
+      ],
+      "candidate_author_attested_ids": [],
+      "candidate_narrative_ids": [],
+      "candidate_direct_evidence_ids": [],
+      "high_risk_markers": [],
+      "claim_digest": "sha256:0671034a771db8338c6634832ba64e198d40156aac5cdf991ebc3358fdd12b10"
+    },
+    {
+      "atomic_claim_id": "FAC14",
+      "unit_id": "FTU13",
+      "text": "each historical neighbor; in the case-study protocol this feature is concatenated with the source-node embedding when the interaction index is zero.",
+      "normalized_text": "each historical neighbor in the case study protocol this feature is concatenated with the source node embedding when the interaction index is zero",
+      "line_start": 11,
+      "line_end": 11,
+      "char_start": 2556,
+      "char_end": 2704,
+      "candidate_projection_claim_ids": [],
+      "candidate_method_proposition_ids": [
+        "claim-O-COMPONENT-05-8cd85daa-fact-O-COMPONENT-05-8cd85daa-node:90ccee28c62680e5"
+      ],
+      "candidate_author_attested_ids": [],
+      "candidate_narrative_ids": [],
+      "candidate_direct_evidence_ids": [],
+      "high_risk_markers": [],
+      "claim_digest": "sha256:adabd8fa6d9501a1c61e133ef4bf97be491e88da30c48a445391f786aab960f1"
+    }
+  ],
+  "deterministic_completeness_passed": true,
+  "completeness_failures": []
+}
