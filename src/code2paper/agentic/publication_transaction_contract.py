@@ -472,42 +472,117 @@ def _witness_constraints_from_plan_row(
         if isinstance(item, Mapping):
             kind = str(item.get("target_kind") or "").strip()
             target_id = str(item.get("target_id") or "").strip()
-            exact = _text_values(item.get("allowed_exact_excerpts"))
+            exact = _text_values(
+                item.get("allowed_exact_excerpts")
+                or item.get("exact_excerpts")
+            )
             semantic_atom = str(item.get("semantic_atom") or "").strip()
-            conditions = _text_values(item.get("required_conditions"))
-            polarity = str(item.get("required_polarity") or "unknown").strip()
+            conditions = _text_values(
+                item.get("required_conditions") or item.get("conditions")
+            )
+            polarity = str(
+                item.get("required_polarity") or item.get("polarity") or "unknown"
+            ).strip()
             paper_role = str(item.get("paper_role") or "").strip()
         else:
             kind = str(getattr(item, "target_kind", "") or "").strip()
             target_id = str(getattr(item, "target_id", "") or "").strip()
-            exact = _text_values(getattr(item, "allowed_exact_excerpts", ()))
+            exact = _text_values(
+                getattr(item, "allowed_exact_excerpts", ())
+                or getattr(item, "exact_excerpts", ())
+            )
             semantic_atom = str(getattr(item, "semantic_atom", "") or "").strip()
-            conditions = _text_values(getattr(item, "required_conditions", ()))
-            polarity = str(getattr(item, "required_polarity", "unknown") or "unknown").strip()
+            conditions = _text_values(
+                getattr(item, "required_conditions", ())
+                or getattr(item, "conditions", ())
+            )
+            polarity = str(
+                getattr(item, "required_polarity", "")
+                or getattr(item, "polarity", "")
+                or "unknown"
+            ).strip()
             paper_role = str(getattr(item, "paper_role", "") or "").strip()
         if not kind or not target_id:
             continue
+        if isinstance(item, Mapping):
+            required = bool(
+                item.get(
+                    "required",
+                    True if "render_policy" not in item else item.get("render_policy") == "required",
+                )
+            )
+        else:
+            render_policy = getattr(item, "render_policy", "required")
+            required = bool(getattr(item, "required", render_policy == "required"))
         result[(kind, target_id)] = {
             "exact": exact,
             "semantic_atom": semantic_atom,
             "conditions": conditions,
             "polarity": polarity,
             "paper_role": paper_role,
+            "required": required,
             "source_anchor_ids": _text_values(
-                item.get("allowed_anchor_ids")
-            ) if isinstance(item, Mapping) else _text_values(
-                getattr(item, "allowed_anchor_ids", ())
+                (
+                    item.get("source_anchor_ids")
+                    or item.get("source_operation_ids")
+                    or item.get("allowed_anchor_ids")
+                )
+                if isinstance(item, Mapping)
+                else (
+                    getattr(item, "source_anchor_ids", ())
+                    or getattr(item, "source_operation_ids", ())
+                    or getattr(item, "allowed_anchor_ids", ())
+                )
             ),
         }
     raw_atoms = row.get("witness_atoms") or row.get("detail_witness_atoms") or ()
     for atom in raw_atoms:
         atom_id = str(atom.get("atom_id") if isinstance(atom, Mapping) else getattr(atom, "atom_id", "")).strip()
         detail_id = str(atom.get("detail_id") if isinstance(atom, Mapping) else getattr(atom, "detail_id", "")).strip()
-        exact = _text_values(atom.get("exact_excerpts") if isinstance(atom, Mapping) else getattr(atom, "exact_excerpts", ()))
-        semantic_atom = str(atom.get("semantic_anchor") if isinstance(atom, Mapping) else getattr(atom, "semantic_anchor", "")).strip()
-        conditions = _text_values(atom.get("conditions") if isinstance(atom, Mapping) else getattr(atom, "conditions", ()))
-        polarity = str(atom.get("polarity") if isinstance(atom, Mapping) else getattr(atom, "polarity", "unknown") or "unknown").strip()
+        exact = _text_values(
+            (
+                atom.get("exact_excerpts")
+                or atom.get("allowed_exact_excerpts")
+            ) if isinstance(atom, Mapping) else (
+                getattr(atom, "exact_excerpts", ())
+                or getattr(atom, "allowed_exact_excerpts", ())
+            )
+        )
+        semantic_atom = str(
+            atom.get("semantic_anchor") if isinstance(atom, Mapping)
+            else getattr(atom, "semantic_anchor", "")
+        ).strip()
+        conditions = _text_values(
+            (
+                atom.get("required_conditions")
+                or atom.get("conditions")
+            ) if isinstance(atom, Mapping) else (
+                getattr(atom, "required_conditions", ())
+                or getattr(atom, "conditions", ())
+            )
+        )
+        polarity = str(
+            (
+                atom.get("required_polarity")
+                or atom.get("polarity")
+                or "unknown"
+            ) if isinstance(atom, Mapping) else (
+                getattr(atom, "required_polarity", "")
+                or getattr(atom, "polarity", "")
+                or "unknown"
+            )
+        ).strip()
         paper_role = str(atom.get("atom_kind") if isinstance(atom, Mapping) else getattr(atom, "atom_kind", "")).strip()
+        if isinstance(atom, Mapping):
+            required = bool(
+                atom.get(
+                    "required",
+                    True if "render_policy" not in atom else atom.get("render_policy") == "required",
+                )
+            )
+        else:
+            render_policy = getattr(atom, "render_policy", "required")
+            required = bool(getattr(atom, "required", render_policy == "required"))
         if atom_id:
             result[("atom", atom_id)] = {
                 "exact": exact,
@@ -516,8 +591,15 @@ def _witness_constraints_from_plan_row(
                 "polarity": polarity,
                 "paper_role": paper_role,
                 "detail_id": detail_id,
+                "required": required,
                 "source_anchor_ids": _text_values(
-                    atom.get("source_operation_ids") if isinstance(atom, Mapping) else getattr(atom, "source_operation_ids", ())
+                    (
+                        atom.get("source_anchor_ids")
+                        or atom.get("source_operation_ids")
+                    ) if isinstance(atom, Mapping) else (
+                        getattr(atom, "source_anchor_ids", ())
+                        or getattr(atom, "source_operation_ids", ())
+                    )
                 ),
             }
     for did in _ids(row.get("required_detail_ids")):
@@ -858,6 +940,13 @@ def paragraph_binding_targets(
                     candidate_targets.append((kind, package_id))
                 continue
             candidate_targets.append((kind, target_id))
+    # V3 detail contracts carry deterministic atom obligations separately from
+    # the externally declared detail id.  Expose those atoms to the Binder so
+    # omitted Writer metadata cannot make a detail appear complete by id alone.
+    candidate_targets.extend(
+        key for key in constraints
+        if key[0] == "atom" and constraints[key].get("required", True)
+    )
 
     # A Writer declaration is only a proposal.  Keep it in the Binder's
     # closed input when it names a sidecar-required target (or an already
@@ -878,7 +967,10 @@ def paragraph_binding_targets(
     # ``witness_contract.targets`` and omit the denormalized required_* lists.
     # Those typed contract entries are still closed authority; they are not a
     # license to accept arbitrary Writer declarations.
-    required_keys.update(constraints)
+    required_keys.update(
+        key for key, local in constraints.items()
+        if key[0] != "atom" or local.get("required", True)
+    )
     for kind, target_ids in declarations.items():
         for target_id in target_ids:
             key = (kind, target_id)
@@ -929,6 +1021,8 @@ def paragraph_binding_targets(
             "paper_role": str(local.get("paper_role") or ""),
             "required_conditions": list(local.get("conditions") or ()),
             "required_polarity": str(local.get("polarity") or "unknown"),
+            "required": bool(local.get("required", True)),
+            "detail_id": str(local.get("detail_id") or ""),
             "allowed_exact_excerpts": list(local.get("exact") or ()),
             "formula_exact_texts": list(dict.fromkeys(
                 str(value).strip()
@@ -1059,7 +1153,28 @@ def validate_paragraph_binding_response(
             unbound_values.append(value)
 
     reported = set(seen) | set(unbound_keys)
+
+    def _detail_atom_complete(detail_id: str) -> bool:
+        atom_keys = {
+            (
+                str(row.get("witness_kind") or ""),
+                str(row.get("target_id") or ""),
+            )
+            for row in target_rows
+            if (
+                row.get("witness_kind") == "atom"
+                and str(row.get("detail_id") or "") == detail_id
+                and row.get("required", True)
+            )
+        }
+        return bool(atom_keys) and atom_keys.issubset(seen)
+
     for kind, target_id in sorted(target_keys - reported):
+        if kind == "detail" and _detail_atom_complete(target_id):
+            # Detail/Atom mode uses the atom witnesses as the lossless
+            # semantic proof.  Requiring a second aggregate sentence would
+            # make the contract impossible for a one-sentence detail.
+            continue
         errors.append(f"binder_target_unreported:{kind}:{target_id}")
     return tuple(valid), tuple(dict.fromkeys(errors)), tuple(unbound_values)
 
@@ -1433,6 +1548,17 @@ def bind_paragraph_witnesses(
     candidate_targets: list[tuple[str, str, str]] = []
     for kind, target_ids in required.items():
         for required_id in target_ids:
+            if kind == "detail" and any(
+                atom_kind == "atom"
+                and local.get("detail_id") == required_id
+                and local.get("required", True)
+                for (atom_kind, _atom_id), local in constraints.items()
+            ):
+                # A Detail with a required atom contract is witnessed by its
+                # complete atom set.  Do not select one generic aggregate
+                # sentence first and thereby prevent the atoms from getting
+                # their own exact witnesses.
+                continue
             target_id = required_id
             if kind == "formula":
                 package = package_by_obligation.get(required_id)
@@ -1443,6 +1569,11 @@ def bind_paragraph_witnesses(
                     continue
             if target_id:
                 candidate_targets.append((kind, target_id, required_id))
+    candidate_targets.extend(
+        (kind, target_id, target_id)
+        for kind, target_id in constraints
+        if kind == "atom" and constraints[(kind, target_id)].get("required", True)
+    )
     for kind, target_ids in declarations.items():
         candidate_targets.extend(
             (kind, target_id, target_id)
@@ -1505,10 +1636,34 @@ def bind_paragraph_witnesses(
                 continue
             source[field_name] = list(dict.fromkeys(values))
     if "unbound_target_ids" in source:
+        witness_keys = {
+            (
+                str(item.get("witness_kind") or "").strip(),
+                str(item.get("target_id") or "").strip(),
+            )
+            for item in source.get("witnesses") or ()
+            if isinstance(item, Mapping)
+            and str(item.get("witness_kind") or "").strip()
+            and str(item.get("target_id") or "").strip()
+        }
+
+        def _detail_atom_complete(detail_id: str) -> bool:
+            atom_keys = {
+                (atom_kind, atom_id)
+                for (atom_kind, atom_id), local in constraints.items()
+                if (
+                    atom_kind == "atom"
+                    and local.get("detail_id") == detail_id
+                    and local.get("required", True)
+                )
+            }
+            return bool(atom_keys) and atom_keys.issubset(witness_keys)
+
         source["unbound_target_ids"] = [
             f"{kind}:{target}"
             for kind, target_ids in declarations.items()
             for target in target_ids
+            if not (kind == "detail" and _detail_atom_complete(target))
             if not any(
                 str(item.get("witness_kind") or "") == kind
                 and str(item.get("target_id") or "") == target
@@ -1544,18 +1699,7 @@ def assess_paragraph_transaction(
     paragraph_id = str(get("paragraph_id", "") or "").strip()
     body = str(get("paragraph_markdown", "") or "").strip()
     required = required_targets_from_plan_row(plan_row)
-    declared = {
-        kind: _ids(get(field, ()))
-        for kind, field in (
-            ("facet", "rendered_from_facet_ids"),
-            ("field", "rendered_field_candidate_ids"),
-            ("slot", "rendered_slot_ids"),
-            ("edge", "rendered_edge_ids"),
-            ("formula", "used_formula_package_ids"),
-            ("claim", "used_claim_ids"),
-            ("equation", "used_equation_ids"),
-        )
-    }
+    declared = _transaction_declarations(get)
     invalid: list[str] = []
     witness_keys: set[tuple[str, str]] = set()
     witness_by_key: dict[tuple[str, str], str] = {}
@@ -1585,6 +1729,22 @@ def assess_paragraph_transaction(
     for kind, values in declared.items():
         for target in values:
             if (kind, target) not in witness_keys:
+                # Detail/Atom contracts permit the Binder to witness a Detail
+                # through the complete set of owned atom witnesses.  The
+                # aggregate detail id remains useful for routing and is not a
+                # second prose substring requirement.
+                if kind == "detail":
+                    detail_atoms = [
+                        (atom_kind, atom_target)
+                        for (atom_kind, atom_target), constraint in _witness_constraints_from_plan_row(plan_row).items()
+                        if (
+                            atom_kind == "atom"
+                            and constraint.get("detail_id") == target
+                            and constraint.get("required", True)
+                        )
+                    ]
+                    if detail_atoms and all(atom_key in witness_keys for atom_key in detail_atoms):
+                        continue
                 invalid.append(f"missing_exact_witness:{kind}:{target}")
 
     missing: dict[str, tuple[str, ...]] = {}
@@ -1614,9 +1774,16 @@ def assess_paragraph_transaction(
             for did in values:
                 detail_atoms = [
                     (k, t) for (k, t), c in constraints_by_key.items()
-                    if k == "atom" and c.get("detail_id") == did
+                    if (
+                        k == "atom"
+                        and c.get("detail_id") == did
+                        and c.get("required", True)
+                    )
                 ]
-                if ("detail", did) in witness_keys:
+                if ("detail", did) in witness_keys and (
+                    not detail_atoms
+                    or all((k, t) in witness_keys for (k, t) in detail_atoms)
+                ):
                     witnessed_details.append(did)
                 elif detail_atoms and all((k, t) in witness_keys for (k, t) in detail_atoms):
                     witnessed_details.append(did)

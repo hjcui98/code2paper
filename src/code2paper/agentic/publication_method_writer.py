@@ -84,6 +84,8 @@ from code2paper.agentic.research_models import TextRepairIssueV1
 from code2paper.agentic.tool_runtime import atomic_write_bytes
 from code2paper.agentic.method_argument_models import (
     ConfigurationClaimSetV1,
+    MechanismResearchCallbackArtifactV2,
+    MechanismResearchRequestV2,
     MethodCompletenessMatrixV1,
     MethodSectionPlanV2,
     MoveAuthorityProofV1,
@@ -301,6 +303,260 @@ def effective_writer_transaction_status(result: Any) -> str:
     return str(getattr(result, "status", "") or "").strip()
 
 
+def _mechanism_value(value: Any, name: str, default: Any = None) -> Any:
+    if isinstance(value, Mapping):
+        return value.get(name, default)
+    return getattr(value, name, default)
+
+
+def _mechanism_callback_terms(detail: Any, operation: Any | None = None) -> tuple[str, ...]:
+    """Return bounded search terms already present in the canonical IR.
+
+    Callback questions are allowed to guide discovery, but they must not turn
+    ids or prose copied from the paper into evidence.  Only source/semantic
+    fields from the detail or operation are therefore exposed as terms.
+    """
+
+    values: list[Any] = []
+    if detail is not None:
+        values.extend([
+            _mechanism_value(detail, "subject", ""),
+            _mechanism_value(detail, "predicate", ""),
+            *(_mechanism_value(detail, "operands", ()) or ()),
+            _mechanism_value(detail, "result", ""),
+            *(_mechanism_value(detail, "shape_or_type_hints", ()) or ()),
+            *(_mechanism_value(detail, "conditions", ()) or ()),
+        ])
+    if operation is not None:
+        values.extend([
+            _mechanism_value(operation, "predicate", ""),
+            *(_mechanism_value(operation, "operands", ()) or ()),
+            _mechanism_value(operation, "result", ""),
+            _mechanism_value(operation, "guard", ""),
+            *(_mechanism_value(operation, "shape_or_type_hints", ()) or ()),
+        ])
+    terms: list[str] = []
+    for raw in values:
+        value = str(raw or "").strip()
+        if not value or value in terms:
+            continue
+        if value.startswith(("span:", "fact:", "claim:", "equation:", "config:", "operation:")):
+            continue
+        if len(value) > 160:
+            value = value[:160].rstrip()
+        if value and value not in terms:
+            terms.append(value)
+    return tuple(terms[:16])
+
+
+def _mechanism_callback_kind(detail: Any, *, authority: str = "") -> str:
+    if authority == "mismatch":
+        return "authority_conflict"
+    role = str(_mechanism_value(detail, "role", "") or "").strip()
+    if role in {"configuration"}:
+        return "missing_configuration"
+    if role in {"condition", "branch"} or bool(_mechanism_value(detail, "conditions", ())):
+        return "missing_condition"
+    if role in {"interface"}:
+        return "missing_call_path"
+    if bool(_mechanism_value(detail, "formalizable", False)) or role in {
+        "formalization", "training_objective", "inference",
+    }:
+        return "missing_formula_operand"
+    if role in {"input", "representation", "transformation", "output"}:
+        return "missing_data_flow"
+    return "missing_definition"
+
+
+def _build_mechanism_research_requests_v2(
+    contexts: Any,
+    narrative_plan: Any | None = None,
+) -> tuple[MechanismResearchRequestV2, ...]:
+    """Compile one exact mechanism/detail callback for each unresolved gap.
+
+    This is deliberately downstream of closure, annotation, and narrative
+    planning.  The plan contributes placement only; ownership and the
+    baseline digest always come from ``MechanismContextV1``.  The helper also
+    emits requests for orphan operations explicitly marked unresolved by the
+    closure, so lossless closure coverage cannot disappear behind a detail
+    grouping decision.
+    """
+
+    if contexts is None:
+        return ()
+    placements: dict[tuple[str, str], tuple[list[str], list[str]]] = {}
+    for section in _mechanism_value(narrative_plan, "sections", ()) or ():
+        section_id = str(_mechanism_value(section, "section_id", "") or "").strip()
+        if not section_id:
+            continue
+        for paragraph in _mechanism_value(section, "paragraphs", ()) or ():
+            paragraph_id = str(_mechanism_value(paragraph, "paragraph_id", "") or "").strip()
+            if not paragraph_id:
+                continue
+            detail_ids = (
+                *(_mechanism_value(paragraph, "required_detail_ids", ()) or ()),
+                *(_mechanism_value(paragraph, "optional_detail_ids", ()) or ()),
+            )
+            mechanism_id = str(_mechanism_value(paragraph, "mechanism_id", "") or "").strip()
+            for raw_detail_id in detail_ids:
+                detail_id = str(raw_detail_id or "").strip()
+                if not detail_id or not mechanism_id:
+                    continue
+                sections, paragraphs = placements.setdefault(
+                    (mechanism_id, detail_id), ([], [])
+                )
+                if section_id not in sections:
+                    sections.append(section_id)
+                if paragraph_id not in paragraphs:
+                    paragraphs.append(paragraph_id)
+
+    requests: list[MechanismResearchRequestV2] = []
+    request_ids: set[str] = set()
+    for context in _mechanism_value(contexts, "contexts", ()) or ():
+        mechanism_id = str(_mechanism_value(context, "mechanism_id", "") or "").strip()
+        if not mechanism_id:
+            continue
+        closure = _mechanism_value(context, "evidence_closure")
+        operations = tuple(_mechanism_value(closure, "operation_nodes", ()) or ())
+        operation_by_id = {
+            str(_mechanism_value(item, "operation_id", "") or "").strip(): item
+            for item in operations
+            if str(_mechanism_value(item, "operation_id", "") or "").strip()
+        }
+        dispositions = {
+            str(_mechanism_value(item, "operation_id", "") or "").strip(): str(
+                _mechanism_value(item, "disposition", "") or ""
+            )
+            for item in (_mechanism_value(closure, "operation_dispositions", ()) or ())
+            if str(_mechanism_value(item, "operation_id", "") or "").strip()
+        }
+        owned_unresolved_ops: set[str] = set()
+        details = tuple(_mechanism_value(context, "details", ()) or ())
+        for detail in details:
+            detail_id = str(_mechanism_value(detail, "detail_id", "") or "").strip()
+            if not detail_id:
+                continue
+            authority = str(_mechanism_value(detail, "evidence_authority", "") or "").strip()
+            claim_kind = str(_mechanism_value(detail, "claim_kind", "") or "").strip()
+            if authority == "author_intent_only" or claim_kind in {"rationale", "specification"}:
+                # Author intent and organization are not repository gaps.
+                continue
+            detail_operation_ids = tuple(dict.fromkeys(
+                str(value).strip()
+                for value in (_mechanism_value(detail, "source_operation_ids", ()) or ())
+                if str(value).strip()
+            ))
+            unresolved_detail_ops = tuple(
+                operation_id for operation_id in detail_operation_ids
+                if dispositions.get(operation_id) == "explicitly_unresolved"
+            )
+            active_status = str(_mechanism_value(detail, "active_path_status", "unknown") or "unknown")
+            unresolved = bool(
+                active_status == "unknown"
+                or authority in {"unresolved", "mismatch", "repository_partial"}
+                or unresolved_detail_ops
+            )
+            if not unresolved or str(_mechanism_value(detail, "publication_policy", "") or "") == "omit":
+                continue
+            owned_unresolved_ops.update(unresolved_detail_ops)
+            kind = _mechanism_callback_kind(detail, authority=authority)
+            section_ids, paragraph_ids = placements.get((mechanism_id, detail_id), ([], []))
+            request_id = f"mechanism-callback:{mechanism_id}:{detail_id}:{kind}"
+            if request_id in request_ids:
+                continue
+            question = (
+                f"Resolve the repository evidence gap for the mechanism detail "
+                f"{detail_id}: establish the exact source operation, condition, "
+                f"configuration, data flow, or formula binding needed for the "
+                f"semantic atom '{str(_mechanism_value(detail, 'semantic_atom', '') or detail_id).strip()}'."
+            )
+            baseline_digest = str(
+                _mechanism_value(context, "source_context_digest", "") or ""
+            ).strip()
+            if not baseline_digest.startswith("sha256:"):
+                baseline_digest = _digest_json({
+                    "mechanism_id": mechanism_id,
+                    "closure_digest": str(_mechanism_value(closure, "content_digest", "") or ""),
+                })
+            requests.append(MechanismResearchRequestV2(
+                request_id=request_id,
+                mechanism_id=mechanism_id,
+                target_detail_id=detail_id,
+                unresolved_kind=kind,  # type: ignore[arg-type]
+                exact_question=question,
+                candidate_symbols_or_terms=_mechanism_callback_terms(detail),
+                baseline_span_ids=tuple(dict.fromkeys(
+                    str(value).strip()
+                    for value in (_mechanism_value(detail, "source_span_ids", ()) or ())
+                    if str(value).strip()
+                )),
+                baseline_context_digest=baseline_digest,
+                target_operation_ids=detail_operation_ids,
+                target_atom_ids=tuple(
+                    str(_mechanism_value(atom, "atom_id", "") or "").strip()
+                    for atom in (_mechanism_value(detail, "witness_atoms", ()) or ())
+                    if str(_mechanism_value(atom, "atom_id", "") or "").strip()
+                ),
+                affected_section_ids=tuple(section_ids),
+                affected_paragraph_ids=tuple(paragraph_ids),
+            ))
+            request_ids.add(request_id)
+
+        # An explicitly unresolved operation has no detail owner by contract.
+        # Give it a mechanism-level callback rather than silently dropping it.
+        for operation_id, disposition in dispositions.items():
+            if disposition != "explicitly_unresolved" or operation_id in owned_unresolved_ops:
+                continue
+            operation = operation_by_id.get(operation_id)
+            source_span = str(_mechanism_value(operation, "source_span_id", "") or "").strip()
+            kind = "missing_call_path" if operation and _mechanism_value(operation, "guard", "") else "missing_definition"
+            request_id = f"mechanism-callback:{mechanism_id}:operation:{operation_id}:{kind}"
+            if request_id in request_ids:
+                continue
+            first_section = next(
+                (
+                    str(_mechanism_value(section, "section_id", "") or "").strip()
+                    for section in _mechanism_value(narrative_plan, "sections", ()) or ()
+                    if mechanism_id in (_mechanism_value(section, "mechanism_ids", ()) or ())
+                ),
+                "",
+            )
+            first_paragraph = next(
+                (
+                    str(_mechanism_value(paragraph, "paragraph_id", "") or "").strip()
+                    for section in _mechanism_value(narrative_plan, "sections", ()) or ()
+                    if mechanism_id in (_mechanism_value(section, "mechanism_ids", ()) or ())
+                    for paragraph in _mechanism_value(section, "paragraphs", ()) or ()
+                ),
+                "",
+            )
+            baseline_digest = str(_mechanism_value(context, "source_context_digest", "") or "").strip()
+            if not baseline_digest.startswith("sha256:"):
+                baseline_digest = _digest_json({
+                    "mechanism_id": mechanism_id,
+                    "closure_digest": str(_mechanism_value(closure, "content_digest", "") or ""),
+                })
+            operation_text = str(_mechanism_value(operation, "predicate", "") or operation_id).strip()
+            requests.append(MechanismResearchRequestV2(
+                request_id=request_id,
+                mechanism_id=mechanism_id,
+                unresolved_kind=kind,  # type: ignore[arg-type]
+                exact_question=(
+                    f"Resolve the explicitly unresolved source operation {operation_id} "
+                    f"for mechanism {mechanism_id}; establish the exact repository "
+                    f"evidence for '{operation_text}'."
+                ),
+                candidate_symbols_or_terms=_mechanism_callback_terms(None, operation),
+                baseline_span_ids=(source_span,) if source_span else (),
+                baseline_context_digest=baseline_digest,
+                target_operation_ids=(operation_id,),
+                affected_section_ids=(first_section,) if first_section else (),
+                affected_paragraph_ids=(first_paragraph,) if first_paragraph else (),
+            ))
+            request_ids.add(request_id)
+    return tuple(requests)
+
+
 def run_publication_method_writer(
     *,
     out_root: str | Path,
@@ -309,6 +565,7 @@ def run_publication_method_writer(
     llm_caller: Callable[[LLMConfig, LLMRequest], LLMResponse] | None = None,
     resume_section_ids: tuple[str, ...] = (),
     research_callback_artifacts: dict[str, tuple[Any, ...]] | None = None,
+    research_mechanism_callback_artifacts: dict[str, tuple[Any, ...]] | None = None,
     editor_caller: Callable[[LLMConfig, LLMRequest], LLMResponse] | None = None,
     rewrite_caller: Callable[[LLMConfig, LLMRequest], LLMResponse] | None = None,
     formalization_caller: Callable[[LLMConfig, LLMRequest], LLMResponse] | None = None,
@@ -711,7 +968,14 @@ def run_publication_method_writer(
     unified_narrative_plan: Any | None = None
     unified_formula_packages: tuple[Any, ...] = ()
     unified_slices: dict[str, Any] = {}
+    formalizer_traces: list[dict[str, Any]] = []
+    formula_obs: dict[str, tuple[Any, ...]] = {}
+    unified_payload_trace_path = ""
     shadow_failure: str = ""
+    # Unified artifacts are persisted before the final publication-output
+    # pass.  Keep their paths in the same result map instead of attempting to
+    # index a map that is only created after Writer/Validator complete.
+    paths: dict[str, str] = {}
 
     if effective_mode in ("unified", "shadow_unified"):
         try:
@@ -726,18 +990,34 @@ def run_publication_method_writer(
                 claims=claims,
                 equations=equations,
                 configurations=configurations,
-                evidence_packets=evidence_packets_v3,
+                evidence_packets=repo_ctx["evidence_packets"] or evidence_packets_v3,
                 behavior_graph=repo_ctx["behavior_graph"],
                 implementation_scope=repo_ctx["implementation_scope"],
+                symbol_index=repo_ctx["symbol_index"],
+                source_provider=repo_ctx["source_provider"],
             )
             unified_contexts = _annotate_mechanism_paper_details(
                 closures,
                 story_spine=repo_ctx["story_spine"],
                 argument_briefs=repo_ctx["argument_briefs"] or argument_briefs,
                 facets=repo_ctx["argument_facets"] or argument_facets,
+                facts=facts,
+                claims=claims,
+                equations=equations,
             )
             context_set_path = method_output(Path(out_root), "mechanism_context_set_v1")
             _atomic_write_text(context_set_path, unified_contexts.model_dump_json(indent=2) + "\n")
+            closure_path = method_output(Path(out_root), "mechanism_evidence_closures_v1")
+            _atomic_write_text(
+                closure_path,
+                json.dumps([item.model_dump(mode="json") for item in closures], ensure_ascii=False, indent=2) + "\n",
+            )
+            # Keep the canonical products visible even if a later Formalizer or
+            # Architect step fails.  A blocked run must retain the exact
+            # source closure for diagnosis rather than hiding it behind the
+            # result-only artifact.
+            paths["mechanism_context_set_v1"] = str(context_set_path)
+            paths["mechanism_evidence_closures_v1"] = str(closure_path)
 
             unified_slices = _build_shared_mechanism_payloads(unified_contexts)
             formula_obs = _compile_mechanism_formula_obligations(
@@ -754,6 +1034,7 @@ def run_publication_method_writer(
                 formula_obs,
                 llm_config=llm_config,
                 caller=effective_formalization_caller,
+                equations=equations,
             )
             unified_narrative_plan, architect_trace_v3 = _build_narrative_plan_v3(
                 unified_contexts,
@@ -765,6 +1046,7 @@ def run_publication_method_writer(
             )
             narrative_plan_path = method_output(Path(out_root), "narrative_plan_v3")
             _atomic_write_text(narrative_plan_path, unified_narrative_plan.model_dump_json(indent=2) + "\n")
+            paths["narrative_plan_v3"] = str(narrative_plan_path)
         except Exception as exc:
             if effective_mode == "unified":
                 result = PublicationWriterRunResultV1(
@@ -773,7 +1055,11 @@ def run_publication_method_writer(
                     claim_digest=claims.content_digest,
                     blocked_reason=f"unified_pipeline_failed:{exc.__class__.__name__}:{str(exc)[:200]}",
                 )
-                return result, _write_result_only(out_root, result)
+                return result, _write_result_only(
+                    out_root,
+                    result,
+                    extra_paths=paths,
+                )
             shadow_failure = f"shadow_unified_failed:{exc.__class__.__name__}:{str(exc)[:200]}"
 
     if effective_mode == "unified":
@@ -1089,7 +1375,12 @@ def run_publication_method_writer(
                 research_artifact_paths = {}
         else:
             research_artifact_paths = {}
-    effective_resume_section_ids = tuple(resume_section_ids)
+    requested_resume_section_ids = tuple(
+        str(item).strip() for item in resume_section_ids if str(item).strip()
+    )
+    effective_resume_section_ids = requested_resume_section_ids
+    effective_mechanism_resume_section_ids: tuple[str, ...] = ()
+    effective_mechanism_resume_paragraph_ids: tuple[str, ...] = ()
     callback_bundle = _load_callback_bundle(artifact_paths)
     callback_bundle_value = artifact_paths.get(
         "writing_research_callback_artifacts_v1", ""
@@ -1105,12 +1396,32 @@ def run_publication_method_writer(
     raw_callback_artifacts = (
         dict(callback_bundle.artifacts) if callback_bundle is not None else {}
     )
+    raw_mechanism_callback_artifacts = (
+        dict(callback_bundle.mechanism_artifacts)
+        if callback_bundle is not None else {}
+    )
     if research_callback_artifacts is not None:
         # An explicit owner response may add/replace only the request IDs it
         # names; preserve the rest of a persisted bundle for the same resume.
         raw_callback_artifacts.update(research_callback_artifacts)
-    if callback_bundle is not None and not effective_resume_section_ids:
-        effective_resume_section_ids = callback_bundle.resume_section_ids
+    if research_mechanism_callback_artifacts is not None:
+        raw_mechanism_callback_artifacts.update(research_mechanism_callback_artifacts)
+    if callback_bundle is not None:
+        if not effective_resume_section_ids:
+            effective_resume_section_ids = tuple(callback_bundle.resume_section_ids)
+        effective_mechanism_resume_section_ids = tuple(
+            callback_bundle.mechanism_resume_section_ids
+        )
+        effective_mechanism_resume_paragraph_ids = tuple(
+            callback_bundle.mechanism_resume_paragraph_ids
+        )
+    # The legacy checkpoint loader is section-scoped.  Mechanism callbacks use
+    # the same physical checkpoint but retain their paragraph-level ownership
+    # in separate markers; the union here is runtime admission only and is not
+    # written back into the legacy ``resume_section_ids`` field.
+    effective_resume_section_ids = tuple(dict.fromkeys(
+        (*effective_resume_section_ids, *effective_mechanism_resume_section_ids)
+    ))
     prior_outputs, prior_response_refs = _load_section_checkpoint(
         out_root=out_root,
         artifact_paths=artifact_paths,
@@ -1132,7 +1443,9 @@ def run_publication_method_writer(
         resume_section_ids=effective_resume_section_ids,
     )
     raw_callback_artifacts = raw_callback_artifacts or {}
+    raw_mechanism_callback_artifacts = raw_mechanism_callback_artifacts or {}
     callback_artifacts: dict[str, tuple[WritingResearchCallbackArtifactV1, ...]] = {}
+    mechanism_callback_artifacts: dict[str, tuple[MechanismResearchCallbackArtifactV2, ...]] = {}
     try:
         callback_artifacts = {
             request_id: tuple(
@@ -1150,6 +1463,27 @@ def run_publication_method_writer(
             resumed_section_ids=_pre_writer_resumed_section_ids(effective_resume_section_ids),
             blocked_reason=(
                 "writing_research_callback_artifacts_invalid:"
+                f"{exc.__class__.__name__}:{str(exc)[:160]}"
+            ),
+        )
+        return result, _write_result_only(out_root, result)
+    try:
+        mechanism_callback_artifacts = {
+            request_id: tuple(
+                item if isinstance(item, MechanismResearchCallbackArtifactV2)
+                else MechanismResearchCallbackArtifactV2.model_validate(item)
+                for item in items
+            )
+            for request_id, items in raw_mechanism_callback_artifacts.items()
+        }
+    except (TypeError, ValueError) as exc:
+        result = PublicationWriterRunResultV1(
+            status="blocked",
+            plan_digest=plan.content_digest,
+            claim_digest=claims.content_digest,
+            resumed_section_ids=_pre_writer_resumed_section_ids(effective_resume_section_ids),
+            blocked_reason=(
+                "writing_mechanism_callback_artifacts_invalid:"
                 f"{exc.__class__.__name__}:{str(exc)[:160]}"
             ),
         )
@@ -1176,6 +1510,27 @@ def run_publication_method_writer(
                 blocked_reason=(
                     "writing_research_callback_artifacts_unbound:"
                     + ",".join(unknown_request_ids)
+                ),
+            )
+            return result, _write_result_only(out_root, result)
+    if mechanism_callback_artifacts:
+        known_mechanism_request_ids: set[str] = set()
+        if callback_bundle is not None:
+            known_mechanism_request_ids.update(
+                item.request_id for item in callback_bundle.mechanism_requests
+            )
+        unknown_mechanism_request_ids = sorted(
+            set(mechanism_callback_artifacts) - known_mechanism_request_ids
+        )
+        if unknown_mechanism_request_ids:
+            result = PublicationWriterRunResultV1(
+                status="blocked",
+                plan_digest=plan.content_digest,
+                claim_digest=claims.content_digest,
+                resumed_section_ids=_pre_writer_resumed_section_ids(effective_resume_section_ids),
+                blocked_reason=(
+                    "writing_mechanism_callback_artifacts_unbound:"
+                    + ",".join(unknown_mechanism_request_ids)
                 ),
             )
             return result, _write_result_only(out_root, result)
@@ -1252,6 +1607,37 @@ def run_publication_method_writer(
             )
             for item in writer_inputs
         ]
+    if effective_mode == "unified":
+        try:
+            payload_trace = _assert_shared_payload_delivery(
+                contexts=unified_contexts,
+                shared_payload_slices=unified_slices,
+                formalizer_traces=formalizer_traces,
+                formula_obligations_by_mech=formula_obs,
+                writer_inputs=writer_inputs,
+            )
+            unified_payload_trace_path = method_output(
+                Path(out_root), "mechanism_shared_payload_trace_v1"
+            )
+            _atomic_write_text(
+                unified_payload_trace_path,
+                json.dumps(payload_trace, ensure_ascii=False, indent=2) + "\n",
+            )
+            paths["mechanism_shared_payload_trace_v1"] = str(
+                unified_payload_trace_path
+            )
+        except Exception as exc:
+            result = PublicationWriterRunResultV1(
+                status="blocked",
+                plan_digest=plan.content_digest,
+                claim_digest=claims.content_digest,
+                blocked_reason=(
+                    "unified_shared_payload_delivery_failed:"
+                    f"{exc.__class__.__name__}:{str(exc)[:240]}"
+                ),
+            )
+            return result, _write_result_only(out_root, result)
+
     if effective_resume_section_ids:
         unresolved_callback_ids = _unresolved_local_resume_callback_ids(
             resume_section_ids=effective_resume_section_ids,
@@ -1274,6 +1660,26 @@ def run_publication_method_writer(
                 candidate_available=incumbent,
             )
             return result, _write_result_only(out_root, result)
+        unresolved_mechanism_callback_ids = _unresolved_mechanism_resume_callback_ids(
+            resume_section_ids=effective_resume_section_ids,
+            callback_bundle=callback_bundle,
+            callback_artifacts=mechanism_callback_artifacts,
+        )
+        if unresolved_mechanism_callback_ids:
+            incumbent = _incumbent_candidate_available(out_root)
+            result = PublicationWriterRunResultV1(
+                status="blocked",
+                plan_digest=plan.content_digest,
+                claim_digest=claims.content_digest,
+                resumed_section_ids=_pre_writer_resumed_section_ids(effective_resume_section_ids),
+                blocked_reason=(
+                    "writing_mechanism_callback_artifacts_missing:"
+                    + ",".join(sorted(set(unresolved_mechanism_callback_ids)))
+                ),
+                candidate_generation_status="generated" if incumbent else "failed",
+                candidate_available=incumbent,
+            )
+            return result, _write_result_only(out_root, result)
     selected_inputs = (
         [item for item in writer_inputs if item.section_id in set(effective_resume_section_ids)]
         if effective_resume_section_ids else writer_inputs
@@ -1286,6 +1692,7 @@ def run_publication_method_writer(
             else Path(out_root).expanduser().resolve()
         )
         callback_prompt_payloads: dict[str, list[dict[str, Any]]] = {}
+        mechanism_callback_prompt_payloads: dict[str, list[dict[str, Any]]] = {}
         callback_reference_failures: list[str] = []
         for request_id, artifacts in callback_artifacts.items():
             payloads: list[dict[str, Any]] = []
@@ -1300,6 +1707,19 @@ def run_publication_method_writer(
                     )
                 payloads.append(payload)
             callback_prompt_payloads[request_id] = payloads
+        for request_id, artifacts in mechanism_callback_artifacts.items():
+            payloads: list[dict[str, Any]] = []
+            for artifact in artifacts:
+                payload, failure = _callback_artifact_prompt_payload(
+                    artifact,
+                    base_dir=callback_reference_base,
+                )
+                if failure:
+                    callback_reference_failures.append(
+                        f"mechanism:{request_id}:{failure}"
+                    )
+                payloads.append(payload)
+            mechanism_callback_prompt_payloads[request_id] = payloads
         if callback_reference_failures:
             result = PublicationWriterRunResultV1(
                 status="blocked",
@@ -1317,6 +1737,47 @@ def run_publication_method_writer(
             item.request_id: item
             for item in (callback_bundle.requests if callback_bundle is not None else ())
         }
+        mechanism_callback_requests_by_id = {
+            item.request_id: item
+            for item in (
+                callback_bundle.mechanism_requests
+                if callback_bundle is not None else ()
+            )
+        }
+        mechanism_callback_resolution_by_section: dict[str, dict[str, Any]] = {}
+        for request_id, artifacts in mechanism_callback_artifacts.items():
+            request = mechanism_callback_requests_by_id.get(request_id)
+            if request is None or not artifacts:
+                continue
+            affected_sections = tuple(dict.fromkeys(
+                (*request.affected_section_ids,
+                 *(section_id for item in artifacts for section_id in item.affected_section_ids))
+            ))
+            for section_id in affected_sections:
+                if section_id not in resume_section_set:
+                    continue
+                section_resolution = mechanism_callback_resolution_by_section.setdefault(
+                    section_id,
+                    {
+                        "fulfilled_requests": [],
+                        "fulfilled_mechanism_details": [],
+                        "instruction": (
+                            "These mechanism callback artifacts contain validated semantic "
+                            "delta for the exact Detail/Atom owner.  Consume only the listed "
+                            "delta, preserve all required conditions and polarity, and do "
+                            "not issue a duplicate callback for this owner."
+                        ),
+                    },
+                )
+                section_resolution["fulfilled_requests"].append(request_id)
+                section_resolution["fulfilled_mechanism_details"].append({
+                    "mechanism_id": request.mechanism_id,
+                    "detail_id": request.target_detail_id,
+                    "unresolved_kind": request.unresolved_kind,
+                    "target_operation_ids": list(request.target_operation_ids),
+                    "target_atom_ids": list(request.target_atom_ids),
+                    "affected_paragraph_ids": list(request.affected_paragraph_ids),
+                })
         for request_id, artifacts in callback_artifacts.items():
             request = callback_requests_by_id.get(request_id)
             if request is None or request.status != "fulfilled":
@@ -1355,6 +1816,24 @@ def run_publication_method_writer(
                             for artifact in artifacts
                         )
                     },
+                    "mechanism_research_callback_artifacts": {
+                        request_id: mechanism_callback_prompt_payloads.get(request_id, [])
+                        for request_id, artifacts in mechanism_callback_artifacts.items()
+                        if any(
+                            item.section_id in (
+                                set(request.affected_section_ids)
+                                | {
+                                    section_id
+                                    for artifact in artifacts
+                                    for section_id in artifact.affected_section_ids
+                                }
+                            )
+                            for request in (
+                                [mechanism_callback_requests_by_id[request_id]]
+                                if request_id in mechanism_callback_requests_by_id else []
+                            )
+                        )
+                    },
                     "writing_research_callback_resolution": callback_resolution_by_section.get(
                         item.section_id,
                         {
@@ -1364,6 +1843,16 @@ def run_publication_method_writer(
                                 "No callback artifact is fulfilled for this section."
                             ),
                         },
+                    ),
+                    "mechanism_research_callback_resolution": (
+                        mechanism_callback_resolution_by_section.get(
+                            item.section_id,
+                            {
+                                "fulfilled_requests": [],
+                                "fulfilled_mechanism_details": [],
+                                "instruction": "No mechanism callback artifact is fulfilled for this section.",
+                            },
+                        )
                     ),
                 },
                 system_prompt=item.system_prompt,
@@ -1751,6 +2240,7 @@ def run_publication_method_writer(
     # their authored body in the Candidate view.
     candidate_excluded_section_ids: set[str] = set()
     research_requests: list[WritingResearchRequestV1] = []
+    mechanism_research_requests: list[MechanismResearchRequestV2] = []
     fulfilled_callback_bindings: dict[str, set[tuple[str, str]]] = {}
     if callback_bundle is not None:
         callback_requests_by_id = {
@@ -3050,6 +3540,36 @@ def run_publication_method_writer(
     research_requests[:] = list(
         _dedupe_writing_research_requests(research_requests)
     )
+    if unified_contexts is not None:
+        try:
+            mechanism_research_requests = list(
+                _build_mechanism_research_requests_v2(
+                    unified_contexts,
+                    unified_narrative_plan,
+                )
+            )
+            # Retain a previously admitted request even when a resumed
+            # authoring revision has not yet closed the gap.  Its stable
+            # mechanism/detail owner is part of the callback protocol and
+            # must survive a Writer retry.
+            existing_mechanism_requests = {
+                item.request_id: item
+                for item in (
+                    callback_bundle.mechanism_requests
+                    if callback_bundle is not None else ()
+                )
+            }
+            for request in existing_mechanism_requests.values():
+                if request.request_id not in {
+                    item.request_id for item in mechanism_research_requests
+                }:
+                    mechanism_research_requests.append(request)
+            mechanism_research_requests.sort(key=lambda item: item.request_id)
+        except (TypeError, ValueError) as exc:
+            failures.append(
+                "mechanism_callback_compile:"
+                f"{type(exc).__name__}:{str(exc)[:160]}"
+            )
     callback_section_ids = {
         request.section_id for request in research_requests if request.status == "open"
     }
@@ -3812,7 +4332,7 @@ def run_publication_method_writer(
             failure="empty_candidate_attempt_rolled_back_to_incumbent",
         )
     try:
-        paths = _write_publication_outputs(
+        published_paths = _write_publication_outputs(
         out_root=out_root,
         candidate_markdown=candidate_markdown,
         verified_markdown=verified_markdown,
@@ -3823,6 +4343,7 @@ def run_publication_method_writer(
         readiness=readiness,
         effective_readiness=effective_readiness,
         research_requests=research_requests,
+        mechanism_research_requests=mechanism_research_requests,
         writer=writer,
         ledger=ledger,
         quality=quality,
@@ -3835,11 +4356,13 @@ def run_publication_method_writer(
         incomplete_section_ids=incomplete_ids,
         callback_bundle=callback_bundle,
         callback_artifacts=callback_artifacts,
+        mechanism_callback_artifacts=mechanism_callback_artifacts,
             resumed_section_ids=_actually_regenerated_section_ids(
                 writer.aggregate,
                 effective_resume_section_ids,
             ),
         )
+        paths.update(published_paths)
     except Exception as exc:  # noqa: BLE001 — output publish fault: republish the durable candidate
         return _publish_checkpoint_fallback(
             out_root=out_root,
@@ -3880,24 +4403,78 @@ def run_publication_method_writer(
                                 if not row.get("valid"):
                                     continue
                                 witnessed_kind = row.get("witnessed_by_kind", {})
-                                if d.detail_id in witnessed_kind.get("detail", ()):
+                                required_atom_ids = {
+                                    atom.atom_id
+                                    for atom in (d.witness_atoms or ())
+                                    if atom.required
+                                }
+                                atom_witness_ids = set(witnessed_kind.get("atom", ()))
+                                if (
+                                    d.detail_id in witnessed_kind.get("detail", ())
+                                    or (
+                                        required_atom_ids
+                                        and required_atom_ids.issubset(atom_witness_ids)
+                                    )
+                                ):
                                     verified_detail_ids.add(d.detail_id)
             trace_v2_path = method_output(Path(out_root), "method_content_trace_v2")
+            trace_callback_artifacts = tuple(
+                artifact
+                for artifact_items in (
+                    *(callback_artifacts or {}).values(),
+                    *(mechanism_callback_artifacts or {}).values(),
+                )
+                for artifact in artifact_items
+            )
+            discovered_operation_ids = {
+                str(ctx.mechanism_id): tuple(
+                    str(getattr(operation, "operation_id", ""))
+                    for operation in (
+                        getattr(ctx.evidence_closure, "operation_nodes", ()) or ()
+                    )
+                    if str(getattr(operation, "operation_id", "") or "").strip()
+                )
+                for ctx in unified_contexts.contexts
+            }
             trace_v2 = write_method_content_trace_v2(
                 trace_v2_path,
                 contexts=unified_contexts,
                 narrative_plan=unified_narrative_plan,
                 paragraph_assessments=assess_map,
                 verified_detail_ids=verified_detail_ids,
+                shared_payload_slices=unified_slices,
+                formalizer_traces=tuple(formalizer_traces),
+                formula_packages=tuple(unified_formula_packages),
+                writer_inputs=tuple(writer_inputs),
+                writer_traces=tuple(writer.aggregate.traces),
+                writer_outputs=output_by_section,
+                research_discovered_operation_ids=discovered_operation_ids,
+                callback_artifacts=trace_callback_artifacts,
             )
             paths["method_content_trace_v2"] = str(trace_v2_path)
             funnel_path = method_output(Path(out_root), "mechanism_information_funnel_v1")
             _atomic_write_text(funnel_path, trace_v2.funnel.model_dump_json(indent=2) + "\n")
             paths["mechanism_information_funnel_v1"] = str(funnel_path)
             paths["mechanism_context_set_v1"] = str(method_output(Path(out_root), "mechanism_context_set_v1"))
+            paths["mechanism_evidence_closures_v1"] = str(method_output(Path(out_root), "mechanism_evidence_closures_v1"))
             paths["narrative_plan_v3"] = str(method_output(Path(out_root), "narrative_plan_v3"))
-        except Exception:
-            pass
+        except Exception as exc:
+            trace_error_path = method_output(
+                Path(out_root), "method_content_trace_v2_error"
+            )
+            _atomic_write_text(
+                trace_error_path,
+                json.dumps(
+                    {
+                        "error": f"{exc.__class__.__name__}:{str(exc)[:400]}",
+                        "context_set_present": unified_contexts is not None,
+                        "narrative_plan_present": unified_narrative_plan is not None,
+                    },
+                    ensure_ascii=False,
+                    indent=2,
+                ) + "\n",
+            )
+            paths["method_content_trace_v2_error"] = str(trace_error_path)
     paragraph_checkpoint_path = method_output(
         Path(out_root), "publication_paragraph_checkpoint_v1"
     )
@@ -12826,6 +13403,9 @@ def _load_repository_authoring_context(
 ) -> dict[str, Any]:
     """Load research artifacts needed for unified mechanism authoring."""
     from code2paper.agentic.behavior_graph import CodeBehaviorGraphV1
+    from code2paper.agentic.behavior_graph import SymbolIndexV2
+    from code2paper.agentic.repo_snapshot import RepoSnapshot
+    from code2paper.agentic.python_behavior_adapter import PythonBehaviorAdapter
     from code2paper.agentic.research_models import ImplementationScopeV1
     from code2paper.agentic.method_argument_brief_models import (
         AuthorMechanismFacetV1,
@@ -12847,6 +13427,52 @@ def _load_repository_authoring_context(
                 behavior_graph = CodeBehaviorGraphV1.model_validate(graph_payload)
         except Exception:
             behavior_graph = None
+
+    repo_snapshot = None
+    snapshot_value = (
+        artifact_paths.get("repo_snapshot_v2", "")
+        or artifact_paths.get("repo_snapshot", "")
+        or artifact_paths.get("repository_snapshot", "")
+    )
+    if snapshot_value and Path(snapshot_value).is_file():
+        try:
+            repo_snapshot = RepoSnapshot.model_validate_json(
+                Path(snapshot_value).read_text(encoding="utf-8")
+            )
+        except Exception:
+            repo_snapshot = None
+
+    symbol_index = None
+    symbol_value = next((
+        artifact_paths.get(key, "")
+        for key in (
+            "symbol_index_v2", "symbol_index", "agentic_symbol_index",
+            "repository_symbol_index_v2",
+        )
+        if artifact_paths.get(key, "")
+    ), "")
+    if symbol_value and Path(symbol_value).is_file():
+        try:
+            raw_symbol_payload = json.loads(Path(symbol_value).read_text(encoding="utf-8"))
+            if isinstance(raw_symbol_payload, Mapping):
+                raw_symbol_payload = raw_symbol_payload.get("symbol_index") or raw_symbol_payload.get("index") or raw_symbol_payload
+            symbol_index = SymbolIndexV2.model_validate(raw_symbol_payload)
+        except Exception:
+            symbol_index = None
+    if symbol_index is None and repo_snapshot is not None:
+        try:
+            source_files = {
+                item.path: Path(repo_snapshot.project_root, item.path).read_text(encoding="utf-8")
+                for item in repo_snapshot.included_files
+                if item.kind == "file" and item.path.endswith(".py")
+            }
+            symbol_index = PythonBehaviorAdapter().index_symbols(
+                repo_snapshot_id=repo_snapshot.snapshot_id,
+                project_tree_hash=repo_snapshot.project_tree_hash,
+                files=source_files,
+            )
+        except (OSError, UnicodeError, ValueError):
+            symbol_index = None
 
     implementation_scope = None
     scope_value = artifact_paths.get("implementation_scope_v1", "")
@@ -12908,14 +13534,26 @@ def _load_repository_authoring_context(
         except Exception:
             candidates = []
 
+    evidence_packets = None
+    packet_value = artifact_paths.get("evidence_packets_v3", "")
+    if packet_value and Path(packet_value).is_file():
+        try:
+            evidence_packets = load_evidence_packets_v3(packet_value)
+        except Exception:
+            evidence_packets = None
+
     return {
-        "behavior_graph": behavior_graph,
-        "implementation_scope": implementation_scope,
+       "behavior_graph": behavior_graph,
+       "implementation_scope": implementation_scope,
+        "repo_snapshot": repo_snapshot,
+        "symbol_index": symbol_index,
+        "source_provider": repo_snapshot,
         "argument_briefs": briefs,
         "argument_facets": tuple(facets),
         "facet_alignments": tuple(alignments),
         "facet_policies": tuple(policies),
         "publication_field_candidates": tuple(candidates),
+        "evidence_packets": evidence_packets,
         "story_spine": tuple(_story_spine_models_from_artifact_paths(dict(artifact_paths))),
     }
 
@@ -12934,6 +13572,9 @@ def _compile_mechanism_evidence_closures(
     evidence_packets: Any | None = None,
     behavior_graph: Any | None = None,
     implementation_scope: Any | None = None,
+    symbol_index: Any | None = None,
+    source_provider: Any | None = None,
+    author_config_overrides: Mapping[str, Any] | None = None,
 ) -> tuple[Any, ...]:
     from code2paper.agentic.mechanism_context_compiler import compile_mechanism_evidence_closures
     return compile_mechanism_evidence_closures(
@@ -12949,6 +13590,9 @@ def _compile_mechanism_evidence_closures(
         evidence_packets=evidence_packets,
         behavior_graph=behavior_graph,
         implementation_scope=implementation_scope,
+        symbol_index=symbol_index,
+        source_provider=source_provider,
+        author_config_overrides=author_config_overrides,
     )
 
 
@@ -12958,6 +13602,9 @@ def _annotate_mechanism_paper_details(
     story_spine: Iterable[Any] = (),
     argument_briefs: Any | None = None,
     facets: Iterable[Any] = (),
+    facts: Any | None = None,
+    claims: Any | None = None,
+    equations: Any | None = None,
 ) -> Any:
     from code2paper.agentic.mechanism_context_compiler import annotate_mechanism_paper_details
     return annotate_mechanism_paper_details(
@@ -12965,6 +13612,9 @@ def _annotate_mechanism_paper_details(
         story_spine=story_spine,
         argument_briefs=argument_briefs,
         facets=facets,
+        facts=facts,
+        claims=claims,
+        equations=equations,
     )
 
 
@@ -12973,12 +13623,17 @@ def _build_shared_mechanism_payloads(
 ) -> dict[str, tuple[Any, ...]]:
     from code2paper.agentic.mechanism_context_projection import (
         build_mechanism_context_slices,
-        assert_consumer_shared_payload_identity,
+        serialize_shared_mechanism_payload,
     )
+    from code2paper.agentic.mechanism_context_models import compute_shared_payload_digest
     shared_slices: dict[str, tuple[Any, ...]] = {}
     for ctx in getattr(contexts, "contexts", ()):
         slices = build_mechanism_context_slices(ctx)
-        assert_consumer_shared_payload_identity(slices, slices)
+        if not slices or not serialize_shared_mechanism_payload(slices):
+            raise ValueError(f"empty_shared_mechanism_payload:{ctx.mechanism_id}")
+        digest = compute_shared_payload_digest(tuple(slices))
+        if any(getattr(item, "shared_payload_digest", "") != digest for item in slices):
+            raise ValueError(f"shared_payload_digest_not_materialized:{ctx.mechanism_id}")
         shared_slices[str(ctx.mechanism_id)] = slices
     return shared_slices
 
@@ -12994,6 +13649,13 @@ def _compile_mechanism_formula_obligations(
     for ctx in getattr(contexts, "contexts", ()):
         obs = compile_mechanism_formula_obligations(
             context=ctx,
+            equations=equations,
+            claims=claims,
+            author_formula_expectations=tuple(
+                str(value).strip()
+                for value in (getattr(ctx, "notation_hints", ()) or ())
+                if str(value).strip()
+            ),
         )
         obs_by_mech[str(ctx.mechanism_id)] = obs
     return obs_by_mech
@@ -13006,9 +13668,14 @@ def _run_mechanism_formalizer(
     *,
     llm_config: Any | None = None,
     caller: Callable[[Any, Any], Any] | None = None,
+    equations: Any | None = None,
 ) -> tuple[tuple[Any, ...], list[dict[str, Any]]]:
     from code2paper.agentic.formalization_agent import run_mechanism_formalizer
     from code2paper.agentic.mechanism_context_projection import serialize_shared_mechanism_payload
+    from code2paper.agentic.mechanism_context_projection import build_mechanism_context_view
+    from code2paper.agentic.mechanism_context_models import (
+        compute_shared_payload_digest, compute_consumer_request_digest,
+    )
     all_packages: list[Any] = []
     traces: list[dict[str, Any]] = []
     for ctx in getattr(contexts, "contexts", ()):
@@ -13016,7 +13683,16 @@ def _run_mechanism_formalizer(
         slices = shared_payload_slices.get(mid, ())
         payload_bytes = serialize_shared_mechanism_payload(slices) if slices else b""
         payload_str = payload_bytes.decode("utf-8") if isinstance(payload_bytes, bytes) else str(payload_bytes)
-        payload_digest = str(getattr(slices[0], "shared_payload_digest", "")) if slices else ""
+        payload_digest = compute_shared_payload_digest(tuple(slices)) if slices else ""
+        view_digest = build_mechanism_context_view(ctx).view_digest
+        slice_digests = tuple(str(item.slice_digest) for item in slices)
+        consumer_request_digest = compute_consumer_request_digest(
+            payload_digest, {
+                "role": "formalizer",
+                "mechanism_id": mid,
+                "obligation_ids": [str(item.obligation_id) for item in formula_obligations_by_mech.get(mid, ())],
+            },
+        ) if slices else ""
         obs = formula_obligations_by_mech.get(mid, ())
         pkgs, call_trace = run_mechanism_formalizer(
             context=ctx,
@@ -13026,8 +13702,35 @@ def _run_mechanism_formalizer(
             llm_config=llm_config,
             caller=caller,
             author_notation_hints=tuple(getattr(ctx, "notation_hints", ())),
+            view_digest=view_digest,
+            slice_digests=slice_digests,
+            consumer_request_digest=consumer_request_digest,
+            equations=equations,
+            allow_deterministic_operation_fallback=False,
         )
         all_packages.extend(pkgs)
+        call_trace = dict(call_trace)
+        call_trace.update({
+            # The Formalizer and Writer must consume the same serialized
+            # bytes.  Retaining the exact UTF-8 payload in the trace makes a
+            # later read-only audit able to distinguish context loss from a
+            # digest-only coincidence.
+            "shared_payload": payload_str,
+            "shared_payload_bytes_digest": (
+                "sha256:" + hashlib.sha256(payload_bytes).hexdigest()
+                if payload_bytes else ""
+            ),
+            "source_context_digest": str(
+                getattr(ctx, "source_context_digest", "")
+                or getattr(ctx, "content_digest", "")
+            ),
+            "core_detail_ids": [
+                str(value)
+                for item in slices
+                for value in (getattr(item, "core_detail_ids", ()) or ())
+                if str(value).strip()
+            ],
+        })
         traces.append(call_trace)
     return tuple(all_packages), traces
 
@@ -13062,6 +13765,7 @@ def _writer_section_inputs_v3(
     """Build the Writer-facing projection for each planned section in unified mode."""
     from code2paper.llm.section_writer import WriterSectionInput
     from code2paper.agentic.mechanism_context_projection import serialize_shared_mechanism_payload
+    from code2paper.agentic.mechanism_context_models import compute_consumer_request_digest
 
     inputs: list[WriterSectionInput] = []
     pkg_by_mech: dict[str, list[dict[str, Any]]] = {}
@@ -13076,6 +13780,7 @@ def _writer_section_inputs_v3(
 
         sec_slices: list[str] = []
         sec_formula_pkgs: list[dict[str, Any]] = []
+        sec_slice_metadata: list[dict[str, Any]] = []
         for mid in getattr(section, "mechanism_ids", ()):
             mid_str = str(mid)
             if mid_str in shared_payload_slices:
@@ -13083,6 +13788,18 @@ def _writer_section_inputs_v3(
                 if isinstance(m_slice, (tuple, list)):
                     raw_b = serialize_shared_mechanism_payload(m_slice)
                     sec_slices.append(raw_b.decode("utf-8") if isinstance(raw_b, bytes) else str(raw_b))
+                    sec_slice_metadata.append({
+                        "mechanism_id": mid_str,
+                        "shared_payload_digest": str(getattr(m_slice[0], "shared_payload_digest", "")) if m_slice else "",
+                        "source_context_digest": str(m_slice[0].technical_payload.get("source_context_digest", "")) if m_slice else "",
+                        "view_digest": str(m_slice[0].view_digest) if m_slice else "",
+                        "slice_digests": [str(item.slice_digest) for item in m_slice],
+                        "core_detail_ids": [str(item) for item in (getattr(m_slice[0], "core_detail_ids", ()) if m_slice else ())],
+                        "consumer_request_digest": compute_consumer_request_digest(
+                            str(getattr(m_slice[0], "shared_payload_digest", "")) if m_slice else "",
+                            {"role": "writer", "section_id": sec_id, "mechanism_id": mid_str},
+                        ) if m_slice else "",
+                    })
                 else:
                     payload_val = getattr(m_slice, "serialized_payload", "") or m_slice
                     if isinstance(payload_val, bytes):
@@ -13091,13 +13808,114 @@ def _writer_section_inputs_v3(
             if mid_str in pkg_by_mech:
                 sec_formula_pkgs.extend(pkg_by_mech[mid_str])
 
+        paragraph_rows = list(sec_plan_dict.get("paragraphs") or ())
+        all_detail_ids = list(dict.fromkeys(
+            str(value).strip()
+            for row in paragraph_rows
+            if isinstance(row, Mapping)
+            for value in (
+                *(row.get("required_detail_ids") or ()),
+                *(row.get("optional_detail_ids") or ()),
+            )
+            if str(value).strip()
+        ))
+        required_detail_ids = list(dict.fromkeys(
+            str(value).strip()
+            for row in paragraph_rows
+            if isinstance(row, Mapping)
+            for value in (row.get("required_detail_ids") or ())
+            if str(value).strip()
+        ))
+        formula_obligation_ids = list(dict.fromkeys(
+            str(value).strip()
+            for row in paragraph_rows
+            if isinstance(row, Mapping)
+            for value in (row.get("formula_obligation_ids") or ())
+            if str(value).strip()
+        ))
+        formula_package_ids = list(dict.fromkeys(
+            str(value).strip()
+            for row in paragraph_rows
+            if isinstance(row, Mapping)
+            for value in (row.get("formula_package_ids") or ())
+            if str(value).strip()
+        ))
+        detail_witness_contracts: dict[str, list[dict[str, Any]]] = {}
+        allowed_atom_ids: list[str] = []
+        required_atom_ids: list[str] = []
+        atom_contracts_by_detail: dict[str, list[dict[str, Any]]] = {}
+        for row in paragraph_rows:
+            if not isinstance(row, Mapping):
+                continue
+            contract = row.get("witness_contract") or {}
+            targets = (
+                contract.get("targets", ())
+                if isinstance(contract, Mapping)
+                else getattr(contract, "targets", ())
+            ) or ()
+            for raw_target in targets:
+                target = (
+                    dict(raw_target)
+                    if isinstance(raw_target, Mapping)
+                    else {
+                        key: getattr(raw_target, key)
+                        for key in (
+                            "target_id", "target_kind", "detail_id", "semantic_atom",
+                            "paper_role", "required_polarity", "required_conditions",
+                            "allowed_anchor_ids", "allowed_exact_excerpts", "required",
+                            "render_policy",
+                        )
+                        if hasattr(raw_target, key)
+                    }
+                )
+                target_id = str(target.get("target_id") or "").strip()
+                target_kind = str(target.get("target_kind") or "").strip()
+                if not target_id or not target_kind:
+                    continue
+                target["required"] = bool(
+                    target.get("required", target.get("render_policy") == "required")
+                )
+                detail_id = str(target.get("detail_id") or "").strip()
+                if target_kind == "detail":
+                    detail_id = target_id
+                if detail_id:
+                    detail_witness_contracts.setdefault(detail_id, []).append(target)
+                if target_kind == "atom":
+                    if target_id not in allowed_atom_ids:
+                        allowed_atom_ids.append(target_id)
+                    if target["required"] and target_id not in required_atom_ids:
+                        required_atom_ids.append(target_id)
+                    if detail_id:
+                        atom_contracts_by_detail.setdefault(detail_id, []).append(target)
+
         prompt_payload = {
             "section_id": sec_id,
             "heading": heading,
             "narrative_plan": sec_plan_dict,
             "shared_contexts": sec_slices,
+            "shared_context_metadata": sec_slice_metadata,
             "formula_packages": sec_formula_pkgs,
             "output_contract": "PublicationMethodSectionOutputV1",
+            "paragraph_transaction_required": True,
+            "formula_placeholders_required": bool(sec_formula_pkgs),
+            "formula_generation_policy": "consume_only",
+            "binding_contract": {
+                "allowed_detail_ids": all_detail_ids,
+                "required_detail_ids": required_detail_ids,
+                "allowed_atom_ids": allowed_atom_ids,
+                "required_atom_ids": required_atom_ids,
+                "detail_witness_contracts": detail_witness_contracts,
+                "atom_contracts_by_detail": atom_contracts_by_detail,
+                "allowed_formula_obligation_ids": formula_obligation_ids,
+                "allowed_formula_package_ids": formula_package_ids
+                + [
+                    str(item.get("package_id") or "").strip()
+                    for item in sec_formula_pkgs
+                    if isinstance(item, Mapping)
+                    and str(item.get("package_id") or "").strip()
+                ],
+                "required_rhetorical_moves": [],
+            },
         }
 
         inputs.append(
@@ -13112,6 +13930,215 @@ def _writer_section_inputs_v3(
         )
 
     return inputs
+
+
+def _assert_shared_payload_delivery(
+    *,
+    contexts: Any,
+    shared_payload_slices: Mapping[str, Any],
+    formalizer_traces: Iterable[Mapping[str, Any]],
+    writer_inputs: Iterable[Any],
+    formula_obligations_by_mech: Mapping[str, Iterable[Any]] | None = None,
+) -> list[dict[str, Any]]:
+    """Prove that Formalizer and Writer received identical context bytes.
+
+    Digests alone are not sufficient here: a consumer can accidentally be
+    given a different JSON projection whose stale metadata happens to carry a
+    matching label.  The assertion compares the materialized UTF-8 payload,
+    then checks source/view/slice/core/request metadata for each consumer.
+    """
+
+    from code2paper.agentic.mechanism_context_models import (
+        compute_consumer_request_digest,
+        compute_shared_payload_digest,
+    )
+    from code2paper.agentic.mechanism_context_projection import (
+        build_mechanism_context_view,
+        serialize_shared_mechanism_payload,
+    )
+
+    context_by_id = {
+        str(getattr(ctx, "mechanism_id", "")): ctx
+        for ctx in (getattr(contexts, "contexts", ()) or ())
+        if str(getattr(ctx, "mechanism_id", "") or "").strip()
+    }
+    trace_by_id: dict[str, Mapping[str, Any]] = {}
+    for raw_trace in formalizer_traces or ():
+        if not isinstance(raw_trace, Mapping):
+            raise ValueError("formalizer_payload_trace_not_mapping")
+        mid = str(raw_trace.get("mechanism_id") or "").strip()
+        if not mid:
+            raise ValueError("formalizer_payload_trace_missing_mechanism_id")
+        if mid in trace_by_id:
+            raise ValueError(f"duplicate_formalizer_payload_trace:{mid}")
+        trace_by_id[mid] = raw_trace
+
+    writer_by_id: dict[str, list[Any]] = {}
+    for writer_input in writer_inputs or ():
+        payload = getattr(writer_input, "prompt_payload", None)
+        if not isinstance(payload, Mapping):
+            raise ValueError("writer_payload_not_mapping")
+        section_id = str(
+            payload.get("section_id") or getattr(writer_input, "section_id", "")
+        ).strip()
+        mechanism_ids = tuple(
+            str(value).strip()
+            for value in (payload.get("narrative_plan", {}).get("mechanism_ids", ())
+                          if isinstance(payload.get("narrative_plan"), Mapping)
+                          else ())
+            if str(value).strip()
+        )
+        if not mechanism_ids:
+            mechanism_ids = tuple(
+                str(value).strip()
+                for value in (getattr(writer_input, "argument_graph", {}).get("mechanism_ids", ())
+                              if isinstance(getattr(writer_input, "argument_graph", {}), Mapping)
+                              else ())
+                if str(value).strip()
+            )
+        # NarrativePlanV3 section dumps normally expose ``mechanism_ids``;
+        # retain a deterministic fallback for a hand-built WriterSectionInput
+        # whose plan row carries only paragraph mechanism ids.
+        if not mechanism_ids:
+            mechanism_ids = tuple(dict.fromkeys(
+                str(row.get("mechanism_id") or "").strip()
+                for row in (payload.get("narrative_plan", {}).get("paragraphs", ())
+                            if isinstance(payload.get("narrative_plan"), Mapping)
+                            else ())
+                if isinstance(row, Mapping) and str(row.get("mechanism_id") or "").strip()
+            ))
+        if not mechanism_ids:
+            raise ValueError(f"writer_payload_missing_mechanism_ids:{section_id}")
+        for mid in mechanism_ids:
+            writer_by_id.setdefault(mid, []).append(writer_input)
+
+    records: list[dict[str, Any]] = []
+    expected_ids = set(context_by_id)
+    if set(trace_by_id) != expected_ids:
+        missing = sorted(expected_ids - set(trace_by_id))
+        extra = sorted(set(trace_by_id) - expected_ids)
+        raise ValueError(
+            "formalizer_payload_trace_mechanism_mismatch:"
+            + json.dumps({"missing": missing, "extra": extra}, sort_keys=True)
+        )
+    if set(writer_by_id) != expected_ids:
+        missing = sorted(expected_ids - set(writer_by_id))
+        extra = sorted(set(writer_by_id) - expected_ids)
+        raise ValueError(
+            "writer_payload_mechanism_mismatch:"
+            + json.dumps({"missing": missing, "extra": extra}, sort_keys=True)
+        )
+
+    for mid in sorted(expected_ids):
+        ctx = context_by_id[mid]
+        slices = tuple(shared_payload_slices.get(mid, ()) or ())
+        if not slices:
+            raise ValueError(f"empty_shared_payload_delivery:{mid}")
+        payload_bytes = serialize_shared_mechanism_payload(slices)
+        payload_text = payload_bytes.decode("utf-8")
+        shared_digest = compute_shared_payload_digest(slices)
+        view_digest = str(build_mechanism_context_view(ctx).view_digest or "")
+        slice_digests = tuple(str(item.slice_digest) for item in slices)
+        source_context_digest = str(
+            getattr(ctx, "source_context_digest", "")
+            or getattr(ctx, "content_digest", "")
+        )
+        formalizer_trace = trace_by_id[mid]
+        if formalizer_trace.get("shared_payload") != payload_text:
+            raise ValueError(f"formalizer_payload_bytes_mismatch:{mid}")
+        if formalizer_trace.get("shared_payload_digest") != shared_digest:
+            raise ValueError(f"formalizer_shared_payload_digest_mismatch:{mid}")
+        if formalizer_trace.get("view_digest") != view_digest:
+            raise ValueError(f"formalizer_view_digest_mismatch:{mid}")
+        if tuple(formalizer_trace.get("slice_digests") or ()) != slice_digests:
+            raise ValueError(f"formalizer_slice_digests_mismatch:{mid}")
+        if formalizer_trace.get("source_context_digest") != source_context_digest:
+            raise ValueError(f"formalizer_source_context_digest_mismatch:{mid}")
+        expected_formalizer_request_digest = compute_consumer_request_digest(
+            shared_digest,
+            {
+                "role": "formalizer",
+                "mechanism_id": mid,
+                "obligation_ids": [
+                    str(item.obligation_id)
+                    for item in ((formula_obligations_by_mech or {}).get(mid, ()) or ())
+                    if str(getattr(item, "obligation_id", "") or "").strip()
+                ],
+            },
+        )
+        if formalizer_trace.get("consumer_request_digest") != expected_formalizer_request_digest:
+            raise ValueError(f"formalizer_request_digest_mismatch:{mid}")
+
+        writer_records: list[dict[str, Any]] = []
+        for writer_input in writer_by_id[mid]:
+            payload = writer_input.prompt_payload
+            shared_contexts = tuple(payload.get("shared_contexts") or ())
+            if payload_text not in tuple(
+                value.decode("utf-8") if isinstance(value, bytes) else str(value)
+                for value in shared_contexts
+            ):
+                raise ValueError(
+                    f"writer_payload_bytes_mismatch:{mid}:{getattr(writer_input, 'section_id', '')}"
+                )
+            metadata_rows = tuple(payload.get("shared_context_metadata") or ())
+            matching_metadata = tuple(
+                row for row in metadata_rows
+                if isinstance(row, Mapping)
+                and str(row.get("mechanism_id") or "").strip() == mid
+            )
+            if len(matching_metadata) != 1:
+                raise ValueError(f"writer_payload_metadata_missing:{mid}")
+            metadata = matching_metadata[0]
+            expected_writer_request_digest = compute_consumer_request_digest(
+                shared_digest,
+                {
+                    "role": "writer",
+                    "section_id": str(getattr(writer_input, "section_id", "")),
+                    "mechanism_id": mid,
+                },
+            )
+            for key, expected in (
+                ("shared_payload_digest", shared_digest),
+                ("source_context_digest", source_context_digest),
+                ("view_digest", view_digest),
+                ("slice_digests", list(slice_digests)),
+                ("core_detail_ids", list(dict.fromkeys(
+                    str(value)
+                    for item in slices
+                    for value in (getattr(item, "core_detail_ids", ()) or ())
+                    if str(value).strip()
+                ))),
+                ("consumer_request_digest", expected_writer_request_digest),
+            ):
+                actual = metadata.get(key)
+                if key == "slice_digests" and tuple(actual or ()) == tuple(expected):
+                    continue
+                if key == "core_detail_ids" and set(actual or ()) == set(expected):
+                    continue
+                if actual != expected:
+                    raise ValueError(
+                        f"writer_payload_metadata_mismatch:{mid}:{key}"
+                    )
+            writer_records.append({
+                "section_id": str(getattr(writer_input, "section_id", "")),
+                "shared_payload_digest": shared_digest,
+                "source_context_digest": source_context_digest,
+                "view_digest": view_digest,
+                "slice_digests": list(slice_digests),
+                "consumer_request_digest": expected_writer_request_digest,
+                "payload_bytes_digest": "sha256:" + hashlib.sha256(payload_bytes).hexdigest(),
+            })
+        records.append({
+            "mechanism_id": mid,
+            "payload_bytes_digest": "sha256:" + hashlib.sha256(payload_bytes).hexdigest(),
+            "shared_payload_digest": shared_digest,
+            "source_context_digest": source_context_digest,
+            "view_digest": view_digest,
+            "slice_digests": list(slice_digests),
+            "formalizer_request_digest": str(formalizer_trace.get("consumer_request_digest") or ""),
+            "writer_consumers": writer_records,
+        })
+    return records
 
 
 _build_writer_inputs_v3 = _writer_section_inputs_v3
@@ -15548,6 +16575,41 @@ def _unresolved_local_resume_callback_ids(
     return unresolved
 
 
+def _unresolved_mechanism_resume_callback_ids(
+    *,
+    resume_section_ids: tuple[str, ...],
+    callback_bundle: Any | None,
+    callback_artifacts: dict[str, tuple[MechanismResearchCallbackArtifactV2, ...]],
+) -> list[str]:
+    """Return mechanism callbacks admitted for a section without artifacts.
+
+    Mechanism callbacks have no mutable ``status`` field: a validated
+    semantic-delta artifact is the fulfillment receipt.  Resume admission is
+    therefore invalid unless every request whose placement intersects the
+    admitted sections has a matching artifact set.
+    """
+
+    if callback_bundle is None:
+        return []
+    admitted_sections = set(resume_section_ids)
+    unresolved: list[str] = []
+    for request in callback_bundle.mechanism_requests:
+        affected = set(request.affected_section_ids)
+        if not affected.intersection(admitted_sections):
+            continue
+        artifacts = callback_artifacts.get(request.request_id, ())
+        if not artifacts or not all(
+            artifact.request_id == request.request_id
+            and artifact.mechanism_id == request.mechanism_id
+            and artifact.target_detail_id == request.target_detail_id
+            and artifact.unresolved_kind == request.unresolved_kind
+            and artifact.baseline_context_digest == request.baseline_context_digest
+            for artifact in artifacts
+        ):
+            unresolved.append(request.request_id)
+    return unresolved
+
+
 def _incumbent_candidate_available(out_root: str | Path) -> bool:
     """True when a prior Writer turn already published non-empty Candidate text."""
 
@@ -16803,39 +17865,40 @@ def _rebase_published_bundle_refs(
     # The persisted digest covered the INPUT refs; the published payload is
     # a new artifact, so drop the stale digest and let the model recompute.
     rebased.pop("content_digest", None)
-    for _request_id, artifacts in (rebased.get("artifacts") or {}).items():
-        for raw in artifacts or ():
-            if not isinstance(raw, dict):
-                continue
-            reference = str(raw.get("artifact_ref") or "").strip()
-            if not reference or reference.startswith(_OPAQUE_CALLBACK_REF_PREFIXES):
-                continue
-            if not _looks_like_callback_file_reference(reference):
-                # Opaque evidence handles (compact non-path ids) are resolved
-                # by the owning tool; only path-shaped refs need rebasing.
-                continue
-            candidate = (directory / reference).resolve()
-            if not (candidate.is_file() and candidate.is_relative_to(root)):
-                candidate = ((root / "artifacts") / reference).resolve()
-            if not (candidate.is_file() and candidate.is_relative_to(root)):
-                candidate = (root / reference).resolve()
-            if not (candidate.is_file() and candidate.is_relative_to(root)):
-                raise ValueError(
-                    f"callback artifact ref does not resolve inside the run root: "
-                    f"{reference}"
-                )
-            relative = candidate.relative_to(root)
-            target = root / relative
-            actual_digest = "sha256:" + hashlib.sha256(target.read_bytes()).hexdigest()
-            if actual_digest != str(raw.get("artifact_digest") or ""):
-                raise ValueError(
-                    f"callback artifact digest mismatch after publication: "
-                    f"{raw.get('artifact_id')}"
-                )
-            # Rebase relative to the PUBLISHED bundle's own directory (one
-            # level deeper than the top-level input bundle).
-            rebased_ref = os.path.relpath(target, directory)
-            raw["artifact_ref"] = rebased_ref.replace(os.sep, "/")
+    for artifact_map_name in ("artifacts", "mechanism_artifacts"):
+        for _request_id, artifacts in (rebased.get(artifact_map_name) or {}).items():
+            for raw in artifacts or ():
+                if not isinstance(raw, dict):
+                    continue
+                reference = str(raw.get("artifact_ref") or "").strip()
+                if not reference or reference.startswith(_OPAQUE_CALLBACK_REF_PREFIXES):
+                    continue
+                if not _looks_like_callback_file_reference(reference):
+                    # Opaque evidence handles (compact non-path ids) are resolved
+                    # by the owning tool; only path-shaped refs need rebasing.
+                    continue
+                candidate = (directory / reference).resolve()
+                if not (candidate.is_file() and candidate.is_relative_to(root)):
+                    candidate = ((root / "artifacts") / reference).resolve()
+                if not (candidate.is_file() and candidate.is_relative_to(root)):
+                    candidate = (root / reference).resolve()
+                if not (candidate.is_file() and candidate.is_relative_to(root)):
+                    raise ValueError(
+                        f"callback artifact ref does not resolve inside the run root: "
+                        f"{reference}"
+                    )
+                relative = candidate.relative_to(root)
+                target = root / relative
+                actual_digest = "sha256:" + hashlib.sha256(target.read_bytes()).hexdigest()
+                if actual_digest != str(raw.get("artifact_digest") or ""):
+                    raise ValueError(
+                        f"callback artifact digest mismatch after publication: "
+                        f"{raw.get('artifact_id')}"
+                    )
+                # Rebase relative to the PUBLISHED bundle's own directory (one
+                # level deeper than the top-level input bundle).
+                rebased_ref = os.path.relpath(target, directory)
+                raw["artifact_ref"] = rebased_ref.replace(os.sep, "/")
     return rebased
 
 
@@ -16851,6 +17914,7 @@ def _write_publication_outputs(
     readiness: MethodPlanProductReadinessV1,
     effective_readiness: str,
     research_requests: list[WritingResearchRequestV1],
+    mechanism_research_requests: list[MechanismResearchRequestV2] | tuple[MechanismResearchRequestV2, ...] = (),
     writer,
     ledger,
     quality,
@@ -16863,6 +17927,7 @@ def _write_publication_outputs(
     incomplete_section_ids: tuple[str, ...] = (),
     callback_bundle: WritingResearchCallbackBundleV1 | None = None,
     callback_artifacts: dict[str, tuple[WritingResearchCallbackArtifactV1, ...]] | None = None,
+    mechanism_callback_artifacts: dict[str, tuple[MechanismResearchCallbackArtifactV2, ...]] | None = None,
     resumed_section_ids: tuple[str, ...] = (),
 ) -> dict[str, str]:
     root = Path(out_root)
@@ -16900,6 +17965,9 @@ def _write_publication_outputs(
         "publication_status": status,
         "items": [item.model_dump(mode="json") for item in review_items],
         "writer_research_requests": [item.model_dump(mode="json") for item in research_requests],
+        "mechanism_research_requests": [
+            item.model_dump(mode="json") for item in mechanism_research_requests
+        ],
         "external_research_queue": [
             item.model_dump(mode="json") for item in external_queue_items
         ],
@@ -16907,6 +17975,12 @@ def _write_publication_outputs(
             *writer.incomplete_sections,
             *incomplete_section_ids,
             *[item.section_id for item in research_requests if item.status == "open"],
+            *[
+                section_id
+                for item in mechanism_research_requests
+                if not (mechanism_callback_artifacts or {}).get(item.request_id)
+                for section_id in item.affected_section_ids
+            ],
         ])),
     }
     _atomic_write_text(review_path, json.dumps(review_payload, ensure_ascii=False, indent=2) + "\n")
@@ -16946,6 +18020,22 @@ def _write_publication_outputs(
             }
             route_rejections.append(rejection)
             route_rows.append(rejection)
+    for request in mechanism_research_requests:
+        artifacts_for_request = (mechanism_callback_artifacts or {}).get(
+            request.request_id, ()
+        )
+        route_rows.append({
+            "request_id": request.request_id,
+            "owner": "mechanism_research",
+            "status": "fulfilled" if artifacts_for_request else "open",
+            "mechanism_id": request.mechanism_id,
+            "target_detail_id": request.target_detail_id,
+            "target_operation_ids": list(request.target_operation_ids),
+            "target_atom_ids": list(request.target_atom_ids),
+            "unresolved_kind": request.unresolved_kind,
+            "affected_section_ids": list(request.affected_section_ids),
+            "affected_paragraph_ids": list(request.affected_paragraph_ids),
+        })
     _atomic_write_text(routes_path, json.dumps({
         "schema_version": "1.0",
         "routes": route_rows,
@@ -16959,10 +18049,27 @@ def _write_publication_outputs(
     for request_id, artifacts in (callback_artifacts or {}).items():
         request = callback_requests.get(request_id)
         if request is not None and artifacts:
-            callback_requests[request_id] = request.model_copy(update={
+            callback_requests[request_id] = WritingResearchRequestV1.model_validate({
+                **request.model_dump(mode="json"),
                 "status": "fulfilled",
                 "fulfilled_artifact_ids": tuple(item.artifact_id for item in artifacts),
             })
+    callback_mechanism_requests = {
+        item.request_id: item
+        for item in (
+            callback_bundle.mechanism_requests
+            if callback_bundle is not None else ()
+        )
+    }
+    callback_mechanism_requests.update({
+        item.request_id: item for item in mechanism_research_requests
+    })
+    callback_mechanism_artifacts = {
+        request_id: tuple(items)
+        for request_id, items in (
+            mechanism_callback_artifacts or {}
+        ).items()
+    }
     try:
         # The persisted admitted set keeps only sections that were admitted
         # but NOT actually regenerated in this run: a successfully
@@ -16978,8 +18085,34 @@ def _write_publication_outputs(
         ))
         callback_payload = WritingResearchCallbackBundleV1(
             requests=tuple(callback_requests.values()),
+            mechanism_requests=tuple(callback_mechanism_requests.values()),
             artifacts=callback_artifacts or {},
+            mechanism_artifacts=callback_mechanism_artifacts,
             resume_section_ids=admitted_but_not_regenerated,
+            mechanism_resume_section_ids=tuple(sorted(
+                section_id
+                for section_id in (
+                    callback_bundle.mechanism_resume_section_ids
+                    if callback_bundle is not None else ()
+                )
+                if section_id not in set(resumed_section_ids)
+            )),
+            mechanism_resume_paragraph_ids=tuple(
+                paragraph_id
+                for paragraph_id in (
+                    callback_bundle.mechanism_resume_paragraph_ids
+                    if callback_bundle is not None else ()
+                )
+                if not (
+                    set(resumed_section_ids)
+                    & {
+                        request.affected_section_ids[index]
+                        for request in callback_mechanism_requests.values()
+                        for index in range(len(request.affected_section_ids))
+                        if paragraph_id in request.affected_paragraph_ids
+                    }
+                )
+            ),
         )
     except ValueError:
         callback_payload = None
@@ -17004,7 +18137,9 @@ def _write_publication_outputs(
         # closed rather than accepting an unbound artifact.
         callback_payload = WritingResearchCallbackBundleV1(
             requests=tuple(research_requests),
+            mechanism_requests=tuple(mechanism_research_requests),
             artifacts={},
+            mechanism_artifacts={},
             resume_section_ids=(),
         )
     _atomic_write_text(
@@ -17298,6 +18433,7 @@ def _write_method_generation_trace(
 def _write_result_only(
     out_root: str | Path,
     result: PublicationWriterRunResultV1,
+    extra_paths: Mapping[str, str] | None = None,
 ) -> dict[str, str]:
     # Q0: an early blocked result is a true generation failure only when no
     # durable candidate exists.  A later resume/callback block must not
@@ -17347,7 +18483,14 @@ def _write_result_only(
         })
     path = method_output(Path(out_root), "publication_writer_result_v1")
     _atomic_write_text(path, result.model_dump_json(indent=2) + "\n")
-    return {"publication_writer_result_v1": str(path)}
+    return {
+        **{
+            str(key): str(value)
+            for key, value in (extra_paths or {}).items()
+            if str(key).strip() and str(value).strip()
+        },
+        "publication_writer_result_v1": str(path),
+    }
 
 
 def _publish_checkpoint_fallback(
@@ -17771,6 +18914,10 @@ def fulfill_writing_research_callbacks(
     bundle_path: str | Path,
     artifacts: Mapping[str, Iterable[WritingResearchCallbackArtifactV1 | Mapping[str, Any]]],
     slot_progress: Mapping[str, tuple[tuple[str, ...], tuple[str, ...]]] | None = None,
+    mechanism_artifacts: Mapping[
+        str,
+        Iterable[MechanismResearchCallbackArtifactV2 | Mapping[str, Any]],
+    ] | None = None,
 ) -> WritingResearchCallbackBundleV1:
     """Atomically persist owner-validated callback artifacts.
 
@@ -17785,7 +18932,15 @@ def fulfill_writing_research_callbacks(
         request_id: tuple(items)
         for request_id, items in bundle.artifacts.items()
     }
+    merged_mechanism = {
+        request_id: tuple(items)
+        for request_id, items in bundle.mechanism_artifacts.items()
+    }
     requests_by_id = {item.request_id: item for item in bundle.requests}
+    mechanism_requests_by_id = {
+        item.request_id: item for item in bundle.mechanism_requests
+    }
+    mechanism_artifacts = mechanism_artifacts or {}
     slot_progress = slot_progress or {}
     for request_id, raw_items in artifacts.items():
         request = requests_by_id.get(str(request_id))
@@ -17845,15 +19000,75 @@ def fulfill_writing_research_callbacks(
             "satisfied_slots": satisfied_slots,
             "remaining_slots": remaining_slots,
         })
+    for request_id, raw_items in mechanism_artifacts.items():
+        request = mechanism_requests_by_id.get(str(request_id))
+        if request is None:
+            raise ValueError(
+                f"mechanism callback artifact request is not pending: {request_id}"
+            )
+        normalized = tuple(
+            item if isinstance(item, MechanismResearchCallbackArtifactV2)
+            else MechanismResearchCallbackArtifactV2.model_validate(item)
+            for item in raw_items
+        )
+        if not normalized:
+            raise ValueError(
+                f"mechanism callback artifact list is empty: {request_id}"
+            )
+        for item in normalized:
+            if (
+                item.request_id != request.request_id
+                or item.mechanism_id != request.mechanism_id
+                or item.target_detail_id != request.target_detail_id
+                or item.unresolved_kind != request.unresolved_kind
+                or item.baseline_context_digest != request.baseline_context_digest
+                or tuple(item.target_operation_ids) != tuple(request.target_operation_ids)
+                or tuple(item.target_atom_ids) != tuple(request.target_atom_ids)
+            ):
+                raise ValueError(
+                    f"mechanism callback artifact does not match request binding: {request_id}"
+                )
+        existing = merged_mechanism.get(str(request_id), ())
+        if existing:
+            if {item.artifact_id for item in existing} != {
+                item.artifact_id for item in normalized
+            }:
+                raise ValueError(
+                    "mechanism callback request is already fulfilled with different artifacts: "
+                    + str(request_id)
+                )
+            continue
+        merged_mechanism[str(request_id)] = normalized
     updated = WritingResearchCallbackBundleV1(
         requests=tuple(requests_by_id.values()),
+        mechanism_requests=tuple(bundle.mechanism_requests),
         artifacts=merged,
+        mechanism_artifacts=merged_mechanism,
+        requested_resume_section_ids=bundle.requested_resume_section_ids,
         resume_section_ids=tuple(dict.fromkeys([
             *bundle.resume_section_ids,
             *[
                 request.section_id for request in requests_by_id.values()
                 if request.status in {"fulfilled", "partial"}
                 and request.required_authority_lane in _LOCALLY_OWNED_LANES
+            ],
+        ])),
+        mechanism_resume_section_ids=tuple(dict.fromkeys([
+            *bundle.mechanism_resume_section_ids,
+            *[
+                section_id
+                for items in merged_mechanism.values()
+                for artifact in items
+                for section_id in artifact.affected_section_ids
+            ],
+        ])),
+        mechanism_resume_paragraph_ids=tuple(dict.fromkeys([
+            *bundle.mechanism_resume_paragraph_ids,
+            *[
+                paragraph_id
+                for items in merged_mechanism.values()
+                for artifact in items
+                for paragraph_id in artifact.affected_paragraph_ids
             ],
         ])),
     )
@@ -18174,7 +19389,7 @@ def rebase_callback_bundle_artifacts(
 
 
 def _callback_artifact_prompt_payload(
-    artifact: WritingResearchCallbackArtifactV1,
+    artifact: Any,
     *,
     base_dir: Path,
     max_preview_chars: int = 8000,
@@ -18190,6 +19405,25 @@ def _callback_artifact_prompt_payload(
     """
 
     payload = artifact.model_dump(mode="json")
+    if isinstance(artifact, WritingResearchCallbackArtifactV1):
+        # Keep the legacy Writer prompt byte-compatible.  V1 artifacts gained
+        # optional unified metadata for migration, but empty migration fields
+        # are not part of the legacy contract and must not perturb callers
+        # that compare the exact callback payload.
+        for field_name in (
+            "mechanism_id",
+            "target_detail_id",
+            "target_atom_ids",
+            "unresolved_kind",
+            "baseline_context_digest",
+            "current_context_digest",
+            "semantic_delta_digest",
+            "new_source_operation_ids",
+            "new_detail_ids",
+        ):
+            value = payload.get(field_name)
+            if value in ("", (), [], None):
+                payload.pop(field_name, None)
     reference = str(artifact.artifact_ref or "").strip()
     if not reference:
         return payload, "artifact_ref_empty"

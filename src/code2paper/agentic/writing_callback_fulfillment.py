@@ -26,7 +26,7 @@ import hashlib
 import json
 import os
 import re
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
 from pathlib import Path
 from typing import Any
 
@@ -38,6 +38,8 @@ from code2paper.agentic.evidence_compiler_v3 import (
 )
 from code2paper.agentic.method_argument_models import (
     ConfigurationClaimSetV1,
+    MechanismResearchCallbackArtifactV2,
+    MechanismResearchRequestV2,
     MethodSectionPlanV2,
     WritingResearchCallbackArtifactV1,
     WritingResearchCallbackBundleV1,
@@ -133,8 +135,11 @@ class WritingCallbackFulfillmentResultV1(BaseModel):
     rounds_attempted: int = 0
     local_requests_seen: int = 0
     local_requests_fulfilled: int = 0
+    mechanism_requests_seen: int = 0
+    mechanism_requests_fulfilled: int = 0
     external_requests_seen: int = 0
     resumed_section_ids: tuple[str, ...] = Field(default_factory=tuple)
+    resumed_paragraph_ids: tuple[str, ...] = Field(default_factory=tuple)
     stopped_reason: str = ""
     trace_path: str = ""
 
@@ -297,6 +302,290 @@ def _load_bundle(path: str | Path) -> WritingResearchCallbackBundleV1 | None:
         return None
 
 
+_MECHANISM_CALLBACK_MOVES: dict[str, str] = {
+    "missing_definition": "implementation_realization",
+    "missing_call_path": "algorithm_or_data_flow",
+    "missing_data_flow": "algorithm_or_data_flow",
+    "missing_condition": "configuration_and_branches",
+    "missing_configuration": "configuration_and_branches",
+    "missing_formula_operand": "equation_or_derivation",
+    "authority_conflict": "limitations_or_mismatch",
+}
+
+
+def _legacy_request_for_mechanism_callback(
+    request: MechanismResearchRequestV2,
+) -> WritingResearchRequestV1:
+    """Adapt a mechanism request to the existing repository research engine.
+
+    The adapter supplies only a synthetic *execution address*.  It copies no
+    technical facts into the legacy request and keeps the canonical mechanism,
+    detail, atom, operation, and baseline bindings in the V2 envelope.
+    """
+
+    section_id = request.affected_section_ids[0] if request.affected_section_ids else (
+        f"mechanism:{request.mechanism_id}"
+    )
+    argument_unit_id = request.target_detail_id or (
+        request.target_operation_ids[0]
+        if request.target_operation_ids else request.request_id
+    )
+    move = _MECHANISM_CALLBACK_MOVES.get(
+        request.unresolved_kind, "implementation_realization"
+    )
+    mandatory_slot_by_kind = {
+        "missing_condition": ("condition",),
+        "missing_configuration": ("condition",),
+        "missing_formula_operand": ("formula",),
+    }
+    return WritingResearchRequestV1(
+        request_id=f"mechanism-adapter:{request.request_id}",
+        section_id=section_id,
+        argument_unit_id=argument_unit_id,
+        missing_rhetorical_move=move,  # type: ignore[arg-type]
+        exact_question=request.exact_question,
+        required_authority_lane="executable_hard",
+        candidate_symbols_or_terms=request.candidate_symbols_or_terms,
+        current_known_facts=(),
+        why_needed_for_reader=(
+            "Resolve the exact canonical mechanism/detail gap before the affected "
+            "paragraph is regenerated."
+        ),
+        priority="high",
+        missing_parts=(request.unresolved_kind,),
+        evidence_refs_used=request.baseline_span_ids,
+        baseline_span_ids=request.baseline_span_ids,
+        mandatory_missing_slots=mandatory_slot_by_kind.get(
+            request.unresolved_kind, ()
+        ),
+        mechanism_id=request.mechanism_id,
+        target_detail_id=request.target_detail_id,
+        target_atom_ids=request.target_atom_ids,
+        target_operation_ids=request.target_operation_ids,
+        unresolved_kind=request.unresolved_kind,
+        baseline_context_digest=request.baseline_context_digest,
+    )
+
+
+def _callback_payload_ids(
+    payload: Mapping[str, Any],
+    report: Mapping[str, Any],
+    names: tuple[str, ...],
+) -> tuple[str, ...]:
+    values: list[str] = []
+    for name in names:
+        for value in (payload.get(name) or report.get(name) or ()):
+            cleaned = str(value).strip()
+            if cleaned and cleaned not in values:
+                values.append(cleaned)
+    return tuple(values)
+
+
+def _mechanism_artifact_from_legacy(
+    request: MechanismResearchRequestV2,
+    raw_artifact: Any,
+    *,
+    callback_root: Path,
+) -> MechanismResearchCallbackArtifactV2 | None:
+    """Convert an owning-validator artifact into a V2 semantic-delta receipt."""
+
+    if isinstance(raw_artifact, Mapping) and isinstance(raw_artifact.get("artifact"), (Mapping, BaseModel)):
+        raw_artifact = raw_artifact["artifact"]
+    try:
+        old_artifact = (
+            raw_artifact
+            if isinstance(raw_artifact, WritingResearchCallbackArtifactV1)
+            else WritingResearchCallbackArtifactV1.model_validate(raw_artifact)
+        )
+    except (TypeError, ValueError):
+        return None
+    if not old_artifact.validated:
+        return None
+    payload = _load_callback_artifact_payload(old_artifact, callback_root)
+    report_value = payload.get("validator_report") if payload else {}
+    report = report_value if isinstance(report_value, Mapping) else {}
+    new_spans = tuple(
+        span_id for span_id in _callback_payload_ids(
+            payload,
+            report,
+            ("new_source_span_ids", "matched_span_ids", "span_ids"),
+        )
+        if span_id not in set(request.baseline_span_ids)
+    )
+    new_facts = _callback_payload_ids(
+        payload,
+        report,
+        ("new_fact_ids", "new_compiled_fact_ids", "matched_fact_ids", "fact_ids"),
+    )
+    new_operations = _callback_payload_ids(
+        payload,
+        report,
+        ("new_source_operation_ids", "operation_ids"),
+    )
+    new_conditions = _callback_payload_ids(
+        payload,
+        report,
+        ("new_condition_ids", "condition_ids", "matched_condition_ids"),
+    )
+    new_configurations = _callback_payload_ids(
+        payload,
+        report,
+        ("new_configuration_ids", "configuration_ids", "matched_configuration_ids"),
+    )
+    new_details = _callback_payload_ids(
+        payload,
+        report,
+        ("new_detail_ids",),
+    )
+    new_atoms = _callback_payload_ids(
+        payload,
+        report,
+        ("new_atom_ids",),
+    )
+
+    def _optional_int(*names: str) -> int | None:
+        for name in names:
+            value = payload.get(name, report.get(name))
+            if value is None:
+                continue
+            try:
+                return max(0, int(value))
+            except (TypeError, ValueError):
+                continue
+        return None
+
+    gaps_before = _callback_payload_ids(
+        payload, report, ("remaining_gap_ids_before", "gap_ids_before")
+    )
+    gaps_after = _callback_payload_ids(
+        payload, report, ("remaining_gap_ids_after", "gap_ids_after", "remaining_gap_ids")
+    )
+    source_gain = any((
+        new_operations,
+        new_spans,
+        new_facts,
+        new_conditions,
+        new_configurations,
+        new_details,
+        new_atoms,
+    ))
+    unresolved_before = _optional_int("unresolved_count_before")
+    unresolved_after = _optional_int("unresolved_count_after")
+    core_before = _optional_int("core_detail_count_before")
+    core_after = _optional_int("core_detail_count_after")
+    quality_gain = bool(
+        unresolved_before is not None
+        and unresolved_after is not None
+        and unresolved_after < unresolved_before
+    ) or bool(
+        core_before is not None
+        and core_after is not None
+        and core_after > core_before
+    ) or bool(gaps_before and len(set(gaps_after)) < len(set(gaps_before)))
+    if not source_gain and not quality_gain:
+        return None
+
+    semantic_payload = {
+        "request_id": request.request_id,
+        "mechanism_id": request.mechanism_id,
+        "target_detail_id": request.target_detail_id,
+        "unresolved_kind": request.unresolved_kind,
+        "new_source_operation_ids": new_operations,
+        "new_source_span_ids": new_spans,
+        "new_fact_ids": new_facts,
+        "new_condition_ids": new_conditions,
+        "new_configuration_ids": new_configurations,
+        "new_detail_ids": new_details,
+        "new_atom_ids": new_atoms,
+        "unresolved_count_before": unresolved_before,
+        "unresolved_count_after": unresolved_after,
+        "core_detail_count_before": core_before,
+        "core_detail_count_after": core_after,
+        "remaining_gap_ids_before": gaps_before,
+        "remaining_gap_ids_after": gaps_after,
+    }
+    current_context_digest = str(
+        payload.get("current_context_digest")
+        or payload.get("source_context_digest")
+        or report.get("current_context_digest")
+        or ""
+    ).strip()
+    if not current_context_digest.startswith("sha256:") or current_context_digest == request.baseline_context_digest:
+        current_context_digest = _digest_json({
+            "baseline_context_digest": request.baseline_context_digest,
+            "semantic_delta": semantic_payload,
+            "artifact_digest": old_artifact.artifact_digest,
+        })
+    semantic_delta_digest = _digest_json(semantic_payload)
+    artifact_id = f"mechanism-callback:{request.request_id}:{_short_digest(semantic_payload)}"
+    return MechanismResearchCallbackArtifactV2(
+        artifact_id=artifact_id,
+        request_id=request.request_id,
+        mechanism_id=request.mechanism_id,
+        target_detail_id=request.target_detail_id,
+        unresolved_kind=request.unresolved_kind,
+        artifact_ref=old_artifact.artifact_ref,
+        artifact_digest=old_artifact.artifact_digest,
+        baseline_context_digest=request.baseline_context_digest,
+        current_context_digest=current_context_digest,
+        semantic_delta_digest=semantic_delta_digest,
+        target_operation_ids=request.target_operation_ids,
+        target_atom_ids=request.target_atom_ids,
+        new_source_operation_ids=new_operations,
+        new_source_span_ids=new_spans,
+        new_fact_ids=new_facts,
+        new_condition_ids=new_conditions,
+        new_configuration_ids=new_configurations,
+        new_detail_ids=new_details,
+        new_atom_ids=new_atoms,
+        unresolved_count_before=unresolved_before,
+        unresolved_count_after=unresolved_after,
+        core_detail_count_before=core_before,
+        core_detail_count_after=core_after,
+        remaining_gap_ids_before=gaps_before,
+        remaining_gap_ids_after=gaps_after,
+        affected_section_ids=request.affected_section_ids,
+        affected_paragraph_ids=request.affected_paragraph_ids,
+        validated=True,
+    )
+
+
+def _execute_mechanism_requests_v2(
+    requests: list[MechanismResearchRequestV2] | tuple[MechanismResearchRequestV2, ...],
+    *,
+    provider: Any,
+    callback_root: Path,
+) -> tuple[
+    dict[str, tuple[MechanismResearchCallbackArtifactV2, ...]],
+    dict[str, list[Any]],
+]:
+    """Run V2 requests through the owning research provider with V2 output."""
+
+    artifacts: dict[str, tuple[MechanismResearchCallbackArtifactV2, ...]] = {}
+    traces: dict[str, list[Any]] = {}
+    for request in requests:
+        if request.unresolved_kind == "authority_conflict":
+            continue
+        legacy_request = _legacy_request_for_mechanism_callback(request)
+        try:
+            raw = provider(legacy_request)
+        except Exception:
+            raw = None
+        stored_traces = getattr(provider, "research_traces_by_request", {})
+        if isinstance(stored_traces, Mapping) and stored_traces.get(legacy_request.request_id):
+            traces[request.request_id] = list(stored_traces[legacy_request.request_id])
+        if raw is None:
+            continue
+        artifact = _mechanism_artifact_from_legacy(
+            request,
+            raw,
+            callback_root=callback_root,
+        )
+        if artifact is not None:
+            artifacts[request.request_id] = (artifact,)
+    return artifacts, traces
+
+
 def fulfill_and_resume_writing_callbacks(
     *,
     runtime: Any,
@@ -436,8 +725,11 @@ def fulfill_and_resume_writing_callbacks(
     trace_rows: list[dict[str, Any]] = []
     local_seen: set[str] = set()
     local_fulfilled: set[str] = set()
+    mechanism_seen: set[str] = set()
+    mechanism_fulfilled: set[str] = set()
     external_seen: set[str] = set()
     resumed: set[str] = set()
+    resumed_paragraphs: set[str] = set()
     initial_writer_payload: dict[str, Any] = {}
     initial_writer_path = str(
         writer_paths.get("publication_writer_result_v1") or ""
@@ -469,7 +761,11 @@ def fulfill_and_resume_writing_callbacks(
         open_requests = [
             item for item in bundle.requests if item.status in {"open", "partial"}
         ]
-        if not open_requests:
+        open_mechanism_requests = [
+            item for item in bundle.mechanism_requests
+            if item.request_id not in bundle.mechanism_artifacts
+        ]
+        if not open_requests and not open_mechanism_requests:
             result = result.model_copy(update={"stopped_reason": "no_open_requests"})
             break
         local_requests = [
@@ -480,10 +776,24 @@ def fulfill_and_resume_writing_callbacks(
             item for item in open_requests
             if item.required_authority_lane not in _LOCAL_OWNED_LANES
         ]
+        local_mechanism_requests = [
+            item for item in open_mechanism_requests
+            if item.unresolved_kind != "authority_conflict"
+        ]
+        external_mechanism_requests = [
+            item for item in open_mechanism_requests
+            if item.unresolved_kind == "authority_conflict"
+        ]
         local_seen.update(item.request_id for item in local_requests)
+        mechanism_seen.update(item.request_id for item in local_mechanism_requests)
         external_seen.update(item.request_id for item in external_requests)
+        external_seen.update(item.request_id for item in external_mechanism_requests)
         selected = local_requests[: budget.max_requests_per_round]
-        if not selected:
+        remaining_request_slots = max(
+            0, budget.max_requests_per_round - len(selected)
+        )
+        selected_mechanism = local_mechanism_requests[:remaining_request_slots]
+        if not selected and not selected_mechanism:
             result = result.model_copy(update={"stopped_reason": "no_open_local_requests"})
             break
 
@@ -504,7 +814,7 @@ def fulfill_and_resume_writing_callbacks(
                 and str(item.section_id) in na_sections
             )
         ]
-        if not selected:
+        if not selected and not selected_mechanism:
             result = result.model_copy(update={"stopped_reason": "no_open_local_requests"})
             break
         artifacts = execute_open_requests_for_routes(
@@ -515,60 +825,147 @@ def fulfill_and_resume_writing_callbacks(
             equations=equations,
             facts=facts,
             repository_provider=provider,
-        )
-        if not artifacts:
+        ) if selected else {}
+        mechanism_artifacts, mechanism_traces = _execute_mechanism_requests_v2(
+            selected_mechanism,
+            provider=provider,
+            callback_root=callback_root,
+        ) if selected_mechanism else ({}, {})
+        if not artifacts and not mechanism_artifacts:
             result = result.model_copy(update={"stopped_reason": "no_progress"})
             break
-        if sum(len(items) for items in artifacts.values()) == 0:
+        if (
+            sum(len(items) for items in artifacts.values()) == 0
+            and sum(len(items) for items in mechanism_artifacts.values()) == 0
+        ):
             result = result.model_copy(update={"stopped_reason": "no_progress"})
             break
 
-        # A continuation provider records semantic gain while executing the
-        # scoped research request.  Check that delta *before* recompiling the
-        # whole authoring revision or invoking Writer: a repeated/empty
-        # observation must not pay the expensive downstream cost again.
+        # Every callback provider must prove an authoring-relevant semantic
+        # delta before the bundle is fulfilled.  The old fallback provider
+        # returned ``validated=true`` from a matched artifact without exposing
+        # whether that artifact added a new fact/slot; that made a repeated
+        # observation eligible for an unnecessary Writer resume.
         continuation_rows: list[dict[str, Any]] = []
         if continuation_provider is not None:
             continuation_rows = continuation_provider.round_digests()
             continuation_rounds.append({
                 "round": round_index,
-                "request_ids": sorted(artifacts),
+                "request_ids": sorted({
+                    *artifacts,
+                    *mechanism_artifacts,
+                }),
                 "continuations": continuation_rows,
             })
-            semantic_delta = False
-            gain_total = 0
-            from code2paper.agentic.callback_semantic_contract import (
-                authoring_semantic_delta_changed,
-            )
-            for row in continuation_rows:
-                gain = row.get("request_gain") or {}
-                fps = int(gain.get("new_fingerprint_count") or 0)
-                slots = list(gain.get("satisfied_slots") or ())
-                digest = str(row.get("semantic_digest") or "")
-                gain_total += fps + len(slots)
-                if authoring_semantic_delta_changed(
-                    previous_digests=seen_semantic_digests,
-                    semantic_digest=digest,
-                    new_fingerprint_count=fps,
-                    satisfied_slots=slots,
-                ):
-                    semantic_delta = True
-                    if digest:
-                        seen_semantic_digests.add(digest)
-            if gain_total == 0 or not semantic_delta:
-                consecutive_no_gain += 1
-            else:
-                consecutive_no_gain = 0
-            if consecutive_no_gain >= 1 and not semantic_delta:
-                trace_rows.append({
-                    "round": round_index,
-                    "fulfilled_request_ids": [],
-                    "resume_section_ids": [],
-                    "stopped_reason": "no_information_gain",
-                    "research_traces": _research_traces_for_selected(provider, selected),
+        semantic_rows: list[dict[str, Any]] = list(continuation_rows)
+        for request_id, artifact_items in artifacts.items():
+            for item in artifact_items:
+                payload = _load_callback_artifact_payload(item, callback_root)
+                report = payload.get("validator_report") or {}
+                fingerprints = payload.get("new_canonical_fingerprints")
+                if not isinstance(fingerprints, (list, tuple)):
+                    fingerprints = report.get("new_canonical_fingerprints") or ()
+                slots = payload.get("satisfied_slots")
+                if not isinstance(slots, (list, tuple)):
+                    slots = report.get("satisfied_slots") or ()
+                digest = str(
+                    payload.get("semantic_digest")
+                    or report.get("semantic_digest")
+                    or ""
+                ).strip()
+                # Legacy formalization/configuration artifacts can be
+                # content-addressed sidecar records rather than JSON payload
+                # files.  Their validated package/claim is still a real
+                # authoring delta; represent that fact explicitly for the
+                # compatibility lane.  Mechanism V2 artifacts use the stricter
+                # context/delta checks below and never rely on this fallback.
+                if not payload and bool(getattr(item, "validated", False)):
+                    lane = str(getattr(item, "authority_lane", "") or "")
+                    if lane == "formal_derivation":
+                        digest = str(getattr(item, "artifact_digest", "") or "")
+                        slots = ["formula"]
+                    elif lane == "configuration_resolved":
+                        digest = str(getattr(item, "artifact_digest", "") or "")
+                        slots = ["condition"]
+                if digest or fingerprints or slots:
+                    semantic_rows.append({
+                        "request_id": request_id,
+                        "semantic_digest": digest,
+                        "request_gain": {
+                            "new_fingerprint_count": len(tuple(fingerprints)) or len(
+                                tuple(payload.get("matched_fact_ids") or ())
+                            ),
+                            "satisfied_slots": list(slots),
+                        },
+                    })
+        for request_id, artifact_items in mechanism_artifacts.items():
+            for item in artifact_items:
+                semantic_rows.append({
+                    "request_id": request_id,
+                    "semantic_digest": item.semantic_delta_digest,
+                    "request_gain": {
+                        "new_fingerprint_count": len(item.new_fact_ids)
+                        + len(item.new_source_span_ids),
+                        "satisfied_slots": list(
+                            item.new_condition_ids + item.new_configuration_ids
+                        ),
+                    },
+                    "baseline_context_digest": item.baseline_context_digest,
+                    "current_context_digest": item.current_context_digest,
+                    "new_source_operation_ids": list(item.new_source_operation_ids),
+                    "new_detail_ids": list(item.new_detail_ids),
+                    "baseline_unresolved_count": item.unresolved_count_before,
+                    "current_unresolved_count": item.unresolved_count_after,
+                    "baseline_core_detail_count": item.core_detail_count_before,
+                    "current_core_detail_count": item.core_detail_count_after,
+                    "target_gaps_before": list(item.remaining_gap_ids_before),
+                    "target_gaps_after": list(item.remaining_gap_ids_after),
                 })
-                result = result.model_copy(update={"stopped_reason": "no_information_gain"})
-                break
+        semantic_delta = False
+        gain_total = 0
+        from code2paper.agentic.callback_semantic_contract import (
+            authoring_semantic_delta_changed,
+        )
+        for row in semantic_rows:
+            gain = row.get("request_gain") or {}
+            fps = int(gain.get("new_fingerprint_count") or 0)
+            slots = list(gain.get("satisfied_slots") or ())
+            digest = str(row.get("semantic_digest") or "")
+            gain_total += fps + len(slots)
+            if authoring_semantic_delta_changed(
+                previous_digests=seen_semantic_digests,
+                semantic_digest=digest,
+                new_fingerprint_count=fps,
+                satisfied_slots=slots,
+                baseline_context_digest=str(row.get("baseline_context_digest") or ""),
+                current_context_digest=str(row.get("current_context_digest") or ""),
+                baseline_unresolved_count=row.get("baseline_unresolved_count"),
+                current_unresolved_count=row.get("current_unresolved_count"),
+                baseline_core_detail_count=row.get("baseline_core_detail_count"),
+                current_core_detail_count=row.get("current_core_detail_count"),
+                target_gaps_before=tuple(row.get("target_gaps_before") or ()),
+                target_gaps_after=tuple(row.get("target_gaps_after") or ()),
+                new_source_operation_ids=tuple(row.get("new_source_operation_ids") or ()),
+                new_detail_ids=tuple(row.get("new_detail_ids") or ()),
+            ):
+                semantic_delta = True
+                if digest:
+                    seen_semantic_digests.add(digest)
+        if gain_total == 0 or not semantic_delta:
+            consecutive_no_gain += 1
+        else:
+            consecutive_no_gain = 0
+        if consecutive_no_gain >= 1 and not semantic_delta:
+            trace_rows.append({
+                "round": round_index,
+                "fulfilled_request_ids": [],
+                "resume_section_ids": [],
+                "stopped_reason": "no_information_gain",
+                "semantic_delta": False,
+                "research_traces": _research_traces_for_selected(provider, selected),
+            })
+            result = result.model_copy(update={"stopped_reason": "no_information_gain"})
+            break
 
         # A Research-Graph continuation changes the evidence authority.  Rebuild
         # every downstream authoring artifact before fulfilling the callback, so
@@ -602,7 +999,10 @@ def fulfill_and_resume_writing_callbacks(
                 selected, artifacts, slot_progress, callback_root,
             )
             bundle = fulfill_writing_research_callbacks(
-                bundle_path, artifacts, slot_progress=slot_progress or None,
+                bundle_path,
+                artifacts,
+                mechanism_artifacts=mechanism_artifacts or None,
+                slot_progress=slot_progress or None,
             )
         except (OSError, TypeError, ValueError) as exc:
             detail = str(exc).splitlines()[0].strip()[:200]
@@ -616,11 +1016,22 @@ def fulfill_and_resume_writing_callbacks(
         local_fulfilled.update(
             request_id for request_id in artifacts
         )
+        mechanism_fulfilled.update(
+            request_id for request_id in mechanism_artifacts
+        )
         resumed.update(bundle.resume_section_ids)
+        resumed.update(bundle.mechanism_resume_section_ids)
+        resumed_paragraphs.update(bundle.mechanism_resume_paragraph_ids)
         trace_rows.append({
             "round": round_index,
-            "fulfilled_request_ids": sorted(artifacts),
+            "fulfilled_request_ids": sorted({
+                *artifacts,
+                *mechanism_artifacts,
+            }),
             "resume_section_ids": list(bundle.resume_section_ids),
+            "mechanism_resume_section_ids": list(bundle.mechanism_resume_section_ids),
+            "mechanism_resume_paragraph_ids": list(bundle.mechanism_resume_paragraph_ids),
+            "mechanism_callback_traces": mechanism_traces,
             "research_traces": _research_traces_for_selected(provider, selected),
         })
 
@@ -640,13 +1051,25 @@ def fulfill_and_resume_writing_callbacks(
             request_id: tuple(items)
             for request_id, items in (bundle.artifacts or {}).items()
         } or artifacts
+        resume_mechanism_artifacts = {
+            request_id: tuple(items)
+            for request_id, items in (bundle.mechanism_artifacts or {}).items()
+        } or mechanism_artifacts
+        resume_sections = tuple(dict.fromkeys((
+            *bundle.resume_section_ids,
+            *bundle.mechanism_resume_section_ids,
+        )))
+        writer_kwargs: dict[str, Any] = {}
+        if resume_mechanism_artifacts:
+            writer_kwargs["research_mechanism_callback_artifacts"] = resume_mechanism_artifacts
         writer_result, next_paths = run_publication_method_writer(
             out_root=out_root,
             artifact_paths=merged_paths,
             llm_config=llm_config,
             llm_caller=llm_caller,
-            resume_section_ids=bundle.resume_section_ids,
+            resume_section_ids=resume_sections,
             research_callback_artifacts=resume_artifacts,
+            **writer_kwargs,
         )
         writer_status = effective_writer_transaction_status(writer_result)
         writer_blocked_reason = getattr(writer_result, "blocked_reason", "")
@@ -664,7 +1087,12 @@ def fulfill_and_resume_writing_callbacks(
                 if item.status in {"open", "partial"}
                 and item.required_authority_lane in _LOCAL_OWNED_LANES
             ]
-            if not remaining_local:
+            remaining_mechanism_local = [
+                item for item in bundle.mechanism_requests
+                if item.request_id not in bundle.mechanism_artifacts
+                and item.unresolved_kind != "authority_conflict"
+            ]
+            if not remaining_local and not remaining_mechanism_local:
                 result = result.model_copy(update={
                     "stopped_reason": "writer_success" if writer_status == "success" else "review_ready_with_warnings",
                 })
@@ -691,8 +1119,11 @@ def fulfill_and_resume_writing_callbacks(
     result = result.model_copy(update={
         "local_requests_seen": len(local_seen),
         "local_requests_fulfilled": len(local_fulfilled),
+        "mechanism_requests_seen": len(mechanism_seen),
+        "mechanism_requests_fulfilled": len(mechanism_fulfilled),
         "external_requests_seen": len(external_seen),
         "resumed_section_ids": tuple(sorted(resumed)),
+        "resumed_paragraph_ids": tuple(sorted(resumed_paragraphs)),
         "stopped_reason": result.stopped_reason or "completed",
         "trace_path": trace_path,
     })
@@ -1508,6 +1939,12 @@ class _BudgetedRepositoryCallbackProvider:
         observed_refs: set[str],
         obligation_id: str,
     ) -> dict[str, Any]:
+        from code2paper.agentic.callback_semantic_contract import (
+            callback_semantic_digest,
+            canonical_fact_fingerprint,
+            evaluate_mandatory_slot_coverage,
+        )
+
         fact_refs = tuple(fact.fact_id for fact in matched_facts)
         span_ids = tuple(dict.fromkeys(
             span_id for fact in matched_facts for span_id in fact.direct_span_ids
@@ -1516,6 +1953,33 @@ class _BudgetedRepositoryCallbackProvider:
             relation_id for fact in matched_facts for relation_id in fact.relation_evidence_ids
         ))
         summary = _fact_summary_for_writer(matched_facts)
+        new_facts = tuple(
+            fact for fact in self._new_facts
+            if str(getattr(fact, "fact_id", "") or "").strip()
+        )
+        new_fingerprints = tuple(dict.fromkeys(
+            canonical_fact_fingerprint(fact) for fact in new_facts
+        ))
+        baseline_fingerprints = tuple(
+            str(value).strip()
+            for value in (request.baseline_fact_fingerprints or ())
+            if str(value).strip()
+        )
+        satisfied_slots, remaining_slots = evaluate_mandatory_slot_coverage(
+            request,
+            new_fact_ids=fact_refs,
+            new_fingerprints=new_fingerprints,
+            baseline_fingerprints=baseline_fingerprints,
+        )
+        semantic_digest = callback_semantic_digest(
+            new_fingerprints=tuple(
+                value for value in new_fingerprints
+                if value not in set(baseline_fingerprints)
+            ),
+            satisfied_slots=satisfied_slots,
+            remaining_slots=remaining_slots,
+            affected_sections=(request.section_id,),
+        )
         payload = {
             "schema_version": "1.0",
             "request_id": request.request_id,
@@ -1529,6 +1993,14 @@ class _BudgetedRepositoryCallbackProvider:
             "tool_observation_refs": sorted(observed_refs)[:12],
             "research_trace": list(self.last_research_trace),
             "new_compiled_fact_ids": [fact.fact_id for fact in self._new_facts],
+            "baseline_canonical_fingerprints": list(baseline_fingerprints),
+            "new_canonical_fingerprints": [
+                value for value in new_fingerprints
+                if value not in set(baseline_fingerprints)
+            ],
+            "satisfied_slots": list(satisfied_slots),
+            "remaining_slots": list(remaining_slots),
+            "semantic_digest": semantic_digest,
             "remaining_limits": [
                 f"The repository evidence covers only the matched facts; the "
                 "remaining parts of this request stay unresolved for review.",
@@ -2468,6 +2940,39 @@ class _ResearchGraphContinuationProvider:
         )
         if concept_judgment_absent:
             report = {**report, "validated": False, "concept_judgment_absent": True}
+        # The V2 callback receipt needs an actual post-continuation authority
+        # digest.  Hash the graph's materialized evidence sets, rather than a
+        # request id or a synthesized semantic receipt, so a resumed Writer
+        # can distinguish a real Research change from representation-only
+        # progress.
+        def _json_value(value: Any) -> Any:
+            if isinstance(value, BaseModel):
+                return value.model_dump(mode="json")
+            if isinstance(value, Mapping):
+                return {
+                    str(key): _json_value(item)
+                    for key, item in value.items()
+                }
+            if isinstance(value, (list, tuple)):
+                return [_json_value(item) for item in value]
+            return value
+
+        authority_context_digest = _digest_json({
+            "repo_snapshot_id": self.runtime.repo_snapshot.snapshot_id,
+            "project_tree_hash": self.runtime.repo_snapshot.project_tree_hash,
+            "obligation_id": obligation_id,
+            "behavior_graph": _json_value(
+                getattr(result.loop_state, "behavior_graph", None)
+            ),
+            "evidence_packets": _json_value(packet_set),
+            "facts": _json_value(fact_set),
+            "claims": _json_value(claim_set),
+        })
+        report = {
+            **report,
+            "baseline_context_digest": request.baseline_context_digest,
+            "current_context_digest": authority_context_digest,
+        }
         chain_payload = {
             "schema_version": "1.0",
             "request_id": request.request_id,
@@ -2580,6 +3085,8 @@ class _ResearchGraphContinuationProvider:
             "concept_judgment": concept_judgment,
             "placement": placement,
             "validator_report": report,
+            "baseline_context_digest": request.baseline_context_digest,
+            "current_context_digest": authority_context_digest,
             "mandatory_slots": list(request.mandatory_missing_slots or ()),
             "satisfied_slots": list(report.get("satisfied_slots") or ()),
             "remaining_slots": list(report.get("remaining_slots") or ()),

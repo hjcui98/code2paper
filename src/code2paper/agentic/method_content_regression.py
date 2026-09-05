@@ -5,6 +5,7 @@ from __future__ import annotations
 import hashlib
 import json
 import re
+from collections.abc import Mapping
 from pathlib import Path
 from typing import Any
 
@@ -18,10 +19,10 @@ class MethodContentUnitFixtureV1(BaseModel):
 
     unit_id: str
     required_alias_groups: tuple[tuple[str, ...], ...]
-    source: str = "current_repo_trace"
-    repo_snapshot_sha: str = "a7c10318e0edd554533962d1ce6159ce51751291"
-    repo_verifiable: bool = True
-    active_path_status: str = "active"
+    source: str = "paper_structure_reference"
+    repo_snapshot_sha: str = ""
+    repo_verifiable: bool = False
+    active_path_status: str = "unknown"
     runtime_authority: str = "diagnostic_non_authorizing"
 
 
@@ -65,6 +66,19 @@ class MethodSynthesisProjectBaselineV1(BaseModel):
     rendered_paragraph_count: int = Field(ge=0)
     content_states: dict[str, int] = Field(default_factory=dict)
     dropped_section_ids: tuple[str, ...] = ()
+    # Diagnostic efficiency counters.  They are never used as authority or
+    # readiness gates; zero is an honest value for legacy frozen baselines.
+    total_tokens: int = Field(default=0, ge=0)
+    total_tokens_per_candidate: int = Field(default=0, ge=0)
+    callback_tokens: int = Field(default=0, ge=0)
+    formalizer_input_tokens: int = Field(default=0, ge=0)
+    writer_input_tokens: int = Field(default=0, ge=0)
+    shared_payload_tokens: int = Field(default=0, ge=0)
+    validated_core_detail_count: int = Field(default=0, ge=0)
+    validated_paragraph_count: int = Field(default=0, ge=0)
+    tokens_per_validated_core_detail: float = Field(default=0.0, ge=0.0)
+    calls_per_validated_paragraph: float = Field(default=0.0, ge=0.0)
+    callback_token_fraction: float = Field(default=0.0, ge=0.0, le=1.0)
 
 
 class MethodSynthesisBaselineV1(BaseModel):
@@ -140,10 +154,10 @@ class MethodAuthoringOracleUnitV1(BaseModel):
     formula_alias_groups: tuple[tuple[str, ...], ...] = ()
     require_display_math: bool = False
     polarity: str = ""
-    source: str = "current_repo_trace"
-    repo_snapshot_sha: str = "a7c10318e0edd554533962d1ce6159ce51751291"
-    repo_verifiable: bool = True
-    active_path_status: str = "active"
+    source: str = "paper_structure_reference"
+    repo_snapshot_sha: str = ""
+    repo_verifiable: bool = False
+    active_path_status: str = "unknown"
     runtime_authority: str = "diagnostic_non_authorizing"
 
 
@@ -594,6 +608,58 @@ def evaluate_formula_fidelity(
     }
 
 
+def compute_method_synthesis_efficiency_metrics(
+    *,
+    total_tokens: int = 0,
+    callback_tokens: int = 0,
+    formalizer_input_tokens: int = 0,
+    writer_input_tokens: int = 0,
+    shared_payload_tokens: int = 0,
+    validated_core_detail_count: int = 0,
+    validated_paragraph_count: int = 0,
+    writer_call_count: int = 0,
+    formalizer_call_count: int = 0,
+    call_count: int | None = None,
+) -> dict[str, Any]:
+    """Compute WP-0 efficiency diagnostics without authorizing a run.
+
+    The helper is intentionally pure so frozen replay baselines and live
+    traces use the same denominator rules.  A zero denominator returns zero
+    for a per-unit cost; it is never converted into a successful quality
+    score.
+    """
+
+    total = max(0, int(total_tokens or 0))
+    callback = max(0, int(callback_tokens or 0))
+    validated_core = max(0, int(validated_core_detail_count or 0))
+    validated_paragraphs = max(0, int(validated_paragraph_count or 0))
+    writers = max(0, int(writer_call_count or 0))
+    formalizers = max(0, int(formalizer_call_count or 0))
+    calls = max(0, int(call_count if call_count is not None else writers + formalizers))
+    return {
+        "total_tokens_per_candidate": total,
+        "total_tokens": total,
+        "callback_tokens": callback,
+        "formalizer_input_tokens": max(0, int(formalizer_input_tokens or 0)),
+        "writer_input_tokens": max(0, int(writer_input_tokens or 0)),
+        "shared_payload_tokens": max(0, int(shared_payload_tokens or 0)),
+        "validated_core_detail_count": validated_core,
+        "validated_paragraph_count": validated_paragraphs,
+        "writer_call_count": writers,
+        "formalizer_call_count": formalizers,
+        "call_count": calls,
+        "tokens_per_validated_core_detail": (
+            round(total / validated_core, 4) if validated_core else 0.0
+        ),
+        "calls_per_validated_paragraph": (
+            round(calls / validated_paragraphs, 4) if validated_paragraphs else 0.0
+        ),
+        "callback_token_fraction": (
+            round(callback / total, 4) if total else 0.0
+        ),
+    }
+
+
 __all__ = [
     "MethodAuthoringOracleProjectV1",
     "MethodAuthoringOracleReportV1",
@@ -609,6 +675,7 @@ __all__ = [
     "MethodSynthesisProjectBaselineV1",
     "MethodSynthesisBaselineV1",
     "build_python_behavior_inventory",
+    "compute_method_synthesis_efficiency_metrics",
     "evaluate_context_writer_delivery",
     "evaluate_formula_fidelity",
     "evaluate_mechanism_contamination",

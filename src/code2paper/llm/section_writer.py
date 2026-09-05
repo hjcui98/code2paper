@@ -1172,8 +1172,26 @@ def _llm_visible_section_payload(section: WriterSectionInput) -> dict[str, Any]:
             "heading": section.prompt_payload.get("heading", section.heading),
             "narrative_plan": section.prompt_payload.get("narrative_plan"),
             "shared_contexts": shared_contexts,
+            "shared_context_metadata": section.prompt_payload.get(
+                "shared_context_metadata", ()
+            ),
             "formula_packages": section.prompt_payload.get("formula_packages", ()),
+            "paragraph_transaction_required": bool(
+                section.prompt_payload.get("paragraph_transaction_required")
+            ),
         }
+        # These are harness-issued contracts, not model-authored evidence.
+        # Keep them in the actual LLM request so the Writer can emit
+        # Detail/Atom witnesses without learning technical facts from a
+        # sibling section or reconstructing the contract itself.
+        for key in (
+            "binding_contract",
+            "formula_placeholders_required",
+            "formula_generation_policy",
+            "output_contract",
+        ):
+            if key in section.prompt_payload:
+                result[key] = section.prompt_payload[key]
         for key in (
             "repair_feedback",
             "writer_section_repair",
@@ -1401,12 +1419,23 @@ def _sanitize_publication_output_overlap(
         for value in output.deferred_facet_ids
         if str(value) not in rendered_facets
     ]
-    if rendered_facets == set(output.rendered_from_facet_ids) and deferred_facets == list(
-        output.deferred_facet_ids
+    rendered_details = {str(value) for value in output.rendered_detail_ids}
+    deferred_details = [
+        str(value)
+        for value in output.deferred_detail_ids
+        if str(value) not in rendered_details
+    ]
+    if (
+        rendered_facets == set(output.rendered_from_facet_ids)
+        and deferred_facets == list(output.deferred_facet_ids)
+        and deferred_details == list(output.deferred_detail_ids)
     ):
         return output
     return output.model_copy(
-        update={"deferred_facet_ids": deferred_facets},
+        update={
+            "deferred_facet_ids": deferred_facets,
+            "deferred_detail_ids": deferred_details,
+        },
     )
 
 
@@ -1433,6 +1462,8 @@ def _merge_publication_partition_outputs(
     rendered_concepts: set[str] = set()
     deferred_concepts: set[str] = set()
     rendered_paragraphs: set[str] = set()
+    rendered_details: set[str] = set()
+    deferred_details: set[str] = set()
     rendered_slots: set[str] = set()
     rendered_edges: set[str] = set()
     used_formula_packages: list[str] = []
@@ -1451,6 +1482,8 @@ def _merge_publication_partition_outputs(
         rendered_concepts.update(str(v) for v in part.rendered_concept_keys)
         deferred_concepts.update(str(v) for v in part.deferred_concept_keys)
         rendered_paragraphs.update(str(v) for v in part.rendered_paragraph_ids)
+        rendered_details.update(str(v) for v in part.rendered_detail_ids)
+        deferred_details.update(str(v) for v in part.deferred_detail_ids)
         rendered_slots.update(str(v) for v in part.rendered_slot_ids)
         rendered_edges.update(str(v) for v in part.rendered_edge_ids)
         used_formula_packages.extend(part.used_formula_package_ids)
@@ -1464,6 +1497,7 @@ def _merge_publication_partition_outputs(
     deferred_facets -= rendered_facets
     deferred_briefs -= rendered_briefs
     deferred_concepts -= rendered_concepts
+    deferred_details -= rendered_details
     return base.model_copy(
         update={
             "section_markdown": "\n\n".join(markdown_parts),
@@ -1475,6 +1509,8 @@ def _merge_publication_partition_outputs(
             "rendered_concept_keys": tuple(sorted(rendered_concepts)),
             "deferred_concept_keys": tuple(sorted(deferred_concepts)),
             "rendered_paragraph_ids": tuple(sorted(rendered_paragraphs)),
+            "rendered_detail_ids": tuple(sorted(rendered_details)),
+            "deferred_detail_ids": tuple(sorted(deferred_details)),
             "rendered_slot_ids": tuple(sorted(rendered_slots)),
             "rendered_edge_ids": tuple(sorted(rendered_edges)),
             "used_formula_package_ids": tuple(dict.fromkeys(used_formula_packages)),
@@ -2543,6 +2579,7 @@ def _closed_set_publication_schema(
             paragraph_properties = paragraph_def.get("properties")
             if isinstance(paragraph_properties, dict):
                 for field_name, plan_key in (
+                    ("rendered_detail_ids", "required_detail_ids"),
                     ("rendered_from_facet_ids", "required_facet_ids"),
                     ("rendered_field_candidate_ids", "required_field_candidate_ids"),
                     # ``ordered_semantic_slot_ids`` is Writer grounding and
@@ -2607,6 +2644,29 @@ def _closed_set_publication_schema(
                     item_schema = field_schema.get("items")
                     if isinstance(item_schema, dict) and values:
                         item_schema["enum"] = values
+                detail_ids = list(dict.fromkeys(
+                    str(value).strip()
+                    for value in (
+                        contract.get("allowed_detail_ids")
+                        or [
+                            value
+                            for item in paragraph_plans
+                            if isinstance(item, dict)
+                            for value in (
+                                *(item.get("required_detail_ids") or ()),
+                                *(item.get("optional_detail_ids") or ()),
+                            )
+                        ]
+                    )
+                    if str(value).strip()
+                ))
+                for detail_field in ("rendered_detail_ids", "deferred_detail_ids"):
+                    detail_schema = paragraph_properties.get(detail_field)
+                    if not isinstance(detail_schema, dict):
+                        continue
+                    detail_items = detail_schema.get("items")
+                    if isinstance(detail_items, dict) and detail_ids:
+                        detail_items["enum"] = detail_ids
                 id_schema = paragraph_properties.get("paragraph_id")
                 if isinstance(id_schema, dict):
                     paragraph_ids = [
@@ -2997,6 +3057,8 @@ def _closed_set_publication_schema(
         "heading_text",
         "paragraphs",
         "rendered_paragraph_ids",
+        "rendered_detail_ids",
+        "deferred_detail_ids",
         "rendered_slot_ids",
         "rendered_edge_ids",
         "used_formula_package_ids",
@@ -3127,6 +3189,7 @@ def _merge_publication_binder_witnesses(
             str(row["target_id"])
         )
     declaration_fields = {
+        "detail": "rendered_detail_ids",
         "facet": "rendered_from_facet_ids",
         "field": "rendered_field_candidate_ids",
         "slot": "rendered_slot_ids",
@@ -3146,6 +3209,49 @@ def _merge_publication_binder_witnesses(
             if target_id not in values:
                 values.append(target_id)
             source[field_name] = values
+    # A Detail/Atom contract is complete when every required atom owned by
+    # that Detail has an exact Binder witness.  Restore the aggregate Detail
+    # declaration as derived metadata; no aggregate prose substring is
+    # invented and optional atoms never become hard obligations.
+    from code2paper.agentic.publication_transaction_contract import (
+        paragraph_binding_targets,
+    )
+    witnessed_keys = {
+        (
+            str(item.get("witness_kind") or ""),
+            str(item.get("target_id") or ""),
+        )
+        for item in existing
+        if isinstance(item, Mapping)
+    }
+    required_atoms_by_detail: dict[str, set[tuple[str, str]]] = {}
+    for row in paragraph_binding_targets(
+        transaction,
+        plan_row=plan_row,
+        formula_packages=formula_packages,
+    ):
+        if (
+            row.get("witness_kind") == "atom"
+            and row.get("required", True)
+            and str(row.get("detail_id") or "").strip()
+        ):
+            required_atoms_by_detail.setdefault(str(row["detail_id"]), set()).add(
+                ("atom", str(row["target_id"]))
+            )
+    detail_values = list(source.get("rendered_detail_ids") or ())
+    allowed_detail_ids = set()
+    if isinstance(plan_row, Mapping):
+        allowed_detail_ids.update(
+            str(value) for value in (plan_row.get("required_detail_ids") or ())
+        )
+        allowed_detail_ids.update(
+            str(value) for value in (plan_row.get("optional_detail_ids") or ())
+        )
+    for detail_id, atom_keys in required_atoms_by_detail.items():
+        if atom_keys.issubset(witnessed_keys) and detail_id in allowed_detail_ids:
+            if detail_id not in detail_values:
+                detail_values.append(detail_id)
+    source["rendered_detail_ids"] = detail_values
     source["witnesses"] = existing
     return transaction.__class__.model_validate(source)
 
@@ -3486,6 +3592,8 @@ def _normalize_publication_paragraph_transaction(
         str(item.get("paragraph_id") or ""): item for item in planned
     }
     aggregate_fields = {
+        "rendered_detail_ids": set(),
+        "deferred_detail_ids": set(),
         "rendered_from_facet_ids": set(),
         "rendered_field_candidate_ids": set(),
         "rendered_slot_ids": set(),
@@ -3539,6 +3647,27 @@ def _normalize_publication_paragraph_transaction(
             str(item.get("package_id") or "")
             for item in (section.prompt_payload.get("formula_packages") or ())
             if isinstance(item, dict) and str(item.get("package_id") or "").strip()
+        }
+        witness_contract = plan_row.get("witness_contract") or {}
+        raw_witness_targets = (
+            witness_contract.get("targets")
+            if isinstance(witness_contract, Mapping)
+            else getattr(witness_contract, "targets", ())
+        ) or ()
+        contract_detail_ids = {
+            str(value).strip()
+            for value in (
+                *(plan_row.get("required_detail_ids") or ()),
+                *(plan_row.get("optional_detail_ids") or ()),
+            )
+            if str(value).strip()
+        }
+        contract_atom_ids = {
+            str(item.get("target_id") or "").strip()
+            for item in raw_witness_targets
+            if isinstance(item, Mapping)
+            and str(item.get("target_kind") or "").strip() == "atom"
+            and str(item.get("target_id") or "").strip()
         }
         formula_packages = tuple(
             item for item in (section.prompt_payload.get("formula_packages") or ())
@@ -3606,6 +3735,8 @@ def _normalize_publication_paragraph_transaction(
             )
         }
         allowed = {
+            "detail": contract_detail_ids,
+            "atom": contract_atom_ids,
             "facet": allowed_facet_ids,
             "field": allowed_field_ids,
             "slot": set(str(value) for value in (
@@ -3635,6 +3766,38 @@ def _normalize_publication_paragraph_transaction(
             if key in witnessed:
                 failures.append(f"duplicate_witness:{paragraph_id}:{kind}:{target_id}")
             witnessed.add(key)
+        required_atoms_by_detail: dict[str, set[tuple[str, str]]] = {}
+        for target in raw_witness_targets:
+            if not isinstance(target, Mapping):
+                continue
+            if (
+                str(target.get("target_kind") or "").strip() == "atom"
+                and bool(target.get("required", target.get("render_policy") == "required"))
+                and str(target.get("detail_id") or "").strip()
+                and str(target.get("target_id") or "").strip()
+            ):
+                required_atoms_by_detail.setdefault(
+                    str(target["detail_id"]), set()
+                ).add(("atom", str(target["target_id"])))
+        for detail_id in transaction.rendered_detail_ids:
+            if detail_id not in contract_detail_ids:
+                failures.append(f"unknown_detail_declaration:{paragraph_id}:{detail_id}")
+            elif required_atoms_by_detail.get(str(detail_id)) and not required_atoms_by_detail[
+                str(detail_id)
+            ].issubset(witnessed):
+                failures.append(
+                    f"missing_required_atom_witness:{paragraph_id}:detail:{detail_id}"
+                )
+            elif ("detail", detail_id) not in witnessed:
+                failures.append(f"missing_exact_witness:{paragraph_id}:detail:{detail_id}")
+            aggregate_fields["rendered_detail_ids"].add(str(detail_id))
+        rendered_detail_ids = set(str(value) for value in transaction.rendered_detail_ids)
+        for detail_id in transaction.deferred_detail_ids:
+            if detail_id not in contract_detail_ids:
+                failures.append(f"unknown_deferred_detail:{paragraph_id}:{detail_id}")
+            if detail_id in rendered_detail_ids:
+                failures.append(f"detail_both_rendered_and_deferred:{paragraph_id}:{detail_id}")
+            aggregate_fields["deferred_detail_ids"].add(str(detail_id))
         for field_name, kind in (
             ("rendered_from_facet_ids", "facet"),
             ("rendered_field_candidate_ids", "field"),
@@ -3858,6 +4021,8 @@ def _normalize_publication_paragraph_transaction(
             if item_id in by_id
         ],
         "rendered_paragraph_ids": list(expected_ids or tuple(by_id)),
+        "rendered_detail_ids": sorted(aggregate_fields["rendered_detail_ids"]),
+        "deferred_detail_ids": sorted(aggregate_fields["deferred_detail_ids"]),
         "rendered_from_facet_ids": sorted(aggregate_fields["rendered_from_facet_ids"]),
         "rendered_field_candidate_ids": sorted(aggregate_fields["rendered_field_candidate_ids"]),
         "rendered_slot_ids": sorted(aggregate_fields["rendered_slot_ids"]),

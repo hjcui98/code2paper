@@ -113,6 +113,16 @@ RHETORICAL_MOVES: tuple[RhetoricalMoveV1, ...] = (
 
 ConfigurationStateV1 = Literal["actual", "default", "conditional", "unreachable", "unresolved"]
 
+MechanismResearchUnresolvedKindV1 = Literal[
+    "missing_definition",
+    "missing_call_path",
+    "missing_data_flow",
+    "missing_condition",
+    "missing_configuration",
+    "missing_formula_operand",
+    "authority_conflict",
+]
+
 
 class _MethodModel(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
@@ -855,7 +865,17 @@ class ParagraphWitnessTargetV1(_MethodModel):
     """One paragraph-local semantic target visible to the Writer."""
 
     target_id: str
-    target_kind: Literal["facet", "field", "slot", "edge", "formula", "claim", "equation"]
+    target_kind: Literal[
+        "detail",
+        "atom",
+        "facet",
+        "field",
+        "slot",
+        "edge",
+        "formula",
+        "claim",
+        "equation",
+    ]
     semantic_atom: str = ""
     paper_role: str = ""
     required_polarity: str = "unknown"
@@ -1136,6 +1156,16 @@ class WritingResearchRequestV1(_MethodModel):
     excluded_audit_concept_keys: tuple[str, ...] = Field(default_factory=tuple)
     satisfied_slots: tuple[str, ...] = Field(default_factory=tuple)
     remaining_slots: tuple[str, ...] = Field(default_factory=tuple)
+    # Unified mechanism callback bindings.  They are optional on the legacy
+    # request so old section-scoped artifacts remain readable, but when
+    # present they identify the exact technical owner rather than granting a
+    # whole section a new evidence scope.
+    mechanism_id: str = ""
+    target_detail_id: str = ""
+    target_atom_ids: tuple[str, ...] = Field(default_factory=tuple)
+    target_operation_ids: tuple[str, ...] = Field(default_factory=tuple)
+    unresolved_kind: MechanismResearchUnresolvedKindV1 | Literal[""] = ""
+    baseline_context_digest: str = ""
     content_digest: str = ""
 
     @field_validator("request_id", "section_id", "argument_unit_id", "exact_question")
@@ -1167,6 +1197,18 @@ class WritingResearchCallbackArtifactV1(_MethodModel):
     artifact_ref: str
     artifact_digest: str
     validated: bool = False
+    # Optional V2 owner/delta metadata.  The old section/unit binding remains
+    # required for legacy callback artifacts; unified callers can additionally
+    # prove which mechanism/detail changed without widening the resume scope.
+    mechanism_id: str = ""
+    target_detail_id: str = ""
+    target_atom_ids: tuple[str, ...] = Field(default_factory=tuple)
+    unresolved_kind: MechanismResearchUnresolvedKindV1 | Literal[""] = ""
+    baseline_context_digest: str = ""
+    current_context_digest: str = ""
+    semantic_delta_digest: str = ""
+    new_source_operation_ids: tuple[str, ...] = Field(default_factory=tuple)
+    new_detail_ids: tuple[str, ...] = Field(default_factory=tuple)
 
     @model_validator(mode="after")
     def _validated_binding(self) -> "WritingResearchCallbackArtifactV1":
@@ -1179,6 +1221,163 @@ class WritingResearchCallbackArtifactV1(_MethodModel):
             raise ValueError("writing callback artifact requires a sha256 digest")
         if not self.validated:
             raise ValueError("writing callback artifact must pass its owning validator")
+        for field_name in (
+            "baseline_context_digest",
+            "current_context_digest",
+            "semantic_delta_digest",
+        ):
+            value = getattr(self, field_name)
+            if value and not value.startswith("sha256:"):
+                raise ValueError(f"{field_name} must be a sha256 digest when present")
+        return self
+
+
+class MechanismResearchRequestV2(_MethodModel):
+    """Mechanism/detail-owned callback request for an unresolved closure item.
+
+    This is intentionally independent of section and paragraph ids.  A
+    narrative plan may later locate the affected paragraph, but it cannot
+    redefine the technical owner of the research request.
+    """
+
+    request_id: str
+    mechanism_id: str
+    target_detail_id: str = ""
+    unresolved_kind: MechanismResearchUnresolvedKindV1
+    exact_question: str
+    candidate_symbols_or_terms: tuple[str, ...] = Field(default_factory=tuple)
+    baseline_span_ids: tuple[str, ...] = Field(default_factory=tuple)
+    baseline_context_digest: str
+    target_operation_ids: tuple[str, ...] = Field(default_factory=tuple)
+    target_atom_ids: tuple[str, ...] = Field(default_factory=tuple)
+    # Placement is derived from the frozen narrative plan and is used only to
+    # select the smallest Writer resume scope.  It is deliberately separate
+    # from the mechanism/detail owner above: a paragraph can consume a detail
+    # but cannot redefine which source gap the callback owns.
+    affected_section_ids: tuple[str, ...] = Field(default_factory=tuple)
+    affected_paragraph_ids: tuple[str, ...] = Field(default_factory=tuple)
+    content_digest: str = ""
+
+    @field_validator("request_id", "mechanism_id", "exact_question")
+    @classmethod
+    def _required_text(cls, value: str) -> str:
+        value = value.strip()
+        if not value:
+            raise ValueError("mechanism callback binding text must not be empty")
+        return value
+
+    @field_validator("baseline_context_digest")
+    @classmethod
+    def _context_digest(cls, value: str) -> str:
+        value = value.strip()
+        if not value.startswith("sha256:"):
+            raise ValueError("mechanism callback requires a sha256 baseline_context_digest")
+        return value
+
+    @model_validator(mode="after")
+    def _digest(self) -> "MechanismResearchRequestV2":
+        computed_digest = _digest(
+            self.model_dump(mode="json", exclude={"content_digest"})
+        )
+        if self.content_digest and self.content_digest != computed_digest:
+            raise ValueError("mechanism callback request content digest mismatch")
+        object.__setattr__(
+            self,
+            "content_digest",
+            computed_digest,
+        )
+        return self
+
+
+class MechanismResearchCallbackArtifactV2(_MethodModel):
+    """Validated mechanism-owned callback artifact carrying semantic delta."""
+
+    artifact_id: str
+    request_id: str
+    mechanism_id: str
+    target_detail_id: str = ""
+    unresolved_kind: MechanismResearchUnresolvedKindV1
+    artifact_ref: str
+    artifact_digest: str
+    baseline_context_digest: str
+    current_context_digest: str
+    semantic_delta_digest: str
+    target_operation_ids: tuple[str, ...] = Field(default_factory=tuple)
+    target_atom_ids: tuple[str, ...] = Field(default_factory=tuple)
+    new_source_operation_ids: tuple[str, ...] = Field(default_factory=tuple)
+    new_source_span_ids: tuple[str, ...] = Field(default_factory=tuple)
+    new_fact_ids: tuple[str, ...] = Field(default_factory=tuple)
+    new_condition_ids: tuple[str, ...] = Field(default_factory=tuple)
+    new_configuration_ids: tuple[str, ...] = Field(default_factory=tuple)
+    new_detail_ids: tuple[str, ...] = Field(default_factory=tuple)
+    new_atom_ids: tuple[str, ...] = Field(default_factory=tuple)
+    unresolved_count_before: int | None = Field(default=None, ge=0)
+    unresolved_count_after: int | None = Field(default=None, ge=0)
+    core_detail_count_before: int | None = Field(default=None, ge=0)
+    core_detail_count_after: int | None = Field(default=None, ge=0)
+    remaining_gap_ids_before: tuple[str, ...] = Field(default_factory=tuple)
+    remaining_gap_ids_after: tuple[str, ...] = Field(default_factory=tuple)
+    affected_section_ids: tuple[str, ...] = Field(default_factory=tuple)
+    affected_paragraph_ids: tuple[str, ...] = Field(default_factory=tuple)
+    validated: bool = False
+    content_digest: str = ""
+
+    @model_validator(mode="after")
+    def _validate_artifact(self) -> "MechanismResearchCallbackArtifactV2":
+        if not all((self.artifact_id.strip(), self.request_id.strip(), self.mechanism_id.strip(), self.artifact_ref.strip())):
+            raise ValueError("mechanism callback artifact binding fields must not be empty")
+        for field_name in (
+            "artifact_digest",
+            "baseline_context_digest",
+            "current_context_digest",
+            "semantic_delta_digest",
+        ):
+            if not getattr(self, field_name).startswith("sha256:"):
+                raise ValueError(f"{field_name} must be a sha256 digest")
+        if not self.validated:
+            raise ValueError("mechanism callback artifact must pass its owning validator")
+        if self.current_context_digest == self.baseline_context_digest:
+            raise ValueError(
+                "mechanism callback artifact must change the context digest"
+            )
+        unresolved_improved = (
+            self.unresolved_count_before is not None
+            and self.unresolved_count_after is not None
+            and self.unresolved_count_after < self.unresolved_count_before
+        )
+        core_improved = (
+            self.core_detail_count_before is not None
+            and self.core_detail_count_after is not None
+            and self.core_detail_count_after > self.core_detail_count_before
+        )
+        gaps_improved = bool(
+            self.remaining_gap_ids_before
+            and len(set(self.remaining_gap_ids_after))
+            < len(set(self.remaining_gap_ids_before))
+        )
+        source_or_semantic_gain = any((
+            self.new_source_operation_ids,
+            self.new_source_span_ids,
+            self.new_fact_ids,
+            self.new_condition_ids,
+            self.new_configuration_ids,
+            self.new_detail_ids,
+            self.new_atom_ids,
+        ))
+        if not (unresolved_improved or core_improved or gaps_improved or source_or_semantic_gain):
+            raise ValueError(
+                "mechanism callback artifact has no semantic delta"
+            )
+        computed_digest = _digest(
+            self.model_dump(mode="json", exclude={"content_digest"})
+        )
+        if self.content_digest and self.content_digest != computed_digest:
+            raise ValueError("mechanism callback artifact content digest mismatch")
+        object.__setattr__(
+            self,
+            "content_digest",
+            computed_digest,
+        )
         return self
 
 
@@ -1193,11 +1392,17 @@ class WritingResearchCallbackBundleV1(_MethodModel):
 
     schema_version: str = "1.0"
     requests: tuple[WritingResearchRequestV1, ...] = Field(default_factory=tuple)
+    mechanism_requests: tuple[MechanismResearchRequestV2, ...] = Field(default_factory=tuple)
     artifacts: dict[str, tuple[WritingResearchCallbackArtifactV1, ...]] = Field(
+        default_factory=dict
+    )
+    mechanism_artifacts: dict[str, tuple[MechanismResearchCallbackArtifactV2, ...]] = Field(
         default_factory=dict
     )
     requested_resume_section_ids: tuple[str, ...] = Field(default_factory=tuple)
     resume_section_ids: tuple[str, ...] = Field(default_factory=tuple)
+    mechanism_resume_section_ids: tuple[str, ...] = Field(default_factory=tuple)
+    mechanism_resume_paragraph_ids: tuple[str, ...] = Field(default_factory=tuple)
     content_digest: str = ""
 
     @property
@@ -1209,8 +1414,11 @@ class WritingResearchCallbackBundleV1(_MethodModel):
     @model_validator(mode="after")
     def _validate_bindings(self) -> "WritingResearchCallbackBundleV1":
         request_ids = [item.request_id for item in self.requests]
-        if len(request_ids) != len(set(request_ids)):
+        mechanism_request_ids = [item.request_id for item in self.mechanism_requests]
+        if len(request_ids) != len(set(request_ids)) or len(mechanism_request_ids) != len(set(mechanism_request_ids)):
             raise ValueError("writing callback bundle contains duplicate request IDs")
+        if set(request_ids).intersection(mechanism_request_ids):
+            raise ValueError("writing callback bundle contains duplicate request IDs across request lanes")
         requests_by_id = {item.request_id: item for item in self.requests}
         known_section_ids = {item.section_id for item in self.requests}
         # ``requested_resume_section_ids`` is truthful telemetry of the set the
@@ -1285,7 +1493,94 @@ class WritingResearchCallbackBundleV1(_MethodModel):
                 raise ValueError(
                     f"non-fulfilled callback request contains fulfilled artifact IDs: {request.request_id}"
                 )
+        mechanism_requests_by_id = {
+            item.request_id: item for item in self.mechanism_requests
+        }
+        for request_id, items in self.mechanism_artifacts.items():
+            request = mechanism_requests_by_id.get(request_id)
+            if request is None:
+                raise ValueError(
+                    f"mechanism callback artifact bundle contains unknown request: {request_id}"
+                )
+            for artifact in items:
+                if (
+                    artifact.request_id != request.request_id
+                    or artifact.mechanism_id != request.mechanism_id
+                    or artifact.target_detail_id != request.target_detail_id
+                    or artifact.unresolved_kind != request.unresolved_kind
+                    or artifact.baseline_context_digest != request.baseline_context_digest
+                    or tuple(artifact.target_operation_ids) != tuple(request.target_operation_ids)
+                    or tuple(artifact.target_atom_ids) != tuple(request.target_atom_ids)
+                ):
+                    raise ValueError(
+                        f"mechanism callback artifact does not match request binding: {request_id}"
+                    )
+                if set(artifact.affected_section_ids) - set(request.affected_section_ids):
+                    raise ValueError(
+                        f"mechanism callback artifact widens affected sections: {request_id}"
+                    )
+                if set(artifact.affected_paragraph_ids) - set(request.affected_paragraph_ids):
+                    raise ValueError(
+                        f"mechanism callback artifact widens affected paragraphs: {request_id}"
+                    )
+        mechanism_artifact_ids = [
+            artifact.artifact_id
+            for items in self.mechanism_artifacts.values()
+            for artifact in items
+        ]
+        if len(mechanism_artifact_ids) != len(set(mechanism_artifact_ids)):
+            raise ValueError(
+                "mechanism callback bundle contains duplicate artifact IDs"
+            )
+        known_mechanism_sections = {
+            section_id
+            for request in self.mechanism_requests
+            for section_id in request.affected_section_ids
+        }
+        known_mechanism_sections.update(
+            section_id
+            for items in self.mechanism_artifacts.values()
+            for artifact in items
+            for section_id in artifact.affected_section_ids
+        )
+        unknown_mechanism_sections = sorted(
+            set(self.mechanism_resume_section_ids) - known_mechanism_sections
+        )
+        if unknown_mechanism_sections:
+            raise ValueError(
+                "writing callback bundle contains unknown mechanism resume sections: "
+                + ",".join(unknown_mechanism_sections)
+            )
+        known_mechanism_paragraphs = {
+            paragraph_id
+            for request in self.mechanism_requests
+            for paragraph_id in request.affected_paragraph_ids
+        }
+        known_mechanism_paragraphs.update(
+            paragraph_id
+            for items in self.mechanism_artifacts.values()
+            for artifact in items
+            for paragraph_id in artifact.affected_paragraph_ids
+        )
+        unknown_mechanism_paragraphs = sorted(
+            set(self.mechanism_resume_paragraph_ids) - known_mechanism_paragraphs
+        )
+        if unknown_mechanism_paragraphs:
+            raise ValueError(
+                "writing callback bundle contains unknown mechanism resume paragraphs: "
+                + ",".join(unknown_mechanism_paragraphs)
+            )
         object.__setattr__(self, "resume_section_ids", tuple(sorted(section_ids)))
+        object.__setattr__(
+            self,
+            "mechanism_resume_section_ids",
+            tuple(dict.fromkeys(str(item) for item in self.mechanism_resume_section_ids if str(item).strip())),
+        )
+        object.__setattr__(
+            self,
+            "mechanism_resume_paragraph_ids",
+            tuple(dict.fromkeys(str(item) for item in self.mechanism_resume_paragraph_ids if str(item).strip())),
+        )
         payload = self.model_dump(mode="json", exclude={"content_digest"})
         computed_digest = _digest(payload)
         if self.content_digest and self.content_digest != computed_digest:
@@ -1732,6 +2027,7 @@ __all__ = [
     "ConfigurationClaimSetV1",
     "ConfigurationClaimV1",
     "ConfigurationStateV1",
+    "MechanismResearchUnresolvedKindV1",
     "MethodArgumentKindV1",
     "MethodArgumentUnitV1",
     "MethodCompletenessItemV1",
@@ -1751,7 +2047,9 @@ __all__ = [
     "SectionContentWitnessSetV1",
     "SectionSentenceContentWitnessV1",
     "WritingResearchRequestV1",
+    "MechanismResearchRequestV2",
     "WritingResearchCallbackArtifactV1",
+    "MechanismResearchCallbackArtifactV2",
     "WritingResearchCallbackBundleV1",
     "build_completeness_matrix",
     "build_reference_method_agenda",

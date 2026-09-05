@@ -5,6 +5,7 @@ from __future__ import annotations
 import hashlib
 import json
 import re
+from collections.abc import Mapping
 from typing import Any, Callable, Literal, Sequence
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
@@ -7532,6 +7533,10 @@ class NarrativeParagraphPlanV3(BaseModel):
     formula_obligation_ids: tuple[str, ...] = ()
     formula_package_ids: tuple[str, ...] = ()
     shared_detail_refs: tuple[Any, ...] = ()
+    # Closed paragraph-local Detail/Atom witness contract.  The Writer may
+    # report ids, but only witnesses satisfying this sidecar can make the
+    # transaction valid.
+    witness_contract: dict[str, Any] = Field(default_factory=dict)
     suggested_depth: Literal["brief", "standard", "detailed"] = "standard"
     reader_goal: str = ""
     transition_from: str = ""
@@ -7540,10 +7545,15 @@ class NarrativeParagraphPlanV3(BaseModel):
 
     @model_validator(mode="after")
     def _compute_digest(self) -> "NarrativeParagraphPlanV3":
-        if not self.content_digest:
-            from code2paper.agentic.mechanism_context_models import canonical_json_bytes, sha256_digest
-            payload = canonical_json_bytes(self, exclude_fields={"content_digest"})
-            object.__setattr__(self, "content_digest", sha256_digest(payload))
+        from code2paper.agentic.mechanism_context_models import canonical_json_bytes, sha256_digest
+        payload = canonical_json_bytes(self, exclude_fields={"content_digest"})
+        expected = sha256_digest(payload)
+        if self.content_digest and self.content_digest != expected:
+            raise ValueError(
+                "narrative paragraph content_digest mismatch: "
+                f"got {self.content_digest}, expected {expected}"
+            )
+        object.__setattr__(self, "content_digest", expected)
         return self
 
 
@@ -7559,10 +7569,15 @@ class NarrativeSectionPlanV3(BaseModel):
 
     @model_validator(mode="after")
     def _compute_digest(self) -> "NarrativeSectionPlanV3":
-        if not self.content_digest:
-            from code2paper.agentic.mechanism_context_models import canonical_json_bytes, sha256_digest
-            payload = canonical_json_bytes(self, exclude_fields={"content_digest"})
-            object.__setattr__(self, "content_digest", sha256_digest(payload))
+        from code2paper.agentic.mechanism_context_models import canonical_json_bytes, sha256_digest
+        payload = canonical_json_bytes(self, exclude_fields={"content_digest"})
+        expected = sha256_digest(payload)
+        if self.content_digest and self.content_digest != expected:
+            raise ValueError(
+                "narrative section content_digest mismatch: "
+                f"got {self.content_digest}, expected {expected}"
+            )
+        object.__setattr__(self, "content_digest", expected)
         return self
 
 
@@ -7590,10 +7605,15 @@ class NarrativeUnitV1(BaseModel):
 
     @model_validator(mode="after")
     def _compute_digest(self) -> "NarrativeUnitV1":
-        if not self.content_digest:
-            from code2paper.agentic.mechanism_context_models import canonical_json_bytes, sha256_digest
-            payload = canonical_json_bytes(self, exclude_fields={"content_digest"})
-            object.__setattr__(self, "content_digest", sha256_digest(payload))
+        from code2paper.agentic.mechanism_context_models import canonical_json_bytes, sha256_digest
+        payload = canonical_json_bytes(self, exclude_fields={"content_digest"})
+        expected = sha256_digest(payload)
+        if self.content_digest and self.content_digest != expected:
+            raise ValueError(
+                "narrative unit content_digest mismatch: "
+                f"got {self.content_digest}, expected {expected}"
+            )
+        object.__setattr__(self, "content_digest", expected)
         return self
 
 
@@ -7610,10 +7630,15 @@ class NarrativePlanV3(BaseModel):
 
     @model_validator(mode="after")
     def _compute_digest(self) -> "NarrativePlanV3":
-        if not self.content_digest:
-            from code2paper.agentic.mechanism_context_models import canonical_json_bytes, sha256_digest
-            payload = canonical_json_bytes(self, exclude_fields={"content_digest"})
-            object.__setattr__(self, "content_digest", sha256_digest(payload))
+        from code2paper.agentic.mechanism_context_models import canonical_json_bytes, sha256_digest
+        payload = canonical_json_bytes(self, exclude_fields={"content_digest"})
+        expected = sha256_digest(payload)
+        if self.content_digest and self.content_digest != expected:
+            raise ValueError(
+                "narrative plan content_digest mismatch: "
+                f"got {self.content_digest}, expected {expected}"
+            )
+        object.__setattr__(self, "content_digest", expected)
         return self
 
 
@@ -7642,12 +7667,110 @@ def compute_narrative_complexity(
     return "detailed"
 
 
+def _v3_detail_witness_contract(
+    detail: Any,
+    *,
+    required: bool,
+) -> tuple[dict[str, Any], ...]:
+    """Materialize the Detail/Atom contract used by the V3 Writer path.
+
+    The contract contains only source handles and reader-facing semantic
+    anchors already present on ``MechanismDetailV1``/``DetailWitnessAtomV1``.
+    It is deliberately a sidecar: the Writer can paraphrase the anchor, but
+    it cannot replace the detail or atom with an invented identifier.
+    """
+
+    detail_id = str(getattr(detail, "detail_id", "") or "").strip()
+    if not detail_id:
+        return ()
+    detail_anchor_ids = tuple(dict.fromkeys(
+        str(value).strip()
+        for values in (
+            getattr(detail, "source_span_ids", ()) or (),
+            getattr(detail, "source_operation_ids", ()) or (),
+            getattr(detail, "source_fact_ids", ()) or (),
+            getattr(detail, "source_claim_ids", ()) or (),
+            getattr(detail, "source_equation_ids", ()) or (),
+        )
+        for value in values
+        if str(value).strip()
+    ))
+    semantic_atom = str(getattr(detail, "semantic_atom", "") or "").strip()
+    if not semantic_atom:
+        semantic_atom = " ".join(
+            str(value).strip()
+            for value in (
+                getattr(detail, "subject", ""),
+                getattr(detail, "predicate", ""),
+                *(getattr(detail, "operands", ()) or ()),
+                getattr(detail, "result", ""),
+            )
+            if str(value).strip()
+        ) or detail_id
+    evidence_authority = str(getattr(detail, "evidence_authority", "") or "")
+    active_status = str(getattr(detail, "active_path_status", "unknown") or "unknown")
+    repository_surface = (
+        evidence_authority == "repository_verified"
+        and active_status in {"active_default", "active_selected", "conditional"}
+    )
+    targets: list[dict[str, Any]] = [{
+        "target_id": detail_id,
+        "target_kind": "detail",
+        "semantic_atom": semantic_atom,
+        "paper_role": str(getattr(detail, "role", "") or "detail"),
+        "required_polarity": str(getattr(detail, "polarity", "unknown") or "unknown"),
+        "required_conditions": list(getattr(detail, "conditions", ()) or ()),
+        "allowed_anchor_ids": list(detail_anchor_ids),
+        "allowed_exact_excerpts": list(getattr(detail, "exact_excerpts", ()) or ()),
+        "authority_lane": "executable_hard" if repository_surface else "author_intent",
+        "surface_mode": "repository_statement" if repository_surface else "author_specification",
+        "required": bool(required),
+        "render_policy": "required" if required else "optional",
+    }]
+    for atom in (getattr(detail, "witness_atoms", ()) or ()):
+        atom_id = str(getattr(atom, "atom_id", "") or "").strip()
+        if not atom_id:
+            continue
+        targets.append({
+            "target_id": atom_id,
+            "target_kind": "atom",
+            "detail_id": detail_id,
+            "semantic_atom": str(getattr(atom, "semantic_anchor", "") or atom_id),
+            "paper_role": str(getattr(atom, "atom_kind", "") or "atom"),
+            "required_polarity": str(
+                getattr(atom, "required_polarity", "unknown") or "unknown"
+            ),
+            "required_conditions": list(getattr(atom, "required_conditions", ()) or ()),
+            "allowed_anchor_ids": list(dict.fromkeys(
+                str(value).strip()
+                for values in (
+                    getattr(atom, "source_anchor_ids", ()) or (),
+                    getattr(atom, "source_operation_ids", ()) or (),
+                )
+                for value in values
+                if str(value).strip()
+            )),
+            "allowed_exact_excerpts": list(getattr(atom, "exact_excerpts", ()) or ()),
+            "authority_lane": "executable_hard" if repository_surface else "author_intent",
+            "surface_mode": "repository_statement" if repository_surface else "author_specification",
+            "required": bool(required),
+            "render_policy": "required" if required else "optional",
+        })
+    return tuple(targets)
+
+
 def validate_narrative_plan(
     plan: NarrativePlanV3,
     contexts: Any,
+    formula_packages: Sequence[Any] = (),
 ) -> tuple[str, ...]:
     """Verify narrative plan against canonical mechanism context set constraints."""
     failures: list[str] = []
+
+    def _value(record: Any, name: str, default: Any = None) -> Any:
+        if isinstance(record, Mapping):
+            return record.get(name, default)
+        return getattr(record, name, default)
 
     # 1. Context set digest check
     expected_digest = getattr(contexts, "content_digest", "") or getattr(contexts, "source_context_digest", "")
@@ -7657,6 +7780,15 @@ def validate_narrative_plan(
     # 2. Mechanisms check
     context_map = {c.mechanism_id: c for c in contexts.contexts}
     all_placed_details: list[str] = []
+    supplied_packages = tuple(formula_packages or ())
+    compiled_packages_by_obligation: dict[str, list[Any]] = {}
+    for package in supplied_packages:
+        for obligation_id in _value(package, "satisfied_obligation_ids", ()) or ():
+            normalized_obligation_id = str(obligation_id).strip()
+            if normalized_obligation_id:
+                compiled_packages_by_obligation.setdefault(
+                    normalized_obligation_id, []
+                ).append(package)
 
     for sec in plan.sections:
         for mid in sec.mechanism_ids:
@@ -7676,17 +7808,93 @@ def validate_narrative_plan(
                     failures.append(f"unknown_detail_id:{did}_in_mechanism:{pmid}")
                 else:
                     d = ctx_details[did]
-                    if getattr(d, "active_path_status", "") in ("inactive_default", "unreachable", "inactive_path"):
+                    if getattr(d, "active_path_status", "") in (
+                        "inactive_default",
+                        "unreachable",
+                        "inactive_path",
+                    ):
                         failures.append(f"inactive_path_detail_in_narrative:{did}")
+                    elif getattr(d, "active_path_status", "unknown") not in (
+                        "active_default",
+                        "active_selected",
+                        "conditional",
+                    ):
+                        failures.append(f"unknown_path_detail_in_narrative:{did}")
                     all_placed_details.append(did)
+
+            # Optional Detail references are the review/uncertainty lane.  They
+            # must still be owned by this mechanism, but an unresolved or
+            # inactive optional Detail is not silently upgraded to a clean
+            # implementation claim.
+            for did in para.optional_detail_ids:
+                if did not in ctx_details:
+                    failures.append(f"unknown_optional_detail_id:{did}_in_mechanism:{pmid}")
+
+            contract = getattr(para, "witness_contract", {}) or {}
+            raw_targets = _value(contract, "targets", ()) or ()
+            atom_owner = {
+                atom.atom_id: detail.detail_id
+                for detail in ctx.details
+                for atom in (getattr(detail, "witness_atoms", ()) or ())
+            }
+            seen_targets: set[tuple[str, str]] = set()
+            for target in raw_targets:
+                kind = str(_value(target, "target_kind", "") or "").strip()
+                target_id = str(_value(target, "target_id", "") or "").strip()
+                key = (kind, target_id)
+                if not kind or not target_id:
+                    failures.append(f"empty_witness_target:{para.paragraph_id}")
+                elif key in seen_targets:
+                    failures.append(f"duplicate_witness_target:{para.paragraph_id}:{kind}:{target_id}")
+                seen_targets.add(key)
+                if kind == "detail" and target_id not in ctx_details:
+                    failures.append(f"unknown_witness_detail:{target_id}")
+                if kind == "atom" and target_id not in atom_owner:
+                    failures.append(f"unknown_witness_atom:{target_id}")
+                if kind == "atom":
+                    declared_detail_id = str(
+                        _value(target, "detail_id", "") or ""
+                    ).strip()
+                    if declared_detail_id and atom_owner.get(target_id) != declared_detail_id:
+                        failures.append(
+                            f"witness_atom_owner_mismatch:{target_id}:{declared_detail_id}"
+                        )
+
+            for formula_id in para.formula_obligation_ids:
+                if not str(formula_id).strip():
+                    failures.append(f"empty_formula_obligation:{para.paragraph_id}")
+                elif supplied_packages:
+                    matching_packages = compiled_packages_by_obligation.get(
+                        str(formula_id).strip(), ()
+                    )
+                    if not matching_packages:
+                        failures.append(
+                            f"formula_obligation_not_in_compiled_set:{formula_id}"
+                        )
+                    for package in matching_packages:
+                        package_mechanism_id = str(
+                            _value(package, "mechanism_id", "") or ""
+                        ).strip()
+                        if package_mechanism_id != pmid:
+                            failures.append(
+                                f"formula_obligation_mechanism_mismatch:"
+                                f"{formula_id}:{_value(package, 'package_id', '')}"
+                            )
 
     # 3. Core detail coverage check: each primary core detail placed exactly once
     core_details_to_place: set[str] = set()
     for ctx in contexts.contexts:
-        if ctx.importance == "core":
-            for d in ctx.details:
-                if d.importance == "core" and d.publication_policy == "clean_candidate":
-                    core_details_to_place.add(d.detail_id)
+        for d in ctx.details:
+            if (
+                d.importance == "core"
+                and d.publication_policy == "clean_candidate"
+                and getattr(d, "active_path_status", "unknown") in {
+                    "active_default",
+                    "active_selected",
+                    "conditional",
+                }
+            ):
+                core_details_to_place.add(d.detail_id)
 
     placed_counts: dict[str, int] = {}
     for did in all_placed_details:
@@ -7704,6 +7912,169 @@ def validate_narrative_plan(
         for mid in unit.mechanism_context_ids:
             if mid not in context_map:
                 failures.append(f"unknown_unit_mechanism:{mid}")
+
+    # Formula packages and obligations are paragraph-owned resources.  A
+    # package appearing in both the transformation and objective paragraphs
+    # would make downstream insertion ambiguous and can duplicate mathematics.
+    formula_package_occurrences: dict[str, list[tuple[str, str]]] = {}
+    formula_obligation_occurrences: dict[str, list[str]] = {}
+    for sec in plan.sections:
+        for para in sec.paragraphs:
+            for package_id in para.formula_package_ids:
+                formula_package_occurrences.setdefault(package_id, []).append(
+                    (sec.section_id, para.paragraph_id)
+                )
+            for obligation_id in para.formula_obligation_ids:
+                formula_obligation_occurrences.setdefault(obligation_id, []).append(para.paragraph_id)
+    for package_id, paragraph_ids in formula_package_occurrences.items():
+        if len(paragraph_ids) != 1:
+            failures.append(
+                "formula_package_multiple_paragraphs:"
+                f"{package_id}:{','.join(para_id for _section_id, para_id in paragraph_ids)}"
+            )
+    for obligation_id, paragraph_ids in formula_obligation_occurrences.items():
+        if len(paragraph_ids) != 1:
+            failures.append(
+                f"formula_obligation_multiple_paragraphs:{obligation_id}:{','.join(paragraph_ids)}"
+            )
+    placement_by_package = {}
+    for placement in plan.formula_placements:
+        package_id = str(_value(placement, "package_id", "") or "").strip()
+        placement_by_package.setdefault(package_id, []).append(
+            (
+                str(_value(placement, "section_id", "") or ""),
+                str(_value(placement, "paragraph_id", "") or ""),
+            )
+        )
+    for package_id, locations in placement_by_package.items():
+        if not package_id:
+            failures.append("empty_formula_placement_package")
+        elif len(locations) != 1:
+            failures.append(f"formula_placement_multiple:{package_id}")
+        elif package_id in formula_package_occurrences:
+            section_id, paragraph_id = locations[0]
+            if (section_id, paragraph_id) not in formula_package_occurrences[package_id]:
+                failures.append(f"formula_placement_paragraph_mismatch:{package_id}")
+
+    # Formula packages are authority products, not free-floating prose
+    # suggestions.  When the caller supplies the compiled package set, every
+    # package must have exactly one plan owner, that owner must be in the same
+    # mechanism, and every source detail must be present in that paragraph's
+    # detail closure.  This keeps formula placement paragraph-independent and
+    # prevents a package from becoming a duplicated generic equation.
+    if supplied_packages:
+        package_ids_seen: set[str] = set()
+        for package in supplied_packages:
+            package_id = str(_value(package, "package_id", "") or "").strip()
+            mechanism_id = str(_value(package, "mechanism_id", "") or "").strip()
+            if not package_id:
+                failures.append("empty_formula_package_id")
+                continue
+            if package_id in package_ids_seen:
+                failures.append(f"duplicate_formula_package_id:{package_id}")
+            package_ids_seen.add(package_id)
+            ctx = context_map.get(mechanism_id)
+            if ctx is None:
+                failures.append(f"formula_package_unknown_mechanism:{package_id}:{mechanism_id}")
+                continue
+            ctx_details = {
+                str(getattr(detail, "detail_id", "")): detail
+                for detail in (getattr(ctx, "details", ()) or ())
+            }
+            source_detail_ids = tuple(
+                str(value).strip()
+                for value in (_value(package, "source_detail_ids", ()) or ())
+                if str(value).strip()
+            )
+            satisfied_obligation_ids = tuple(
+                str(value).strip()
+                for value in (
+                    _value(package, "satisfied_obligation_ids", ()) or ()
+                )
+                if str(value).strip()
+            )
+            if not satisfied_obligation_ids:
+                failures.append(f"formula_package_without_obligation:{package_id}")
+            for detail_id in source_detail_ids:
+                if detail_id not in ctx_details:
+                    failures.append(f"formula_package_unknown_detail:{package_id}:{detail_id}")
+            locations = formula_package_occurrences.get(package_id, ())
+            if len(locations) != 1:
+                if not locations:
+                    failures.append(f"formula_package_unplaced:{package_id}")
+                continue
+            section_id, paragraph_id = locations[0]
+            section = next((item for item in plan.sections if item.section_id == section_id), None)
+            paragraph = next(
+                (
+                    item for item in (section.paragraphs if section is not None else ())
+                    if item.paragraph_id == paragraph_id
+                ),
+                None,
+            )
+            if paragraph is None:
+                failures.append(f"formula_package_owner_missing:{package_id}")
+                continue
+            if paragraph.mechanism_id != mechanism_id:
+                failures.append(f"formula_package_mechanism_mismatch:{package_id}")
+            paragraph_obligation_ids = {
+                str(value).strip()
+                for value in paragraph.formula_obligation_ids
+                if str(value).strip()
+            }
+            missing_obligations = sorted(
+                set(satisfied_obligation_ids) - paragraph_obligation_ids
+            )
+            if missing_obligations:
+                failures.append(
+                    f"formula_package_obligation_not_in_owner:{package_id}:"
+                    + ",".join(missing_obligations)
+                )
+            paragraph_detail_ids = set(
+                str(value).strip()
+                for value in (
+                    *getattr(paragraph, "required_detail_ids", ()),
+                    *getattr(paragraph, "optional_detail_ids", ()),
+                )
+                if str(value).strip()
+            )
+            missing_details = sorted(set(source_detail_ids) - paragraph_detail_ids)
+            if missing_details:
+                failures.append(
+                    f"formula_package_detail_not_in_owner:{package_id}:"
+                    + ",".join(missing_details)
+                )
+            expected_context_digest = (
+                getattr(ctx, "source_context_digest", "")
+                or getattr(ctx, "content_digest", "")
+            )
+            package_context_digest = str(
+                getattr(package, "source_context_digest", "") or ""
+            )
+            if expected_context_digest and package_context_digest != expected_context_digest:
+                failures.append(f"formula_package_context_digest_mismatch:{package_id}")
+            placement_matches = any(
+                str(_value(item, "package_id", "") or "") == package_id
+                and str(_value(item, "section_id", "") or "") == section_id
+                and str(_value(item, "paragraph_id", "") or "") == paragraph_id
+                for item in plan.formula_placements
+            )
+            if not placement_matches:
+                failures.append(f"formula_package_placement_missing:{package_id}")
+
+        if package_ids_seen:
+            for package_id in sorted(
+                package_id
+                for package_id in formula_package_occurrences
+                if package_id not in package_ids_seen
+            ):
+                failures.append(f"formula_package_not_in_compiled_set:{package_id}")
+            for package_id in sorted(
+                package_id
+                for package_id in package_ids_seen
+                if package_id not in formula_package_occurrences
+            ):
+                failures.append(f"formula_package_unplaced:{package_id}")
 
     return tuple(failures)
 
@@ -7737,7 +8108,27 @@ def build_narrative_plan_v3(
         pkg_by_mech.setdefault(pkg.mechanism_id, []).append(pkg)
 
     sec_idx = 1
-    for ctx in contexts.contexts:
+    context_items = list(contexts.contexts)
+    story_order = {
+        str(getattr(node, "story_node_id", "")): index
+        for index, node in enumerate(story_spine)
+        if str(getattr(node, "story_node_id", "") or "").strip()
+    }
+    original_order = {id(ctx): index for index, ctx in enumerate(context_items)}
+    context_items.sort(key=lambda ctx: (
+        min(
+            (
+                story_order.get(str(story_id), len(story_order))
+                for story_id in (getattr(ctx, "story_node_ids", ()) or ())
+                if str(story_id).strip()
+            ),
+            default=len(story_order),
+        ),
+        original_order.get(id(ctx), len(original_order)),
+    ))
+    trace["story_ordered"] = bool(story_order)
+
+    for ctx in context_items:
         if ctx.importance == "side_branch":
             continue
 
@@ -7755,7 +8146,16 @@ def build_narrative_plan_v3(
 
         core_clean_details = [
             d for d in ctx.details
-            if getattr(d, "active_path_status", "") not in ("inactive_default", "unreachable", "inactive_path")
+            if getattr(d, "active_path_status", "unknown") in {
+                "active_default",
+                "active_selected",
+                "conditional",
+            }
+        ]
+        review_details = [
+            d for d in ctx.details
+            if d not in core_clean_details
+            and getattr(d, "publication_policy", "") in {"annotated_only", "review_only"}
         ]
 
         overview_details = [d for d in core_clean_details if d.role in ("input", "representation", "configuration")]
@@ -7774,9 +8174,42 @@ def build_narrative_plan_v3(
             para_groups.append(("formal_objective", formal_details))
         if output_details:
             para_groups.append(("interface_and_outputs", output_details))
+        if review_details:
+            # Keep unresolved evidence visible to the Writer as optional
+            # review material.  It remains outside the clean-candidate lane.
+            para_groups.append(("evidence_status", review_details))
 
         if not para_groups:
             para_groups.append(("mechanism_overview", list(core_clean_details)))
+
+        # Each formula package is assigned to the first paragraph whose
+        # semantic detail group owns one of its source details.  This is the
+        # single source of placement truth; a package is never copied into
+        # both a transformation and an objective paragraph.
+        package_target_role: dict[str, str] = {}
+        for pkg in pkg_by_mech.get(ctx.mechanism_id, ()):
+            package_id = str(getattr(pkg, "package_id", "") or "").strip()
+            source_detail_ids = {
+                str(value).strip()
+                for value in (getattr(pkg, "source_detail_ids", ()) or ())
+                if str(value).strip()
+            }
+            for role_name, group_details in para_groups:
+                if source_detail_ids.intersection(
+                    str(getattr(detail, "detail_id", "") or "")
+                    for detail in group_details
+                ):
+                    package_target_role[package_id] = role_name
+                    break
+            if package_id not in package_target_role and para_groups:
+                package_target_role[package_id] = next(
+                    (
+                        role_name
+                        for role_name, _details in para_groups
+                        if role_name == "formal_objective"
+                    ),
+                    para_groups[0][0],
+                )
 
         para_idx = 1
         para_ids: list[str] = []
@@ -7800,12 +8233,19 @@ def build_narrative_plan_v3(
 
             p_pkg_ids: list[str] = []
             p_ob_ids: list[str] = []
-            if role_name in ("formal_objective", "core_transformations") and ctx.mechanism_id in pkg_by_mech:
+            if ctx.mechanism_id in pkg_by_mech:
                 for pkg in pkg_by_mech[ctx.mechanism_id]:
-                    p_pkg_ids.append(pkg.package_id)
-                    p_ob_ids.extend(pkg.satisfied_obligation_ids)
+                    package_id = str(getattr(pkg, "package_id", "") or "").strip()
+                    if not package_id or package_target_role.get(package_id) != role_name:
+                        continue
+                    p_pkg_ids.append(package_id)
+                    p_ob_ids.extend(
+                        str(value).strip()
+                        for value in (getattr(pkg, "satisfied_obligation_ids", ()) or ())
+                        if str(value).strip()
+                    )
                     placements.append(FormulaPlacementV1(
-                        package_id=pkg.package_id,
+                        package_id=package_id,
                         section_id=section_id,
                         paragraph_id=p_id,
                     ))
@@ -7822,6 +8262,19 @@ def build_narrative_plan_v3(
                 formula_obligation_ids=tuple(dict.fromkeys(p_ob_ids)),
                 formula_package_ids=tuple(dict.fromkeys(p_pkg_ids)),
                 shared_detail_refs=getattr(ctx, "shared_detail_refs", ()),
+                witness_contract={
+                    "schema_version": "1.0",
+                    "paragraph_id": p_id,
+                    "rhetorical_goal": role_name,
+                    "targets": [
+                        target
+                        for detail in group_details
+                        for target in _v3_detail_witness_contract(
+                            detail,
+                            required=detail.detail_id in req_dids,
+                        )
+                    ],
+                },
                 suggested_depth=depth,
                 reader_goal=f"Explain {role_name} for {ctx.mechanism_name}.",
             )
@@ -7847,11 +8300,12 @@ def build_narrative_plan_v3(
             paragraph_ids=tuple(para_ids),
             required_detail_ids=tuple(dict.fromkeys(all_unit_req_details)),
             optional_detail_ids=tuple(dict.fromkeys(all_unit_opt_details)),
-            formula_obligation_ids=tuple(
-                pkg.satisfied_obligation_ids[0]
+            formula_obligation_ids=tuple(dict.fromkeys(
+                str(obligation_id).strip()
                 for pkg in pkg_by_mech.get(ctx.mechanism_id, ())
-                if pkg.satisfied_obligation_ids
-            ),
+                for obligation_id in (getattr(pkg, "satisfied_obligation_ids", ()) or ())
+                if str(obligation_id).strip()
+            )),
             suggested_depth=unit_depth,
         ))
         sec_idx += 1
@@ -7867,6 +8321,16 @@ def build_narrative_plan_v3(
     trace["sections_planned"] = len(sections)
     trace["paragraphs_planned"] = sum(len(s.paragraphs) for s in sections)
     trace["formula_placements_count"] = len(placements)
+
+    validation_failures = validate_narrative_plan(
+        plan,
+        contexts,
+        formula_packages=formula_packages,
+    )
+    if validation_failures:
+        raise ValueError(
+            "narrative_plan_v3_invalid:" + ";".join(validation_failures[:16])
+        )
 
     return plan, trace
 

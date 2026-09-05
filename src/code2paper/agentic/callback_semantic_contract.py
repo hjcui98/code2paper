@@ -9,6 +9,7 @@ from typing import Any, Mapping
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from code2paper.agentic.method_argument_models import (
+    MechanismResearchRequestV2,
     SectionArgumentGraphV1,
     WritingResearchRequestV1,
 )
@@ -120,20 +121,52 @@ def _required_targets(row: dict[str, Any]) -> dict[str, tuple[str, ...]]:
         _publication_slot_ids,
     )
 
-    return {
+    result = {
         "facet": _ids(row.get("required_facet_ids")),
+        "detail": _ids(row.get("required_detail_ids")),
         "slot": _publication_slot_ids(row),
         "edge": _ids(row.get("required_edge_ids")),
         "formula": _ids(row.get("formula_obligation_ids")),
     }
+    # Atom ids are nested in the paragraph-local contract.  They remain
+    # separate targets so a Detail declaration cannot hide a missing required
+    # semantic atom.
+    contract = row.get("witness_contract") or {}
+    raw_targets = contract.get("targets", ()) if isinstance(contract, Mapping) else ()
+    result["atom"] = tuple(dict.fromkeys(
+        str(item.get("target_id") or "").strip()
+        for item in raw_targets
+        if isinstance(item, Mapping)
+        and str(item.get("target_kind") or "") == "atom"
+        and str(item.get("target_id") or "").strip()
+        and bool(
+            item.get(
+                "required",
+                True if "render_policy" not in item else item.get("render_policy") == "required",
+            )
+        )
+    ))
+    return {kind: values for kind, values in result.items() if values}
 
 
 def _open_callback_scope(request: dict[str, Any]) -> bool:
-    """A callback request must identify one section and one missing target."""
+    """A callback request must identify one technical owner and one gap."""
 
     if not str(request.get("request_id") or "").strip():
         return False
-    if not str(request.get("section_id") or "").strip():
+    mechanism_id = str(request.get("mechanism_id") or "").strip()
+    if mechanism_id:
+        # V2 deliberately does not require section/paragraph ownership.  A
+        # detail, atom, operation, or typed unresolved kind is sufficient to
+        # make the request auditable.
+        if not str(request.get("unresolved_kind") or "").strip():
+            return False
+        if not any(
+            str(request.get(name) or "").strip()
+            for name in ("target_detail_id", "target_operation_ids", "target_atom_ids", "unresolved_kind")
+        ):
+            return False
+    elif not str(request.get("section_id") or "").strip():
         return False
     if not str(request.get("exact_question") or "").strip():
         return False
@@ -146,6 +179,10 @@ def _open_callback_scope(request: dict[str, Any]) -> bool:
         or request.get("target_concept_keys")
         or request.get("target_brief_ids")
         or request.get("target_clause_ids")
+        or request.get("target_detail_id")
+        or request.get("target_operation_ids")
+        or request.get("target_atom_ids")
+        or request.get("unresolved_kind")
         or request.get("missing_rhetorical_move")
     )
     if isinstance(targets, str):
@@ -271,7 +308,7 @@ def evaluate_authoring_structural_exit(
         required = _required_targets(row)
         required["formula"] = tuple(
             obligation_id
-            for obligation_id in required["formula"]
+            for obligation_id in required.get("formula", ())
             if obligation_id not in non_hard_formula_obligation_ids
         )
         target_count = sum(len(values) for values in required.values())
@@ -279,8 +316,8 @@ def evaluate_authoring_structural_exit(
             continue
         required_paragraph_count += 1
         required_target_count += target_count
-        required_slots += len(required["slot"])
-        required_edges += len(required["edge"])
+        required_slots += len(required.get("slot", ()))
+        required_edges += len(required.get("edge", ()))
         assessment = assessment_rows.get(key)
         if assessment is None:
             reasons.append(f"required_paragraph_unassessed:{key[0]}:{key[1]}")
@@ -302,8 +339,8 @@ def evaluate_authoring_structural_exit(
         }
         for kind, values in required.items():
             valid_target_count += len(set(values) & witnessed.get(kind, set()))
-        witnessed_slots += len(set(required["slot"]) & witnessed.get("slot", set()))
-        witnessed_edges += len(set(required["edge"]) & witnessed.get("edge", set()))
+        witnessed_slots += len(set(required.get("slot", ())) & witnessed.get("slot", set()))
+        witnessed_edges += len(set(required.get("edge", ())) & witnessed.get("edge", set()))
         for missing_kind, missing_values in (assessment.get("missing_by_kind") or {}).items():
             if missing_values:
                 reasons.append(
@@ -408,9 +445,38 @@ def evaluate_authoring_structural_exit(
     if unresolved_required:
         reasons.append("required_formula_unresolved:" + ",".join(sorted(set(unresolved_required))))
 
+    callback_request_items = [
+        item for item in (
+            *(callback.get("requests") or ()),
+            *(callback.get("mechanism_requests") or ()),
+        )
+        if isinstance(item, dict)
+    ]
+    # Mechanism V2 requests have no mutable ``status`` field.  Their terminal
+    # state is represented by the typed artifact map in the same bundle.  Do
+    # not leave a fulfilled V2 request looking open merely because its request
+    # record is intentionally immutable; doing so would make every successful
+    # mechanism callback permanently block structural exit.
+    fulfilled_mechanism_request_ids = {
+        str(request_id).strip()
+        for request_id in (callback.get("mechanism_artifacts") or {})
+        if str(request_id).strip()
+    }
     open_requests = [
-        item for item in callback.get("requests") or ()
-        if isinstance(item, dict) and str(item.get("status") or "").casefold() in {"open", "partial"}
+        item for item in callback_request_items
+        if not (
+            str(item.get("request_id") or "").strip()
+            and str(item.get("request_id") or "").strip()
+            in fulfilled_mechanism_request_ids
+            and (
+                str(item.get("mechanism_id") or "").strip()
+                or str(item.get("unresolved_kind") or "").strip()
+            )
+        )
+        # V2 requests have no mutable section status: their presence in the
+        # callback bundle means the unresolved owner is open.
+        if not str(item.get("status") or "").strip()
+        or str(item.get("status") or "").casefold() in {"open", "partial"}
     ]
     scoped_requests = [item for item in open_requests if _open_callback_scope(item)]
     if len(scoped_requests) != len(open_requests):
@@ -441,6 +507,9 @@ def evaluate_authoring_structural_exit(
         # and semantic target identity; two requests for the same owner and
         # same target still fail closed.
         request_targets.append((
+            str(item.get("mechanism_id") or ""),
+            str(item.get("target_detail_id") or ""),
+            str(item.get("unresolved_kind") or ""),
             str(item.get("section_id") or ""),
             str(item.get("argument_unit_id") or ""),
             str(item.get("missing_rhetorical_move") or ""),
@@ -451,6 +520,8 @@ def evaluate_authoring_structural_exit(
             tuple(sorted(_ids(item.get("target_concept_keys")))),
             tuple(sorted(_ids(item.get("target_brief_ids")))),
             tuple(sorted(_ids(item.get("target_clause_ids")))),
+            tuple(sorted(_ids(item.get("target_operation_ids")))),
+            tuple(sorted(_ids(item.get("target_atom_ids")))),
         ))
     if len(request_targets) != len(set(request_targets)):
         reasons.append("callback_request_targets_not_unique")
@@ -625,13 +696,72 @@ def authoring_semantic_delta_changed(
     semantic_digest: str,
     new_fingerprint_count: int,
     satisfied_slots: tuple[str, ...] | list[str] = (),
+    baseline_context_digest: str = "",
+    current_context_digest: str = "",
+    baseline_unresolved_count: int | None = None,
+    current_unresolved_count: int | None = None,
+    baseline_core_detail_count: int | None = None,
+    current_core_detail_count: int | None = None,
+    target_gaps_before: tuple[str, ...] | list[str] = (),
+    target_gaps_after: tuple[str, ...] | list[str] = (),
+    new_source_operation_ids: tuple[str, ...] | list[str] = (),
+    new_detail_ids: tuple[str, ...] | list[str] = (),
 ) -> bool:
-    """True only when this round adds a new authoring semantic digest."""
+    """True only when this round adds a new authoring semantic digest.
+
+    Legacy callers use fingerprints/slots.  Unified callers additionally pass
+    context quality counters and owner ids; for that lane a changed digest by
+    itself is *not* progress.  At least one source/detail/gap/readiness
+    improvement must accompany it.
+    """
 
     digest = str(semantic_digest or "").strip()
     if digest and digest in previous_digests:
         return False
-    return bool(new_fingerprint_count or satisfied_slots)
+    unified_quality_fields = any(
+        value is not None
+        for value in (
+            baseline_unresolved_count,
+            current_unresolved_count,
+            baseline_core_detail_count,
+            current_core_detail_count,
+        )
+    ) or bool(
+        baseline_context_digest
+        or current_context_digest
+        or new_source_operation_ids
+        or new_detail_ids
+        or target_gaps_before
+        or target_gaps_after
+    )
+    if not unified_quality_fields:
+        return bool(new_fingerprint_count or satisfied_slots)
+    context_changed = bool(
+        baseline_context_digest
+        and current_context_digest
+        and baseline_context_digest != current_context_digest
+    )
+    unresolved_improved = (
+        baseline_unresolved_count is not None
+        and current_unresolved_count is not None
+        and current_unresolved_count < baseline_unresolved_count
+    )
+    core_improved = (
+        baseline_core_detail_count is not None
+        and current_core_detail_count is not None
+        and current_core_detail_count > baseline_core_detail_count
+    )
+    gap_improved = bool(
+        target_gaps_before
+        and len(set(target_gaps_after)) < len(set(target_gaps_before))
+    )
+    owner_gain = bool(new_source_operation_ids or new_detail_ids)
+    explicit_semantic_gain = bool(new_fingerprint_count or satisfied_slots)
+    return bool(
+        digest
+        and context_changed
+        and (unresolved_improved or core_improved or gap_improved or owner_gain or explicit_semantic_gain)
+    )
 
 
 def enrich_callback_request_semantics(
@@ -667,7 +797,8 @@ def enrich_callback_request_semantics(
         for fact in baseline_facts
         if canonical_fact_fingerprint(fact)
     ))
-    return request.model_copy(update={
+    payload = request.model_dump(mode="python")
+    payload.update({
         "target_story_node_ids": tuple(dict.fromkeys(target_story_node_ids)),
         "target_concept_keys": tuple(dict.fromkeys(target_concept_keys)),
         "target_formula_obligation_ids": tuple(dict.fromkeys(target_formula_obligation_ids)),
@@ -677,7 +808,47 @@ def enrich_callback_request_semantics(
         )),
         "baseline_fact_fingerprints": fingerprints,
         "excluded_audit_concept_keys": tuple(dict.fromkeys(excluded_audit)),
+        "content_digest": "",
     })
+    return WritingResearchRequestV1.model_validate(payload)
+
+
+def build_mechanism_research_request_v2(
+    *,
+    request_id: str,
+    mechanism_id: str,
+    exact_question: str,
+    unresolved_kind: str,
+    baseline_context_digest: str,
+    target_detail_id: str = "",
+    candidate_symbols_or_terms: tuple[str, ...] | list[str] = (),
+    baseline_span_ids: tuple[str, ...] | list[str] = (),
+    target_operation_ids: tuple[str, ...] | list[str] = (),
+    target_atom_ids: tuple[str, ...] | list[str] = (),
+    affected_section_ids: tuple[str, ...] | list[str] = (),
+    affected_paragraph_ids: tuple[str, ...] | list[str] = (),
+) -> MechanismResearchRequestV2:
+    """Construct the canonical mechanism/detail callback request.
+
+    This helper is intentionally explicit about the owner and baseline.  It is
+    used by production adapters as well as tests so a section-scoped request
+    cannot be silently promoted to a mechanism callback.
+    """
+
+    return MechanismResearchRequestV2(
+        request_id=request_id,
+        mechanism_id=mechanism_id,
+        target_detail_id=target_detail_id,
+        unresolved_kind=unresolved_kind,  # type: ignore[arg-type]
+        exact_question=exact_question,
+        candidate_symbols_or_terms=tuple(candidate_symbols_or_terms),
+        baseline_span_ids=tuple(baseline_span_ids),
+        baseline_context_digest=baseline_context_digest,
+        target_operation_ids=tuple(target_operation_ids),
+        target_atom_ids=tuple(target_atom_ids),
+        affected_section_ids=tuple(affected_section_ids),
+        affected_paragraph_ids=tuple(affected_paragraph_ids),
+    )
 
 
 __all__ = [
@@ -685,6 +856,7 @@ __all__ = [
     "authoring_semantic_delta_changed",
     "callback_semantic_digest",
     "canonical_fact_fingerprint",
+    "build_mechanism_research_request_v2",
     "enrich_callback_request_semantics",
     "evaluate_authoring_structural_exit",
     "evaluate_mandatory_slot_coverage",

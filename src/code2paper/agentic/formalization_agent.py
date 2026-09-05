@@ -8,7 +8,7 @@ import re
 from collections import Counter
 from pathlib import Path
 from collections.abc import Mapping
-from typing import Any, Literal
+from typing import Any, Callable, Literal, Sequence
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
@@ -396,6 +396,10 @@ class SectionFormulaPackageV1(BaseModel):
     review_question: str = ""
     bound_fact_ids: tuple[str, ...] = Field(default_factory=tuple)
     bound_equation_ids: tuple[str, ...] = Field(default_factory=tuple)
+    # Operation-level binding is the canonical route for the unified context.
+    # Keep fact/equation ids for legacy sidecars, but do not make them the only
+    # proof that a formula came from repository evidence.
+    bound_operation_ids: tuple[str, ...] = Field(default_factory=tuple)
     content_digest: str = ""
 
     @model_validator(mode="after")
@@ -451,7 +455,7 @@ class SectionFormulaPackageV1(BaseModel):
                 "only code-verified repository-derived formula packages may be accepted"
             )
         if self.authority_status == "code_verified" and not (
-            self.bound_fact_ids or self.bound_equation_ids
+            self.bound_fact_ids or self.bound_equation_ids or self.bound_operation_ids
         ):
             raise ValueError("code_verified formula packages must bind exact ids")
         # Compatibility normalization (Section 6.4): a historical package that
@@ -543,9 +547,14 @@ class MechanismFormulaObligationV1(BaseModel):
 
     @model_validator(mode="after")
     def _compute_digest(self) -> "MechanismFormulaObligationV1":
-        if not self.content_digest:
-            payload = self.model_dump(mode="json", exclude={"content_digest"})
-            object.__setattr__(self, "content_digest", _digest_json(payload))
+        payload = self.model_dump(mode="json", exclude={"content_digest"})
+        expected = _digest_json(payload)
+        if self.content_digest and self.content_digest != expected:
+            raise ValueError(
+                "mechanism formula obligation content_digest mismatch: "
+                f"got {self.content_digest}, expected {expected}"
+            )
+        object.__setattr__(self, "content_digest", expected)
         return self
 
 
@@ -578,6 +587,9 @@ class MechanismFormulaPackageV2(BaseModel):
 
     source_context_digest: str = ""
     shared_payload_digest: str = ""
+    view_digest: str = ""
+    slice_digests: tuple[str, ...] = Field(default_factory=tuple)
+    consumer_request_digest: str = ""
     content_digest: str = ""
 
     @model_validator(mode="after")
@@ -585,11 +597,17 @@ class MechanismFormulaPackageV2(BaseModel):
         normalized = normalize_formula_latex_body(self.latex)
         if normalized != self.latex:
             object.__setattr__(self, "latex", normalized)
-        if not self.markdown_block:
+        canonical_block = canonical_formula_markdown_block(self.latex)
+        if self.markdown_block != canonical_block:
             object.__setattr__(self, "markdown_block", canonical_formula_markdown_block(self.latex))
-        if not self.content_digest:
-            payload = self.model_dump(mode="json", exclude={"content_digest"})
-            object.__setattr__(self, "content_digest", _digest_json(payload))
+        payload = self.model_dump(mode="json", exclude={"content_digest"})
+        expected = _digest_json(payload)
+        if self.content_digest and self.content_digest != expected:
+            raise ValueError(
+                "mechanism formula package content_digest mismatch: "
+                f"got {self.content_digest}, expected {expected}"
+            )
+        object.__setattr__(self, "content_digest", expected)
         return self
 
 
@@ -607,8 +625,17 @@ def compile_mechanism_formula_obligations(
     context: Any,
     *,
     author_formula_expectations: Sequence[str] = (),
+    equations: Any | None = None,
+    claims: Any | None = None,
 ) -> tuple[MechanismFormulaObligationV1, ...]:
-    """Compile paragraph-independent formula obligations from MechanismContextV1."""
+    """Compile paragraph-independent formula obligations from MechanismContextV1.
+
+    ``context`` remains the binding authority.  The optional frozen equation
+    and claim sets are corroborating indexes: when supplied, a formula detail
+    that points at an id absent from either set is not promoted into a package
+    by this lane.  This keeps a stale context annotation from becoming a new
+    source of mathematical authority.
+    """
     mid = getattr(context, "mechanism_id", "")
     details = getattr(context, "details", ()) or ()
     formalizable_details = [
@@ -616,18 +643,68 @@ def compile_mechanism_formula_obligations(
         if getattr(d, "formalizable", False)
         or getattr(d, "role", "") in ("transformation", "training_objective", "inference")
     ]
-    if not formalizable_details and details:
-        formalizable_details = [d for d in details if getattr(d, "importance", "") == "core"]
-
+    closure = getattr(context, "evidence_closure", None)
+    closure_ops = {
+        str(getattr(op, "operation_id", "")): op
+        for op in (getattr(closure, "operation_nodes", ()) or getattr(closure, "operations", ()) or ())
+    }
+    known_equation_ids = {
+        str(getattr(item, "equation_id", "") or "").strip()
+        for item in (getattr(equations, "equations", ()) or ())
+        if str(getattr(item, "equation_id", "") or "").strip()
+    } if equations is not None else None
+    known_claim_ids = {
+        str(getattr(item, "claim_id", "") or "").strip()
+        for item in (getattr(claims, "claims", ()) or ())
+        if str(getattr(item, "claim_id", "") or "").strip()
+    } if claims is not None else None
+    active_statuses = {"active_default", "active_selected", "conditional"}
+    eligible_details: list[Any] = []
+    for detail in formalizable_details:
+        if getattr(detail, "evidence_authority", "") != "repository_verified":
+            continue
+        detail_equation_ids = {
+            str(value).strip()
+            for value in (getattr(detail, "source_equation_ids", ()) or ())
+            if str(value).strip()
+        }
+        detail_claim_ids = {
+            str(value).strip()
+            for value in (getattr(detail, "source_claim_ids", ()) or ())
+            if str(value).strip()
+        }
+        if known_equation_ids is not None and not detail_equation_ids.issubset(known_equation_ids):
+            continue
+        if known_claim_ids is not None and not detail_claim_ids.issubset(known_claim_ids):
+            continue
+        status = getattr(detail, "active_path_status", "unknown")
+        if status in active_statuses:
+            eligible_details.append(detail)
+            continue
+        # A Detail may be an annotation whose status was not independently
+        # copied from the operation node.  Derive it only from its complete,
+        # exact operation binding; an unbound/unknown Detail remains unsafe.
+        bound_ids = tuple(str(item) for item in getattr(detail, "source_operation_ids", ()) or ())
+        if status == "unknown" and bound_ids and all(
+            op_id in closure_ops and getattr(closure_ops[op_id], "active_path_status", "unknown") in active_statuses
+            for op_id in bound_ids
+        ):
+            eligible_details.append(detail)
+    formalizable_details = eligible_details
     if not formalizable_details:
         return ()
 
     target_dids = tuple(d.detail_id for d in formalizable_details)
-    op_ids = tuple(op_id for d in formalizable_details for op_id in getattr(d, "source_operation_ids", ()))
-    fact_ids = tuple(f_id for d in formalizable_details for f_id in getattr(d, "source_fact_ids", ()))
-    conditions = tuple(c for d in formalizable_details for c in getattr(d, "conditions", ()))
+    op_ids = tuple(dict.fromkeys(op_id for d in formalizable_details for op_id in getattr(d, "source_operation_ids", ())))
+    fact_ids = tuple(dict.fromkeys(f_id for d in formalizable_details for f_id in getattr(d, "source_fact_ids", ())))
+    conditions = tuple(dict.fromkeys(c for d in formalizable_details for c in getattr(d, "conditions", ())))
     operand_sets = tuple(getattr(d, "operands", ()) for d in formalizable_details if getattr(d, "operands", ()))
     predicates = [getattr(d, "predicate", "") for d in formalizable_details if getattr(d, "predicate", "")]
+    equation_ids = tuple(dict.fromkeys(
+        equation_id
+        for detail in formalizable_details
+        for equation_id in (getattr(detail, "source_equation_ids", ()) or ())
+    ))
 
     signatures = [
         {
@@ -653,9 +730,125 @@ def compile_mechanism_formula_obligations(
         notation_hints=tuple(author_formula_expectations),
         source_operation_ids=op_ids,
         source_fact_ids=fact_ids,
+        source_equation_ids=equation_ids,
+        source_facet_ids=tuple(dict.fromkeys(
+            facet_id for d in formalizable_details for facet_id in getattr(d, "source_facet_ids", ())
+        )),
+        source_obligation_ids=tuple(dict.fromkeys(
+            obligation_id for d in formalizable_details for obligation_id in getattr(d, "source_obligation_ids", ())
+        )),
         source_context_digest=getattr(context, "source_context_digest", "") or getattr(context, "content_digest", ""),
     )
     return (ob,)
+
+
+def _record_value(record: Any, name: str, default: Any = None) -> Any:
+    """Read a field from either a typed source record or a JSON mapping."""
+
+    if isinstance(record, Mapping):
+        return record.get(name, default)
+    return getattr(record, name, default)
+
+
+def _equation_records(value: Any | None) -> tuple[Any, ...]:
+    """Normalize an EquationClaimSet, one record, or a JSON-shaped collection."""
+
+    if value is None:
+        return ()
+    if isinstance(value, EquationClaimSetV1):
+        return tuple(value.equations)
+    if isinstance(value, Mapping):
+        if "equation_id" in value:
+            return (value,)
+        nested = value.get("equations")
+        return _equation_records(nested) if nested is not None else ()
+    nested = getattr(value, "equations", None)
+    if nested is not None and nested is not value:
+        return tuple(nested)
+    if isinstance(value, (list, tuple, set, frozenset)):
+        return tuple(value)
+    return ()
+
+
+def _equation_role(record: Any) -> str:
+    """Return the non-promoted role for a source equation record."""
+
+    expression = str(_record_value(record, "expression", "") or "")
+    if is_bare_binary_expression(expression):
+        return "incidental"
+    return str(
+        _record_value(record, "formula_role", "publication_candidate")
+        or "publication_candidate"
+    ).strip()
+
+
+def _equation_map(value: Any | None) -> dict[str, Any]:
+    return {
+        str(_record_value(record, "equation_id", "") or "").strip(): record
+        for record in _equation_records(value)
+        if str(_record_value(record, "equation_id", "") or "").strip()
+    }
+
+
+def _authorized_equation_map(value: Any | None) -> dict[str, Any]:
+    """Index only source equations that are explicitly publication-authorized."""
+
+    result: dict[str, Any] = {}
+    for equation_id, record in _equation_map(value).items():
+        if str(_record_value(record, "validation_status", "supported") or "") != "supported":
+            continue
+        if _equation_role(record) != "publication_candidate":
+            continue
+        if not str(_record_value(record, "expression", "") or "").strip():
+            continue
+        result[equation_id] = record
+    return result
+
+
+def _equation_fact_ids(record: Any) -> tuple[str, ...]:
+    return tuple(dict.fromkeys(
+        str(value).strip()
+        for value in (_record_value(record, "fact_ids", ()) or ())
+        if str(value).strip()
+    ))
+
+
+def _equation_conditions(record: Any) -> tuple[str, ...]:
+    return tuple(dict.fromkeys(
+        str(value).strip()
+        for value in (_record_value(record, "conditions", ()) or ())
+        if str(value).strip()
+    ))
+
+
+def _equation_symbol_definitions(record: Any) -> tuple[tuple[str, str], ...]:
+    definitions: list[tuple[str, str]] = []
+    for binding in (_record_value(record, "symbol_bindings", ()) or ()):
+        symbol = str(_record_value(binding, "symbol", "") or "").strip()
+        if not symbol:
+            continue
+        value = str(_record_value(binding, "operand_value", "") or "").strip()
+        fact_id = str(_record_value(binding, "fact_id", "") or "").strip()
+        role = str(_record_value(binding, "operand_role", "") or "").strip()
+        meaning = value or (f"{role} from {fact_id}" if role or fact_id else "source-bound symbol")
+        definitions.append((symbol, meaning))
+    return tuple(dict.fromkeys(definitions))
+
+
+def _equation_operand_values(record: Any) -> set[str]:
+    values: set[str] = set()
+    for binding in (_record_value(record, "symbol_bindings", ()) or ()):
+        value = str(_record_value(binding, "operand_value", "") or "").strip()
+        if value:
+            values.add(value.casefold())
+    return values
+
+
+def _authorized_equation_latex(records: Sequence[Any]) -> str:
+    return r" \quad;\quad ".join(
+        normalize_formula_latex_body(str(_record_value(record, "expression", "") or "").strip())
+        for record in records
+    )
 
 
 def validate_mechanism_formula_package(
@@ -664,6 +857,9 @@ def validate_mechanism_formula_package(
     context: Any,
     obligation: MechanismFormulaObligationV1 | None = None,
     shared_payload_digest: str = "",
+    view_digest: str = "",
+    slice_digests: tuple[str, ...] = (),
+    equations: Any | None = None,
 ) -> list[str]:
     """Validate MechanismFormulaPackageV2 against context, obligation, and guard constraints."""
     failures: list[str] = []
@@ -672,9 +868,19 @@ def validate_mechanism_formula_package(
     ctx_digest = getattr(context, "source_context_digest", "") or getattr(context, "content_digest", "")
     if package.source_context_digest and ctx_digest and package.source_context_digest != ctx_digest:
         failures.append(f"source_context_digest_mismatch: got {package.source_context_digest}, expected {ctx_digest}")
+    if ctx_digest and not package.source_context_digest:
+        failures.append("source_context_digest_missing")
 
     if shared_payload_digest and package.shared_payload_digest and package.shared_payload_digest != shared_payload_digest:
         failures.append(f"shared_payload_digest_mismatch: got {package.shared_payload_digest}, expected {shared_payload_digest}")
+    elif shared_payload_digest and not package.shared_payload_digest:
+        failures.append("shared_payload_digest_missing")
+    if view_digest and package.view_digest and package.view_digest != view_digest:
+        failures.append(f"view_digest_mismatch: got {package.view_digest}, expected {view_digest}")
+    if view_digest and not package.view_digest:
+        failures.append("view_digest_missing")
+    if slice_digests and tuple(package.slice_digests) != tuple(slice_digests):
+        failures.append("slice_digests_mismatch")
 
     # 2. Mechanism ID ownership
     if package.mechanism_id != getattr(context, "mechanism_id", ""):
@@ -689,6 +895,8 @@ def validate_mechanism_formula_package(
             d = details_map[did]
             if getattr(d, "active_path_status", "") in ("inactive_default", "unreachable", "inactive_path"):
                 failures.append(f"inactive_path_detail_promoted:{did}")
+            elif getattr(d, "active_path_status", "") == "unknown":
+                failures.append(f"unknown_path_detail_promoted:{did}")
 
     # 4. Bound operation IDs & active-path check
     closure = getattr(context, "evidence_closure", None)
@@ -701,6 +909,109 @@ def validate_mechanism_formula_package(
             op = ops_map[op_id]
             if getattr(op, "active_path_status", "") in ("inactive_default", "unreachable", "inactive_path"):
                 failures.append(f"inactive_path_operation_promoted:{op_id}")
+            elif getattr(op, "active_path_status", "") == "unknown":
+                failures.append(f"unknown_path_operation_promoted:{op_id}")
+        else:
+            failures.append(f"unknown_bound_operation_id:{op_id}")
+    closure_fact_ids = set(getattr(closure, "fact_ids", ()) or ())
+    closure_equation_ids = set(getattr(closure, "equation_ids", ()) or ())
+    unknown_facts = set(package.bound_fact_ids) - closure_fact_ids
+    unknown_equations = set(package.bound_equation_ids) - closure_equation_ids
+    failures.extend(f"unknown_bound_fact_id:{item}" for item in sorted(unknown_facts))
+    failures.extend(f"unknown_bound_equation_id:{item}" for item in sorted(unknown_equations))
+    detail_operation_ids = {
+        operation_id for detail in details_map.values()
+        for operation_id in (getattr(detail, "source_operation_ids", ()) or ())
+    }
+    if set(package.bound_operation_ids) - detail_operation_ids:
+        failures.append("formula_detail_ownership_mismatch")
+    detail_fact_ids = {
+        fact_id for detail in details_map.values()
+        for fact_id in (getattr(detail, "source_fact_ids", ()) or ())
+    }
+    detail_equation_ids = {
+        equation_id for detail in details_map.values()
+        for equation_id in (getattr(detail, "source_equation_ids", ()) or ())
+    }
+    if set(package.bound_fact_ids) - detail_fact_ids:
+        failures.append("formula_fact_detail_ownership_mismatch")
+    if set(package.bound_equation_ids) - detail_equation_ids:
+        failures.append("formula_equation_detail_ownership_mismatch")
+
+    # A supplied equation set is an authority index, not a hint.  A package
+    # bound to an equation must use the exact supported publication candidate
+    # expression and carry every fact that licenses that equation.  This is
+    # also what prevents an incidental ``x + y`` operation atom from being
+    # promoted by the generic operator fallback.
+    exact_equation_match = False
+    exact_equation_operand_values: set[str] = set()
+    if equations is not None and package.bound_equation_ids:
+        all_equations = _equation_map(equations)
+        authorized_equations = _authorized_equation_map(equations)
+        bound_records: list[Any] = []
+        equation_source_failures = False
+        for equation_id in package.bound_equation_ids:
+            record = all_equations.get(str(equation_id))
+            if record is None:
+                failures.append(f"formula_equation_source_missing:{equation_id}")
+                equation_source_failures = True
+                continue
+            status = str(_record_value(record, "validation_status", "supported") or "")
+            if status != "supported":
+                failures.append(f"formula_equation_not_supported:{equation_id}:{status}")
+                equation_source_failures = True
+            if _equation_role(record) != "publication_candidate":
+                failures.append(f"formula_equation_not_publication_candidate:{equation_id}")
+                equation_source_failures = True
+            if not str(_record_value(record, "expression", "") or "").strip():
+                failures.append(f"formula_equation_expression_missing:{equation_id}")
+                equation_source_failures = True
+            if equation_id not in authorized_equations:
+                equation_source_failures = True
+            else:
+                bound_records.append(authorized_equations[equation_id])
+
+        equation_fact_ids = {
+            fact_id
+            for record in bound_records
+            for fact_id in _equation_fact_ids(record)
+        }
+        missing_closure_facts = equation_fact_ids - closure_fact_ids
+        if missing_closure_facts:
+            failures.extend(
+                f"formula_equation_fact_unknown:{item}"
+                for item in sorted(missing_closure_facts)
+            )
+            equation_source_failures = True
+        if equation_fact_ids - detail_fact_ids:
+            failures.append("formula_equation_fact_detail_ownership_mismatch")
+            equation_source_failures = True
+        if equation_fact_ids - set(package.bound_fact_ids):
+            failures.append("formula_equation_fact_binding_missing")
+            equation_source_failures = True
+        if len(bound_records) == len(package.bound_equation_ids) and not equation_source_failures:
+            expected_latex = _authorized_equation_latex(bound_records)
+            if normalize_formula_latex_body(package.latex) != expected_latex:
+                failures.append("formula_equation_expression_mismatch")
+                equation_source_failures = True
+            else:
+                exact_equation_match = True
+                for record in bound_records:
+                    exact_equation_operand_values.update(_equation_operand_values(record))
+
+    if not (package.bound_operation_ids or package.bound_fact_ids or package.bound_equation_ids):
+        failures.append("formula_source_binding_missing")
+    if obligation is not None:
+        if package.mechanism_id != obligation.mechanism_id:
+            failures.append("formula_obligation_mechanism_mismatch")
+        if set(obligation.source_detail_ids) - set(package.source_detail_ids):
+            failures.append("formula_obligation_detail_coverage_missing")
+        if set(obligation.source_operation_ids) - set(package.bound_operation_ids):
+            failures.append("formula_obligation_operation_coverage_missing")
+        if set(obligation.source_fact_ids) - set(package.bound_fact_ids):
+            failures.append("formula_obligation_fact_coverage_missing")
+        if set(obligation.source_equation_ids) - set(package.bound_equation_ids):
+            failures.append("formula_obligation_equation_coverage_missing")
 
     # 5. Latex cleanliness and code plumbing guards
     latex = package.latex or ""
@@ -717,6 +1028,12 @@ def validate_mechanism_formula_package(
     # 6. Obligation operator, operand, and condition guards
     if obligation is not None:
         for sig in obligation.required_operator_signatures:
+            if exact_equation_match:
+                # The EquationClaim compiler already authorized the exact
+                # expression against source operations.  Requiring the raw
+                # Python predicate spelling in LaTeX would reject valid
+                # notation such as ``\mathcal{L}_{InfoNCE}``.
+                continue
             pred = str(sig.get("predicate") or "").strip().lower()
             if pred and pred not in latex.lower():
                 normalized_pred = re.sub(r"^(run|compute|calc)_", "", pred)
@@ -732,10 +1049,72 @@ def validate_mechanism_formula_package(
                         failures.append(f"missing_required_operator:{pred}")
 
         for cond in obligation.required_conditions:
-            if cond and (cond not in package.material_conditions and cond not in latex):
-                failures.append(f"missing_required_condition:{cond}")
+           if cond and (cond not in package.material_conditions and cond not in latex):
+               failures.append(f"missing_required_condition:{cond}")
+        latex_lower = latex.casefold()
+        for operand_set in obligation.required_operand_sets:
+            required = tuple(str(item).strip() for item in operand_set if str(item).strip())
+            missing = [
+                item for item in required
+                if item.casefold() not in latex_lower
+                and (not exact_equation_match or item.casefold() not in exact_equation_operand_values)
+            ]
+            if missing:
+                failures.append("formula_operand_set_mismatch:" + ",".join(missing))
+        for operation_id in obligation.source_operation_ids:
+            if operation_id not in package.bound_operation_ids:
+                failures.append(f"formula_source_operation_missing:{operation_id}")
 
     return failures
+
+
+def _resolved_formula_bindings(
+    context: Any,
+    obligation: MechanismFormulaObligationV1,
+) -> tuple[tuple[str, ...], tuple[str, ...], tuple[str, ...], tuple[str, ...]]:
+    """Return only bindings that exist in this mechanism's frozen closure."""
+
+    details = tuple(getattr(context, "details", ()) or ())
+    details_by_id = {
+        str(getattr(detail, "detail_id", "")): detail for detail in details
+    }
+    closure = getattr(context, "evidence_closure", None)
+    operation_ids = {
+        str(getattr(operation, "operation_id", ""))
+        for operation in (
+            getattr(closure, "operation_nodes", ())
+            or getattr(closure, "operations", ())
+            or ()
+        )
+    }
+    detail_ids = tuple(
+        detail_id for detail_id in obligation.source_detail_ids
+        if detail_id in details_by_id
+    )
+    detail_values = [details_by_id[detail_id] for detail_id in detail_ids]
+    operation_candidates = tuple(dict.fromkeys(
+        (*obligation.source_operation_ids,
+         *(operation_id for detail in detail_values
+           for operation_id in (getattr(detail, "source_operation_ids", ()) or ())))
+    ))
+    fact_candidates = tuple(dict.fromkeys(
+        (*obligation.source_fact_ids,
+         *(fact_id for detail in detail_values
+           for fact_id in (getattr(detail, "source_fact_ids", ()) or ())))
+    ))
+    equation_candidates = tuple(dict.fromkeys(
+        (*obligation.source_equation_ids,
+         *(equation_id for detail in detail_values
+           for equation_id in (getattr(detail, "source_equation_ids", ()) or ())))
+    ))
+    closure_fact_ids = set(getattr(closure, "fact_ids", ()) or ())
+    closure_equation_ids = set(getattr(closure, "equation_ids", ()) or ())
+    return (
+        detail_ids,
+        tuple(item for item in operation_candidates if item in operation_ids),
+        tuple(item for item in fact_candidates if item in closure_fact_ids),
+        tuple(item for item in equation_candidates if item in closure_equation_ids),
+    )
 
 
 def build_deterministic_mechanism_formula_packages(
@@ -743,8 +1122,21 @@ def build_deterministic_mechanism_formula_packages(
     context: Any,
     obligations: tuple[MechanismFormulaObligationV1, ...] | list[MechanismFormulaObligationV1] = (),
     shared_payload_digest: str = "",
+    view_digest: str = "",
+    slice_digests: tuple[str, ...] = (),
+    consumer_request_digest: str = "",
+    equations: Any | None = None,
+    allow_deterministic_operation_fallback: bool = True,
 ) -> tuple[MechanismFormulaPackageV2, ...]:
-    """Compile conservative, fact-backed formula packages strictly within one mechanism context."""
+    """Compile conservative formula packages strictly within one context.
+
+    The source-equation route is exact and preferred whenever an equation set
+    is supplied.  The operation-shaped fallback remains available for direct
+    legacy callers, but the unified production path disables it explicitly so
+    a symbolic ``result = operator(...)`` cannot become an accepted paper
+    equation without an authorized source equation or a validated Formalizer
+    response.
+    """
     packages: list[MechanismFormulaPackageV2] = []
     closure = getattr(context, "evidence_closure", None)
     if closure is None:
@@ -754,64 +1146,171 @@ def build_deterministic_mechanism_formula_packages(
     ops_by_id = {str(getattr(op, "operation_id", "")): op for op in ops}
     details = tuple(getattr(context, "details", ()) or ())
     details_by_id = {str(getattr(d, "detail_id", "")): d for d in details}
+    all_equations = _equation_map(equations)
+    authorized_equations = _authorized_equation_map(equations)
+    closure_fact_ids = set(getattr(closure, "fact_ids", ()) or ())
 
     ctx_digest = getattr(context, "source_context_digest", "") or getattr(context, "content_digest", "")
 
     for ob in obligations:
+        bound_detail_ids, bound_operation_ids, bound_fact_ids, bound_equation_ids = (
+            _resolved_formula_bindings(context, ob)
+        )
         matched_ops: list[Any] = []
         candidate_op_ids: list[str] = list(ob.source_operation_ids)
-        for did in ob.source_detail_ids:
+        for did in bound_detail_ids:
             if did in details_by_id:
                 candidate_op_ids.extend(getattr(details_by_id[did], "source_operation_ids", ()))
 
         for op_id in dict.fromkeys(candidate_op_ids):
             if op_id in ops_by_id:
                 op = ops_by_id[op_id]
-                if getattr(op, "active_path_status", "") not in ("inactive_default", "unreachable", "inactive_path"):
+                if getattr(op, "active_path_status", "") in ("active_default", "active_selected", "conditional"):
                     matched_ops.append(op)
 
         if not matched_ops:
             continue
 
-        primary_op = matched_ops[0]
-        operands = tuple(getattr(primary_op, "operands", ()) or ())
-        result = str(getattr(primary_op, "result", "") or "y").strip()
-        predicate = str(getattr(primary_op, "predicate", "") or "").strip()
+        required_operation_ids = set(bound_operation_ids)
+        matched_operation_ids = {str(getattr(op, "operation_id", "")) for op in matched_ops}
+        if required_operation_ids - matched_operation_ids:
+            # A multi-operation obligation must not be satisfied by its first operation.
+            continue
 
-        if operands and result:
-            op_str = f"\\operatorname{{{predicate}}}" if predicate else ""
-            if op_str:
-                latex = f"{result} = {op_str}({', '.join(operands)})"
-            else:
-                latex = f"{result} = {' + '.join(operands)}"
-        elif getattr(primary_op, "exact_excerpt", ""):
-            raw = getattr(primary_op, "exact_excerpt", "").strip()
-            cleaned = re.sub(r"#.*$", "", raw).strip()
-            latex = normalize_formula_latex_body(cleaned)
-        else:
-            latex = f"{result} = \\operatorname{{{predicate or 'f'}}}(x)"
+        # Exact source equation expressions are the only deterministic route
+        # allowed to produce an accepted publication formula in unified mode.
+        # Every bound equation must be supported, explicitly publication
+        # candidate, and fully owned by this detail closure.
+        if equations is not None and bound_equation_ids:
+            bound_equations = [
+                authorized_equations[equation_id]
+                for equation_id in bound_equation_ids
+                if equation_id in authorized_equations
+            ]
+            equation_fact_ids = tuple(dict.fromkeys(
+                fact_id
+                for equation in bound_equations
+                for fact_id in _equation_fact_ids(equation)
+            ))
+            detail_fact_ids = {
+                fact_id
+                for detail in details
+                for fact_id in (getattr(detail, "source_fact_ids", ()) or ())
+            }
+            exact_equation_ready = (
+                len(bound_equations) == len(bound_equation_ids)
+                and bool(equation_fact_ids)
+                and set(equation_fact_ids).issubset(closure_fact_ids)
+                and set(equation_fact_ids).issubset(detail_fact_ids)
+            )
+            if exact_equation_ready:
+                exact_conditions = tuple(dict.fromkeys(
+                    (*ob.required_conditions, *(
+                        condition
+                        for equation in bound_equations
+                        for condition in _equation_conditions(equation)
+                    ))
+                ))
+                exact_symbols = tuple(dict.fromkeys(
+                    definition
+                    for equation in bound_equations
+                    for definition in _equation_symbol_definitions(equation)
+                ))
+                exact_package = MechanismFormulaPackageV2(
+                    package_id=(
+                        f"pkg:formula:source:{getattr(context, 'mechanism_id', '')}:"
+                        f"{ob.obligation_id}"
+                    ),
+                    mechanism_id=getattr(context, "mechanism_id", ""),
+                    source_detail_ids=bound_detail_ids,
+                    satisfied_obligation_ids=(ob.obligation_id,),
+                    latex=_authorized_equation_latex(bound_equations),
+                    prose_explanation=(
+                        "Uses the authorized source equation "
+                        + ", ".join(bound_equation_ids)
+                        + "."
+                    ),
+                    symbol_definitions=exact_symbols,
+                    material_conditions=exact_conditions,
+                    evidence_authority="repository_verified",
+                    formula_lane="repository_derived",
+                    review_status="accepted",
+                    bound_operation_ids=tuple(
+                        str(getattr(op, "operation_id", "")) for op in matched_ops
+                    ),
+                    bound_fact_ids=tuple(dict.fromkeys((*bound_fact_ids, *equation_fact_ids))),
+                    bound_equation_ids=tuple(bound_equation_ids),
+                    source_context_digest=ctx_digest,
+                    shared_payload_digest=shared_payload_digest,
+                    view_digest=view_digest,
+                    slice_digests=slice_digests,
+                    consumer_request_digest=consumer_request_digest,
+                )
+                exact_failures = validate_mechanism_formula_package(
+                    exact_package,
+                    context=context,
+                    obligation=ob,
+                    shared_payload_digest=shared_payload_digest,
+                    view_digest=view_digest,
+                    slice_digests=slice_digests,
+                    equations=equations,
+                )
+                if not exact_failures:
+                    packages.append(exact_package)
+                    continue
+            # An explicit equation binding that is not accepted must never be
+            # silently replaced by the generic operation representation.
+            continue
 
-        symbol_defs = tuple(
-            (opnd, f"Input operand {opnd}")
-            for opnd in operands
-        ) + ((result, "Output result"),)
+        if not allow_deterministic_operation_fallback:
+            continue
+
+        formula_segments: list[str] = []
+        symbol_defs_list: list[tuple[str, str]] = []
+        prose_parts: list[str] = []
+        for operation in matched_ops:
+            operation_operands = tuple(getattr(operation, "operands", ()) or ())
+            operation_result = str(getattr(operation, "result", "") or "").strip()
+            operation_predicate = str(getattr(operation, "predicate", "") or "").strip()
+            if not operation_predicate or not operation_result:
+                formula_segments = []
+                break
+            operator_name = re.sub(r"[^A-Za-z0-9_]+", "_", operation_predicate).strip("_") or "operation"
+            formula_segments.append(
+                f"{operation_result} = \\operatorname{{{operator_name}}}({', '.join(operation_operands)})"
+            )
+            prose_parts.append(
+                f"{operation_result} via {operation_predicate}"
+            )
+            symbol_defs_list.extend(
+                (operand, f"Input operand {operand}") for operand in operation_operands
+            )
+            symbol_defs_list.append((operation_result, "Output result"))
+        if not formula_segments:
+            continue
+        latex = r" \quad;\quad ".join(formula_segments)
+        symbol_defs = tuple(dict.fromkeys(symbol_defs_list))
 
         pkg = MechanismFormulaPackageV2(
             package_id=f"pkg:formula:{getattr(context, 'mechanism_id', '')}:{ob.obligation_id}",
             mechanism_id=getattr(context, "mechanism_id", ""),
-            source_detail_ids=ob.source_detail_ids,
+            source_detail_ids=bound_detail_ids,
             satisfied_obligation_ids=(ob.obligation_id,),
             latex=latex,
-            prose_explanation=f"Computes {result} via {predicate} applied to {', '.join(operands) if operands else 'inputs'}.",
+            prose_explanation="Computes " + "; ".join(prose_parts) + ".",
             symbol_definitions=symbol_defs,
             material_conditions=ob.required_conditions,
             evidence_authority="repository_verified",
             formula_lane="repository_derived",
             review_status="accepted",
             bound_operation_ids=tuple(str(getattr(op, "operation_id", "")) for op in matched_ops),
-            bound_fact_ids=tuple(ob.source_fact_ids),
+            bound_fact_ids=bound_fact_ids,
+            bound_equation_ids=bound_equation_ids,
             source_context_digest=ctx_digest,
             shared_payload_digest=shared_payload_digest,
+            view_digest=view_digest,
+            slice_digests=slice_digests,
+            consumer_request_digest=consumer_request_digest,
         )
 
         failures = validate_mechanism_formula_package(
@@ -819,6 +1318,9 @@ def build_deterministic_mechanism_formula_packages(
             context=context,
             obligation=ob,
             shared_payload_digest=shared_payload_digest,
+            view_digest=view_digest,
+            slice_digests=slice_digests,
+            equations=equations,
         )
         if not failures:
             packages.append(pkg)
@@ -846,22 +1348,30 @@ def adapt_mechanism_formula_package_to_legacy(
         symbol_definitions=package.symbol_definitions,
         material_conditions=package.material_conditions,
         assumptions=package.assumptions,
-        authority_status="code_verified" if package.evidence_authority == "repository_verified" else "author_intent",
-        formula_lane="repository_derived" if package.formula_lane == "repository_derived" else "author_intent_academic",
+        authority_status="code_verified" if package.evidence_authority == "repository_verified" and (package.bound_fact_ids or package.bound_equation_ids or package.bound_operation_ids) else "partial",
+        formula_lane=(
+            "repository_derived"
+            if package.formula_lane == "repository_derived" and (package.bound_fact_ids or package.bound_equation_ids or package.bound_operation_ids)
+            else "hybrid_partial"
+        ),
         review_status="accepted" if package.review_status == "accepted" else "review_required",
-        bound_fact_ids=package.bound_fact_ids or ("fact:verified",),
+        bound_fact_ids=package.bound_fact_ids,
         bound_equation_ids=package.bound_equation_ids,
+        bound_operation_ids=package.bound_operation_ids,
         risks=package.risks,
         review_question=package.review_question,
     )
 
 
-def run_mechanism_formalizer(
+def _run_mechanism_formalizer_legacy(
     *,
     context: Any,
     obligations: tuple[MechanismFormulaObligationV1, ...],
     shared_payload: str = "",
     shared_payload_digest: str = "",
+    view_digest: str = "",
+    slice_digests: tuple[str, ...] = (),
+    consumer_request_digest: str = "",
     llm_config: Any | None = None,
     caller: Callable[[Any, Any], Any] | None = None,
     author_notation_hints: tuple[str, ...] = (),
@@ -883,6 +1393,9 @@ def run_mechanism_formalizer(
         context=context,
         obligations=obligations,
         shared_payload_digest=shared_payload_digest,
+        view_digest=view_digest,
+        slice_digests=slice_digests,
+        consumer_request_digest=consumer_request_digest,
     )
     call_trace["deterministic_packages"] = len(deterministic_pkgs)
     satisfied_ob_ids = {
@@ -901,6 +1414,17 @@ def run_mechanism_formalizer(
 
     if remaining_obligations and caller is not None and llm_config is not None:
         for ob in remaining_obligations:
+            bound_detail_ids, bound_operation_ids, bound_fact_ids, bound_equation_ids = (
+                _resolved_formula_bindings(context, ob)
+            )
+            if not bound_detail_ids or not (
+                bound_operation_ids or bound_fact_ids or bound_equation_ids
+            ):
+                call_trace["rejected_packages"] += 1
+                call_trace["failures"].append(
+                    f"formula_source_binding_missing:{ob.obligation_id}"
+                )
+                continue
             prompt = (
                 f"You are the Method Formalizer. Formalize the following mechanism mathematically.\n"
                 f"Mechanism ID: {getattr(context, 'mechanism_id', '')}\n"
@@ -921,7 +1445,7 @@ def run_mechanism_formalizer(
                     pkg = MechanismFormulaPackageV2(
                         package_id=f"pkg:formula:llm:{getattr(context, 'mechanism_id', '')}:{ob.obligation_id}",
                         mechanism_id=getattr(context, "mechanism_id", ""),
-                        source_detail_ids=ob.source_detail_ids,
+                        source_detail_ids=bound_detail_ids,
                         satisfied_obligation_ids=(ob.obligation_id,),
                         latex=str(parsed["latex"]),
                         prose_explanation=str(parsed.get("prose_explanation", "")),
@@ -930,8 +1454,9 @@ def run_mechanism_formalizer(
                         evidence_authority="repository_verified",
                         formula_lane="repository_derived",
                         review_status="accepted",
-                        bound_operation_ids=tuple(ob.source_operation_ids),
-                        bound_fact_ids=tuple(ob.source_fact_ids),
+                        bound_operation_ids=bound_operation_ids,
+                        bound_fact_ids=bound_fact_ids,
+                        bound_equation_ids=bound_equation_ids,
                         source_context_digest=getattr(context, "source_context_digest", "") or getattr(context, "content_digest", ""),
                         shared_payload_digest=shared_payload_digest,
                     )
@@ -952,6 +1477,174 @@ def run_mechanism_formalizer(
 
     return tuple(accepted_packages), call_trace
 
+
+def run_mechanism_formalizer(
+    *,
+    context: Any,
+    obligations: tuple[MechanismFormulaObligationV1, ...],
+    shared_payload: str = "",
+    shared_payload_digest: str = "",
+    llm_config: Any | None = None,
+    caller: Any | None = None,
+    author_notation_hints: tuple[str, ...] = (),
+    view_digest: str = "",
+    slice_digests: tuple[str, ...] = (),
+    consumer_request_digest: str = "",
+    equations: Any | None = None,
+    allow_deterministic_operation_fallback: bool = True,
+) -> tuple[tuple[MechanismFormulaPackageV2, ...], dict[str, Any]]:
+    """Run the Formalizer with exact source equations and bounded fallback.
+
+    ``allow_deterministic_operation_fallback`` is retained for compatibility
+    with direct callers.  Unified production passes ``False``; that route can
+    accept an exact supported ``EquationClaimV1`` or a validated Formalizer
+    response, but never a rule-generated operation-shaped equation.
+    """
+    mechanism_id = str(getattr(context, "mechanism_id", ""))
+    trace: dict[str, Any] = {
+        "mechanism_id": mechanism_id,
+        "obligations_count": len(obligations),
+        "deterministic_packages": 0,
+        "llm_packages": 0,
+        "rejected_packages": 0,
+        "failures": [],
+        "formalizer_delivered": bool(shared_payload),
+        "shared_payload_digest": shared_payload_digest,
+        "view_digest": view_digest,
+        "slice_digests": list(slice_digests),
+        "consumer_request_digest": consumer_request_digest,
+        "deterministic_operation_fallback_allowed": allow_deterministic_operation_fallback,
+        "source_equation_packages": 0,
+    }
+    accepted: list[MechanismFormulaPackageV2] = []
+
+    deterministic_packages = build_deterministic_mechanism_formula_packages(
+        context=context,
+        obligations=obligations,
+        shared_payload_digest=shared_payload_digest,
+        view_digest=view_digest,
+        slice_digests=slice_digests,
+        consumer_request_digest=consumer_request_digest,
+        equations=equations,
+        allow_deterministic_operation_fallback=allow_deterministic_operation_fallback,
+    )
+    accepted.extend(deterministic_packages)
+    trace["deterministic_packages"] = len(deterministic_packages)
+    trace["source_equation_packages"] = sum(
+        1 for package in deterministic_packages if package.bound_equation_ids
+    )
+    satisfied_obligation_ids = {
+        obligation_id
+        for package in deterministic_packages
+        for obligation_id in package.satisfied_obligation_ids
+    }
+
+    def llm_package(obligation: MechanismFormulaObligationV1) -> MechanismFormulaPackageV2 | None:
+        if caller is None or llm_config is None:
+            return None
+        bound_detail_ids, bound_operation_ids, bound_fact_ids, bound_equation_ids = (
+            _resolved_formula_bindings(context, obligation)
+        )
+        if not bound_detail_ids or not (
+            bound_operation_ids or bound_fact_ids or bound_equation_ids
+        ):
+            trace["rejected_packages"] += 1
+            trace["failures"].append(
+                f"formula_source_binding_missing:{obligation.obligation_id}"
+            )
+            return None
+        prompt = (
+            "You are the Method Formalizer. Return JSON only.\n"
+            f"Mechanism ID: {mechanism_id}\n"
+            f"Obligation ID: {obligation.obligation_id}\n"
+            f"Mathematical goal: {obligation.mathematical_goal}\n"
+            f"Required operators: {obligation.required_operator_signatures}\n"
+            f"Required operand sets: {obligation.required_operand_sets}\n"
+            f"Required conditions: {obligation.required_conditions}\n"
+            f"Shared payload digest: {shared_payload_digest}\n"
+            f"Shared mechanism context bytes:\n{shared_payload}\n"
+            "Keys: latex, prose_explanation, symbol_definitions, material_conditions, assumptions."
+        )
+        try:
+            from code2paper.llm.client import LLMRequest
+            from code2paper.llm.response_schemas import _loads_json_or_extract_object
+            response = caller(llm_config, LLMRequest(prompt=prompt))
+            trace["llm_call_made"] = True
+            raw = response.content if hasattr(response, "content") else str(response)
+            parsed = _loads_json_or_extract_object(raw)
+            if not isinstance(parsed, dict) or not str(parsed.get("latex", "")).strip():
+                trace["rejected_packages"] += 1
+                trace["failures"].append(f"llm_invalid_response:{obligation.obligation_id}")
+                return None
+            package = MechanismFormulaPackageV2(
+                package_id=f"pkg:formula:llm:{mechanism_id}:{obligation.obligation_id}",
+                mechanism_id=mechanism_id,
+                source_detail_ids=bound_detail_ids,
+                satisfied_obligation_ids=(obligation.obligation_id,),
+                latex=str(parsed["latex"]),
+                prose_explanation=str(parsed.get("prose_explanation", "")),
+                symbol_definitions=tuple(
+                    tuple(item) for item in parsed.get("symbol_definitions", ())
+                    if isinstance(item, (list, tuple)) and len(item) == 2
+                ),
+                material_conditions=tuple(str(item) for item in parsed.get("material_conditions", ())),
+                assumptions=tuple(str(item) for item in parsed.get("assumptions", ())),
+                evidence_authority="repository_verified",
+                formula_lane="repository_derived",
+                review_status="accepted",
+                bound_operation_ids=bound_operation_ids,
+                bound_fact_ids=bound_fact_ids,
+                bound_equation_ids=bound_equation_ids,
+                source_context_digest=(
+                    getattr(context, "source_context_digest", "")
+                    or getattr(context, "content_digest", "")
+                ),
+                shared_payload_digest=shared_payload_digest,
+                view_digest=view_digest,
+                slice_digests=slice_digests,
+                consumer_request_digest=consumer_request_digest,
+            )
+            failures = validate_mechanism_formula_package(
+                package, context=context, obligation=obligation,
+                shared_payload_digest=shared_payload_digest,
+                view_digest=view_digest,
+                slice_digests=slice_digests,
+                equations=equations,
+            )
+            if failures:
+                trace["rejected_packages"] += 1
+                trace["failures"].extend(failures)
+                return None
+            trace["llm_packages"] += 1
+            return package
+        except Exception as exc:
+            trace["failures"].append(f"llm_error:{type(exc).__name__}:{str(exc)[:180]}")
+            return None
+
+    for obligation in obligations:
+        if obligation.expectation not in ("required", "preferred"):
+            continue
+        if obligation.obligation_id in satisfied_obligation_ids:
+            continue
+        package = llm_package(obligation)
+        if package is not None:
+            accepted.append(package)
+            continue
+        fallback = build_deterministic_mechanism_formula_packages(
+            context=context, obligations=(obligation,),
+            shared_payload_digest=shared_payload_digest,
+            view_digest=view_digest,
+            slice_digests=slice_digests,
+            consumer_request_digest=consumer_request_digest,
+            equations=equations,
+            allow_deterministic_operation_fallback=allow_deterministic_operation_fallback,
+        )
+        if fallback:
+            accepted.extend(fallback)
+            trace["deterministic_packages"] += len(fallback)
+        else:
+            trace["failures"].append(f"no_accepted_formula_package:{obligation.obligation_id}")
+    return tuple(accepted), trace
 
 class SectionFormulaDispositionV1(BaseModel):
     """Typed disposition when a section receives no accepted formula package.

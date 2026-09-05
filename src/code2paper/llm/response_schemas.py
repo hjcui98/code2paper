@@ -42,7 +42,17 @@ class PublicationContentWitnessV1(BaseModel):
 
     model_config = ConfigDict(extra="forbid")
 
-    witness_kind: Literal["facet", "field", "slot", "edge", "formula", "claim", "equation"]
+    witness_kind: Literal[
+        "detail",
+        "atom",
+        "facet",
+        "field",
+        "slot",
+        "edge",
+        "formula",
+        "claim",
+        "equation",
+    ]
     target_id: str = Field(min_length=1, max_length=240)
     exact_text: str = Field(min_length=1, max_length=4000)
 
@@ -87,6 +97,11 @@ class PublicationMethodParagraphOutputV1(BaseModel):
 
     paragraph_id: str = Field(min_length=1, max_length=240)
     paragraph_markdown: str = Field(min_length=1, max_length=16000)
+    # Detail ids are the external publication taxonomy.  Atom witnesses are
+    # validated against the paragraph-local witness contract and therefore do
+    # not need a separate model-authored declaration list.
+    rendered_detail_ids: list[str] = Field(default_factory=list, max_length=64)
+    deferred_detail_ids: list[str] = Field(default_factory=list, max_length=64)
     rendered_from_facet_ids: list[str] = Field(default_factory=list, max_length=32)
     rendered_field_candidate_ids: list[str] = Field(default_factory=list, max_length=64)
     rendered_slot_ids: list[str] = Field(default_factory=list, max_length=64)
@@ -113,6 +128,11 @@ class PublicationMethodParagraphOutputV1(BaseModel):
         default_factory=list,
         max_length=16,
     )
+    # These are writer-reported review items, not authority.  The transaction
+    # assessor keeps them visible while requiring every closed target to be
+    # witnessed or explicitly unbound.
+    unresolved_points: list[str] = Field(default_factory=list, max_length=64)
+    unresolved: list[str] = Field(default_factory=list, max_length=64)
 
 
 class PublicationMethodSectionOutputV1(BaseModel):
@@ -144,6 +164,8 @@ class PublicationMethodSectionOutputV1(BaseModel):
     # emitted ids against the section contract and never treats self-report as
     # evidence authority.
     rendered_paragraph_ids: list[str] = Field(default_factory=list)
+    rendered_detail_ids: list[str] = Field(default_factory=list)
+    deferred_detail_ids: list[str] = Field(default_factory=list)
     rendered_slot_ids: list[str] = Field(default_factory=list)
     rendered_edge_ids: list[str] = Field(default_factory=list)
     used_formula_package_ids: list[str] = Field(default_factory=list)
