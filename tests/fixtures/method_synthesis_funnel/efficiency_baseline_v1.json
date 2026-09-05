@@ -1,0 +1,73 @@
+{
+  "schema_version": "1.0",
+  "authority": "diagnostic_non_authorizing",
+  "audit_baseline_sha": "a7c10318e0edd554533962d1ce6159ce51751291",
+  "frozen_replay_date": "2026-09-05",
+  "runtime": {
+    "base_url": "http://127.0.0.1:8006/v1",
+    "model": "qwen38-27b-nvfp4",
+    "context_window": 131072
+  },
+  "projects": {
+    "dyg": {
+      "captured_total_tokens": 542567,
+      "input_tokens": 507067,
+      "output_tokens": 35500,
+      "writer_call_count": 56,
+      "valid_paragraphs": "2/6",
+      "valid_targets": "20/31",
+      "callback_outcome": "stopped_no_progress",
+      "tokens_per_candidate": 542567,
+      "production_budget": {
+        "max_total_tokens": 700000,
+        "max_writer_calls": 70,
+        "min_validated_core_detail_recall": 0.9
+      }
+    },
+    "linearrag": {
+      "captured_total_tokens": 1232329,
+      "input_tokens": 1154235,
+      "output_tokens": 78094,
+      "writer_call_count": 94,
+      "valid_paragraphs": "0/5",
+      "valid_targets": "8/27",
+      "callback_outcome": "rollback_after_regression",
+      "tokens_per_candidate": 1232329,
+      "production_budget": {
+        "max_total_tokens": 1500000,
+        "max_writer_calls": 110,
+        "min_validated_core_detail_recall": 0.9
+      }
+    },
+    "ebcar": {
+      "captured_total_tokens": 1164319,
+      "input_tokens": 1060800,
+      "output_tokens": 103519,
+      "writer_call_count": 135,
+      "valid_paragraphs": "3/7",
+      "valid_targets": "19/26",
+      "callback_outcome": "rollback_after_regression",
+      "tokens_per_candidate": 1164319,
+      "production_budget": {
+        "max_total_tokens": 1400000,
+        "max_writer_calls": 150,
+        "min_validated_core_detail_recall": 0.9
+      }
+    }
+  },
+  "cross_repo_holdout_protocol": {
+    "selection_criteria": [
+      "nested_helper_wrapper_heavy",
+      "config_branch_heavy",
+      "formula_loss_heavy",
+      "non_graph_style_method"
+    ],
+    "hard_invariants": [
+      "no_project_specific_marker",
+      "source_operation_terminal_coverage_1_0",
+      "active_path_precedence_verified",
+      "shared_payload_byte_identity",
+      "atomic_witness_satisfaction"
+    ]
+  }
+}

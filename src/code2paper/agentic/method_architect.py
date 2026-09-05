@@ -5,7 +5,9 @@ from __future__ import annotations
 import hashlib
 import json
 import re
-from typing import Any
+from typing import Any, Callable, Literal, Sequence
+
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from code2paper.agentic.evidence_compiler_v3 import AtomicClaimSetV3, AtomicClaimV3
 from code2paper.agentic.equation_claims import EquationClaimSetV1
@@ -7517,9 +7519,368 @@ def _move_authority_lanes(
     return all_lanes or ("executable_hard",)
 
 
+class NarrativeParagraphPlanV3(BaseModel):
+    """Scientific paragraph plan specifying required and optional details and formula placements."""
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    paragraph_id: str
+    section_id: str
+    role: str
+    mechanism_id: str
+    required_detail_ids: tuple[str, ...] = ()
+    optional_detail_ids: tuple[str, ...] = ()
+    formula_obligation_ids: tuple[str, ...] = ()
+    formula_package_ids: tuple[str, ...] = ()
+    shared_detail_refs: tuple[Any, ...] = ()
+    suggested_depth: Literal["brief", "standard", "detailed"] = "standard"
+    reader_goal: str = ""
+    transition_from: str = ""
+    transition_to: str = ""
+    content_digest: str = ""
+
+    @model_validator(mode="after")
+    def _compute_digest(self) -> "NarrativeParagraphPlanV3":
+        if not self.content_digest:
+            from code2paper.agentic.mechanism_context_models import canonical_json_bytes, sha256_digest
+            payload = canonical_json_bytes(self, exclude_fields={"content_digest"})
+            object.__setattr__(self, "content_digest", sha256_digest(payload))
+        return self
+
+
+class NarrativeSectionPlanV3(BaseModel):
+    """Section plan grouping scientific paragraphs for one or more mechanisms."""
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    section_id: str
+    heading: str
+    mechanism_ids: tuple[str, ...] = ()
+    paragraphs: tuple[NarrativeParagraphPlanV3, ...] = ()
+    content_digest: str = ""
+
+    @model_validator(mode="after")
+    def _compute_digest(self) -> "NarrativeSectionPlanV3":
+        if not self.content_digest:
+            from code2paper.agentic.mechanism_context_models import canonical_json_bytes, sha256_digest
+            payload = canonical_json_bytes(self, exclude_fields={"content_digest"})
+            object.__setattr__(self, "content_digest", sha256_digest(payload))
+        return self
+
+
+class NarrativeUnitV1(BaseModel):
+    """Scientific argument unit mapping mechanisms to narrative paragraphs without technical IR compaction."""
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    unit_id: str
+    section_id: str
+
+    mechanism_context_ids: tuple[str, ...]
+    rhetorical_role: str
+    reader_question: str
+
+    paragraph_ids: tuple[str, ...]
+    required_detail_ids: tuple[str, ...]
+    optional_detail_ids: tuple[str, ...]
+    formula_obligation_ids: tuple[str, ...]
+
+    suggested_depth: Literal["brief", "standard", "detailed"]
+    transition_from: str = ""
+    transition_to: str = ""
+
+    content_digest: str = ""
+
+    @model_validator(mode="after")
+    def _compute_digest(self) -> "NarrativeUnitV1":
+        if not self.content_digest:
+            from code2paper.agentic.mechanism_context_models import canonical_json_bytes, sha256_digest
+            payload = canonical_json_bytes(self, exclude_fields={"content_digest"})
+            object.__setattr__(self, "content_digest", sha256_digest(payload))
+        return self
+
+
+class NarrativePlanV3(BaseModel):
+    """Thin narrative plan referencing canonical mechanism context entities without technical IR compilation."""
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    plan_id: str
+    sections: tuple[NarrativeSectionPlanV3, ...]
+    narrative_units: tuple[NarrativeUnitV1, ...]
+    formula_placements: tuple[Any, ...] = ()
+    context_set_digest: str = ""
+    content_digest: str = ""
+
+    @model_validator(mode="after")
+    def _compute_digest(self) -> "NarrativePlanV3":
+        if not self.content_digest:
+            from code2paper.agentic.mechanism_context_models import canonical_json_bytes, sha256_digest
+            payload = canonical_json_bytes(self, exclude_fields={"content_digest"})
+            object.__setattr__(self, "content_digest", sha256_digest(payload))
+        return self
+
+
+def compute_narrative_complexity(
+    details: Sequence[Any],
+    formula_obligations: Sequence[str] = (),
+) -> Literal["brief", "standard", "detailed"]:
+    """Compute complexity heuristic to suggest appropriate narrative paragraph depth."""
+    core_transforms = sum(
+        1 for d in details
+        if getattr(d, "role", "") == "transformation" and getattr(d, "importance", "") == "core"
+    )
+    conditions = sum(
+        1 for d in details
+        if getattr(d, "role", "") == "condition" or bool(getattr(d, "conditions", ()))
+    )
+    interfaces = sum(
+        1 for d in details
+        if getattr(d, "role", "") in ("input", "output", "interface")
+    )
+    c = 1.0 * core_transforms + 0.7 * conditions + 0.8 * len(formula_obligations) + 0.5 * interfaces
+    if c <= 3.0:
+        return "brief"
+    elif c <= 7.0:
+        return "standard"
+    return "detailed"
+
+
+def validate_narrative_plan(
+    plan: NarrativePlanV3,
+    contexts: Any,
+) -> tuple[str, ...]:
+    """Verify narrative plan against canonical mechanism context set constraints."""
+    failures: list[str] = []
+
+    # 1. Context set digest check
+    expected_digest = getattr(contexts, "content_digest", "") or getattr(contexts, "source_context_digest", "")
+    if plan.context_set_digest and expected_digest and plan.context_set_digest != expected_digest:
+        failures.append(f"context_set_digest_mismatch: got {plan.context_set_digest}, expected {expected_digest}")
+
+    # 2. Mechanisms check
+    context_map = {c.mechanism_id: c for c in contexts.contexts}
+    all_placed_details: list[str] = []
+
+    for sec in plan.sections:
+        for mid in sec.mechanism_ids:
+            if mid not in context_map:
+                failures.append(f"unknown_mechanism_id:{mid}")
+
+        for para in sec.paragraphs:
+            pmid = para.mechanism_id
+            if pmid not in context_map:
+                failures.append(f"unknown_mechanism_id:{pmid}")
+                continue
+            ctx = context_map[pmid]
+            ctx_details = {d.detail_id: d for d in ctx.details}
+
+            for did in para.required_detail_ids:
+                if did not in ctx_details:
+                    failures.append(f"unknown_detail_id:{did}_in_mechanism:{pmid}")
+                else:
+                    d = ctx_details[did]
+                    if getattr(d, "active_path_status", "") in ("inactive_default", "unreachable", "inactive_path"):
+                        failures.append(f"inactive_path_detail_in_narrative:{did}")
+                    all_placed_details.append(did)
+
+    # 3. Core detail coverage check: each primary core detail placed exactly once
+    core_details_to_place: set[str] = set()
+    for ctx in contexts.contexts:
+        if ctx.importance == "core":
+            for d in ctx.details:
+                if d.importance == "core" and d.publication_policy == "clean_candidate":
+                    core_details_to_place.add(d.detail_id)
+
+    placed_counts: dict[str, int] = {}
+    for did in all_placed_details:
+        placed_counts[did] = placed_counts.get(did, 0) + 1
+
+    for did in sorted(core_details_to_place):
+        count = placed_counts.get(did, 0)
+        if count == 0:
+            failures.append(f"missing_core_detail:{did}")
+        elif count > 1:
+            failures.append(f"duplicate_core_detail_placement:{did}:{count}")
+
+    # 4. Check narrative units
+    for unit in plan.narrative_units:
+        for mid in unit.mechanism_context_ids:
+            if mid not in context_map:
+                failures.append(f"unknown_unit_mechanism:{mid}")
+
+    return tuple(failures)
+
+
+def build_narrative_plan_v3(
+    *,
+    contexts: Any,
+    story_spine: tuple[Any, ...] | list[Any] = (),
+    formula_packages: tuple[Any, ...] = (),
+    prior_plan: Any | None = None,
+    proposal_caller: Callable[[Any, Any], Any] | None = None,
+    llm_config: Any | None = None,
+) -> tuple[NarrativePlanV3, dict[str, Any]]:
+    """Build NarrativePlanV3 grouping canonical mechanism details into scientific paragraphs."""
+    from code2paper.agentic.formalization_agent import FormulaPlacementV1
+    from code2paper.agentic.mechanism_context_models import canonical_json_bytes, sha256_digest
+
+    trace: dict[str, Any] = {
+        "mechanism_count": len(contexts.contexts),
+        "sections_planned": 0,
+        "paragraphs_planned": 0,
+        "formula_placements_count": 0,
+    }
+
+    sections: list[NarrativeSectionPlanV3] = []
+    narrative_units: list[NarrativeUnitV1] = []
+    placements: list[FormulaPlacementV1] = []
+
+    pkg_by_mech: dict[str, list[Any]] = {}
+    for pkg in formula_packages:
+        pkg_by_mech.setdefault(pkg.mechanism_id, []).append(pkg)
+
+    sec_idx = 1
+    for ctx in contexts.contexts:
+        if ctx.importance == "side_branch":
+            continue
+
+        prior_sections = getattr(prior_plan, "sections", ()) or ()
+        if prior_plan is not None and sec_idx - 1 < len(prior_sections):
+            prior_sec = prior_sections[sec_idx - 1]
+            section_id = str(prior_sec.section_id)
+            heading = str(getattr(prior_sec, "heading", "") or f"{ctx.mechanism_name}")
+            prior_paras = getattr(prior_sec, "paragraphs", ()) or ()
+        else:
+            section_id = f"sec_method_{sec_idx}"
+            heading = f"{ctx.mechanism_name}"
+            prior_paras = ()
+        paragraphs: list[NarrativeParagraphPlanV3] = []
+
+        core_clean_details = [
+            d for d in ctx.details
+            if getattr(d, "active_path_status", "") not in ("inactive_default", "unreachable", "inactive_path")
+        ]
+
+        overview_details = [d for d in core_clean_details if d.role in ("input", "representation", "configuration")]
+        transform_details = [d for d in core_clean_details if d.role in ("transformation", "branch", "condition")]
+        formal_details = [d for d in core_clean_details if d.role in ("training_objective", "inference", "formalization")]
+        output_details = [d for d in core_clean_details if d.role in ("output", "interface", "rationale", "limitation")]
+
+        para_groups: list[tuple[str, list[Any]]] = []
+        if overview_details:
+            para_groups.append(("overview_and_inputs", overview_details))
+        if transform_details:
+            para_groups.append(("core_transformations", transform_details))
+        elif not overview_details and core_clean_details:
+            para_groups.append(("core_transformations", core_clean_details))
+        if formal_details:
+            para_groups.append(("formal_objective", formal_details))
+        if output_details:
+            para_groups.append(("interface_and_outputs", output_details))
+
+        if not para_groups:
+            para_groups.append(("mechanism_overview", list(core_clean_details)))
+
+        para_idx = 1
+        para_ids: list[str] = []
+        all_unit_req_details: list[str] = []
+        all_unit_opt_details: list[str] = []
+
+        for role_name, group_details in para_groups:
+            if para_idx - 1 < len(prior_paras):
+                p_id = str(prior_paras[para_idx - 1].paragraph_id)
+            else:
+                p_id = f"{section_id}_p{para_idx}"
+            para_ids.append(p_id)
+
+            req_dids = tuple(
+                d.detail_id for d in group_details
+                if d.importance == "core" and d.publication_policy == "clean_candidate"
+            )
+            opt_dids = tuple(d.detail_id for d in group_details if d.detail_id not in req_dids)
+            all_unit_req_details.extend(req_dids)
+            all_unit_opt_details.extend(opt_dids)
+
+            p_pkg_ids: list[str] = []
+            p_ob_ids: list[str] = []
+            if role_name in ("formal_objective", "core_transformations") and ctx.mechanism_id in pkg_by_mech:
+                for pkg in pkg_by_mech[ctx.mechanism_id]:
+                    p_pkg_ids.append(pkg.package_id)
+                    p_ob_ids.extend(pkg.satisfied_obligation_ids)
+                    placements.append(FormulaPlacementV1(
+                        package_id=pkg.package_id,
+                        section_id=section_id,
+                        paragraph_id=p_id,
+                    ))
+
+            depth = compute_narrative_complexity(group_details, p_ob_ids)
+
+            p_plan = NarrativeParagraphPlanV3(
+                paragraph_id=p_id,
+                section_id=section_id,
+                role=role_name,
+                mechanism_id=ctx.mechanism_id,
+                required_detail_ids=req_dids,
+                optional_detail_ids=opt_dids,
+                formula_obligation_ids=tuple(dict.fromkeys(p_ob_ids)),
+                formula_package_ids=tuple(dict.fromkeys(p_pkg_ids)),
+                shared_detail_refs=getattr(ctx, "shared_detail_refs", ()),
+                suggested_depth=depth,
+                reader_goal=f"Explain {role_name} for {ctx.mechanism_name}.",
+            )
+            paragraphs.append(p_plan)
+            para_idx += 1
+
+        sec_plan = NarrativeSectionPlanV3(
+            section_id=section_id,
+            heading=heading,
+            mechanism_ids=(ctx.mechanism_id,),
+            paragraphs=tuple(paragraphs),
+        )
+        sections.append(sec_plan)
+
+        unit_id = f"unit_{sec_idx}"
+        unit_depth = compute_narrative_complexity(core_clean_details)
+        narrative_units.append(NarrativeUnitV1(
+            unit_id=unit_id,
+            section_id=section_id,
+            mechanism_context_ids=(ctx.mechanism_id,),
+            rhetorical_role=ctx.scientific_role or "mechanism_exposition",
+            reader_question=ctx.reader_question or f"How does {ctx.mechanism_name} operate?",
+            paragraph_ids=tuple(para_ids),
+            required_detail_ids=tuple(dict.fromkeys(all_unit_req_details)),
+            optional_detail_ids=tuple(dict.fromkeys(all_unit_opt_details)),
+            formula_obligation_ids=tuple(
+                pkg.satisfied_obligation_ids[0]
+                for pkg in pkg_by_mech.get(ctx.mechanism_id, ())
+                if pkg.satisfied_obligation_ids
+            ),
+            suggested_depth=unit_depth,
+        ))
+        sec_idx += 1
+
+    plan = NarrativePlanV3(
+        plan_id=f"plan_v3_{sha256_digest(canonical_json_bytes([s.section_id for s in sections]))[:16]}",
+        sections=tuple(sections),
+        narrative_units=tuple(narrative_units),
+        formula_placements=tuple(placements),
+        context_set_digest=getattr(contexts, "content_digest", "") or getattr(contexts, "source_context_digest", ""),
+    )
+
+    trace["sections_planned"] = len(sections)
+    trace["paragraphs_planned"] = sum(len(s.paragraphs) for s in sections)
+    trace["formula_placements_count"] = len(placements)
+
+    return plan, trace
+
+
 __all__ = [
     "MethodArchitect",
     "build_method_section_plan",
     "build_method_section_plan_with_product_readiness",
     "build_method_section_plan_with_trace",
+    "NarrativeParagraphPlanV3",
+    "NarrativeSectionPlanV3",
+    "NarrativeUnitV1",
+    "NarrativePlanV3",
+    "compute_narrative_complexity",
+    "validate_narrative_plan",
+    "build_narrative_plan_v3",
 ]

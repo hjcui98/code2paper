@@ -83,6 +83,9 @@ class PublicationMethodWriterSkillV1(BaseModel):
         "List every required rhetorical move actually completed in completed_rhetorical_moves.",
         "Emit each paragraph once; never repeat a completed section or restart the same heading.",
         "Keep section_markdown to paper prose only; never serialize output field names or binding metadata inside it.",
+        "For unified mechanism contexts, cover every required core detail in scientific order without raw implementation narration.",
+        "Emit formula packages strictly at their designated narrative placements using [[FORMULA:<package_id>]].",
+        "Use authority-aware framing for non-code-verified details; use supporting details to add depth, and never promote side branches to the primary Method narrative.",
     )
     callback_protocol: tuple[str, ...] = (
         "Return a scoped WritingResearchRequestV1 when a required move lacks evidence.",

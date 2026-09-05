@@ -499,6 +499,36 @@ def _witness_constraints_from_plan_row(
                 getattr(item, "allowed_anchor_ids", ())
             ),
         }
+    raw_atoms = row.get("witness_atoms") or row.get("detail_witness_atoms") or ()
+    for atom in raw_atoms:
+        atom_id = str(atom.get("atom_id") if isinstance(atom, Mapping) else getattr(atom, "atom_id", "")).strip()
+        detail_id = str(atom.get("detail_id") if isinstance(atom, Mapping) else getattr(atom, "detail_id", "")).strip()
+        exact = _text_values(atom.get("exact_excerpts") if isinstance(atom, Mapping) else getattr(atom, "exact_excerpts", ()))
+        semantic_atom = str(atom.get("semantic_anchor") if isinstance(atom, Mapping) else getattr(atom, "semantic_anchor", "")).strip()
+        conditions = _text_values(atom.get("conditions") if isinstance(atom, Mapping) else getattr(atom, "conditions", ()))
+        polarity = str(atom.get("polarity") if isinstance(atom, Mapping) else getattr(atom, "polarity", "unknown") or "unknown").strip()
+        paper_role = str(atom.get("atom_kind") if isinstance(atom, Mapping) else getattr(atom, "atom_kind", "")).strip()
+        if atom_id:
+            result[("atom", atom_id)] = {
+                "exact": exact,
+                "semantic_atom": semantic_atom,
+                "conditions": conditions,
+                "polarity": polarity,
+                "paper_role": paper_role,
+                "detail_id": detail_id,
+                "source_anchor_ids": _text_values(
+                    atom.get("source_operation_ids") if isinstance(atom, Mapping) else getattr(atom, "source_operation_ids", ())
+                ),
+            }
+    for did in _ids(row.get("required_detail_ids")):
+        result.setdefault(("detail", did), {
+            "exact": (),
+            "semantic_atom": "",
+            "conditions": (),
+            "polarity": "unknown",
+            "paper_role": "detail",
+            "source_anchor_ids": (),
+        })
     return result
 
 
@@ -544,6 +574,7 @@ def _witness_satisfies_constraints(
 
 
 _TRANSACTION_DECLARATION_FIELDS: tuple[tuple[str, str], ...] = (
+    ("detail", "rendered_detail_ids"),
     ("facet", "rendered_from_facet_ids"),
     ("field", "rendered_field_candidate_ids"),
     ("slot", "rendered_slot_ids"),
@@ -1075,6 +1106,12 @@ def required_targets_from_plan_row(plan_row: Mapping[str, Any] | None) -> dict[s
     """Return the exact target sets owned by a paragraph plan row."""
 
     row = plan_row or {}
+    detail_ids = _ids(row.get("required_detail_ids"))
+    if detail_ids:
+        return {
+            "detail": detail_ids,
+            "formula": _ids(row.get("formula_obligation_ids") or row.get("formula_package_ids")),
+        }
     return {
         "facet": _ids(row.get("required_facet_ids")),
         "field": _ids(row.get("required_field_candidate_ids")),
@@ -1464,6 +1501,8 @@ def bind_paragraph_witnesses(
     for kind, values in candidate_declarations.items():
         field_name = declaration_fields.get(kind)
         if field_name:
+            if not isinstance(transaction, Mapping) and field_name not in getattr(transaction.__class__, "model_fields", {}):
+                continue
             source[field_name] = list(dict.fromkeys(values))
     if "unbound_target_ids" in source:
         source["unbound_target_ids"] = [
@@ -1567,7 +1606,26 @@ def assess_paragraph_transaction(
             ).strip()
             not in {"review_required", "not_applicable"}
         )
+    constraints_by_key = _witness_constraints_from_plan_row(plan_row)
     for kind, values in required.items():
+        if kind == "detail":
+            missing_details: list[str] = []
+            witnessed_details: list[str] = []
+            for did in values:
+                detail_atoms = [
+                    (k, t) for (k, t), c in constraints_by_key.items()
+                    if k == "atom" and c.get("detail_id") == did
+                ]
+                if ("detail", did) in witness_keys:
+                    witnessed_details.append(did)
+                elif detail_atoms and all((k, t) in witness_keys for (k, t) in detail_atoms):
+                    witnessed_details.append(did)
+                else:
+                    missing_details.append(did)
+            witnessed[kind] = tuple(witnessed_details)
+            if missing_details:
+                missing[kind] = tuple(missing_details)
+            continue
         if kind != "formula":
             seen = tuple(target for target in values if (kind, target) in witness_keys)
             witnessed[kind] = seen

@@ -1,5 +1,127 @@
 # Implementation and evidence
 
+### Unified Mechanism Context Architecture Refactor (2026-09-05) — WP-0 through WP-9 COMPLETE
+
+Executed the complete architecture refactor per `docs/code2paper_unified_mechanism_context_architecture_redesign_review_revised_v2_2026-09-05.md` across all Work Packages WP-0 through WP-9. All work was performed serially in the same worktree without reset, branch switch, or checkout; Verified fail-closed boundaries remain strictly enforced and legacy behavior remains 100% backward-compatible.
+
+### Implemented Work Packages
+
+1. **WP-0 (Freeze Evidence, Quality, and Efficiency Baseline):**
+   - Verified replay baseline at `artifacts/quality_closed_loop/2026-09-05/nextrepair-8006-qwen38/` bound to SHA `a7c10318e0edd554533962d1ce6159ce51751291`.
+   - Created `tests/fixtures/method_synthesis_funnel/efficiency_baseline_v1.json` recording DyG (542k tokens, 56 calls), LinearRAG (1.23M tokens, 94 calls), and EBCAR (1.16M tokens, 135 calls) token accounting, production budget caps, and cross-repo holdout protocol.
+   - Updated `MethodContentUnitFixtureV1` and `MethodAuthoringOracleUnitV1` in `src/code2paper/agentic/method_content_regression.py` with provenance fields (`source`, `repo_snapshot_sha`, `repo_verifiable`, `active_path_status`, `runtime_authority`).
+   - Added evaluation functions: `evaluate_mechanism_detail_recall`, `evaluate_context_writer_delivery`, `evaluate_mechanism_contamination`, and `evaluate_formula_fidelity`.
+
+2. **WP-1 (Canonical Context Models + Digest Rules):**
+   - Created `src/code2paper/agentic/mechanism_context_models.py` defining:
+     - `ActivePathStatus`, `DetailRole`, `DetailImportance`, `ClaimKind`, `EvidenceAuthority`, `PublicationPolicy`, `WitnessAtomKind`.
+     - `MechanismSeedV1`: narrow author intent/alignment seed.
+     - `EvidenceOperationV1`: source-grounded operation node with active-path status.
+     - `SourceOperationDispositionV1`: terminal operation disposition.
+     - `MechanismEvidenceClosureV1`: lossless source-grounded closure (Invariant I1, I3).
+     - `DetailWitnessAtomV1`: deterministic atomic contract (Invariant I10).
+     - `MechanismDetailV1`: paper-facing annotation with three-axis authority (Invariant I9).
+     - `MechanismEdgeV1` and `SharedDetailRefV1` (Invariant I15).
+     - `MechanismContextV1` and `MechanismContextSetV1`.
+     - Deterministic 5-level digest hierarchy: `compute_source_context_digest`, `compute_view_digest`, `compute_slice_digest`, `compute_shared_payload_digest`, and `compute_consumer_request_digest`.
+   - Added tests in `tests/test_agentic_mechanism_context_models.py` (9 passed).
+
+3. **WP-2 (Lossless Evidence Closure Compiler):**
+   - In `src/code2paper/agentic/mechanism_context_compiler.py`:
+     - `DefinitionResolver`: resolves callee bodies via SymbolIndexV2 + SourceProvider with fallback-free resolution hierarchy (exact symbol_id > path::qname > unique tail) and max depth/line budgets.
+     - `resolve_active_path_status`: implements active-path precedence (override > config > default > symbol existence).
+     - `compile_mechanism_evidence_closures`: compiles lossless closures without paragraph dependencies.
+   - Added tests in `tests/test_agentic_mechanism_evidence_closure.py` (3 passed).
+
+4. **WP-3 (EvidenceClosure → PaperDetails Abstraction):**
+   - In `src/code2paper/agentic/mechanism_context_compiler.py`:
+     - `annotate_mechanism_paper_details`: clusters operations deterministically, produces reader-facing `MechanismDetailV1` annotations, derives `DetailWitnessAtomV1` obligations (operation, operand, output, condition), builds `MechanismEdgeV1`, and ensures `source_operation_terminal_coverage == 1.0`.
+     - `compile_mechanism_contexts`: unified entry point.
+   - Added tests in `tests/test_agentic_mechanism_detail_compiler.py` (2 passed).
+
+5. **WP-4 (Single Shared LLM Projection):**
+   - Created `src/code2paper/agentic/mechanism_context_projection.py`:
+     - `build_mechanism_context_view`: consumer-neutral projection.
+     - `build_mechanism_context_slices`: divides view into bounded slices with all core details guaranteed in slice 0.
+     - `serialize_shared_mechanism_payload` and `assert_consumer_shared_payload_identity`: enforces Invariant I8 (byte-identical shared payload bytes and digest).
+   - Added tests in `tests/test_agentic_mechanism_context_projection.py` (2 passed).
+
+6. **WP-4.5 (Mechanism Formula Obligation Compiler):**
+   - In `src/code2paper/agentic/formalization_agent.py`:
+     - `MechanismFormulaObligationV1`: paragraph-independent mathematical goal owned by mechanism and source details.
+     - `MechanismFormulaPackageV2`: mechanism-owned formula package with canonical display math and content digest.
+     - `FormulaPlacementV1`: narrative placement decoupled from formula ownership.
+     - `compile_mechanism_formula_obligations`: compiles formula obligations directly from MechanismContextV1.
+   - Added tests in `tests/test_agentic_mechanism_formula_obligations.py` (2 passed).
+
+7. **WP-5 (Mechanism Formalizer Cutover):**
+   - In `src/code2paper/agentic/formalization_agent.py`:
+     - `run_mechanism_formalizer`: executes Formalizer strictly scoped to mechanism context and obligations.
+     - `adapt_mechanism_formula_package_to_legacy`: bridges V2 packages to legacy `SectionFormulaPackageV1` for sidecar compatibility without compromising source authority.
+   - Added tests in `tests/test_agentic_mechanism_formalizer.py` (3 passed).
+
+8. **WP-6 (Narrative Architect V3):**
+   - In `src/code2paper/agentic/method_architect.py`:
+     - `build_narrative_plan_v3`: groups canonical details into scientific paragraphs, computes narrative step complexity, and binds formula placements without touching raw code facts.
+     - Preserves prior section / paragraph identity when prior plans are supplied during transitional modes.
+   - Added tests in `tests/test_agentic_narrative_architect_v3.py` (4 passed).
+
+9. **WP-7 (Writer V3 Single Shared Payload Passthrough):**
+   - In `src/code2paper/llm/section_writer.py`:
+     - `_llm_visible_section_payload`: directly passes shared mechanism context payloads through without secondary compaction, preserving byte-identical slices between Formalizer and Writer.
+   - Added tests in `tests/test_agentic_writer_v3.py` (2 passed).
+
+10. **WP-8 (Detail-Atom Binder, Lifecycle Trace V2 & Funnel Observability):**
+    - In `src/code2paper/agentic/publication_transaction_contract.py` and `src/code2paper/agentic/method_content_trace.py`:
+      - `DetailWitnessAtomV1` binding against paragraph prose.
+      - `MethodContentTraceV2` tracing detail lifecycles across R0 (Closure), R1 (Paper Detail), R2 (Shared Payload), R3 (Architect Planned), and R4 (Rendered / Verified).
+      - `MechanismInformationFunnelV1`: tracks retention and survival rates across all funnel stages.
+      - Registered `method_content_trace_v2` and `mechanism_information_funnel_v1` in `src/code2paper/core/output_names.py`.
+    - Added tests in `tests/test_agentic_detail_atom_binder_and_trace_v2.py` (2 passed).
+
+11. **WP-8.5 / WP-9 (Production Orchestrator Wiring & Cutover Execution):**
+    - In `src/code2paper/agentic/publication_method_writer.py`:
+      - Added `AuthoringContextMode = Literal["legacy", "shadow_unified", "unified"]`.
+      - Parameter `authoring_context_mode` on `run_publication_method_writer(...)` with environment variable fallback `CODE2PAPER_AUTHORING_CONTEXT_MODE`.
+      - Extracted `_load_repository_authoring_context` to load full research inputs before Architect planning.
+      - Wired `_compile_mechanism_evidence_closures`, `_annotate_mechanism_paper_details`, `_build_shared_mechanism_payloads`, `_compile_mechanism_formula_obligations`, `_run_mechanism_formalizer`, `_build_narrative_plan_v3`, and `_writer_section_inputs_v3`.
+      - In `shadow_unified` mode: runs the unified pipeline side-by-side with legacy, persisting diagnostics (`mechanism_context_set_v1`, `narrative_plan_v3`, `method_content_trace_v2`, `mechanism_information_funnel_v1`) without mutating legacy outputs.
+      - In `unified` mode: activates unified narrative planning, mechanism formalization, shared writer payloads, and trace V2 lifecycle assessment.
+      - All gates (`repository_verified_method.md`, reverse validation, candidate checkpointing) remain fail-closed.
+    - Added tests in `tests/test_agentic_publication_method_writer_unified.py` (3 passed).
+
+### Verification Evidence
+
+```text
+python -m compileall -q src tests
+exit 0
+
+git diff --check
+exit 0
+
+python -m pytest -q \
+  tests/test_agentic_mechanism_context_models.py \
+  tests/test_agentic_mechanism_evidence_closure.py \
+  tests/test_agentic_mechanism_detail_compiler.py \
+  tests/test_agentic_mechanism_context_projection.py \
+  tests/test_agentic_mechanism_formula_obligations.py \
+  tests/test_agentic_mechanism_formalizer.py \
+  tests/test_agentic_narrative_architect_v3.py \
+  tests/test_agentic_writer_v3.py \
+  tests/test_agentic_detail_atom_binder_and_trace_v2.py \
+  tests/test_agentic_publication_method_writer_unified.py
+29 passed in 1.58s (exit 0)
+
+python -m pytest -q tests/test_agentic_publication_method_writer.py
+142 passed, 6 warnings in 9.26s (exit 0)
+
+python -m pytest -q \
+  tests/test_agentic_formalization_guards.py \
+  tests/test_agentic_formula_obligation_truths.py \
+  tests/test_agentic_authoring_plan_v3.py
+76 passed in 0.93s (exit 0)
+```
+
 ## Candidate-First Method Code Repair (2026-09-02) — COMPLETE (static-verified; WP1–WP5 closure)
 
 Transformed the codebase according to `docs/code2paper_candidate_first_method_code_repair_guide_2026-09-02.md` across 5 core work packages (P0-A through P0-E), fixing the root causes diagnosed across EBCAR, DyG, and LinearRAG. No git reset, branch switch, or merge was performed; Verified authority gates and reverse validation remain strictly fail-closed.

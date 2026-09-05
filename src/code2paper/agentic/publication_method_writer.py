@@ -177,6 +177,12 @@ def _default_llm_caller(config: LLMConfig, request: LLMRequest) -> LLMResponse:
 
     return LLMClient(config).complete(request)
 
+AuthoringContextMode = Literal[
+    "legacy",
+    "shadow_unified",
+    "unified",
+]
+
 
 class PublicationWriterRunResultV1(BaseModel):
     model_config = ConfigDict(extra="forbid")
@@ -311,6 +317,7 @@ def run_publication_method_writer(
     # R1 explicit author-story override: concept keys the author story names
     # as scientifically material are never filtered as audit_only.
     concept_audit_override_keys: tuple[str, ...] = (),
+    authoring_context_mode: AuthoringContextMode | str | None = None,
 ) -> tuple[PublicationWriterRunResultV1, dict[str, str]]:
     """Write section-scoped Method prose from the multi-authority plan."""
     required = (
@@ -602,9 +609,17 @@ def run_publication_method_writer(
             )
             return result, _write_result_only(out_root, result)
 
+    effective_mode: str = "legacy"
+    if authoring_context_mode:
+        effective_mode = str(authoring_context_mode).strip().casefold()
+    else:
+        env_mode = os.environ.get("CODE2PAPER_AUTHORING_CONTEXT_MODE", "").strip().casefold()
+        if env_mode in ("legacy", "shadow_unified", "unified"):
+            effective_mode = env_mode
+
     architect_trace_path = ""
     architect_plan_path = ""
-    if (
+    if effective_mode != "unified" and (
         rebuild_architect_plan
         or not any(unit.semantic_frame is not None for unit in plan.argument_units)
         # A reused frozen plan can already contain semantic frames and
@@ -692,230 +707,388 @@ def run_publication_method_writer(
         )
         return result, _write_result_only(out_root, result)
 
-    formalization = formalize_code_facts(facts=facts, equations=equations)
-    formalization_path = method_output(Path(out_root), "formalization_result_v1")
-    _atomic_write_text(formalization_path, formalization.model_dump_json(indent=2) + "\n")
-    formalization_agent_path = ""
-    if formalization_caller is not None:
-        formalization, formalization_agent_result = _run_formalization_agent(
-            base=formalization,
-            facts=facts,
-            equations=equations,
-            config=llm_config,
-            caller=formalization_caller,
-            out_root=out_root,
-        )
-        formalization_agent_path = str(
-            method_output(Path(out_root), "formalization_agent_result_v1")
-        )
-        _atomic_write_text(
-            formalization_agent_path,
-            json.dumps(formalization_agent_result, ensure_ascii=False, indent=2) + "\n",
-        )
-        _atomic_write_text(formalization_path, formalization.model_dump_json(indent=2) + "\n")
+    unified_contexts: Any | None = None
+    unified_narrative_plan: Any | None = None
+    unified_formula_packages: tuple[Any, ...] = ()
+    unified_slices: dict[str, Any] = {}
+    shadow_failure: str = ""
 
-    # Slice 2: compile a paragraph-local connected research dossier before the
-    # section Formalizer sees the mechanism.  The graph/scope artifacts are
-    # optional for legacy replays; when absent, the compiler preserves a typed
-    # unresolved dossier instead of treating author prose as code evidence.
-    research_dossiers: tuple[Any, ...] = ()
-    research_derivations: tuple[Any, ...] = ()
-    authoring_packets_v2_by_section: dict[str, tuple[Any, ...]] = {}
-    research_derived_failure = ""
-    try:
-        from code2paper.agentic.research_derived_authoring import (
-            build_research_mechanism_dossiers,
-            build_publication_authoring_packets,
-            compile_derivation_records,
-            merge_derivations_into_field_candidates,
-            write_research_derived_artifacts,
-        )
-        from code2paper.agentic.behavior_graph import CodeBehaviorGraphV1
-
-        behavior_graph = None
-        graph_value = (
-            artifact_paths.get("behavior_graph_v1", "")
-            or artifact_paths.get("code_graph", "")
-        )
-        if graph_value and Path(graph_value).is_file():
-            graph_payload = json.loads(Path(graph_value).read_text(encoding="utf-8"))
-            if isinstance(graph_payload, Mapping):
-                graph_payload = graph_payload.get("behavior_graph") or graph_payload.get(
-                    "graph"
-                ) or graph_payload
-                behavior_graph = CodeBehaviorGraphV1.model_validate(graph_payload)
-        implementation_scope = None
-        scope_value = artifact_paths.get("implementation_scope_v1", "")
-        if scope_value and Path(scope_value).is_file():
-            from code2paper.agentic.research_models import ImplementationScopeV1
-
-            implementation_scope = ImplementationScopeV1.model_validate_json(
-                Path(scope_value).read_text(encoding="utf-8")
-            )
-        research_dossiers = build_research_mechanism_dossiers(
-            plan=plan,
-            facets=argument_facets,
-            facet_alignments=facet_alignments,
-            field_candidates=publication_field_candidates,
-            argument_briefs=argument_briefs,
-            behavior_graph=behavior_graph,
-            facts=facts,
-            claims=claims,
-            equations=equations,
-            configurations=configurations,
-            evidence_packets=evidence_packets_v3,
-            implementation_scope=implementation_scope,
-            require_nonempty=bool(argument_facets and facet_alignments),
-        )
-    except (OSError, TypeError, ValueError, json.JSONDecodeError) as exc:
-        research_derived_failure = (
-            f"research_dossier_compile:{exc.__class__.__name__}:{str(exc)[:180]}"
-        )
-
-    # Candidate and Verified have different evidence contracts.  Research
-    # readiness gates repository-derived/Verified claims and formulas, but it
-    # must not suppress the complete author specification that Candidate is
-    # meant to preserve.  Keep readiness failures as typed diagnostics; the
-    # downstream Binder and Verified split consume the same dossier state.
-    research_readiness_warnings: list[str] = []
-    if research_derived_failure:
-        research_readiness_warnings.append(research_derived_failure)
-    if argument_facets and facet_alignments:
-        not_ready_dossiers = tuple(
-            dossier for dossier in research_dossiers
-            if bool(getattr(dossier, "code_required", False))
-            and str(getattr(dossier, "evidence_readiness", "blocked") or "")
-            != "code_ready"
-        )
-        if not research_dossiers:
-            research_readiness_warnings.append("research_dossier_empty_run")
-        elif not_ready_dossiers:
-            for dossier in not_ready_dossiers:
-                details = ":".join(item for item in (
-                    str(getattr(dossier, "section_id", "") or ""),
-                    str(getattr(dossier, "paragraph_id", "") or ""),
-                    ",".join(
-                        str(reason)
-                        for reason in (
-                            getattr(dossier, "readiness_failures", ()) or ()
-                        )
-                    ) or str(
-                        getattr(dossier, "evidence_readiness", "blocked") or "blocked"
-                    ),
-                ) if item)
-                if details:
-                    research_readiness_warnings.append(
-                        "research_dossier_not_code_ready:" + details
-                    )
-
-    # Q2 (plan 19.6): the section-scoped Formalizer produces paper-level
-    # formula packages (or typed dispositions) per section, bound to the
-    # section's own core equations.  Empty proposal results are never
-    # silently treated as completion.
-    # R1: audit-only concept cards are excluded from the Writer sentence
-    # plan, coverage, qualifier repair and Formalizer inputs; the explicit
-    # author-story override re-admits material cards.
-    # Review Q1: the story override is derived from the frozen story spine /
-    # placement on every production path (cards whose story_node is named by
-    # the spine are never filtered as audit_only), and unioned with any
-    # caller-supplied explicit keys.
-    from code2paper.agentic.publication_relevance import classify_concept_card_writing_role
-
-    effective_override_keys = set(concept_audit_override_keys)
-    if concept_cards is not None:
-        effective_override_keys.update(_story_override_concept_keys(
-            artifact_paths=artifact_paths,
-            concept_cards=concept_cards,
-        ))
-    audit_concept_keys: frozenset[str] = frozenset()
-    if concept_cards is not None:
-        audit_concept_keys = frozenset(
-            str(card.concept_key)
-            for card in concept_cards.cards
-            if classify_concept_card_writing_role(
-                card,
-                story_selected=str(card.concept_key) in effective_override_keys,
-            )
-            == "audit_only"
-        )
-    audit_only_claim_ids = _audit_only_claim_ids(
-        propositions=propositions,
-        proposition_bindings=proposition_bindings,
-        concept_cards=concept_cards,
-        audit_concept_keys=audit_concept_keys,
-        claims=claims,
-        facts=facts,
-    )
-    # Q2 repair (review P0): the section Formalizer must make a real
-    # low-temperature model call in product and replay execution.  When no
-    # caller is injected, the live client is the default (fail-closed: a
-    # missing key yields a blocked response and the deterministic fallback).
-    effective_formalization_caller = formalization_caller or llm_caller or _default_llm_caller
-    section_formula_results, formalization_section_path = _run_section_formalizer(
-        out_root=out_root,
-        plan=plan,
-        equations=equations,
-        facts=facts,
-        claims=claims,
-        propositions=propositions,
-        proposition_bindings=proposition_bindings,
-        concept_cards=concept_cards,
-        llm_config=llm_config,
-        caller=effective_formalization_caller,
-        agenda=agenda,
-        audit_concept_keys=audit_concept_keys,
-        argument_facets=argument_facets,
-        facet_alignments=facet_alignments,
-        facet_policies=facet_policies,
-        publication_field_candidates=publication_field_candidates,
-        require_llm_call=True,
-        research_dossiers=research_dossiers,
-    )
-    plan = _canonicalize_plan_formula_targets(
-        plan=plan,
-        section_results=section_formula_results,
-    )
-    if architect_plan_path:
-        _atomic_write_text(
-            architect_plan_path,
-            plan.model_dump_json(indent=2) + "\n",
-        )
-    if not research_derived_failure:
+    if effective_mode in ("unified", "shadow_unified"):
         try:
-            research_derivations = compile_derivation_records(
-                dossiers=research_dossiers,
+            repo_ctx = _load_repository_authoring_context(artifact_paths)
+            closures = _compile_mechanism_evidence_closures(
+                argument_briefs=repo_ctx["argument_briefs"] or argument_briefs,
+                facets=repo_ctx["argument_facets"] or argument_facets,
+                facet_alignments=repo_ctx["facet_alignments"] or facet_alignments,
+                field_candidates=repo_ctx["publication_field_candidates"] or publication_field_candidates,
+                story_spine=repo_ctx["story_spine"],
+                facts=facts,
+                claims=claims,
+                equations=equations,
+                configurations=configurations,
+                evidence_packets=evidence_packets_v3,
+                behavior_graph=repo_ctx["behavior_graph"],
+                implementation_scope=repo_ctx["implementation_scope"],
+            )
+            unified_contexts = _annotate_mechanism_paper_details(
+                closures,
+                story_spine=repo_ctx["story_spine"],
+                argument_briefs=repo_ctx["argument_briefs"] or argument_briefs,
+                facets=repo_ctx["argument_facets"] or argument_facets,
+            )
+            context_set_path = method_output(Path(out_root), "mechanism_context_set_v1")
+            _atomic_write_text(context_set_path, unified_contexts.model_dump_json(indent=2) + "\n")
+
+            unified_slices = _build_shared_mechanism_payloads(unified_contexts)
+            formula_obs = _compile_mechanism_formula_obligations(
+                unified_contexts,
+                equations=equations,
+                claims=claims,
+            )
+            effective_formalization_caller = (
+                formalization_caller or llm_caller or _default_llm_caller
+            )
+            unified_formula_packages, formalizer_traces = _run_mechanism_formalizer(
+                unified_contexts,
+                unified_slices,
+                formula_obs,
+                llm_config=llm_config,
+                caller=effective_formalization_caller,
+            )
+            unified_narrative_plan, architect_trace_v3 = _build_narrative_plan_v3(
+                unified_contexts,
+                story_spine=repo_ctx["story_spine"],
+                formula_packages=unified_formula_packages,
+                prior_plan=plan,
+                proposal_caller=architect_proposal_caller,
+                llm_config=llm_config,
+            )
+            narrative_plan_path = method_output(Path(out_root), "narrative_plan_v3")
+            _atomic_write_text(narrative_plan_path, unified_narrative_plan.model_dump_json(indent=2) + "\n")
+        except Exception as exc:
+            if effective_mode == "unified":
+                result = PublicationWriterRunResultV1(
+                    status="blocked",
+                    plan_digest=plan.content_digest,
+                    claim_digest=claims.content_digest,
+                    blocked_reason=f"unified_pipeline_failed:{exc.__class__.__name__}:{str(exc)[:200]}",
+                )
+                return result, _write_result_only(out_root, result)
+            shadow_failure = f"shadow_unified_failed:{exc.__class__.__name__}:{str(exc)[:200]}"
+
+    if effective_mode == "unified":
+        from code2paper.agentic.formalization_agent import (
+            MethodFormulaObligationV2,
+            adapt_mechanism_formula_package_to_legacy,
+            section_result_from_packages,
+        )
+        flat_formula_obs = [
+            ob
+            for obs in formula_obs.values()
+            for ob in (obs if isinstance(obs, (list, tuple)) else (obs,))
+        ]
+        adapted_formula_obs: list[MethodFormulaObligationV2] = []
+        for ob in flat_formula_obs:
+            c_para = ""
+            c_sec = ""
+            for sec in unified_narrative_plan.sections:
+                for p in sec.paragraphs:
+                    if ob.obligation_id in p.formula_obligation_ids:
+                        c_para = p.paragraph_id
+                        c_sec = sec.section_id
+                        break
+                if c_para:
+                    break
+            adapted_formula_obs.append(
+                MethodFormulaObligationV2(
+                    obligation_id=ob.obligation_id,
+                    expectation=ob.expectation,
+                    mathematical_goal=ob.mathematical_goal,
+                    section_id=c_sec,
+                    consumer_paragraph_id=c_para,
+                    paragraph_ids=(c_para,) if c_para else (),
+                )
+            )
+
+        sec_packages: dict[str, list[Any]] = {}
+        for sec in unified_narrative_plan.sections:
+            for pkg in unified_formula_packages:
+                if pkg.mechanism_id in sec.mechanism_ids:
+                    c_para = ""
+                    for p in sec.paragraphs:
+                        if pkg.package_id in p.formula_package_ids or any(
+                            oid in p.formula_obligation_ids for oid in pkg.satisfied_obligation_ids
+                        ):
+                            c_para = p.paragraph_id
+                            break
+                    legacy_pkg = adapt_mechanism_formula_package_to_legacy(
+                        pkg,
+                        section_id=sec.section_id,
+                        consumer_paragraph_id=c_para,
+                    )
+                    sec_packages.setdefault(sec.section_id, []).append(legacy_pkg)
+        section_formula_results = []
+        for sec in unified_narrative_plan.sections:
+            pkgs = tuple(sec_packages.get(sec.section_id, ()))
+            ob_ids = tuple(
+                str(item).strip()
+                for pkg in pkgs
+                for item in getattr(pkg, "satisfied_obligation_ids", ())
+                if str(item).strip()
+            )
+            sec_obs = tuple(o for o in adapted_formula_obs if o.section_id == sec.section_id)
+            sec_res = section_result_from_packages(
+                section_id=sec.section_id,
+                packages=pkgs,
+                obligation_ids=ob_ids,
+                formula_obligations=sec_obs,
+            )
+            section_formula_results.append(sec_res)
+        formalization_payload = {
+            "schema_version": "1.0",
+            "sections": [item.model_dump(mode="json") for item in section_formula_results],
+            "formalizer_call_traces": formalizer_traces,
+        }
+        formalization_section_path = str(method_output(Path(out_root), "formalization_section_results_v1"))
+        _atomic_write_text(formalization_section_path, json.dumps(formalization_payload, ensure_ascii=False, indent=2) + "\n")
+        formalization = formalize_code_facts(facts=facts, equations=equations)
+        formalization_path = str(method_output(Path(out_root), "formalization_result_v1"))
+        _atomic_write_text(formalization_path, formalization.model_dump_json(indent=2) + "\n")
+        formalization_agent_path = ""
+        authoring_packets_v2_by_section = {}
+        research_dossiers = ()
+        research_derivations = ()
+        research_derived_failure = ""
+        research_readiness_warnings = []
+        audit_concept_keys = frozenset()
+        audit_only_claim_ids = frozenset()
+        effective_override_keys = set()
+        research_artifact_paths = {}
+    else:
+        formalization = formalize_code_facts(facts=facts, equations=equations)
+        formalization_path = method_output(Path(out_root), "formalization_result_v1")
+        _atomic_write_text(formalization_path, formalization.model_dump_json(indent=2) + "\n")
+        formalization_agent_path = ""
+        if formalization_caller is not None:
+            formalization, formalization_agent_result = _run_formalization_agent(
+                base=formalization,
+                facts=facts,
+                equations=equations,
+                config=llm_config,
+                caller=formalization_caller,
+                out_root=out_root,
+            )
+            formalization_agent_path = str(
+                method_output(Path(out_root), "formalization_agent_result_v1")
+            )
+            _atomic_write_text(
+                formalization_agent_path,
+                json.dumps(formalization_agent_result, ensure_ascii=False, indent=2) + "\n",
+            )
+            _atomic_write_text(formalization_path, formalization.model_dump_json(indent=2) + "\n")
+
+        # Slice 2: compile a paragraph-local connected research dossier before the
+        # section Formalizer sees the mechanism.  The graph/scope artifacts are
+        # optional for legacy replays; when absent, the compiler preserves a typed
+        # unresolved dossier instead of treating author prose as code evidence.
+        research_dossiers: tuple[Any, ...] = ()
+        research_derivations: tuple[Any, ...] = ()
+        authoring_packets_v2_by_section: dict[str, tuple[Any, ...]] = {}
+        research_derived_failure = ""
+        try:
+            from code2paper.agentic.research_derived_authoring import (
+                build_research_mechanism_dossiers,
+                build_publication_authoring_packets,
+                compile_derivation_records,
+                merge_derivations_into_field_candidates,
+                write_research_derived_artifacts,
+            )
+            from code2paper.agentic.behavior_graph import CodeBehaviorGraphV1
+
+            behavior_graph = None
+            graph_value = (
+                artifact_paths.get("behavior_graph_v1", "")
+                or artifact_paths.get("code_graph", "")
+            )
+            if graph_value and Path(graph_value).is_file():
+                graph_payload = json.loads(Path(graph_value).read_text(encoding="utf-8"))
+                if isinstance(graph_payload, Mapping):
+                    graph_payload = graph_payload.get("behavior_graph") or graph_payload.get(
+                        "graph"
+                    ) or graph_payload
+                    behavior_graph = CodeBehaviorGraphV1.model_validate(graph_payload)
+            implementation_scope = None
+            scope_value = artifact_paths.get("implementation_scope_v1", "")
+            if scope_value and Path(scope_value).is_file():
+                from code2paper.agentic.research_models import ImplementationScopeV1
+
+                implementation_scope = ImplementationScopeV1.model_validate_json(
+                    Path(scope_value).read_text(encoding="utf-8")
+                )
+            research_dossiers = build_research_mechanism_dossiers(
+                plan=plan,
                 facets=argument_facets,
-                alignments=facet_alignments,
-                formula_results=section_formula_results,
+                facet_alignments=facet_alignments,
+                field_candidates=publication_field_candidates,
+                argument_briefs=argument_briefs,
+                behavior_graph=behavior_graph,
+                facts=facts,
+                claims=claims,
+                equations=equations,
+                configurations=configurations,
+                evidence_packets=evidence_packets_v3,
+                implementation_scope=implementation_scope,
+                require_nonempty=bool(argument_facets and facet_alignments),
             )
-            if research_derivations:
-                publication_field_candidates = merge_derivations_into_field_candidates(
-                    candidates=publication_field_candidates,
-                    derivations=research_derivations,
-                )
-            research_artifact_paths = write_research_derived_artifacts(
-                str(out_root),
-                dossiers=research_dossiers,
-                derivations=research_derivations,
-            )
-            if research_dossiers or research_derivations:
-                authoring_packets_v2_by_section = build_publication_authoring_packets(
-                    plan=plan,
-                    dossiers=research_dossiers,
-                    derivations=research_derivations,
-                    candidates=publication_field_candidates,
-                    formula_packages_by_section={
-                        result.section_id: _writer_visible_formula_packages(result)
-                        for result in section_formula_results
-                    },
-                )
         except (OSError, TypeError, ValueError, json.JSONDecodeError) as exc:
             research_derived_failure = (
-                f"research_derivation_compile:{exc.__class__.__name__}:{str(exc)[:180]}"
+                f"research_dossier_compile:{exc.__class__.__name__}:{str(exc)[:180]}"
             )
+
+        # Candidate and Verified have different evidence contracts.  Research
+        # readiness gates repository-derived/Verified claims and formulas, but it
+        # must not suppress the complete author specification that Candidate is
+        # meant to preserve.  Keep readiness failures as typed diagnostics; the
+        # downstream Binder and Verified split consume the same dossier state.
+        research_readiness_warnings: list[str] = []
+        if research_derived_failure:
+            research_readiness_warnings.append(research_derived_failure)
+        if argument_facets and facet_alignments:
+            not_ready_dossiers = tuple(
+                dossier for dossier in research_dossiers
+                if bool(getattr(dossier, "code_required", False))
+                and str(getattr(dossier, "evidence_readiness", "blocked") or "")
+                != "code_ready"
+            )
+            if not research_dossiers:
+                research_readiness_warnings.append("research_dossier_empty_run")
+            elif not_ready_dossiers:
+                for dossier in not_ready_dossiers:
+                    details = ":".join(item for item in (
+                        str(getattr(dossier, "section_id", "") or ""),
+                        str(getattr(dossier, "paragraph_id", "") or ""),
+                        ",".join(
+                            str(reason)
+                            for reason in (
+                                getattr(dossier, "readiness_failures", ()) or ()
+                            )
+                        ) or str(
+                            getattr(dossier, "evidence_readiness", "blocked") or "blocked"
+                        ),
+                    ) if item)
+                    if details:
+                        research_readiness_warnings.append(
+                            "research_dossier_not_code_ready:" + details
+                        )
+
+        # Q2 (plan 19.6): the section-scoped Formalizer produces paper-level
+        # formula packages (or typed dispositions) per section, bound to the
+        # section's own core equations.  Empty proposal results are never
+        # silently treated as completion.
+        # R1: audit-only concept cards are excluded from the Writer sentence
+        # plan, coverage, qualifier repair and Formalizer inputs; the explicit
+        # author-story override re-admits material cards.
+        # Review Q1: the story override is derived from the frozen story spine /
+        # placement on every production path (cards whose story_node is named by
+        # the spine are never filtered as audit_only), and unioned with any
+        # caller-supplied explicit keys.
+        from code2paper.agentic.publication_relevance import classify_concept_card_writing_role
+
+        effective_override_keys = set(concept_audit_override_keys)
+        if concept_cards is not None:
+            effective_override_keys.update(_story_override_concept_keys(
+                artifact_paths=artifact_paths,
+                concept_cards=concept_cards,
+            ))
+        audit_concept_keys: frozenset[str] = frozenset()
+        if concept_cards is not None:
+            audit_concept_keys = frozenset(
+                str(card.concept_key)
+                for card in concept_cards.cards
+                if classify_concept_card_writing_role(
+                    card,
+                    story_selected=str(card.concept_key) in effective_override_keys,
+                )
+                == "audit_only"
+            )
+        audit_only_claim_ids = _audit_only_claim_ids(
+            propositions=propositions,
+            proposition_bindings=proposition_bindings,
+            concept_cards=concept_cards,
+            audit_concept_keys=audit_concept_keys,
+            claims=claims,
+            facts=facts,
+        )
+        # Q2 repair (review P0): the section Formalizer must make a real
+        # low-temperature model call in product and replay execution.  When no
+        # caller is injected, the live client is the default (fail-closed: a
+        # missing key yields a blocked response and the deterministic fallback).
+        effective_formalization_caller = formalization_caller or llm_caller or _default_llm_caller
+        section_formula_results, formalization_section_path = _run_section_formalizer(
+            out_root=out_root,
+            plan=plan,
+            equations=equations,
+            facts=facts,
+            claims=claims,
+            propositions=propositions,
+            proposition_bindings=proposition_bindings,
+            concept_cards=concept_cards,
+            llm_config=llm_config,
+            caller=effective_formalization_caller,
+            agenda=agenda,
+            audit_concept_keys=audit_concept_keys,
+            argument_facets=argument_facets,
+            facet_alignments=facet_alignments,
+            facet_policies=facet_policies,
+            publication_field_candidates=publication_field_candidates,
+            require_llm_call=True,
+            research_dossiers=research_dossiers,
+        )
+        plan = _canonicalize_plan_formula_targets(
+            plan=plan,
+            section_results=section_formula_results,
+        )
+        if architect_plan_path:
+            _atomic_write_text(
+                architect_plan_path,
+                plan.model_dump_json(indent=2) + "\n",
+            )
+        if not research_derived_failure:
+            try:
+                research_derivations = compile_derivation_records(
+                    dossiers=research_dossiers,
+                    facets=argument_facets,
+                    alignments=facet_alignments,
+                    formula_results=section_formula_results,
+                )
+                if research_derivations:
+                    publication_field_candidates = merge_derivations_into_field_candidates(
+                        candidates=publication_field_candidates,
+                        derivations=research_derivations,
+                    )
+                research_artifact_paths = write_research_derived_artifacts(
+                    str(out_root),
+                    dossiers=research_dossiers,
+                    derivations=research_derivations,
+                )
+                if research_dossiers or research_derivations:
+                    authoring_packets_v2_by_section = build_publication_authoring_packets(
+                        plan=plan,
+                        dossiers=research_dossiers,
+                        derivations=research_derivations,
+                        candidates=publication_field_candidates,
+                        formula_packages_by_section={
+                            result.section_id: _writer_visible_formula_packages(result)
+                            for result in section_formula_results
+                        },
+                    )
+            except (OSError, TypeError, ValueError, json.JSONDecodeError) as exc:
+                research_derived_failure = (
+                    f"research_derivation_compile:{exc.__class__.__name__}:{str(exc)[:180]}"
+                )
+                research_artifact_paths = {}
+        else:
             research_artifact_paths = {}
-    else:
-        research_artifact_paths = {}
     effective_resume_section_ids = tuple(resume_section_ids)
     callback_bundle = _load_callback_bundle(artifact_paths)
     callback_bundle_value = artifact_paths.get(
@@ -1006,81 +1179,79 @@ def run_publication_method_writer(
                 ),
             )
             return result, _write_result_only(out_root, result)
-    try:
-        writer_inputs = _writer_section_inputs(
+    qualifier_terms_by_section: dict[str, Any] = {}
+    if effective_mode == "unified":
+        writer_inputs = _writer_section_inputs_v3(
+            narrative_plan=unified_narrative_plan,
+            shared_payload_slices=unified_slices,
+            formula_packages=unified_formula_packages,
+            system_prompt="",
+        )
+    else:
+        try:
+            writer_inputs = _writer_section_inputs(
+                plan=plan,
+                claims=claims,
+                equations=equations,
+                configurations=configurations,
+                formalization=formalization,
+                facts=facts,
+                evidence_packets_v3=evidence_packets_v3,
+                callback_bundle=callback_bundle,
+                callback_artifacts=callback_artifacts,
+                propositions=propositions,
+                concept_cards=concept_cards,
+                argument_briefs=argument_briefs,
+                argument_facets=argument_facets,
+                facet_alignments=facet_alignments,
+                facet_policies=facet_policies,
+                publication_field_candidates=publication_field_candidates,
+                typed_field_deferred=typed_field_deferred,
+                formula_packages_by_section={
+                    result.section_id: _writer_visible_formula_packages(result)
+                    for result in section_formula_results
+                },
+                formula_obligations_by_section={
+                    result.section_id: _writer_visible_formula_obligations(result)
+                    for result in section_formula_results
+                },
+                exclude_audit_only_concepts=True,
+                audit_override_concept_keys=frozenset(effective_override_keys),
+                audit_only_claim_ids=audit_only_claim_ids,
+                story_spine_nodes=_story_spine_nodes_from_artifact_paths(artifact_paths),
+                authoring_packets_v2_by_section=authoring_packets_v2_by_section,
+            )
+        except ValueError as exc:
+            result = PublicationWriterRunResultV1(
+                status="blocked",
+                plan_digest=plan.content_digest,
+                claim_digest=claims.content_digest,
+                resumed_section_ids=_pre_writer_resumed_section_ids(effective_resume_section_ids),
+                blocked_reason=f"move_authority_callback_binding_invalid:{str(exc)[:240]}",
+            )
+            return result, _write_result_only(out_root, result)
+        qualifier_terms_by_section = _qualifier_terms_by_section(
             plan=plan,
             claims=claims,
-            equations=equations,
-            configurations=configurations,
-            formalization=formalization,
-            facts=facts,
-            evidence_packets_v3=evidence_packets_v3,
-            callback_bundle=callback_bundle,
-            callback_artifacts=callback_artifacts,
-            propositions=propositions,
-            concept_cards=concept_cards,
-            argument_briefs=argument_briefs,
-            argument_facets=argument_facets,
-            facet_alignments=facet_alignments,
-            facet_policies=facet_policies,
-            publication_field_candidates=publication_field_candidates,
-            typed_field_deferred=typed_field_deferred,
-            formula_packages_by_section={
-                result.section_id: _writer_visible_formula_packages(result)
-                for result in section_formula_results
-            },
-            formula_obligations_by_section={
-                result.section_id: _writer_visible_formula_obligations(result)
-                for result in section_formula_results
-            },
-            exclude_audit_only_concepts=True,
-            audit_override_concept_keys=frozenset(effective_override_keys),
-            audit_only_claim_ids=audit_only_claim_ids,
-            story_spine_nodes=_story_spine_nodes_from_artifact_paths(artifact_paths),
-            authoring_packets_v2_by_section=authoring_packets_v2_by_section,
+            exclude_claim_ids=audit_only_claim_ids,
         )
-    except ValueError as exc:
-        result = PublicationWriterRunResultV1(
-            status="blocked",
-            plan_digest=plan.content_digest,
-            claim_digest=claims.content_digest,
-            resumed_section_ids=_pre_writer_resumed_section_ids(effective_resume_section_ids),
-            blocked_reason=f"move_authority_callback_binding_invalid:{str(exc)[:240]}",
-        )
-        return result, _write_result_only(out_root, result)
-    # Qualifier authority is derived from the persisted Architect plan and
-    # frozen claims, not from the (deliberately compact) Writer prompt
-    # projection.  Keep this map for every downstream quality owner so a
-    # low-level required predicate cannot disappear merely because a
-    # concept-card grouping omitted it from one model payload.
-    # Q1: audit-only claims never trigger qualifier Rewrite requests; their
-    # qualifiers stay in evidence and validation, not in prose obligations.
-    qualifier_terms_by_section = _qualifier_terms_by_section(
-        plan=plan,
-        claims=claims,
-        exclude_claim_ids=audit_only_claim_ids,
-    )
-    # Keep the exact validator predicates visible to the Writer as a compact
-    # binding channel.  This is not a prose template and carries no internal
-    # fact/claim/frame identifiers; it prevents a proposition-only projection
-    # from silently dropping a condition that the reverse validator requires.
-    writer_inputs = [
-        item.__class__(
-            section_id=item.section_id,
-            heading=item.heading,
-            prompt_payload={
-                **item.prompt_payload,
-                "required_qualifier_bindings": [
-                    _candidate_qualifier_binding(term)
-                    for term in qualifier_terms_by_section.get(item.section_id, ())
-                ],
-            },
-            system_prompt=item.system_prompt,
-            publication_mode=item.publication_mode,
-            argument_graph=item.argument_graph,
-        )
-        for item in writer_inputs
-    ]
+        writer_inputs = [
+            item.__class__(
+                section_id=item.section_id,
+                heading=item.heading,
+                prompt_payload={
+                    **item.prompt_payload,
+                    "required_qualifier_bindings": [
+                        _candidate_qualifier_binding(term)
+                        for term in qualifier_terms_by_section.get(item.section_id, ())
+                    ],
+                },
+                system_prompt=item.system_prompt,
+                publication_mode=item.publication_mode,
+                argument_graph=item.argument_graph,
+            )
+            for item in writer_inputs
+        ]
     if effective_resume_section_ids:
         unresolved_callback_ids = _unresolved_local_resume_callback_ids(
             resume_section_ids=effective_resume_section_ids,
@@ -3676,10 +3847,11 @@ def run_publication_method_writer(
             claim_digest=claims.content_digest,
             failure=f"outputs:{type(exc).__name__}:{str(exc)[:200]}",
         )
+    active_plan = unified_narrative_plan if (effective_mode == "unified" and unified_narrative_plan is not None) else plan
     transaction_assessment_path, transaction_assessment_digest = (
         _write_paragraph_transaction_assessments(
             out_root=out_root,
-            plan=plan,
+            plan=active_plan,
             section_inputs={item.section_id: item for item in writer_inputs},
             section_outputs=output_by_section,
             formalization_path=formalization_section_path,
@@ -3693,6 +3865,39 @@ def run_publication_method_writer(
     paths["publication_paragraph_transaction_assessments_v1"] = (
         transaction_assessment_path
     )
+    if unified_contexts is not None and unified_narrative_plan is not None:
+        try:
+            from code2paper.agentic.method_content_trace import write_method_content_trace_v2
+            assess_payload = json.loads(Path(transaction_assessment_path).read_text(encoding="utf-8"))
+            assess_rows = assess_payload.get("assessments", [])
+            assess_map = {row.get("paragraph_id", ""): row for row in assess_rows if isinstance(row, dict)}
+            verified_detail_ids: set[str] = set()
+            if verified_markdown:
+                for ctx in unified_contexts.contexts:
+                    for d in ctx.details:
+                        if d.evidence_authority == "repository_verified":
+                            for row in assess_rows:
+                                if not row.get("valid"):
+                                    continue
+                                witnessed_kind = row.get("witnessed_by_kind", {})
+                                if d.detail_id in witnessed_kind.get("detail", ()):
+                                    verified_detail_ids.add(d.detail_id)
+            trace_v2_path = method_output(Path(out_root), "method_content_trace_v2")
+            trace_v2 = write_method_content_trace_v2(
+                trace_v2_path,
+                contexts=unified_contexts,
+                narrative_plan=unified_narrative_plan,
+                paragraph_assessments=assess_map,
+                verified_detail_ids=verified_detail_ids,
+            )
+            paths["method_content_trace_v2"] = str(trace_v2_path)
+            funnel_path = method_output(Path(out_root), "mechanism_information_funnel_v1")
+            _atomic_write_text(funnel_path, trace_v2.funnel.model_dump_json(indent=2) + "\n")
+            paths["mechanism_information_funnel_v1"] = str(funnel_path)
+            paths["mechanism_context_set_v1"] = str(method_output(Path(out_root), "mechanism_context_set_v1"))
+            paths["narrative_plan_v3"] = str(method_output(Path(out_root), "narrative_plan_v3"))
+        except Exception:
+            pass
     paragraph_checkpoint_path = method_output(
         Path(out_root), "publication_paragraph_checkpoint_v1"
     )
@@ -3782,7 +3987,7 @@ def run_publication_method_writer(
             out_root=out_root,
             candidate_markdown=candidate_markdown,
             candidate_available=candidate_available,
-            plan=plan,
+            plan=active_plan,
             accepted=accepted,
             output_by_section=output_by_section,
             incomplete_section_ids=incomplete_ids,
@@ -3812,7 +4017,7 @@ def run_publication_method_writer(
         out_root=out_root,
         artifact_paths=artifact_paths,
         paths=paths,
-        plan=plan,
+        plan=active_plan,
         writer=writer,
         writer_inputs=tuple(writer_inputs),
         formula_results=tuple(section_formula_results),
@@ -3866,9 +4071,15 @@ def run_publication_method_writer(
             ).content_digest
         except (OSError, TypeError, ValueError, json.JSONDecodeError):
             callback_bundle_digest = ""
+    if shadow_failure:
+        failures.append(shadow_failure)
     result = PublicationWriterRunResultV1(
         status=status,
-        plan_digest=plan.content_digest,
+        plan_digest=(
+            unified_narrative_plan.content_digest
+            if (effective_mode == "unified" and unified_narrative_plan is not None)
+            else plan.content_digest
+        ),
         claim_digest=claims.content_digest,
         section_results=tuple(section_rows),
         accepted_section_ids=tuple(section_id for section_id, _text, _ref in accepted),
@@ -10001,7 +10212,7 @@ def _candidate_completion_state(
     out_root: str | Path,
     candidate_markdown: str,
     candidate_available: bool,
-    plan: MethodSectionPlanV2,
+    plan: Any,
     accepted: list[tuple[str, str, str]],
     output_by_section: Mapping[str, PublicationMethodSectionOutputV1],
     incomplete_section_ids: Iterable[str],
@@ -12608,6 +12819,302 @@ def _normalize_section_heading_breaks(markdown: str, *, expected_heading: str = 
                 continue
         normalized.append(line)
     return "\n".join(normalized)
+
+
+def _load_repository_authoring_context(
+    artifact_paths: Mapping[str, str],
+) -> dict[str, Any]:
+    """Load research artifacts needed for unified mechanism authoring."""
+    from code2paper.agentic.behavior_graph import CodeBehaviorGraphV1
+    from code2paper.agentic.research_models import ImplementationScopeV1
+    from code2paper.agentic.method_argument_brief_models import (
+        AuthorMechanismFacetV1,
+        FacetEvidenceAlignmentV1,
+        CandidateFacetPolicyV1,
+        MethodArgumentBriefSetV1,
+    )
+
+    behavior_graph = None
+    graph_value = (
+        artifact_paths.get("behavior_graph_v1", "")
+        or artifact_paths.get("code_graph", "")
+    )
+    if graph_value and Path(graph_value).is_file():
+        try:
+            graph_payload = json.loads(Path(graph_value).read_text(encoding="utf-8"))
+            if isinstance(graph_payload, Mapping):
+                graph_payload = graph_payload.get("behavior_graph") or graph_payload.get("graph") or graph_payload
+                behavior_graph = CodeBehaviorGraphV1.model_validate(graph_payload)
+        except Exception:
+            behavior_graph = None
+
+    implementation_scope = None
+    scope_value = artifact_paths.get("implementation_scope_v1", "")
+    if scope_value and Path(scope_value).is_file():
+        try:
+            implementation_scope = ImplementationScopeV1.model_validate_json(
+                Path(scope_value).read_text(encoding="utf-8")
+            )
+        except Exception:
+            implementation_scope = None
+
+    briefs = None
+    brief_value = artifact_paths.get("method_argument_briefs_v1", "")
+    if brief_value and Path(brief_value).is_file():
+        try:
+            briefs = MethodArgumentBriefSetV1.model_validate_json(
+                Path(brief_value).read_text(encoding="utf-8")
+            )
+        except Exception:
+            briefs = None
+
+    facets: list[AuthorMechanismFacetV1] = []
+    facet_value = artifact_paths.get("method_argument_facets_v1", "")
+    if facet_value and Path(facet_value).is_file():
+        try:
+            raw = json.loads(Path(facet_value).read_text(encoding="utf-8"))
+            items = raw.get("facets", ()) if isinstance(raw, dict) else raw
+            facets = [AuthorMechanismFacetV1.model_validate(item) for item in items]
+        except Exception:
+            facets = []
+
+    alignments: list[FacetEvidenceAlignmentV1] = []
+    alignment_value = artifact_paths.get("facet_evidence_alignments_v1", "")
+    if alignment_value and Path(alignment_value).is_file():
+        try:
+            raw = json.loads(Path(alignment_value).read_text(encoding="utf-8"))
+            items = raw.get("alignments", ()) if isinstance(raw, dict) else raw
+            alignments = [FacetEvidenceAlignmentV1.model_validate(item) for item in items]
+        except Exception:
+            alignments = []
+
+    policies: list[CandidateFacetPolicyV1] = []
+    policy_value = artifact_paths.get("candidate_facet_policies_v1", "")
+    if policy_value and Path(policy_value).is_file():
+        try:
+            raw = json.loads(Path(policy_value).read_text(encoding="utf-8"))
+            items = raw.get("policies", ()) if isinstance(raw, dict) else raw
+            policies = [CandidateFacetPolicyV1.model_validate(item) for item in items]
+        except Exception:
+            policies = []
+
+    candidates: list[Any] = []
+    candidate_value = artifact_paths.get("publication_field_candidates_v1", "")
+    if candidate_value and Path(candidate_value).is_file():
+        try:
+            raw = json.loads(Path(candidate_value).read_text(encoding="utf-8"))
+            items = raw.get("candidates", ()) if isinstance(raw, dict) else raw
+            candidates = list(items)
+        except Exception:
+            candidates = []
+
+    return {
+        "behavior_graph": behavior_graph,
+        "implementation_scope": implementation_scope,
+        "argument_briefs": briefs,
+        "argument_facets": tuple(facets),
+        "facet_alignments": tuple(alignments),
+        "facet_policies": tuple(policies),
+        "publication_field_candidates": tuple(candidates),
+        "story_spine": tuple(_story_spine_models_from_artifact_paths(dict(artifact_paths))),
+    }
+
+
+def _compile_mechanism_evidence_closures(
+    *,
+    argument_briefs: Any | None = None,
+    facets: Iterable[Any] = (),
+    facet_alignments: Iterable[Any] = (),
+    field_candidates: Iterable[Any] = (),
+    story_spine: Iterable[Any] = (),
+    facts: Any | None = None,
+    claims: Any | None = None,
+    equations: Any | None = None,
+    configurations: Any | None = None,
+    evidence_packets: Any | None = None,
+    behavior_graph: Any | None = None,
+    implementation_scope: Any | None = None,
+) -> tuple[Any, ...]:
+    from code2paper.agentic.mechanism_context_compiler import compile_mechanism_evidence_closures
+    return compile_mechanism_evidence_closures(
+        argument_briefs=argument_briefs,
+        facets=facets,
+        facet_alignments=facet_alignments,
+        field_candidates=field_candidates,
+        story_spine=story_spine,
+        facts=facts,
+        claims=claims,
+        equations=equations,
+        configurations=configurations,
+        evidence_packets=evidence_packets,
+        behavior_graph=behavior_graph,
+        implementation_scope=implementation_scope,
+    )
+
+
+def _annotate_mechanism_paper_details(
+    closures: Sequence[Any],
+    *,
+    story_spine: Iterable[Any] = (),
+    argument_briefs: Any | None = None,
+    facets: Iterable[Any] = (),
+) -> Any:
+    from code2paper.agentic.mechanism_context_compiler import annotate_mechanism_paper_details
+    return annotate_mechanism_paper_details(
+        closures,
+        story_spine=story_spine,
+        argument_briefs=argument_briefs,
+        facets=facets,
+    )
+
+
+def _build_shared_mechanism_payloads(
+    contexts: Any,
+) -> dict[str, tuple[Any, ...]]:
+    from code2paper.agentic.mechanism_context_projection import (
+        build_mechanism_context_slices,
+        assert_consumer_shared_payload_identity,
+    )
+    shared_slices: dict[str, tuple[Any, ...]] = {}
+    for ctx in getattr(contexts, "contexts", ()):
+        slices = build_mechanism_context_slices(ctx)
+        assert_consumer_shared_payload_identity(slices, slices)
+        shared_slices[str(ctx.mechanism_id)] = slices
+    return shared_slices
+
+
+def _compile_mechanism_formula_obligations(
+    contexts: Any,
+    *,
+    equations: Any | None = None,
+    claims: Any | None = None,
+) -> dict[str, tuple[Any, ...]]:
+    from code2paper.agentic.formalization_agent import compile_mechanism_formula_obligations
+    obs_by_mech: dict[str, tuple[Any, ...]] = {}
+    for ctx in getattr(contexts, "contexts", ()):
+        obs = compile_mechanism_formula_obligations(
+            context=ctx,
+        )
+        obs_by_mech[str(ctx.mechanism_id)] = obs
+    return obs_by_mech
+
+
+def _run_mechanism_formalizer(
+    contexts: Any,
+    shared_payload_slices: Mapping[str, tuple[Any, ...]],
+    formula_obligations_by_mech: Mapping[str, tuple[Any, ...]],
+    *,
+    llm_config: Any | None = None,
+    caller: Callable[[Any, Any], Any] | None = None,
+) -> tuple[tuple[Any, ...], list[dict[str, Any]]]:
+    from code2paper.agentic.formalization_agent import run_mechanism_formalizer
+    from code2paper.agentic.mechanism_context_projection import serialize_shared_mechanism_payload
+    all_packages: list[Any] = []
+    traces: list[dict[str, Any]] = []
+    for ctx in getattr(contexts, "contexts", ()):
+        mid = str(ctx.mechanism_id)
+        slices = shared_payload_slices.get(mid, ())
+        payload_bytes = serialize_shared_mechanism_payload(slices) if slices else b""
+        payload_str = payload_bytes.decode("utf-8") if isinstance(payload_bytes, bytes) else str(payload_bytes)
+        payload_digest = str(getattr(slices[0], "shared_payload_digest", "")) if slices else ""
+        obs = formula_obligations_by_mech.get(mid, ())
+        pkgs, call_trace = run_mechanism_formalizer(
+            context=ctx,
+            obligations=obs,
+            shared_payload=payload_str,
+            shared_payload_digest=payload_digest,
+            llm_config=llm_config,
+            caller=caller,
+            author_notation_hints=tuple(getattr(ctx, "notation_hints", ())),
+        )
+        all_packages.extend(pkgs)
+        traces.append(call_trace)
+    return tuple(all_packages), traces
+
+
+def _build_narrative_plan_v3(
+    contexts: Any,
+    *,
+    story_spine: tuple[Any, ...] | list[Any] = (),
+    formula_packages: tuple[Any, ...] = (),
+    prior_plan: Any | None = None,
+    proposal_caller: Callable[[Any, Any], Any] | None = None,
+    llm_config: Any | None = None,
+) -> tuple[Any, dict[str, Any]]:
+    from code2paper.agentic.method_architect import build_narrative_plan_v3
+    return build_narrative_plan_v3(
+        contexts=contexts,
+        story_spine=story_spine,
+        formula_packages=formula_packages,
+        prior_plan=prior_plan,
+        proposal_caller=proposal_caller,
+        llm_config=llm_config,
+    )
+
+
+def _writer_section_inputs_v3(
+    *,
+    narrative_plan: Any,
+    shared_payload_slices: Mapping[str, Any],
+    formula_packages: tuple[Any, ...] = (),
+    system_prompt: str = "",
+) -> list[Any]:
+    """Build the Writer-facing projection for each planned section in unified mode."""
+    from code2paper.llm.section_writer import WriterSectionInput
+    from code2paper.agentic.mechanism_context_projection import serialize_shared_mechanism_payload
+
+    inputs: list[WriterSectionInput] = []
+    pkg_by_mech: dict[str, list[dict[str, Any]]] = {}
+    for pkg in formula_packages:
+        pkg_dict = pkg.model_dump(mode="json") if hasattr(pkg, "model_dump") else dict(pkg)
+        pkg_by_mech.setdefault(str(pkg_dict.get("mechanism_id", "")), []).append(pkg_dict)
+
+    for section in getattr(narrative_plan, "sections", ()):
+        sec_id = str(getattr(section, "section_id", ""))
+        heading = str(getattr(section, "heading", ""))
+        sec_plan_dict = section.model_dump(mode="json") if hasattr(section, "model_dump") else dict(section)
+
+        sec_slices: list[str] = []
+        sec_formula_pkgs: list[dict[str, Any]] = []
+        for mid in getattr(section, "mechanism_ids", ()):
+            mid_str = str(mid)
+            if mid_str in shared_payload_slices:
+                m_slice = shared_payload_slices[mid_str]
+                if isinstance(m_slice, (tuple, list)):
+                    raw_b = serialize_shared_mechanism_payload(m_slice)
+                    sec_slices.append(raw_b.decode("utf-8") if isinstance(raw_b, bytes) else str(raw_b))
+                else:
+                    payload_val = getattr(m_slice, "serialized_payload", "") or m_slice
+                    if isinstance(payload_val, bytes):
+                        payload_val = payload_val.decode("utf-8")
+                    sec_slices.append(str(payload_val))
+            if mid_str in pkg_by_mech:
+                sec_formula_pkgs.extend(pkg_by_mech[mid_str])
+
+        prompt_payload = {
+            "section_id": sec_id,
+            "heading": heading,
+            "narrative_plan": sec_plan_dict,
+            "shared_contexts": sec_slices,
+            "formula_packages": sec_formula_pkgs,
+            "output_contract": "PublicationMethodSectionOutputV1",
+        }
+
+        inputs.append(
+            WriterSectionInput(
+                section_id=sec_id,
+                heading=heading,
+                prompt_payload=prompt_payload,
+                system_prompt=system_prompt,
+                publication_mode=True,
+                argument_graph={"paragraphs": sec_plan_dict.get("paragraphs", ())},
+            )
+        )
+
+    return inputs
+
+
+_build_writer_inputs_v3 = _writer_section_inputs_v3
 
 
 def _writer_section_inputs(
@@ -16548,7 +17055,7 @@ def _write_method_generation_trace(
     out_root: str | Path,
     artifact_paths: Mapping[str, str],
     paths: Mapping[str, str],
-    plan: MethodSectionPlanV2,
+    plan: Any,
     writer: Any,
     writer_inputs: tuple[Any, ...] = (),
     formula_results: tuple[Any, ...] = (),
@@ -16706,7 +17213,7 @@ def _write_method_generation_trace(
             "affected_sections": [section.section_id for section in plan.sections],
             "semantic_delta": {
                 "field_bindings_added": sum(
-                    len(paragraph.required_facet_ids)
+                    len(getattr(paragraph, "required_detail_ids", getattr(paragraph, "required_facet_ids", ())))
                     for section in plan.sections
                     for paragraph in (section.paragraphs or ())
                 ),

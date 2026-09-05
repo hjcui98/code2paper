@@ -87,6 +87,7 @@ def _transaction_has_valid_witnesses(
         )
 
         plan_row = {
+            "required_detail_ids": tuple((required_targets or {}).get("detail", ())),
             "required_facet_ids": tuple((required_targets or {}).get("facet", ())),
             "required_publication_slot_ids": tuple((required_targets or {}).get("slot", ())),
             "required_field_candidate_ids": tuple((required_targets or {}).get("field", ())),
@@ -762,9 +763,233 @@ def write_method_content_trace(
     return trace
 
 
+class MethodContentTraceRowV2(BaseModel):
+    """Unified mechanism-context-first content trace row."""
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    mechanism_id: str
+    detail_id: str
+    order_index: int = 0
+    role: str = ""
+    importance: str = "core"
+    claim_kind: str = "specification"
+    evidence_authority: str = "repository_verified"
+    publication_policy: str = "clean_candidate"
+    active_path_status: str = "active_default"
+
+    source_operation_ids: tuple[str, ...] = Field(default_factory=tuple)
+    source_span_ids: tuple[str, ...] = Field(default_factory=tuple)
+    witness_atom_ids: tuple[str, ...] = Field(default_factory=tuple)
+
+    section_id: str = ""
+    paragraph_id: str = ""
+    formula_package_ids: tuple[str, ...] = Field(default_factory=tuple)
+
+    writer_witnessed: bool = False
+    candidate_included: bool = False
+    verified_status: str = "unverified"
+    terminal_state: str = "planned"
+    content_digest: str = ""
+
+    @model_validator(mode="after")
+    def _digest(self) -> "MethodContentTraceRowV2":
+        if not self.content_digest:
+            payload = self.model_dump(mode="json", exclude={"content_digest"})
+            object.__setattr__(self, "content_digest", _digest(payload))
+        return self
+
+
+class MechanismInformationFunnelV1(BaseModel):
+    """Funnel metrics tracking content survival from Research to Validated."""
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    repo_snapshot_id: str
+    total_research_operations: int = 0
+    total_context_details: int = 0
+    core_context_details: int = 0
+    architect_planned_details: int = 0
+    writer_rendered_details: int = 0
+    candidate_accepted_details: int = 0
+    verified_validated_details: int = 0
+
+    funnel_survival_rates: dict[str, float] = Field(default_factory=dict)
+    content_digest: str = ""
+
+    @model_validator(mode="after")
+    def _compute_digest(self) -> "MechanismInformationFunnelV1":
+        if not self.content_digest:
+            payload = self.model_dump(mode="json", exclude={"content_digest"})
+            object.__setattr__(self, "content_digest", _digest(payload))
+        return self
+
+
+class MethodContentTraceV2(BaseModel):
+    """V2 trace tracking mechanism details across the authoring funnel."""
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    schema_version: str = "2.0"
+    repo_snapshot_id: str
+    project_tree_hash: str = ""
+    context_set_digest: str = ""
+    rows: tuple[MethodContentTraceRowV2, ...]
+    funnel: MechanismInformationFunnelV1 | None = None
+    content_digest: str = ""
+
+    @model_validator(mode="after")
+    def _digest(self) -> "MethodContentTraceV2":
+        if not self.content_digest:
+            payload = self.model_dump(mode="json", exclude={"content_digest"})
+            object.__setattr__(self, "content_digest", _digest(payload))
+        return self
+
+
+def build_method_content_trace_v2(
+    *,
+    contexts: Any,
+    narrative_plan: Any | None = None,
+    paragraph_assessments: Mapping[str, Any] | None = None,
+    verified_detail_ids: set[str] | frozenset[str] = frozenset(),
+) -> MethodContentTraceV2:
+    """Build V2 trace and information funnel from unified mechanism contexts."""
+    assessments = paragraph_assessments or {}
+    detail_placement: dict[str, tuple[str, str]] = {}
+    if narrative_plan is not None:
+        for sec in getattr(narrative_plan, "sections", ()):
+            sec_id = getattr(sec, "section_id", "")
+            for para in getattr(sec, "paragraphs", ()):
+                p_id = getattr(para, "paragraph_id", "")
+                for did in getattr(para, "required_detail_ids", ()):
+                    detail_placement[did] = (sec_id, p_id)
+                for did in getattr(para, "optional_detail_ids", ()):
+                    detail_placement.setdefault(did, (sec_id, p_id))
+
+    rows: list[MethodContentTraceRowV2] = []
+    total_ops = 0
+    total_details = 0
+    core_details = 0
+    planned_details = 0
+    writer_rendered = 0
+    candidate_accepted = 0
+    verified_validated = 0
+
+    for ctx in getattr(contexts, "contexts", ()):
+        closure = getattr(ctx, "evidence_closure", None)
+        if closure is not None:
+            ops = getattr(closure, "operation_nodes", ()) or getattr(closure, "operations", ()) or ()
+            total_ops += len(ops)
+
+        for d in getattr(ctx, "details", ()):
+            total_details += 1
+            is_core = getattr(d, "importance", "") == "core"
+            if is_core:
+                core_details += 1
+
+            did = getattr(d, "detail_id", "")
+            sec_id, p_id = detail_placement.get(did, ("", ""))
+            if sec_id and p_id:
+                planned_details += 1
+
+            assessment = assessments.get(p_id) or assessments.get((sec_id, p_id))
+            witnessed = False
+            p_valid = False
+            if assessment is not None:
+                p_valid = bool(getattr(assessment, "valid", False) if not isinstance(assessment, Mapping) else assessment.get("valid", False))
+                witnessed_by_kind = getattr(assessment, "witnessed_by_kind", {}) if not isinstance(assessment, Mapping) else assessment.get("witnessed_by_kind", {})
+                detail_witnessed = set(witnessed_by_kind.get("detail", ()))
+                witnessed = did in detail_witnessed
+
+            if witnessed:
+                writer_rendered += 1
+            if witnessed and p_valid:
+                candidate_accepted += 1
+
+            is_verified = did in verified_detail_ids
+            if is_verified:
+                verified_validated += 1
+
+            terminal_state = "validated" if is_verified else ("rendered" if witnessed else ("planned" if p_id else "discovered_bound"))
+
+            rows.append(MethodContentTraceRowV2(
+                mechanism_id=getattr(ctx, "mechanism_id", ""),
+                detail_id=did,
+                order_index=int(getattr(d, "order_index", 0)),
+                role=str(getattr(d, "role", "")),
+                importance=str(getattr(d, "importance", "core")),
+                claim_kind=str(getattr(d, "claim_kind", "specification")),
+                evidence_authority=str(getattr(d, "evidence_authority", "repository_verified")),
+                publication_policy=str(getattr(d, "publication_policy", "clean_candidate")),
+                active_path_status=str(getattr(d, "active_path_status", "active_default")),
+                source_operation_ids=tuple(getattr(d, "source_operation_ids", ())),
+                witness_atom_ids=tuple(
+                    getattr(atom, "atom_id", "")
+                    for atom in getattr(d, "witness_atoms", ())
+                    if getattr(atom, "atom_id", "")
+                ),
+                section_id=sec_id,
+                paragraph_id=p_id,
+                writer_witnessed=witnessed,
+                candidate_included=witnessed and p_valid,
+                verified_status="verified" if is_verified else "unverified",
+                terminal_state=terminal_state,
+            ))
+
+    survival_rates: dict[str, float] = {}
+    if total_details > 0:
+        survival_rates["context_to_plan"] = round(planned_details / total_details, 4)
+        survival_rates["plan_to_writer"] = round(writer_rendered / planned_details, 4) if planned_details > 0 else 0.0
+        survival_rates["writer_to_candidate"] = round(candidate_accepted / writer_rendered, 4) if writer_rendered > 0 else 0.0
+        survival_rates["candidate_to_verified"] = round(verified_validated / candidate_accepted, 4) if candidate_accepted > 0 else 0.0
+
+    funnel = MechanismInformationFunnelV1(
+        repo_snapshot_id=str(getattr(contexts, "repo_snapshot_id", "")),
+        total_research_operations=total_ops,
+        total_context_details=total_details,
+        core_context_details=core_details,
+        architect_planned_details=planned_details,
+        writer_rendered_details=writer_rendered,
+        candidate_accepted_details=candidate_accepted,
+        verified_validated_details=verified_validated,
+        funnel_survival_rates=survival_rates,
+    )
+
+    return MethodContentTraceV2(
+        repo_snapshot_id=str(getattr(contexts, "repo_snapshot_id", "")),
+        project_tree_hash=str(getattr(contexts, "project_tree_hash", "")),
+        context_set_digest=str(getattr(contexts, "content_digest", "") or getattr(contexts, "source_context_digest", "")),
+        rows=tuple(rows),
+        funnel=funnel,
+    )
+
+
+def write_method_content_trace_v2(
+    path: str | Path,
+    *,
+    contexts: Any,
+    narrative_plan: Any | None = None,
+    paragraph_assessments: Mapping[str, Any] | None = None,
+    verified_detail_ids: set[str] | frozenset[str] = frozenset(),
+) -> MethodContentTraceV2:
+    """Build and write the V2 trace at ``path``."""
+    trace = build_method_content_trace_v2(
+        contexts=contexts,
+        narrative_plan=narrative_plan,
+        paragraph_assessments=paragraph_assessments,
+        verified_detail_ids=verified_detail_ids,
+    )
+    target = Path(path)
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_text(trace.model_dump_json(indent=2) + "\n", encoding="utf-8")
+    return trace
+
+
 __all__ = [
     "MethodContentTraceRowV1",
     "MethodContentTraceV1",
     "build_method_content_trace_from_artifact_paths",
     "write_method_content_trace",
+    "MethodContentTraceRowV2",
+    "MechanismInformationFunnelV1",
+    "MethodContentTraceV2",
+    "build_method_content_trace_v2",
+    "write_method_content_trace_v2",
 ]

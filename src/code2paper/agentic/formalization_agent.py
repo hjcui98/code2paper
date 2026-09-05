@@ -513,6 +513,446 @@ class SectionFormulaPackageV1(BaseModel):
         return self
 
 
+class MechanismFormulaObligationV1(BaseModel):
+    """Paragraph-independent formula obligation owned by a mechanism and source details."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    obligation_id: str
+    mechanism_id: str
+    source_detail_ids: tuple[str, ...]
+
+    expectation: Literal["required", "preferred", "none"] = "required"
+    mathematical_goal: str
+    claim_kind: Literal["formalization", "specification"] = "formalization"
+    required_evidence_authority: tuple[str, ...] = ("repository_verified",)
+
+    required_operator_signatures: tuple[dict[str, Any], ...] = Field(default_factory=tuple)
+    required_operand_sets: tuple[tuple[str, ...], ...] = Field(default_factory=tuple)
+    required_conditions: tuple[str, ...] = Field(default_factory=tuple)
+    notation_hints: tuple[str, ...] = Field(default_factory=tuple)
+
+    source_facet_ids: tuple[str, ...] = Field(default_factory=tuple)
+    source_obligation_ids: tuple[str, ...] = Field(default_factory=tuple)
+    source_operation_ids: tuple[str, ...] = Field(default_factory=tuple)
+    source_fact_ids: tuple[str, ...] = Field(default_factory=tuple)
+    source_equation_ids: tuple[str, ...] = Field(default_factory=tuple)
+
+    source_context_digest: str = ""
+    content_digest: str = ""
+
+    @model_validator(mode="after")
+    def _compute_digest(self) -> "MechanismFormulaObligationV1":
+        if not self.content_digest:
+            payload = self.model_dump(mode="json", exclude={"content_digest"})
+            object.__setattr__(self, "content_digest", _digest_json(payload))
+        return self
+
+
+class MechanismFormulaPackageV2(BaseModel):
+    """Mechanism-owned mathematical formulation package without paragraph coupling."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    package_id: str
+    mechanism_id: str
+    source_detail_ids: tuple[str, ...]
+    satisfied_obligation_ids: tuple[str, ...]
+
+    latex: str
+    markdown_block: str = ""
+    prose_explanation: str
+    symbol_definitions: tuple[tuple[str, str], ...] = Field(default_factory=tuple)
+    material_conditions: tuple[str, ...] = Field(default_factory=tuple)
+    assumptions: tuple[str, ...] = Field(default_factory=tuple)
+
+    evidence_authority: str = "repository_verified"
+    formula_lane: str = "repository_derived"
+    review_status: str = "accepted"
+    risks: tuple[str, ...] = Field(default_factory=tuple)
+    review_question: str = ""
+
+    bound_operation_ids: tuple[str, ...] = Field(default_factory=tuple)
+    bound_fact_ids: tuple[str, ...] = Field(default_factory=tuple)
+    bound_equation_ids: tuple[str, ...] = Field(default_factory=tuple)
+
+    source_context_digest: str = ""
+    shared_payload_digest: str = ""
+    content_digest: str = ""
+
+    @model_validator(mode="after")
+    def _validate_package(self) -> "MechanismFormulaPackageV2":
+        normalized = normalize_formula_latex_body(self.latex)
+        if normalized != self.latex:
+            object.__setattr__(self, "latex", normalized)
+        if not self.markdown_block:
+            object.__setattr__(self, "markdown_block", canonical_formula_markdown_block(self.latex))
+        if not self.content_digest:
+            payload = self.model_dump(mode="json", exclude={"content_digest"})
+            object.__setattr__(self, "content_digest", _digest_json(payload))
+        return self
+
+
+class FormulaPlacementV1(BaseModel):
+    """Narrative placement of a MechanismFormulaPackageV2 into a specific paragraph."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    package_id: str
+    section_id: str
+    paragraph_id: str
+
+
+def compile_mechanism_formula_obligations(
+    context: Any,
+    *,
+    author_formula_expectations: Sequence[str] = (),
+) -> tuple[MechanismFormulaObligationV1, ...]:
+    """Compile paragraph-independent formula obligations from MechanismContextV1."""
+    mid = getattr(context, "mechanism_id", "")
+    details = getattr(context, "details", ()) or ()
+    formalizable_details = [
+        d for d in details
+        if getattr(d, "formalizable", False)
+        or getattr(d, "role", "") in ("transformation", "training_objective", "inference")
+    ]
+    if not formalizable_details and details:
+        formalizable_details = [d for d in details if getattr(d, "importance", "") == "core"]
+
+    if not formalizable_details:
+        return ()
+
+    target_dids = tuple(d.detail_id for d in formalizable_details)
+    op_ids = tuple(op_id for d in formalizable_details for op_id in getattr(d, "source_operation_ids", ()))
+    fact_ids = tuple(f_id for d in formalizable_details for f_id in getattr(d, "source_fact_ids", ()))
+    conditions = tuple(c for d in formalizable_details for c in getattr(d, "conditions", ()))
+    operand_sets = tuple(getattr(d, "operands", ()) for d in formalizable_details if getattr(d, "operands", ()))
+    predicates = [getattr(d, "predicate", "") for d in formalizable_details if getattr(d, "predicate", "")]
+
+    signatures = [
+        {
+            "predicate": getattr(d, "predicate", ""),
+            "operands": list(getattr(d, "operands", ())),
+            "result": getattr(d, "result", ""),
+        }
+        for d in formalizable_details
+    ]
+    goal = f"Formalize {' and '.join(predicates[:3]) or mid} operations."
+
+    ob = MechanismFormulaObligationV1(
+        obligation_id=f"ob:formula:{mid}",
+        mechanism_id=mid,
+        source_detail_ids=target_dids,
+        expectation="required" if author_formula_expectations else "preferred",
+        mathematical_goal=goal,
+        claim_kind="formalization",
+        required_evidence_authority=("repository_verified",),
+        required_operator_signatures=tuple(signatures),
+        required_operand_sets=operand_sets,
+        required_conditions=conditions,
+        notation_hints=tuple(author_formula_expectations),
+        source_operation_ids=op_ids,
+        source_fact_ids=fact_ids,
+        source_context_digest=getattr(context, "source_context_digest", "") or getattr(context, "content_digest", ""),
+    )
+    return (ob,)
+
+
+def validate_mechanism_formula_package(
+    package: MechanismFormulaPackageV2,
+    *,
+    context: Any,
+    obligation: MechanismFormulaObligationV1 | None = None,
+    shared_payload_digest: str = "",
+) -> list[str]:
+    """Validate MechanismFormulaPackageV2 against context, obligation, and guard constraints."""
+    failures: list[str] = []
+
+    # 1. Digest closures
+    ctx_digest = getattr(context, "source_context_digest", "") or getattr(context, "content_digest", "")
+    if package.source_context_digest and ctx_digest and package.source_context_digest != ctx_digest:
+        failures.append(f"source_context_digest_mismatch: got {package.source_context_digest}, expected {ctx_digest}")
+
+    if shared_payload_digest and package.shared_payload_digest and package.shared_payload_digest != shared_payload_digest:
+        failures.append(f"shared_payload_digest_mismatch: got {package.shared_payload_digest}, expected {shared_payload_digest}")
+
+    # 2. Mechanism ID ownership
+    if package.mechanism_id != getattr(context, "mechanism_id", ""):
+        failures.append(f"mechanism_id_mismatch: package for {package.mechanism_id} but context is {getattr(context, 'mechanism_id', '')}")
+
+    # 3. Source detail IDs & active-path check
+    details_map = {str(getattr(d, "detail_id", "")): d for d in (getattr(context, "details", ()) or ())}
+    for did in package.source_detail_ids:
+        if did not in details_map:
+            failures.append(f"unknown_source_detail_id:{did}")
+        else:
+            d = details_map[did]
+            if getattr(d, "active_path_status", "") in ("inactive_default", "unreachable", "inactive_path"):
+                failures.append(f"inactive_path_detail_promoted:{did}")
+
+    # 4. Bound operation IDs & active-path check
+    closure = getattr(context, "evidence_closure", None)
+    ops_map = {
+        str(getattr(op, "operation_id", "")): op
+        for op in (getattr(closure, "operation_nodes", ()) or getattr(closure, "operations", ()) or ())
+    }
+    for op_id in package.bound_operation_ids:
+        if op_id in ops_map:
+            op = ops_map[op_id]
+            if getattr(op, "active_path_status", "") in ("inactive_default", "unreachable", "inactive_path"):
+                failures.append(f"inactive_path_operation_promoted:{op_id}")
+
+    # 5. Latex cleanliness and code plumbing guards
+    latex = package.latex or ""
+    forbidden_code_plumbing = (
+        r"\btorch\.", r"\bnn\.Module\b", r"\bself\.", r"\.forward\(",
+        r"\bimport\b", r"\bdef\s+", r"\breturn\s+", r"\.to\(",
+        r"\.detach\(", r"\.cpu\(", r"\.cuda\(", r"\.numpy\(",
+    )
+    for pattern in forbidden_code_plumbing:
+        if re.search(pattern, latex, flags=re.IGNORECASE):
+            failures.append("formula_contains_unrendered_code")
+            break
+
+    # 6. Obligation operator, operand, and condition guards
+    if obligation is not None:
+        for sig in obligation.required_operator_signatures:
+            pred = str(sig.get("predicate") or "").strip().lower()
+            if pred and pred not in latex.lower():
+                normalized_pred = re.sub(r"^(run|compute|calc)_", "", pred)
+                if normalized_pred and normalized_pred not in latex.lower():
+                    operator_equivs = {
+                        "loss": ("loss", r"\mathcal{l}", "l("),
+                        "cross_entropy": ("log", "sum", "ce"),
+                        "infonce": ("exp", "sim", "log"),
+                        "matmul": ("@", r"\cdot", r"\times"),
+                        "normalize": ("norm", r"\|", r"\hat"),
+                    }
+                    if not any(eq in latex.lower() for eq in operator_equivs.get(normalized_pred, ())):
+                        failures.append(f"missing_required_operator:{pred}")
+
+        for cond in obligation.required_conditions:
+            if cond and (cond not in package.material_conditions and cond not in latex):
+                failures.append(f"missing_required_condition:{cond}")
+
+    return failures
+
+
+def build_deterministic_mechanism_formula_packages(
+    *,
+    context: Any,
+    obligations: tuple[MechanismFormulaObligationV1, ...] | list[MechanismFormulaObligationV1] = (),
+    shared_payload_digest: str = "",
+) -> tuple[MechanismFormulaPackageV2, ...]:
+    """Compile conservative, fact-backed formula packages strictly within one mechanism context."""
+    packages: list[MechanismFormulaPackageV2] = []
+    closure = getattr(context, "evidence_closure", None)
+    if closure is None:
+        return ()
+
+    ops = tuple(getattr(closure, "operation_nodes", ()) or getattr(closure, "operations", ()) or ())
+    ops_by_id = {str(getattr(op, "operation_id", "")): op for op in ops}
+    details = tuple(getattr(context, "details", ()) or ())
+    details_by_id = {str(getattr(d, "detail_id", "")): d for d in details}
+
+    ctx_digest = getattr(context, "source_context_digest", "") or getattr(context, "content_digest", "")
+
+    for ob in obligations:
+        matched_ops: list[Any] = []
+        candidate_op_ids: list[str] = list(ob.source_operation_ids)
+        for did in ob.source_detail_ids:
+            if did in details_by_id:
+                candidate_op_ids.extend(getattr(details_by_id[did], "source_operation_ids", ()))
+
+        for op_id in dict.fromkeys(candidate_op_ids):
+            if op_id in ops_by_id:
+                op = ops_by_id[op_id]
+                if getattr(op, "active_path_status", "") not in ("inactive_default", "unreachable", "inactive_path"):
+                    matched_ops.append(op)
+
+        if not matched_ops:
+            continue
+
+        primary_op = matched_ops[0]
+        operands = tuple(getattr(primary_op, "operands", ()) or ())
+        result = str(getattr(primary_op, "result", "") or "y").strip()
+        predicate = str(getattr(primary_op, "predicate", "") or "").strip()
+
+        if operands and result:
+            op_str = f"\\operatorname{{{predicate}}}" if predicate else ""
+            if op_str:
+                latex = f"{result} = {op_str}({', '.join(operands)})"
+            else:
+                latex = f"{result} = {' + '.join(operands)}"
+        elif getattr(primary_op, "exact_excerpt", ""):
+            raw = getattr(primary_op, "exact_excerpt", "").strip()
+            cleaned = re.sub(r"#.*$", "", raw).strip()
+            latex = normalize_formula_latex_body(cleaned)
+        else:
+            latex = f"{result} = \\operatorname{{{predicate or 'f'}}}(x)"
+
+        symbol_defs = tuple(
+            (opnd, f"Input operand {opnd}")
+            for opnd in operands
+        ) + ((result, "Output result"),)
+
+        pkg = MechanismFormulaPackageV2(
+            package_id=f"pkg:formula:{getattr(context, 'mechanism_id', '')}:{ob.obligation_id}",
+            mechanism_id=getattr(context, "mechanism_id", ""),
+            source_detail_ids=ob.source_detail_ids,
+            satisfied_obligation_ids=(ob.obligation_id,),
+            latex=latex,
+            prose_explanation=f"Computes {result} via {predicate} applied to {', '.join(operands) if operands else 'inputs'}.",
+            symbol_definitions=symbol_defs,
+            material_conditions=ob.required_conditions,
+            evidence_authority="repository_verified",
+            formula_lane="repository_derived",
+            review_status="accepted",
+            bound_operation_ids=tuple(str(getattr(op, "operation_id", "")) for op in matched_ops),
+            bound_fact_ids=tuple(ob.source_fact_ids),
+            source_context_digest=ctx_digest,
+            shared_payload_digest=shared_payload_digest,
+        )
+
+        failures = validate_mechanism_formula_package(
+            pkg,
+            context=context,
+            obligation=ob,
+            shared_payload_digest=shared_payload_digest,
+        )
+        if not failures:
+            packages.append(pkg)
+
+    return tuple(packages)
+
+
+def adapt_mechanism_formula_package_to_legacy(
+    package: MechanismFormulaPackageV2,
+    *,
+    section_id: str,
+    consumer_paragraph_id: str = "",
+) -> SectionFormulaPackageV1:
+    """Legacy-compatible sidecar adapter converting MechanismFormulaPackageV2 to SectionFormulaPackageV1."""
+    return SectionFormulaPackageV1(
+        package_id=package.package_id,
+        section_id=section_id,
+        consumer_paragraph_id=consumer_paragraph_id,
+        satisfied_obligation_ids=package.satisfied_obligation_ids,
+        obligation_id=package.satisfied_obligation_ids[0] if len(package.satisfied_obligation_ids) == 1 else "",
+        purpose=package.prose_explanation or f"Formalization for {package.mechanism_id}",
+        latex=package.latex,
+        prose_explanation=package.prose_explanation,
+        markdown_block=package.markdown_block,
+        symbol_definitions=package.symbol_definitions,
+        material_conditions=package.material_conditions,
+        assumptions=package.assumptions,
+        authority_status="code_verified" if package.evidence_authority == "repository_verified" else "author_intent",
+        formula_lane="repository_derived" if package.formula_lane == "repository_derived" else "author_intent_academic",
+        review_status="accepted" if package.review_status == "accepted" else "review_required",
+        bound_fact_ids=package.bound_fact_ids or ("fact:verified",),
+        bound_equation_ids=package.bound_equation_ids,
+        risks=package.risks,
+        review_question=package.review_question,
+    )
+
+
+def run_mechanism_formalizer(
+    *,
+    context: Any,
+    obligations: tuple[MechanismFormulaObligationV1, ...],
+    shared_payload: str = "",
+    shared_payload_digest: str = "",
+    llm_config: Any | None = None,
+    caller: Callable[[Any, Any], Any] | None = None,
+    author_notation_hints: tuple[str, ...] = (),
+) -> tuple[tuple[MechanismFormulaPackageV2, ...], dict[str, Any]]:
+    """Execute Formalizer scoped strictly to one mechanism context and its obligations.
+
+    Ensures zero cross-section/cross-mechanism fallback.
+    """
+    call_trace: dict[str, Any] = {
+        "mechanism_id": getattr(context, "mechanism_id", ""),
+        "obligations_count": len(obligations),
+        "deterministic_packages": 0,
+        "llm_packages": 0,
+        "rejected_packages": 0,
+        "failures": [],
+    }
+
+    deterministic_pkgs = build_deterministic_mechanism_formula_packages(
+        context=context,
+        obligations=obligations,
+        shared_payload_digest=shared_payload_digest,
+    )
+    call_trace["deterministic_packages"] = len(deterministic_pkgs)
+    satisfied_ob_ids = {
+        ob_id
+        for pkg in deterministic_pkgs
+        for ob_id in pkg.satisfied_obligation_ids
+    }
+
+    remaining_obligations = [
+        ob for ob in obligations
+        if ob.obligation_id not in satisfied_ob_ids
+        and ob.expectation in ("required", "preferred")
+    ]
+
+    accepted_packages = list(deterministic_pkgs)
+
+    if remaining_obligations and caller is not None and llm_config is not None:
+        for ob in remaining_obligations:
+            prompt = (
+                f"You are the Method Formalizer. Formalize the following mechanism mathematically.\n"
+                f"Mechanism ID: {getattr(context, 'mechanism_id', '')}\n"
+                f"Mathematical Goal: {ob.mathematical_goal}\n"
+                f"Required operators: {ob.required_operator_signatures}\n"
+                f"Required conditions: {ob.required_conditions}\n"
+                f"Author notation hints: {author_notation_hints or ob.notation_hints}\n"
+                f"Mechanism Context Slice:\n{shared_payload}\n"
+                f"Return a valid JSON object with keys: latex, prose_explanation, symbol_definitions (list of [symbol, meaning]), material_conditions."
+            )
+            try:
+                from code2paper.llm.client import LLMRequest
+                from code2paper.llm.response_schemas import _loads_json_or_extract_object
+                response = caller(llm_config, LLMRequest(prompt=prompt))
+                call_trace["llm_call_made"] = True
+                parsed = _loads_json_or_extract_object(response.content if hasattr(response, "content") else str(response))
+                if isinstance(parsed, dict) and "latex" in parsed:
+                    pkg = MechanismFormulaPackageV2(
+                        package_id=f"pkg:formula:llm:{getattr(context, 'mechanism_id', '')}:{ob.obligation_id}",
+                        mechanism_id=getattr(context, "mechanism_id", ""),
+                        source_detail_ids=ob.source_detail_ids,
+                        satisfied_obligation_ids=(ob.obligation_id,),
+                        latex=str(parsed["latex"]),
+                        prose_explanation=str(parsed.get("prose_explanation", "")),
+                        symbol_definitions=tuple(tuple(item) for item in parsed.get("symbol_definitions", ())),
+                        material_conditions=tuple(str(c) for c in parsed.get("material_conditions", ())),
+                        evidence_authority="repository_verified",
+                        formula_lane="repository_derived",
+                        review_status="accepted",
+                        bound_operation_ids=tuple(ob.source_operation_ids),
+                        bound_fact_ids=tuple(ob.source_fact_ids),
+                        source_context_digest=getattr(context, "source_context_digest", "") or getattr(context, "content_digest", ""),
+                        shared_payload_digest=shared_payload_digest,
+                    )
+                    failures = validate_mechanism_formula_package(
+                        pkg,
+                        context=context,
+                        obligation=ob,
+                        shared_payload_digest=shared_payload_digest,
+                    )
+                    if not failures:
+                        accepted_packages.append(pkg)
+                        call_trace["llm_packages"] += 1
+                    else:
+                        call_trace["rejected_packages"] += 1
+                        call_trace["failures"].extend(failures)
+            except Exception as exc:
+                call_trace["failures"].append(f"llm_error:{str(exc)}")
+
+    return tuple(accepted_packages), call_trace
+
+
 class SectionFormulaDispositionV1(BaseModel):
     """Typed disposition when a section receives no accepted formula package.
 
@@ -938,6 +1378,67 @@ def _operation_rows(value: Any) -> tuple[Mapping[str, Any], ...]:
     return tuple(rows)
 
 
+_ABBREVIATION_EXPANSIONS: dict[str, set[str]] = {
+    "adj": {"adjacency", "adjacent"},
+    "ppr": {"personalized", "pagerank", "page", "rank"},
+    "prob": {"probability"},
+    "ssm": {"state", "space"},
+    "ffn": {"feed", "forward"},
+    "mlp": {"multilayer", "perceptron"},
+    "infonce": {"info", "nce", "contrastive"},
+    "emb": {"embedding"},
+    "embs": {"embeddings"},
+    "embed": {"embedding"},
+    "embeds": {"embeddings"},
+    "dim": {"dimension"},
+    "dims": {"dimensions"},
+    "pos": {"position", "positional"},
+    "seq": {"sequence"},
+    "len": {"length"},
+    "idx": {"index"},
+    "indices": {"index"},
+    "src": {"source"},
+    "dst": {"destination"},
+    "pred": {"prediction", "predictor"},
+    "attn": {"attention"},
+    "proj": {"projection"},
+    "norm": {"normalization", "normalize"},
+    "sim": {"similarity"},
+    "temp": {"temperature"},
+    "dist": {"distance", "distribution"},
+    "rep": {"representation"},
+    "reps": {"representations"},
+    "init": {"initialization", "initialize"},
+    "param": {"parameter"},
+    "params": {"parameters"},
+    "feat": {"feature"},
+    "feats": {"features"},
+    "res": {"residual"},
+    "logits": {"logit"},
+    "cat": {"concat", "concatenation"},
+    "ctx": {"context"},
+    "doc": {"document"},
+    "docs": {"documents"},
+    "sent": {"sentence"},
+    "sents": {"sentences"},
+    "ent": {"entity"},
+    "ents": {"entities"},
+}
+
+_PLUMBING_PATTERN = re.compile(
+    r"\b(rearrange|unsqueeze|squeeze|contiguous|detach|clone|to\s*\(dtype=|\.to\s*\(|type_as|permute|transpose)\b",
+    flags=re.IGNORECASE,
+)
+
+
+def _is_operation_implementation_plumbing(text: str) -> bool:
+    """Detect implementation plumbing expressions (e.g. rearrange, dtype cast)."""
+    s = str(text or "").strip()
+    if not s:
+        return False
+    return bool(_PLUMBING_PATTERN.search(s))
+
+
 def _operation_binding_tokens(value: Any) -> set[str]:
     """Extract conservative semantic tokens for an operand/condition binding."""
 
@@ -957,6 +1458,13 @@ def _operation_binding_tokens(value: Any) -> set[str]:
         for part in re.split(r"[_\-]+|(?<=[a-z])(?=[A-Z])", token):
             if part:
                 tokens.add(part)
+        for prefix in ("run_", "compute_", "calculate_", "calc_", "get_", "eval_", "estimate_", "apply_"):
+            if token.startswith(prefix) and len(token) > len(prefix):
+                stem = token[len(prefix):]
+                tokens.add(stem)
+                for part in re.split(r"[_\-]+|(?<=[a-z])(?=[A-Z])", stem):
+                    if part:
+                        tokens.add(part)
         for suffix in (
             "ization", "isation", "ation", "tion", "ment", "ing",
             "ers", "er", "ed", "es", "s",
@@ -964,26 +1472,39 @@ def _operation_binding_tokens(value: Any) -> set[str]:
             if token.endswith(suffix) and len(token) - len(suffix) >= 4:
                 tokens.add(token[:-len(suffix)])
                 break
+
+    expanded: set[str] = set(tokens)
+    for t in tokens:
+        if t in _ABBREVIATION_EXPANSIONS:
+            expanded.update(_ABBREVIATION_EXPANSIONS[t])
+
     return {
-        token for token in tokens
+        token for token in expanded
         if token not in _OPERATION_BINDING_STOPWORDS
     }
 
 
 def _operation_binding_values(value: Any) -> tuple[str, ...]:
-    if isinstance(value, str):
-        return (value.strip(),) if value.strip() else ()
-    if value is None or isinstance(value, Mapping):
+    if value is None:
         return ()
+    if isinstance(value, str):
+        return (value.strip(),) if value.strip() and value.strip() != "None" else ()
+    if isinstance(value, Mapping):
+        return tuple(dict.fromkeys(
+            str(item).strip()
+            for key in ("result", "output", "operation", "call", "symbol", "name")
+            for item in _operation_binding_values(value.get(key))
+            if str(item).strip() and str(item).strip() != "None"
+        ))
     try:
         return tuple(
             str(item).strip()
             for item in value
-            if str(item).strip()
+            if str(item).strip() and str(item).strip() != "None"
         )
     except TypeError:
         text = str(value).strip()
-        return (text,) if text else ()
+        return (text,) if text and text != "None" else ()
 
 
 def _operation_binding_surface(package: SectionFormulaPackageV1) -> tuple[str, set[str], tuple[tuple[str, set[str]], ...]]:
@@ -1052,18 +1573,37 @@ def _operation_callable_is_rendered(value: str, latex: str) -> bool:
     terminal = str(value or "").strip().rsplit(".", 1)[-1].casefold()
     if not terminal:
         return False
+    clean_terminal = re.sub(r"^(run_|compute_|calculate_|calc_|get_|eval_|estimate_|apply_)", "", terminal)
     aliases = {
         "cat": "concat",
         "concatenate": "concat",
         "argsort": "sort",
         "logsumexp": "logsumexp",
     }
-    operator = aliases.get(terminal, terminal)
-    return bool(re.search(
-        r"\\operatorname\{" + re.escape(operator) + r"\}",
-        str(latex or ""),
-        flags=re.IGNORECASE,
-    ))
+    candidates = {terminal, clean_terminal}
+    for cand in list(candidates):
+        if cand in aliases:
+            candidates.add(aliases[cand])
+    for operator in candidates:
+        if re.search(
+            r"\\operatorname\{" + re.escape(operator) + r"\}",
+            str(latex or ""),
+            flags=re.IGNORECASE,
+        ):
+            return True
+        if re.search(
+            r"\\mathrm\{" + re.escape(operator) + r"\}",
+            str(latex or ""),
+            flags=re.IGNORECASE,
+        ):
+            return True
+        if re.search(
+            r"\b" + re.escape(operator) + r"\b",
+            str(latex or ""),
+            flags=re.IGNORECASE,
+        ):
+            return True
+    return False
 
 
 def _operation_source_conditions(packs: tuple[Any, ...]) -> tuple[str, ...]:
@@ -1073,7 +1613,7 @@ def _operation_source_conditions(packs: tuple[Any, ...]) -> tuple[str, ...]:
             str(item).strip()
             for item in ((pack.get("preconditions", ()) if isinstance(pack, Mapping)
                           else getattr(pack, "preconditions", ())) or ())
-            if str(item).strip()
+            if str(item).strip() and not _is_operation_implementation_plumbing(item)
         )
         for atom in _operation_rows(pack):
             conditions.extend(
@@ -1082,7 +1622,7 @@ def _operation_source_conditions(packs: tuple[Any, ...]) -> tuple[str, ...]:
                     *_operation_binding_values(atom.get("conditions")),
                     *_operation_binding_values(atom.get("guard")),
                 )
-                if str(item).strip()
+                if str(item).strip() and not _is_operation_implementation_plumbing(item)
             )
     return tuple(dict.fromkeys(conditions))
 
@@ -1095,7 +1635,7 @@ def _operation_source_shapes(packs: tuple[Any, ...]) -> tuple[str, ...]:
             for item in ((pack.get("shape_or_type_hints", ())
                           if isinstance(pack, Mapping)
                           else getattr(pack, "shape_or_type_hints", ())) or ())
-            if str(item).strip()
+            if str(item).strip() and not _is_operation_implementation_plumbing(item)
         )
         for atom in _operation_rows(pack):
             shapes.extend(
@@ -1105,7 +1645,7 @@ def _operation_source_shapes(packs: tuple[Any, ...]) -> tuple[str, ...]:
                     or atom.get("shape_hints")
                     or atom.get("types")
                 )
-                if str(item).strip()
+                if str(item).strip() and not _is_operation_implementation_plumbing(item)
             )
     return tuple(dict.fromkeys(shapes))
 
@@ -3801,6 +4341,10 @@ __all__ = [
     "FormulaLaneV1",
     "FormulaReviewStatusV1",
     "MethodFormulaObligationV2",
+    "MechanismFormulaObligationV1",
+    "MechanismFormulaPackageV2",
+    "FormulaPlacementV1",
+    "compile_mechanism_formula_obligations",
     "MechanismEquationEvidencePackV1",
     "FormalizationSectionResultV1",
     "SectionFormulaDispositionV1",
@@ -3826,4 +4370,8 @@ __all__ = [
     "validate_formalization_proposal",
     "validate_section_formalizer_response",
     "validate_section_formula_package",
+    "validate_mechanism_formula_package",
+    "build_deterministic_mechanism_formula_packages",
+    "adapt_mechanism_formula_package_to_legacy",
+    "run_mechanism_formalizer",
 ]

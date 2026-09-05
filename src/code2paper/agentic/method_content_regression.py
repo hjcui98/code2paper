@@ -18,6 +18,11 @@ class MethodContentUnitFixtureV1(BaseModel):
 
     unit_id: str
     required_alias_groups: tuple[tuple[str, ...], ...]
+    source: str = "current_repo_trace"
+    repo_snapshot_sha: str = "a7c10318e0edd554533962d1ce6159ce51751291"
+    repo_verifiable: bool = True
+    active_path_status: str = "active"
+    runtime_authority: str = "diagnostic_non_authorizing"
 
 
 class MethodContentProjectFixtureV1(BaseModel):
@@ -135,6 +140,11 @@ class MethodAuthoringOracleUnitV1(BaseModel):
     formula_alias_groups: tuple[tuple[str, ...], ...] = ()
     require_display_math: bool = False
     polarity: str = ""
+    source: str = "current_repo_trace"
+    repo_snapshot_sha: str = "a7c10318e0edd554533962d1ce6159ce51751291"
+    repo_verifiable: bool = True
+    active_path_status: str = "active"
+    runtime_authority: str = "diagnostic_non_authorizing"
 
 
 class MethodAuthoringOracleProjectV1(BaseModel):
@@ -452,6 +462,138 @@ def _oracle_polarity_ok(haystack: str, polarity: str) -> bool:
     return True
 
 
+def evaluate_mechanism_detail_recall(
+    contexts: Any,
+    rendered_text: str,
+) -> dict[str, Any]:
+    """Measure recall of mechanism details in rendered text (diagnostic only)."""
+    haystack = str(rendered_text or "").lower()
+    all_details = [
+        d for ctx in getattr(contexts, "contexts", ())
+        for d in getattr(ctx, "details", ())
+    ]
+    core_details = [d for d in all_details if getattr(d, "importance", "") == "core"]
+    supporting_details = [d for d in all_details if getattr(d, "importance", "") == "supporting"]
+
+    def _is_covered(d: Any) -> bool:
+        anchor = getattr(d, "semantic_atom", "") or getattr(d, "predicate", "")
+        if not anchor:
+            return False
+        tokens = [t.lower() for t in re.findall(r"\w+", anchor) if len(t) > 3]
+        if not tokens:
+            return True
+        return sum(1 for t in tokens if t in haystack) >= max(1, len(tokens) // 2)
+
+    core_covered = sum(1 for d in core_details if _is_covered(d))
+    supp_covered = sum(1 for d in supporting_details if _is_covered(d))
+
+    return {
+        "core_detail_count": len(core_details),
+        "core_detail_covered": core_covered,
+        "core_detail_recall": core_covered / len(core_details) if core_details else 1.0,
+        "supporting_detail_count": len(supporting_details),
+        "supporting_detail_covered": supp_covered,
+        "supporting_detail_recall": supp_covered / len(supporting_details) if supporting_details else 1.0,
+    }
+
+
+def evaluate_context_writer_delivery(
+    contexts: Any,
+    writer_views: tuple[Any, ...] | Any,
+) -> dict[str, Any]:
+    """Verify that all core details in contexts reached writer shared views without loss."""
+    all_core = {
+        d.detail_id
+        for ctx in getattr(contexts, "contexts", ())
+        for d in getattr(ctx, "details", ())
+        if getattr(d, "importance", "") == "core" and getattr(d, "publication_policy", "") == "clean_candidate"
+    }
+    views = writer_views if isinstance(writer_views, (tuple, list)) else (writer_views,)
+    delivered_details: set[str] = set()
+    for v in views:
+        for d in getattr(v, "ordered_details", ()):
+            if isinstance(d, Mapping):
+                did = str(d.get("detail_id") or "")
+            else:
+                did = getattr(d, "detail_id", "")
+            if did:
+                delivered_details.add(did)
+
+    missing_core = all_core - delivered_details
+    core_count = len(all_core)
+    delivered_core = core_count - len(missing_core)
+    loss_rate = len(missing_core) / core_count if core_count else 0.0
+
+    return {
+        "context_core_count": core_count,
+        "delivered_core_count": delivered_core,
+        "missing_core_ids": tuple(sorted(missing_core)),
+        "context_to_writer_core_loss_rate": loss_rate,
+        "delivery_complete": len(missing_core) == 0,
+    }
+
+
+def evaluate_mechanism_contamination(
+    contexts: Any,
+    rendered_sections: Mapping[str, str],
+) -> dict[str, Any]:
+    """Detect cross-mechanism operator/concept leakage across distinct sections."""
+    contamination_events: list[dict[str, Any]] = []
+    mech_tokens: dict[str, set[str]] = {}
+    for ctx in getattr(contexts, "contexts", ()):
+        mid = getattr(ctx, "mechanism_id", "")
+        tokens = {
+            t.lower()
+            for d in getattr(ctx, "details", ())
+            for t in re.findall(r"\w+", getattr(d, "predicate", "") + " " + getattr(d, "semantic_atom", ""))
+            if len(t) > 4
+        }
+        mech_tokens[mid] = tokens
+
+    mech_list = list(mech_tokens.keys())
+    for i, m1 in enumerate(mech_list):
+        for m2 in mech_list[i + 1:]:
+            s1_text = rendered_sections.get(m1, "").lower()
+            unique_to_m2 = mech_tokens[m2] - mech_tokens[m1]
+            leaked = [t for t in unique_to_m2 if t in s1_text]
+            if len(leaked) >= 3:
+                contamination_events.append({
+                    "mechanism_section": m1,
+                    "foreign_mechanism": m2,
+                    "leaked_tokens": leaked[:5],
+                })
+
+    return {
+        "contamination_event_count": len(contamination_events),
+        "contamination_events": tuple(contamination_events),
+        "cross_mechanism_contamination_free": len(contamination_events) == 0,
+    }
+
+
+def evaluate_formula_fidelity(
+    packages: tuple[Any, ...],
+    contexts: Any,
+) -> dict[str, Any]:
+    """Check formula fidelity against mechanism contexts."""
+    known_mechs = {getattr(ctx, "mechanism_id", "") for ctx in getattr(contexts, "contexts", ())}
+    valid_pkgs = 0
+    mismatches: list[str] = []
+    for pkg in packages:
+        mid = getattr(pkg, "mechanism_id", "")
+        if mid and known_mechs and mid not in known_mechs:
+            mismatches.append(f"package {getattr(pkg, 'package_id', '')} references unknown mechanism {mid}")
+        else:
+            valid_pkgs += 1
+
+    return {
+        "package_count": len(packages),
+        "valid_package_count": valid_pkgs,
+        "mismatch_count": len(mismatches),
+        "mismatches": tuple(mismatches),
+        "formula_fidelity_ok": len(mismatches) == 0,
+    }
+
+
 __all__ = [
     "MethodAuthoringOracleProjectV1",
     "MethodAuthoringOracleReportV1",
@@ -467,6 +609,10 @@ __all__ = [
     "MethodSynthesisProjectBaselineV1",
     "MethodSynthesisBaselineV1",
     "build_python_behavior_inventory",
+    "evaluate_context_writer_delivery",
+    "evaluate_formula_fidelity",
+    "evaluate_mechanism_contamination",
+    "evaluate_mechanism_detail_recall",
     "evaluate_method_authoring_oracle",
     "evaluate_method_content_artifacts",
     "load_method_authoring_oracle",

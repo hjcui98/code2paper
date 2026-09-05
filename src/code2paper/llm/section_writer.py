@@ -1165,6 +1165,26 @@ def _llm_visible_section_payload(section: WriterSectionInput) -> dict[str, Any]:
     IDs and move proofs are harness-private.
     """
 
+    shared_contexts = section.prompt_payload.get("shared_contexts") or section.prompt_payload.get("shared_mechanism_contexts")
+    if shared_contexts:
+        result: dict[str, Any] = {
+            "section_id": section.prompt_payload.get("section_id", section.section_id),
+            "heading": section.prompt_payload.get("heading", section.heading),
+            "narrative_plan": section.prompt_payload.get("narrative_plan"),
+            "shared_contexts": shared_contexts,
+            "formula_packages": section.prompt_payload.get("formula_packages", ()),
+        }
+        for key in (
+            "repair_feedback",
+            "writer_section_repair",
+            "previous_attempt_error",
+            "previous_attempt_section_markdown",
+            "callback_owner_retry_instruction",
+        ):
+            if key in section.prompt_payload:
+                result[key] = section.prompt_payload[key]
+        return result
+
     v2_packets = section.prompt_payload.get("authoring_packets_v2")
     if v2_packets:
         # Slice 3: the V2 packet is the single Writer organization surface.
