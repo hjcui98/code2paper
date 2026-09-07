@@ -6,6 +6,13 @@
 
 ## 当前状态
 
+- [十项目 Method 信息缺失根因、Unified Context 设计修订与优化执行方案（2026-09-06）](code2paper_unified_mechanism_context_quality_failure_diagnosis_and_optimization_execution_plan_2026-09-06.md)：
+  基于 GPU 1 十项目原文、代码、Research trace、中间 IR、Candidate/Verified 和关键日志，确认
+  本轮真实入口均未启用 unified、七项目 callback 命中同一未定义 digest helper、作者意图虽在
+  九项目形成 213 个 facet 但完整代码蕴含为 0。本文保留 Unified Mechanism Context 主方向，
+  新增 run/source/promotion/mechanism/formula/page-delivery 五类合同，并把执行顺序改为先修真实
+  接线与 offline reconstruction，再做 scope、Research、context、formula、Writer 和十项目 live
+  验收；不放宽 Verified 硬门，也不把原论文变成 implementation authority。
 - [Method Authoring 原文可推断性、公式丢失根因与下一阶段执行计划（2026-08-29）](method_authoring_original_equivalence_diagnosis_and_next_execution_plan_2026-08-29.md)：
   对照 EBCAR、DyG-Mamba、LinearRAG 原文、作者意图、真实代码、人工盲测和 8006 最终产物，
   区分可直接恢复、代码等价推导、意图/纸码差异和不可授权效果；确认真实 dossier/derivation

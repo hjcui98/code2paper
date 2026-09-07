@@ -65,11 +65,17 @@ from code2paper.agentic.research_models import (
     ResearchToolCallV1,
     empty_quality_state,
 )
+from code2paper.agentic.intent_ledger import (
+    IntentCoverageScheduler,
+    IntentImplementationLedgerV1,
+    build_intent_implementation_ledger,
+)
 from code2paper.agentic.implementation_scope import (
     build_candidate_acquisition_ledger,
     infer_implementation_scope,
     seed_child_candidates_from_parents,
 )
+from code2paper.agentic.research_promotion import build_observation_promotion_ledger
 from code2paper.agentic.research_nodes import (
     BudgetPolicyV1,
     DEFAULT_BUDGET_POLICY,
@@ -295,6 +301,76 @@ def _store_evidence_sidecar(
     )
 
 
+def _record_intent_compile_event(
+    loop: "ResearchLoopState",
+    payload: dict[str, Any] | None,
+) -> None:
+    """Record information gain at every compile boundary.
+
+    The intent scheduler must be able to distinguish a real promotion from a
+    repeated ``COMPILE_EVIDENCE`` route.  Counts are computed from the
+    canonical packet/fact objects and never from a claimed status string.
+    """
+
+    if payload is None:
+        loop.intent_compile_events.append({
+            "new_spans_count": 0,
+            "new_facts_count": 0,
+            "new_operations_count": 0,
+            "has_coverage_gain": False,
+        })
+        return
+    obligation_id = str(payload.get("obligation_id") or "")
+    current = loop.compiled_evidence.get(obligation_id)
+    old_fact_ids = {
+        str(getattr(item, "fact_id", ""))
+        for item in (getattr(getattr(current, "fact_set", None), "facts", ()) or ())
+        if str(getattr(item, "fact_id", ""))
+    }
+    old_span_ids = {
+        str(getattr(span, "span_id", ""))
+        for packet in (getattr(getattr(current, "packet_set", None), "packets", ()) or ())
+        for span in (getattr(packet, "spans", ()) or ())
+        if str(getattr(span, "span_id", ""))
+    }
+    fact_ids = {
+        str(getattr(item, "fact_id", ""))
+        for item in (getattr(getattr(payload, "fact_set", None), "facts", ()) or ())
+        if str(getattr(item, "fact_id", ""))
+    }
+    packet_spans = {
+        str(getattr(span, "span_id", ""))
+        for packet in (getattr(getattr(payload, "packet_set", None), "packets", ()) or ())
+        for span in (getattr(packet, "spans", ()) or ())
+        if str(getattr(span, "span_id", ""))
+    }
+    # ``payload`` is a dict but its evidence values are model objects.
+    if not fact_ids:
+        fact_set = payload.get("fact_set")
+        fact_ids = {
+            str(getattr(item, "fact_id", ""))
+            for item in (getattr(fact_set, "facts", ()) or ())
+            if str(getattr(item, "fact_id", ""))
+        }
+    if not packet_spans:
+        packet_set = payload.get("packet_set")
+        packet_spans = {
+            str(getattr(span, "span_id", ""))
+            for packet in (getattr(packet_set, "packets", ()) or ())
+            for span in (getattr(packet, "spans", ()) or ())
+            if str(getattr(span, "span_id", ""))
+        }
+    new_facts = fact_ids - old_fact_ids
+    new_spans = packet_spans - old_span_ids
+    loop.intent_compile_events.append({
+        "obligation_id": obligation_id,
+        "new_spans_count": len(new_spans),
+        "new_facts_count": len(new_facts),
+        "new_operations_count": 0,
+        "has_coverage_gain": bool(new_facts or new_spans),
+    })
+
+
 def _sidecar_digest(payload: Any) -> str:
     encoded = json.dumps(
         payload,
@@ -361,6 +437,9 @@ class LoopStateSnapshot(BaseModel):
     implementation_scope: dict[str, Any] = Field(default_factory=dict)
     implementation_scope_symbols: list[dict[str, Any]] = Field(default_factory=list)
     candidate_acquisition_ledger: dict[str, Any] = Field(default_factory=dict)
+    intent_implementation_ledger: dict[str, Any] = Field(default_factory=dict)
+    intent_schedule: dict[str, Any] = Field(default_factory=dict)
+    intent_compile_events: list[dict[str, Any]] = Field(default_factory=list)
 
     def to_state_dict(self) -> dict[str, Any]:
         """Return a JSON-serializable dict for LangGraph state channels."""
@@ -400,6 +479,12 @@ def snapshot_loop_state(loop: "ResearchLoopState") -> dict[str, Any]:
         "implementation_scope": loop.implementation_scope.model_dump(mode="json"),
         "implementation_scope_symbols": list(loop.implementation_scope_symbols),
         "candidate_acquisition_ledger": loop.candidate_acquisition_ledger.model_dump(mode="json"),
+        "intent_implementation_ledger": (
+            loop.intent_implementation_ledger.model_dump(mode="json")
+            if loop.intent_implementation_ledger is not None else {}
+        ),
+        "intent_schedule": dict(loop.intent_schedule or {}),
+        "intent_compile_events": list(loop.intent_compile_events or ()),
     }
     payload_ref, payload_digest = _write_immutable_loop_payload(
         loop.runtime,
@@ -626,6 +711,27 @@ def restore_loop_state_from_snapshot(
         except Exception as exc:
             if strict:
                 raise ValueError("invalid_loop_state_snapshot:candidate_acquisition_ledger") from exc
+    intent_payload = immutable.get("intent_implementation_ledger") or snapshot.intent_implementation_ledger
+    if intent_payload:
+        try:
+            loop.intent_implementation_ledger = IntentImplementationLedgerV1.model_validate(
+                intent_payload
+            )
+        except Exception as exc:
+            if strict:
+                raise ValueError("invalid_loop_state_snapshot:intent_implementation_ledger") from exc
+    loop.intent_schedule = dict(
+        immutable.get("intent_schedule") or snapshot.intent_schedule or {}
+    )
+    loop.intent_compile_events = [
+        dict(item)
+        for item in (
+            immutable.get("intent_compile_events")
+            or getattr(snapshot, "intent_compile_events", ())
+            or ()
+        )
+        if isinstance(item, dict)
+    ]
     return loop
 
 
@@ -674,6 +780,19 @@ class ResearchLoopState:
     implementation_scope: ImplementationScopeV1 = field(default_factory=ImplementationScopeV1)
     implementation_scope_symbols: tuple[dict[str, Any], ...] = field(default_factory=tuple)
     candidate_acquisition_ledger: CandidateAcquisitionLedgerV1 = field(default_factory=CandidateAcquisitionLedgerV1)
+    intent_implementation_ledger: IntentImplementationLedgerV1 = field(
+        default_factory=IntentImplementationLedgerV1
+    )
+    intent_schedule: dict[str, Any] = field(default_factory=dict)
+    intent_compile_events: list[dict[str, Any]] = field(default_factory=list)
+    intent_scheduler: IntentCoverageScheduler = field(
+        default_factory=IntentCoverageScheduler
+    )
+    observation_promotion_ledger: Any = None
+    # Frozen input-boundary sidecars used by unified reconstruction.  They are
+    # held outside LangGraph channels and re-emitted as ordinary artifacts.
+    symbol_index: Any | None = None
+    source_manifest: Any | None = None
 
 
 def _append_observation_history(
@@ -732,16 +851,182 @@ def _refresh_acquisition_ledger(
         observations=tuple(loop.observation_history or loop.recent_observations),
         behavior_graph=loop.behavior_graph,
         compiled_by_obligation=loop.compiled_evidence,
+        symbols=getattr(loop.symbol_index, "symbols", ()) if loop.symbol_index is not None else (),
+        source_manifest=loop.source_manifest,
         repo_snapshot_id=loop.runtime.repo_snapshot.snapshot_id,
         project_tree_hash=loop.runtime.repo_snapshot.project_tree_hash,
     )
     loop.candidate_acquisition_ledger = ledger
+    loop.observation_promotion_ledger = build_observation_promotion_ledger(
+        observations=tuple(loop.observation_history or loop.recent_observations),
+        behavior_graph=loop.behavior_graph,
+        compiled_by_obligation=loop.compiled_evidence,
+        repo_snapshot_id=loop.runtime.repo_snapshot.snapshot_id,
+        project_tree_hash=loop.runtime.repo_snapshot.project_tree_hash,
+    )
     path = loop.runtime.tool_context().write_artifact(
         "candidate_acquisition_ledgers", ledger.content_digest, ledger
     )
     if state is not None:
         state["candidate_acquisition_ledger_ref"] = ledger.content_digest
+        state["observation_promotion_ledger_ref"] = (
+            loop.observation_promotion_ledger.content_digest
+        )
     return ledger
+
+
+def _refresh_intent_coverage_scheduler(
+    loop: "ResearchLoopState",
+    state: dict[str, Any] | None = None,
+    *,
+    remaining_budget_turns: int = 0,
+    current_action_is_novelty: bool = True,
+) -> dict[str, Any]:
+    """Build and execute the production core-intent scheduler.
+
+    The old promotion ledger was an after-the-fact sidecar.  This boundary
+    derives a closed intent ledger from the live agenda, observations, and
+    compiled evidence, then invokes ``check_next_schedule`` before every
+    scheduling/termination decision.  Discovery without a typed terminal
+    disposition remains open.
+    """
+
+    agenda_items = tuple(loop.runtime.agenda.items)
+    observations = tuple(loop.observation_history or loop.recent_observations)
+    queries_by_clause: dict[str, list[str]] = {}
+    reads_by_clause: dict[str, list[str]] = {}
+    for item in agenda_items:
+        cid = str(item.obligation_id)
+        queries_by_clause[cid] = [
+            str(action) for action in (item.attempted_actions or ()) if str(action)
+        ]
+    for observation in observations:
+        cid = str(observation.obligation_id)
+        queries_by_clause.setdefault(cid, []).append(str(observation.tool_name))
+        reads_by_clause.setdefault(cid, []).extend(
+            [
+                *tuple(str(value) for value in observation.exact_span_ids),
+                *tuple(str(value) for value in observation.notebook.discovered_symbols),
+            ]
+        )
+    facts_by_clause: dict[str, list[str]] = {}
+    operations_by_clause: dict[str, list[str]] = {}
+    for obligation_id, compiled in loop.compiled_evidence.items():
+        facts_by_clause[obligation_id] = [
+            str(item.fact_id)
+            for item in (getattr(compiled.fact_set, "facts", ()) or ())
+            if str(getattr(item, "fact_id", ""))
+        ]
+        operations_by_clause[obligation_id] = [
+            str(item.node_id)
+            for item in (getattr(loop.behavior_graph, "nodes", ()) or ())
+            if str(getattr(item, "node_id", ""))
+        ]
+    statuses: dict[str, str] = {}
+    rejections: dict[str, str] = {}
+    for item in agenda_items:
+        cid = str(item.obligation_id)
+        if item.status == "supported":
+            statuses[cid] = "implemented_exact"
+        elif item.status == "partial":
+            statuses[cid] = "implemented_partial"
+        elif item.status == "explicit_gap":
+            statuses[cid] = "not_found_after_bounded_search"
+        elif item.status == "blocked":
+            statuses[cid] = "repo_mismatch"
+            rejections[cid] = ";".join(str(value) for value in item.missing_information) or "agenda_blocked"
+
+    loop.intent_implementation_ledger = build_intent_implementation_ledger(
+        clauses=[
+            {
+                "clause_id": str(item.obligation_id),
+                "clause_text": str(item.author_text),
+                "is_core": item.priority == "must_cover",
+            }
+            for item in agenda_items
+        ],
+        queries_by_clause=queries_by_clause,
+        candidates_by_clause={
+            str(item.obligation_id): tuple(item.candidate_symbol_ids or ())
+            for item in agenda_items
+        },
+        read_symbols_by_clause=reads_by_clause,
+        promoted_facts_by_clause=facts_by_clause,
+        promoted_operations_by_clause=operations_by_clause,
+        rejections_by_clause=rejections,
+        statuses_by_clause=statuses,
+        repo_snapshot_id=loop.runtime.repo_snapshot.snapshot_id,
+        project_tree_hash=loop.runtime.repo_snapshot.project_tree_hash,
+        total_budget_turns=max(1, int(remaining_budget_turns or 1)),
+        novelty_budget_turns=max(0, int(remaining_budget_turns)),
+        compile_events=tuple(loop.intent_compile_events),
+    )
+    schedule = loop.intent_scheduler.check_next_schedule(
+        loop.intent_implementation_ledger,
+        remaining_budget_turns=max(0, int(remaining_budget_turns)),
+        current_action_is_novelty=current_action_is_novelty,
+    )
+    unresolved_core_intents = tuple(
+        str(value)
+        for value in (
+            *tuple(schedule.get("unattempted_core_clause_ids", ()) or ()),
+            *tuple(schedule.get("unresolved_core_clause_ids", ()) or ()),
+        )
+        if str(value).strip()
+    )
+    unresolved_promotions = tuple(
+        record.observation_id
+        for record in (
+            getattr(loop.observation_promotion_ledger, "records", ()) or ()
+        )
+        if record.status in {"observed_unpromoted", "behavior_built", "packet_promoted", "fact_promoted"}
+        and next(
+            (
+                str(item.status)
+                for item in agenda_items
+                if str(item.obligation_id) == str(record.obligation_id)
+            ),
+            "pending",
+        ) not in {"supported", "partial", "explicit_gap", "blocked"}
+    )
+    schedule["unresolved_observation_promotion_ids"] = unresolved_promotions
+    schedule["unresolved_core_intent_ids"] = tuple(
+        dict.fromkeys(unresolved_core_intents)
+    )
+    schedule["can_terminate"] = not bool(
+        schedule.get("unresolved_core_intent_ids") or unresolved_promotions
+    )
+    loop.intent_schedule = schedule
+    if state is not None:
+        state["intent_implementation_ledger_ref"] = loop.intent_implementation_ledger.content_digest
+        state["intent_schedule"] = dict(schedule)
+    return schedule
+
+
+def _intent_termination_blocked(loop: "ResearchLoopState", state: dict[str, Any]) -> bool:
+    schedule = _refresh_intent_coverage_scheduler(
+        loop,
+        state,
+        remaining_budget_turns=max(0, 0),
+        current_action_is_novelty=False,
+    )
+    return not bool(schedule.get("can_terminate", False))
+
+
+def _mark_trusted_terminal(
+    loop: "ResearchLoopState",
+    state: dict[str, Any],
+    *,
+    reason: str,
+) -> str:
+    """Apply the intent/promotion gate before declaring Research trusted."""
+
+    if _intent_termination_blocked(loop, state):
+        state["status"] = "blocked"
+        state["blocked_reason"] = "intent_coverage_or_promotion_incomplete"
+        return "intent_coverage_blocked"
+    state["status"] = "trusted"
+    return reason
 
 
 def initial_loop_state(
@@ -895,6 +1180,9 @@ class ResearchLoopDriver:
         inferred_scope = index_update.pop("_implementation_scope", None)
         index_update.pop("_implementation_scope_path", None)
         inferred_scope_symbols = index_update.pop("_implementation_scope_symbols", None)
+        loop.symbol_index = index_update.pop("_symbol_index", None)
+        loop.source_manifest = index_update.pop("_source_manifest", None)
+        index_update.pop("_source_manifest_path", None)
         state.update(index_update)
         if inferred_scope is not None:
             loop.implementation_scope = inferred_scope
@@ -909,6 +1197,11 @@ class ResearchLoopDriver:
             behavior_graph=loop.behavior_graph,
         ))
         _refresh_acquisition_ledger(loop, state)
+        _refresh_intent_coverage_scheduler(
+            loop,
+            state,
+            remaining_budget_turns=max(0, self._max_turns),
+        )
 
         # --- research loop --------------------------------------------------
         routes: list[str] = []
@@ -917,11 +1210,21 @@ class ResearchLoopDriver:
         termination_reason = ""
 
         while turns_executed < self._max_turns:
+            # Recompute the intent ledger at the scheduling boundary.  This
+            # makes the scheduler an input to the live loop rather than a
+            # post-hoc report emitted only at termination.
+            _refresh_intent_coverage_scheduler(
+                loop,
+                state,
+                remaining_budget_turns=max(0, self._max_turns - turns_executed),
+                current_action_is_novelty=True,
+            )
             active_obligation_id = state.get("active_obligation_id", "")
             if not active_obligation_id:
                 terminated = True
-                termination_reason = "no_active_obligation"
-                state["status"] = "trusted"
+                termination_reason = _mark_trusted_terminal(
+                    loop, state, reason="no_active_obligation"
+                )
                 break
 
             # Supervisor + policy merge.
@@ -1004,6 +1307,10 @@ class ResearchLoopDriver:
                 partial_evidence = compile_update.pop("_partial_evidence", None)
                 gap_accepted = compile_update.pop("_gap_accepted", None)
                 state.update(compile_update)
+                _record_intent_compile_event(
+                    loop,
+                    partial_evidence or compiled_evidence,
+                )
                 if partial_evidence is not None:
                     _store_evidence_sidecar(loop, partial_evidence)
                 if compiled_evidence is not None:
@@ -1019,8 +1326,9 @@ class ResearchLoopDriver:
                     )
                     if next_obl is None:
                         terminated = True
-                        termination_reason = "all_obligations_terminal"
-                        state["status"] = "trusted"
+                        termination_reason = _mark_trusted_terminal(
+                            loop, state, reason="all_obligations_terminal"
+                        )
                         break
                     state["active_obligation_id"] = next_obl
                     loop.active_issue = None
@@ -1037,8 +1345,9 @@ class ResearchLoopDriver:
                         # supervisor would only repeat exact calls until
                         # fallback exhaustion.
                         terminated = True
-                        termination_reason = "all_obligations_terminal"
-                        state["status"] = "trusted"
+                        termination_reason = _mark_trusted_terminal(
+                            loop, state, reason="all_obligations_terminal"
+                        )
                         break
                     if next_obl != active_obligation_id:
                         state["active_obligation_id"] = next_obl
@@ -1063,8 +1372,9 @@ class ResearchLoopDriver:
                     )
                     if next_obl is None or next_obl == active_obligation_id:
                         terminated = True
-                        termination_reason = "all_obligations_terminal"
-                        state["status"] = "trusted"
+                        termination_reason = _mark_trusted_terminal(
+                            loop, state, reason="all_obligations_terminal"
+                        )
                         break
                     state["active_obligation_id"] = next_obl
                     loop.active_issue = None
@@ -1100,8 +1410,9 @@ class ResearchLoopDriver:
                 next_obl = _next_unresolved_obligation(runtime.agenda, active_obligation_id)
                 if next_obl is None:
                     terminated = True
-                    termination_reason = "all_obligations_terminal"
-                    state["status"] = "trusted"
+                    termination_reason = _mark_trusted_terminal(
+                        loop, state, reason="all_obligations_terminal"
+                    )
                     break
                 state["active_obligation_id"] = next_obl
                 loop.active_issue = None
@@ -1186,8 +1497,9 @@ class ResearchLoopDriver:
                 break
             if route == "ready_to_author":
                 terminated = True
-                termination_reason = "ready_to_author"
-                state["status"] = "trusted"
+                termination_reason = _mark_trusted_terminal(
+                    loop, state, reason="ready_to_author"
+                )
                 break
             if route == "record_gap":
                 gap_update = gap_finalizer_node(
@@ -1206,8 +1518,9 @@ class ResearchLoopDriver:
                 next_obl = _next_unresolved_obligation(runtime.agenda, active_obligation_id)
                 if next_obl is None:
                     terminated = True
-                    termination_reason = "all_obligations_terminal"
-                    state["status"] = "trusted"
+                    termination_reason = _mark_trusted_terminal(
+                        loop, state, reason="all_obligations_terminal"
+                    )
                     break
                 state["active_obligation_id"] = next_obl
                 loop.active_issue = None
@@ -1231,6 +1544,10 @@ class ResearchLoopDriver:
                 partial_evidence = compile_update.pop("_partial_evidence", None)
                 gap_accepted = compile_update.pop("_gap_accepted", None)
                 state.update(compile_update)
+                _record_intent_compile_event(
+                    loop,
+                    partial_evidence or compiled_evidence,
+                )
                 if partial_evidence is not None:
                     _store_evidence_sidecar(loop, partial_evidence)
                 if compiled_evidence is not None:
@@ -1239,8 +1556,9 @@ class ResearchLoopDriver:
                     next_obl = _next_unresolved_obligation(runtime.agenda, active_obligation_id)
                     if next_obl is None:
                         terminated = True
-                        termination_reason = "all_obligations_terminal"
-                        state["status"] = "trusted"
+                        termination_reason = _mark_trusted_terminal(
+                            loop, state, reason="all_obligations_terminal"
+                        )
                         break
                     state["active_obligation_id"] = next_obl
                     loop.active_issue = None
@@ -1262,8 +1580,9 @@ class ResearchLoopDriver:
                     )
                     if next_obl is None:
                         terminated = True
-                        termination_reason = "all_obligations_terminal"
-                        state["status"] = "trusted"
+                        termination_reason = _mark_trusted_terminal(
+                            loop, state, reason="all_obligations_terminal"
+                        )
                         break
                     if next_obl != active_obligation_id:
                         state["active_obligation_id"] = next_obl
@@ -1289,8 +1608,9 @@ class ResearchLoopDriver:
                 next_obl = _next_unresolved_obligation(runtime.agenda, active_obligation_id)
                 if next_obl is None:
                     terminated = True
-                    termination_reason = "all_obligations_terminal"
-                    state["status"] = "trusted"
+                    termination_reason = _mark_trusted_terminal(
+                        loop, state, reason="all_obligations_terminal"
+                    )
                     break
                 state["active_obligation_id"] = next_obl
                 loop.active_issue = None
@@ -1427,6 +1747,10 @@ def _ctx_linear_prefix(
     inferred_scope = index_update.pop("_implementation_scope", None)
     index_update.pop("_implementation_scope_path", None)
     inferred_scope_symbols = index_update.pop("_implementation_scope_symbols", None)
+    if ctx.loop_state is not None:
+        ctx.loop_state.symbol_index = index_update.pop("_symbol_index", None)
+        ctx.loop_state.source_manifest = index_update.pop("_source_manifest", None)
+    index_update.pop("_source_manifest_path", None)
     update.update(index_update)
     if inferred_scope is not None and ctx.loop_state is not None:
         ctx.loop_state.implementation_scope = inferred_scope
@@ -1442,6 +1766,11 @@ def _ctx_linear_prefix(
     ))
     if ctx.loop_state is not None:
         _refresh_acquisition_ledger(ctx.loop_state, update)
+        _refresh_intent_coverage_scheduler(
+            ctx.loop_state,
+            update,
+            remaining_budget_turns=max(0, ctx.max_turns - ctx.turns_executed),
+        )
     # Re-emit the snapshot so the checkpointer persists the restored
     # state even when the linear prefix did not mutate it this turn.
     if ctx.loop_state is not None:
@@ -1459,12 +1788,21 @@ def _ctx_supervisor(
     runtime = ctx.runtime
     loop = _ensure_ctx_loop(state, ctx)
 
+    _refresh_intent_coverage_scheduler(
+        loop,
+        state,
+        remaining_budget_turns=max(0, ctx.max_turns - ctx.turns_executed),
+        current_action_is_novelty=True,
+    )
+
     active_obligation_id = state.get("active_obligation_id", "")
     if not active_obligation_id:
         ctx.terminated = True
-        ctx.termination_reason = "no_active_obligation"
+        ctx.termination_reason = _mark_trusted_terminal(
+            loop, state, reason="no_active_obligation"
+        )
         ctx.supervisor_route = "no_tool_calls"
-        return {"status": "trusted"}
+        return {"status": state.get("status", "blocked")}
 
     # Max-turns check: if we've exceeded the budget, terminate.
     if ctx.turns_executed >= ctx.max_turns:
@@ -1692,9 +2030,11 @@ def _ctx_critic(
         return {"status": "blocked"}
     if route == "ready_to_author":
         ctx.terminated = True
-        ctx.termination_reason = "ready_to_author"
+        ctx.termination_reason = _mark_trusted_terminal(
+            loop, state, reason="ready_to_author"
+        )
         ctx.critic_route = "ready_to_author"
-        return {"status": "trusted"}
+        return {"status": state.get("status", "blocked")}
 
     # Non-terminal routes: record_gap, compile_candidate, search_more, inspect_branch.
     ctx.critic_route = route
@@ -1739,6 +2079,11 @@ def _ctx_compile(
     compiled_evidence = compile_update.pop("_compiled_evidence", None)
     partial_evidence = compile_update.pop("_partial_evidence", None)
     gap_accepted = compile_update.pop("_gap_accepted", None)
+
+    _record_intent_compile_event(
+        loop,
+        partial_evidence or compiled_evidence,
+    )
 
     if partial_evidence is not None:
         _store_evidence_sidecar(loop, partial_evidence)
@@ -1849,9 +2194,11 @@ def _ctx_advancer(
         and getattr(ctx, "supervisor_route", "") == "partial_gap"
     ):
         ctx.terminated = True
-        ctx.termination_reason = "all_obligations_terminal"
+        ctx.termination_reason = _mark_trusted_terminal(
+            loop, state, reason="all_obligations_terminal"
+        )
         ctx.advancer_route = "no_next"
-        return {"status": "trusted"}
+        return {"status": state.get("status", "blocked")}
 
     ctx.advancer_route = "has_next"
     ctx.turns_executed += 1
@@ -1887,7 +2234,7 @@ def _ctx_terminate(
         final_state["blocked_reason"] = "max_turns_reached"
     elif ctx.termination_reason in ("no_active_obligation", "all_obligations_terminal", "ready_to_author"):
         final_state["status"] = "trusted"
-    elif ctx.termination_reason in ("stop_blocked", "gap_finalizer_blocked", "evidence_critic_blocked", "no_tool_calls_no_terminal"):
+    elif ctx.termination_reason in ("stop_blocked", "gap_finalizer_blocked", "evidence_critic_blocked", "no_tool_calls_no_terminal", "intent_coverage_blocked"):
         final_state["status"] = "blocked"
     return ResearchLoopResult(
         loop_state=loop,

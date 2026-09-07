@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import math
 from typing import Any, Literal, Mapping
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
@@ -123,6 +124,12 @@ def sha256_digest(data: bytes | str) -> str:
     return "sha256:" + hashlib.sha256(data).hexdigest()
 
 
+def conservative_token_estimate(value: Any) -> int:
+    """Return a deterministic, conservative token estimate for JSON bytes."""
+    size = len(canonical_json_bytes(value))
+    return max(1, math.ceil(size / 4)) if size else 0
+
+
 class MechanismSeedV1(BaseModel):
     """Narrow intent/alignment entry point for a mechanism."""
 
@@ -175,6 +182,7 @@ class EvidenceOperationV1(BaseModel):
     activation_basis_ids: tuple[str, ...] = ()
     shape_or_type_hints: tuple[str, ...] = ()
     source_fact_ids: tuple[str, ...] = ()
+    source_kind: str = "unknown"
     exact_excerpt: str = ""
     content_digest: str = ""
 
@@ -397,6 +405,7 @@ class MechanismDetailV1(BaseModel):
     source_facet_ids: tuple[str, ...] = ()
     source_brief_ids: tuple[str, ...] = ()
     source_obligation_ids: tuple[str, ...] = ()
+    source_kind: str = "unknown"
     author_statements: tuple[str, ...] = ()
     mismatch_reason: str = ""
 
@@ -413,6 +422,13 @@ class MechanismDetailV1(BaseModel):
             self.evidence_authority in ("repository_verified", "repository_partial")
             and self.claim_kind in ("implementation", "interface", "formalization")
         ):
+            if self.source_kind in {
+                "vendor", "generated", "submodule", "dataset_or_checkpoint",
+            }:
+                raise ValueError(
+                    f"Detail {self.detail_id} cannot promote excluded source kind "
+                    f"{self.source_kind} into repository authority"
+                )
             has_source = bool(
                 self.source_operation_ids
                 or self.source_fact_ids
@@ -564,6 +580,21 @@ class MechanismContextV1(BaseModel):
     context_readiness: ContextReadiness = "partial"
     readiness_failures: tuple[str, ...] = ()
     budget_exhausted: bool = False
+
+    # Closure-vs-annotation audit.  These fields are deliberately separate
+    # from ``source_operation_terminal_coverage``: a mechanism may classify
+    # every operation while still failing to connect an input to an output or
+    # while losing a core witness during PaperDetail annotation.
+    connected_input_detail_ids: tuple[str, ...] = ()
+    connected_output_detail_ids: tuple[str, ...] = ()
+    disconnected_core_detail_ids: tuple[str, ...] = ()
+    connected_input_to_output: bool = False
+    information_completeness: float = Field(default=0.0, ge=0.0, le=1.0)
+    cluster_cohesion_score: float = Field(default=0.0, ge=0.0, le=1.0)
+    cluster_merge_reasons: tuple[str, ...] = ()
+    cluster_split_audit: tuple[str, ...] = ()
+    cluster_merge_audit: tuple[str, ...] = ()
+    source_manifest_digest: str = ""
 
     source_context_digest: str = ""
 
@@ -872,6 +903,7 @@ __all__ = [
     "ContextReadiness",
     "OperationDisposition",
     "canonical_json_bytes",
+    "conservative_token_estimate",
     "sha256_digest",
     "MechanismSeedV1",
     "EvidenceOperationV1",

@@ -28,6 +28,7 @@ from code2paper.agentic.method_proposition_provider import (
 from code2paper.agentic.method_proposition_evidence_provider import (
     build_method_proposition_evidence_judge,
 )
+from code2paper.agentic.authoring_context_contract import resolve_authoring_context_mode
 from code2paper.agentic.publication_method_writer import run_publication_method_writer
 from code2paper.agentic.trust_contracts import AuthoringInputProjection
 from code2paper.llm.providers import load_llm_config_from_env
@@ -59,6 +60,10 @@ _OPTIONAL_INPUT_FILES = {
         "04_evidence/evidence_snapshot_v2.json",
         "07_validation/evidence_snapshot_v2.json",
     ),
+    "method_argument_briefs_v1": ("method_argument_briefs_v1.json",),
+    "method_concept_cards_v1": ("method_concept_cards_v1.json",),
+    "repo_snapshot_v2": ("repo_snapshot_v2.json", "repo_snapshot.json"),
+    "symbol_index_v2": ("symbol_index_v2.json", "symbol_index.json"),
 }
 
 
@@ -164,9 +169,16 @@ def main(argv: list[str] | None = None) -> int:
         "--prepare-only", action="store_true",
         help="Stop after proposition/Judge/plan preparation without calling the Writer.",
     )
+    parser.add_argument(
+        "--authoring-context-mode",
+        choices=("legacy", "shadow_unified", "unified"),
+        default=None,
+        help="Authoring context lane; explicit CLI input wins over the profile/environment",
+    )
     args = parser.parse_args(argv)
     artifact_dir = args.artifact_dir.expanduser().resolve()
     out_root = args.out_root.expanduser().resolve()
+    effective_mode, _ = resolve_authoring_context_mode(args.authoring_context_mode)
     paths: dict[str, str] = {}
     for key, candidates in _INPUT_FILES.items():
         candidate = _first_file(artifact_dir, candidates)
@@ -178,7 +190,11 @@ def main(argv: list[str] | None = None) -> int:
             if candidate.is_file():
                 paths[key] = str(candidate)
                 break
-    missing = [key for key in _INPUT_FILES if key not in paths]
+    if effective_mode == "unified":
+        required_keys = ("atomic_claims_v3", "code_facts_v1")
+    else:
+        required_keys = tuple(_INPUT_FILES.keys())
+    missing = [key for key in required_keys if key not in paths]
     if missing:
         parser.error("missing frozen inputs: " + ", ".join(missing))
     llm_config = load_llm_config_from_env()
@@ -206,6 +222,7 @@ def main(argv: list[str] | None = None) -> int:
         out_root=out_root,
         artifact_paths=paths,
         llm_config=llm_config,
+        authoring_context_mode=args.authoring_context_mode,
     )
     print(json.dumps({
         "status": result.status,

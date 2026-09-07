@@ -36,6 +36,14 @@ from code2paper.agentic.source_authority import (
     assert_authority_allows_positive_claim,
     can_support_positive_claim,
 )
+from code2paper.agentic.intent_ledger import (
+    IntentCoverageScheduler,
+    IntentImplementationLedgerItemV1,
+    IntentImplementationLedgerV1,
+    IntentImplementationStatus,
+    VALID_INTENT_IMPLEMENTATION_STATUSES,
+    build_intent_implementation_ledger,
+)
 
 
 # ---------------------------------------------------------------------------
@@ -325,6 +333,16 @@ CandidateAcquisitionStatusV1 = Literal[
     "superseded",
 ]
 
+CandidateResolutionStatusV1 = Literal[
+    "implemented_exact",
+    "implemented_partial",
+    "author_spec_only",
+    "repo_mismatch",
+    "inactive_alternative",
+    "not_found_after_bounded_search",
+    "out_of_scope",
+]
+
 
 class CandidateAcquisitionRecordV1(_ResearchModel):
     """Audit record for one discovered candidate and its acquisition path."""
@@ -355,6 +373,14 @@ class CandidateAcquisitionRecordV1(_ResearchModel):
         serialization_alias="terminal_status",
     )
     rejection_reason: str = ""
+    # P3 resolution taxonomy.  ``terminal_status`` remains for compatibility
+    # with the original acquisition ledger; this field records the semantic
+    # decision that downstream promotion/closure gates consume.
+    # ``None`` keeps legacy, pre-P3 records in their original non-terminal
+    # acquisition state.  New records produced by the scope compiler always
+    # write the explicit P3 resolution taxonomy.
+    resolution_status: CandidateResolutionStatusV1 | None = None
+    rejection_code: str = ""
     content_digest: str = ""
 
     @field_validator(
@@ -394,6 +420,10 @@ class CandidateAcquisitionRecordV1(_ResearchModel):
             raise ValueError("rejected/superseded candidate requires a typed reason")
         if self.ownership_role in {"comparand", "evaluation"} and acquired and self.claim_ids:
             raise ValueError("comparand/evaluation candidates cannot authorize target claims")
+        if self.resolution_status in {"out_of_scope", "inactive_alternative", "repo_mismatch"} and not (
+            self.rejection_reason.strip() or self.rejection_code.strip()
+        ):
+            raise ValueError("non-promoted candidate resolution requires a typed reason")
         payload = self.model_dump(mode="json", exclude={"content_digest"})
         object.__setattr__(self, "content_digest", _digest_payload(payload))
         return self
@@ -402,7 +432,15 @@ class CandidateAcquisitionRecordV1(_ResearchModel):
     def terminal(self) -> bool:
         return self.terminal_status in {
             "acquired_and_compiled", "explicitly_rejected", "superseded",
-        }
+        } or (
+            self.resolution_status in {
+                "implemented_exact", "implemented_partial", "author_spec_only",
+                "repo_mismatch", "inactive_alternative", "not_found_after_bounded_search",
+                "out_of_scope",
+            }
+            if self.resolution_status is not None
+            else False
+        )
 
     @property
     def status(self) -> CandidateAcquisitionStatusV1:
@@ -1502,6 +1540,7 @@ __all__ = [
     "ImplementationOwnershipRoleV1",
     "ImplementationScopeV1",
     "CandidateAcquisitionStatusV1",
+    "CandidateResolutionStatusV1",
     "CandidateAcquisitionRecordV1",
     "CandidateAcquisitionLedgerV1",
     "PerObligationBudgetV1",
@@ -1537,4 +1576,10 @@ __all__ = [
     "empty_quality_state",
     "make_observation",
     "quality_state_dominates",
+    "IntentCoverageScheduler",
+    "IntentImplementationLedgerItemV1",
+    "IntentImplementationLedgerV1",
+    "IntentImplementationStatus",
+    "VALID_INTENT_IMPLEMENTATION_STATUSES",
+    "build_intent_implementation_ledger",
 ]

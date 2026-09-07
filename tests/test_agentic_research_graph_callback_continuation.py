@@ -187,6 +187,11 @@ def test_continuation_fulfills_request_through_original_research_graph() -> None
         assert chain["decision_trace"], "the research graph decision trace must continue"
         assert chain["termination"]["termination_reason"] in {
             "all_obligations_terminal", "max_turns_reached", "ready_to_author",
+            # The production intent/promotion gate may deliberately stop
+            # a continuation before trust when another core clause is
+            # still untouched; that is a typed safety outcome, not a
+            # successful Research termination.
+            "intent_coverage_blocked",
         }
         # The artifact itself is digest-pinned (owning-validator binding).
         digest = "sha256:" + hashlib.sha256(artifact_file.read_bytes()).hexdigest()

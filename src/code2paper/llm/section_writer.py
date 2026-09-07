@@ -1167,11 +1167,20 @@ def _llm_visible_section_payload(section: WriterSectionInput) -> dict[str, Any]:
 
     shared_contexts = section.prompt_payload.get("shared_contexts") or section.prompt_payload.get("shared_mechanism_contexts")
     if shared_contexts:
+        # Shared technical pages are immutable evidence.  The previous
+        # 24,000-character slice silently changed the bytes after the
+        # identity gate had already accepted the pre-call Writer input.  Keep
+        # every page byte intact; page budgeting and request-level receipts
+        # are responsible for bounding/validating delivery.
+        compacted_contexts: list[Any] = [
+            item.decode("utf-8") if isinstance(item, bytes) else item
+            for item in shared_contexts
+        ]
         result: dict[str, Any] = {
             "section_id": section.prompt_payload.get("section_id", section.section_id),
             "heading": section.prompt_payload.get("heading", section.heading),
             "narrative_plan": section.prompt_payload.get("narrative_plan"),
-            "shared_contexts": shared_contexts,
+            "shared_contexts": compacted_contexts,
             "shared_context_metadata": section.prompt_payload.get(
                 "shared_context_metadata", ()
             ),

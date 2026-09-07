@@ -20,13 +20,14 @@ from code2paper.agentic.mechanism_context_models import (
     compute_shared_payload_digest,
     compute_slice_digest,
     compute_view_digest,
+    conservative_token_estimate,
     sha256_digest,
     shared_slice_payload_record,
 )
 
 MAX_SUPPORTING_DETAILS_PER_SLICE = 24
 MAX_EXACT_EXCERPT_TOKENS_PER_SLICE = 12_000
-MAX_MECHANISM_SLICES = 4
+MAX_MECHANISM_SLICES = 64
 
 
 def build_mechanism_context_view(context: MechanismContextV1) -> MechanismContextViewV1:
@@ -108,6 +109,7 @@ def build_mechanism_context_slices(
     *,
     max_supporting_per_slice: int = MAX_SUPPORTING_DETAILS_PER_SLICE,
     max_slices: int = MAX_MECHANISM_SLICES,
+    target_token_budget: int = 11_000,
 ) -> tuple[MechanismContextSliceV1, ...]:
     """Divide MechanismContextView into ordered slices with all core details preserved."""
     if not isinstance(view, MechanismContextViewV1):
@@ -118,17 +120,50 @@ def build_mechanism_context_slices(
     supporting_details = [d for d in all_details if d.get("importance") != "core"]
     cap = max(1, int(max_supporting_per_slice))
 
-    # Slice zero is the canonical core view.  Supporting details are chunked,
-    # but no detail or evidence is silently discarded when the nominal slice
-    # budget is reached: the final slice becomes an explicitly marked bounded
-    # remainder.  This preserves the lossless closure while making pressure
-    # visible to the caller.
-    detail_chunks: list[list[dict[str, Any]]] = [list(core_details)]
-    detail_chunks[0].extend(supporting_details[:cap])
-    remaining = supporting_details[cap:]
-    while remaining:
-        detail_chunks.append(remaining[:cap])
-        remaining = remaining[cap:]
+    # Slice zero is the canonical core view when core details fit within nominal
+    # capacity.  When core details exceed nominal capacity, they are chunked
+    # deterministically so that downstream page packaging respects token budgets.
+    # No detail or evidence is silently discarded.
+    if len(core_details) <= cap:
+        first_chunk = list(core_details)
+        space = max(0, cap - len(first_chunk))
+        first_chunk.extend(supporting_details[:space])
+        initial_chunks = [first_chunk]
+        remaining = supporting_details[space:]
+        while remaining:
+            initial_chunks.append(remaining[:cap])
+            remaining = remaining[cap:]
+    else:
+        initial_chunks = [
+            core_details[i : i + cap]
+            for i in range(0, len(core_details), cap)
+        ]
+        remaining = list(supporting_details)
+        while remaining:
+            initial_chunks.append(remaining[:cap])
+            remaining = remaining[cap:]
+
+    # Adaptive subdivision: if any chunk's details alone exceed the target token
+    # budget (accounting for base page overhead of ~4000 tokens), divide it so
+    # the materialized page does not trigger page_over_budget.
+    detail_chunks: list[list[dict[str, Any]]] = []
+    threshold = max(2000, target_token_budget - 4000)
+    for chunk in initial_chunks:
+        if len(chunk) <= 1:
+            detail_chunks.append(chunk)
+            continue
+        sub_chunks = [chunk]
+        while any(len(c) > 1 and conservative_token_estimate(c) > threshold for c in sub_chunks):
+            next_subs = []
+            for c in sub_chunks:
+                if len(c) > 1 and conservative_token_estimate(c) > threshold:
+                    mid = max(1, len(c) // 2)
+                    next_subs.append(c[:mid])
+                    next_subs.append(c[mid:])
+                else:
+                    next_subs.append(c)
+            sub_chunks = next_subs
+        detail_chunks.extend(sub_chunks)
 
     evidence = [
         item for item in view.exact_evidence

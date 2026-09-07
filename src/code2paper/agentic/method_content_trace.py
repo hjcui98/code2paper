@@ -49,6 +49,107 @@ _TRACE_STATES: tuple[str, ...] = (
     "validated",
 )
 
+LossTaxonomyLayerV2 = Literal[
+    "R0a",  # obligation never triggered search
+    "R0b",  # candidate discovered but not read
+    "R0c",  # read/observed but not graphed or compiled into evidence
+    "R0d",  # promotion attempted but rejected with typed rejection code
+    "R1a",  # source ownership or scope misclassified
+    "R1b",  # stage or mechanism routing misclassified
+    "R2a",  # operation closure missing edges or active path unresolved
+    "R2b",  # operation to PaperDetail clustering/compression loss
+    "R2c",  # formula obligation compile loss
+    "R3a",  # payload undelivered, unpaged, or modified by sanitizer
+    "R3b",  # narrative or writer failed to realize delivered detail or formula
+    "R4",   # rendering, LaTeX syntax, or control character damage
+    "R5",   # binder/validator rejection or callback/runtime interrupt
+]
+
+LOSS_TAXONOMY_LAYERS_V2: tuple[str, ...] = (
+    "R0a",
+    "R0b",
+    "R0c",
+    "R0d",
+    "R1a",
+    "R1b",
+    "R2a",
+    "R2b",
+    "R2c",
+    "R3a",
+    "R3b",
+    "R4",
+    "R5",
+)
+
+LOSS_TAXONOMY_DESCRIPTIONS_V2: dict[str, str] = {
+    "R0a": "obligation never triggered search",
+    "R0b": "candidate discovered but not read",
+    "R0c": "read/observed but not graphed or compiled into evidence",
+    "R0d": "promotion attempted but rejected with typed rejection code",
+    "R1a": "source ownership or scope misclassified",
+    "R1b": "stage or mechanism routing misclassified",
+    "R2a": "operation closure missing edges or active path unresolved",
+    "R2b": "operation to PaperDetail clustering/compression loss",
+    "R2c": "formula obligation compile loss",
+    "R3a": "payload undelivered, unpaged, or modified by sanitizer",
+    "R3b": "narrative or writer failed to realize delivered detail or formula",
+    "R4": "rendering, LaTeX syntax, or control character damage",
+    "R5": "binder/validator rejection or callback/runtime interrupt",
+}
+
+
+def classify_primary_loss_layer(
+    *,
+    validated: bool,
+    discovered: bool,
+    closed_in_evidence: bool,
+    annotated: bool,
+    projected: bool,
+    writer_delivered: bool,
+    rendered: bool,
+    p_valid: bool,
+    active_path_status: str = "active_default",
+    has_formula_loss: bool = False,
+    ownership_misclassified: bool = False,
+    routing_miss: bool = False,
+    rejection_code: str = "",
+    search_triggered: bool = True,
+    candidate_read: bool = True,
+    control_char_damage: bool = False,
+    binder_rejected: bool = False,
+) -> str:
+    """Classify the unique primary loss layer for an item in the authoring funnel."""
+
+    if validated and p_valid:
+        return ""
+    if not search_triggered:
+        return "R0a"
+    if not candidate_read or not discovered:
+        return "R0b"
+    if rejection_code:
+        return "R0d"
+    if not closed_in_evidence:
+        return "R0c"
+    if ownership_misclassified:
+        return "R1a"
+    if routing_miss or not annotated:
+        return "R1b"
+    if active_path_status == "unknown":
+        return "R2a"
+    if not projected:
+        return "R2b"
+    if has_formula_loss:
+        return "R2c"
+    if not writer_delivered:
+        return "R3a"
+    if not rendered:
+        return "R3b"
+    if control_char_damage or (rendered and not p_valid and not binder_rejected):
+        return "R4"
+    if binder_rejected or not validated:
+        return "R5"
+    return "R5"
+
 
 def _digest(value: Any) -> str:
     payload = json.dumps(
@@ -833,11 +934,24 @@ class MethodContentTraceRowV2(BaseModel):
     budget_exhausted: bool = False
     callback_status: str = ""
     callback_semantic_delta_digest: str = ""
+    primary_loss_layer: str = ""
+    r0a_search_not_triggered: bool = False
+    r0b_discovered_not_read: bool = False
+    r0c_observed_not_promoted: bool = False
+    r0d_promotion_rejected: bool = False
+    r1a_ownership_misclassified: bool = False
+    r1b_routing_miss: bool = False
+    r2a_closure_edge_missing: bool = False
+    r2b_detail_compression_loss: bool = False
+    r2c_formula_obligation_loss: bool = False
+    r3a_payload_delivery_loss: bool = False
+    r3b_writer_realization_loss: bool = False
     r0_discovery_miss: bool = False
     r1_mechanism_routing_miss: bool = False
     r2_ir_compression_loss: bool = False
     r3_writer_delivery_loss: bool = False
     r4_rendering_loss: bool = False
+    r5_binder_rejection: bool = False
     candidate_included: bool = False
     verified_status: str = "unverified"
     terminal_state: str = "planned"
@@ -916,6 +1030,7 @@ class MechanismInformationFunnelV1(BaseModel):
     writer_input_tokens: int = 0
     shared_payload_tokens: int = 0
 
+    loss_counts_by_layer: dict[str, int] = Field(default_factory=dict)
     funnel_survival_rates: dict[str, float] = Field(default_factory=dict)
     metrics: dict[str, Any] = Field(default_factory=dict)
     content_digest: str = ""
@@ -1493,6 +1608,28 @@ def build_method_content_trace_v2(
             else:
                 stop_reason = ""
 
+            primary_loss = classify_primary_loss_layer(
+                validated=validated,
+                discovered=discovered,
+                closed_in_evidence=closed_in_evidence,
+                annotated=annotated,
+                projected=projected,
+                writer_delivered=writer_delivered,
+                rendered=rendered,
+                p_valid=p_valid,
+                active_path_status=str(getattr(d, "active_path_status", "active_default")),
+                has_formula_loss=bool(
+                    source_equation_ids and not formula_obligation_placement.get(p_id, ())
+                ),
+                ownership_misclassified=False,
+                routing_miss=r1_mechanism_routing_miss,
+                rejection_code="",
+                search_triggered=True,
+                candidate_read=discovered,
+                control_char_damage=False,
+                binder_rejected=(rendered and not p_valid),
+            )
+
             rows.append(MethodContentTraceRowV2(
                 mechanism_id=getattr(ctx, "mechanism_id", ""),
                 detail_id=did,
@@ -1551,11 +1688,24 @@ def build_method_content_trace_v2(
                 budget_exhausted=context_budget_exhausted,
                 callback_status=callback_status,
                 callback_semantic_delta_digest=callback_delta_digest,
+                primary_loss_layer=primary_loss,
+                r0a_search_not_triggered=(primary_loss == "R0a"),
+                r0b_discovered_not_read=(primary_loss == "R0b"),
+                r0c_observed_not_promoted=(primary_loss == "R0c"),
+                r0d_promotion_rejected=(primary_loss == "R0d"),
+                r1a_ownership_misclassified=(primary_loss == "R1a"),
+                r1b_routing_miss=(primary_loss == "R1b"),
+                r2a_closure_edge_missing=(primary_loss == "R2a"),
+                r2b_detail_compression_loss=(primary_loss == "R2b"),
+                r2c_formula_obligation_loss=(primary_loss == "R2c"),
+                r3a_payload_delivery_loss=(primary_loss == "R3a"),
+                r3b_writer_realization_loss=(primary_loss == "R3b"),
                 r0_discovery_miss=r0_discovery_miss,
                 r1_mechanism_routing_miss=r1_mechanism_routing_miss,
                 r2_ir_compression_loss=r2_ir_compression_loss,
                 r3_writer_delivery_loss=r3_writer_delivery_loss,
                 r4_rendering_loss=r4_rendering_loss,
+                r5_binder_rejection=(primary_loss == "R5"),
                 candidate_included=witnessed and p_valid,
                 verified_status="verified" if validated else "unverified",
                 terminal_state=terminal_state,
@@ -2018,6 +2168,11 @@ def build_method_content_trace_v2(
         formalizer_input_tokens=formalizer_input_tokens,
         writer_input_tokens=writer_input_tokens,
         shared_payload_tokens=shared_payload_tokens,
+        loss_counts_by_layer={
+            layer: sum(1 for row in rows if row.primary_loss_layer == layer)
+            for layer in LOSS_TAXONOMY_LAYERS_V2
+            if any(row.primary_loss_layer == layer for row in rows)
+        },
         funnel_survival_rates=survival_rates,
         metrics=metrics,
     )
@@ -2069,6 +2224,10 @@ def write_method_content_trace_v2(
 
 
 __all__ = [
+    "LossTaxonomyLayerV2",
+    "LOSS_TAXONOMY_LAYERS_V2",
+    "LOSS_TAXONOMY_DESCRIPTIONS_V2",
+    "classify_primary_loss_layer",
     "MethodContentTraceRowV1",
     "MethodContentTraceV1",
     "build_method_content_trace_from_artifact_paths",

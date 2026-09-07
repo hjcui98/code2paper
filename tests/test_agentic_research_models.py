@@ -666,3 +666,163 @@ def test_typed_behavior_target_forbids_extra_fields() -> None:
 def test_gap_requirement_forbids_extra_fields() -> None:
     with pytest.raises(ValidationError):
         GapRequirementV1(requirement_id="G-1", description="x", surprise=True)  # type: ignore[call-arg]
+
+
+# ---------------------------------------------------------------------------
+# P2: Scope fixtures (Domain-Pruning, FastGS, LearNAT)
+# ---------------------------------------------------------------------------
+
+
+def test_domain_pruning_vendor_exclusion() -> None:
+    from code2paper.agentic.source_inventory import classify_source_kind
+    from code2paper.agentic.implementation_scope import infer_implementation_scope
+
+    assert classify_source_kind("sglang/srt/entrypoints/http_server.py") == "vendor"
+    assert classify_source_kind("submodules/sglang/setup.py") == "vendor"
+    assert classify_source_kind("sglang_pruned/models/llama.py") == "vendor"
+    assert classify_source_kind("pruning/pruners/magnitude.py") == "first_party_executable"
+
+    mock_symbols = [
+        {"symbol_id": "sym:sglang:1", "name": "SGLangServer", "path": "sglang/srt/server.py", "kind": "class"},
+        {"symbol_id": "sym:pruning:1", "name": "MagnitudePruner", "path": "pruning/magnitude.py", "kind": "class"},
+    ]
+    scope = infer_implementation_scope(mock_symbols, author_texts=["pruning", "magnitude"])
+    assert "sym:sglang:1" not in scope.target_core_symbol_ids
+    assert "sym:pruning:1" in scope.target_core_symbol_ids
+
+
+def test_fastgs_densify_not_comparand() -> None:
+    from code2paper.agentic.implementation_scope import infer_implementation_scope
+
+    fastgs_symbols = [
+        {
+            "symbol_id": "sym:fastgs:1",
+            "name": "densify_and_prune_fastgs",
+            "path": "scene/gaussian_model.py",
+            "qualified_name": "GaussianModel.densify_and_prune_fastgs",
+            "docstring": "FastGS densification implementation without baseline comparison.",
+            "kind": "method",
+        },
+        {
+            "symbol_id": "sym:baseline:1",
+            "name": "densify_and_prune_baseline",
+            "path": "baseline/gaussian_model.py",
+            "qualified_name": "BaselineGaussianModel.densify_and_prune",
+            "docstring": "Baseline comparison model.",
+            "kind": "method",
+        },
+    ]
+    scope_fastgs = infer_implementation_scope(fastgs_symbols, author_texts=["FastGS", "densify", "prune"])
+    assert "sym:fastgs:1" in scope_fastgs.target_core_symbol_ids
+    assert "sym:fastgs:1" not in scope_fastgs.comparand_symbol_ids
+    assert "sym:baseline:1" in scope_fastgs.comparand_symbol_ids
+
+
+def test_learnat_mcts_target_core_ownership() -> None:
+    from code2paper.agentic.implementation_scope import (
+        infer_implementation_scope,
+        scope_role_for_candidate,
+    )
+
+    learnat_symbols = [
+        {
+            "symbol_id": "sym:learnat:1",
+            "name": "NL2SQLMCTS",
+            "path": "src/search/mcts.py",
+            "qualified_name": "NL2SQLMCTS",
+            "docstring": "MCTS implementation for text-to-SQL search.",
+            "kind": "class",
+        }
+    ]
+    scope_learnat = infer_implementation_scope(learnat_symbols, author_texts=["LearNAT", "MCTS", "NL2SQLMCTS"])
+    assert "sym:learnat:1" in scope_learnat.target_core_symbol_ids
+
+    role = scope_role_for_candidate(
+        scope_learnat,
+        "symbol:src/search/mcts.py:NL2SQLMCTS:50",
+        symbols=learnat_symbols,
+    )
+    assert role == "target_core"
+
+
+# ---------------------------------------------------------------------------
+# P3: Observation promotion ledger
+# ---------------------------------------------------------------------------
+
+
+def test_observation_promotion_ledger_lifecycle() -> None:
+    from code2paper.agentic.research_promotion import (
+        build_observation_promotion_ledger,
+    )
+
+    observations = [
+        {
+            "observation_id": "obs:search:1",
+            "obligation_id": "OBL-1",
+            "tool_name": "search_symbols",
+            "status": "success",
+            "result_refs": ["sym:candidate:1"],
+        },
+        {
+            "observation_id": "obs:failed:1",
+            "obligation_id": "OBL-1",
+            "tool_name": "read_symbol",
+            "status": "error",
+            "result_refs": ["sym:candidate:1"],
+        },
+        {
+            "observation_id": "obs:read_no_span:1",
+            "obligation_id": "OBL-1",
+            "tool_name": "read_symbol",
+            "status": "success",
+            "result_refs": ["sym:candidate:1"],
+        },
+        {
+            "observation_id": "obs:promoted:1",
+            "obligation_id": "OBL-2",
+            "tool_name": "read_code_span",
+            "status": "success",
+            "exact_span_ids": ["span:src/core.py:10:20"],
+            "result_refs": ["node:1"],
+        },
+    ]
+
+    class MockNode:
+        node_id = "node:1"
+        symbol_id = "sym:core:1"
+        source_span_id = "span:src/core.py:10:20"
+
+    class MockGraph:
+        nodes = [MockNode()]
+
+    compiled_by_obligation = {
+        "OBL-2": {
+            "packet_set": {"packets": [{"packet_id": "pkt:1"}]},
+            "fact_set": {"facts": [{"fact_id": "f:1"}]},
+            "claim_set": {"claims": [{"claim_id": "c:1"}]},
+        }
+    }
+
+    ledger = build_observation_promotion_ledger(
+        observations=observations,
+        behavior_graph=MockGraph(),
+        compiled_by_obligation=compiled_by_obligation,
+        repo_snapshot_id="snap-1",
+        project_tree_hash="hash-1",
+    )
+
+    assert len(ledger.records) == 4
+    records_by_id = {r.observation_id: r for r in ledger.records}
+
+    assert records_by_id["obs:search:1"].status == "discovered_only"
+    assert records_by_id["obs:search:1"].rejection_code == "discovery_refs_are_not_evidence"
+
+    assert records_by_id["obs:failed:1"].status == "rejected"
+    assert records_by_id["obs:failed:1"].rejection_code == "observation_failed"
+
+    assert records_by_id["obs:read_no_span:1"].status == "observed_unpromoted"
+    assert records_by_id["obs:read_no_span:1"].rejection_code == "exact_source_span_missing"
+
+    assert records_by_id["obs:promoted:1"].status == "claim_promoted"
+    assert records_by_id["obs:promoted:1"].claim_ids == ("c:1",)
+    assert records_by_id["obs:promoted:1"].rejection_code == ""

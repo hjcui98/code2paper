@@ -19,6 +19,7 @@ from code2paper.agentic.research_models import (
     ImplementationOwnershipRoleV1,
     ImplementationScopeV1,
 )
+from code2paper.agentic.source_inventory import classify_source_kind
 from code2paper.agentic.typed_refs import split_span_ref, split_symbol_ref
 
 
@@ -28,7 +29,7 @@ _EVALUATION_RE = re.compile(
     re.I,
 )
 _COMPARAND_RE = re.compile(
-    r"(?:baseline|compar(?:e|ison)|competitor|ablati(?:on|ve)|reference)",
+    r"(?:^|[/_.-])(baseline|compar(?:e|ison|and)s?|competitor|reference)(?:$|[/_.-])",
     re.I,
 )
 _CONFIG_RE = re.compile(
@@ -242,21 +243,29 @@ def infer_implementation_scope(
     for symbol_id, symbol in by_id.items():
         text = _symbol_text(symbol)
         path = str(_attr(symbol, "path", "") or "")
-        if _EVALUATION_RE.search(path) or _EVALUATION_RE.search(text):
+        kind = classify_source_kind(path)
+        if kind in {"vendor", "generated", "dataset_or_checkpoint", "paper_or_draft", "submodule"}:
+            roles[symbol_id] = {"unknown"}
+            continue
+        qname = str(_attr(symbol, "qualified_name", "") or "")
+        overlap = len(_tokens(text) & intent_tokens)
+        if overlap >= 2 and not _COMPARAND_RE.search(path):
+            roles[symbol_id] = {"target_core"}
+            continue
+        if _EVALUATION_RE.search(path) or _EVALUATION_RE.search(qname):
             roles[symbol_id] = {"evaluation"}
             continue
-        if _COMPARAND_RE.search(path) or _COMPARAND_RE.search(text):
+        if _COMPARAND_RE.search(path) or _COMPARAND_RE.search(qname):
             # A reachable symbol is still a target dependency when the graph
             # proves it is called by the target.  Otherwise it is audit-only.
             if symbol_id not in reachable:
                 roles[symbol_id] = {"comparand"}
             continue
-        if _CONFIG_RE.search(path) or _CONFIG_RE.search(text):
+        if _CONFIG_RE.search(path) or _CONFIG_RE.search(qname):
             if symbol_id not in reachable and symbol_id not in entry_ids:
                 roles[symbol_id] = {"configuration"}
                 continue
         if not roles[symbol_id]:
-            overlap = len(_tokens(text) & intent_tokens)
             if overlap >= 2:
                 roles[symbol_id] = {"target_core"}
             elif overlap == 1:
@@ -308,22 +317,56 @@ def ownership_rank(role: str) -> int:
 
 
 def scope_role_for_candidate(
-    scope: ImplementationScopeV1,
+    scope: ImplementationScopeV1 | None,
     candidate: str,
     *,
     behavior_graph: Any | None = None,
+    symbols: Iterable[Any] = (),
+    source_manifest: Any | None = None,
 ) -> ImplementationOwnershipRoleV1:
     """Resolve a heterogeneous candidate reference before role lookup."""
 
+    if scope is None:
+        return "unknown"
     raw = str(candidate or "").strip()
     direct = scope.role_for(raw)
-    if direct != "unknown" or behavior_graph is None:
+    if direct != "unknown":
         return direct
-    for node in getattr(behavior_graph, "nodes", ()) or ():
-        if _node_matches_candidate(node, raw):
-            role = scope.role_for(str(_attr(node, "symbol_id", "") or ""))
+
+    if symbols:
+        symbols_by_id = {str(_attr(s, "symbol_id", "") or ""): s for s in symbols}
+        canon = _canonical_symbol_id(raw, symbols_by_id)
+        if canon and canon != raw:
+            role = scope.role_for(canon)
             if role != "unknown":
                 return role
+
+    if behavior_graph is not None:
+        for node in getattr(behavior_graph, "nodes", ()) or ():
+            if _node_matches_candidate(node, raw):
+                role = scope.role_for(str(_attr(node, "symbol_id", "") or ""))
+                if role != "unknown":
+                    return role
+
+    location = _candidate_location(raw)
+    if location is not None:
+        path = location[0]
+        if source_manifest is not None:
+            entry = getattr(source_manifest, "entry_for", lambda p: None)(path)
+            if entry is not None and getattr(entry, "ownership_role", "unknown") != "unknown":
+                return entry.ownership_role
+        kind = classify_source_kind(path)
+        if kind in {"vendor", "submodule", "generated", "dataset_or_checkpoint"}:
+            return "unknown"
+        if _EVALUATION_RE.search(path):
+            return "evaluation"
+        if _COMPARAND_RE.search(path):
+            return "comparand"
+        if _CONFIG_RE.search(path):
+            return "configuration"
+        if kind == "first_party_executable":
+            return "target_core"
+
     return direct
 
 
@@ -576,6 +619,8 @@ def build_candidate_acquisition_ledger(
     observations: Iterable[Any] = (),
     behavior_graph: Any | None = None,
     compiled_by_obligation: Mapping[str, Any] | None = None,
+    symbols: Iterable[Any] = (),
+    source_manifest: Any | None = None,
     repo_snapshot_id: str = "",
     project_tree_hash: str = "",
 ) -> CandidateAcquisitionLedgerV1:
@@ -640,7 +685,13 @@ def build_candidate_acquisition_ledger(
                 compiled, candidate_spans=packet_span_ids or candidate_spans
             )
             claim_ids = _candidate_claim_refs(compiled, fact_set_ids)
-            role = scope_role_for_candidate(scope, candidate_id, behavior_graph=behavior_graph)
+            role = scope_role_for_candidate(
+                scope,
+                candidate_id,
+                behavior_graph=behavior_graph,
+                symbols=symbols,
+                source_manifest=source_manifest,
+            )
             terminal_status = "discovered"
             rejection_reason = ""
             if role in {"comparand", "evaluation"}:
@@ -654,6 +705,18 @@ def build_candidate_acquisition_ledger(
                 terminal_status = "read"
             elif symbol_matches:
                 terminal_status = "behavior_built"
+            if role in {"comparand", "evaluation", "configuration"}:
+                resolution_status = "out_of_scope"
+                rejection_code = "ownership_role_not_target_method"
+            elif terminal_status == "acquired_and_compiled":
+                resolution_status = "implemented_exact"
+                rejection_code = ""
+            elif terminal_status in {"packet_built", "read", "behavior_built"}:
+                resolution_status = "implemented_partial"
+                rejection_code = "evidence_chain_incomplete"
+            else:
+                resolution_status = "not_found_after_bounded_search"
+                rejection_code = "bounded_search_not_closed"
             records.append(CandidateAcquisitionRecordV1(
                 obligation_id=obligation_id,
                 candidate_symbol_id=candidate_id,
@@ -673,6 +736,8 @@ def build_candidate_acquisition_ledger(
                 claim_ids=claim_ids if role in {"target_core", "target_dependency", "unknown"} else (),
                 terminal_status=terminal_status,
                 rejection_reason=rejection_reason,
+                resolution_status=resolution_status,
+                rejection_code=rejection_code,
             ))
     # Once a target-owned candidate has traversed the full chain, remaining
     # alternatives for the same obligation are closed explicitly as
@@ -698,6 +763,8 @@ def build_candidate_acquisition_ledger(
             records[index] = record.model_copy(update={
                 "terminal_status": "superseded",
                 "rejection_reason": "alternative_candidate_not_selected_after_acquisition",
+                "resolution_status": "inactive_alternative",
+                "rejection_code": "alternative_candidate_not_selected_after_acquisition",
             })
     return CandidateAcquisitionLedgerV1(
         repo_snapshot_id=repo_snapshot_id,

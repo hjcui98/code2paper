@@ -53,6 +53,7 @@ from code2paper.agentic.research_models import (
 )
 from code2paper.agentic.research_tools import ResearchToolContext, execute_research_tool
 from code2paper.agentic.behavior_graph_tools import build_behavior_subgraph
+from code2paper.agentic.digest import digest_json as _digest_json
 from code2paper.agentic.generic_fact_compiler import FactCompilerInputV1, compile_facts_from_behavior_graph
 from code2paper.llm.client import LLMClient, LLMRequest, LLMResponse
 from code2paper.llm.response_schemas import json_schema_for, try_parse_structured_response
@@ -140,6 +141,24 @@ class WritingCallbackFulfillmentResultV1(BaseModel):
     external_requests_seen: int = 0
     resumed_section_ids: tuple[str, ...] = Field(default_factory=tuple)
     resumed_paragraph_ids: tuple[str, ...] = Field(default_factory=tuple)
+    # Resume provenance is a first-class callback contract.  These fields are
+    # intentionally persisted even when the loop blocks before a Writer call:
+    # an auditor must be able to distinguish a mode/context mismatch from a
+    # repository request that simply made no progress.
+    initial_run_mode: str = ""
+    resume_run_mode: str = ""
+    mode_identity_verified: bool = False
+    baseline_source_context_digest: str = ""
+    current_source_context_digest: str = ""
+    context_identity_verified: bool = False
+    baseline_page_manifest_digest: str = ""
+    current_page_manifest_digest: str = ""
+    page_identity_verified: bool = False
+    new_observation_ids: tuple[str, ...] = Field(default_factory=tuple)
+    new_operation_ids: tuple[str, ...] = Field(default_factory=tuple)
+    new_fact_ids: tuple[str, ...] = Field(default_factory=tuple)
+    new_detail_ids: tuple[str, ...] = Field(default_factory=tuple)
+    remaining_core_intent_ids: tuple[str, ...] = Field(default_factory=tuple)
     stopped_reason: str = ""
     trace_path: str = ""
 
@@ -157,11 +176,14 @@ _AUTHORING_REVISION_PATH_KEYS: frozenset[str] = frozenset({
     "typed_gaps",
     "implementation_scope_v1",
     "candidate_acquisition_ledger_v1",
+    "observation_promotion_ledger_v1",
     "obligation_coverage_v2",
     "reference_method_agenda_v1",
     "method_completeness_matrix_v1",
     "completeness_matrix",
     "story_spine",
+    "author_story_spine_v1",
+    "method_story_nodes_v1",
     "authoring_projection_v1",
     "method_evidence",
     "claim_evidence_map",
@@ -190,6 +212,20 @@ _AUTHORING_REVISION_PATH_KEYS: frozenset[str] = frozenset({
     # an older snapshot; the callback bundle itself is deliberately absent.
     "research_mechanism_dossiers_v1",
     "derivation_records_v1",
+    # Unified context products are part of the authoring revision.  Keeping
+    # these keys in the merge contract prevents a resumed Writer from
+    # silently retaining the previous context/page/formula closure after a
+    # Research callback changed its source authority.
+    "repository_source_manifest_v1",
+    "repo_snapshot_v2",
+    "symbol_index_v2",
+    "mechanism_context_set_v1",
+    "mechanism_evidence_closures_v1",
+    "mechanism_context_completeness_v1",
+    "mechanism_context_page_manifest_v1",
+    "mechanism_formula_obligations_v1",
+    "mechanism_formula_packages_v2",
+    "narrative_plan_v3",
 })
 
 
@@ -586,6 +622,143 @@ def _execute_mechanism_requests_v2(
     return artifacts, traces
 
 
+_AUTHORING_CONTEXT_IDENTITY_KEYS: tuple[str, ...] = (
+    # These are the frozen inputs that determine the technical context.  The
+    # callback identity is a digest of the files that are actually present;
+    # absent optional artifacts are not represented as fabricated empty files.
+    "repo_snapshot_v2",
+    "symbol_index_v2",
+    "repository_source_manifest_v1",
+    "implementation_scope_v1",
+    "behavior_graph_v1",
+    "code_facts_v1",
+    "evidence_packets_v3",
+    "atomic_claims_v3",
+    "equation_claims_v1",
+    "configuration_claims_v1",
+    "mechanism_evidence_closures_v1",
+    "mechanism_context_set_v1",
+    "mechanism_formula_obligations_v1",
+    "mechanism_formula_packages_v2",
+)
+
+
+def _file_digest(path_value: Any) -> str:
+    path = Path(str(path_value or "")).expanduser()
+    if not path.is_file():
+        return ""
+    try:
+        return "sha256:" + hashlib.sha256(path.read_bytes()).hexdigest()
+    except OSError:
+        return ""
+
+
+def _authoring_context_identity(
+    paths: Mapping[str, str],
+    *,
+    fallback_mode: str | None = None,
+) -> dict[str, str | bool]:
+    """Read mode and context identity from persisted run artifacts.
+
+    A callback must not infer its resume lane from ambient environment state.
+    The initial Writer contract is authoritative when present; the explicit
+    fallback is used only for the legacy compatibility tests/path that never
+    produced a run contract.
+    """
+
+    contract_present = False
+    mode = ""
+    contract_path = str(paths.get("authoring_run_contract_v1") or "").strip()
+    if contract_path and Path(contract_path).is_file():
+        contract_present = True
+        try:
+            payload = json.loads(Path(contract_path).read_text(encoding="utf-8"))
+            if isinstance(payload, Mapping):
+                mode = str(payload.get("effective_mode") or "").strip().casefold()
+        except (OSError, TypeError, ValueError, json.JSONDecodeError):
+            mode = ""
+    if not mode:
+        result_path = str(paths.get("publication_writer_result_v1") or "").strip()
+        if result_path and Path(result_path).is_file():
+            try:
+                payload = json.loads(Path(result_path).read_text(encoding="utf-8"))
+                if isinstance(payload, Mapping):
+                    mode = str(
+                        payload.get("effective_authoring_context_mode")
+                        or payload.get("requested_authoring_context_mode")
+                        or ""
+                    ).strip().casefold()
+            except (OSError, TypeError, ValueError, json.JSONDecodeError):
+                mode = ""
+    if not mode:
+        mode = str(fallback_mode or "legacy").strip().casefold() or "legacy"
+
+    source_rows = {
+        key: digest
+        for key in _AUTHORING_CONTEXT_IDENTITY_KEYS
+        if (digest := _file_digest(paths.get(key, "")))
+    }
+    source_context_digest = _digest_json(source_rows) if source_rows else ""
+    page_manifest_digest = _file_digest(
+        paths.get("mechanism_context_page_manifest_v1", "")
+    )
+    return {
+        "mode": mode,
+        "contract_present": contract_present,
+        "source_context_digest": source_context_digest,
+        "page_manifest_digest": page_manifest_digest,
+    }
+
+
+def _core_intent_ids_from_paths(paths: Mapping[str, str]) -> tuple[str, ...]:
+    """Best-effort read of unresolved core clause identities for the receipt."""
+
+    ids: set[str] = set()
+    for key in ("intent_obligation_graph_v2", "research_agenda_v1"):
+        path = str(paths.get(key) or "").strip()
+        if not path or not Path(path).is_file():
+            continue
+        try:
+            payload = json.loads(Path(path).read_text(encoding="utf-8"))
+        except (OSError, TypeError, ValueError, json.JSONDecodeError):
+            continue
+        rows: list[Any] = []
+        if isinstance(payload, list):
+            rows = payload
+        elif isinstance(payload, Mapping):
+            for field in (
+                "clauses", "obligations", "items", "agenda", "nodes",
+                "intent_clauses", "core_intents",
+            ):
+                value = payload.get(field)
+                if isinstance(value, list):
+                    rows.extend(value)
+        for row in rows:
+            if not isinstance(row, Mapping):
+                continue
+            importance = str(
+                row.get("importance") or row.get("priority") or row.get("scope") or ""
+            ).casefold()
+            status = str(
+                row.get("status") or row.get("disposition") or row.get("state") or ""
+            ).casefold()
+            if importance and importance not in {"core", "critical", "p0", "high"}:
+                continue
+            if status in {
+                "implemented_exact", "implemented_partial", "out_of_scope",
+                "not_found_after_bounded_search", "repo_mismatch", "blocked",
+            }:
+                continue
+            value = (
+                row.get("intent_id") or row.get("clause_id")
+                or row.get("obligation_id") or row.get("item_id")
+                or row.get("agenda_item_id") or row.get("id")
+            )
+            if str(value or "").strip():
+                ids.add(str(value).strip())
+    return tuple(sorted(ids))
+
+
 def fulfill_and_resume_writing_callbacks(
     *,
     runtime: Any,
@@ -598,6 +771,7 @@ def fulfill_and_resume_writing_callbacks(
     research_stage_checkpoint: str | Path | None = None,
     research_continuation_seed: ResearchContinuationSeedV1 | None = None,
     method_name: str = "",
+    authoring_context_mode: str | None = None,
 ) -> tuple[dict[str, str], str, str, WritingCallbackFulfillmentResultV1]:
     """Run the bounded callback fulfillment/resume loop after a Writer run.
 
@@ -730,6 +904,10 @@ def fulfill_and_resume_writing_callbacks(
     external_seen: set[str] = set()
     resumed: set[str] = set()
     resumed_paragraphs: set[str] = set()
+    new_observation_ids: set[str] = set()
+    new_operation_ids: set[str] = set()
+    new_fact_ids: set[str] = set()
+    new_detail_ids: set[str] = set()
     initial_writer_payload: dict[str, Any] = {}
     initial_writer_path = str(
         writer_paths.get("publication_writer_result_v1") or ""
@@ -741,6 +919,51 @@ def fulfill_and_resume_writing_callbacks(
                 initial_writer_payload = loaded
         except (OSError, TypeError, ValueError, json.JSONDecodeError):
             initial_writer_payload = {}
+    initial_identity = _authoring_context_identity(
+        {**artifact_paths, **writer_paths},
+        fallback_mode=authoring_context_mode,
+    )
+    initial_mode = str(initial_identity["mode"])
+    requested_mode = str(authoring_context_mode or "").strip().casefold()
+    result = result.model_copy(update={
+        "initial_run_mode": initial_mode,
+        "resume_run_mode": initial_mode,
+        "baseline_source_context_digest": str(
+            initial_identity["source_context_digest"]
+        ),
+        "current_source_context_digest": str(
+            initial_identity["source_context_digest"]
+        ),
+        "baseline_page_manifest_digest": str(
+            initial_identity["page_manifest_digest"]
+        ),
+        "current_page_manifest_digest": str(
+            initial_identity["page_manifest_digest"]
+        ),
+        "remaining_core_intent_ids": _core_intent_ids_from_paths(
+            {**artifact_paths, **writer_paths}
+        ),
+    })
+    if requested_mode and requested_mode != initial_mode:
+        result = result.model_copy(update={
+            "stopped_reason": "callback_authoring_mode_mismatch",
+            "mode_identity_verified": False,
+        })
+        return writer_paths, "blocked", result.stopped_reason, result
+    # A unified callback without the initial persisted contract has no
+    # trustworthy provenance.  Legacy compatibility fixtures may still omit
+    # the contract, but the production unified lane must fail closed.
+    if initial_mode in {"unified", "shadow_unified"} and not bool(
+        initial_identity["contract_present"]
+    ):
+        result = result.model_copy(update={
+            "stopped_reason": "callback_initial_authoring_contract_missing",
+            "mode_identity_verified": False,
+        })
+        return writer_paths, "blocked", result.stopped_reason, result
+    result = result.model_copy(update={
+        "mode_identity_verified": True,
+    })
     initial_assessment_path = str(
         writer_paths.get("publication_paragraph_transaction_assessments_v1") or ""
     ).strip()
@@ -831,6 +1054,42 @@ def fulfill_and_resume_writing_callbacks(
             provider=provider,
             callback_root=callback_root,
         ) if selected_mechanism else ({}, {})
+        for artifact_items in artifacts.values():
+            for artifact in artifact_items:
+                payload = _load_callback_artifact_payload(artifact, callback_root)
+                for field, target in (
+                    ("new_observation_ids", new_observation_ids),
+                    ("observation_ids", new_observation_ids),
+                    ("new_operation_ids", new_operation_ids),
+                    ("operation_ids", new_operation_ids),
+                    ("new_fact_ids", new_fact_ids),
+                    ("fact_ids", new_fact_ids),
+                    ("new_detail_ids", new_detail_ids),
+                    ("detail_ids", new_detail_ids),
+                ):
+                    values = payload.get(field) or getattr(artifact, field, ())
+                    target.update(
+                        str(value).strip()
+                        for value in (values or ())
+                        if str(value).strip()
+                    )
+        for artifact_items in mechanism_artifacts.values():
+            for artifact in artifact_items:
+                new_operation_ids.update(
+                    str(value).strip()
+                    for value in (getattr(artifact, "new_source_operation_ids", ()) or ())
+                    if str(value).strip()
+                )
+                new_fact_ids.update(
+                    str(value).strip()
+                    for value in (getattr(artifact, "new_fact_ids", ()) or ())
+                    if str(value).strip()
+                )
+                new_detail_ids.update(
+                    str(value).strip()
+                    for value in (getattr(artifact, "new_detail_ids", ()) or ())
+                    if str(value).strip()
+                )
         if not artifacts and not mechanism_artifacts:
             result = result.model_copy(update={"stopped_reason": "no_progress"})
             break
@@ -1047,6 +1306,17 @@ def fulfill_and_resume_writing_callbacks(
             writer_paths=writer_paths,
             authoring_paths=artifact_paths,
         )
+        resume_identity = _authoring_context_identity(
+            merged_paths,
+            fallback_mode=initial_mode,
+        )
+        if str(resume_identity["mode"]) != initial_mode:
+            result = result.model_copy(update={
+                "resume_run_mode": str(resume_identity["mode"]),
+                "mode_identity_verified": False,
+                "stopped_reason": "callback_resume_authoring_mode_mismatch",
+            })
+            return writer_paths, "blocked", result.stopped_reason, result
         resume_artifacts = {
             request_id: tuple(items)
             for request_id, items in (bundle.artifacts or {}).items()
@@ -1069,6 +1339,11 @@ def fulfill_and_resume_writing_callbacks(
             llm_caller=llm_caller,
             resume_section_ids=resume_sections,
             research_callback_artifacts=resume_artifacts,
+            # Always inherit the persisted initial lane.  Passing ``None``
+            # here would allow the Writer wrapper to resolve legacy from its
+            # default/environment and silently cross lanes on resume.
+            authoring_context_mode=initial_mode,
+            authoring_context_mode_source="resume",
             **writer_kwargs,
         )
         writer_status = effective_writer_transaction_status(writer_result)
@@ -1077,6 +1352,52 @@ def fulfill_and_resume_writing_callbacks(
         # the 06_authoring bundle/formalization paths so the next round does
         # not fall back to a stale frozen copy.
         writer_paths = {**writer_paths, **next_paths}
+        post_identity = _authoring_context_identity(
+            {**merged_paths, **next_paths},
+            fallback_mode=initial_mode,
+        )
+        unified_resume_artifacts_present = all(
+            str(next_paths.get(key) or "").strip()
+            and Path(str(next_paths.get(key))).is_file()
+            for key in (
+                "authoring_run_contract_v1",
+                "mechanism_context_set_v1",
+                "mechanism_context_page_manifest_v1",
+                "mechanism_shared_payload_trace_v1",
+            )
+        )
+        context_verified = bool(post_identity["source_context_digest"])
+        page_verified = bool(post_identity["page_manifest_digest"])
+        if initial_mode in {"unified", "shadow_unified"} and not (
+            context_verified and page_verified and unified_resume_artifacts_present
+        ):
+            result = result.model_copy(update={
+                "resume_run_mode": str(post_identity["mode"]),
+                "current_source_context_digest": str(
+                    post_identity["source_context_digest"]
+                ),
+                "current_page_manifest_digest": str(
+                    post_identity["page_manifest_digest"]
+                ),
+                "context_identity_verified": context_verified,
+                "page_identity_verified": page_verified,
+                "stopped_reason": "callback_resume_context_identity_missing",
+            })
+            return writer_paths, "blocked", result.stopped_reason, result
+        result = result.model_copy(update={
+            "resume_run_mode": str(post_identity["mode"]),
+            "current_source_context_digest": str(
+                post_identity["source_context_digest"]
+            ),
+            "current_page_manifest_digest": str(
+                post_identity["page_manifest_digest"]
+            ),
+            "context_identity_verified": context_verified,
+            "page_identity_verified": page_verified,
+            "mode_identity_verified": (
+                str(post_identity["mode"]) == initial_mode
+            ),
+        })
         bundle = _load_bundle(
             writer_paths.get("writing_research_callback_artifacts_v1", "")
             or bundle_path
@@ -1124,6 +1445,13 @@ def fulfill_and_resume_writing_callbacks(
         "external_requests_seen": len(external_seen),
         "resumed_section_ids": tuple(sorted(resumed)),
         "resumed_paragraph_ids": tuple(sorted(resumed_paragraphs)),
+        "new_observation_ids": tuple(sorted(new_observation_ids)),
+        "new_operation_ids": tuple(sorted(new_operation_ids)),
+        "new_fact_ids": tuple(sorted(new_fact_ids)),
+        "new_detail_ids": tuple(sorted(new_detail_ids)),
+        "remaining_core_intent_ids": _core_intent_ids_from_paths(
+            {**artifact_paths, **writer_paths}
+        ),
         "stopped_reason": result.stopped_reason or "completed",
         "trace_path": trace_path,
     })

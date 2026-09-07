@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from types import SimpleNamespace
+
 import pytest
 from code2paper.agentic.formalization_agent import (
     FormulaPlacementV1,
@@ -116,3 +118,32 @@ def test_mechanism_formula_package_v2_and_placement() -> None:
     assert placement.package_id == "pkg:infonce"
     assert placement.section_id == "MA-S3"
     assert placement.paragraph_id == "p:loss"
+
+
+def test_formula_obligation_preserves_nested_fraction_ast_terms() -> None:
+    """Nested sub/superscript groups must not truncate a denominator."""
+
+    context = _make_context()
+    detail = context.details[0].model_copy(update={
+        "source_equation_ids": ("eq:nested",),
+    })
+    context = context.model_copy(update={"details": (detail,)})
+    expression = r"S = \frac{\sum_{i=1}^{n} w_i x_i}{\sum_{j=1}^{n} w_j + \epsilon}"
+    source_equations = SimpleNamespace(equations=(SimpleNamespace(
+        equation_id="eq:nested",
+        expression=expression,
+        operation_predicates=("reduces",),
+        conditions=(),
+        symbol_bindings=(),
+    ),))
+
+    obligations = compile_mechanism_formula_obligations(
+        context,
+        equations=source_equations,
+    )
+
+    assert len(obligations) == 1
+    assert obligations[0].source_equation_expression == expression
+    assert obligations[0].required_denominator_terms == (
+        r"\sum_{j=1}^{n} w_j + \epsilon",
+    )

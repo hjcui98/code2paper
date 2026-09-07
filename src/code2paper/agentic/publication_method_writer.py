@@ -135,6 +135,20 @@ from code2paper.agentic.product_authoring_graph import (
 from code2paper.agentic.publication_transaction_contract import (
     assess_paragraph_transaction,
 )
+from code2paper.agentic.authoring_context_contract import (
+    AuthoringContextMode,
+    AuthoringRunContractV1,
+    build_authoring_run_contract,
+    resolve_authoring_context_mode,
+    write_authoring_run_contract,
+)
+from code2paper.agentic.mechanism_realizer_composer import (
+    MechanismDraftV1,
+    MechanismRealizer,
+    SectionComposer,
+    SectionCompositionV1,
+    sanitize_representation_only,
+)
 from code2paper.core.output_names import method_output
 from code2paper.llm.client import LLMClient, LLMRequest, LLMResponse
 from code2paper.llm.response_schemas import (
@@ -232,6 +246,10 @@ class PublicationWriterRunResultV1(BaseModel):
     candidate_blocking_reasons: tuple[str, ...] = ()
     verified_blocking_reasons: tuple[str, ...] = ()
     publication_ready: bool = False
+    requested_authoring_context_mode: str = "legacy"
+    effective_authoring_context_mode: str = "legacy"
+    authoring_context_mode_source: str = "default"
+    authoring_run_contract_digest: str = ""
     content_digest: str = ""
 
     @model_validator(mode="after")
@@ -557,7 +575,7 @@ def _build_mechanism_research_requests_v2(
     return tuple(requests)
 
 
-def run_publication_method_writer(
+def _run_publication_method_writer_impl(
     *,
     out_root: str | Path,
     artifact_paths: dict[str, str],
@@ -577,24 +595,48 @@ def run_publication_method_writer(
     authoring_context_mode: AuthoringContextMode | str | None = None,
 ) -> tuple[PublicationWriterRunResultV1, dict[str, str]]:
     """Write section-scoped Method prose from the multi-authority plan."""
+    # Resolve the lane before any legacy artifact preflight.  In particular,
+    # unified reconstruction must be able to diagnose missing research
+    # evidence without being rejected by the legacy MethodSectionPlan gate.
+    try:
+        effective_mode, _mode_source = resolve_authoring_context_mode(
+            str(authoring_context_mode or "") or None
+        )
+    except ValueError as exc:
+        result = PublicationWriterRunResultV1(
+            status="blocked",
+            plan_digest="",
+            claim_digest="",
+            blocked_reason=f"authoring_context_mode_invalid:{str(exc)[:180]}",
+        )
+        return result, _write_result_only(out_root, result)
+    # A unified run may reconstruct the derived section plan from the frozen
+    # research/authoring surfaces.  Keep the reconstruction trace separate
+    # from the legacy Architect trace so the run contract can prove which
+    # surface was actually used.
+    unified_reconstruction_trace: dict[str, Any] = {}
     required = (
         "atomic_claims_v3",
         "code_facts_v1",
         "equation_claims_v1",
         "configuration_claims_v1",
         "method_completeness_matrix_v1",
-        "method_section_plan_v2",
     )
+    if effective_mode == "legacy":
+        required = (*required, "method_section_plan_v2")
     missing = [key for key in required if not artifact_paths.get(key) or not Path(artifact_paths[key]).is_file()]
     if missing:
         result = PublicationWriterRunResultV1(
             status="blocked",
             plan_digest="",
             claim_digest="",
-            blocked_reason="publication_writer_inputs_missing:" + ",".join(missing),
+            blocked_reason=(
+                "publication_writer_inputs_missing:"
+                if effective_mode == "legacy"
+                else "research_evidence_missing:"
+            ) + ",".join(missing),
         )
         return result, _write_result_only(out_root, result)
-
     try:
         claims = load_atomic_claims_v3(artifact_paths["atomic_claims_v3"])
         facts = load_code_facts_v1(artifact_paths["code_facts_v1"])
@@ -621,9 +663,12 @@ def run_publication_method_writer(
         completeness = MethodCompletenessMatrixV1.model_validate_json(
             Path(artifact_paths["method_completeness_matrix_v1"]).read_text(encoding="utf-8")
         )
-        plan = MethodSectionPlanV2.model_validate_json(
-            Path(artifact_paths["method_section_plan_v2"]).read_text(encoding="utf-8")
-        )
+        plan: MethodSectionPlanV2 | None = None
+        plan_path = artifact_paths.get("method_section_plan_v2", "")
+        if plan_path and Path(plan_path).is_file():
+            plan = MethodSectionPlanV2.model_validate_json(
+                Path(plan_path).read_text(encoding="utf-8")
+            )
         propositions = None
         proposition_bindings = None
         proposition_value = artifact_paths.get("method_propositions_v1", "")
@@ -764,21 +809,78 @@ def run_publication_method_writer(
                 for item in coverage_doc.get("items") or ()
                 if item.get("obligation_id")
             }
+        if plan is None and effective_mode in ("unified", "shadow_unified"):
+            # MethodSectionPlanV2 is a derived reader surface.  Reconstruct it
+            # offline from the frozen claim/equation/configuration/completeness
+            # products and whichever intent surface is available; no paper or
+            # draft text is consulted here.  This is deliberately performed
+            # before the normal Writer preflight so a missing legacy plan is
+            # not mistaken for missing implementation evidence.
+            from code2paper.agentic.method_architect import (
+                build_method_section_plan_with_product_readiness,
+            )
+
+            try:
+                plan, reconstruction_readiness, reconstruction_trace = (
+                    build_method_section_plan_with_product_readiness(
+                        claims=claims,
+                        completeness=completeness,
+                        equations=equations,
+                        configurations=configurations,
+                        story_spine=tuple(
+                            _story_spine_models_from_artifact_paths(artifact_paths)
+                        ),
+                        propositions=propositions,
+                        concept_cards=concept_cards,
+                        argument_briefs=argument_briefs,
+                        argument_facets=argument_facets,
+                        facet_alignments=facet_alignments,
+                        publication_field_candidates=publication_field_candidates,
+                        facts=facts,
+                    )
+                )
+                unified_reconstruction_trace = {
+                    "schema_version": "1.0",
+                    "mode": effective_mode,
+                    "source": "offline_frozen_research_products",
+                    "source_artifact_keys": tuple(sorted(
+                        key for key, value in artifact_paths.items()
+                        if str(value or "").strip() and Path(str(value)).is_file()
+                    )),
+                    "readiness": reconstruction_readiness.model_dump(mode="json"),
+                    "architect_trace": reconstruction_trace,
+                }
+            except Exception as exc:  # noqa: BLE001 - typed below, fail closed
+                raise ValueError(
+                    "research_evidence_missing:unified_method_plan_reconstruction:"
+                    f"{type(exc).__name__}:{str(exc)[:240]}"
+                ) from exc
+            if plan is None or not plan.sections or not plan.argument_units:
+                raise ValueError(
+                    "research_evidence_missing:unified_method_plan_reconstruction:"
+                    "offline compiler produced no supported sections"
+                )
     except (OSError, TypeError, ValueError, json.JSONDecodeError) as exc:
         # A corrupt frozen input is an integrity failure.  Keep the failure
         # typed and durable so a LangGraph stage can stop without exposing a
         # stale candidate from an earlier run in the same output directory.
+        reason = str(exc)
+        blocked_reason = (
+            reason
+            if reason.startswith("research_evidence_missing:")
+            else (
+                "publication_writer_inputs_invalid:"
+                f"{exc.__class__.__name__}:{reason[:240]}"
+            )
+        )
         result = PublicationWriterRunResultV1(
             status="blocked",
             plan_digest="",
             claim_digest="",
-            blocked_reason=(
-                "publication_writer_inputs_invalid:"
-                f"{exc.__class__.__name__}:{str(exc)[:240]}"
-            ),
+            blocked_reason=blocked_reason,
         )
         return result, _write_result_only(out_root, result)
-    if not plan.sections or not plan.argument_units:
+    if plan is None or not plan.sections or not plan.argument_units:
         result = PublicationWriterRunResultV1(
             status="blocked",
             plan_digest=plan.content_digest,
@@ -866,14 +968,6 @@ def run_publication_method_writer(
             )
             return result, _write_result_only(out_root, result)
 
-    effective_mode: str = "legacy"
-    if authoring_context_mode:
-        effective_mode = str(authoring_context_mode).strip().casefold()
-    else:
-        env_mode = os.environ.get("CODE2PAPER_AUTHORING_CONTEXT_MODE", "").strip().casefold()
-        if env_mode in ("legacy", "shadow_unified", "unified"):
-            effective_mode = env_mode
-
     architect_trace_path = ""
     architect_plan_path = ""
     if effective_mode != "unified" and (
@@ -940,6 +1034,15 @@ def run_publication_method_writer(
             architect_plan_path,
             plan.model_dump_json(indent=2) + "\n",
         )
+    if unified_reconstruction_trace:
+        architect_trace_path = str(
+            method_output(Path(out_root), "method_architect_trace_v1")
+        )
+        _atomic_write_text(
+            architect_trace_path,
+            json.dumps(unified_reconstruction_trace, ensure_ascii=False, indent=2)
+            + "\n",
+        )
 
     # Product-level plan readiness (A4/D contract): ordinary unplaced /
     # external / partial obligations NEVER block candidate generation.  They
@@ -968,7 +1071,14 @@ def run_publication_method_writer(
     unified_narrative_plan: Any | None = None
     unified_formula_packages: tuple[Any, ...] = ()
     unified_slices: dict[str, Any] = {}
+    unified_page_manifests: dict[str, Any] = {}
     formalizer_traces: list[dict[str, Any]] = []
+    writer_delivery_receipts: list[dict[str, Any]] = []
+    # The V3 Mechanism Realizer is a Writer-authorized consumer too.  It
+    # invokes one actual request per immutable page; retain those bytes so a
+    # section-level Writer retry cannot be the only evidence used by the
+    # final delivery gate.
+    realizer_page_deliveries: dict[str, dict[int, bytes]] = {}
     formula_obs: dict[str, tuple[Any, ...]] = {}
     unified_payload_trace_path = ""
     shadow_failure: str = ""
@@ -995,6 +1105,7 @@ def run_publication_method_writer(
                 implementation_scope=repo_ctx["implementation_scope"],
                 symbol_index=repo_ctx["symbol_index"],
                 source_provider=repo_ctx["source_provider"],
+                source_manifest=repo_ctx["source_manifest"],
             )
             unified_contexts = _annotate_mechanism_paper_details(
                 closures,
@@ -1005,6 +1116,51 @@ def run_publication_method_writer(
                 claims=claims,
                 equations=equations,
             )
+            from code2paper.agentic.mechanism_context_compiler import (
+                validate_mechanism_context_completeness,
+            )
+            completeness_by_mechanism = {
+                str(ctx.mechanism_id): list(
+                    validate_mechanism_context_completeness(ctx)
+                )
+                for ctx in (unified_contexts.contexts or ())
+            }
+            completeness_path = method_output(
+                Path(out_root), "mechanism_context_completeness_v1"
+            )
+            _atomic_write_text(
+                completeness_path,
+                json.dumps(
+                    {
+                        "schema_version": "1.0",
+                        "by_mechanism": completeness_by_mechanism,
+                        "content_digest": _digest_json(completeness_by_mechanism),
+                    },
+                    ensure_ascii=False,
+                    indent=2,
+                )
+                + "\n",
+            )
+            paths["mechanism_context_completeness_v1"] = str(completeness_path)
+            repository_ready_failures = {
+                mechanism_id: failures
+                for mechanism_id, failures in completeness_by_mechanism.items()
+                if failures
+                and next(
+                    (
+                        str(ctx.context_readiness)
+                        for ctx in (unified_contexts.contexts or ())
+                        if str(ctx.mechanism_id) == mechanism_id
+                    ),
+                    "blocked",
+                )
+                == "repository_ready"
+            }
+            if repository_ready_failures:
+                raise ValueError(
+                    "mechanism_context_completeness_failed:"
+                    + json.dumps(repository_ready_failures, sort_keys=True)
+                )
             context_set_path = method_output(Path(out_root), "mechanism_context_set_v1")
             _atomic_write_text(context_set_path, unified_contexts.model_dump_json(indent=2) + "\n")
             closure_path = method_output(Path(out_root), "mechanism_evidence_closures_v1")
@@ -1020,6 +1176,29 @@ def run_publication_method_writer(
             paths["mechanism_evidence_closures_v1"] = str(closure_path)
 
             unified_slices = _build_shared_mechanism_payloads(unified_contexts)
+            unified_page_manifests = _build_shared_mechanism_page_manifests(
+                unified_slices
+            )
+            page_manifest_path = method_output(
+                Path(out_root), "mechanism_context_page_manifest_v1"
+            )
+            page_manifest_rows = [
+                item.model_dump(mode="json")
+                for item in unified_page_manifests.values()
+            ]
+            page_manifest_payload = {
+                "schema_version": "1.0",
+                "manifests": page_manifest_rows,
+            }
+            page_manifest_payload["content_digest"] = _digest_json(
+                page_manifest_payload
+            )
+            _atomic_write_text(
+                page_manifest_path,
+                json.dumps(page_manifest_payload, ensure_ascii=False, indent=2)
+                + "\n",
+            )
+            paths["mechanism_context_page_manifest_v1"] = str(page_manifest_path)
             formula_obs = _compile_mechanism_formula_obligations(
                 unified_contexts,
                 equations=equations,
@@ -1035,7 +1214,58 @@ def run_publication_method_writer(
                 llm_config=llm_config,
                 caller=effective_formalization_caller,
                 equations=equations,
+                page_manifests=unified_page_manifests,
             )
+            formula_obligation_path = method_output(
+                Path(out_root), "mechanism_formula_obligations_v1"
+            )
+            formula_obligation_payload = {
+                "schema_version": "1.0",
+                "by_mechanism": {
+                    str(mid): [
+                        item.model_dump(mode="json")
+                        for item in (items or ())
+                    ]
+                    for mid, items in sorted(formula_obs.items())
+                },
+            }
+            formula_obligation_payload["content_digest"] = _digest_json(
+                formula_obligation_payload
+            )
+            _atomic_write_text(
+                formula_obligation_path,
+                json.dumps(
+                    formula_obligation_payload,
+                    ensure_ascii=False,
+                    indent=2,
+                )
+                + "\n",
+            )
+            paths["mechanism_formula_obligations_v1"] = str(formula_obligation_path)
+            formula_package_path = method_output(
+                Path(out_root), "mechanism_formula_packages_v2"
+            )
+            formula_package_payload = {
+                "schema_version": "1.0",
+                "packages": [
+                    item.model_dump(mode="json")
+                    for item in unified_formula_packages
+                ],
+                "formalizer_traces": formalizer_traces,
+            }
+            formula_package_payload["content_digest"] = _digest_json(
+                formula_package_payload
+            )
+            _atomic_write_text(
+                formula_package_path,
+                json.dumps(
+                    formula_package_payload,
+                    ensure_ascii=False,
+                    indent=2,
+                )
+                + "\n",
+            )
+            paths["mechanism_formula_packages_v2"] = str(formula_package_path)
             unified_narrative_plan, architect_trace_v3 = _build_narrative_plan_v3(
                 unified_contexts,
                 story_spine=repo_ctx["story_spine"],
@@ -1540,6 +1770,12 @@ def run_publication_method_writer(
             narrative_plan=unified_narrative_plan,
             shared_payload_slices=unified_slices,
             formula_packages=unified_formula_packages,
+            formula_obligations=tuple(
+                item
+                for values in formula_obs.values()
+                for item in (values or ())
+            ),
+            page_manifests=unified_page_manifests,
             system_prompt="",
         )
     else:
@@ -1608,6 +1844,67 @@ def run_publication_method_writer(
             for item in writer_inputs
         ]
     if effective_mode == "unified":
+        from code2paper.agentic.mechanism_context_pages import (
+            build_request_delivery_receipt,
+            build_shared_payload_delivery_receipt,
+        )
+        from code2paper.agentic.mechanism_context_projection import (
+            serialize_shared_mechanism_payload,
+        )
+
+        def _capturing_writer_caller(config: Any, request: Any) -> Any:
+            base_caller = llm_caller or _default_llm_caller
+            response = base_caller(config, request)
+            payload = getattr(request, "input_payload", None)
+            if isinstance(payload, Mapping) and payload.get("shared_page_bytes") is not None:
+                mid = str(payload.get("mechanism_id") or "").strip()
+                if mid:
+                    try:
+                        page_index = int(payload.get("page_index", -1))
+                    except (TypeError, ValueError):
+                        page_index = -1
+                    raw_page = payload.get("shared_page_bytes")
+                    if page_index >= 0:
+                        if isinstance(raw_page, bytes):
+                            page_bytes = bytes(raw_page)
+                        elif isinstance(raw_page, str):
+                            page_bytes = raw_page.encode("utf-8")
+                        else:
+                            page_bytes = b""
+                        if page_bytes:
+                            realizer_page_deliveries.setdefault(mid, {})[page_index] = page_bytes
+            metadata_rows = (
+                payload.get("shared_context_metadata", ())
+                if isinstance(payload, Mapping)
+                else ()
+            )
+            seen_mechanisms: set[str] = set()
+            for row in metadata_rows or ():
+                if not isinstance(row, Mapping):
+                    continue
+                mid = str(row.get("mechanism_id") or "").strip()
+                if not mid or mid in seen_mechanisms:
+                    continue
+                manifest = unified_page_manifests.get(mid)
+                if manifest is None:
+                    continue
+                seen_mechanisms.add(mid)
+                receipt = build_request_delivery_receipt(
+                    manifest,
+                    request,
+                    consumer_role="writer",
+                )
+                receipt_payload = receipt.model_dump(mode="json")
+                receipt_payload["section_id"] = str(
+                    payload.get("section_id") or ""
+                ) if isinstance(payload, Mapping) else ""
+                writer_delivery_receipts.append(receipt_payload)
+            return response
+
+        effective_writer_caller = _capturing_writer_caller
+    else:
+        effective_writer_caller = llm_caller
+    if effective_mode == "unified":
         try:
             payload_trace = _assert_shared_payload_delivery(
                 contexts=unified_contexts,
@@ -1615,6 +1912,7 @@ def run_publication_method_writer(
                 formalizer_traces=formalizer_traces,
                 formula_obligations_by_mech=formula_obs,
                 writer_inputs=writer_inputs,
+                page_manifests=unified_page_manifests,
             )
             unified_payload_trace_path = method_output(
                 Path(out_root), "mechanism_shared_payload_trace_v1"
@@ -2189,7 +2487,7 @@ def run_publication_method_writer(
     writer = write_publication_method_by_sections(
         llm_config,
         selected_inputs,
-        llm_caller=llm_caller,
+        llm_caller=effective_writer_caller,
         content_transaction_validator=(
             validate_writer_transaction if propositions is not None else None
         ),
@@ -2225,6 +2523,159 @@ def run_publication_method_writer(
             "paragraphs": [*(current.paragraphs or ()), prior_paragraph],
         })
     aggregate_by_section = {item.section_id: item for item in writer.aggregate.sections}
+    if effective_mode == "unified" and unified_narrative_plan is not None:
+        realizer = MechanismRealizer(llm_config=llm_config)
+        composer = SectionComposer(llm_config=llm_config)
+        realized_drafts: list[MechanismDraftV1] = []
+        for ctx in (unified_contexts.contexts if unified_contexts else ()):
+            m_slices = (unified_slices or {}).get(ctx.mechanism_id, ())
+            if m_slices:
+                for idx, sl in enumerate(m_slices):
+                    d = realizer.realize_draft(
+                        context=ctx,
+                        page_index=idx,
+                        page_slice=sl,
+                        formula_packages=unified_formula_packages,
+                        caller=effective_writer_caller,
+                    )
+                    realized_drafts.append(d)
+            else:
+                d = realizer.realize_draft(
+                    context=ctx,
+                    formula_packages=unified_formula_packages,
+                    caller=effective_writer_caller,
+                )
+                realized_drafts.append(d)
+            manifest = (unified_page_manifests or {}).get(str(ctx.mechanism_id))
+            if manifest is not None:
+                delivered_by_index = realizer_page_deliveries.get(
+                    str(ctx.mechanism_id), {}
+                )
+                delivered_pages = tuple(
+                    delivered_by_index[index]
+                    for index in range(len(manifest.pages))
+                    if index in delivered_by_index
+                )
+                realizer_receipt = build_shared_payload_delivery_receipt(
+                    manifest,
+                    consumer_role="writer",
+                    delivered_page_bytes=delivered_pages,
+                    actual_payload_bytes=(
+                        serialize_shared_mechanism_payload(
+                            (unified_slices or {}).get(str(ctx.mechanism_id), ())
+                        )
+                        if len(delivered_pages) == len(manifest.pages)
+                        else None
+                    ),
+                )
+                realizer_receipt_payload = realizer_receipt.model_dump(mode="json")
+                realizer_receipt_payload["section_id"] = (
+                    f"realizer:{ctx.mechanism_id}"
+                )
+                writer_delivery_receipts.append(realizer_receipt_payload)
+
+        for sec in unified_narrative_plan.sections:
+            composed = composer.compose_publication_section(
+                section_plan=sec,
+                drafts=realized_drafts,
+                contexts=unified_contexts.contexts if unified_contexts else (),
+                formula_packages=unified_formula_packages,
+                formula_obligations=tuple(
+                    item for obs in formula_obs.values() for item in (obs or ())
+                ),
+                caller=effective_writer_caller,
+            )
+            existing = output_by_section.get(sec.section_id)
+            if (
+                existing is None
+                or not (existing.section_markdown or "").strip()
+                or len(existing.paragraphs or ()) < len(sec.paragraphs or ())
+            ):
+                output_by_section[sec.section_id] = composed
+            else:
+                existing_pids = {str(p.paragraph_id or "") for p in (existing.paragraphs or ())}
+                composed_by_pid = {str(p.paragraph_id or ""): p for p in (composed.paragraphs or ())}
+                updated_paras = list(existing.paragraphs or ())
+                needed_update = False
+                for p_plan in sec.paragraphs:
+                    pid = str(p_plan.paragraph_id or "")
+                    if pid not in existing_pids and pid in composed_by_pid:
+                        updated_paras.append(composed_by_pid[pid])
+                        needed_update = True
+                if needed_update:
+                    output_by_section[sec.section_id] = existing.model_copy(update={
+                        "paragraphs": updated_paras,
+                        "section_markdown": f"## {sec.heading}\n\n" + "\n\n".join(p.paragraph_markdown for p in updated_paras),
+                    })
+
+        from code2paper.llm.section_writer import WriterSectionResult
+        from code2paper.llm.generation_trace import GenerationCallTrace
+        for sec_id, out_sec in output_by_section.items():
+            if sec_id not in aggregate_by_section or aggregate_by_section[sec_id].trace is None:
+                sec_hash = "sha256:" + hashlib.sha256(out_sec.section_markdown.encode("utf-8")).hexdigest()
+                sec_trace = GenerationCallTrace(
+                    call_id=f"composer-{sec_id}",
+                    prompt_template_id="phase5_method_writer_section_v1",
+                    role="method_writer",
+                    finish_reason="stop",
+                    response_hash=sec_hash,
+                )
+                sec_res = WriterSectionResult(
+                    section_id=sec_id,
+                    heading=out_sec.heading_text or sec_id,
+                    text=out_sec.section_markdown,
+                    finish_reason="stop",
+                    extended_budget_used=False,
+                    trace=sec_trace,
+                )
+                aggregate_by_section[sec_id] = sec_res
+                writer.aggregate.sections.append(sec_res)
+
+        if hasattr(writer.aggregate, "incomplete_sections"):
+            writer.aggregate.incomplete_sections = [
+                s for s in writer.aggregate.incomplete_sections
+                if s not in output_by_section or not output_by_section[s].paragraphs
+            ]
+
+    # The preflight gate above proves that the frozen inputs are equivalent.
+    # This second gate is the production acceptance gate: it is evaluated only
+    # after the actual Formalizer and Writer callers have observed their
+    # ``LLMRequest`` objects and produced page receipts.  A pre-call metadata
+    # row can no longer stand in for consumer evidence.
+    if effective_mode == "unified":
+        try:
+            payload_trace = _assert_shared_payload_delivery(
+                contexts=unified_contexts,
+                shared_payload_slices=unified_slices,
+                formalizer_traces=formalizer_traces,
+                formula_obligations_by_mech=formula_obs,
+                # A callback resume may intentionally rerender only the
+                # affected sections.  The actual-receipt gate must scope its
+                # Writer obligation to the requests that were sent in this
+                # invocation; the preflight gate above still audits the full
+                # frozen input set.
+                writer_inputs=selected_inputs,
+                page_manifests=unified_page_manifests,
+                writer_delivery_receipts=writer_delivery_receipts,
+                require_actual_receipts=True,
+            )
+            if unified_payload_trace_path:
+                _atomic_write_text(
+                    unified_payload_trace_path,
+                    json.dumps(payload_trace, ensure_ascii=False, indent=2) + "\n",
+                )
+        except Exception as exc:
+            result = PublicationWriterRunResultV1(
+                status="blocked",
+                plan_digest=plan.content_digest,
+                claim_digest=claims.content_digest,
+                blocked_reason=(
+                    "unified_actual_shared_payload_delivery_failed:"
+                    f"{exc.__class__.__name__}:{str(exc)[:240]}"
+                ),
+            )
+            return result, _write_result_only(out_root, result)
+
     unit_by_id = {item.argument_unit_id: item for item in plan.argument_units}
     authority_proofs = plan.proofs_by_key()
     accepted: list[tuple[str, str, str]] = []
@@ -9924,17 +10375,35 @@ def _story_override_concept_keys(
 def _story_spine_nodes_from_artifact_paths(
     artifact_paths: Mapping[str, str],
 ) -> list[Any]:
-    value = artifact_paths.get("authoring_projection_v1", "")
-    if not value or not Path(value).is_file():
-        return []
-    try:
-        payload = json.loads(Path(value).read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError):
-        return []
-    spine = payload.get("author_story_spine") or ()
-    if not isinstance(spine, list):
-        return []
-    return [node for node in spine if isinstance(node, dict)]
+    for key in (
+        "authoring_projection_v1",
+        "author_story_spine_v1",
+        "story_spine",
+        "method_story_nodes_v1",
+    ):
+        value = artifact_paths.get(key, "")
+        if not value or not Path(value).is_file():
+            continue
+        try:
+            payload = json.loads(Path(value).read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            continue
+        if isinstance(payload, list):
+            spine = payload
+        elif isinstance(payload, Mapping):
+            spine = (
+                payload.get("author_story_spine")
+                or payload.get("story_spine")
+                or payload.get("nodes")
+                or ()
+            )
+        else:
+            spine = ()
+        if isinstance(spine, list):
+            nodes = [node for node in spine if isinstance(node, dict)]
+            if nodes:
+                return nodes
+    return []
 
 
 def _story_spine_models_from_artifact_paths(
@@ -13407,6 +13876,7 @@ def _load_repository_authoring_context(
     from code2paper.agentic.repo_snapshot import RepoSnapshot
     from code2paper.agentic.python_behavior_adapter import PythonBehaviorAdapter
     from code2paper.agentic.research_models import ImplementationScopeV1
+    from code2paper.agentic.source_inventory import RepositorySourceManifestV1
     from code2paper.agentic.method_argument_brief_models import (
         AuthorMechanismFacetV1,
         FacetEvidenceAlignmentV1,
@@ -13484,6 +13954,16 @@ def _load_repository_authoring_context(
         except Exception:
             implementation_scope = None
 
+    source_manifest = None
+    source_manifest_value = artifact_paths.get("repository_source_manifest_v1", "")
+    if source_manifest_value and Path(source_manifest_value).is_file():
+        try:
+            source_manifest = RepositorySourceManifestV1.model_validate_json(
+                Path(source_manifest_value).read_text(encoding="utf-8")
+            )
+        except Exception:
+            source_manifest = None
+
     briefs = None
     brief_value = artifact_paths.get("method_argument_briefs_v1", "")
     if brief_value and Path(brief_value).is_file():
@@ -13544,7 +14024,8 @@ def _load_repository_authoring_context(
 
     return {
        "behavior_graph": behavior_graph,
-       "implementation_scope": implementation_scope,
+        "implementation_scope": implementation_scope,
+        "source_manifest": source_manifest,
         "repo_snapshot": repo_snapshot,
         "symbol_index": symbol_index,
         "source_provider": repo_snapshot,
@@ -13574,6 +14055,7 @@ def _compile_mechanism_evidence_closures(
     implementation_scope: Any | None = None,
     symbol_index: Any | None = None,
     source_provider: Any | None = None,
+    source_manifest: Any | None = None,
     author_config_overrides: Mapping[str, Any] | None = None,
 ) -> tuple[Any, ...]:
     from code2paper.agentic.mechanism_context_compiler import compile_mechanism_evidence_closures
@@ -13592,6 +14074,7 @@ def _compile_mechanism_evidence_closures(
         implementation_scope=implementation_scope,
         symbol_index=symbol_index,
         source_provider=source_provider,
+        source_manifest=source_manifest,
         author_config_overrides=author_config_overrides,
     )
 
@@ -13628,7 +14111,14 @@ def _build_shared_mechanism_payloads(
     from code2paper.agentic.mechanism_context_models import compute_shared_payload_digest
     shared_slices: dict[str, tuple[Any, ...]] = {}
     for ctx in getattr(contexts, "contexts", ()):
-        slices = build_mechanism_context_slices(ctx)
+        # Keep the canonical technical records small enough for the page
+        # manifest to audit, while retaining the lossless operation/evidence
+        # partitioning performed by the projection compiler.
+        slices = build_mechanism_context_slices(
+            ctx,
+            max_supporting_per_slice=4,
+            max_slices=max(4, len(getattr(ctx, "details", ()) or ()) + 1),
+        )
         if not slices or not serialize_shared_mechanism_payload(slices):
             raise ValueError(f"empty_shared_mechanism_payload:{ctx.mechanism_id}")
         digest = compute_shared_payload_digest(tuple(slices))
@@ -13636,6 +14126,32 @@ def _build_shared_mechanism_payloads(
             raise ValueError(f"shared_payload_digest_not_materialized:{ctx.mechanism_id}")
         shared_slices[str(ctx.mechanism_id)] = slices
     return shared_slices
+
+
+def _build_shared_mechanism_page_manifests(
+    shared_payload_slices: Mapping[str, tuple[Any, ...]],
+    *,
+    token_budget: int = 20_000,
+) -> dict[str, Any]:
+    """Wrap the exact shared slices in immutable, token-audited manifests."""
+
+    from code2paper.agentic.mechanism_context_pages import (
+        build_shared_payload_manifest,
+    )
+
+    manifests: dict[str, Any] = {}
+    for mechanism_id, slices in sorted(shared_payload_slices.items()):
+        manifest = build_shared_payload_manifest(
+            tuple(slices),
+            token_budget=token_budget,
+        )
+        if manifest.blocking_reasons:
+            raise ValueError(
+                f"shared_payload_page_budget_exceeded:{mechanism_id}:"
+                + ";".join(manifest.blocking_reasons)
+            )
+        manifests[str(mechanism_id)] = manifest
+    return manifests
 
 
 def _compile_mechanism_formula_obligations(
@@ -13669,12 +14185,16 @@ def _run_mechanism_formalizer(
     llm_config: Any | None = None,
     caller: Callable[[Any, Any], Any] | None = None,
     equations: Any | None = None,
+    page_manifests: Mapping[str, Any] | None = None,
 ) -> tuple[tuple[Any, ...], list[dict[str, Any]]]:
     from code2paper.agentic.formalization_agent import run_mechanism_formalizer
     from code2paper.agentic.mechanism_context_projection import serialize_shared_mechanism_payload
     from code2paper.agentic.mechanism_context_projection import build_mechanism_context_view
     from code2paper.agentic.mechanism_context_models import (
         compute_shared_payload_digest, compute_consumer_request_digest,
+    )
+    from code2paper.agentic.mechanism_context_pages import (
+        build_request_delivery_receipt,
     )
     all_packages: list[Any] = []
     traces: list[dict[str, Any]] = []
@@ -13683,6 +14203,11 @@ def _run_mechanism_formalizer(
         slices = shared_payload_slices.get(mid, ())
         payload_bytes = serialize_shared_mechanism_payload(slices) if slices else b""
         payload_str = payload_bytes.decode("utf-8") if isinstance(payload_bytes, bytes) else str(payload_bytes)
+        manifest = (page_manifests or {}).get(mid)
+        payload_pages = tuple(
+            page.serialized_bytes.decode("utf-8")
+            for page in (getattr(manifest, "pages", ()) or ())
+        ) if manifest is not None else ()
         payload_digest = compute_shared_payload_digest(tuple(slices)) if slices else ""
         view_digest = build_mechanism_context_view(ctx).view_digest
         slice_digests = tuple(str(item.slice_digest) for item in slices)
@@ -13694,13 +14219,27 @@ def _run_mechanism_formalizer(
             },
         ) if slices else ""
         obs = formula_obligations_by_mech.get(mid, ())
+        formalizer_receipts: list[dict[str, Any]] = []
+
+        def _capturing_formalizer_caller(config: Any, request: Any) -> Any:
+            response = caller(config, request) if caller is not None else None
+            if manifest is not None:
+                receipt = build_request_delivery_receipt(
+                    manifest,
+                    request,
+                    consumer_role="formalizer",
+                )
+                formalizer_receipts.append(receipt.model_dump(mode="json"))
+            return response
+
         pkgs, call_trace = run_mechanism_formalizer(
             context=ctx,
             obligations=obs,
             shared_payload=payload_str,
+            shared_payload_pages=payload_pages,
             shared_payload_digest=payload_digest,
             llm_config=llm_config,
-            caller=caller,
+            caller=_capturing_formalizer_caller if caller is not None else None,
             author_notation_hints=tuple(getattr(ctx, "notation_hints", ())),
             view_digest=view_digest,
             slice_digests=slice_digests,
@@ -13708,6 +14247,42 @@ def _run_mechanism_formalizer(
             equations=equations,
             allow_deterministic_operation_fallback=False,
         )
+        if (
+            manifest is not None
+            and caller is not None
+            and llm_config is not None
+            and not any(
+                bool(item.get("accepted"))
+                for item in formalizer_receipts
+                if isinstance(item, Mapping)
+            )
+        ):
+            # A mechanism without a formula obligation still has to prove
+            # that the Formalizer consumer received the immutable page pack.
+            # This no-op delivery probe is not allowed to create a formula;
+            # it exists solely to bind the receipt to an actual request at the
+            # caller boundary.
+            from code2paper.llm.client import LLMRequest
+
+            _capturing_formalizer_caller(
+                llm_config,
+                LLMRequest(
+                    prompt_template_id="phase4_mechanism_formalizer_delivery_probe_v1",
+                    prompt=(
+                        "Return JSON only. Confirm receipt of the supplied "
+                        "mechanism context pages; do not author a formula.\n"
+                        + json.dumps(list(payload_pages), ensure_ascii=False)
+                    ),
+                    input_payload={
+                        "mechanism_id": mid,
+                        "shared_payload_pages": list(payload_pages),
+                        "shared_payload_digest": payload_digest,
+                        "delivery_probe": True,
+                    },
+                ),
+            )
+            call_trace = dict(call_trace)
+            call_trace["formalizer_delivery_probe"] = True
         all_packages.extend(pkgs)
         call_trace = dict(call_trace)
         call_trace.update({
@@ -13731,6 +14306,31 @@ def _run_mechanism_formalizer(
                 if str(value).strip()
             ],
         })
+        if manifest is not None:
+            if not formalizer_receipts:
+                formalizer_receipts.append({
+                    "consumer_role": "formalizer",
+                    "mechanism_id": mid,
+                    "manifest_digest": str(getattr(manifest, "content_digest", "")),
+                    "accepted": False,
+                    "rejection_code": "formalizer_request_not_observed",
+                })
+            call_trace.update({
+                "page_manifest_digest": str(getattr(manifest, "content_digest", "")),
+                "page_indices": [
+                    int(getattr(page, "page_index", 0))
+                    for page in (getattr(manifest, "pages", ()) or ())
+                ],
+                "page_digests": [
+                    str(getattr(page, "content_digest", ""))
+                    for page in (getattr(manifest, "pages", ()) or ())
+                ],
+                "page_bytes_digests": [
+                    str(getattr(page, "technical_bytes_digest", ""))
+                    for page in (getattr(manifest, "pages", ()) or ())
+                ],
+                "formalizer_page_delivery_receipts": formalizer_receipts,
+            })
         traces.append(call_trace)
     return tuple(all_packages), traces
 
@@ -13760,6 +14360,8 @@ def _writer_section_inputs_v3(
     narrative_plan: Any,
     shared_payload_slices: Mapping[str, Any],
     formula_packages: tuple[Any, ...] = (),
+    formula_obligations: tuple[Any, ...] = (),
+    page_manifests: Mapping[str, Any] | None = None,
     system_prompt: str = "",
 ) -> list[Any]:
     """Build the Writer-facing projection for each planned section in unified mode."""
@@ -13769,9 +14371,19 @@ def _writer_section_inputs_v3(
 
     inputs: list[WriterSectionInput] = []
     pkg_by_mech: dict[str, list[dict[str, Any]]] = {}
+    obligation_by_mech: dict[str, list[dict[str, Any]]] = {}
     for pkg in formula_packages:
         pkg_dict = pkg.model_dump(mode="json") if hasattr(pkg, "model_dump") else dict(pkg)
         pkg_by_mech.setdefault(str(pkg_dict.get("mechanism_id", "")), []).append(pkg_dict)
+    for obligation in formula_obligations:
+        row = (
+            obligation.model_dump(mode="json")
+            if hasattr(obligation, "model_dump")
+            else dict(obligation)
+        )
+        obligation_by_mech.setdefault(
+            str(row.get("mechanism_id") or ""), []
+        ).append(row)
 
     for section in getattr(narrative_plan, "sections", ()):
         sec_id = str(getattr(section, "section_id", ""))
@@ -13780,6 +14392,7 @@ def _writer_section_inputs_v3(
 
         sec_slices: list[str] = []
         sec_formula_pkgs: list[dict[str, Any]] = []
+        sec_formula_obs: list[dict[str, Any]] = []
         sec_slice_metadata: list[dict[str, Any]] = []
         for mid in getattr(section, "mechanism_ids", ()):
             mid_str = str(mid)
@@ -13787,23 +14400,54 @@ def _writer_section_inputs_v3(
                 m_slice = shared_payload_slices[mid_str]
                 if isinstance(m_slice, (tuple, list)):
                     raw_b = serialize_shared_mechanism_payload(m_slice)
-                    sec_slices.append(raw_b.decode("utf-8") if isinstance(raw_b, bytes) else str(raw_b))
-                    sec_slice_metadata.append({
-                        "mechanism_id": mid_str,
-                        "shared_payload_bytes_digest": (
-                            "sha256:" + hashlib.sha256(raw_b).hexdigest()
-                            if raw_b else ""
-                        ),
-                        "shared_payload_digest": str(getattr(m_slice[0], "shared_payload_digest", "")) if m_slice else "",
-                        "source_context_digest": str(m_slice[0].technical_payload.get("source_context_digest", "")) if m_slice else "",
-                        "view_digest": str(m_slice[0].view_digest) if m_slice else "",
-                        "slice_digests": [str(item.slice_digest) for item in m_slice],
-                        "core_detail_ids": [str(item) for item in (getattr(m_slice[0], "core_detail_ids", ()) if m_slice else ())],
-                        "consumer_request_digest": compute_consumer_request_digest(
-                            str(getattr(m_slice[0], "shared_payload_digest", "")) if m_slice else "",
-                            {"role": "writer", "section_id": sec_id, "mechanism_id": mid_str},
-                        ) if m_slice else "",
-                    })
+                    manifest = (page_manifests or {}).get(mid_str)
+                    if manifest is not None:
+                        # One input item is one immutable page.  The Writer
+                        # request therefore carries the same ordered page
+                        # bytes as the Formalizer, rather than a second
+                        # combined serialization subject to truncation.
+                        page_items = tuple(getattr(manifest, "pages", ()) or ())
+                        for page in page_items:
+                            page_bytes = page.serialized_bytes
+                            sec_slices.append(page_bytes.decode("utf-8"))
+                            sec_slice_metadata.append({
+                                "mechanism_id": mid_str,
+                                "page_index": int(page.page_index),
+                                "page_manifest_digest": str(getattr(manifest, "content_digest", "")),
+                                "page_digest": str(getattr(page, "content_digest", "")),
+                                "page_bytes_digest": str(getattr(page, "technical_bytes_digest", "")),
+                                "shared_payload_bytes_digest": (
+                                    "sha256:" + hashlib.sha256(raw_b).hexdigest()
+                                    if raw_b else ""
+                                ),
+                                "shared_payload_digest": str(getattr(m_slice[0], "shared_payload_digest", "")) if m_slice else "",
+                                "source_context_digest": str(getattr(manifest, "source_context_digest", "")),
+                                "view_digest": str(getattr(manifest, "view_digest", "")),
+                                "slice_digests": [str(item.slice_digest) for item in m_slice],
+                                "core_detail_ids": [str(item) for item in (getattr(m_slice[0], "core_detail_ids", ()) if m_slice else ())],
+                                "consumer_request_digest": compute_consumer_request_digest(
+                                    str(getattr(m_slice[0], "shared_payload_digest", "")) if m_slice else "",
+                                    {"role": "writer", "section_id": sec_id, "mechanism_id": mid_str},
+                                ) if m_slice else "",
+                            })
+                    else:
+                        sec_slices.append(raw_b.decode("utf-8") if isinstance(raw_b, bytes) else str(raw_b))
+                        sec_slice_metadata.append({
+                            "mechanism_id": mid_str,
+                            "shared_payload_bytes_digest": (
+                                "sha256:" + hashlib.sha256(raw_b).hexdigest()
+                                if raw_b else ""
+                            ),
+                            "shared_payload_digest": str(getattr(m_slice[0], "shared_payload_digest", "")) if m_slice else "",
+                            "source_context_digest": str(m_slice[0].technical_payload.get("source_context_digest", "")) if m_slice else "",
+                            "view_digest": str(m_slice[0].view_digest) if m_slice else "",
+                            "slice_digests": [str(item.slice_digest) for item in m_slice],
+                            "core_detail_ids": [str(item) for item in (getattr(m_slice[0], "core_detail_ids", ()) if m_slice else ())],
+                            "consumer_request_digest": compute_consumer_request_digest(
+                                str(getattr(m_slice[0], "shared_payload_digest", "")) if m_slice else "",
+                                {"role": "writer", "section_id": sec_id, "mechanism_id": mid_str},
+                            ) if m_slice else "",
+                        })
                 else:
                     payload_val = getattr(m_slice, "serialized_payload", "") or m_slice
                     if isinstance(payload_val, bytes):
@@ -13811,6 +14455,8 @@ def _writer_section_inputs_v3(
                     sec_slices.append(str(payload_val))
             if mid_str in pkg_by_mech:
                 sec_formula_pkgs.extend(pkg_by_mech[mid_str])
+            if mid_str in obligation_by_mech:
+                sec_formula_obs.extend(obligation_by_mech[mid_str])
 
         paragraph_rows = list(sec_plan_dict.get("paragraphs") or ())
         all_detail_ids = list(dict.fromkeys(
@@ -13899,6 +14545,7 @@ def _writer_section_inputs_v3(
             "shared_contexts": sec_slices,
             "shared_context_metadata": sec_slice_metadata,
             "formula_packages": sec_formula_pkgs,
+            "formula_obligations": sec_formula_obs,
             "output_contract": "PublicationMethodSectionOutputV1",
             "paragraph_transaction_required": True,
             "formula_placeholders_required": bool(sec_formula_pkgs),
@@ -13943,6 +14590,9 @@ def _assert_shared_payload_delivery(
     formalizer_traces: Iterable[Mapping[str, Any]],
     writer_inputs: Iterable[Any],
     formula_obligations_by_mech: Mapping[str, Iterable[Any]] | None = None,
+    page_manifests: Mapping[str, Any] | None = None,
+    writer_delivery_receipts: Iterable[Mapping[str, Any]] = (),
+    require_actual_receipts: bool = False,
 ) -> list[dict[str, Any]]:
     """Prove that Formalizer and Writer received identical context bytes.
 
@@ -14017,6 +14667,11 @@ def _assert_shared_payload_delivery(
         for mid in mechanism_ids:
             writer_by_id.setdefault(mid, []).append(writer_input)
 
+    actual_writer_receipts = tuple(
+        item for item in (writer_delivery_receipts or ())
+        if isinstance(item, Mapping)
+    )
+
     records: list[dict[str, Any]] = []
     expected_ids = set(context_by_id)
     if set(trace_by_id) != expected_ids:
@@ -14026,15 +14681,27 @@ def _assert_shared_payload_delivery(
             "formalizer_payload_trace_mechanism_mismatch:"
             + json.dumps({"missing": missing, "extra": extra}, sort_keys=True)
         )
-    if set(writer_by_id) != expected_ids:
-        missing = sorted(expected_ids - set(writer_by_id))
-        extra = sorted(set(writer_by_id) - expected_ids)
+    writer_scope_ids = set(writer_by_id)
+    if require_actual_receipts:
+        # Callback resumes may send only affected sections.  Their Writer
+        # obligation is a subset of the frozen mechanism set; requiring a
+        # receipt for untouched sections would turn a scoped rerender into a
+        # false identity failure.
+        extra = sorted(writer_scope_ids - expected_ids)
+        if extra or not writer_scope_ids:
+            raise ValueError(
+                "writer_payload_mechanism_mismatch:"
+                + json.dumps({"missing": [], "extra": extra}, sort_keys=True)
+            )
+    elif writer_scope_ids != expected_ids:
+        missing = sorted(expected_ids - writer_scope_ids)
+        extra = sorted(writer_scope_ids - expected_ids)
         raise ValueError(
             "writer_payload_mechanism_mismatch:"
             + json.dumps({"missing": missing, "extra": extra}, sort_keys=True)
         )
 
-    for mid in sorted(expected_ids):
+    for mid in sorted(writer_scope_ids if require_actual_receipts else expected_ids):
         ctx = context_by_id[mid]
         slices = tuple(shared_payload_slices.get(mid, ()) or ())
         if not slices:
@@ -14048,6 +14715,40 @@ def _assert_shared_payload_delivery(
             getattr(ctx, "source_context_digest", "")
             or getattr(ctx, "content_digest", "")
         )
+        page_manifest = (page_manifests or {}).get(mid)
+        page_manifest_digest = ""
+        page_digests: tuple[str, ...] = ()
+        page_bytes_digests: tuple[str, ...] = ()
+        if page_manifest is not None:
+            page_manifest_digest = str(getattr(page_manifest, "content_digest", ""))
+            page_digests = tuple(
+                str(getattr(page, "content_digest", ""))
+                for page in (getattr(page_manifest, "pages", ()) or ())
+            )
+            page_bytes_digests = tuple(
+                str(getattr(page, "technical_bytes_digest", ""))
+                for page in (getattr(page_manifest, "pages", ()) or ())
+            )
+            if getattr(page_manifest, "blocking_reasons", ()):
+                raise ValueError(
+                    f"shared_payload_page_manifest_blocked:{mid}:"
+                    + ";".join(getattr(page_manifest, "blocking_reasons", ()))
+                )
+            if str(getattr(page_manifest, "shared_payload_digest", "")) != shared_digest:
+                raise ValueError(f"shared_payload_page_manifest_digest_mismatch:{mid}")
+            if page_bytes_digests != tuple(
+                "sha256:" + hashlib.sha256(
+                    item.serialized_payload
+                    if hasattr(item, "serialized_payload")
+                    else serialize_shared_mechanism_payload((item,))
+                ).hexdigest()
+                for item in slices
+            ):
+                # ``SharedPayloadPageV1`` hashes the same canonical slice
+                # record as the I8 serializer.  Compare its declared bytes
+                # explicitly so a page envelope cannot drift from the actual
+                # payload while retaining the legacy gate.
+                raise ValueError(f"shared_payload_page_bytes_digest_mismatch:{mid}")
         formalizer_trace = trace_by_id[mid]
         formalizer_payload_value = formalizer_trace.get("shared_payload")
         if isinstance(formalizer_payload_value, bytes):
@@ -14071,6 +14772,37 @@ def _assert_shared_payload_delivery(
             raise ValueError(f"formalizer_slice_digests_mismatch:{mid}")
         if formalizer_trace.get("source_context_digest") != source_context_digest:
             raise ValueError(f"formalizer_source_context_digest_mismatch:{mid}")
+        if page_manifest is not None:
+            formalizer_receipts = tuple(
+                item for item in (formalizer_trace.get("formalizer_page_delivery_receipts") or ())
+                if isinstance(item, Mapping)
+            )
+            accepted_formalizer_receipts = tuple(
+                item for item in formalizer_receipts
+                if bool(item.get("accepted"))
+                and str(item.get("manifest_digest") or "") == page_manifest_digest
+            )
+            if require_actual_receipts and not accepted_formalizer_receipts:
+                raise ValueError(f"formalizer_actual_page_receipt_missing:{mid}")
+            if accepted_formalizer_receipts:
+                if any(
+                    tuple(item.get("page_indices") or ()) != tuple(range(len(page_digests)))
+                    or tuple(item.get("page_bytes_digests") or ()) != page_bytes_digests
+                    or str(item.get("actual_payload_bytes_digest") or "")
+                    != "sha256:" + hashlib.sha256(payload_bytes).hexdigest()
+                    for item in accepted_formalizer_receipts
+                ):
+                    raise ValueError(f"formalizer_actual_page_receipt_mismatch:{mid}")
+            for key, expected in (
+                ("page_manifest_digest", page_manifest_digest),
+                ("page_digests", list(page_digests)),
+                ("page_bytes_digests", list(page_bytes_digests)),
+            ):
+                actual = formalizer_trace.get(key)
+                if tuple(actual or ()) == tuple(expected) and key != "page_manifest_digest":
+                    continue
+                if actual != expected:
+                    raise ValueError(f"formalizer_{key}_mismatch:{mid}")
         expected_formalizer_request_digest = compute_consumer_request_digest(
             shared_digest,
             {
@@ -14101,18 +14833,47 @@ def _assert_shared_payload_delivery(
                 if isinstance(row, Mapping)
                 and str(row.get("mechanism_id") or "").strip() == mid
             )
-            if len(matching_metadata) != 1:
+            if not matching_metadata:
                 raise ValueError(f"writer_payload_metadata_missing:{mid}")
-            metadata_index, metadata = matching_metadata[0]
-            writer_payload_value = shared_contexts[metadata_index]
-            if isinstance(writer_payload_value, bytes):
-                writer_payload_bytes = writer_payload_value
-            elif isinstance(writer_payload_value, str):
-                writer_payload_bytes = writer_payload_value.encode("utf-8")
+            # Unified inputs contain one metadata row per immutable page.  A
+            # legacy/no-manifest input still has one combined row.  Rebuild
+            # the full request payload from the exact page strings so the
+            # pre-call gate and the caller-boundary receipt use the same
+            # ordered bytes.
+            page_rows = tuple(
+                (index, row)
+                for index, row in matching_metadata
+                if "page_index" in row
+            )
+            if page_rows:
+                page_rows = tuple(sorted(page_rows, key=lambda item: int(item[1].get("page_index", 0))))
+                try:
+                    writer_payload_bytes = json.dumps(
+                        [json.loads(
+                            (shared_contexts[index].decode("utf-8")
+                             if isinstance(shared_contexts[index], bytes)
+                             else str(shared_contexts[index]))
+                        ) for index, _ in page_rows],
+                        ensure_ascii=False,
+                        sort_keys=True,
+                        separators=(",", ":"),
+                    ).encode("utf-8")
+                except (TypeError, ValueError, json.JSONDecodeError) as exc:
+                    raise ValueError(
+                        f"writer_payload_page_bytes_invalid:{mid}:{getattr(writer_input, 'section_id', '')}"
+                    ) from exc
+                metadata = page_rows[0][1]
             else:
-                raise ValueError(
-                    f"writer_payload_bytes_missing:{mid}:{getattr(writer_input, 'section_id', '')}"
-                )
+                metadata_index, metadata = matching_metadata[0]
+                writer_payload_value = shared_contexts[metadata_index]
+                if isinstance(writer_payload_value, bytes):
+                    writer_payload_bytes = writer_payload_value
+                elif isinstance(writer_payload_value, str):
+                    writer_payload_bytes = writer_payload_value.encode("utf-8")
+                else:
+                    raise ValueError(
+                        f"writer_payload_bytes_missing:{mid}:{getattr(writer_input, 'section_id', '')}"
+                    )
             writer_payload_bytes_digest = (
                 "sha256:" + hashlib.sha256(writer_payload_bytes).hexdigest()
             )
@@ -14155,6 +14916,62 @@ def _assert_shared_payload_delivery(
                     raise ValueError(
                         f"writer_payload_metadata_mismatch:{mid}:{key}"
                     )
+            if page_manifest is not None:
+                if page_rows:
+                    page_index = int(metadata.get("page_index", -1))
+                    if page_index < 0 or page_index >= len(page_digests):
+                        raise ValueError(f"writer_page_metadata_mismatch:{mid}:page_index")
+                    for key, expected in (
+                        ("page_manifest_digest", page_manifest_digest),
+                        ("page_digest", page_digests[page_index]),
+                        ("page_bytes_digest", page_bytes_digests[page_index]),
+                    ):
+                        if metadata.get(key) != expected:
+                            raise ValueError(
+                                f"writer_page_metadata_mismatch:{mid}:{key}"
+                            )
+                else:
+                    for key, expected in (
+                        ("page_manifest_digest", page_manifest_digest),
+                        ("page_digests", list(page_digests)),
+                        ("page_bytes_digests", list(page_bytes_digests)),
+                    ):
+                        actual = metadata.get(key)
+                        if tuple(actual or ()) == tuple(expected) and key != "page_manifest_digest":
+                            continue
+                        if actual != expected:
+                            raise ValueError(
+                                f"writer_page_metadata_mismatch:{mid}:{key}"
+                            )
+                writer_receipts = tuple(
+                    item for item in actual_writer_receipts
+                    if str(item.get("mechanism_id") or "") == mid
+                    and (
+                        str(item.get("section_id") or "")
+                        == str(getattr(writer_input, "section_id", ""))
+                        or str(item.get("section_id") or "")
+                        == f"realizer:{mid}"
+                    )
+                )
+                accepted_writer_receipts = tuple(
+                    item for item in writer_receipts
+                    if bool(item.get("accepted"))
+                    and str(item.get("manifest_digest") or "") == page_manifest_digest
+                )
+                if require_actual_receipts and not accepted_writer_receipts:
+                    raise ValueError(
+                        f"writer_actual_page_receipt_missing:{mid}:{getattr(writer_input, 'section_id', '')}"
+                    )
+                if accepted_writer_receipts and any(
+                    tuple(item.get("page_indices") or ()) != tuple(range(len(page_digests)))
+                    or tuple(item.get("page_bytes_digests") or ()) != page_bytes_digests
+                    or str(item.get("actual_payload_bytes_digest") or "")
+                    != "sha256:" + hashlib.sha256(payload_bytes).hexdigest()
+                    for item in accepted_writer_receipts
+                ):
+                    raise ValueError(
+                        f"writer_actual_page_receipt_mismatch:{mid}:{getattr(writer_input, 'section_id', '')}"
+                    )
             writer_records.append({
                 "section_id": str(getattr(writer_input, "section_id", "")),
                 "shared_payload_digest": shared_digest,
@@ -14163,6 +14980,24 @@ def _assert_shared_payload_delivery(
                 "slice_digests": list(slice_digests),
                 "consumer_request_digest": expected_writer_request_digest,
                 "payload_bytes_digest": writer_payload_bytes_digest,
+                **({
+                    "page_manifest_digest": page_manifest_digest,
+                    "page_digests": list(page_digests),
+                    "page_bytes_digests": list(page_bytes_digests),
+                    "formalizer_page_delivery_receipts": formalizer_trace.get(
+                        "formalizer_page_delivery_receipts"
+                    ),
+                    "writer_page_delivery_receipts": [
+                        item for item in actual_writer_receipts
+                        if str(item.get("mechanism_id") or "") == mid
+                        and (
+                            str(item.get("section_id") or "")
+                            == str(getattr(writer_input, "section_id", ""))
+                            or str(item.get("section_id") or "")
+                            == f"realizer:{mid}"
+                        )
+                    ],
+                } if page_manifest is not None else {}),
             })
         records.append({
             "mechanism_id": mid,
@@ -14174,6 +15009,11 @@ def _assert_shared_payload_delivery(
             "slice_digests": list(slice_digests),
             "formalizer_request_digest": str(formalizer_trace.get("consumer_request_digest") or ""),
             "writer_consumers": writer_records,
+            **({
+                "page_manifest_digest": page_manifest_digest,
+                "page_digests": list(page_digests),
+                "page_bytes_digests": list(page_bytes_digests),
+            } if page_manifest is not None else {}),
         })
     return records
 
@@ -18467,6 +19307,125 @@ def _write_method_generation_trace(
         return ""
 
 
+def run_publication_method_writer(
+    *,
+    out_root: str | Path,
+    artifact_paths: dict[str, str],
+    llm_config: LLMConfig,
+    llm_caller: Callable[[LLMConfig, LLMRequest], LLMResponse] | None = None,
+    resume_section_ids: tuple[str, ...] = (),
+    research_callback_artifacts: dict[str, tuple[Any, ...]] | None = None,
+    research_mechanism_callback_artifacts: dict[str, tuple[Any, ...]] | None = None,
+    editor_caller: Callable[[LLMConfig, LLMRequest], LLMResponse] | None = None,
+    rewrite_caller: Callable[[LLMConfig, LLMRequest], LLMResponse] | None = None,
+    formalization_caller: Callable[[LLMConfig, LLMRequest], LLMResponse] | None = None,
+    architect_proposal_caller: Callable[..., str | None] | None = None,
+    rebuild_architect_plan: bool = False,
+    concept_audit_override_keys: tuple[str, ...] = (),
+    authoring_context_mode: AuthoringContextMode | str | None = None,
+    authoring_context_mode_source: str | None = None,
+) -> tuple[PublicationWriterRunResultV1, dict[str, str]]:
+    """Run the Writer and persist one auditable mode/identity contract.
+
+    The implementation function predates the run-level contract and has many
+    fail-closed return paths.  Keeping this thin wrapper around it guarantees
+    that early input failures, callback resumes, and successful publication
+    runs all receive the same mode metadata without duplicating those gates.
+    """
+
+    try:
+        mode, source = resolve_authoring_context_mode(
+            authoring_context_mode,
+            source_hint=authoring_context_mode_source,
+        )
+    except ValueError as exc:
+        result = PublicationWriterRunResultV1(
+            status="blocked",
+            plan_digest="",
+            claim_digest="",
+            blocked_reason=f"authoring_context_mode_invalid:{str(exc)[:180]}",
+        )
+        contract = build_authoring_run_contract(
+            requested_mode="legacy",
+            effective_mode="legacy",
+            mode_source="default",
+            artifact_paths=artifact_paths,
+            run_id=str(artifact_paths.get("run_id") or ""),
+        )
+        contract_path = write_authoring_run_contract(out_root, contract)
+        result = result.model_copy(update={
+            "authoring_run_contract_digest": contract.content_digest,
+            "requested_authoring_context_mode": "legacy",
+            "effective_authoring_context_mode": "legacy",
+            "authoring_context_mode_source": "default",
+        })
+        result_path = method_output(Path(out_root), "publication_writer_result_v1")
+        _atomic_write_text(result_path, result.model_dump_json(indent=2) + "\n")
+        return result, {
+            "authoring_run_contract_v1": contract_path,
+            "publication_writer_result_v1": str(result_path),
+        }
+
+    result, paths = _run_publication_method_writer_impl(
+        out_root=out_root,
+        artifact_paths=artifact_paths,
+        llm_config=llm_config,
+        llm_caller=llm_caller,
+        resume_section_ids=resume_section_ids,
+        research_callback_artifacts=research_callback_artifacts,
+        research_mechanism_callback_artifacts=research_mechanism_callback_artifacts,
+        editor_caller=editor_caller,
+        rewrite_caller=rewrite_caller,
+        formalization_caller=formalization_caller,
+        architect_proposal_caller=architect_proposal_caller,
+        rebuild_architect_plan=rebuild_architect_plan,
+        concept_audit_override_keys=concept_audit_override_keys,
+        authoring_context_mode=mode,
+    )
+
+    run_id = str(artifact_paths.get("run_id") or "")
+    mode_digest = _digest_json({
+        "mode": mode,
+        "source": source,
+        "run_id": run_id,
+        "resume_section_ids": list(resume_section_ids),
+    })
+    contract = build_authoring_run_contract(
+        requested_mode=mode,
+        effective_mode=mode,
+        mode_source=source,
+        artifact_paths=artifact_paths,
+        output_paths=paths,
+        run_id=run_id,
+        initial_mode_digest=mode_digest,
+        resume_mode_digest=(mode_digest if resume_section_ids else ""),
+    )
+    if (
+        mode in ("unified", "shadow_unified")
+        and result.status != "blocked"
+        and not contract.contract_satisfied
+    ):
+        result = result.model_copy(update={
+            "status": "blocked",
+            "blocked_reason": f"expected_authoring_artifacts_missing:{','.join(contract.missing_artifact_keys)}",
+        })
+    if mode in ("unified", "shadow_unified") or authoring_context_mode is not None:
+        contract_path = write_authoring_run_contract(out_root, contract)
+        paths = {**paths, "authoring_run_contract_v1": contract_path}
+        result = result.model_copy(update={
+            "requested_authoring_context_mode": mode,
+            "effective_authoring_context_mode": mode,
+            "authoring_context_mode_source": source,
+            "authoring_run_contract_digest": contract.content_digest,
+        })
+    result_path_value = paths.get("publication_writer_result_v1", "")
+    if result_path_value:
+        _atomic_write_text(
+            Path(result_path_value), result.model_dump_json(indent=2) + "\n"
+        )
+    return result, paths
+
+
 def _write_result_only(
     out_root: str | Path,
     result: PublicationWriterRunResultV1,
@@ -19668,4 +20627,9 @@ __all__ = [
     "PublicationWriterRunResultV1",
     "fulfill_writing_research_callbacks",
     "run_publication_method_writer",
+    "MechanismDraftV1",
+    "SectionCompositionV1",
+    "MechanismRealizer",
+    "SectionComposer",
+    "sanitize_representation_only",
 ]

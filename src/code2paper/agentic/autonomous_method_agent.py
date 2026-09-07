@@ -1343,6 +1343,31 @@ def persist_product_artifacts(
             product=False,
         )
 
+    # The snapshot is the repository authority identity for every downstream
+    # context consumer.  Persist it beside the research artifacts so replay,
+    # unified reconstruction, and callback resume all bind to the same tree.
+    snapshot_path = _write(
+        "repo_snapshot_v2",
+        runtime.repo_snapshot.model_dump(mode="json"),
+        product=False,
+    )
+    paths["repo_snapshot"] = snapshot_path
+    loop_symbol_index = getattr(loop_result.loop_state, "symbol_index", None)
+    if loop_symbol_index is not None:
+        paths["symbol_index_v2"] = _write(
+            "symbol_index_v2",
+            loop_symbol_index.model_dump(mode="json"),
+            product=False,
+        )
+        paths["symbol_index"] = paths["symbol_index_v2"]
+    loop_source_manifest = getattr(loop_result.loop_state, "source_manifest", None)
+    if loop_source_manifest is not None:
+        paths["repository_source_manifest_v1"] = _write(
+            "repository_source_manifest_v1",
+            loop_source_manifest.model_dump(mode="json"),
+            product=False,
+        )
+
     paths["intent_obligation_graph_v2"] = _write(
         "intent_obligation_graph_v2",
         runtime.intent_graph.model_dump(mode="json"),
@@ -1376,6 +1401,13 @@ def persist_product_artifacts(
         paths["candidate_acquisition_ledger_v1"] = _write(
             "candidate_acquisition_ledger_v1",
             loop_ledger.model_dump(mode="json"),
+            product=False,
+        )
+    promotion_ledger = getattr(loop_result.loop_state, "observation_promotion_ledger", None)
+    if promotion_ledger is not None:
+        paths["observation_promotion_ledger_v1"] = _write(
+            "observation_promotion_ledger_v1",
+            promotion_ledger.model_dump(mode="json"),
             product=False,
         )
 
@@ -1425,9 +1457,16 @@ def persist_product_artifacts(
         "completeness_matrix",
         completeness.model_dump(mode="json"),
     )
-    paths["story_spine"] = _write(
-        "story_spine",
-        [node.model_dump(mode="json") for node in story_spine],
+    story_spine_payload = [node.model_dump(mode="json") for node in story_spine]
+    paths["story_spine"] = _write("story_spine", story_spine_payload)
+    # The Writer artifact collector consumes the frozen product surface from
+    # ``artifacts/``.  Persist the same bytes under the canonical v1 key; the
+    # two names are aliases, not independently generated story artifacts.
+    paths["author_story_spine_v1"] = _write(
+        "author_story_spine_v1", story_spine_payload, product=False
+    )
+    paths["method_story_nodes_v1"] = _write(
+        "method_story_nodes_v1", story_spine_payload, product=False
     )
     if authoring_projection is not None:
         paths["authoring_projection_v1"] = _write(
@@ -1979,6 +2018,7 @@ def run_autonomous_method_agent(
     concept_cards: Any | None = None,
     compile_concept_cards: bool = False,
     compile_argument_briefs: bool = True,
+    authoring_context_mode: str | None = None,
 ) -> MethodAgentRunResultV1:
     """Run the full autonomous Method Agent product path.
 
@@ -2009,6 +2049,9 @@ def run_autonomous_method_agent(
         + datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%S")
         + "-"
         + hashlib.sha256(str(resolved_out).encode("utf-8")).hexdigest()[:8]
+    )
+    requested_authoring_context_mode = (
+        str(authoring_context_mode or "").strip().casefold() or None
     )
 
     effective_llm = llm_config or load_llm_config_from_env()
@@ -2272,6 +2315,7 @@ def run_autonomous_method_agent(
             artifact_paths=dict(sorted(writer_artifact_paths.items())),
             llm_config=effective_llm,
             run_id=effective_run_id,
+            authoring_context_mode=requested_authoring_context_mode,
         )
     else:
         writer_blocked_reason = (
@@ -2322,6 +2366,7 @@ def run_autonomous_method_agent(
                 # agenda and evidence restored from the stage checkpoint.
                 research_stage_checkpoint=paths["research_stage_checkpoint_v1"],
                 method_name=method_name,
+                authoring_context_mode=requested_authoring_context_mode,
             )
         )
         _phase(
@@ -2534,6 +2579,10 @@ def run_autonomous_method_agent(
         except (OSError, json.JSONDecodeError):
             writer_payload = {}
         for key in (
+            "requested_authoring_context_mode",
+            "effective_authoring_context_mode",
+            "authoring_context_mode_source",
+            "authoring_run_contract_digest",
             "candidate_generation_status",
             "candidate_available",
             "candidate_completion_status",
@@ -2567,6 +2616,11 @@ def run_autonomous_method_agent(
         verified_validation["unsupported_positive_claims"]
     )
     summary["artifacts"] = dict(sorted(paths.items()))
+    summary["authoring_context"] = {
+        "requested_mode": requested_authoring_context_mode or "",
+        "writer_mode": str(writer_summary.get("effective_authoring_context_mode") or ""),
+        "run_contract_path": str(paths.get("authoring_run_contract_v1") or ""),
+    }
 
     agent_trace.append({
         "phase": "finalize",
@@ -2599,6 +2653,11 @@ def run_autonomous_method_agent(
 
 def _writer_artifact_paths(out_root: Path) -> dict[str, str]:
     names = (
+        "repo_snapshot_v2",
+        "repo_snapshot",
+        "symbol_index_v2",
+        "symbol_index",
+        "repository_source_manifest_v1",
         "intent_obligation_graph_v2",
         "research_agenda_v1",
         "authoring_projection_v1",
@@ -2624,7 +2683,12 @@ def _writer_artifact_paths(out_root: Path) -> dict[str, str]:
         "implementation_scope_v1",
         "behavior_graph_v1",
         "candidate_acquisition_ledger_v1",
+        "observation_promotion_ledger_v1",
         "method_authoring_closure_metrics_v1",
+        "method_argument_briefs_v1",
+        "author_story_spine_v1",
+        "story_spine",
+        "method_story_nodes_v1",
     )
     return {
         name: str(out_root / "artifacts" / f"{name}.json")
@@ -2639,6 +2703,7 @@ def _run_writer_surface(
     artifact_paths: dict[str, str],
     llm_config: LLMConfig,
     run_id: str,
+    authoring_context_mode: str | None = None,
 ) -> tuple[dict[str, str], str, str]:
     """Call the shared Writer surface and map its status onto the product run.
 
@@ -2661,6 +2726,7 @@ def _run_writer_surface(
             rewrite_caller=None,
             formalization_caller=None,
             architect_proposal_caller=None,
+            authoring_context_mode=authoring_context_mode,
         )
     except Exception as exc:  # noqa: BLE001 — the product run must not crash on writer faults
         return {}, "blocked", f"writer_surface_fault:{type(exc).__name__}:{str(exc)[:200]}"

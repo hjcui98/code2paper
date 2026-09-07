@@ -213,3 +213,113 @@ def test_method_content_trace_v2_and_information_funnel() -> None:
     assert trace.funnel.candidate_accepted_details == 1
     assert trace.funnel.verified_validated_details == 1
     assert trace.funnel.funnel_survival_rates["candidate_to_verified"] == 1.0
+    assert row.primary_loss_layer == ""
+
+
+def test_extended_loss_taxonomy_classification() -> None:
+    from code2paper.agentic.method_content_trace import (
+        LOSS_TAXONOMY_LAYERS_V2,
+        LOSS_TAXONOMY_DESCRIPTIONS_V2,
+        classify_primary_loss_layer,
+    )
+
+    assert len(LOSS_TAXONOMY_LAYERS_V2) == 13
+    assert len(LOSS_TAXONOMY_DESCRIPTIONS_V2) == 13
+
+    # R0a: search never triggered
+    assert classify_primary_loss_layer(
+        validated=False, discovered=False, closed_in_evidence=False,
+        annotated=False, projected=False, writer_delivered=False,
+        rendered=False, p_valid=False, search_triggered=False,
+    ) == "R0a"
+
+    # R0b: discovered not read
+    assert classify_primary_loss_layer(
+        validated=False, discovered=False, closed_in_evidence=False,
+        annotated=False, projected=False, writer_delivered=False,
+        rendered=False, p_valid=False, search_triggered=True, candidate_read=False,
+    ) == "R0b"
+
+    # R0c: read but not closed in evidence
+    assert classify_primary_loss_layer(
+        validated=False, discovered=True, closed_in_evidence=False,
+        annotated=False, projected=False, writer_delivered=False,
+        rendered=False, p_valid=False,
+    ) == "R0c"
+
+    # R0d: promotion attempted but typed rejection
+    assert classify_primary_loss_layer(
+        validated=False, discovered=True, closed_in_evidence=True,
+        annotated=False, projected=False, writer_delivered=False,
+        rendered=False, p_valid=False, rejection_code="ownership_role_not_target_method",
+    ) == "R0d"
+
+    # R1a: ownership misclassified
+    assert classify_primary_loss_layer(
+        validated=False, discovered=True, closed_in_evidence=True,
+        annotated=True, projected=False, writer_delivered=False,
+        rendered=False, p_valid=False, ownership_misclassified=True,
+    ) == "R1a"
+
+    # R1b: stage/mechanism routing miss
+    assert classify_primary_loss_layer(
+        validated=False, discovered=True, closed_in_evidence=True,
+        annotated=False, projected=False, writer_delivered=False,
+        rendered=False, p_valid=False, routing_miss=True,
+    ) == "R1b"
+
+    # R2a: active path unknown / missing closure edges
+    assert classify_primary_loss_layer(
+        validated=False, discovered=True, closed_in_evidence=True,
+        annotated=True, projected=False, writer_delivered=False,
+        rendered=False, p_valid=False, active_path_status="unknown",
+    ) == "R2a"
+
+    # R2b: detail compression loss (not projected)
+    assert classify_primary_loss_layer(
+        validated=False, discovered=True, closed_in_evidence=True,
+        annotated=True, projected=False, writer_delivered=False,
+        rendered=False, p_valid=False,
+    ) == "R2b"
+
+    # R2c: formula obligation compile loss
+    assert classify_primary_loss_layer(
+        validated=False, discovered=True, closed_in_evidence=True,
+        annotated=True, projected=True, writer_delivered=False,
+        rendered=False, p_valid=False, has_formula_loss=True,
+    ) == "R2c"
+
+    # R3a: payload undelivered to writer
+    assert classify_primary_loss_layer(
+        validated=False, discovered=True, closed_in_evidence=True,
+        annotated=True, projected=True, writer_delivered=False,
+        rendered=False, p_valid=False,
+    ) == "R3a"
+
+    # R3b: writer failed to realize delivered detail
+    assert classify_primary_loss_layer(
+        validated=False, discovered=True, closed_in_evidence=True,
+        annotated=True, projected=True, writer_delivered=True,
+        rendered=False, p_valid=False,
+    ) == "R3b"
+
+    # R4: rendering / LaTeX / control char damage
+    assert classify_primary_loss_layer(
+        validated=False, discovered=True, closed_in_evidence=True,
+        annotated=True, projected=True, writer_delivered=True,
+        rendered=True, p_valid=False, control_char_damage=True,
+    ) == "R4"
+
+    # R5: binder rejection
+    assert classify_primary_loss_layer(
+        validated=False, discovered=True, closed_in_evidence=True,
+        annotated=True, projected=True, writer_delivered=True,
+        rendered=True, p_valid=False, binder_rejected=True,
+    ) == "R5"
+
+    # Validated: no loss
+    assert classify_primary_loss_layer(
+        validated=True, discovered=True, closed_in_evidence=True,
+        annotated=True, projected=True, writer_delivered=True,
+        rendered=True, p_valid=True,
+    ) == ""

@@ -8735,3 +8735,102 @@ All three used endpoint `http://127.0.0.1:8006` and model
 `qwen38-27b-nvfp4`; the execution records bind them to code-state digest
 `sha256:5c103f3400e5118ba4ff579601909af6bd483290b70efcd66dde3c909b626b6d`.
 All remained fail-closed and are diagnostic/prose-quality evidence only.
+
+## Direct repair round — unified context/runtime blockers (2026-09-07)
+
+This round was executed directly by Codex in the current worktree.  No
+collaboration skill, secondary agent, commit, reset, clean, branch checkout, or
+discard operation was used.  The pre-existing dirty worktree was preserved.
+
+### Implemented closure
+
+- Actual-byte delivery is now captured at the real `LLMRequest` caller boundary
+  for Formalizer, section Writer, and per-page Mechanism Realizer calls.  Page
+  receipts are built from the request payload, compare ordered page bytes and
+  page digests against the manifest, and include the digest of the complete
+  canonical payload bytes.  Missing caller observations remain rejected; a
+  metadata row cannot itself produce an accepted receipt.
+- Formalizer and Writer no longer use the former 24,000-character technical
+  context truncation.  Unified Writer inputs carry one exact immutable page per
+  manifest page, and the production post-call gate checks the captured receipts.
+- Mechanism Realizer now requires an actual Writer-authorized caller and
+  fail-closes on missing caller/configuration, malformed or incomplete model
+  output, out-of-scope details/formulas, missing exact witnesses, unresolved
+  authority, or repository mismatch.  It no longer templates technical prose
+  or manufactures witnesses.  Composer only joins accepted Realizer drafts
+  and emits no fallback technical sentence.
+- Repository source manifests are loaded and passed into production closure
+  compilation; source digests retain manifest identity and excluded
+  vendor/generated/submodule/data authority is unresolved rather than
+  publishable.  The public compiler entry point also accepts `source_manifest`.
+- The Research graph now builds the intent implementation ledger, records
+  compile information gain, invokes `check_next_schedule()` at scheduling and
+  terminal boundaries, and blocks trusted termination while core intent or
+  observation promotion remains unresolved.
+- Mechanism completeness validation is invoked in unified production before
+  authoring proceeds and is persisted as
+  `mechanism_context_completeness_v1`.  Connectivity ignores ordering-only
+  `precedes` edges and requires directed semantic/data-flow reachability.
+- Story-spine aliases are persisted and collected consistently
+  (`story_spine`, `author_story_spine_v1`, `method_story_nodes_v1`).
+- Callback fulfillment now carries and checks mode, source-context, and page
+  manifest identity across resume; unified/shadow resume requires the fresh
+  contract/context/page/trace artifacts and cannot silently fall back to
+  legacy mode.
+- Formula obligations preserve exact source expressions plus denominator,
+  reduction, normalization, branch-condition, and symbol-binding obligations.
+  Fraction denominator extraction now uses balanced LaTeX groups, including
+  nested subscript/superscript groups, and the nested-fraction regression test
+  is included.
+
+### Verification executed
+
+1. Focused unified/Realizer/vertical/callback/formula/research command:
+
+   ```text
+   python -m pytest -q tests/test_agentic_publication_method_writer_unified.py tests/test_agentic_mechanism_realizer_composer.py tests/test_agentic_14_vertical_tests.py tests/test_agentic_autonomous_callback_fulfillment.py tests/test_agentic_mechanism_detail_compiler.py tests/test_agentic_mechanism_formula_obligations.py tests/test_agentic_mechanism_formalizer.py tests/test_agentic_intent_ledger.py tests/test_agentic_research_graph_callback_continuation.py
+   ```
+
+   Exit `0`; `60 passed in 9.27s`.
+
+2. Related binder/research-model/intent-compiler/final-trust regression:
+
+   ```text
+   python -m pytest -q tests/test_agentic_detail_atom_binder_and_trace_v2.py tests/test_agentic_research_models.py tests/test_agentic_intent_compiler_v2.py tests/test_agentic_final_text_trust_v3.py
+   ```
+
+   Exit `0`; `105 passed in 1.33s`.
+
+3. Static syntax/import check:
+
+   ```text
+   python -m compileall -q src tests scripts
+   ```
+
+   Exit `0`.
+
+4. Patch hygiene:
+
+   ```text
+   git diff --check
+   ```
+
+   Exit `0`.
+
+5. Full static suite:
+
+   ```text
+   python -m pytest -q
+   ```
+
+   Exit `0`; `3148 passed, 3 skipped, 7 warnings, 12 subtests passed in
+   104.90s`.
+
+### Acceptance boundary still open
+
+This round closes the identified offline/runtime wiring defects, but it does
+not claim live acceptance.  P8 (pilot and ten-project unified live matrix) and
+P9 (unseen holdout and default cutover decision) remain unexecuted.  No default
+mode cutover, release freeze, or Verified-quality claim is authorized by these
+static results alone.  The current worktree remains intentionally uncommitted
+and contains the user's earlier changes plus this repair round.

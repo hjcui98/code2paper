@@ -542,6 +542,17 @@ class MechanismFormulaObligationV1(BaseModel):
     source_fact_ids: tuple[str, ...] = Field(default_factory=tuple)
     source_equation_ids: tuple[str, ...] = Field(default_factory=tuple)
 
+    # Per-equation fidelity obligations.  These are closed source-derived
+    # structures, not prose prompts: a package must preserve the expression,
+    # operand bindings, denominator/reduction/normalization terms, and source
+    # conditions captured here.
+    source_equation_expression: str = ""
+    required_denominator_terms: tuple[str, ...] = Field(default_factory=tuple)
+    required_reduction_terms: tuple[str, ...] = Field(default_factory=tuple)
+    required_normalization_terms: tuple[str, ...] = Field(default_factory=tuple)
+    required_branch_conditions: tuple[str, ...] = Field(default_factory=tuple)
+    required_symbol_bindings: tuple[dict[str, Any], ...] = Field(default_factory=tuple)
+
     source_context_digest: str = ""
     content_digest: str = ""
 
@@ -694,52 +705,179 @@ def compile_mechanism_formula_obligations(
     if not formalizable_details:
         return ()
 
-    target_dids = tuple(d.detail_id for d in formalizable_details)
-    op_ids = tuple(dict.fromkeys(op_id for d in formalizable_details for op_id in getattr(d, "source_operation_ids", ())))
-    fact_ids = tuple(dict.fromkeys(f_id for d in formalizable_details for f_id in getattr(d, "source_fact_ids", ())))
-    conditions = tuple(dict.fromkeys(c for d in formalizable_details for c in getattr(d, "conditions", ())))
-    operand_sets = tuple(getattr(d, "operands", ()) for d in formalizable_details if getattr(d, "operands", ()))
-    predicates = [getattr(d, "predicate", "") for d in formalizable_details if getattr(d, "predicate", "")]
-    equation_ids = tuple(dict.fromkeys(
-        equation_id
-        for detail in formalizable_details
-        for equation_id in (getattr(detail, "source_equation_ids", ()) or ())
-    ))
-
-    signatures = [
-        {
-            "predicate": getattr(d, "predicate", ""),
-            "operands": list(getattr(d, "operands", ())),
-            "result": getattr(d, "result", ""),
+    def _equation_fidelity_fields(record: Any | None) -> dict[str, Any]:
+        if record is None:
+            return {
+                "source_equation_expression": "",
+                "required_denominator_terms": (),
+                "required_reduction_terms": (),
+                "required_normalization_terms": (),
+                "required_branch_conditions": (),
+                "required_symbol_bindings": (),
+            }
+        expression = str(_record_value(record, "expression", "") or "").strip()
+        denominators = _extract_latex_fraction_denominators(expression)
+        predicates = tuple(dict.fromkeys(
+            str(value).strip()
+            for value in (_record_value(record, "operation_predicates", ()) or ())
+            if str(value).strip()
+        ))
+        reduction_terms = tuple(
+            value for value in predicates
+            if any(token in value.casefold() for token in ("reduce", "aggregate", "sum", "mean", "pool"))
+        )
+        normalization_terms = tuple(
+            value for value in predicates
+            if any(token in value.casefold() for token in ("normal", "scale", "softmax", "standard"))
+        )
+        conditions = tuple(dict.fromkeys(
+            str(value).strip()
+            for value in (_record_value(record, "conditions", ()) or ())
+            if str(value).strip()
+        ))
+        bindings = tuple(
+            {
+                "symbol": str(_record_value(binding, "symbol", "") or ""),
+                "operand_value": str(_record_value(binding, "operand_value", "") or ""),
+                "operand_role": str(_record_value(binding, "operand_role", "") or ""),
+                "fact_id": str(_record_value(binding, "fact_id", "") or ""),
+            }
+            for binding in (_record_value(record, "symbol_bindings", ()) or ())
+            if str(_record_value(binding, "symbol", "") or "").strip()
+            or str(_record_value(binding, "operand_value", "") or "").strip()
+        )
+        return {
+            "source_equation_expression": expression,
+            "required_denominator_terms": denominators,
+            "required_reduction_terms": reduction_terms,
+            "required_normalization_terms": normalization_terms,
+            "required_branch_conditions": conditions,
+            "required_symbol_bindings": bindings,
         }
-        for d in formalizable_details
-    ]
-    goal = f"Formalize {' and '.join(predicates[:3]) or mid} operations."
 
-    ob = MechanismFormulaObligationV1(
-        obligation_id=f"ob:formula:{mid}",
-        mechanism_id=mid,
-        source_detail_ids=target_dids,
-        expectation="required" if author_formula_expectations else "preferred",
-        mathematical_goal=goal,
-        claim_kind="formalization",
-        required_evidence_authority=("repository_verified",),
-        required_operator_signatures=tuple(signatures),
-        required_operand_sets=operand_sets,
-        required_conditions=conditions,
-        notation_hints=tuple(author_formula_expectations),
-        source_operation_ids=op_ids,
-        source_fact_ids=fact_ids,
-        source_equation_ids=equation_ids,
-        source_facet_ids=tuple(dict.fromkeys(
-            facet_id for d in formalizable_details for facet_id in getattr(d, "source_facet_ids", ())
-        )),
-        source_obligation_ids=tuple(dict.fromkeys(
-            obligation_id for d in formalizable_details for obligation_id in getattr(d, "source_obligation_ids", ())
-        )),
-        source_context_digest=getattr(context, "source_context_digest", "") or getattr(context, "content_digest", ""),
-    )
-    return (ob,)
+    # A mechanism can expose several independent equations.  The old
+    # compiler collapsed every formalizable detail into one obligation, which
+    # allowed a single accepted formula to appear to satisfy unrelated
+    # equations.  Partition by exact source equation identity; details with
+    # no equation binding retain a detail-scoped obligation for the bounded
+    # operation/formalizer lane.
+    groups: list[tuple[str, tuple[Any, ...], str]] = []
+    grouped: dict[tuple[str, str], list[Any]] = {}
+    group_order: list[tuple[str, str]] = []
+    for detail in formalizable_details:
+        equation_ids_for_detail = tuple(dict.fromkeys(
+            str(value).strip()
+            for value in (getattr(detail, "source_equation_ids", ()) or ())
+            if str(value).strip()
+        ))
+        keys = (
+            tuple(("equation", equation_id) for equation_id in equation_ids_for_detail)
+            if equation_ids_for_detail
+            else (("detail", str(getattr(detail, "detail_id", ""))),)
+        )
+        for key in keys:
+            if key not in grouped:
+                grouped[key] = []
+                group_order.append(key)
+            grouped[key].append(detail)
+
+    for kind, key in group_order:
+        details_for_group = tuple(grouped[(kind, key)])
+        groups.append((kind, details_for_group, key))
+
+    obligations: list[MechanismFormulaObligationV1] = []
+    for group_index, (kind, group_details, group_key) in enumerate(groups):
+        target_dids = tuple(dict.fromkeys(
+            str(getattr(detail, "detail_id", ""))
+            for detail in group_details
+            if str(getattr(detail, "detail_id", "")).strip()
+        ))
+        op_ids = tuple(dict.fromkeys(
+            str(op_id).strip()
+            for detail in group_details
+            for op_id in (getattr(detail, "source_operation_ids", ()) or ())
+            if str(op_id).strip()
+        ))
+        fact_ids = tuple(dict.fromkeys(
+            str(fact_id).strip()
+            for detail in group_details
+            for fact_id in (getattr(detail, "source_fact_ids", ()) or ())
+            if str(fact_id).strip()
+        ))
+        conditions = tuple(dict.fromkeys(
+            str(condition).strip()
+            for detail in group_details
+            for condition in (getattr(detail, "conditions", ()) or ())
+            if str(condition).strip()
+        ))
+        operand_sets = tuple(
+            tuple(str(operand).strip() for operand in (getattr(detail, "operands", ()) or ()) if str(operand).strip())
+            for detail in group_details
+            if getattr(detail, "operands", ())
+        )
+        predicates = [
+            str(getattr(detail, "predicate", "") or "").strip()
+            for detail in group_details
+            if str(getattr(detail, "predicate", "") or "").strip()
+        ]
+        signatures = tuple(
+            {
+                "predicate": str(getattr(detail, "predicate", "") or ""),
+                "operands": list(getattr(detail, "operands", ()) or ()),
+                "result": str(getattr(detail, "result", "") or ""),
+            }
+            for detail in group_details
+        )
+        equation_ids_for_group = (group_key,) if kind == "equation" else ()
+        equation_record = next(
+            (
+                item for item in _equation_records(equations)
+                if str(_record_value(item, "equation_id", "") or "") == group_key
+            ),
+            None,
+        ) if kind == "equation" else None
+        fidelity_fields = _equation_fidelity_fields(equation_record)
+        suffix = ""
+        if len(groups) > 1:
+            suffix = f":{kind}:{group_key}"
+        obligation_id = f"ob:formula:{mid}{suffix}"
+        obligations.append(MechanismFormulaObligationV1(
+            obligation_id=obligation_id,
+            mechanism_id=mid,
+            source_detail_ids=target_dids,
+            expectation="required" if author_formula_expectations else "preferred",
+            mathematical_goal=(
+                f"Formalize {' and '.join(predicates[:3]) or mid} "
+                f"{('equation ' + group_key) if kind == 'equation' else 'operation'}{'.' if predicates else ''}"
+            ),
+            claim_kind="formalization",
+            required_evidence_authority=("repository_verified",),
+            required_operator_signatures=signatures,
+            required_operand_sets=operand_sets,
+            required_conditions=conditions,
+            notation_hints=tuple(author_formula_expectations),
+            source_operation_ids=op_ids,
+            source_fact_ids=fact_ids,
+            source_equation_ids=equation_ids_for_group,
+            **fidelity_fields,
+            source_facet_ids=tuple(dict.fromkeys(
+                str(facet_id).strip()
+                for detail in group_details
+                for facet_id in (getattr(detail, "source_facet_ids", ()) or ())
+                if str(facet_id).strip()
+            )),
+            source_obligation_ids=tuple(dict.fromkeys(
+                str(source_obligation_id).strip()
+                for detail in group_details
+                for source_obligation_id in (getattr(detail, "source_obligation_ids", ()) or ())
+                if str(source_obligation_id).strip()
+            )),
+            source_context_digest=(
+                getattr(context, "source_context_digest", "")
+                or getattr(context, "content_digest", "")
+            ),
+        ))
+    return tuple(obligations)
 
 
 def _record_value(record: Any, name: str, default: Any = None) -> Any:
@@ -768,6 +906,64 @@ def _equation_records(value: Any | None) -> tuple[Any, ...]:
     if isinstance(value, (list, tuple, set, frozenset)):
         return tuple(value)
     return ()
+
+
+def _extract_latex_fraction_denominators(expression: str) -> tuple[str, ...]:
+    """Extract ``\\frac`` denominators without flattening nested LaTeX groups.
+
+    A regular expression that uses ``[^{}]*`` is insufficient for source
+    expressions such as ``\\frac{\\sum_{i=1}^{n} x_i}{\\sum_{j=1}^{n} x_j}``:
+    the braces used by subscripts/superscripts are part of the numerator and
+    denominator, not the fraction boundary.  This small balanced-group
+    parser is deliberately representation-only; exact source-expression
+    equality remains the stronger authorization check below.
+    """
+
+    text = str(expression or "")
+    fraction_re = re.compile(r"\\(?:frac|dfrac|tfrac)\b")
+    denominators: list[str] = []
+
+    def _group_at(position: int) -> tuple[str, int] | None:
+        while position < len(text) and text[position].isspace():
+            position += 1
+        if position >= len(text) or text[position] != "{":
+            return None
+        start = position + 1
+        depth = 1
+        position += 1
+        while position < len(text):
+            char = text[position]
+            if char == "\\":
+                # Escaped braces (``\\{``/``\\}``) are literal characters.
+                position += 2
+                continue
+            if char == "{":
+                depth += 1
+            elif char == "}":
+                depth -= 1
+                if depth == 0:
+                    return text[start:position], position + 1
+            position += 1
+        return None
+
+    cursor = 0
+    while True:
+        match = fraction_re.search(text, cursor)
+        if match is None:
+            break
+        numerator = _group_at(match.end())
+        if numerator is None:
+            cursor = match.end()
+            continue
+        denominator = _group_at(numerator[1])
+        if denominator is not None and denominator[0].strip():
+            value = denominator[0].strip()
+            if value not in denominators:
+                denominators.append(value)
+            cursor = denominator[1]
+        else:
+            cursor = numerator[1]
+    return tuple(denominators)
 
 
 def _equation_role(record: Any) -> str:
@@ -1064,6 +1260,34 @@ def validate_mechanism_formula_package(
         for operation_id in obligation.source_operation_ids:
             if operation_id not in package.bound_operation_ids:
                 failures.append(f"formula_source_operation_missing:{operation_id}")
+
+        # Per-equation fidelity is checked independently of the coarse
+        # operation/claim binding.  This catches a formula that mentions the
+        # right equation id but drops a denominator, reduction, normalization,
+        # branch condition, or symbol binding.
+        if obligation.source_equation_expression:
+            if normalize_formula_latex_body(package.latex) != normalize_formula_latex_body(
+                obligation.source_equation_expression
+            ):
+                failures.append("formula_source_equation_expression_mismatch")
+        latex_lower = latex.casefold()
+        for term in obligation.required_denominator_terms:
+            if term and term.casefold() not in latex_lower and not exact_equation_match:
+                failures.append(f"formula_denominator_term_missing:{term}")
+        for term in obligation.required_reduction_terms:
+            if term and term.casefold() not in latex_lower and term.casefold() not in str(package.prose_explanation).casefold() and not exact_equation_match:
+                failures.append(f"formula_reduction_term_missing:{term}")
+        for term in obligation.required_normalization_terms:
+            if term and term.casefold() not in latex_lower and term.casefold() not in str(package.prose_explanation).casefold() and not exact_equation_match:
+                failures.append(f"formula_normalization_term_missing:{term}")
+        for condition in obligation.required_branch_conditions:
+            if condition and condition not in package.material_conditions and condition not in latex and not exact_equation_match:
+                failures.append(f"formula_branch_condition_missing:{condition}")
+        for binding in obligation.required_symbol_bindings:
+            for field_name in ("symbol", "operand_value"):
+                value = str(binding.get(field_name) or "").strip()
+                if value and value.casefold() not in latex_lower:
+                    failures.append(f"formula_symbol_binding_missing:{field_name}:{value}")
 
     return failures
 
@@ -1368,6 +1592,7 @@ def _run_mechanism_formalizer_legacy(
     context: Any,
     obligations: tuple[MechanismFormulaObligationV1, ...],
     shared_payload: str = "",
+    shared_payload_pages: tuple[str, ...] = (),
     shared_payload_digest: str = "",
     view_digest: str = "",
     slice_digests: tuple[str, ...] = (),
@@ -1432,13 +1657,27 @@ def _run_mechanism_formalizer_legacy(
                 f"Required operators: {ob.required_operator_signatures}\n"
                 f"Required conditions: {ob.required_conditions}\n"
                 f"Author notation hints: {author_notation_hints or ob.notation_hints}\n"
-                f"Mechanism Context Slice:\n{shared_payload}\n"
+                f"Mechanism Context Pages (each value is an exact UTF-8 page; do not rewrite):\n"
+                f"{json.dumps(list(shared_payload_pages) or [shared_payload], ensure_ascii=False)}\n"
                 f"Return a valid JSON object with keys: latex, prose_explanation, symbol_definitions (list of [symbol, meaning]), material_conditions."
             )
             try:
                 from code2paper.llm.client import LLMRequest
                 from code2paper.llm.response_schemas import _loads_json_or_extract_object
-                response = caller(llm_config, LLMRequest(prompt=prompt))
+                response = caller(
+                    llm_config,
+                    LLMRequest(
+                        prompt_template_id="phase4_mechanism_formalizer_v1",
+                        prompt=prompt,
+                        input_payload={
+                            "prompt": prompt,
+                            "mechanism_id": getattr(context, "mechanism_id", ""),
+                            "obligation_id": ob.obligation_id,
+                            "shared_payload": shared_payload,
+                            "shared_payload_pages": list(shared_payload_pages) or [shared_payload],
+                        },
+                    ),
+                )
                 call_trace["llm_call_made"] = True
                 parsed = _loads_json_or_extract_object(response.content if hasattr(response, "content") else str(response))
                 if isinstance(parsed, dict) and "latex" in parsed:
@@ -1483,6 +1722,7 @@ def run_mechanism_formalizer(
     context: Any,
     obligations: tuple[MechanismFormulaObligationV1, ...],
     shared_payload: str = "",
+    shared_payload_pages: tuple[str, ...] = (),
     shared_payload_digest: str = "",
     llm_config: Any | None = None,
     caller: Any | None = None,
@@ -1562,13 +1802,27 @@ def run_mechanism_formalizer(
             f"Required operand sets: {obligation.required_operand_sets}\n"
             f"Required conditions: {obligation.required_conditions}\n"
             f"Shared payload digest: {shared_payload_digest}\n"
-            f"Shared mechanism context bytes:\n{shared_payload}\n"
+            f"Shared mechanism context pages (exact UTF-8 page strings):\n"
+            f"{json.dumps(list(shared_payload_pages) or [shared_payload], ensure_ascii=False)}\n"
             "Keys: latex, prose_explanation, symbol_definitions, material_conditions, assumptions."
         )
         try:
             from code2paper.llm.client import LLMRequest
             from code2paper.llm.response_schemas import _loads_json_or_extract_object
-            response = caller(llm_config, LLMRequest(prompt=prompt))
+            response = caller(
+                llm_config,
+                LLMRequest(
+                    prompt_template_id="phase4_mechanism_formalizer_v1",
+                    prompt=prompt,
+                    input_payload={
+                        "prompt": prompt,
+                        "mechanism_id": mechanism_id,
+                        "obligation_id": obligation.obligation_id,
+                        "shared_payload": shared_payload,
+                        "shared_payload_pages": list(shared_payload_pages) or [shared_payload],
+                    },
+                ),
+            )
             trace["llm_call_made"] = True
             raw = response.content if hasattr(response, "content") else str(response)
             parsed = _loads_json_or_extract_object(raw)

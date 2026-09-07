@@ -108,6 +108,7 @@ from code2paper.agentic.research_tools import (
     execute_research_tool,
 )
 from code2paper.agentic.repo_snapshot import RepoSnapshot, build_repo_snapshot
+from code2paper.agentic.source_inventory import build_repository_source_manifest
 from code2paper.agentic.state_v3 import AgentStateV3
 from code2paper.agentic.typed_refs import (
     behavior_refs,
@@ -778,12 +779,21 @@ def repository_indexer_node(
         entry_symbol_ids=explicit_entries,
         evidence_refs=(symbol_index_digest,),
     )
+    source_manifest = build_repository_source_manifest(
+        runtime.repo_snapshot,
+        symbols=symbol_index.symbols,
+        implementation_scope=scope,
+    )
     scope_path = runtime.tool_context().write_artifact(
         "implementation_scopes", scope.content_digest, scope
+    )
+    source_manifest_path = runtime.tool_context().write_artifact(
+        "source_manifests", source_manifest.content_digest, source_manifest
     )
     return {
         "symbol_index_ref": symbol_index_digest,
         "implementation_scope_ref": scope.content_digest,
+        "source_manifest_ref": source_manifest.content_digest,
         "behavior_graph_ref": _empty_behavior_graph_digest(
             runtime.repo_snapshot, language=adapter.language
         ),
@@ -797,6 +807,9 @@ def repository_indexer_node(
             symbol.model_dump(mode="json")
             for symbol in symbol_index.symbols
         ],
+        "_symbol_index": symbol_index,
+        "_source_manifest": source_manifest,
+        "_source_manifest_path": str(source_manifest_path or ""),
     }
 
 

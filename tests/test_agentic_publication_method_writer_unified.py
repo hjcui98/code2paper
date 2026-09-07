@@ -128,6 +128,28 @@ def test_run_publication_method_writer_unified_mode(tmp_path: Path) -> None:
     assert "narrative_plan_v3" in outputs
     assert "method_content_trace_v2" in outputs
     assert "mechanism_information_funnel_v1" in outputs
+    trace_payload = json.loads(
+        Path(outputs["mechanism_shared_payload_trace_v1"]).read_text(encoding="utf-8")
+    )
+    assert trace_payload
+    assert all(
+        any(
+            bool(receipt.get("accepted"))
+            for receipt in (consumer.get("formalizer_page_delivery_receipts") or ())
+        )
+        for row in trace_payload
+        for consumer in (row.get("writer_consumers") or ())
+        if row.get("page_manifest_digest")
+    )
+    assert all(
+        any(
+            bool(receipt.get("accepted"))
+            for receipt in (consumer.get("writer_page_delivery_receipts") or ())
+        )
+        for row in trace_payload
+        for consumer in (row.get("writer_consumers") or ())
+        if row.get("page_manifest_digest")
+    )
 
     # Validate MechanismContextSetV1
     context_set = MechanismContextSetV1.model_validate_json(
@@ -199,3 +221,61 @@ def test_run_publication_method_writer_env_var_unified_cutover(
     assert "narrative_plan_v3" in outputs
     assert "method_content_trace_v2" in outputs
     assert "mechanism_information_funnel_v1" in outputs
+
+
+def test_validate_authoring_run_contract_satisfied(tmp_path: Path) -> None:
+    from code2paper.agentic.authoring_context_contract import (
+        AuthoringRunContractV1,
+        build_authoring_run_contract,
+        validate_authoring_run_contract,
+    )
+
+    paths = _artifacts(tmp_path)
+    result, outputs = run_publication_method_writer(
+        out_root=tmp_path,
+        artifact_paths=paths,
+        llm_config=_config(),
+        llm_caller=_mock_writer_caller,
+        authoring_context_mode="unified",
+    )
+    assert result.status in ("success", "incomplete")
+    assert "authoring_run_contract_v1" in outputs
+    contract_data = Path(outputs["authoring_run_contract_v1"]).read_text(encoding="utf-8")
+    contract = AuthoringRunContractV1.model_validate_json(contract_data)
+    assert contract.contract_satisfied is True
+    assert len(contract.missing_artifact_keys) == 0
+    is_valid, missing = validate_authoring_run_contract(contract)
+    assert is_valid is True
+    assert missing == ()
+
+
+def test_run_publication_method_writer_expected_artifact_gate_fail_closed(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """When an expected artifact is missing, unified authoring fails-closed."""
+    from unittest.mock import patch
+    from code2paper.agentic.authoring_context_contract import build_authoring_run_contract
+
+    paths = _artifacts(tmp_path)
+    # Simulate an output file being deleted or missing from outputs before contract check
+    orig_build = build_authoring_run_contract
+
+    def mock_build_contract(*args: Any, **kwargs: Any) -> Any:
+        output_paths = dict(kwargs.get("output_paths") or {})
+        # Remove an expected unified artifact
+        output_paths.pop("mechanism_formula_packages_v2", None)
+        kwargs["output_paths"] = output_paths
+        return orig_build(*args, **kwargs)
+
+    with patch("code2paper.agentic.publication_method_writer.build_authoring_run_contract", side_effect=mock_build_contract):
+        result, outputs = run_publication_method_writer(
+            out_root=tmp_path,
+            artifact_paths=paths,
+            llm_config=_config(),
+            llm_caller=_mock_writer_caller,
+            authoring_context_mode="unified",
+        )
+
+    assert result.status == "blocked"
+    assert "expected_authoring_artifacts_missing" in result.blocked_reason
+    assert "mechanism_formula_packages_v2" in result.blocked_reason

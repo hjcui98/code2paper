@@ -330,6 +330,12 @@ def _method_agent_parser() -> argparse.ArgumentParser:
         help="Compile method_argument_briefs_v1 during planning (default: enabled)",
     )
     run_parser.add_argument(
+        "--authoring-context-mode",
+        choices=("legacy", "shadow_unified", "unified"),
+        default=None,
+        help="Authoring context lane; explicit CLI input wins over the environment",
+    )
+    run_parser.add_argument(
         "--research-stage-checkpoint",
         default="",
         help="Resume after repository research from a trusted stage checkpoint.",
@@ -399,6 +405,7 @@ def method_agent_main(argv: list[str] | None = None) -> int:
             concept_cards=_load_concept_cards(args.concept_cards),
             compile_concept_cards=bool(args.compile_concept_cards),
             compile_argument_briefs=bool(args.compile_argument_briefs),
+            authoring_context_mode=args.authoring_context_mode,
         )
     except (FileNotFoundError, ValueError, RuntimeError, OSError) as exc:
         print(f"[code2paper method-agent] error={exc}")

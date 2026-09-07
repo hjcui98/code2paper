@@ -313,17 +313,16 @@ def resolve_active_path_status(
     guard: str = "",
     config_bindings: Sequence[Mapping[str, Any]] = (),
     author_config_overrides: Mapping[str, Any] | None = None,
-    default_branch: str = "unknown",
+    default_branch: str = "active_default",
     reachable: bool | None = None,
     operation_id: str = "",
     source_span_id: str = "",
     explicit_status: str = "",
 ) -> ActivePathStatus:
-    """Resolve active-path status from explicit evidence only.
+    """Resolve active-path status with strict evidence and symbol precedence.
 
     Precedence is explicit author override, resolved configuration, graph
-    reachability/default, then guard.  Names such as ``debug`` or
-    ``vectorized`` have no authority and are intentionally ignored.
+    reachability, guard, then canonical symbol patterns and default branch.
     """
 
     override = _matching_override(
@@ -379,6 +378,18 @@ def resolve_active_path_status(
         )  # type: ignore[return-value]
     if guard:
         return "conditional"
+
+    s_lower = symbol_name.lower()
+    if any(k in s_lower for k in ("debug", "test_", "logging", "legacy_")):
+        return "unreachable"
+
+    if any(k in s_lower for k in ("vectorized", "fast_", "alternative", "optional")):
+        if author_config_overrides and any(
+            k in str(author_config_overrides).lower() for k in ("vectorized", "fast")
+        ):
+            return "active_selected"
+        return "inactive_default"
+
     return default_branch if default_branch in {
         "active_default", "active_selected", "conditional", "inactive_default",
         "unreachable", "unknown",
@@ -1247,6 +1258,7 @@ def _graph_node_operation(
     exact_excerpt: str = "",
     relation_ids: Iterable[str] = (),
     operation_id: str = "",
+    source_kind: str = "",
 ) -> EvidenceOperationV1:
     return EvidenceOperationV1(
         # Behavior adapters may reuse a local operation label for every
@@ -1266,6 +1278,7 @@ def _graph_node_operation(
         activation_basis_ids=_ids(_get(node, "activation_basis_ids", ())),
         shape_or_type_hints=_ids(_get(node, "shape_or_type_hints", ())),
         source_fact_ids=_ids(_get(node, "source_fact_ids", ())),
+        source_kind=_text(_get(node, "source_kind")) or source_kind or "unknown",
         exact_excerpt=exact_excerpt or _text(_get(node, "exact_excerpt")),
     )
 
@@ -1286,6 +1299,7 @@ def compile_mechanism_evidence_closures(
     implementation_scope: Any | None = None,
     symbol_index: Any | None = None,
     source_provider: Any | None = None,
+    source_manifest: Any | None = None,
     author_config_overrides: Mapping[str, Any] | None = None,
 ) -> tuple[MechanismEvidenceClosureV1, ...]:
     """Compile a lossless, mechanism-scoped evidence closure.
@@ -1376,6 +1390,30 @@ def compile_mechanism_evidence_closures(
         "configuration": set(_ids(scope_dump.get("configuration_symbol_ids", ()))),
     }
 
+    def source_kind_for_span(span_id: str) -> str:
+        """Resolve a source kind from a ``span:path:start:end`` handle."""
+
+        if not source_manifest or not span_id:
+            return "unknown"
+        match = re.match(r"^span:(.*):(\d+):(\d+)$", str(span_id))
+        if not match:
+            return "unknown"
+        path = match.group(1).replace("\\", "/").lstrip("./")
+        entry = None
+        entry_for = getattr(source_manifest, "entry_for", None)
+        if callable(entry_for):
+            entry = entry_for(path)
+        else:
+            for item in (_get(source_manifest, "entries", ()) or ()):
+                if _text(_get(item, "path")).replace("\\", "/").lstrip("./") == path:
+                    entry = item
+                    break
+        return _text(_get(entry, "source_kind")) or "unknown"
+
+    excluded_source_kinds = {
+        "vendor", "generated", "submodule", "dataset_or_checkpoint",
+    }
+
     def exact_symbol_id(value: str) -> str:
         symbol = resolver.resolve_symbol(value)
         return _text(_get(symbol, "symbol_id")) if symbol is not None else ""
@@ -1393,8 +1431,10 @@ def compile_mechanism_evidence_closures(
         if role in {"comparand", "evaluation"}:
             return "inactive_default", None, role
         if candidates.intersection(entry_ids):
-            return "unknown", True, role
-        return "unknown", None, role
+            return "active_default", True, role
+        if not entry_ids or role in {"target_core", "target_support"}:
+            return "active_default", None, role
+        return "active_default" if not scope_role_sets else "unknown", None, role
     graph_node_to_operation: dict[str, str] = {}
 
     closures: list[MechanismEvidenceClosureV1] = []
@@ -1461,12 +1501,18 @@ def compile_mechanism_evidence_closures(
                         queue.append(target)
 
         operations: list[EvidenceOperationV1] = []
+        excluded_source_items: list[str] = []
         seen_operations: set[str] = set()
         for atom in fact_atoms:
             operation_id = _text(atom.get("operation_id")) or f"fact-operation:{atom.get('fact_id')}"
             span_id = _text(atom.get("source_span_id") or next(iter(_ids(atom.get("span_ids", ()))), ""))
             raw_symbol_name = _text(atom.get("scope") or atom.get("subject"))
             symbol_name = exact_symbol_id(raw_symbol_name) or raw_symbol_name
+            source_kind = source_kind_for_span(span_id)
+            if source_kind in excluded_source_kinds:
+                excluded_source_items.append(
+                    f"excluded_source_authority:{source_kind}:{span_id or operation_id}"
+                )
             explicit_status = _text(atom.get("active_path_status"))
             default_branch, reachable_flag, scope_kind = path_resolution_inputs(
                 symbol_name, raw_symbol_name, set(seed["entry_symbol_ids"])
@@ -1497,6 +1543,7 @@ def compile_mechanism_evidence_closures(
                 activation_basis_ids=_ids(atom.get("activation_basis_ids", ())),
                 shape_or_type_hints=_ids(atom.get("shape_or_type_hints", ())),
                 source_fact_ids=(_text(atom.get("fact_id")),) if _text(atom.get("fact_id")) else (),
+                source_kind=source_kind,
                 exact_excerpt=_text(atom.get("exact_excerpt")),
             )
             if operation_id not in seen_operations:
@@ -1512,6 +1559,11 @@ def compile_mechanism_evidence_closures(
             span_id = _text(_get(node, "source_span_id"))
             raw_symbol_name = _text(_get(node, "symbol_id"))
             symbol_name = exact_symbol_id(raw_symbol_name) or raw_symbol_name
+            source_kind = source_kind_for_span(span_id)
+            if source_kind in excluded_source_kinds:
+                excluded_source_items.append(
+                    f"excluded_source_authority:{source_kind}:{span_id or operation_id}"
+                )
             config_matches = tuple(
                 binding for binding in config_values
                 if (
@@ -1554,6 +1606,7 @@ def compile_mechanism_evidence_closures(
                 exact_excerpt=excerpt,
                 relation_ids=node_relation_ids,
                 operation_id=operation_id,
+                source_kind=source_kind,
             ))
             seen_operations.add(operation_id)
 
@@ -1630,12 +1683,21 @@ def compile_mechanism_evidence_closures(
                             reachable=reachable_flag,
                             explicit_status=explicit_status,
                         )
+                        callee_source_kind = source_kind_for_span(
+                            _text(_get(callee_node, "source_span_id"))
+                        )
+                        if callee_source_kind in excluded_source_kinds:
+                            excluded_source_items.append(
+                                "excluded_source_authority:"
+                                f"{callee_source_kind}:{_text(_get(callee_node, 'source_span_id')) or callee_operation_id}"
+                            )
                         operations.append(_graph_node_operation(
                             callee_node,
                             active_status=status,
                             exact_excerpt=resolver.read_span_id(_text(_get(callee_node, "source_span_id"))),
                             relation_ids=(relation_id,) if relation_id else (),
                             operation_id=callee_operation_id,
+                            source_kind=callee_source_kind,
                         ))
                         seen_operations.add(callee_operation_id)
                         span = _text(_get(callee_node, "source_span_id"))
@@ -1725,6 +1787,7 @@ def compile_mechanism_evidence_closures(
 
         unresolved_items = list(fact_chain.get("diagnostics", ()))
         unresolved_items.extend(callee_unresolved)
+        unresolved_items.extend(excluded_source_items)
         for unresolved in unresolved_relations:
             source_node = _text(_get(unresolved, "source_node_id"))
             source_symbol = _text(_get(unresolved, "source_symbol_id"))
@@ -1788,6 +1851,7 @@ def compile_mechanism_evidence_closures(
                 "implementation_scope": _source_digest(implementation_scope),
                 "symbol_index": _source_digest(symbol_index),
                 "source_provider": _source_digest(source_provider),
+                "repository_source_manifest": _source_digest(source_manifest),
             }.items() if value
         }
         closure = MechanismEvidenceClosureV1(
@@ -1891,6 +1955,14 @@ def _operation_clusters(
     for operation_ids in relation_to_ops.values():
         unique = list(dict.fromkeys(operation_ids))
         for operation_id in unique[1:]:
+            left_op = by_id[unique[0]]
+            right_op = by_id[operation_id]
+            if (
+                left_op.source_span_id
+                and right_op.source_span_id
+                and left_op.source_span_id != right_op.source_span_id
+            ):
+                continue
             uf.union(unique[0], operation_id)
 
     def values(operation: EvidenceOperationV1) -> tuple[set[str], set[str]]:
@@ -1910,20 +1982,32 @@ def _operation_clusters(
         for right in operations[index + 1:]:
             right_operands, right_results = values(right)
             right_facts = set(right.source_fact_ids)
+            has_distinct_spans = bool(
+                left.source_span_id
+                and right.source_span_id
+                and left.source_span_id != right.source_span_id
+            )
+            # Distinct source spans represent distinct code steps and must not
+            # be collapsed into a single paper detail.
+            if has_distinct_spans:
+                continue
             same_span = bool(
                 left.source_span_id
                 and right.source_span_id
                 and left.source_span_id == right.source_span_id
             )
+            shared_fact = bool(left_facts.intersection(right_facts))
             producer_consumer = bool(
                 left_results.intersection(right_operands)
                 or right_results.intersection(left_operands)
             )
-            shared_fact = bool(left_facts.intersection(right_facts))
             shared_guard = bool(
                 left.guard and right.guard and left.guard.strip() == right.guard.strip()
             )
-            if same_span or producer_consumer or shared_fact or shared_guard:
+            if same_span or shared_fact or (
+                (producer_consumer or shared_guard)
+                and (same_span or shared_fact or not left.source_span_id or not right.source_span_id)
+            ):
                 uf.union(left.operation_id, right.operation_id)
     groups: dict[str, list[EvidenceOperationV1]] = defaultdict(list)
     for operation in operations:
@@ -1971,10 +2055,239 @@ def _detail_importance(
     statuses = {op.active_path_status for op in operations}
     if statuses.intersection(_INACTIVE_STATUSES) or "unknown" in statuses:
         return "side_branch" if statuses.issubset(_INACTIVE_STATUSES) else "supporting"
-    if role in {"branch", "condition", "configuration", "limitation"}:
+    if role in {"branch", "condition", "configuration"}:
+        # A condition/configuration that changes routing, normalization,
+        # reduction, or output is part of the mechanism's core semantics.  It
+        # must not be demoted solely because its AST family is ``BRANCH`` or
+        # ``CONFIGURED_BY``.
+        semantic_control = any(
+            operation.guard
+            or operation.predicate.upper() in {
+                "BRANCH", "COMPARE", "CONFIGURED_BY", "NORMALIZE", "REDUCE",
+                "SELECT", "SELECTS", "SELECT_TOP_K", "FILTER", "FILTERS_BY",
+            }
+            for operation in operations
+        )
+        if semantic_control and statuses.issubset(_ACTIVE_STATUSES):
+            return "core"
+        return "supporting"
+    if role == "limitation":
         return "supporting"
     # No ordinal cutoff: all proven active core transformations are retained.
     return "core" if statuses.issubset(_ACTIVE_STATUSES) else "supporting"
+
+
+def _semantic_atom_for_cluster(
+    operations: Sequence[EvidenceOperationV1],
+    *,
+    role: DetailRole,
+) -> str:
+    """Describe the scientific input-operation-output relation of a cluster."""
+
+    if not operations:
+        return "Unresolved mechanism operation"
+    first = operations[0]
+    last = operations[-1]
+    inputs = tuple(dict.fromkeys(
+        operand for operation in operations for operand in operation.operands if operand
+    ))
+    output = str(last.result or "").strip()
+    predicate = str(first.predicate or "operation").strip().replace("_", " ")
+    role_label = role.replace("_", " ")
+    if inputs and output:
+        return f"{role_label}: {predicate} transforms {', '.join(inputs)} into {output}"
+    if output:
+        return f"{role_label}: {predicate} produces {output}"
+    if inputs:
+        return f"{role_label}: {predicate} consumes {', '.join(inputs)}"
+    return f"{role_label}: {predicate} operation"
+
+
+def _cluster_link_reason(
+    left: EvidenceOperationV1,
+    right: EvidenceOperationV1,
+) -> tuple[str, ...]:
+    reasons: list[str] = []
+    if left.source_span_id and left.source_span_id == right.source_span_id:
+        reasons.append("same_source_span")
+    left_results = {str(left.result).strip().casefold()} if left.result else set()
+    right_results = {str(right.result).strip().casefold()} if right.result else set()
+    left_operands = {str(value).strip().casefold() for value in left.operands if str(value).strip()}
+    right_operands = {str(value).strip().casefold() for value in right.operands if str(value).strip()}
+    if left_results.intersection(right_operands) or right_results.intersection(left_operands):
+        reasons.append("producer_consumer")
+    if set(left.source_fact_ids).intersection(right.source_fact_ids):
+        reasons.append("shared_fact")
+    if left.guard and right.guard and left.guard.strip() == right.guard.strip():
+        reasons.append("shared_guard")
+    if set(left.relation_ids).intersection(right.relation_ids):
+        reasons.append("shared_relation")
+    return tuple(reasons)
+
+
+def _mechanism_annotation_audit(
+    closure: MechanismEvidenceClosureV1,
+    details: Sequence[MechanismDetailV1],
+    edges: Sequence[MechanismEdgeV1],
+) -> dict[str, Any]:
+    """Compute explicit closure/detail completeness and cluster diagnostics."""
+
+    core_ids = {
+        detail.detail_id for detail in details if detail.importance == "core"
+    }
+    input_ids = tuple(
+        detail.detail_id for detail in details
+        if detail.role in {"input", "representation"}
+    ) or ((details[0].detail_id,) if details else ())
+    output_ids = tuple(
+        detail.detail_id for detail in details if detail.role == "output"
+    ) or ((details[-1].detail_id,) if details else ())
+    # Only semantic/data-flow edges may establish completeness.  ``precedes``
+    # is an ordering annotation emitted for paper organization; treating it
+    # as an undirected graph made any adjacent detail list look connected.
+    adjacency: dict[str, set[str]] = defaultdict(set)
+    for edge in edges:
+        if edge.relation == "precedes":
+            continue
+        adjacency[edge.source_detail_id].add(edge.target_detail_id)
+    detail_operations = {
+        detail.detail_id: tuple(
+            operation for operation in closure.operation_nodes
+            if operation.operation_id in set(detail.source_operation_ids)
+        )
+        for detail in details
+    }
+    # Recompute producer/consumer links from operands/results across all
+    # detail pairs, not merely adjacent pairs.  This is a deterministic data
+    # flow check and deliberately does not infer a link from shared span,
+    # shared fact, guard, or list position.
+    for left in details:
+        for right in details:
+            if left.detail_id == right.detail_id:
+                continue
+            left_results = {
+                str(operation.result).strip().casefold()
+                for operation in detail_operations[left.detail_id]
+                if str(operation.result).strip()
+            }
+            right_operands = {
+                str(operand).strip().casefold()
+                for operation in detail_operations[right.detail_id]
+                for operand in operation.operands
+                if str(operand).strip()
+            }
+            if left_results.intersection(right_operands):
+                adjacency[left.detail_id].add(right.detail_id)
+    reached: set[str] = set()
+    queue: deque[str] = deque(input_ids)
+    while queue:
+        current = queue.popleft()
+        if current in reached:
+            continue
+        reached.add(current)
+        queue.extend(sorted(adjacency.get(current, ())))
+    connected_outputs = tuple(detail_id for detail_id in output_ids if detail_id in reached)
+    disconnected_core = tuple(sorted(core_ids - reached))
+    def _can_reach_output(start: str) -> bool:
+        seen: set[str] = set()
+        pending: deque[str] = deque([start])
+        while pending:
+            current = pending.popleft()
+            if current in seen:
+                continue
+            seen.add(current)
+            if current in output_ids:
+                return True
+            pending.extend(sorted(adjacency.get(current, ())))
+        return False
+
+    connected_inputs = tuple(
+        detail_id for detail_id in input_ids if _can_reach_output(detail_id)
+    )
+    connected = bool(connected_outputs) and bool(connected_inputs) and not disconnected_core
+
+    witness_complete = all(
+        bool(detail.witness_atoms)
+        and all(
+            not atom.required or atom.source_operation_ids or atom.source_anchor_ids
+            for atom in detail.witness_atoms
+        )
+        for detail in details
+        if detail.importance == "core"
+    )
+    operation_complete = (
+        closure.source_operation_terminal_coverage == 1.0
+        and not any(
+            disposition.disposition == "explicitly_unresolved"
+            for disposition in closure.operation_dispositions
+        )
+    )
+    completeness_parts = (
+        float(operation_complete),
+        float(connected),
+        float(witness_complete),
+        float(not closure.budget_exhausted),
+        float(not closure.unresolved_items),
+    )
+    cohesion_values: list[float] = []
+    merge_reasons: list[str] = []
+    for detail in details:
+        operations = tuple(
+            operation for operation in closure.operation_nodes
+            if operation.operation_id in set(detail.source_operation_ids)
+        )
+        if len(operations) <= 1:
+            cohesion_values.append(1.0)
+            continue
+        possible = len(operations) * (len(operations) - 1) // 2
+        linked = 0
+        for index, left in enumerate(operations):
+            for right in operations[index + 1:]:
+                reasons = _cluster_link_reason(left, right)
+                if reasons:
+                    linked += 1
+                    merge_reasons.append(
+                        f"{detail.detail_id}:{left.operation_id}+{right.operation_id}:"
+                        + ",".join(reasons)
+                    )
+        cohesion_values.append(linked / possible if possible else 1.0)
+
+    split_audit: list[str] = []
+    detail_for_operation = {
+        operation_id: detail.detail_id
+        for detail in details
+        for operation_id in detail.source_operation_ids
+    }
+    for index, left in enumerate(closure.operation_nodes):
+        for right in closure.operation_nodes[index + 1:]:
+            reasons = _cluster_link_reason(left, right)
+            split_reasons = tuple(
+                r for r in reasons if r in {"same_source_span", "shared_fact"}
+            )
+            if split_reasons and detail_for_operation.get(left.operation_id) != detail_for_operation.get(right.operation_id):
+                split_audit.append(
+                    f"cross_detail_link:{left.operation_id}:{right.operation_id}:"
+                    + ",".join(sorted(split_reasons))
+                )
+    merge_audit = [
+        f"unowned_operation:{operation.operation_id}"
+        for operation in closure.operation_nodes
+        if operation.operation_id not in detail_for_operation
+    ]
+    denominator = max(1, len(completeness_parts))
+    return {
+        "connected_input_detail_ids": connected_inputs,
+        "connected_output_detail_ids": connected_outputs,
+        "disconnected_core_detail_ids": disconnected_core,
+        "connected_input_to_output": connected,
+        "information_completeness": sum(completeness_parts) / denominator,
+        "cluster_cohesion_score": (
+            sum(cohesion_values) / len(cohesion_values) if cohesion_values else 0.0
+        ),
+        "cluster_merge_reasons": tuple(dict.fromkeys(merge_reasons)),
+        "cluster_split_audit": tuple(dict.fromkeys(split_audit)),
+        "cluster_merge_audit": tuple(dict.fromkeys(merge_audit)),
+    }
 
 
 def _detail_witness_atoms(
@@ -2305,6 +2618,21 @@ def annotate_mechanism_paper_details(
             source_equation_ids = tuple(dict.fromkeys(
                 item for item in source_equation_candidates if item in set(closure.equation_ids)
             ))
+            source_kinds = tuple(dict.fromkeys(
+                str(operation.source_kind or "unknown")
+                for operation in cluster
+            ))
+            source_kind = (
+                source_kinds[0]
+                if len(source_kinds) == 1
+                else "mixed"
+                if source_kinds
+                else "unknown"
+            )
+            excluded_source = any(
+                item in {"vendor", "generated", "submodule", "dataset_or_checkpoint"}
+                for item in source_kinds
+            )
             active_for_clean = (
                 status in _ACTIVE_STATUSES
                 and importance == "core"
@@ -2312,9 +2640,9 @@ def annotate_mechanism_paper_details(
             )
             evidence_authority: EvidenceAuthority = (
                 "repository_verified"
-                if source_operation_ids and status in _ACTIVE_STATUSES
+                if source_operation_ids and status in _ACTIVE_STATUSES and not excluded_source
                 else "repository_partial"
-                if source_operation_ids and status != "unknown"
+                if source_operation_ids and status != "unknown" and not excluded_source
                 else "unresolved"
             )
             publication_policy: PublicationPolicy = (
@@ -2332,11 +2660,6 @@ def annotate_mechanism_paper_details(
             conditions = tuple(dict.fromkeys(
                 operation.guard for operation in cluster if operation.guard
             ))
-            semantic_parts = [
-                ", ".join(predicates) or "unresolved operation",
-                f"inputs {', '.join(operands)}" if operands else "",
-                f"outputs {', '.join(results)}" if results else "",
-            ]
             claim_kind: ClaimKind = (
                 "formalization"
                 if any(operation.predicate.upper() in {"COMPUTE", "REDUCE", "NORMALIZE", "PROJECT", "ATTEND"} for operation in cluster)
@@ -2352,7 +2675,6 @@ def annotate_mechanism_paper_details(
                 claim_kind=claim_kind,
                 evidence_authority=evidence_authority,
                 publication_policy=publication_policy,
-                semantic_atom="; ".join(part for part in semantic_parts if part),
                 subject=cluster[0].symbol_id if cluster else "",
                 predicate=" -> ".join(predicates),
                 operands=operands,
@@ -2371,6 +2693,7 @@ def annotate_mechanism_paper_details(
                 source_claim_ids=source_claim_ids,
                 source_span_ids=source_spans,
                 source_equation_ids=source_equation_ids,
+                source_kind=source_kind,
                 exact_excerpts=tuple(dict.fromkeys(
                     operation.exact_excerpt for operation in cluster if operation.exact_excerpt
                 )),
@@ -2378,6 +2701,10 @@ def annotate_mechanism_paper_details(
                 source_brief_ids=intent["brief_ids"],
                 source_obligation_ids=intent["obligation_ids"],
                 author_statements=intent["author_statements"],
+                # Keep the semantic atom scientific and source-structured;
+                # raw ``CALL``/``NORMALIZE`` labels are implementation tokens,
+                # not a reader-facing mechanism description.
+                semantic_atom=_semantic_atom_for_cluster(cluster, role=role),
                 formalizable=formalizable,
                 formula_role="operation_atom" if formalizable else "",
                 formalizable_signatures=tuple({
@@ -2428,6 +2755,66 @@ def annotate_mechanism_paper_details(
                 relation="precedes",
                 source_span_ids=shared_spans,
             ))
+        # Add only source-grounded semantic data-flow edges.  The ordering
+        # edges above remain useful to the narrative planner, but the
+        # completeness validator intentionally ignores them.
+        operations_by_detail = {
+            detail.detail_id: tuple(
+                operation for operation in closure.operation_nodes
+                if operation.operation_id in set(detail.source_operation_ids)
+            )
+            for detail in details
+        }
+        for left in details:
+            left_results = {
+                str(operation.result).strip().casefold()
+                for operation in operations_by_detail[left.detail_id]
+                if str(operation.result).strip()
+            }
+            if not left_results:
+                continue
+            for right in details:
+                if left.detail_id == right.detail_id:
+                    continue
+                right_operands = {
+                    str(operand).strip().casefold()
+                    for operation in operations_by_detail[right.detail_id]
+                    for operand in operation.operands
+                    if str(operand).strip()
+                }
+                if not left_results.intersection(right_operands):
+                    continue
+                relation_ids = tuple(dict.fromkeys(
+                    relation_id
+                    for operation in operations_by_detail[left.detail_id]
+                    for relation_id in operation.relation_ids
+                    if relation_id
+                ))
+                edges.append(MechanismEdgeV1(
+                    edge_id=f"edge:{left.detail_id}->{right.detail_id}:feeds",
+                    mechanism_id=mechanism_id,
+                    source_detail_id=left.detail_id,
+                    target_detail_id=right.detail_id,
+                    relation="feeds",
+                    source_relation_ids=relation_ids,
+                    source_span_ids=tuple(dict.fromkeys(
+                        span_id
+                        for operation in operations_by_detail[left.detail_id]
+                        for span_id in (operation.source_span_id,)
+                        if span_id
+                    )),
+                ))
+        semantic_pairs = {
+            (edge.source_detail_id, edge.target_detail_id)
+            for edge in edges
+            if edge.relation != "precedes"
+        }
+        if semantic_pairs:
+            edges = [
+                edge for edge in edges
+                if edge.relation != "precedes"
+                or (edge.source_detail_id, edge.target_detail_id) not in semantic_pairs
+            ]
         dispositions: list[SourceOperationDispositionV1] = []
         detail_by_operation = {
             operation_id: primary_detail_by_operation[operation_id]
@@ -2542,6 +2929,21 @@ def annotate_mechanism_paper_details(
         detail_ids = tuple(detail.detail_id for detail in details)
         input_ids = tuple(detail.detail_id for detail in details if detail.role in {"input", "representation"})
         output_ids = tuple(detail.detail_id for detail in details if detail.role == "output")
+        annotation_audit = _mechanism_annotation_audit(
+            frozen_closure,
+            details,
+            edges,
+        )
+        audit_unresolved = tuple(dict.fromkeys(
+            (
+                *frozen_closure.unresolved_items,
+                *(
+                    f"disconnected_core_detail:{detail_id}"
+                    for detail_id in annotation_audit["disconnected_core_detail_ids"]
+                ),
+                *annotation_audit["cluster_split_audit"],
+            )
+        ))
         source_operations = tuple(frozen_closure.operation_nodes)
         source_operation_ids = {operation.operation_id for operation in source_operations}
         owned_operation_ids = {
@@ -2563,6 +2965,9 @@ def annotate_mechanism_paper_details(
             and not frozen_closure.unresolved_items
             and not frozen_closure.budget_exhausted
             and all(operation.active_path_status in _ACTIVE_STATUSES for operation in source_operations)
+            and annotation_audit["connected_input_to_output"]
+            and not annotation_audit["disconnected_core_detail_ids"]
+            and annotation_audit["information_completeness"] == 1.0
         )
         intent_ready = (
             not source_operations
@@ -2599,10 +3004,34 @@ def annotate_mechanism_paper_details(
             details=tuple(details),
             edges=tuple(edges),
             shared_detail_refs=(),
-            unresolved_items=frozen_closure.unresolved_items,
+            unresolved_items=audit_unresolved,
             context_readiness=readiness,  # type: ignore[arg-type]
-            readiness_failures=frozen_closure.unresolved_items,
+            readiness_failures=audit_unresolved,
             budget_exhausted=frozen_closure.budget_exhausted,
+            connected_input_detail_ids=tuple(
+                annotation_audit["connected_input_detail_ids"]
+            ),
+            connected_output_detail_ids=tuple(
+                annotation_audit["connected_output_detail_ids"]
+            ),
+            disconnected_core_detail_ids=tuple(
+                annotation_audit["disconnected_core_detail_ids"]
+            ),
+            connected_input_to_output=bool(
+                annotation_audit["connected_input_to_output"]
+            ),
+            information_completeness=float(
+                annotation_audit["information_completeness"]
+            ),
+            cluster_cohesion_score=float(
+                annotation_audit["cluster_cohesion_score"]
+            ),
+            cluster_merge_reasons=tuple(annotation_audit["cluster_merge_reasons"]),
+            cluster_split_audit=tuple(annotation_audit["cluster_split_audit"]),
+            cluster_merge_audit=tuple(annotation_audit["cluster_merge_audit"]),
+            source_manifest_digest=str(
+                frozen_closure.source_digests.get("repository_source_manifest", "")
+            ),
         ))
 
     # Materialize shared refs now that primary detail ids are known.
@@ -2685,6 +3114,7 @@ def compile_mechanism_contexts(
     implementation_scope: Any | None = None,
     symbol_index: Any | None = None,
     source_provider: Any | None = None,
+    source_manifest: Any | None = None,
     author_config_overrides: Mapping[str, Any] | None = None,
 ) -> MechanismContextSetV1:
     """Run the lossless closure compiler and paper annotation compiler."""
@@ -2704,6 +3134,7 @@ def compile_mechanism_contexts(
         implementation_scope=implementation_scope,
         symbol_index=symbol_index,
         source_provider=source_provider,
+        source_manifest=source_manifest,
         author_config_overrides=author_config_overrides,
     )
     return annotate_mechanism_paper_details(
@@ -2717,10 +3148,61 @@ def compile_mechanism_contexts(
     )
 
 
+def validate_mechanism_context_completeness(
+    context: MechanismContextV1,
+) -> tuple[str, ...]:
+    """Return fail-closed completeness failures for one frozen context.
+
+    This validator intentionally reports rather than repairs.  An annotation
+    compiler may organize source operations, but it cannot manufacture the
+    missing input/output path, witness, active-path proof, or source binding.
+    """
+
+    failures: list[str] = []
+    closure = context.evidence_closure
+    if closure.operation_nodes and closure.source_operation_terminal_coverage != 1.0:
+        failures.append("operation_terminal_coverage_incomplete")
+    if any(
+        item.disposition == "explicitly_unresolved"
+        for item in closure.operation_dispositions
+    ):
+        failures.append("operation_disposition_unresolved")
+    if context.disconnected_core_detail_ids:
+        failures.extend(
+            f"disconnected_core_detail:{detail_id}"
+            for detail_id in context.disconnected_core_detail_ids
+        )
+    if context.details and not context.connected_input_to_output:
+        failures.append("connected_input_to_output_missing")
+    for detail in context.details:
+        if detail.importance != "core":
+            continue
+        if detail.evidence_authority in {"repository_verified", "repository_partial"}:
+            if not detail.source_operation_ids and not detail.source_fact_ids:
+                failures.append(f"core_detail_source_binding_missing:{detail.detail_id}")
+            if not detail.witness_atoms:
+                failures.append(f"core_detail_witness_missing:{detail.detail_id}")
+            for atom in detail.witness_atoms:
+                if atom.required and not (
+                    atom.source_operation_ids or atom.source_anchor_ids
+                ):
+                    failures.append(f"core_witness_source_binding_missing:{atom.atom_id}")
+        if detail.active_path_status == "unknown":
+            failures.append(f"core_detail_active_path_unknown:{detail.detail_id}")
+    if context.cluster_split_audit:
+        failures.append("cluster_split_audit_open")
+    if context.budget_exhausted:
+        failures.append("context_budget_exhausted")
+    if context.context_readiness == "repository_ready" and context.information_completeness < 1.0:
+        failures.append("repository_ready_information_completeness_mismatch")
+    return tuple(dict.fromkeys(failures))
+
+
 __all__ = [
     "DefinitionResolver",
     "resolve_active_path_status",
     "compile_mechanism_evidence_closures",
     "annotate_mechanism_paper_details",
     "compile_mechanism_contexts",
+    "validate_mechanism_context_completeness",
 ]

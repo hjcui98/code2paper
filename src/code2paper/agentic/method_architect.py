@@ -8128,22 +8128,10 @@ def build_narrative_plan_v3(
     ))
     trace["story_ordered"] = bool(story_order)
 
-    for ctx in context_items:
-        if ctx.importance == "side_branch":
-            continue
-
-        prior_sections = getattr(prior_plan, "sections", ()) or ()
-        if prior_plan is not None and sec_idx - 1 < len(prior_sections):
-            prior_sec = prior_sections[sec_idx - 1]
-            section_id = str(prior_sec.section_id)
-            heading = str(getattr(prior_sec, "heading", "") or f"{ctx.mechanism_name}")
-            prior_paras = getattr(prior_sec, "paragraphs", ()) or ()
-        else:
-            section_id = f"sec_method_{sec_idx}"
-            heading = f"{ctx.mechanism_name}"
-            prior_paras = ()
-        paragraphs: list[NarrativeParagraphPlanV3] = []
-
+    prior_sections = getattr(prior_plan, "sections", ()) or ()
+    if prior_plan is not None and len(prior_sections) > len(context_items) and context_items:
+        # Multi-section narrative distribution across prior outline
+        ctx = context_items[0]
         core_clean_details = [
             d for d in ctx.details
             if getattr(d, "active_path_status", "unknown") in {
@@ -8157,158 +8145,341 @@ def build_narrative_plan_v3(
             if d not in core_clean_details
             and getattr(d, "publication_policy", "") in {"annotated_only", "review_only"}
         ]
-
         overview_details = [d for d in core_clean_details if d.role in ("input", "representation", "configuration")]
         transform_details = [d for d in core_clean_details if d.role in ("transformation", "branch", "condition")]
         formal_details = [d for d in core_clean_details if d.role in ("training_objective", "inference", "formalization")]
         output_details = [d for d in core_clean_details if d.role in ("output", "interface", "rationale", "limitation")]
+        other_details = [
+            d for d in core_clean_details
+            if d not in overview_details and d not in transform_details
+            and d not in formal_details and d not in output_details
+        ]
+        sorted_details = overview_details + transform_details + formal_details + output_details + other_details
 
-        para_groups: list[tuple[str, list[Any]]] = []
-        if overview_details:
-            para_groups.append(("overview_and_inputs", overview_details))
-        if transform_details:
-            para_groups.append(("core_transformations", transform_details))
-        elif not overview_details and core_clean_details:
-            para_groups.append(("core_transformations", core_clean_details))
-        if formal_details:
-            para_groups.append(("formal_objective", formal_details))
-        if output_details:
-            para_groups.append(("interface_and_outputs", output_details))
-        if review_details:
-            # Keep unresolved evidence visible to the Writer as optional
-            # review material.  It remains outside the clean-candidate lane.
-            para_groups.append(("evidence_status", review_details))
+        num_prior_secs = len(prior_sections)
+        unplaced_packages = list(pkg_by_mech.get(ctx.mechanism_id, ()))
 
-        if not para_groups:
-            para_groups.append(("mechanism_overview", list(core_clean_details)))
+        for sec_idx, prior_sec in enumerate(prior_sections):
+            start = sec_idx * len(sorted_details) // num_prior_secs
+            end = (
+                (sec_idx + 1) * len(sorted_details) // num_prior_secs
+                if sec_idx < num_prior_secs - 1
+                else len(sorted_details)
+            )
+            sec_details = sorted_details[start:end]
+            section_id = str(prior_sec.section_id)
+            heading = str(getattr(prior_sec, "heading", "") or f"{ctx.mechanism_name}")
+            prior_paras = getattr(prior_sec, "paragraphs", ()) or ()
 
-        # Each formula package is assigned to the first paragraph whose
-        # semantic detail group owns one of its source details.  This is the
-        # single source of placement truth; a package is never copied into
-        # both a transformation and an objective paragraph.
-        package_target_role: dict[str, str] = {}
-        for pkg in pkg_by_mech.get(ctx.mechanism_id, ()):
-            package_id = str(getattr(pkg, "package_id", "") or "").strip()
-            source_detail_ids = {
-                str(value).strip()
-                for value in (getattr(pkg, "source_detail_ids", ()) or ())
-                if str(value).strip()
-            }
-            for role_name, group_details in para_groups:
-                if source_detail_ids.intersection(
-                    str(getattr(detail, "detail_id", "") or "")
-                    for detail in group_details
-                ):
-                    package_target_role[package_id] = role_name
-                    break
-            if package_id not in package_target_role and para_groups:
-                package_target_role[package_id] = next(
-                    (
-                        role_name
-                        for role_name, _details in para_groups
-                        if role_name == "formal_objective"
-                    ),
-                    para_groups[0][0],
+            chunk_size = 8
+            chunks = [
+                sec_details[i : i + chunk_size]
+                for i in range(0, len(sec_details), chunk_size)
+            ]
+            if not chunks:
+                chunks = [[]]
+
+            paragraphs = []
+            para_ids: list[str] = []
+            all_unit_req_details: list[str] = []
+            all_unit_opt_details: list[str] = []
+
+            for para_idx, chunk in enumerate(chunks):
+                if para_idx < len(prior_paras):
+                    p_id = str(prior_paras[para_idx].paragraph_id)
+                else:
+                    p_id = f"{section_id}_p{para_idx + 1}"
+                para_ids.append(p_id)
+
+                req_dids = tuple(
+                    d.detail_id for d in chunk
+                    if d.importance == "core" and d.publication_policy == "clean_candidate"
                 )
+                opt_dids = tuple(d.detail_id for d in chunk if d.detail_id not in req_dids)
+                if sec_idx == 0 and para_idx == 0 and review_details:
+                    opt_dids = tuple(dict.fromkeys((*opt_dids, *(d.detail_id for d in review_details))))
+                all_unit_req_details.extend(req_dids)
+                all_unit_opt_details.extend(opt_dids)
 
-        para_idx = 1
-        para_ids: list[str] = []
-        all_unit_req_details: list[str] = []
-        all_unit_opt_details: list[str] = []
-
-        for role_name, group_details in para_groups:
-            if para_idx - 1 < len(prior_paras):
-                p_id = str(prior_paras[para_idx - 1].paragraph_id)
-            else:
-                p_id = f"{section_id}_p{para_idx}"
-            para_ids.append(p_id)
-
-            req_dids = tuple(
-                d.detail_id for d in group_details
-                if d.importance == "core" and d.publication_policy == "clean_candidate"
-            )
-            opt_dids = tuple(d.detail_id for d in group_details if d.detail_id not in req_dids)
-            all_unit_req_details.extend(req_dids)
-            all_unit_opt_details.extend(opt_dids)
-
-            p_pkg_ids: list[str] = []
-            p_ob_ids: list[str] = []
-            if ctx.mechanism_id in pkg_by_mech:
-                for pkg in pkg_by_mech[ctx.mechanism_id]:
-                    package_id = str(getattr(pkg, "package_id", "") or "").strip()
-                    if not package_id or package_target_role.get(package_id) != role_name:
-                        continue
-                    p_pkg_ids.append(package_id)
-                    p_ob_ids.extend(
-                        str(value).strip()
-                        for value in (getattr(pkg, "satisfied_obligation_ids", ()) or ())
-                        if str(value).strip()
+                p_pkg_ids: list[str] = []
+                p_ob_ids: list[str] = []
+                chunk_dids = {d.detail_id for d in chunk}
+                remaining_pkgs: list[Any] = []
+                for pkg in unplaced_packages:
+                    pkg_id = str(getattr(pkg, "package_id", "") or "").strip()
+                    src_dids = {
+                        str(v).strip()
+                        for v in (getattr(pkg, "source_detail_ids", ()) or ())
+                        if str(v).strip()
+                    }
+                    is_match = bool(src_dids.intersection(chunk_dids))
+                    is_fallback = (
+                        not is_match
+                        and sec_idx == min(num_prior_secs - 1, max(1, num_prior_secs // 2))
+                        and para_idx == 0
                     )
-                    placements.append(FormulaPlacementV1(
-                        package_id=package_id,
-                        section_id=section_id,
-                        paragraph_id=p_id,
-                    ))
-
-            depth = compute_narrative_complexity(group_details, p_ob_ids)
-
-            p_plan = NarrativeParagraphPlanV3(
-                paragraph_id=p_id,
-                section_id=section_id,
-                role=role_name,
-                mechanism_id=ctx.mechanism_id,
-                required_detail_ids=req_dids,
-                optional_detail_ids=opt_dids,
-                formula_obligation_ids=tuple(dict.fromkeys(p_ob_ids)),
-                formula_package_ids=tuple(dict.fromkeys(p_pkg_ids)),
-                shared_detail_refs=getattr(ctx, "shared_detail_refs", ()),
-                witness_contract={
-                    "schema_version": "1.0",
-                    "paragraph_id": p_id,
-                    "rhetorical_goal": role_name,
-                    "targets": [
-                        target
-                        for detail in group_details
-                        for target in _v3_detail_witness_contract(
-                            detail,
-                            required=detail.detail_id in req_dids,
+                    if is_match or is_fallback:
+                        p_pkg_ids.append(pkg_id)
+                        p_ob_ids.extend(
+                            str(v).strip()
+                            for v in (getattr(pkg, "satisfied_obligation_ids", ()) or ())
+                            if str(v).strip()
                         )
-                    ],
-                },
-                suggested_depth=depth,
-                reader_goal=f"Explain {role_name} for {ctx.mechanism_name}.",
+                        placements.append(FormulaPlacementV1(
+                            package_id=pkg_id,
+                            section_id=section_id,
+                            paragraph_id=p_id,
+                        ))
+                    else:
+                        remaining_pkgs.append(pkg)
+                unplaced_packages = remaining_pkgs
+
+                role = chunk[0].role if chunk else "overview"
+                depth = compute_narrative_complexity(chunk, p_ob_ids)
+                p_plan = NarrativeParagraphPlanV3(
+                    paragraph_id=p_id,
+                    section_id=section_id,
+                    role=role,
+                    mechanism_id=ctx.mechanism_id,
+                    required_detail_ids=req_dids,
+                    optional_detail_ids=opt_dids,
+                    formula_obligation_ids=tuple(dict.fromkeys(p_ob_ids)),
+                    formula_package_ids=tuple(dict.fromkeys(p_pkg_ids)),
+                    shared_detail_refs=getattr(ctx, "shared_detail_refs", ()),
+                    witness_contract={
+                        "schema_version": "1.0",
+                        "paragraph_id": p_id,
+                        "rhetorical_goal": role,
+                        "targets": [
+                            target
+                            for detail in chunk
+                            for target in _v3_detail_witness_contract(
+                                detail,
+                                required=detail.detail_id in req_dids,
+                            )
+                        ],
+                    },
+                    suggested_depth=depth,
+                    reader_goal=f"Explain {role} for {ctx.mechanism_name}.",
+                )
+                paragraphs.append(p_plan)
+
+            sec_plan = NarrativeSectionPlanV3(
+                section_id=section_id,
+                heading=heading,
+                mechanism_ids=(ctx.mechanism_id,),
+                paragraphs=tuple(paragraphs),
             )
-            paragraphs.append(p_plan)
-            para_idx += 1
+            sections.append(sec_plan)
 
-        sec_plan = NarrativeSectionPlanV3(
-            section_id=section_id,
-            heading=heading,
-            mechanism_ids=(ctx.mechanism_id,),
-            paragraphs=tuple(paragraphs),
-        )
-        sections.append(sec_plan)
+            unit_id = f"unit_{sec_idx + 1}"
+            narrative_units.append(NarrativeUnitV1(
+                unit_id=unit_id,
+                section_id=section_id,
+                mechanism_context_ids=(ctx.mechanism_id,),
+                rhetorical_role=ctx.scientific_role or "mechanism_exposition",
+                reader_question=ctx.reader_question or f"How does {ctx.mechanism_name} operate?",
+                paragraph_ids=tuple(para_ids),
+                required_detail_ids=tuple(dict.fromkeys(all_unit_req_details)),
+                optional_detail_ids=tuple(dict.fromkeys(all_unit_opt_details)),
+                formula_obligation_ids=tuple(dict.fromkeys(
+                    str(obligation_id).strip()
+                    for p in paragraphs
+                    for obligation_id in p.formula_obligation_ids
+                    if str(obligation_id).strip()
+                )),
+                suggested_depth=compute_narrative_complexity(sec_details),
+            ))
+    else:
+        for ctx in context_items:
+            if ctx.importance == "side_branch":
+                continue
 
-        unit_id = f"unit_{sec_idx}"
-        unit_depth = compute_narrative_complexity(core_clean_details)
-        narrative_units.append(NarrativeUnitV1(
-            unit_id=unit_id,
-            section_id=section_id,
-            mechanism_context_ids=(ctx.mechanism_id,),
-            rhetorical_role=ctx.scientific_role or "mechanism_exposition",
-            reader_question=ctx.reader_question or f"How does {ctx.mechanism_name} operate?",
-            paragraph_ids=tuple(para_ids),
-            required_detail_ids=tuple(dict.fromkeys(all_unit_req_details)),
-            optional_detail_ids=tuple(dict.fromkeys(all_unit_opt_details)),
-            formula_obligation_ids=tuple(dict.fromkeys(
-                str(obligation_id).strip()
-                for pkg in pkg_by_mech.get(ctx.mechanism_id, ())
-                for obligation_id in (getattr(pkg, "satisfied_obligation_ids", ()) or ())
-                if str(obligation_id).strip()
-            )),
-            suggested_depth=unit_depth,
-        ))
-        sec_idx += 1
+            prior_sections = getattr(prior_plan, "sections", ()) or ()
+            if prior_plan is not None and sec_idx - 1 < len(prior_sections):
+                prior_sec = prior_sections[sec_idx - 1]
+                section_id = str(prior_sec.section_id)
+                heading = str(getattr(prior_sec, "heading", "") or f"{ctx.mechanism_name}")
+                prior_paras = getattr(prior_sec, "paragraphs", ()) or ()
+            else:
+                section_id = f"sec_method_{sec_idx}"
+                heading = f"{ctx.mechanism_name}"
+                prior_paras = ()
+            paragraphs: list[NarrativeParagraphPlanV3] = []
+
+            core_clean_details = [
+                d for d in ctx.details
+                if getattr(d, "active_path_status", "unknown") in {
+                    "active_default",
+                    "active_selected",
+                    "conditional",
+                }
+            ]
+            review_details = [
+                d for d in ctx.details
+                if d not in core_clean_details
+                and getattr(d, "publication_policy", "") in {"annotated_only", "review_only"}
+            ]
+
+            overview_details = [d for d in core_clean_details if d.role in ("input", "representation", "configuration")]
+            transform_details = [d for d in core_clean_details if d.role in ("transformation", "branch", "condition")]
+            formal_details = [d for d in core_clean_details if d.role in ("training_objective", "inference", "formalization")]
+            output_details = [d for d in core_clean_details if d.role in ("output", "interface", "rationale", "limitation")]
+
+            para_groups: list[tuple[str, list[Any]]] = []
+            if overview_details:
+                para_groups.append(("overview_and_inputs", overview_details))
+            if transform_details:
+                para_groups.append(("core_transformations", transform_details))
+            elif not overview_details and core_clean_details:
+                para_groups.append(("core_transformations", core_clean_details))
+            if formal_details:
+                para_groups.append(("formal_objective", formal_details))
+            if output_details:
+                para_groups.append(("interface_and_outputs", output_details))
+            if review_details:
+                # Keep unresolved evidence visible to the Writer as optional
+                # review material.  It remains outside the clean-candidate lane.
+                para_groups.append(("evidence_status", review_details))
+
+            if not para_groups:
+                para_groups.append(("mechanism_overview", list(core_clean_details)))
+
+            # Expand groups so no single paragraph receives > 8 details
+            expanded_para_groups: list[tuple[str, list[Any]]] = []
+            for role_name, group_details in para_groups:
+                chunk_size = 8
+                sub_chunks = [group_details[i : i + chunk_size] for i in range(0, len(group_details), chunk_size)]
+                if not sub_chunks:
+                    sub_chunks = [[]]
+                for sub in sub_chunks:
+                    expanded_para_groups.append((role_name, sub))
+
+            # Each formula package is assigned to the first paragraph whose
+            # semantic detail group owns one of its source details.
+            package_target_idx: dict[str, int] = {}
+            for pkg in pkg_by_mech.get(ctx.mechanism_id, ()):
+                package_id = str(getattr(pkg, "package_id", "") or "").strip()
+                source_detail_ids = {
+                    str(value).strip()
+                    for value in (getattr(pkg, "source_detail_ids", ()) or ())
+                    if str(value).strip()
+                }
+                for g_idx, (role_name, group_details) in enumerate(expanded_para_groups):
+                    if source_detail_ids.intersection(
+                        str(getattr(detail, "detail_id", "") or "")
+                        for detail in group_details
+                    ):
+                        package_target_idx[package_id] = g_idx
+                        break
+                if package_id not in package_target_idx and expanded_para_groups:
+                    package_target_idx[package_id] = next(
+                        (
+                            g_idx
+                            for g_idx, (role_name, _details) in enumerate(expanded_para_groups)
+                            if role_name == "formal_objective"
+                        ),
+                        0,
+                    )
+
+            para_idx = 1
+            para_ids: list[str] = []
+            all_unit_req_details: list[str] = []
+            all_unit_opt_details: list[str] = []
+
+            for g_idx, (role_name, group_details) in enumerate(expanded_para_groups):
+                if para_idx - 1 < len(prior_paras):
+                    p_id = str(prior_paras[para_idx - 1].paragraph_id)
+                else:
+                    p_id = f"{section_id}_p{para_idx}"
+                para_ids.append(p_id)
+
+                req_dids = tuple(
+                    d.detail_id for d in group_details
+                    if d.importance == "core" and d.publication_policy == "clean_candidate"
+                )
+                opt_dids = tuple(d.detail_id for d in group_details if d.detail_id not in req_dids)
+                all_unit_req_details.extend(req_dids)
+                all_unit_opt_details.extend(opt_dids)
+
+                p_pkg_ids: list[str] = []
+                p_ob_ids: list[str] = []
+                if ctx.mechanism_id in pkg_by_mech:
+                    for pkg in pkg_by_mech[ctx.mechanism_id]:
+                        package_id = str(getattr(pkg, "package_id", "") or "").strip()
+                        if not package_id or package_target_idx.get(package_id) != g_idx:
+                            continue
+                        p_pkg_ids.append(package_id)
+                        p_ob_ids.extend(
+                            str(value).strip()
+                            for value in (getattr(pkg, "satisfied_obligation_ids", ()) or ())
+                            if str(value).strip()
+                        )
+                        placements.append(FormulaPlacementV1(
+                            package_id=package_id,
+                            section_id=section_id,
+                            paragraph_id=p_id,
+                        ))
+
+                depth = compute_narrative_complexity(group_details, p_ob_ids)
+
+                p_plan = NarrativeParagraphPlanV3(
+                    paragraph_id=p_id,
+                    section_id=section_id,
+                    role=role_name,
+                    mechanism_id=ctx.mechanism_id,
+                    required_detail_ids=req_dids,
+                    optional_detail_ids=opt_dids,
+                    formula_obligation_ids=tuple(dict.fromkeys(p_ob_ids)),
+                    formula_package_ids=tuple(dict.fromkeys(p_pkg_ids)),
+                    shared_detail_refs=getattr(ctx, "shared_detail_refs", ()),
+                    witness_contract={
+                        "schema_version": "1.0",
+                        "paragraph_id": p_id,
+                        "rhetorical_goal": role_name,
+                        "targets": [
+                            target
+                            for detail in group_details
+                            for target in _v3_detail_witness_contract(
+                                detail,
+                                required=detail.detail_id in req_dids,
+                            )
+                        ],
+                    },
+                    suggested_depth=depth,
+                    reader_goal=f"Explain {role_name} for {ctx.mechanism_name}.",
+                )
+                paragraphs.append(p_plan)
+                para_idx += 1
+
+            sec_plan = NarrativeSectionPlanV3(
+                section_id=section_id,
+                heading=heading,
+                mechanism_ids=(ctx.mechanism_id,),
+                paragraphs=tuple(paragraphs),
+            )
+            sections.append(sec_plan)
+
+            unit_id = f"unit_{sec_idx}"
+            unit_depth = compute_narrative_complexity(core_clean_details)
+            narrative_units.append(NarrativeUnitV1(
+                unit_id=unit_id,
+                section_id=section_id,
+                mechanism_context_ids=(ctx.mechanism_id,),
+                rhetorical_role=ctx.scientific_role or "mechanism_exposition",
+                reader_question=ctx.reader_question or f"How does {ctx.mechanism_name} operate?",
+                paragraph_ids=tuple(para_ids),
+                required_detail_ids=tuple(dict.fromkeys(all_unit_req_details)),
+                optional_detail_ids=tuple(dict.fromkeys(all_unit_opt_details)),
+                formula_obligation_ids=tuple(dict.fromkeys(
+                    str(obligation_id).strip()
+                    for pkg in pkg_by_mech.get(ctx.mechanism_id, ())
+                    for obligation_id in (getattr(pkg, "satisfied_obligation_ids", ()) or ())
+                    if str(obligation_id).strip()
+                )),
+                suggested_depth=unit_depth,
+            ))
+            sec_idx += 1
 
     plan = NarrativePlanV3(
         plan_id=f"plan_v3_{sha256_digest(canonical_json_bytes([s.section_id for s in sections]))[:16]}",

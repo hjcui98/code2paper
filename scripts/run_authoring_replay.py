@@ -101,6 +101,9 @@ FROZEN_ARTIFACTS = RESEARCH_COPY_ARTIFACTS
 OPTIONAL_RESEARCH_ARTIFACTS = (
     "behavior_graph_v1",
     "research_stage_checkpoint_v1",
+    "repo_snapshot_v2",
+    "repository_source_manifest_v1",
+    "symbol_index_v2",
 )
 
 OPTIONAL_FROZEN_ARTIFACTS = OPTIONAL_RESEARCH_ARTIFACTS
@@ -344,12 +347,14 @@ def _execution_manifest_digest(
     profile_path: Path,
     frozen: Path,
     copied_artifact_names: tuple[str, ...],
+    authoring_context_mode: str = "legacy",
 ) -> str:
     """Bind replay script, profile, frozen inputs, and code manifest."""
 
     parts = [
         f"replay_script:{_digest_file(Path(__file__).resolve())}",
         f"code_state:{_code_state_digest()}",
+        f"authoring_context_mode:{str(authoring_context_mode or 'legacy')}",
     ]
     if profile_path.is_file():
         parts.append(f"profile:{_digest_file(profile_path)}")
@@ -890,6 +895,7 @@ def _write_execution_record(
         "fresh_root": str(fresh),
         "resume_section_ids": list(arguments.resume),
         "code_state_digest": _code_state_digest(),
+        "authoring_context": telemetry.get("authoring_context", {}),
         "runtime": {
             "start": runtime_start or {},
             "end": runtime_end or {},
@@ -1597,6 +1603,20 @@ def _replay(
     from code2paper.llm.providers import load_llm_config_from_env
 
     llm_config = load_llm_config_from_env()
+    requested_mode = str(getattr(arguments, "authoring_context_mode", "") or "").strip().casefold()
+    profile_mode = str(os.environ.get("CODE2PAPER_AUTHORING_CONTEXT_MODE", "") or "").strip().casefold()
+    effective_mode = requested_mode or profile_mode or "legacy"
+    mode_source = (
+        "argument" if requested_mode
+        else "profile" if profile_mode and profile_path.is_file()
+        else "environment" if profile_mode
+        else "default"
+    )
+    telemetry["authoring_context"] = {
+        "requested_mode": requested_mode or effective_mode,
+        "effective_mode": effective_mode,
+        "mode_source": mode_source,
+    }
 
     # Copy frozen research artifacts into the fresh root (never move/delete).
     artifacts = fresh / "artifacts"
@@ -1658,6 +1678,7 @@ def _replay(
         profile_path=profile_path,
         frozen=frozen,
         copied_artifact_names=tuple(copied),
+        authoring_context_mode=effective_mode,
     )
     if not profile_path.is_file():
         telemetry["terminal_stage"] = "input"
@@ -1862,6 +1883,8 @@ def _replay(
         rewrite_caller=None,
         formalization_caller=None,
         architect_proposal_caller=None,
+        authoring_context_mode=requested_mode or None,
+        authoring_context_mode_source=mode_source,
     )
     print(f"[replay] writer status: {result.status} blocked={result.blocked_reason}")
     print(f"[replay] paths: {json.dumps({k: v for k, v in sorted(paths.items()) if v}, indent=1)[:1200]}")
@@ -1873,6 +1896,13 @@ def _replay(
     telemetry["writer_transaction_status"] = effective_writer_transaction_status(result)
     telemetry["writer_status"] = telemetry["writer_transaction_status"]
     telemetry["writer_blocked_reason"] = result.blocked_reason
+    telemetry["authoring_context"].update({
+        "requested_mode": getattr(result, "requested_authoring_context_mode", effective_mode),
+        "effective_mode": getattr(result, "effective_authoring_context_mode", effective_mode),
+        "mode_source": getattr(result, "authoring_context_mode_source", mode_source),
+        "run_contract_digest": getattr(result, "authoring_run_contract_digest", ""),
+        "run_contract_path": paths.get("authoring_run_contract_v1", ""),
+    })
     if telemetry["writer_status"] != "success":
         telemetry["terminal_reason"] = str(
             result.blocked_reason or f"writer_status:{result.status}"
@@ -2060,6 +2090,9 @@ def _replay(
                     llm_caller=None,
                     research_stage_checkpoint=checkpoint_path,
                     research_continuation_seed=continuation_seed,
+                    authoring_context_mode=getattr(
+                        result, "effective_authoring_context_mode", effective_mode
+                    ),
                 )
             )
             print(
@@ -2224,10 +2257,7 @@ def _replay(
         return 2
     if not bool(telemetry.get("structural_exit", {}).get("eligible")):
         return 2
-    return 0
-
-
-def main(argv: list[str] | None = None) -> int:
+def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("frozen_root", help="Frozen run root with research artifacts")
     parser.add_argument("fresh_root", help="Fresh output root for the replay")
@@ -2249,6 +2279,12 @@ def main(argv: list[str] | None = None) -> int:
     )
     parser.add_argument("--run-id", default="replay")
     parser.add_argument(
+        "--authoring-context-mode",
+        choices=("legacy", "shadow_unified", "unified"),
+        default=None,
+        help="Authoring context lane; explicit CLI input wins over the profile/environment",
+    )
+    parser.add_argument(
         "--rebuild-authoring",
         action="store_true",
         help="Rebuild derived authoring (concept cards, plan, projection) from research authority",
@@ -2268,6 +2304,11 @@ def main(argv: list[str] | None = None) -> int:
         action="store_true",
         help="Write authoring_rebuild_manifest_v1.json with copy/rebuild decisions",
     )
+    return parser
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = _build_parser()
     arguments = parser.parse_args(argv)
 
     frozen = Path(arguments.frozen_root).expanduser().resolve()
