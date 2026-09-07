@@ -1210,6 +1210,14 @@ def _llm_visible_section_payload(section: WriterSectionInput) -> dict[str, Any]:
         ):
             if key in section.prompt_payload:
                 result[key] = section.prompt_payload[key]
+        # Partition identity is harness metadata, not technical evidence.  It
+        # must remain on the actual request so the structured wrapper can
+        # merge page responses deterministically without reintroducing the
+        # other pages into this call.
+        if "writer_context_partition" in section.prompt_payload:
+            result["writer_context_partition"] = copy.deepcopy(
+                section.prompt_payload["writer_context_partition"]
+            )
         return result
 
     v2_packets = section.prompt_payload.get("authoring_packets_v2")
@@ -1599,7 +1607,90 @@ def _publication_section_partitions(
     response_json_schema: dict[str, Any] | None,
     config: LLMConfig,
 ) -> list[WriterSectionInput]:
-    """Split one section only when compact input still exceeds the context window."""
+    """Split one section into immutable page calls before context clamping.
+
+    Unified mechanism inputs carry one metadata row per manifest page.  Those
+    pages are separate consumer units even when their combined representation
+    would fit the model context: a Writer request must never reassemble the
+    full page pack.  The later context-size partitions remain available for
+    non-paged/facet-heavy sections.
+    """
+
+    payload = section.prompt_payload or {}
+    shared_context_key = (
+        "shared_contexts"
+        if payload.get("shared_contexts")
+        else "shared_mechanism_contexts"
+    )
+    shared_contexts = payload.get(shared_context_key) or ()
+    shared_context_metadata = payload.get("shared_context_metadata") or ()
+    page_rows: list[tuple[int, Any, Mapping[str, Any]]] = []
+    if len(shared_contexts) > 1:
+        metadata_is_page_aligned = (
+            len(shared_context_metadata) == len(shared_contexts)
+        )
+        if metadata_is_page_aligned:
+            for page, metadata in zip(shared_contexts, shared_context_metadata):
+                if not isinstance(metadata, Mapping):
+                    metadata_is_page_aligned = False
+                    break
+                try:
+                    page_index = int(metadata.get("page_index", -1))
+                except (TypeError, ValueError):
+                    metadata_is_page_aligned = False
+                    break
+                if page_index < 0:
+                    metadata_is_page_aligned = False
+                    break
+                page_rows.append((page_index, page, metadata))
+        if not metadata_is_page_aligned:
+            # Still split the request.  Missing/invalid page metadata must
+            # fail at the delivery gate; it must never be a reason to put all
+            # technical pages back into one actual LLM request.
+            page_rows = [
+                (
+                    index,
+                    page,
+                    shared_context_metadata[index]
+                    if index < len(shared_context_metadata)
+                    and isinstance(shared_context_metadata[index], Mapping)
+                    else {},
+                )
+                for index, page in enumerate(shared_contexts)
+            ]
+    if len(page_rows) == len(shared_contexts) and len(page_rows) > 1:
+        partitions: list[WriterSectionInput] = []
+        for partition_index, (page_index, page, metadata) in enumerate(page_rows):
+            partition_payload = copy.deepcopy(payload)
+            # Keep both historical aliases page-scoped if a caller included
+            # both.  The alias must not become a hidden second full payload
+            # in the actual request handed to the LLM caller.
+            for key in ("shared_contexts", "shared_mechanism_contexts"):
+                if key in partition_payload:
+                    partition_payload[key] = [page]
+            partition_payload["shared_context_metadata"] = [copy.deepcopy(metadata)]
+            prior_partition = partition_payload.get("writer_context_partition")
+            partition_meta = (
+                copy.deepcopy(prior_partition)
+                if isinstance(prior_partition, Mapping)
+                else {}
+            )
+            partition_meta.update({
+                "partition_kind": "shared_payload_page",
+                "partition_index": partition_index,
+                "partition_count": len(page_rows),
+                "page_index": page_index,
+            })
+            partition_payload["writer_context_partition"] = partition_meta
+            partitions.append(WriterSectionInput(
+                section_id=section.section_id,
+                heading=section.heading,
+                prompt_payload=partition_payload,
+                system_prompt=section.system_prompt,
+                publication_mode=section.publication_mode,
+                argument_graph=section.argument_graph,
+            ))
+        return partitions
 
     base_payload = {
         "section_id": section.section_id,
@@ -1629,7 +1720,6 @@ def _publication_section_partitions(
         )
     ):
         return [section]
-    payload = section.prompt_payload or {}
     writer_view = payload.get("writer_view") if isinstance(payload.get("writer_view"), dict) else {}
     packet = writer_view.get("mechanism_authoring_packet")
     if not isinstance(packet, dict):

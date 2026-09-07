@@ -36,6 +36,7 @@ from code2paper.llm.section_writer import (
     dynamic_writer_cumulative_budget,
     _llm_visible_section_payload,
     _normalize_publication_paragraph_transaction,
+    _publication_section_partitions,
     _recover_exact_formula_block_representation,
     _project_operation_to_reader_surface,
     write_publication_method_by_sections,
@@ -74,6 +75,94 @@ def _section(section_id: str, heading: str = "Section") -> WriterSectionInput:
         heading=heading,
         prompt_payload={"section_id": section_id, "evidence": []},
     )
+
+
+def test_publication_section_pages_are_always_separate_writer_requests() -> None:
+    pages = [
+        '{"mechanism_id":"mech","technical_payload":{"details":[{"detail_id":"d:0"}]}}',
+        '{"mechanism_id":"mech","technical_payload":{"details":[{"detail_id":"d:1"}]}}',
+    ]
+    metadata = [
+        {"mechanism_id": "mech", "page_index": 0},
+        {"mechanism_id": "mech", "page_index": 1},
+    ]
+    section = WriterSectionInput(
+        section_id="MA-S1",
+        heading="Mechanism",
+        prompt_payload={
+            "section_id": "MA-S1",
+            "shared_contexts": pages,
+            "shared_context_metadata": metadata,
+        },
+        publication_mode=True,
+    )
+
+    partitions = _publication_section_partitions(
+        section,
+        system_prompt="Write the section.",
+        response_json_schema=None,
+        config=_base_config(),
+    )
+
+    assert len(partitions) == 2
+    assert [part.prompt_payload["shared_contexts"] for part in partitions] == [
+        [pages[0]],
+        [pages[1]],
+    ]
+    assert all(
+        len(part.prompt_payload["shared_contexts"]) == 1
+        and len(part.prompt_payload["shared_context_metadata"]) == 1
+        and part.prompt_payload["writer_context_partition"]["partition_kind"]
+        == "shared_payload_page"
+        for part in partitions
+    )
+
+
+def test_publication_writer_executes_one_actual_call_per_shared_page() -> None:
+    pages = [
+        '{"mechanism_id":"mech","technical_payload":{"details":[{"detail_id":"d:0"}]}}',
+        '{"mechanism_id":"mech","technical_payload":{"details":[{"detail_id":"d:1"}]}}',
+    ]
+    requests: list[LLMRequest] = []
+
+    def caller(_config, request: LLMRequest) -> LLMResponse:
+        requests.append(request)
+        payload = request.input_payload
+        assert len(payload["shared_contexts"]) == 1
+        assert len(payload["shared_context_metadata"]) == 1
+        return LLMResponse(
+            text=json.dumps({
+                "section_id": "MA-S1",
+                "heading_text": "Mechanism",
+                "section_markdown": "A page-scoped explanation.",
+            }),
+            response_hash="sha256:page-writer",
+            finish_reason="stop",
+            token_usage={"completion_tokens": 1},
+        )
+
+    section = WriterSectionInput(
+        section_id="MA-S1",
+        heading="Mechanism",
+        prompt_payload={
+            "section_id": "MA-S1",
+            "shared_contexts": pages,
+            "shared_context_metadata": [
+                {"mechanism_id": "mech", "page_index": 0},
+                {"mechanism_id": "mech", "page_index": 1},
+            ],
+        },
+        publication_mode=True,
+    )
+    result = write_publication_method_by_sections(
+        _base_config(),
+        [section],
+        llm_caller=caller,
+    )
+
+    assert len(requests) == 2
+    assert [request.input_payload["shared_context_metadata"][0]["page_index"] for request in requests] == [0, 1]
+    assert result.aggregate.context_partitioned_section_ids == ["MA-S1"]
 
 
 def test_v2_surface_bounds_author_specification_before_writer_sees_it() -> None:

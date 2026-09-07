@@ -1610,6 +1610,7 @@ def _run_mechanism_formalizer_legacy(
         "obligations_count": len(obligations),
         "deterministic_packages": 0,
         "llm_packages": 0,
+        "llm_page_calls": 0,
         "rejected_packages": 0,
         "failures": [],
     }
@@ -1650,37 +1651,52 @@ def _run_mechanism_formalizer_legacy(
                     f"formula_source_binding_missing:{ob.obligation_id}"
                 )
                 continue
-            prompt = (
-                f"You are the Method Formalizer. Formalize the following mechanism mathematically.\n"
-                f"Mechanism ID: {getattr(context, 'mechanism_id', '')}\n"
-                f"Mathematical Goal: {ob.mathematical_goal}\n"
-                f"Required operators: {ob.required_operator_signatures}\n"
-                f"Required conditions: {ob.required_conditions}\n"
-                f"Author notation hints: {author_notation_hints or ob.notation_hints}\n"
-                f"Mechanism Context Pages (each value is an exact UTF-8 page; do not rewrite):\n"
-                f"{json.dumps(list(shared_payload_pages) or [shared_payload], ensure_ascii=False)}\n"
-                f"Return a valid JSON object with keys: latex, prose_explanation, symbol_definitions (list of [symbol, meaning]), material_conditions."
-            )
-            try:
-                from code2paper.llm.client import LLMRequest
-                from code2paper.llm.response_schemas import _loads_json_or_extract_object
-                response = caller(
-                    llm_config,
-                    LLMRequest(
-                        prompt_template_id="phase4_mechanism_formalizer_v1",
-                        prompt=prompt,
-                        input_payload={
-                            "prompt": prompt,
-                            "mechanism_id": getattr(context, "mechanism_id", ""),
-                            "obligation_id": ob.obligation_id,
-                            "shared_payload": shared_payload,
-                            "shared_payload_pages": list(shared_payload_pages) or [shared_payload],
-                        },
-                    ),
+            page_values = tuple(shared_payload_pages) or (shared_payload,)
+            selected_package: MechanismFormulaPackageV2 | None = None
+            for page_index, page_value in enumerate(page_values):
+                prompt = (
+                    f"You are the Method Formalizer. Formalize the following mechanism mathematically.\n"
+                    f"Mechanism ID: {getattr(context, 'mechanism_id', '')}\n"
+                    f"Mathematical Goal: {ob.mathematical_goal}\n"
+                    f"Required operators: {ob.required_operator_signatures}\n"
+                    f"Required conditions: {ob.required_conditions}\n"
+                    f"Author notation hints: {author_notation_hints or ob.notation_hints}\n"
+                    f"Mechanism Context Page {page_index + 1}/{len(page_values)} "
+                    f"(exact UTF-8 page; do not rewrite):\n"
+                    f"{page_value}\n"
+                    f"Return a valid JSON object with keys: latex, prose_explanation, symbol_definitions (list of [symbol, meaning]), material_conditions."
                 )
-                call_trace["llm_call_made"] = True
-                parsed = _loads_json_or_extract_object(response.content if hasattr(response, "content") else str(response))
-                if isinstance(parsed, dict) and "latex" in parsed:
+                try:
+                    from code2paper.llm.client import LLMRequest
+                    from code2paper.llm.response_schemas import _loads_json_or_extract_object
+                    response = caller(
+                        llm_config,
+                        LLMRequest(
+                            prompt_template_id="phase4_mechanism_formalizer_v1",
+                            prompt=prompt,
+                            input_payload={
+                                "prompt": prompt,
+                                "mechanism_id": getattr(context, "mechanism_id", ""),
+                                "obligation_id": ob.obligation_id,
+                                # A page-scoped request must not retain a
+                                # second full-payload field alongside the
+                                # page envelope.
+                                "shared_payload": page_value,
+                                "shared_payload_pages": [page_value],
+                                "shared_payload_page_index": page_index,
+                                "shared_payload_page_count": len(page_values),
+                            },
+                        ),
+                    )
+                    call_trace["llm_call_made"] = True
+                    call_trace["llm_page_calls"] += 1
+                    parsed = _loads_json_or_extract_object(response.content if hasattr(response, "content") else str(response))
+                    if not isinstance(parsed, dict) or "latex" not in parsed:
+                        call_trace["rejected_packages"] += 1
+                        call_trace["failures"].append(
+                            f"llm_invalid_response:{ob.obligation_id}:page:{page_index}"
+                        )
+                        continue
                     pkg = MechanismFormulaPackageV2(
                         package_id=f"pkg:formula:llm:{getattr(context, 'mechanism_id', '')}:{ob.obligation_id}",
                         mechanism_id=getattr(context, "mechanism_id", ""),
@@ -1706,13 +1722,23 @@ def _run_mechanism_formalizer_legacy(
                         shared_payload_digest=shared_payload_digest,
                     )
                     if not failures:
-                        accepted_packages.append(pkg)
-                        call_trace["llm_packages"] += 1
-                    else:
-                        call_trace["rejected_packages"] += 1
-                        call_trace["failures"].extend(failures)
-            except Exception as exc:
-                call_trace["failures"].append(f"llm_error:{str(exc)}")
+                        if selected_package is None:
+                            selected_package = pkg
+                            call_trace["llm_packages"] += 1
+                        # Continue through every page even after a valid
+                        # response.  The caller-boundary receipt must prove
+                        # that no page was silently omitted.
+                        continue
+                    call_trace["rejected_packages"] += 1
+                    call_trace["failures"].extend(
+                        f"{failure}:page:{page_index}" for failure in failures
+                    )
+                except Exception as exc:
+                    call_trace["failures"].append(
+                        f"llm_error:page:{page_index}:{str(exc)}"
+                    )
+            if selected_package is not None:
+                accepted_packages.append(selected_package)
 
     return tuple(accepted_packages), call_trace
 
@@ -1746,6 +1772,7 @@ def run_mechanism_formalizer(
         "obligations_count": len(obligations),
         "deterministic_packages": 0,
         "llm_packages": 0,
+        "llm_page_calls": 0,
         "rejected_packages": 0,
         "failures": [],
         "formalizer_delivered": bool(shared_payload),
@@ -1793,87 +1820,106 @@ def run_mechanism_formalizer(
                 f"formula_source_binding_missing:{obligation.obligation_id}"
             )
             return None
-        prompt = (
-            "You are the Method Formalizer. Return JSON only.\n"
-            f"Mechanism ID: {mechanism_id}\n"
-            f"Obligation ID: {obligation.obligation_id}\n"
-            f"Mathematical goal: {obligation.mathematical_goal}\n"
-            f"Required operators: {obligation.required_operator_signatures}\n"
-            f"Required operand sets: {obligation.required_operand_sets}\n"
-            f"Required conditions: {obligation.required_conditions}\n"
-            f"Shared payload digest: {shared_payload_digest}\n"
-            f"Shared mechanism context pages (exact UTF-8 page strings):\n"
-            f"{json.dumps(list(shared_payload_pages) or [shared_payload], ensure_ascii=False)}\n"
-            "Keys: latex, prose_explanation, symbol_definitions, material_conditions, assumptions."
-        )
-        try:
-            from code2paper.llm.client import LLMRequest
-            from code2paper.llm.response_schemas import _loads_json_or_extract_object
-            response = caller(
-                llm_config,
-                LLMRequest(
-                    prompt_template_id="phase4_mechanism_formalizer_v1",
-                    prompt=prompt,
-                    input_payload={
-                        "prompt": prompt,
-                        "mechanism_id": mechanism_id,
-                        "obligation_id": obligation.obligation_id,
-                        "shared_payload": shared_payload,
-                        "shared_payload_pages": list(shared_payload_pages) or [shared_payload],
-                    },
-                ),
+        page_values = tuple(shared_payload_pages) or (shared_payload,)
+        selected_package: MechanismFormulaPackageV2 | None = None
+        for page_index, page_value in enumerate(page_values):
+            prompt = (
+                "You are the Method Formalizer. Return JSON only.\n"
+                f"Mechanism ID: {mechanism_id}\n"
+                f"Obligation ID: {obligation.obligation_id}\n"
+                f"Mathematical goal: {obligation.mathematical_goal}\n"
+                f"Required operators: {obligation.required_operator_signatures}\n"
+                f"Required operand sets: {obligation.required_operand_sets}\n"
+                f"Required conditions: {obligation.required_conditions}\n"
+                f"Shared payload digest: {shared_payload_digest}\n"
+                f"Shared mechanism context page {page_index + 1}/{len(page_values)} "
+                f"(exact UTF-8 page string; do not rewrite):\n"
+                f"{page_value}\n"
+                "Keys: latex, prose_explanation, symbol_definitions, material_conditions, assumptions."
             )
-            trace["llm_call_made"] = True
-            raw = response.content if hasattr(response, "content") else str(response)
-            parsed = _loads_json_or_extract_object(raw)
-            if not isinstance(parsed, dict) or not str(parsed.get("latex", "")).strip():
-                trace["rejected_packages"] += 1
-                trace["failures"].append(f"llm_invalid_response:{obligation.obligation_id}")
-                return None
-            package = MechanismFormulaPackageV2(
-                package_id=f"pkg:formula:llm:{mechanism_id}:{obligation.obligation_id}",
-                mechanism_id=mechanism_id,
-                source_detail_ids=bound_detail_ids,
-                satisfied_obligation_ids=(obligation.obligation_id,),
-                latex=str(parsed["latex"]),
-                prose_explanation=str(parsed.get("prose_explanation", "")),
-                symbol_definitions=tuple(
-                    tuple(item) for item in parsed.get("symbol_definitions", ())
-                    if isinstance(item, (list, tuple)) and len(item) == 2
-                ),
-                material_conditions=tuple(str(item) for item in parsed.get("material_conditions", ())),
-                assumptions=tuple(str(item) for item in parsed.get("assumptions", ())),
-                evidence_authority="repository_verified",
-                formula_lane="repository_derived",
-                review_status="accepted",
-                bound_operation_ids=bound_operation_ids,
-                bound_fact_ids=bound_fact_ids,
-                bound_equation_ids=bound_equation_ids,
-                source_context_digest=(
-                    getattr(context, "source_context_digest", "")
-                    or getattr(context, "content_digest", "")
-                ),
-                shared_payload_digest=shared_payload_digest,
-                view_digest=view_digest,
-                slice_digests=slice_digests,
-                consumer_request_digest=consumer_request_digest,
-            )
-            failures = validate_mechanism_formula_package(
-                package, context=context, obligation=obligation,
-                shared_payload_digest=shared_payload_digest,
-                view_digest=view_digest,
-                slice_digests=slice_digests,
-                equations=equations,
-            )
-            if failures:
-                trace["rejected_packages"] += 1
-                trace["failures"].extend(failures)
-                return None
-            trace["llm_packages"] += 1
-            return package
-        except Exception as exc:
-            trace["failures"].append(f"llm_error:{type(exc).__name__}:{str(exc)[:180]}")
-            return None
+            try:
+                from code2paper.llm.client import LLMRequest
+                from code2paper.llm.response_schemas import _loads_json_or_extract_object
+                response = caller(
+                    llm_config,
+                    LLMRequest(
+                        prompt_template_id="phase4_mechanism_formalizer_v1",
+                        prompt=prompt,
+                        input_payload={
+                            "prompt": prompt,
+                            "mechanism_id": mechanism_id,
+                            "obligation_id": obligation.obligation_id,
+                            # Keep only the current immutable page in the
+                            # actual request; the full payload is represented
+                            # by its digest and the per-page call sequence.
+                            "shared_payload": page_value,
+                            "shared_payload_pages": [page_value],
+                            "shared_payload_page_index": page_index,
+                            "shared_payload_page_count": len(page_values),
+                        },
+                    ),
+                )
+                trace["llm_call_made"] = True
+                trace["llm_page_calls"] += 1
+                raw = response.content if hasattr(response, "content") else str(response)
+                parsed = _loads_json_or_extract_object(raw)
+                if not isinstance(parsed, dict) or not str(parsed.get("latex", "")).strip():
+                    trace["rejected_packages"] += 1
+                    trace["failures"].append(
+                        f"llm_invalid_response:{obligation.obligation_id}:page:{page_index}"
+                    )
+                    continue
+                package = MechanismFormulaPackageV2(
+                    package_id=f"pkg:formula:llm:{mechanism_id}:{obligation.obligation_id}",
+                    mechanism_id=mechanism_id,
+                    source_detail_ids=bound_detail_ids,
+                    satisfied_obligation_ids=(obligation.obligation_id,),
+                    latex=str(parsed["latex"]),
+                    prose_explanation=str(parsed.get("prose_explanation", "")),
+                    symbol_definitions=tuple(
+                        tuple(item) for item in parsed.get("symbol_definitions", ())
+                        if isinstance(item, (list, tuple)) and len(item) == 2
+                    ),
+                    material_conditions=tuple(str(item) for item in parsed.get("material_conditions", ())),
+                    assumptions=tuple(str(item) for item in parsed.get("assumptions", ())),
+                    evidence_authority="repository_verified",
+                    formula_lane="repository_derived",
+                    review_status="accepted",
+                    bound_operation_ids=bound_operation_ids,
+                    bound_fact_ids=bound_fact_ids,
+                    bound_equation_ids=bound_equation_ids,
+                    source_context_digest=(
+                        getattr(context, "source_context_digest", "")
+                        or getattr(context, "content_digest", "")
+                    ),
+                    shared_payload_digest=shared_payload_digest,
+                    view_digest=view_digest,
+                    slice_digests=slice_digests,
+                    consumer_request_digest=consumer_request_digest,
+                )
+                failures = validate_mechanism_formula_package(
+                    package, context=context, obligation=obligation,
+                    shared_payload_digest=shared_payload_digest,
+                    view_digest=view_digest,
+                    slice_digests=slice_digests,
+                    equations=equations,
+                )
+                if failures:
+                    trace["rejected_packages"] += 1
+                    trace["failures"].extend(
+                        f"{failure}:page:{page_index}" for failure in failures
+                    )
+                    continue
+                if selected_package is None:
+                    selected_package = package
+                    trace["llm_packages"] += 1
+                # Continue through all pages so the caller-boundary receipt
+                # proves complete page delivery even after one valid answer.
+            except Exception as exc:
+                trace["failures"].append(
+                    f"llm_error:page:{page_index}:{type(exc).__name__}:{str(exc)[:180]}"
+                )
+        return selected_package
 
     for obligation in obligations:
         if obligation.expectation not in ("required", "preferred"):

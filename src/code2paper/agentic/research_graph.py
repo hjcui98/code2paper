@@ -875,6 +875,65 @@ def _refresh_acquisition_ledger(
     return ledger
 
 
+def _compiled_operation_ids_for_obligation(
+    *,
+    obligation_id: str,
+    compiled: "CompiledEvidence",
+    behavior_graph: CodeBehaviorGraphV1,
+) -> tuple[str, ...]:
+    """Return only graph nodes evidenced by one compiled obligation.
+
+    ``ResearchLoopState.behavior_graph`` is a repository-wide accumulation.
+    It is not an ownership proof for every obligation.  The compiler sidecar
+    is the narrower authority: facts carry exact source spans and packets may
+    carry resolved relation endpoint node ids.  A node is promoted only when
+    one of those exact anchors points to it; an empty match stays empty rather
+    than falling back to the complete behavior graph.
+    """
+
+    owned_span_ids: set[str] = set()
+    for fact in (getattr(compiled.fact_set, "facts", ()) or ()):
+        for field in ("direct_span_ids", "relation_span_ids"):
+            owned_span_ids.update(
+                str(value).strip()
+                for value in (getattr(fact, field, ()) or ())
+                if str(value).strip()
+            )
+
+    owned_node_ids: set[str] = set()
+    for packet in (getattr(compiled.packet_set, "packets", ()) or ()):
+        tags = {
+            str(value).strip()
+            for value in (getattr(packet, "obligation_tags", ()) or ())
+            if str(value).strip()
+        }
+        if tags and str(obligation_id).strip() not in tags:
+            continue
+        owned_span_ids.update(
+            str(getattr(span, "span_id", "")).strip()
+            for span in (getattr(packet, "spans", ()) or ())
+            if str(getattr(span, "span_id", "")).strip()
+        )
+        for relation in (getattr(packet, "relations", ()) or ()):
+            for endpoint_name in ("source_endpoint", "target_endpoint"):
+                endpoint = getattr(relation, endpoint_name, None)
+                node_id = str(getattr(endpoint, "node_id", "")).strip()
+                if node_id:
+                    owned_node_ids.add(node_id)
+
+    if not owned_span_ids and not owned_node_ids:
+        return ()
+    return tuple(
+        str(node.node_id)
+        for node in (getattr(behavior_graph, "nodes", ()) or ())
+        if str(getattr(node, "node_id", "")).strip()
+        and (
+            str(node.node_id) in owned_node_ids
+            or str(getattr(node, "source_span_id", "")).strip() in owned_span_ids
+        )
+    )
+
+
 def _refresh_intent_coverage_scheduler(
     loop: "ResearchLoopState",
     state: dict[str, Any] | None = None,
@@ -917,11 +976,13 @@ def _refresh_intent_coverage_scheduler(
             for item in (getattr(compiled.fact_set, "facts", ()) or ())
             if str(getattr(item, "fact_id", ""))
         ]
-        operations_by_clause[obligation_id] = [
-            str(item.node_id)
-            for item in (getattr(loop.behavior_graph, "nodes", ()) or ())
-            if str(getattr(item, "node_id", ""))
-        ]
+        operations_by_clause[obligation_id] = list(
+            _compiled_operation_ids_for_obligation(
+                obligation_id=obligation_id,
+                compiled=compiled,
+                behavior_graph=loop.behavior_graph,
+            )
+        )
     statuses: dict[str, str] = {}
     rejections: dict[str, str] = {}
     for item in agenda_items:

@@ -1079,6 +1079,11 @@ def _run_publication_method_writer_impl(
     # section-level Writer retry cannot be the only evidence used by the
     # final delivery gate.
     realizer_page_deliveries: dict[str, dict[int, bytes]] = {}
+    # Section Writer calls are also page-scoped.  Keep a separate accumulator
+    # keyed by (mechanism, section) so a complete section receipt is emitted
+    # only after every immutable page has crossed the actual caller boundary.
+    writer_page_deliveries: dict[tuple[str, str], dict[int, bytes]] = {}
+    writer_page_request_records: list[dict[str, Any]] = []
     formula_obs: dict[str, tuple[Any, ...]] = {}
     unified_payload_trace_path = ""
     shadow_failure: str = ""
@@ -1845,8 +1850,8 @@ def _run_publication_method_writer_impl(
         ]
     if effective_mode == "unified":
         from code2paper.agentic.mechanism_context_pages import (
-            build_request_delivery_receipt,
             build_shared_payload_delivery_receipt,
+            shared_payload_page_bytes_from_request,
         )
         from code2paper.agentic.mechanism_context_projection import (
             serialize_shared_mechanism_payload,
@@ -1878,6 +1883,11 @@ def _run_publication_method_writer_impl(
                 if isinstance(payload, Mapping)
                 else ()
             )
+            section_id = (
+                str(payload.get("section_id") or "").strip()
+                if isinstance(payload, Mapping)
+                else ""
+            )
             seen_mechanisms: set[str] = set()
             for row in metadata_rows or ():
                 if not isinstance(row, Mapping):
@@ -1889,15 +1899,69 @@ def _run_publication_method_writer_impl(
                 if manifest is None:
                     continue
                 seen_mechanisms.add(mid)
-                receipt = build_request_delivery_receipt(
-                    manifest,
+                try:
+                    page_index = int(row.get("page_index", -1))
+                except (TypeError, ValueError):
+                    page_index = -1
+                delivered, _ = shared_payload_page_bytes_from_request(
                     request,
                     consumer_role="writer",
+                    mechanism_id=mid,
+                )
+                # A section receipt is assembled from individually observed
+                # page requests.  If a caller ever hands us multiple pages in
+                # one request, treat that request as non-page-scoped and do
+                # not let it satisfy the aggregate receipt.
+                page_bytes = delivered[0] if len(delivered) == 1 else b""
+                delivery_key = (mid, section_id)
+                delivered_by_index = writer_page_deliveries.setdefault(
+                    delivery_key, {}
+                )
+                expected_page_bytes = (
+                    manifest.pages[page_index].serialized_bytes
+                    if 0 <= page_index < len(manifest.pages)
+                    else b""
+                )
+                # Preserve a previously observed exact page when a later
+                # retry is malformed; an accepted aggregate still proves
+                # that every page crossed this boundary exactly once in at
+                # least one actual request.
+                if (
+                    page_index >= 0
+                    and page_index not in delivered_by_index
+                ) or page_bytes == expected_page_bytes:
+                    if page_index >= 0:
+                        delivered_by_index[page_index] = page_bytes
+                writer_page_request_records.append({
+                    "section_id": section_id,
+                    "mechanism_id": mid,
+                    "page_index": page_index,
+                    "page_request_count": len(delivered),
+                    "page_bytes_digest": (
+                        "sha256:" + hashlib.sha256(page_bytes).hexdigest()
+                        if page_bytes else ""
+                    ),
+                    "accepted_page_bytes": page_bytes == expected_page_bytes
+                    and bool(page_bytes),
+                })
+                delivered_pages = tuple(
+                    delivered_by_index.get(index, b"")
+                    for index in range(len(manifest.pages))
+                )
+                receipt = build_shared_payload_delivery_receipt(
+                    manifest,
+                    consumer_role="writer",
+                    delivered_page_bytes=delivered_pages,
+                    actual_payload_bytes=(
+                        serialize_shared_mechanism_payload(
+                            unified_slices.get(mid, ())
+                        )
+                        if all(index in delivered_by_index for index in range(len(manifest.pages)))
+                        else None
+                    ),
                 )
                 receipt_payload = receipt.model_dump(mode="json")
-                receipt_payload["section_id"] = str(
-                    payload.get("section_id") or ""
-                ) if isinstance(payload, Mapping) else ""
+                receipt_payload["section_id"] = section_id
                 writer_delivery_receipts.append(receipt_payload)
             return response
 
@@ -2659,6 +2723,13 @@ def _run_publication_method_writer_impl(
                 writer_delivery_receipts=writer_delivery_receipts,
                 require_actual_receipts=True,
             )
+            for record in payload_trace:
+                for consumer in record.get("writer_consumers", ()):
+                    consumer["writer_page_request_records"] = [
+                        item for item in writer_page_request_records
+                        if item.get("mechanism_id") == record.get("mechanism_id")
+                        and item.get("section_id") == consumer.get("section_id")
+                    ]
             if unified_payload_trace_path:
                 _atomic_write_text(
                     unified_payload_trace_path,
@@ -14194,7 +14265,8 @@ def _run_mechanism_formalizer(
         compute_shared_payload_digest, compute_consumer_request_digest,
     )
     from code2paper.agentic.mechanism_context_pages import (
-        build_request_delivery_receipt,
+        build_shared_payload_delivery_receipt,
+        shared_payload_page_bytes_from_request,
     )
     all_packages: list[Any] = []
     traces: list[dict[str, Any]] = []
@@ -14220,17 +14292,84 @@ def _run_mechanism_formalizer(
         ) if slices else ""
         obs = formula_obligations_by_mech.get(mid, ())
         formalizer_receipts: list[dict[str, Any]] = []
+        formalizer_page_deliveries: dict[int, bytes] = {}
+        formalizer_page_request_records: list[dict[str, Any]] = []
 
         def _capturing_formalizer_caller(config: Any, request: Any) -> Any:
             response = caller(config, request) if caller is not None else None
             if manifest is not None:
-                receipt = build_request_delivery_receipt(
-                    manifest,
+                payload = getattr(request, "input_payload", None)
+                try:
+                    page_index = int(
+                        payload.get("shared_payload_page_index", -1)
+                        if isinstance(payload, Mapping)
+                        else -1
+                    )
+                except (TypeError, ValueError):
+                    page_index = -1
+                delivered, _ = shared_payload_page_bytes_from_request(
                     request,
                     consumer_role="formalizer",
+                    mechanism_id=mid,
                 )
-                formalizer_receipts.append(receipt.model_dump(mode="json"))
+                # The receipt accumulator only accepts one page per actual
+                # request.  A legacy/all-pages request has len(delivered)>1
+                # and therefore cannot manufacture a complete receipt.
+                page_bytes = delivered[0] if len(delivered) == 1 else b""
+                expected_page_bytes = (
+                    manifest.pages[page_index].serialized_bytes
+                    if 0 <= page_index < len(manifest.pages)
+                    else b""
+                )
+                if (
+                    page_index >= 0
+                    and page_index not in formalizer_page_deliveries
+                ) or page_bytes == expected_page_bytes:
+                    if page_index >= 0:
+                        formalizer_page_deliveries[page_index] = page_bytes
+                formalizer_page_request_records.append({
+                    "page_index": page_index,
+                    "page_request_count": len(delivered),
+                    "page_bytes_digest": (
+                        "sha256:" + hashlib.sha256(page_bytes).hexdigest()
+                        if page_bytes else ""
+                    ),
+                    "accepted_page_bytes": page_bytes == expected_page_bytes
+                    and bool(page_bytes),
+                })
+                return response
             return response
+
+        def _append_formalizer_aggregate_receipt() -> None:
+            if manifest is None:
+                return
+            if not formalizer_page_request_records:
+                formalizer_receipts.append({
+                    "consumer_role": "formalizer",
+                    "mechanism_id": mid,
+                    "manifest_digest": str(getattr(manifest, "content_digest", "")),
+                    "accepted": False,
+                    "rejection_code": "formalizer_request_not_observed",
+                })
+                return
+            delivered_pages = tuple(
+                formalizer_page_deliveries.get(index, b"")
+                for index in range(len(manifest.pages))
+            )
+            receipt = build_shared_payload_delivery_receipt(
+                manifest,
+                consumer_role="formalizer",
+                delivered_page_bytes=delivered_pages,
+                actual_payload_bytes=(
+                    payload_bytes
+                    if all(
+                        index in formalizer_page_deliveries
+                        for index in range(len(manifest.pages))
+                    )
+                    else None
+                ),
+            )
+            formalizer_receipts.append(receipt.model_dump(mode="json"))
 
         pkgs, call_trace = run_mechanism_formalizer(
             context=ctx,
@@ -14251,10 +14390,10 @@ def _run_mechanism_formalizer(
             manifest is not None
             and caller is not None
             and llm_config is not None
-            and not any(
-                bool(item.get("accepted"))
-                for item in formalizer_receipts
-                if isinstance(item, Mapping)
+            and not all(
+                formalizer_page_deliveries.get(index)
+                == manifest.pages[index].serialized_bytes
+                for index in range(len(manifest.pages))
             )
         ):
             # A mechanism without a formula obligation still has to prove
@@ -14264,23 +14403,27 @@ def _run_mechanism_formalizer(
             # caller boundary.
             from code2paper.llm.client import LLMRequest
 
-            _capturing_formalizer_caller(
-                llm_config,
-                LLMRequest(
-                    prompt_template_id="phase4_mechanism_formalizer_delivery_probe_v1",
-                    prompt=(
-                        "Return JSON only. Confirm receipt of the supplied "
-                        "mechanism context pages; do not author a formula.\n"
-                        + json.dumps(list(payload_pages), ensure_ascii=False)
+            for page_index, page_value in enumerate(payload_pages):
+                _capturing_formalizer_caller(
+                    llm_config,
+                    LLMRequest(
+                        prompt_template_id="phase4_mechanism_formalizer_delivery_probe_v1",
+                        prompt=(
+                            "Return JSON only. Confirm receipt of the supplied "
+                            "mechanism context page; do not author a formula.\n"
+                            + page_value
+                        ),
+                        input_payload={
+                            "mechanism_id": mid,
+                            "shared_payload": page_value,
+                            "shared_payload_pages": [page_value],
+                            "shared_payload_page_index": page_index,
+                            "shared_payload_page_count": len(payload_pages),
+                            "shared_payload_digest": payload_digest,
+                            "delivery_probe": True,
+                        },
                     ),
-                    input_payload={
-                        "mechanism_id": mid,
-                        "shared_payload_pages": list(payload_pages),
-                        "shared_payload_digest": payload_digest,
-                        "delivery_probe": True,
-                    },
-                ),
-            )
+                )
             call_trace = dict(call_trace)
             call_trace["formalizer_delivery_probe"] = True
         all_packages.extend(pkgs)
@@ -14307,14 +14450,7 @@ def _run_mechanism_formalizer(
             ],
         })
         if manifest is not None:
-            if not formalizer_receipts:
-                formalizer_receipts.append({
-                    "consumer_role": "formalizer",
-                    "mechanism_id": mid,
-                    "manifest_digest": str(getattr(manifest, "content_digest", "")),
-                    "accepted": False,
-                    "rejection_code": "formalizer_request_not_observed",
-                })
+            _append_formalizer_aggregate_receipt()
             call_trace.update({
                 "page_manifest_digest": str(getattr(manifest, "content_digest", "")),
                 "page_indices": [
@@ -14330,6 +14466,7 @@ def _run_mechanism_formalizer(
                     for page in (getattr(manifest, "pages", ()) or ())
                 ],
                 "formalizer_page_delivery_receipts": formalizer_receipts,
+                "formalizer_page_request_records": formalizer_page_request_records,
             })
         traces.append(call_trace)
     return tuple(all_packages), traces
@@ -14946,12 +15083,8 @@ def _assert_shared_payload_delivery(
                 writer_receipts = tuple(
                     item for item in actual_writer_receipts
                     if str(item.get("mechanism_id") or "") == mid
-                    and (
-                        str(item.get("section_id") or "")
-                        == str(getattr(writer_input, "section_id", ""))
-                        or str(item.get("section_id") or "")
-                        == f"realizer:{mid}"
-                    )
+                    and str(item.get("section_id") or "")
+                    == str(getattr(writer_input, "section_id", ""))
                 )
                 accepted_writer_receipts = tuple(
                     item for item in writer_receipts
@@ -14990,12 +15123,8 @@ def _assert_shared_payload_delivery(
                     "writer_page_delivery_receipts": [
                         item for item in actual_writer_receipts
                         if str(item.get("mechanism_id") or "") == mid
-                        and (
-                            str(item.get("section_id") or "")
-                            == str(getattr(writer_input, "section_id", ""))
-                            or str(item.get("section_id") or "")
-                            == f"realizer:{mid}"
-                        )
+                        and str(item.get("section_id") or "")
+                        == str(getattr(writer_input, "section_id", ""))
                     ],
                 } if page_manifest is not None else {}),
             })

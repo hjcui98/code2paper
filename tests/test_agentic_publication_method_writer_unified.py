@@ -3,12 +3,26 @@
 from __future__ import annotations
 
 import json
+import hashlib
 from pathlib import Path
+from types import SimpleNamespace
 from typing import Any
 
 import pytest
 
-from code2paper.agentic.mechanism_context_models import MechanismContextSetV1
+from code2paper.agentic.mechanism_context_models import (
+    MechanismContextSetV1,
+    MechanismContextSliceV1,
+)
+from code2paper.agentic.mechanism_context_pages import (
+    build_shared_payload_delivery_receipt,
+    build_shared_payload_manifest,
+)
+from code2paper.agentic.mechanism_context_projection import (
+    build_mechanism_context_slices,
+    build_mechanism_context_view,
+    serialize_shared_mechanism_payload,
+)
 from code2paper.agentic.method_architect import NarrativePlanV3
 from code2paper.agentic.method_content_trace import (
     MechanismInformationFunnelV1,
@@ -16,11 +30,19 @@ from code2paper.agentic.method_content_trace import (
 )
 from code2paper.agentic.publication_method_writer import (
     AuthoringContextMode,
+    _assert_shared_payload_delivery,
+    _run_mechanism_formalizer,
     run_publication_method_writer,
 )
 from code2paper.llm.client import LLMRequest, LLMResponse
+from code2paper.llm.section_writer import WriterSectionInput
+from code2paper.agentic.mechanism_context_models import (
+    compute_consumer_request_digest,
+    compute_shared_payload_digest,
+)
 from code2paper.schemas import LLMConfig
 from tests.test_agentic_publication_method_writer import _artifacts, _config
+from tests.test_agentic_mechanism_formalizer import _make_context
 
 
 def _mock_writer_caller(config: LLMConfig, request: LLMRequest) -> LLMResponse:
@@ -181,6 +203,141 @@ def test_run_publication_method_writer_unified_mode(tmp_path: Path) -> None:
     assert "context_to_plan" in funnel.funnel_survival_rates
 
 
+def test_realizer_receipt_cannot_satisfy_section_writer_receipt() -> None:
+    context = _make_context()
+    view = build_mechanism_context_view(context)
+    slices = build_mechanism_context_slices(view)
+    payload_bytes = serialize_shared_mechanism_payload(slices)
+    shared_digest = compute_shared_payload_digest(slices)
+    manifest = build_shared_payload_manifest(slices)
+    page = manifest.pages[0]
+    mechanism_id = context.mechanism_id
+    section_id = "MA-S1"
+    source_context_digest = context.source_context_digest or context.content_digest
+    writer_request_digest = compute_consumer_request_digest(
+        shared_digest,
+        {
+            "role": "writer",
+            "section_id": section_id,
+            "mechanism_id": mechanism_id,
+        },
+    )
+    writer_input = WriterSectionInput(
+        section_id=section_id,
+        heading="Mechanism",
+        prompt_payload={
+            "section_id": section_id,
+            "narrative_plan": {"mechanism_ids": [mechanism_id]},
+            "shared_contexts": [page.serialized_bytes.decode("utf-8")],
+            "shared_context_metadata": [{
+                "mechanism_id": mechanism_id,
+                "page_index": 0,
+                "page_manifest_digest": manifest.content_digest,
+                "page_digest": page.content_digest,
+                "page_bytes_digest": page.technical_bytes_digest,
+                "shared_payload_bytes_digest": "sha256:" + hashlib.sha256(payload_bytes).hexdigest(),
+                "shared_payload_digest": shared_digest,
+                "source_context_digest": source_context_digest,
+                "view_digest": view.view_digest,
+                "slice_digests": [item.slice_digest for item in slices],
+                "core_detail_ids": [
+                    value for item in slices for value in item.core_detail_ids
+                ],
+                "consumer_request_digest": writer_request_digest,
+            }],
+        },
+    )
+    formalizer_receipt = build_shared_payload_delivery_receipt(
+        manifest,
+        consumer_role="formalizer",
+        delivered_page_bytes=[page.serialized_bytes],
+        actual_payload_bytes=payload_bytes,
+    ).model_dump(mode="json")
+    formalizer_trace = {
+        "mechanism_id": mechanism_id,
+        "shared_payload": payload_bytes.decode("utf-8"),
+        "shared_payload_bytes_digest": "sha256:" + hashlib.sha256(payload_bytes).hexdigest(),
+        "shared_payload_digest": shared_digest,
+        "source_context_digest": source_context_digest,
+        "view_digest": view.view_digest,
+        "slice_digests": [item.slice_digest for item in slices],
+        "consumer_request_digest": compute_consumer_request_digest(
+            shared_digest,
+            {
+                "role": "formalizer",
+                "mechanism_id": mechanism_id,
+                "obligation_ids": [],
+            },
+        ),
+        "page_manifest_digest": manifest.content_digest,
+        "page_digests": list(manifest.page_digests),
+        "page_bytes_digests": list(manifest.page_bytes_digests),
+        "formalizer_page_delivery_receipts": [formalizer_receipt],
+    }
+    section_receipt = build_shared_payload_delivery_receipt(
+        manifest,
+        consumer_role="writer",
+        delivered_page_bytes=[page.serialized_bytes],
+        actual_payload_bytes=payload_bytes,
+    ).model_dump(mode="json")
+    section_receipt["section_id"] = section_id
+    realizer_receipt = dict(section_receipt)
+    realizer_receipt["section_id"] = f"realizer:{mechanism_id}"
+
+    common = {
+        "contexts": SimpleNamespace(contexts=(context,)),
+        "shared_payload_slices": {mechanism_id: slices},
+        "formalizer_traces": [formalizer_trace],
+        "writer_inputs": [writer_input],
+        "page_manifests": {mechanism_id: manifest},
+        "require_actual_receipts": True,
+    }
+    _assert_shared_payload_delivery(
+        **common,
+        writer_delivery_receipts=[section_receipt],
+    )
+    with pytest.raises(ValueError, match="writer_actual_page_receipt_missing"):
+        _assert_shared_payload_delivery(
+            **common,
+            writer_delivery_receipts=[realizer_receipt],
+        )
+
+
+def test_formalizer_delivery_probe_is_one_actual_request_per_page() -> None:
+    context = _make_context()
+    view = build_mechanism_context_view(context)
+    first = build_mechanism_context_slices(view)[0]
+    second = MechanismContextSliceV1(
+        mechanism_id=first.mechanism_id,
+        slice_index=1,
+        detail_ids=first.detail_ids,
+        exact_evidence_ids=first.exact_evidence_ids,
+        view_digest=first.view_digest,
+        technical_payload=first.technical_payload,
+        core_detail_ids=first.core_detail_ids,
+        shared_payload_digest=first.shared_payload_digest,
+    )
+    slices = (first, second)
+    manifest = build_shared_payload_manifest(slices)
+    requests: list[LLMRequest] = []
+
+    def caller(_config, request: LLMRequest):
+        requests.append(request)
+        return None
+
+    _, traces = _run_mechanism_formalizer(
+        SimpleNamespace(contexts=(context,)),
+        {context.mechanism_id: slices},
+        {context.mechanism_id: ()},
+        llm_config=object(),
+        caller=caller,
+        page_manifests={context.mechanism_id: manifest},
+    )
+
+    assert len(requests) == 2
+    assert [request.input_payload["shared_payload_page_index"] for request in requests] == [0, 1]
+    assert all(len(request.input_payload["shared_payload_pages"]) == 1 for request in requests)
+    assert traces[0]["formalizer_page_delivery_receipts"][0]["accepted"] is True
 def test_run_publication_method_writer_shadow_unified_mode(tmp_path: Path) -> None:
     paths = _artifacts(tmp_path)
 

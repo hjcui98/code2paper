@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from types import SimpleNamespace
+
 import pytest
 
 from code2paper.agentic.intent_ledger import (
@@ -9,6 +11,7 @@ from code2paper.agentic.intent_ledger import (
     VALID_INTENT_IMPLEMENTATION_STATUSES,
     build_intent_implementation_ledger,
 )
+from code2paper.agentic.research_graph import _compiled_operation_ids_for_obligation
 
 
 def test_intent_implementation_statuses() -> None:
@@ -23,6 +26,26 @@ def test_intent_implementation_statuses() -> None:
         "out_of_scope",
     }
     assert set(VALID_INTENT_IMPLEMENTATION_STATUSES) == expected
+
+
+def test_compiled_obligation_does_not_promote_unrelated_behavior_nodes() -> None:
+    compiled = SimpleNamespace(
+        fact_set=SimpleNamespace(facts=(SimpleNamespace(
+            direct_span_ids=["span:owned"],
+            relation_span_ids=[],
+        ),)),
+        packet_set=SimpleNamespace(packets=[]),
+    )
+    graph = SimpleNamespace(nodes=(
+        SimpleNamespace(node_id="node:owned", source_span_id="span:owned"),
+        SimpleNamespace(node_id="node:unrelated", source_span_id="span:other"),
+    ))
+
+    assert _compiled_operation_ids_for_obligation(
+        obligation_id="obl:owned",
+        compiled=compiled,
+        behavior_graph=graph,
+    ) == ("node:owned",)
 
 
 def test_build_intent_implementation_ledger_metrics() -> None:

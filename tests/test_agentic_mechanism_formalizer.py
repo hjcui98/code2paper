@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+import json
+from types import SimpleNamespace
+
 import pytest
 from code2paper.agentic.formalization_agent import (
     MechanismFormulaObligationV1,
@@ -159,3 +162,41 @@ def test_run_mechanism_formalizer_no_cross_mechanism_fallback() -> None:
     assert len(pkgs) == 1
     assert trace["deterministic_packages"] == 1
     assert trace["mechanism_id"] == "mech_infonce"
+
+
+def test_run_mechanism_formalizer_calls_each_page_without_full_payload() -> None:
+    ctx = _make_context()
+    obs = compile_mechanism_formula_obligations(ctx, author_formula_expectations=("loss",))
+    calls: list[object] = []
+
+    def caller(_config, request):
+        calls.append(request)
+        return SimpleNamespace(content=json.dumps({
+            "latex": r"loss = \operatorname{compute_loss}(logits, labels)",
+            "prose_explanation": "The source operation computes the loss.",
+            "symbol_definitions": [],
+            "material_conditions": [],
+            "assumptions": [],
+        }))
+
+    packages, trace = run_mechanism_formalizer(
+        context=ctx,
+        obligations=obs,
+        shared_payload_pages=("page-one", "page-two"),
+        shared_payload="must-not-be-forwarded-as-a-whole",
+        shared_payload_digest="sha256:pages",
+        llm_config=object(),
+        caller=caller,
+        allow_deterministic_operation_fallback=False,
+    )
+
+    assert len(packages) == 1
+    assert trace["llm_page_calls"] == 2
+    assert len(calls) == 2
+    for index, request in enumerate(calls):
+        payload = request.input_payload
+        assert payload["shared_payload_pages"] == [f"page-{['one', 'two'][index]}"]
+        assert payload["shared_payload"] == payload["shared_payload_pages"][0]
+        assert payload["shared_payload_page_index"] == index
+        assert "must-not-be-forwarded-as-a-whole" not in request.prompt
+        assert "page-two" not in request.prompt if index == 0 else "page-one" not in request.prompt

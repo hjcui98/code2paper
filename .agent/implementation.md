@@ -8834,3 +8834,93 @@ P9 (unseen holdout and default cutover decision) remain unexecuted.  No default
 mode cutover, release freeze, or Verified-quality claim is authorized by these
 static results alone.  The current worktree remains intentionally uncommitted
 and contains the user's earlier changes plus this repair round.
+
+## Direct repair round — paged consumers and obligation-scoped operations (2026-09-07)
+
+This follow-up was executed directly by Codex in the same worktree, without a
+collaboration skill or secondary agent.  The baseline before this follow-up
+was commit `57be827c27a69b0354c21caf0657516fd442fa2a`
+(`fix: close unified mechanism context delivery gates`).  The pre-existing
+dirty submodule and untracked `docs/1.txt` were preserved.
+
+### Implemented closure
+
+- Formalizer formula calls and delivery probes now send exactly one immutable
+  page per actual `LLMRequest`, including explicit page index/count metadata;
+  the former full `shared_payload` field is page-scoped too.  The first valid
+  formula response remains the selected package, but all pages are still
+  handed to the caller so complete delivery can be audited.
+- Unified section Writer inputs are partitioned into one actual request per
+  manifest page, even when the combined pages fit the model context.  Both
+  shared-context aliases are page-scoped, and the partition marker is retained
+  on the actual request for structured-output merging.
+- Formalizer and section Writer page receipts are accumulated from bytes
+  extracted at the real caller boundary.  A complete aggregate receipt is
+  accepted only after every manifest page has been observed exactly; an
+  all-pages-in-one request cannot satisfy it.  Realizer receipts remain a
+  separate `realizer:<mechanism_id>` audit record and can no longer satisfy a
+  section Writer receipt.
+- Intent scheduler operation promotion is now derived from the compiled
+  obligation's exact fact spans and packet relation endpoints.  Unrelated
+  repository-wide behavior nodes are no longer assigned to every obligation;
+  no exact anchor means no promoted operation.
+
+### Verification executed
+
+1. Focused consumer/ledger tests:
+
+   ```text
+   python -m pytest -q tests/test_llm_section_writer.py tests/test_agentic_mechanism_formalizer.py tests/test_agentic_intent_ledger.py
+   ```
+
+   Exit `0`; `101 passed`.
+
+2. Unified integration tests:
+
+   ```text
+   python -m pytest -q tests/test_agentic_publication_method_writer_unified.py
+   ```
+
+   Exit `0`; `7 passed`.
+
+3. Static syntax/import check:
+
+   ```text
+   python -m compileall -q src tests scripts
+   ```
+
+   Exit `0`.
+
+4. Patch hygiene:
+
+   ```text
+   git diff --check
+   ```
+
+   Exit `0`.
+
+5. Full static suite:
+
+   ```text
+   python -m pytest -q
+   ```
+
+   Exit `0`; `3154 passed, 3 skipped, 7 warnings, 12 subtests passed in
+   99.78s`.
+
+6. Final post-edit full-suite recheck (after the page-alias fail-closed guard
+   and trace-record persistence were added):
+
+   ```text
+   python -m pytest -q
+   ```
+
+   Exit `0`; `3154 passed, 3 skipped, 7 warnings, 12 subtests passed in
+   105.12s`.
+
+### Acceptance boundary still open
+
+No live LLM matrix, ten-project pilot, unseen holdout, default cutover, or
+release freeze was run.  P8 and P9 remain unexecuted.  The follow-up source
+and test edits are currently uncommitted; the earlier baseline commit remains
+intact.
