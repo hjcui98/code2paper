@@ -1374,3 +1374,73 @@ class TestCompileDeterminism:
         digests1 = _run()
         digests2 = _run()
         assert digests1 == digests2
+
+
+class TestBehaviorLocationRefs:
+    """``behavior:<path>:<name>:<line>`` refs are locations, not node ids."""
+
+    def test_behavior_location_ref_falls_back_to_typed_matcher(
+        self, snapshot: RepoSnapshot
+    ) -> None:
+        symbol_id = make_symbol_id("train.py", "train", 1)
+        obl = _obligation(
+            "obl-behavior-ref",
+            candidate_symbol_ids=("symbol:train.py:train:1",),
+            candidate_behavior_node_ids=("behavior:train.py:train:1",),
+        )
+        runtime = _runtime(snapshot, _agenda("run-br", snapshot, obl))
+        node = _node(
+            node_id="node:br",
+            symbol_id=symbol_id,
+            source_span_id="span:train.py:9:10",
+        )
+        gain = InformationGainTracker()
+        update = compile_candidate_node(
+            _state("obl-behavior-ref"),
+            runtime=runtime,
+            behavior_graph=_graph(nodes=[node]),
+            active_obligation_id="obl-behavior-ref",
+            gain_tracker=gain,
+        )
+        # The unresolved behavior ref must not silently compile an empty
+        # packet; the typed matcher resolves the symbol body instead.
+        assert "_compiled_evidence" in update
+
+    def test_unqualified_location_ref_resolves_via_symbol_index(
+        self, snapshot: RepoSnapshot
+    ) -> None:
+        """Search refs use leaf names; the index resolves them to real ids."""
+
+        from types import SimpleNamespace
+
+        from code2paper.agentic.research_nodes import (
+            _select_behavior_nodes_for_obligation,
+        )
+
+        real_symbol_id = make_symbol_id("train.py", "Trainer.train", 1)
+        graph = _graph(nodes=[
+            _node(
+                node_id="node:uq",
+                symbol_id=real_symbol_id,
+                source_span_id="span:train.py:9:10",
+            ),
+        ])
+        symbols = (
+            SimpleNamespace(
+                symbol_id=real_symbol_id,
+                path="train.py",
+                qualified_name="Trainer.train",
+                kind="method",
+                start_line=1,
+                end_line=20,
+            ),
+        )
+
+        selected = _select_behavior_nodes_for_obligation(
+            graph,
+            candidate_symbol_ids=["symbol:train.py:train:1"],
+            candidate_behavior_node_ids=[],
+            symbols=symbols,
+        )
+
+        assert [node.node_id for node in selected] == ["node:uq"]

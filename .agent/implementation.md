@@ -8924,3 +8924,79 @@ No live LLM matrix, ten-project pilot, unseen holdout, default cutover, or
 release freeze was run.  P8 and P9 remain unexecuted.  The follow-up source
 and test edits are currently uncommitted; the earlier baseline commit remains
 intact.
+
+## Direct repair round — Research identity, lineage, and staged admission (2026-09-09)
+
+The supplied third-run audit was applied as an offline-first repair.  No model,
+prompt, endpoint, or turn-limit change was made; the 8003 runtime was not
+restarted and no live/model call was issued.  The qwen38 live run remains a
+separate authorization and acceptance boundary.
+
+### Implementation
+
+- Added the shared `CandidateBindingV1` resolver and explicit `SymbolIndexV2`
+  propagation through direct, compatibility, and LangGraph compile/updater
+  paths.  Resume now authenticates snapshot/tree, symbol-index, and source
+  manifest identity; missing authenticated sidecars fail closed.  Acquisition,
+  compile, and promotion reject ambiguous or unavailable identities with typed
+  failures instead of widening into repository gaps.
+- Made symbol matching interval-aware and authoritative symbol ranges constrain
+  `read_symbol`, acquisition, compile, and promotion.  Promotion now records
+  exact observation -> behavior span -> packet -> fact -> claim lineage; broad
+  excerpts cannot pull sibling evidence.  Configuration and discovery remain
+  separate evidence lanes.
+- Added `CompileAttemptResultV1`, semantic/breadth scheduling, concrete
+  `STOP_BLOCKED` roots, and the shared obligation terminal proof.  Partial
+  terminal status requires promoted evidence, bounded exhaustion, an explicit
+  gap bound, and the required qualifier.
+- Added `RunIdentityV1`, staged authoring contracts with explicit N/A artifacts,
+  `ResearchClosureAdmissionV1`, early unified preadmission, and product-state
+  handling for research/writer blocked, review-ready-with-warnings, and
+  completed outcomes.  Failed Research admission cannot trigger downstream
+  Formalizer/Writer model calls.
+
+### Verification executed
+
+1. Audit-target regression set:
+
+   ```text
+   python -m pytest -q tests/test_agentic_compile_candidate_node.py tests/test_agentic_research_models.py tests/test_agentic_method_authoring_p0_closure.py tests/test_agentic_14_vertical_tests.py tests/test_agentic_gemma_supervisor_backend.py tests/test_agentic_publication_method_writer_unified.py tests/test_agentic_intent_ledger.py
+   ```
+
+   Exit `0`; `206 passed, 1 skipped in 3.76s`.
+
+2. Product/Writer/vertical regression set:
+
+   ```text
+   python -m pytest -q tests/test_agentic_autonomous_method_agent.py tests/test_agentic_autonomous_method_agent_cli.py tests/test_agentic_method_agent_cli.py tests/test_agentic_product_authoring_graph.py tests/test_agentic_publication_method_writer.py tests/test_agentic_research_tool_security.py tests/test_agentic_d6_portability.py tests/test_agentic_research_derived_authoring.py
+   ```
+
+   Exit `0`; `244 passed, 6 warnings in 15.59s`.
+
+3. Checkpoint/no-progress/tool regression set:
+
+   ```text
+   python -m pytest -q tests/test_agentic_research_checkpoint_resume.py tests/test_agentic_research_no_progress.py tests/test_agentic_research_tools.py tests/test_agentic_research_tools_extended.py
+   ```
+
+   Exit `0`; `231 passed in 4.81s`.
+
+4. Static syntax/import check:
+
+   ```text
+   python -m compileall -q src tests
+   ```
+
+   Exit `0`.
+
+5. Patch hygiene:
+
+   ```text
+   git diff --check
+   ```
+
+   Exit `0`.
+
+Live/model validation, the three-run comparison, default cutover, and release
+freeze remain open.  The repair and tests are uncommitted; no reset, checkout,
+commit, or merge was performed.

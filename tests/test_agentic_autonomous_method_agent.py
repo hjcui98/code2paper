@@ -323,6 +323,54 @@ class TestRunAutonomousMethodAgent:
         assert method_evidence["claim_contracts"]
         assert claim_map["claims"]
 
+    def test_unified_research_failure_admits_no_downstream_model_calls(
+        self,
+        tmp_path: Path,
+        llm_none: LLMConfig,
+    ) -> None:
+        out_root = tmp_path / "out-unified-blocked"
+        result = run_autonomous_method_agent(
+            repo_path=FIXTURE_REPO,
+            author_intent_path=FIXTURE_INTENT,
+            out_root=out_root,
+            llm_config=llm_none,
+            max_research_turns=1,
+            write_method_text=True,
+            authoring_context_mode="unified",
+            run_id="unified-blocked",
+        )
+
+        assert result.writer_status == "blocked"
+        assert result.writer_blocked_reason.startswith(
+            "research_closure_admission_failed:"
+        )
+        admission_path = Path(result.artifact_paths["research_closure_admission_v1"])
+        admission = json.loads(admission_path.read_text(encoding="utf-8"))
+        assert admission["run_id"] == "unified-blocked"
+        assert admission["model_calls_allowed"] is False
+        assert admission["failure_codes"]
+        assert "formalizer" not in admission["downstream_phases_planned"]
+        assert "writer" not in admission["downstream_phases_planned"]
+
+        identity = json.loads(
+            Path(result.artifact_paths["run_identity_v1"])
+            .read_text(encoding="utf-8")
+        )
+        assert identity["run_id"] == "unified-blocked"
+        assert identity["content_digest"].startswith("sha256:")
+        terminal = json.loads(
+            Path(result.artifact_paths["run_terminal_event"])
+            .read_text(encoding="utf-8")
+        )
+        assert terminal["terminal_reason"] == "research_closure_admission_failed"
+        contract = json.loads(
+            Path(result.artifact_paths["authoring_run_contract_v1"])
+            .read_text(encoding="utf-8")
+        )
+        assert contract["contract_stage"] == "research_closure"
+        assert contract["not_applicable_artifact_keys"]
+        assert result.summary["product_authoring"]["terminal_status"] == "blocked"
+
     def test_typed_gap_claim_produces_review_candidates(
         self,
         tmp_path: Path,

@@ -444,6 +444,23 @@ def test_read_symbol_returns_exact_span_for_toplevel_function(ctx: ResearchToolC
     assert int(end) >= int(start)
 
 
+def test_read_symbol_context_does_not_widen_exact_span(
+    ctx: ResearchToolContext,
+) -> None:
+    call = _tool_call(
+        tool_name="read_symbol",
+        repo_snapshot_id=ctx.repo_snapshot.snapshot_id,
+        arguments={"path": "main.py", "symbol": "main", "context_lines": 3},
+        top_k=1,
+    )
+    observation = read_symbol(ctx, call)
+
+    assert observation.status == "success"
+    assert observation.exact_span_ids == ("span:main.py:1:4",)
+    assert observation.notebook is not None
+    assert 'if __name__ == "__main__":' in observation.notebook.code_excerpt
+
+
 def test_read_symbol_supports_dotted_path_for_method(ctx: ResearchToolContext) -> None:
     call = _tool_call(
         tool_name="read_symbol",

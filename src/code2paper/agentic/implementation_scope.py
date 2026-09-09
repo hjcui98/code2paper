@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import re
 from collections.abc import Iterable, Mapping
+from dataclasses import dataclass
 from typing import Any
 
 from code2paper.agentic.behavior_graph import make_symbol_id
@@ -147,21 +148,23 @@ def _canonical_symbol_id(value: Any, symbols_by_id: Mapping[str, Any]) -> str:
         return ""
     if raw in symbols_by_id:
         return raw
-    parsed = split_symbol_ref(raw)
+    parsed = _location_ref_parts(raw)
     if parsed is not None:
+        binding = resolve_candidate_binding(
+            raw,
+            symbols=tuple(symbols_by_id.values()),
+            mode="scope",
+        )
+        if not binding.ambiguous and len(binding.canonical_symbol_ids) == 1:
+            return binding.canonical_symbol_ids[0]
+        # The adapter and typed-ref builder share this stable id scheme.  It
+        # is accepted only when it is actually present in the index; a leaf
+        # ref that cannot be uniquely resolved remains unresolved.
         path, name, line = parsed
-        for symbol_id, symbol in symbols_by_id.items():
-            if (
-                str(_attr(symbol, "path", "") or "") == path
-                and int(_attr(symbol, "start_line", 0) or 0) == line
-                and str(_attr(symbol, "qualified_name", "") or "")
-                in {name, name.split(".")[-1]}
-            ):
-                return symbol_id
-        # The adapter and typed-ref builder share this stable id scheme.
         candidate = make_symbol_id(path, name, line)
         if candidate in symbols_by_id:
             return candidate
+        return raw
     # Accept a compact path/name or path-only seed when it uniquely resolves.
     for symbol_id, symbol in symbols_by_id.items():
         path = str(_attr(symbol, "path", "") or "")
@@ -172,10 +175,314 @@ def _canonical_symbol_id(value: Any, symbols_by_id: Mapping[str, Any]) -> str:
 
 
 def _candidate_location(value: str) -> tuple[str, str, int] | None:
-    parsed = split_symbol_ref(value)
+    parsed = _location_ref_parts(value)
     if parsed is not None:
         return parsed
     return None
+
+
+@dataclass(frozen=True)
+class CandidateBindingV1:
+    """Deterministic binding of one candidate/ref to repository identities.
+
+    A candidate is not evidence.  This value only records how a typed
+    location, stable symbol id, behavior id, or exact source span binds to
+    the frozen repository index.  ``ambiguous`` and ``rejection_code`` are
+    deliberately preserved so callers cannot silently fall back to a broad
+    path match after identity resolution failed.
+    """
+
+    raw_ref: str
+    canonical_symbol_ids: tuple[str, ...] = ()
+    symbol_ranges: tuple[tuple[str, int, int], ...] = ()
+    behavior_node_ids: tuple[str, ...] = ()
+    exact_spans: tuple[tuple[str, int, int], ...] = ()
+    index_available: bool = False
+    ambiguous: bool = False
+    rejection_code: str = ""
+
+    @property
+    def resolved(self) -> bool:
+        return bool(
+            self.canonical_symbol_ids
+            or self.behavior_node_ids
+            or self.exact_spans
+        ) and not self.ambiguous and not self.rejection_code
+
+
+def _normalized_source_path(value: Any) -> str:
+    raw = str(value or "").strip().replace("\\", "/")
+    while raw.startswith("./"):
+        raw = raw[2:]
+    return raw
+
+
+def _span_interval(value: Any) -> tuple[str, int, int] | None:
+    parsed = split_span_ref(str(value or ""))
+    if parsed is None:
+        return None
+    path, start, end = parsed
+    path = _normalized_source_path(path)
+    return (path, int(start), int(end)) if path else None
+
+
+def source_intervals_overlap(
+    left: tuple[str, int, int] | None,
+    right: tuple[str, int, int] | None,
+) -> bool:
+    """Return whether two repository-relative source intervals overlap."""
+
+    if left is None or right is None:
+        return False
+    return (
+        _normalized_source_path(left[0]) == _normalized_source_path(right[0])
+        and int(left[1]) <= int(right[2])
+        and int(right[1]) <= int(left[2])
+    )
+
+
+def _symbol_location_matches(
+    symbol: Any,
+    *,
+    path: str,
+    name: str,
+    line: int,
+) -> tuple[int, tuple[str, int, int]] | None:
+    symbol_path = _normalized_source_path(_attr(symbol, "path", ""))
+    if symbol_path != path:
+        return None
+    qualified_name = str(_attr(symbol, "qualified_name", "") or "").strip()
+    if not qualified_name:
+        return None
+    leaf = name.rsplit(".", 1)[-1]
+    if qualified_name == name:
+        name_score = 4
+    elif qualified_name.rsplit(".", 1)[-1] == name:
+        name_score = 3
+    elif qualified_name.rsplit(".", 1)[-1] == leaf or qualified_name.endswith(
+        f".{leaf}"
+    ):
+        name_score = 2
+    else:
+        return None
+    start = int(_attr(symbol, "start_line", 0) or 0)
+    end = int(_attr(symbol, "end_line", 0) or 0)
+    if start < 1 or end < start or not (start <= line <= end):
+        return None
+    line_score = 2 if start == line else 1
+    return name_score + line_score, (symbol_path, start, end)
+
+
+def _location_ref_parts(value: Any) -> tuple[str, str, int] | None:
+    """Parse a symbol-location ref from either the symbol or behavior lane.
+
+    ``behavior:<node_id>`` is a graph identity.  A few acquisition tools also
+    emit ``behavior:<path>:<qualified-name>:<declaration-line>`` as a location
+    hint, however, and that hint must go through the same index resolution as
+    ``symbol:...`` rather than falling back to a path-wide match.
+    """
+
+    raw = str(value or "").strip()
+    parsed = split_symbol_ref(raw)
+    if parsed is not None:
+        return parsed
+    if not raw.startswith("behavior:"):
+        return None
+    body = raw.removeprefix("behavior:")
+    parts = body.rsplit(":", 2)
+    if len(parts) != 3:
+        return None
+    path, name, line_text = parts
+    try:
+        line = int(line_text)
+    except (TypeError, ValueError):
+        return None
+    if not path or not name or line < 1:
+        return None
+    return path, name, line
+
+
+def resolve_candidate_binding(
+    candidate: Any,
+    *,
+    symbols: Iterable[Any] = (),
+    behavior_nodes: Iterable[Any] = (),
+    exact_span_ids: Iterable[str] = (),
+    mode: str = "compile",
+) -> CandidateBindingV1:
+    """Resolve one candidate through the repository identity hierarchy.
+
+    Resolution order is stable-id/node-id, indexed qualified symbol, then
+    exact source span.  Leaf-name resolution is accepted only when it has a
+    unique best indexed match.  A typed symbol candidate without an index is
+    an identity failure for compilation; it is never widened to the whole
+    file.  Source intervals use overlap, which covers a wide read span and
+    statement-level behavior spans without admitting a sibling symbol.
+    """
+
+    raw = str(candidate or "").strip()
+    symbol_items = tuple(symbols)
+    node_items = tuple(behavior_nodes)
+    intervals: list[tuple[str, int, int]] = []
+    for value in exact_span_ids:
+        interval = _span_interval(value)
+        if interval is not None and interval not in intervals:
+            intervals.append(interval)
+    candidate_interval = _span_interval(raw)
+    if candidate_interval is not None and candidate_interval not in intervals:
+        intervals.append(candidate_interval)
+
+    direct_nodes: list[str] = []
+    raw_node_id = raw.removeprefix("behavior:")
+    for node in node_items:
+        node_id = str(_attr(node, "node_id", "") or "").strip()
+        if node_id and node_id in {raw, raw_node_id} and node_id not in direct_nodes:
+            direct_nodes.append(node_id)
+
+    canonical: list[str] = []
+    ranges: list[tuple[str, int, int]] = []
+    ambiguous = False
+    rejection_code = ""
+    parsed_symbol = _location_ref_parts(raw)
+    if parsed_symbol is not None:
+        path, name, line = parsed_symbol
+        path = _normalized_source_path(path)
+        if not symbol_items:
+            # Preserve an exact legacy stable-id match for direct callers.
+            # The compile gate still reports a missing index when this id is
+            # not present on any behavior node; a qualified leaf cannot be
+            # widened from this fallback.
+            canonical.append(make_symbol_id(path, name, line))
+            if mode in {"compile", "acquisition", "promotion"}:
+                rejection_code = "symbol_index_not_available_to_compile"
+        else:
+            matches: list[tuple[int, str, tuple[str, int, int]]] = []
+            for symbol in symbol_items:
+                match = _symbol_location_matches(
+                    symbol,
+                    path=path,
+                    name=name,
+                    line=line,
+                )
+                symbol_id = str(_attr(symbol, "symbol_id", "") or "").strip()
+                if match is not None and symbol_id:
+                    score, symbol_range = match
+                    matches.append((score, symbol_id, symbol_range))
+            if matches:
+                best_score = max(item[0] for item in matches)
+                best = [item for item in matches if item[0] == best_score]
+                if len(best) != 1:
+                    ambiguous = True
+                    rejection_code = "candidate_identity_ambiguous"
+                else:
+                    _score, symbol_id, symbol_range = best[0]
+                    canonical.append(symbol_id)
+                    ranges.append(symbol_range)
+            else:
+                rejection_code = "candidate_identity_resolution_failed"
+    elif raw.startswith("symbol:"):
+        stable_id = raw.removeprefix("symbol:")
+        indexed = [
+            symbol
+            for symbol in symbol_items
+            if str(_attr(symbol, "symbol_id", "") or "").strip() == stable_id
+        ]
+        if len(indexed) == 1:
+            canonical.append(stable_id)
+            start = int(_attr(indexed[0], "start_line", 0) or 0)
+            end = int(_attr(indexed[0], "end_line", 0) or 0)
+            path = _normalized_source_path(_attr(indexed[0], "path", ""))
+            if path and start > 0 and end >= start:
+                ranges.append((path, start, end))
+        elif len(indexed) > 1:
+            ambiguous = True
+            rejection_code = "candidate_identity_ambiguous"
+        elif stable_id.startswith("sym:"):
+            # A stable id can still bind directly to a graph node in a
+            # compatibility fixture.  It carries no qualified-name proof,
+            # so do not manufacture a range when the index is absent.
+            canonical.append(stable_id)
+    elif raw and not raw.startswith(("span:", "behavior:")):
+        # Accept an unwrapped stable symbol id or symbol name only through
+        # the frozen index.  Exact stable/qualified-name matches outrank
+        # leaf-name matches; a tie at the best score is an identity
+        # ambiguity rather than permission to choose by sort order.
+        indexed_matches: list[tuple[int, str, Any]] = []
+        for symbol in symbol_items:
+            symbol_id = str(_attr(symbol, "symbol_id", "") or "").strip()
+            qualified_name = str(_attr(symbol, "qualified_name", "") or "").strip()
+            if not symbol_id or not qualified_name:
+                continue
+            if raw == symbol_id:
+                score = 4
+            elif raw == qualified_name:
+                score = 3
+            elif raw == qualified_name.rsplit(".", 1)[-1]:
+                score = 2
+            else:
+                continue
+            indexed_matches.append((score, symbol_id, symbol))
+        if indexed_matches:
+            best_score = max(item[0] for item in indexed_matches)
+            best = [item for item in indexed_matches if item[0] == best_score]
+            if len(best) != 1:
+                ambiguous = True
+                rejection_code = "candidate_identity_ambiguous"
+            else:
+                _score, symbol_id, symbol = best[0]
+                canonical.append(symbol_id)
+                start = int(_attr(symbol, "start_line", 0) or 0)
+                end = int(_attr(symbol, "end_line", 0) or 0)
+                path = _normalized_source_path(_attr(symbol, "path", ""))
+                if path and start > 0 and end >= start:
+                    ranges.append((path, start, end))
+
+    # Exact span candidates are valid identity anchors even when there is no
+    # symbol index.  They do not authorize claims by themselves.
+    node_matches: list[str] = list(direct_nodes)
+    canonical_set = set(canonical)
+    range_items = tuple(ranges)
+    for node in node_items:
+        node_id = str(_attr(node, "node_id", "") or "").strip()
+        if not node_id:
+            continue
+        node_symbol_id = str(_attr(node, "symbol_id", "") or "").strip()
+        node_interval = _span_interval(_attr(node, "source_span_id", ""))
+        # A raw stable symbol id may be used by older checkpoint fixtures.
+        # This is an exact graph identity match, not a path/name or span
+        # fallback, so it does not widen the candidate to sibling nodes.
+        matched = node_symbol_id in canonical_set or (
+            bool(raw) and node_symbol_id == raw
+        )
+        # A typed location that failed index resolution is not allowed to
+        # regain authority through its declaration line or a broad file/span
+        # overlap.  The sole compatibility exception is an exact stable graph
+        # symbol id carried in ``canonical_symbol_ids`` without an index.
+        allow_interval_match = not rejection_code
+        if not matched and allow_interval_match and node_interval is not None:
+            # An indexed symbol range is authoritative.  Do not fall back to
+            # an observation's wider read span, which may include a sibling
+            # method in the same file.
+            if range_items:
+                matched = any(
+                    source_intervals_overlap(node_interval, item)
+                    for item in range_items
+                )
+            else:
+                matched = any(source_intervals_overlap(node_interval, item) for item in intervals)
+        if matched and node_id not in node_matches:
+            node_matches.append(node_id)
+
+    return CandidateBindingV1(
+        raw_ref=raw,
+        canonical_symbol_ids=tuple(dict.fromkeys(canonical)),
+        symbol_ranges=tuple(dict.fromkeys(ranges)),
+        behavior_node_ids=tuple(dict.fromkeys(node_matches)),
+        exact_spans=tuple(dict.fromkeys(intervals)),
+        index_available=bool(symbol_items),
+        ambiguous=ambiguous,
+        rejection_code=rejection_code,
+    )
 
 
 def infer_implementation_scope(
@@ -513,7 +820,7 @@ def scope_role_for_candidate(
 
     if behavior_graph is not None:
         for node in getattr(behavior_graph, "nodes", ()) or ():
-            if _node_matches_candidate(node, raw):
+            if _node_matches_candidate(node, raw, symbols=symbols):
                 role = scope.role_for(str(_attr(node, "symbol_id", "") or ""))
                 if role != "unknown":
                     return role
@@ -540,27 +847,18 @@ def scope_role_for_candidate(
     return direct
 
 
-def _candidate_context(candidate: str, behavior_graph: Any | None) -> set[str]:
+def _candidate_context(
+    candidate: str,
+    behavior_graph: Any | None,
+    *,
+    symbols: Iterable[Any] = (),
+) -> set[str]:
     """Return semantic context for a candidate without reading source text."""
 
     values: list[set[str]] = [_tokens(candidate)]
     if behavior_graph is not None:
-        location = _candidate_location(candidate)
         for node in getattr(behavior_graph, "nodes", ()) or ():
-            same = False
-            if location is not None:
-                path, name, line = location
-                span = str(_attr(node, "source_span_id", "") or "")
-                same = str(_attr(node, "symbol_id", "") or "") == candidate
-                if not same and span.count(":") >= 3:
-                    parsed_span = split_span_ref(span)
-                    same = bool(
-                        parsed_span
-                        and parsed_span[0] == path
-                        and parsed_span[1] <= line <= parsed_span[2]
-                    )
-            else:
-                same = str(_attr(node, "symbol_id", "") or "") == candidate
+            same = _node_matches_candidate(node, candidate, symbols=symbols)
             if same:
                 values.append(_tokens(" ".join(
                     str(_attr(node, attr, "") or "")
@@ -569,26 +867,45 @@ def _candidate_context(candidate: str, behavior_graph: Any | None) -> set[str]:
     return set().union(*values)
 
 
-def _node_matches_candidate(node: Any, candidate: str) -> bool:
+def _symbol_line_range(
+    candidate: str,
+    symbols: Iterable[Any],
+) -> tuple[str, int, int] | None:
+    """Resolve a ``symbol:<path>:<name>:<line>`` candidate to its full span.
+
+    Search results carry the *declaration* line of a symbol, while behavior
+    nodes are statement-level single-line spans after that declaration.  A
+    containment test (node span must contain the declaration line) can never
+    match, which silently left every candidate unbound from the behavior
+    graph.  Resolving the candidate to ``[start_line, end_line]`` lets a node
+    match when it lies inside the declared symbol body.
+    """
+
+    binding = resolve_candidate_binding(
+        candidate,
+        symbols=tuple(symbols),
+        mode="range",
+    )
+    if binding.ambiguous or len(binding.symbol_ranges) != 1:
+        return None
+    return binding.symbol_ranges[0]
+
+
+def _node_matches_candidate(
+    node: Any,
+    candidate: str,
+    *,
+    symbols: Iterable[Any] = (),
+) -> bool:
     """Match a behavior node to a stable id or typed location candidate."""
 
-    raw = str(candidate or "").strip()
-    if not raw:
-        return False
-    if str(_attr(node, "node_id", "") or "") in {
-        raw,
-        raw.removeprefix("behavior:"),
-    }:
-        return True
-    symbol_id = str(_attr(node, "symbol_id", "") or "")
-    if raw.removeprefix("symbol:") == symbol_id:
-        return True
-    location = _candidate_location(raw)
-    if location is None:
-        return False
-    path, _name, line = location
-    parsed_span = split_span_ref(str(_attr(node, "source_span_id", "") or ""))
-    return bool(parsed_span and parsed_span[0] == path and parsed_span[1] <= line <= parsed_span[2])
+    binding = resolve_candidate_binding(
+        candidate,
+        symbols=tuple(symbols),
+        behavior_nodes=(node,),
+        mode="match",
+    )
+    return str(_attr(node, "node_id", "") or "") in binding.behavior_node_ids
 
 
 def _candidate_packet_refs(
@@ -612,7 +929,13 @@ def _candidate_packet_refs(
                 *(getattr(packet, "semantic_span_ids", ()) or ()),
             )
         )
-        matched = bool(candidate_spans.intersection(spans))
+        matched = bool(candidate_spans.intersection(spans)) or any(
+            source_intervals_overlap(left, right)
+            for left in (
+                _span_interval(value) for value in candidate_spans
+            )
+            for right in (_span_interval(value) for value in spans)
+        )
         if not matched and location is not None:
             path, name, line = location
             for span in getattr(packet, "spans", ()) or ():
@@ -651,7 +974,12 @@ def _candidate_fact_refs(
                 *(getattr(fact, "relation_span_ids", ()) or ()),
             )
         )
-        if not candidate_spans or candidate_spans.intersection(spans):
+        matched = bool(candidate_spans.intersection(spans)) or any(
+            source_intervals_overlap(left, right)
+            for left in (_span_interval(value) for value in candidate_spans)
+            for right in (_span_interval(value) for value in spans)
+        )
+        if not candidate_spans or matched:
             fact_id = str(getattr(fact, "fact_id", "") or "")
             if fact_id:
                 fact_ids.append(fact_id)
@@ -680,6 +1008,7 @@ def seed_child_candidates_from_parents(
     *,
     behavior_graph: Any | None = None,
     scope: ImplementationScopeV1 | None = None,
+    symbols: Iterable[Any] = (),
     max_candidates: int = 8,
 ) -> tuple[tuple[str, tuple[str, ...]], ...]:
     """Seed empty child obligations from semantically related parent candidates.
@@ -733,7 +1062,9 @@ def seed_child_candidates_from_parents(
                 )
                 if role in {"comparand", "evaluation", "configuration"}:
                     continue
-                context = _candidate_context(canonical, behavior_graph)
+                context = _candidate_context(
+                    canonical, behavior_graph, symbols=symbols
+                )
                 parent_terms = _tokens(getattr(parent, "author_text", ""))
                 overlap = len(child_terms & (context | parent_terms))
                 if overlap <= 0:
@@ -746,7 +1077,9 @@ def seed_child_candidates_from_parents(
                     parent_nodes = {
                         str(_attr(node, "node_id", "") or "")
                         for node in getattr(behavior_graph, "nodes", ()) or ()
-                        if _node_matches_candidate(node, canonical)
+                        if _node_matches_candidate(
+                            node, canonical, symbols=symbols
+                        )
                     }
                     child_nodes = {
                         str(value).strip()
@@ -803,6 +1136,7 @@ def build_candidate_acquisition_ledger(
     # mainline question was active may later be propagated to a child, and a
     # supervisor obligation switch must not erase its read provenance.
     nodes = tuple(getattr(behavior_graph, "nodes", ()) or ()) if behavior_graph is not None else ()
+    symbol_items = tuple(symbols)
     records: list[CandidateAcquisitionRecordV1] = []
     for agenda in agenda_items:
         obligation_id = str(getattr(agenda, "obligation_id", "") or "")
@@ -828,33 +1162,68 @@ def build_candidate_acquisition_ledger(
                     for ref in refs
                 )
                 located = False
-                if location is not None:
+                if location is not None and spans:
                     path, name, line = location
+                    candidate_interval = (path, line, line)
                     located = any(
-                        (parsed := split_span_ref(span)) is not None
-                        and parsed[0] == path
-                        and parsed[1] <= line <= parsed[2]
-                        for span in spans
+                        source_intervals_overlap(candidate_interval, parsed)
+                        for parsed in (_span_interval(span) for span in spans)
                     )
                 if exact or located:
                     matched_obs.append(observation)
             read_obs = [item for item in matched_obs if item.tool_name in {"read_symbol", "read_code_span"} and item.status == "success"]
-            symbol_matches = [
+            binding = resolve_candidate_binding(
+                candidate_id,
+                symbols=symbol_items,
+                behavior_nodes=nodes,
+                mode="acquisition",
+            )
+            compatibility_identity = (
+                binding.rejection_code == "symbol_index_not_available_to_compile"
+                and bool(binding.behavior_node_ids)
+                and any(
+                    str(_attr(node, "symbol_id", "") or "")
+                    in set(binding.canonical_symbol_ids)
+                    for node in nodes
+                    if str(_attr(node, "node_id", "") or "")
+                    in set(binding.behavior_node_ids)
+                )
+            )
+            identity_rejection = (
+                "candidate_identity_ambiguous"
+                if binding.ambiguous
+                else (
+                    binding.rejection_code
+                    if binding.rejection_code and not compatibility_identity
+                    else ""
+                )
+            )
+            # Do not let a declaration-line/location fallback produce packet,
+            # fact, or claim ownership after identity resolution failed.  The
+            # typed rejection remains visible on the acquisition record and
+            # keeps the Research obligation open for the repository-index
+            # owner.
+            symbol_matches = [] if identity_rejection else [
                 node for node in nodes
                 if str(_attr(node, "symbol_id", "") or "") == candidate_id.removeprefix("symbol:")
-                or _node_matches_candidate(node, candidate_id)
+                or _node_matches_candidate(node, candidate_id, symbols=symbol_items)
             ]
             compiled = compiled_by_obligation.get(obligation_id)
             candidate_spans = {
                 str(_attr(node, "source_span_id", "") or "") for node in symbol_matches
             }
-            packet_ids, packet_span_ids = _candidate_packet_refs(
-                compiled, candidate_spans=candidate_spans, location=location
-            )
-            fact_ids, fact_set_ids = _candidate_fact_refs(
-                compiled, candidate_spans=packet_span_ids or candidate_spans
-            )
-            claim_ids = _candidate_claim_refs(compiled, fact_set_ids)
+            if identity_rejection:
+                packet_ids, packet_span_ids = (), set()
+                fact_ids, fact_set_ids = (), set()
+                claim_ids = ()
+            else:
+                packet_ids, packet_span_ids = _candidate_packet_refs(
+                    compiled, candidate_spans=candidate_spans, location=location
+                )
+                fact_ids, fact_set_ids = _candidate_fact_refs(
+                    compiled, candidate_spans=packet_span_ids or candidate_spans
+                )
+                claim_ids = _candidate_claim_refs(compiled, fact_set_ids)
             role = scope_role_for_candidate(
                 scope,
                 candidate_id,
@@ -864,7 +1233,12 @@ def build_candidate_acquisition_ledger(
             )
             terminal_status = "discovered"
             rejection_reason = ""
-            if role in {"comparand", "evaluation"}:
+            if identity_rejection:
+                # Keep the acquisition status non-terminal: this is a typed
+                # data-plane/binding failure, not evidence that the candidate
+                # is absent from the repository.
+                rejection_reason = identity_rejection
+            elif role in {"comparand", "evaluation"}:
                 terminal_status = "explicitly_rejected"
                 rejection_reason = "ownership_role_not_target_method"
             elif packet_ids and fact_ids and claim_ids and read_obs and symbol_matches:
@@ -875,7 +1249,10 @@ def build_candidate_acquisition_ledger(
                 terminal_status = "read"
             elif symbol_matches:
                 terminal_status = "behavior_built"
-            if role in {"comparand", "evaluation", "configuration"}:
+            if identity_rejection:
+                resolution_status = None
+                rejection_code = identity_rejection
+            elif role in {"comparand", "evaluation", "configuration"}:
                 resolution_status = "out_of_scope"
                 rejection_code = "ownership_role_not_target_method"
             elif terminal_status == "acquired_and_compiled":

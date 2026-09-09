@@ -492,6 +492,61 @@ class CandidateAcquisitionLedgerV1(_ResearchModel):
         return tuple(item for item in self.records if item.ownership_role in {"target_core", "target_dependency"})
 
 
+class CompileAttemptResultV1(_ResearchModel):
+    """Structured result of one obligation-scoped compile attempt.
+
+    The attempt is an audit record, not a claim of success.  In particular,
+    an identity or data-plane rejection remains retryable and keeps its
+    concrete owner/code instead of being collapsed into a generic stop or
+    repository evidence gap.
+    """
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    schema_version: str = "1.0"
+    obligation_id: str
+    raw_candidate_refs: tuple[str, ...] = Field(default_factory=tuple)
+    canonical_symbol_ids: tuple[str, ...] = Field(default_factory=tuple)
+    selected_behavior_node_ids: tuple[str, ...] = Field(default_factory=tuple)
+    packet_ids_before: tuple[str, ...] = Field(default_factory=tuple)
+    packet_ids_after: tuple[str, ...] = Field(default_factory=tuple)
+    fact_ids_before: tuple[str, ...] = Field(default_factory=tuple)
+    fact_ids_after: tuple[str, ...] = Field(default_factory=tuple)
+    claim_ids_before: tuple[str, ...] = Field(default_factory=tuple)
+    claim_ids_after: tuple[str, ...] = Field(default_factory=tuple)
+    outcome_stage: str
+    rejection_code: str = ""
+    retry_owner: str = "research_manager"
+    repo_snapshot_id: str = ""
+    project_tree_hash: str = ""
+    symbol_index_digest: str = ""
+    source_manifest_digest: str = ""
+    content_digest: str = ""
+
+    @field_validator(
+        "raw_candidate_refs",
+        "canonical_symbol_ids",
+        "selected_behavior_node_ids",
+        "packet_ids_before",
+        "packet_ids_after",
+        "fact_ids_before",
+        "fact_ids_after",
+        "claim_ids_before",
+        "claim_ids_after",
+    )
+    @classmethod
+    def _dedupe_refs(cls, value: tuple[str, ...]) -> tuple[str, ...]:
+        return tuple(dict.fromkeys(str(item).strip() for item in value if str(item).strip()))
+
+    @model_validator(mode="after")
+    def _closed_digest(self) -> "CompileAttemptResultV1":
+        if not self.obligation_id.strip() or not self.outcome_stage.strip():
+            raise ValueError("compile attempt requires obligation and outcome stage")
+        payload = self.model_dump(mode="json", exclude={"content_digest"})
+        object.__setattr__(self, "content_digest", _digest_payload(payload))
+        return self
+
+
 class ResearchContinuationSeedV1(_ResearchModel):
     """Honest starting point for writing-time research without a checkpoint.
 
@@ -1554,6 +1609,7 @@ __all__ = [
     "CandidateResolutionStatusV1",
     "CandidateAcquisitionRecordV1",
     "CandidateAcquisitionLedgerV1",
+    "CompileAttemptResultV1",
     "PerObligationBudgetV1",
     "PacketRepairRequestV1",
     "QualityContentDimensionsV1",

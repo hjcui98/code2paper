@@ -399,6 +399,9 @@ class TestInspectConfiguration:
         refs = list(obs.result_refs)
         assert all("lr" in r for r in refs), refs
         assert not any("epochs" in r for r in refs), refs
+        assert obs.exact_span_ids
+        assert len(obs.exact_span_ids) == len(obs.result_refs)
+        assert all(span.startswith("span:") for span in obs.exact_span_ids)
 
     def test_returns_success_empty_when_no_bindings(
         self, ctx: ResearchToolContext

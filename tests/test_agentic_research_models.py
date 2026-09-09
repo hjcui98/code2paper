@@ -940,3 +940,180 @@ def test_observation_promotion_ledger_lifecycle() -> None:
     assert records_by_id["obs:promoted:1"].status == "claim_promoted"
     assert records_by_id["obs:promoted:1"].claim_ids == ("c:1",)
     assert records_by_id["obs:promoted:1"].rejection_code == ""
+
+
+def test_configuration_observation_stays_in_separate_evidence_lane() -> None:
+    from types import SimpleNamespace
+
+    from code2paper.agentic.research_promotion import (
+        build_observation_promotion_ledger,
+    )
+
+    observation = SimpleNamespace(
+        observation_id="obs:config:1",
+        obligation_id="OBL-CONFIG",
+        tool_name="inspect_configuration",
+        status="success",
+        source_authority="executable_hard",
+        result_refs=("config:train.py:3:lr",),
+        exact_span_ids=("span:train.py:3:3",),
+    )
+    graph = SimpleNamespace(nodes=(SimpleNamespace(
+        node_id="node:parse_args",
+        symbol_id="symbol:train.py:parse_args:1",
+        source_span_id="span:train.py:1:5",
+    ),))
+
+    ledger = build_observation_promotion_ledger(
+        observations=(observation,),
+        behavior_graph=graph,
+        repo_snapshot_id="snap-config",
+        project_tree_hash="tree-config",
+    )
+    record = ledger.records[0]
+
+    assert record.evidence_lane == "configuration"
+    assert record.status == "observed_unpromoted"
+    assert record.rejection_code.startswith("configuration_")
+    assert record.rejection_code != "no_matching_behavior_node"
+
+
+def test_observation_promotion_joins_only_its_own_lineage() -> None:
+    from types import SimpleNamespace
+
+    from code2paper.agentic.research_promotion import (
+        build_observation_promotion_ledger,
+    )
+
+    span_one = "span:src/model.py:10:10"
+    span_two = "span:src/model.py:20:20"
+    graph = SimpleNamespace(nodes=(
+        SimpleNamespace(
+            node_id="node:one",
+            symbol_id="sym:one",
+            source_span_id=span_one,
+        ),
+        SimpleNamespace(
+            node_id="node:two",
+            symbol_id="sym:two",
+            source_span_id=span_two,
+        ),
+    ))
+    symbols = (
+        SimpleNamespace(
+            symbol_id="sym:one",
+            path="src/model.py",
+            qualified_name="Model.one",
+            start_line=10,
+            end_line=12,
+        ),
+        SimpleNamespace(
+            symbol_id="sym:two",
+            path="src/model.py",
+            qualified_name="Model.two",
+            start_line=20,
+            end_line=22,
+        ),
+    )
+    compiled = SimpleNamespace(
+        packet_set=SimpleNamespace(packets=(
+            {
+                "packet_id": "packet:one",
+                "anchor_span_ids": [span_one],
+                "spans": [{"span_id": span_one}],
+            },
+            {
+                "packet_id": "packet:two",
+                "anchor_span_ids": [span_two],
+                "spans": [{"span_id": span_two}],
+            },
+        )),
+        fact_set=SimpleNamespace(facts=(
+            {"fact_id": "fact:one", "direct_span_ids": [span_one]},
+            {"fact_id": "fact:two", "direct_span_ids": [span_two]},
+        )),
+        claim_set=SimpleNamespace(claims=(
+            {"claim_id": "claim:one", "fact_ids": ["fact:one"]},
+            {"claim_id": "claim:two", "fact_ids": ["fact:two"]},
+        )),
+    )
+    observations = (
+        SimpleNamespace(
+            observation_id="observation:one",
+            obligation_id="OBL-LINEAGE",
+            tool_name="read_symbol",
+            status="success",
+            result_refs=("symbol:src/model.py:one:10",),
+            # A legacy/wide read excerpt must not license the sibling symbol.
+            exact_span_ids=("span:src/model.py:10:20",),
+            notebook=SimpleNamespace(discovered_symbols=()),
+        ),
+        SimpleNamespace(
+            observation_id="observation:two",
+            obligation_id="OBL-LINEAGE",
+            tool_name="read_code_span",
+            status="success",
+            result_refs=("node:two",),
+            exact_span_ids=(span_two,),
+            notebook=SimpleNamespace(discovered_symbols=()),
+        ),
+    )
+
+    ledger = build_observation_promotion_ledger(
+        observations=observations,
+        behavior_graph=graph,
+        compiled_by_obligation={"OBL-LINEAGE": compiled},
+        symbols=symbols,
+        repo_snapshot_id="snap-lineage",
+        project_tree_hash="tree-lineage",
+    )
+    records = {record.observation_id: record for record in ledger.records}
+    assert records["observation:one"].status == "claim_promoted"
+    assert records["observation:one"].behavior_node_ids == ("node:one",)
+    assert records["observation:one"].packet_ids == ("packet:one",)
+    assert records["observation:one"].fact_ids == ("fact:one",)
+    assert records["observation:one"].claim_ids == ("claim:one",)
+    assert records["observation:two"].behavior_node_ids == ("node:two",)
+    assert records["observation:two"].packet_ids == ("packet:two",)
+    assert records["observation:two"].fact_ids == ("fact:two",)
+    assert records["observation:two"].claim_ids == ("claim:two",)
+
+
+def test_partial_obligation_requires_the_complete_terminal_proof() -> None:
+    from types import SimpleNamespace
+
+    from code2paper.agentic.research_terminal import (
+        evaluate_obligation_terminal_proof,
+    )
+
+    item = ResearchAgendaItemV1(
+        **_agenda_item_kwargs(
+            status="partial",
+            missing_information=["typed_predicate:normalize"],
+        )
+    )
+    promoted = SimpleNamespace(
+        status="claim_promoted",
+        claim_ids=("claim:partial",),
+    )
+    before_gap = evaluate_obligation_terminal_proof(
+        item,
+        promotion_records=(promoted,),
+    )
+    assert not before_gap.terminal
+    assert "explicit_gap_not_bound_to_missing_field" in before_gap.reasons
+
+    item.gap_requirements.append(GapRequirementV1(
+        requirement_id="gap:partial",
+        description="The normalization remainder was exhaustively searched.",
+        required_predicate="normalize",
+        terminal="explicit_gap",
+    ))
+    after_gap = evaluate_obligation_terminal_proof(
+        item,
+        promotion_records=(promoted,),
+    )
+    assert after_gap.terminal
+    assert after_gap.promoted_repository_evidence
+    assert after_gap.bounded_search_exhausted
+    assert after_gap.explicit_gap_bound

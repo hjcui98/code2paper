@@ -41,6 +41,14 @@ from typing import Any, Literal, Mapping
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from code2paper.agentic.author_intent_summary import load_author_intent_summary
+from code2paper.agentic.authoring_context_contract import (
+    build_authoring_run_contract,
+    build_run_identity,
+    expected_authoring_artifact_keys,
+    resolve_authoring_context_mode,
+    write_authoring_run_contract,
+    write_run_identity,
+)
 from code2paper.agentic.authoring_projection import (
     build_authoring_projection,
     projected_writer_inputs,
@@ -128,6 +136,10 @@ from code2paper.agentic.research_models import (
 )
 from code2paper.agentic.research_policy import PolicyMergeResult
 from code2paper.agentic.research_nodes import ResearchGraphRuntime
+from code2paper.agentic.research_terminal import (
+    build_research_closure_admission,
+    evaluate_obligation_terminal_proof,
+)
 from code2paper.agentic.product_authoring_graph import (
     ProductAuthoringIssueV1,
     persist_product_authoring_state_from_writer,
@@ -137,6 +149,7 @@ from code2paper.agentic.v3_runtime import (
     build_research_agenda_from_intent_graph,
     merge_compiled_evidence,
 )
+from code2paper.core.output_names import method_output
 from code2paper.llm.providers import has_provider_api_key, load_llm_config_from_env
 from code2paper.schemas import ClaimEvidenceMap, LLMConfig, MethodEvidence
 
@@ -554,6 +567,89 @@ def _research_run_state(
         "policy_fallback_decisions": policy_fallbacks,
         "degraded_reasons": list(dict.fromkeys(degraded_reasons)),
     }
+
+
+def _research_closure_failure_codes(
+    *,
+    loop_result: ResearchLoopResult,
+    runtime: ResearchGraphRuntime,
+    research_run_state: Mapping[str, Any],
+    packet_set: EvidencePacketSetV3 | None,
+    fact_set: CodeFactSetV1 | None,
+    claim_set: AtomicClaimSetV3 | None,
+) -> tuple[str, ...]:
+    """Return typed failures for the Research -> authoring boundary.
+
+    This gate is intentionally independent of plan/readiness.  A plan can be
+    organized from author intent while the repository closure is still
+    incomplete; that must not authorize any model-backed authoring request.
+    """
+
+    failures: list[str] = []
+    status = str(research_run_state.get("status") or "incomplete")
+    if status != "trusted":
+        failures.append(f"research_status:{status}")
+
+    loop = loop_result.loop_state
+    promotion_records = tuple(
+        getattr(getattr(loop, "observation_promotion_ledger", None), "records", ())
+        or ()
+    )
+    compiled_by_obligation = getattr(loop, "compiled_evidence", {}) or {}
+    for item in runtime.agenda.items:
+        if item.priority != "must_cover":
+            continue
+        compiled = compiled_by_obligation.get(str(item.obligation_id))
+        promoted_claim_ids = tuple(
+            str(getattr(claim, "claim_id", "") or "")
+            for claim in (
+                getattr(getattr(compiled, "claim_set", None), "claims", ()) or ()
+            )
+            if str(getattr(claim, "claim_id", "") or "")
+        )
+        proof = evaluate_obligation_terminal_proof(
+            item,
+            promotion_records=tuple(
+                record
+                for record in promotion_records
+                if str(getattr(record, "obligation_id", "") or "")
+                == str(item.obligation_id)
+            ),
+            promoted_claim_ids=promoted_claim_ids,
+        )
+        if proof.terminal:
+            continue
+        if item.status in {"pending", "in_progress"}:
+            failures.append(f"unified_core_intent_unsearched:{item.obligation_id}")
+        else:
+            failures.append(
+                "unified_core_intent_terminal_proof_missing:"
+                f"{item.obligation_id}"
+            )
+
+    for record in promotion_records:
+        if str(getattr(record, "status", "") or "") not in {
+            "observed_unpromoted",
+            "behavior_built",
+            "packet_promoted",
+            "fact_promoted",
+        }:
+            continue
+        failures.append(
+            "unified_observation_promotion_incomplete:"
+            f"{getattr(record, 'observation_id', '')}"
+        )
+
+    missing_evidence: list[str] = []
+    if packet_set is None or not packet_set.packets:
+        missing_evidence.append("evidence_packets_v3")
+    if fact_set is None or not fact_set.facts:
+        missing_evidence.append("code_facts_v1")
+    if claim_set is None or not claim_set.claims:
+        missing_evidence.append("atomic_claims_v3")
+    if missing_evidence:
+        failures.append("research_evidence_missing:" + ",".join(missing_evidence))
+    return tuple(dict.fromkeys(failures))
 
 
 def merge_product_evidence(
@@ -1360,11 +1456,32 @@ def persist_product_artifacts(
             product=False,
         )
         paths["symbol_index"] = paths["symbol_index_v2"]
+    loop_scope = getattr(loop_result.loop_state, "implementation_scope", None)
     loop_source_manifest = getattr(loop_result.loop_state, "source_manifest", None)
     if loop_source_manifest is not None:
         paths["repository_source_manifest_v1"] = _write(
             "repository_source_manifest_v1",
             loop_source_manifest.model_dump(mode="json"),
+            product=False,
+        )
+    if (
+        runtime.repo_snapshot is not None
+        and loop_symbol_index is not None
+        and loop_scope is not None
+        and loop_source_manifest is not None
+    ):
+        from code2paper.agentic.repository_authoring_artifacts import (
+            repository_authoring_identity_payload,
+        )
+
+        paths["repository_authoring_artifacts_v1"] = _write(
+            "repository_authoring_artifacts_v1",
+            repository_authoring_identity_payload(
+                snapshot=runtime.repo_snapshot,
+                symbol_index=loop_symbol_index,
+                implementation_scope=loop_scope,
+                source_manifest=loop_source_manifest,
+            ),
             product=False,
         )
 
@@ -1389,7 +1506,6 @@ def persist_product_artifacts(
     # Research closure sidecars.  These are diagnostic provenance artifacts,
     # not a second authority path: positive claims still come only from the
     # frozen packets/facts/claims below.
-    loop_scope = getattr(loop_result.loop_state, "implementation_scope", None)
     if loop_scope is not None:
         paths["implementation_scope_v1"] = _write(
             "implementation_scope_v1",
@@ -2053,6 +2169,9 @@ def run_autonomous_method_agent(
     requested_authoring_context_mode = (
         str(authoring_context_mode or "").strip().casefold() or None
     )
+    effective_context_mode, context_mode_source = resolve_authoring_context_mode(
+        requested_authoring_context_mode
+    )
 
     effective_llm = llm_config or load_llm_config_from_env()
     live_llm = bool(has_provider_api_key(effective_llm))
@@ -2165,6 +2284,68 @@ def run_autonomous_method_agent(
         claim_set=claim_set,
     )
 
+    research_failure_codes = _research_closure_failure_codes(
+        loop_result=loop_result,
+        runtime=runtime,
+        research_run_state=research_run_state,
+        packet_set=packet_set,
+        fact_set=fact_set,
+        claim_set=claim_set,
+    )
+    loop_identity = loop_result.loop_state
+    run_identity = build_run_identity(
+        run_id=effective_run_id,
+        repo_root=repo_path,
+        repo_snapshot_id=runtime.repo_snapshot.snapshot_id,
+        project_tree_hash=runtime.repo_snapshot.project_tree_hash,
+        symbol_index_digest=str(
+            getattr(getattr(loop_identity, "symbol_index", None), "content_digest", "")
+            or ""
+        ),
+        source_manifest_digest=str(
+            getattr(getattr(loop_identity, "source_manifest", None), "content_digest", "")
+            or ""
+        ),
+        model_identity=(
+            f"{getattr(effective_llm, 'provider', '')}:{getattr(effective_llm, 'model', '')}"
+        ).strip(":") or "unknown",
+        model_identity_payload=effective_llm.model_dump(mode="json"),
+        launcher_payload={
+            "entrypoint": "run_autonomous_method_agent",
+            "authoring_context_mode": effective_context_mode,
+            "max_research_turns": int(max_research_turns),
+            "max_callback_rounds": int(max_callback_rounds),
+        },
+        profile_payload={
+            "llm_role": str(getattr(effective_llm, "role", "") or ""),
+            "prompt_template_version": str(
+                getattr(effective_llm, "prompt_template_version", "") or ""
+            ),
+            "authoring_context_mode_source": context_mode_source,
+        },
+        code_sha=str(getattr(runtime.repo_snapshot, "git_commit", "") or "") or None,
+    )
+    run_identity_path = write_run_identity(resolved_out, run_identity)
+    downstream_phases = ("planning",)
+    if not research_failure_codes and write_method_text:
+        downstream_phases = ("planning", "formalizer", "writer")
+    research_admission = build_research_closure_admission(
+        run_id=effective_run_id,
+        repo_snapshot_id=runtime.repo_snapshot.snapshot_id,
+        project_tree_hash=runtime.repo_snapshot.project_tree_hash,
+        research_status=str(research_run_state.get("status") or "incomplete"),
+        failure_codes=research_failure_codes,
+        downstream_phases_planned=downstream_phases,
+    )
+    research_admission_path = method_output(
+        resolved_out,
+        "research_closure_admission_v1",
+    )
+    _atomic_write_text(
+        research_admission_path,
+        research_admission.model_dump_json(indent=2) + "\n",
+    )
+
     typed_gaps = build_typed_gaps(
         runtime,
         loop_result,
@@ -2177,7 +2358,15 @@ def run_autonomous_method_agent(
         claim_set=claim_set,
         claims_input=claims_input,
         method_name=method_name,
-        llm_config=effective_llm if live_llm else None,
+        llm_config=(
+            effective_llm
+            if live_llm
+            and not (
+                effective_context_mode in {"unified", "shadow_unified"}
+                and research_failure_codes
+            )
+            else None
+        ),
         concept_cards=concept_cards,
         compile_concept_cards=compile_concept_cards and live_llm,
         compile_argument_briefs=compile_argument_briefs,
@@ -2210,16 +2399,38 @@ def run_autonomous_method_agent(
     review_candidates = planning["review_candidates"]
     readiness = planning["readiness"]
     plan = planning["plan"]
+    readiness_failures = (
+        tuple(research_failure_codes)
+        if effective_context_mode == "unified"
+        else ()
+    )
     if readiness is not None:
-        plan_readiness = readiness.readiness
-        blocked_reasons = tuple(readiness.blocked_for_safety_reasons)
-    else:
-        plan_readiness = "candidate_ready_with_review"
+        plan_readiness = (
+            "blocked_by_research"
+            if effective_context_mode == "unified" and research_failure_codes
+            else readiness.readiness
+        )
         blocked_reasons = tuple(
-            reason
-            for item in completeness.items
-            if item.status not in {"supported_by_repository", "out_of_scope"}
-            for reason in (f"unverified obligation: {item.obligation_id}",)
+            dict.fromkeys((
+                *readiness_failures,
+                *tuple(readiness.blocked_for_safety_reasons),
+            ))
+        )
+    else:
+        plan_readiness = (
+            "blocked_by_research"
+            if effective_context_mode == "unified" and research_failure_codes
+            else "not_built"
+        )
+        blocked_reasons = tuple(
+            dict.fromkeys((
+                *readiness_failures,
+                *(
+                    f"unverified obligation: {item.obligation_id}"
+                    for item in completeness.items
+                    if item.status not in {"supported_by_repository", "out_of_scope"}
+                ),
+            ))
         )
 
     verified_facts = 0
@@ -2242,6 +2453,11 @@ def run_autonomous_method_agent(
             "termination_reason": loop_result.termination_reason,
             "turns_executed": loop_result.turns_executed,
         },
+        "run_identity": {
+            **run_identity.model_dump(mode="json"),
+            "path": run_identity_path,
+        },
+        "research_admission": research_admission.model_dump(mode="json"),
         "evidence": {
             "evidence_packets": len(packet_set.packets) if packet_set is not None else 0,
             "code_facts": len(fact_set.facts) if fact_set is not None else 0,
@@ -2304,12 +2520,84 @@ def run_autonomous_method_agent(
         summary=summary,
     )
     paths["research_stage_checkpoint_v1"] = research_checkpoint_path
+    paths["run_identity_v1"] = run_identity_path
+    paths["research_closure_admission_v1"] = str(research_admission_path)
 
     writer_status = "skipped_no_live_llm"
     writer_blocked_reason = ""
     writer_paths: dict[str, str] = {}
     writer_artifact_paths = _writer_artifact_paths(resolved_out)
-    if write_method_text:
+    writer_artifact_paths.update({
+        "run_identity_v1": run_identity_path,
+        "research_closure_admission_v1": str(research_admission_path),
+    })
+    if effective_context_mode == "unified" and research_failure_codes:
+        # Research closure is a terminal upstream boundary.  Persist one
+        # explicit run event and a staged contract here even when the Writer
+        # is not requested; downstream phase artifacts are N/A, not missing.
+        from code2paper.agentic.unified_invocation_ledger import (
+            write_run_terminal_event,
+        )
+
+        terminal_path = write_run_terminal_event(
+            resolved_out / "artifacts" / "06_authoring" / "invocations",
+            run_digest=run_identity.content_digest,
+            terminal_reason="research_closure_admission_failed",
+            terminal_stage="research_closure",
+            extra={
+                "failure_codes": list(research_failure_codes),
+                "model_calls_allowed": False,
+                "downstream_phases_planned": ["planning"],
+                "research_admission_id": research_admission.admission_id,
+            },
+        )
+        paths["run_terminal_event"] = str(terminal_path)
+        writer_artifact_paths["run_terminal_event"] = str(terminal_path)
+
+        research_boundary_keys = {
+            "repo_snapshot_v2",
+            "symbol_index_v2",
+            "repository_source_manifest_v1",
+            "implementation_scope_v1",
+            "repository_authoring_artifacts_v1",
+            "atomic_claims_v3",
+            "code_facts_v1",
+            "equation_claims_v1",
+            "configuration_claims_v1",
+            "method_completeness_matrix_v1",
+            "intent_obligation_graph_v2",
+            "research_agenda_v1",
+        }
+        contract = build_authoring_run_contract(
+            requested_mode=effective_context_mode,
+            effective_mode=effective_context_mode,
+            mode_source=context_mode_source,
+            artifact_paths={**writer_artifact_paths, **paths},
+            run_id=effective_run_id,
+            repo_snapshot_id=run_identity.repo_snapshot_id,
+            project_tree_hash=run_identity.project_tree_hash,
+            code_sha=run_identity.code_commit_sha,
+            run_identity=run_identity,
+            not_applicable_artifact_keys=tuple(
+                key
+                for key in expected_authoring_artifact_keys(effective_context_mode)
+                if key not in research_boundary_keys
+            ),
+            contract_stage="research_closure",
+        )
+        contract_path = write_authoring_run_contract(resolved_out, contract)
+        paths["authoring_run_contract_v1"] = contract_path
+        writer_artifact_paths["authoring_run_contract_v1"] = contract_path
+    if write_method_text and effective_context_mode == "unified" and research_failure_codes:
+        # Research closure is a hard pre-admission boundary.  Do not invoke
+        # the Writer (or create Formalizer/Writer phase admissions) when the
+        # repository evidence is still unresolved.
+        writer_status = "blocked"
+        writer_blocked_reason = (
+            "research_closure_admission_failed:"
+            + ",".join(research_failure_codes)
+        )
+    elif write_method_text:
         writer_paths, writer_status, writer_blocked_reason = _run_writer_surface(
             out_root=resolved_out,
             artifact_paths=dict(sorted(writer_artifact_paths.items())),
@@ -2459,6 +2747,14 @@ def run_autonomous_method_agent(
             source="research_graph",
             reason=gap.reason or gap.stopping_reason,
         ))
+    for failure_code in research_failure_codes:
+        product_issues.append(ProductAuthoringIssueV1(
+            issue_id=f"research-admission:{failure_code}",
+            issue_type="research_admission",
+            owner="research_continuation",
+            source="research_closure_admission_v1",
+            reason=failure_code,
+        ))
     if writer_status in {"incomplete", "blocked"}:
         product_issues.append(ProductAuthoringIssueV1(
             issue_id="writer:product_status",
@@ -2504,6 +2800,50 @@ def run_autonomous_method_agent(
                 source="section_writer_callback",
                 reason="writing-time callback remains open",
             ))
+    candidate_path_value = str(
+        writer_paths.get("publication_candidate_method")
+        or paths.get("publication_candidate_method")
+        or ""
+    )
+    verified_path_value = str(
+        writer_paths.get("repository_verified_method")
+        or paths.get("repository_verified_method")
+        or ""
+    )
+
+    def _nonempty_file(value: str) -> bool:
+        if not value:
+            return False
+        path = Path(value)
+        if not path.is_file():
+            return False
+        try:
+            return bool(path.read_text(encoding="utf-8").strip())
+        except (OSError, UnicodeError):
+            return False
+
+    candidate_nonempty = _nonempty_file(candidate_path_value)
+    verified_nonempty = _nonempty_file(verified_path_value)
+    verified_integrity_passed = verified_validation.get("status") == "passed"
+    research_blocked = bool(research_failure_codes) or research_run_state.get(
+        "status"
+    ) in {"blocked", "incomplete"}
+    if research_blocked and not candidate_nonempty:
+        product_terminal_status = "blocked"
+    elif writer_status == "blocked" and not candidate_nonempty:
+        product_terminal_status = "blocked"
+    elif (
+        candidate_nonempty
+        and verified_nonempty
+        and verified_integrity_passed
+        and writer_status == "success"
+        and not product_issues
+    ):
+        product_terminal_status = "completed"
+    elif candidate_nonempty:
+        product_terminal_status = "review_ready_with_warnings"
+    else:
+        product_terminal_status = "incomplete"
     try:
         _product_state, product_state_path = (
             persist_product_authoring_state_from_writer(
@@ -2517,13 +2857,7 @@ def run_autonomous_method_agent(
                         if callback_fulfillment is not None else ()
                     ),
                 ),
-                terminal_status=(
-                    "completed"
-                    if writer_status == "success" and not product_issues
-                    else "incomplete"
-                    if writer_status == "skipped_no_live_llm"
-                    else "review_ready_with_warnings"
-                ),
+                terminal_status=product_terminal_status,
                 stop_reason=(
                     writer_blocked_reason
                     or (
@@ -2654,6 +2988,7 @@ def run_autonomous_method_agent(
 def _writer_artifact_paths(out_root: Path) -> dict[str, str]:
     names = (
         "repo_snapshot_v2",
+        "repository_authoring_artifacts_v1",
         "repo_snapshot",
         "symbol_index_v2",
         "symbol_index",
@@ -2721,6 +3056,7 @@ def _run_writer_surface(
             out_root=out_root,
             artifact_paths=artifact_paths,
             llm_config=llm_config,
+            run_id=run_id,
             llm_caller=None,
             editor_caller=None,
             rewrite_caller=None,

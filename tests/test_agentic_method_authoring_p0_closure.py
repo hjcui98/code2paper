@@ -643,3 +643,138 @@ def test_formula_package_without_unique_consumer_is_not_accepted() -> None:
     assert result.packages == ()
     assert "consumer_not_unique:formula:normalize" in result.formula_route_failures
     assert result.required_formula_failures == ("formula:normalize",)
+
+
+def test_declaration_line_candidate_binds_to_symbol_body_nodes() -> None:
+    """A ``symbol:path:name:line`` candidate matches the symbol's body nodes.
+
+    Search results carry the declaration line, while behavior nodes are
+    statement-level spans after it; the previous containment test could never
+    match, leaving every candidate unbound from the behavior graph.
+    """
+
+    from code2paper.agentic.implementation_scope import _node_matches_candidate
+
+    symbols = (
+        SimpleNamespace(
+            symbol_id="sym:encoder",
+            path="src/model.py",
+            qualified_name="Encoder.forward",
+            kind="method",
+            start_line=10,
+            end_line=20,
+        ),
+    )
+    body_nodes = (
+        SimpleNamespace(
+            node_id="node:read",
+            symbol_id="sym:encoder",
+            source_span_id="span:src/model.py:12:12",
+        ),
+        SimpleNamespace(
+            node_id="node:call",
+            symbol_id="sym:encoder",
+            source_span_id="span:src/model.py:15:15",
+        ),
+    )
+    candidate = "symbol:src/model.py:forward:10"
+
+    assert all(
+        _node_matches_candidate(node, candidate, symbols=symbols)
+        for node in body_nodes
+    )
+    outside = SimpleNamespace(
+        node_id="node:outside",
+        symbol_id="sym:other",
+        source_span_id="span:src/model.py:40:40",
+    )
+    assert not _node_matches_candidate(outside, candidate, symbols=symbols)
+
+    scope = ImplementationScopeV1(
+        target_entry_symbol_ids=("sym:encoder",),
+        target_core_symbol_ids=("sym:encoder",),
+    )
+    graph = SimpleNamespace(
+        nodes=body_nodes,
+        relations=(),
+        unresolved_relations=(),
+    )
+    ledger = build_candidate_acquisition_ledger(
+        scope=scope,
+        agenda_items=(
+            SimpleNamespace(
+                obligation_id="obligation:encoder",
+                candidate_symbol_ids=[candidate],
+            ),
+        ),
+        observations=(),
+        behavior_graph=graph,
+        symbols=symbols,
+    )
+    record = ledger.by_key()[("obligation:encoder", candidate)]
+    assert record.behavior_graph_status == "built"
+    assert record.behavior_node_ids == ("node:read", "node:call")
+    assert record.terminal_status == "behavior_built"
+
+
+def test_failed_index_location_cannot_widen_into_a_sibling_symbol() -> None:
+    """An unresolved typed location remains rejected even on an overlapping span."""
+
+    from code2paper.agentic.implementation_scope import _node_matches_candidate
+
+    symbols = (
+        SimpleNamespace(
+            symbol_id="sym:valid",
+            path="src/model.py",
+            qualified_name="Model.valid",
+            kind="method",
+            start_line=10,
+            end_line=20,
+        ),
+    )
+    sibling_node = SimpleNamespace(
+        node_id="node:valid",
+        symbol_id="sym:valid",
+        source_span_id="span:src/model.py:12:12",
+    )
+
+    assert not _node_matches_candidate(
+        sibling_node,
+        "symbol:src/model.py:missing:10",
+        symbols=symbols,
+    )
+
+    from code2paper.agentic.research_nodes import (
+        _select_behavior_nodes_for_obligation,
+    )
+
+    graph = SimpleNamespace(nodes=(sibling_node,))
+    selected = _select_behavior_nodes_for_obligation(
+        graph,
+        candidate_symbol_ids=[],
+        candidate_behavior_node_ids=["behavior:src/model.py:missing:10"],
+        symbols=symbols,
+    )
+    assert selected == []
+
+    ledger = build_candidate_acquisition_ledger(
+        scope=ImplementationScopeV1(),
+        agenda_items=(SimpleNamespace(
+            obligation_id="obligation:identity",
+            candidate_symbol_ids=["symbol:src/model.py:missing:10"],
+        ),),
+        observations=(SimpleNamespace(
+            observation_id="observation:wide-read",
+            tool_name="read_code_span",
+            status="success",
+            result_refs=(),
+            exact_span_ids=("span:src/model.py:10:20",),
+            notebook=SimpleNamespace(discovered_symbols=()),
+        ),),
+        behavior_graph=graph,
+        symbols=symbols,
+    )
+    record = ledger.records[0]
+    assert record.rejection_code == "candidate_identity_resolution_failed"
+    assert record.claim_ids == ()
+    assert not record.terminal

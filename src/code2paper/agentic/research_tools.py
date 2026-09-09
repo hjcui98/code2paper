@@ -554,6 +554,8 @@ class RecordExplicitCodeGapInput(_ResearchToolInputBase):
     search_scope: tuple[str, ...] = Field(default_factory=tuple)
     attempted_tools: tuple[str, ...] = Field(default_factory=tuple)
     missing_relations: tuple[str, ...] = Field(default_factory=tuple)
+    gap_fields: tuple[str, ...] = Field(default_factory=tuple)
+    partial_gap: bool = False
     search_complete: bool = False
     scope_exhausted: bool = False
 
@@ -811,17 +813,30 @@ def read_symbol(
                 if item.path == rel_path and item.qualified_name == symbol
             ), None)
             if matched is not None:
-                start_line = max(1, matched.start_line - context_lines)
-                end_line = matched.end_line + context_lines
+                symbol_start_line = matched.start_line
+                symbol_end_line = matched.end_line
+                start_line = max(1, symbol_start_line - context_lines)
+                end_line = symbol_end_line + context_lines
                 return make_observation(
                     tool_call=tool_call,
                     status="success",
                     source_authority=classify_source_authority(rel_path),
-                    result_refs=(build_symbol_ref(rel_path, symbol, matched.start_line),),
-                    exact_span_ids=(f"span:{rel_path}:{start_line}:{end_line}",),
+                    result_refs=(build_symbol_ref(rel_path, symbol, symbol_start_line),),
+                    # Context is presentation-only.  The exact evidence
+                    # anchor must stay within the indexed symbol body so a
+                    # neighboring symbol cannot be promoted through a wide
+                    # read excerpt.
+                    exact_span_ids=(
+                        f"span:{rel_path}:{symbol_start_line}:{symbol_end_line}",
+                    ),
                     diagnostics=ResearchObservationDiagnosticsV1(
                         candidate_count=1,
-                        notes=(f"language_adapter={adapter.language}", f"symbol={symbol}", f"lines={start_line}-{end_line}"),
+                        notes=(
+                            f"language_adapter={adapter.language}",
+                            f"symbol={symbol}",
+                            f"symbol_lines={symbol_start_line}-{symbol_end_line}",
+                            f"excerpt_lines={start_line}-{end_line}",
+                        ),
                     ),
                     notebook=ResearchObservationNotebookV1(
                         summary=(
@@ -882,8 +897,9 @@ def read_symbol(
             ),
         )
 
-    symbol_start_line, end_line = span
+    symbol_start_line, symbol_end_line = span
     start_line = symbol_start_line
+    end_line = symbol_end_line
     if context_lines:
         start_line = max(1, start_line - context_lines)
         end_line = end_line + context_lines
@@ -893,10 +909,19 @@ def read_symbol(
         status="success",
         source_authority=authority,
         result_refs=(build_symbol_ref(rel_path, symbol, symbol_start_line),),
-        exact_span_ids=(f"span:{rel_path}:{start_line}:{end_line}",),
+        # ``context_lines`` only enlarges the human-readable excerpt.  It is
+        # not an evidence license and must not make a sibling function part
+        # of the symbol's exact source anchor.
+        exact_span_ids=(
+            f"span:{rel_path}:{symbol_start_line}:{symbol_end_line}",
+        ),
         diagnostics=ResearchObservationDiagnosticsV1(
             candidate_count=1,
-            notes=(f"symbol={symbol}", f"lines={start_line}-{end_line}"),
+            notes=(
+                f"symbol={symbol}",
+                f"symbol_lines={symbol_start_line}-{symbol_end_line}",
+                f"excerpt_lines={start_line}-{end_line}",
+            ),
         ),
         notebook=ResearchObservationNotebookV1(
             summary=(
@@ -1302,6 +1327,13 @@ def inspect_configuration(
         status="success" if not truncated else "truncated",
         source_authority=weakest,
         result_refs=result_refs,
+        # Configuration is a separate evidence lane, but it still needs an
+        # exact source anchor for provenance and for a later consumer-binding
+        # decision.  These spans must not be treated as executable behavior
+        # by promotion merely because they overlap a source file.
+        exact_span_ids=tuple(
+            f"span:{path}:{line}:{line}" for path, line, _, _ in bindings
+        ),
         diagnostics=ResearchObservationDiagnosticsV1(
             candidate_count=len(bindings),
             truncated=truncated,
@@ -2715,6 +2747,12 @@ def record_explicit_code_gap(
     missing_relations = tuple(
         _arg_value(tool_call, "missing_relations", default=()) or ()
     )
+    gap_fields = tuple(
+        str(value).strip()
+        for value in (_arg_value(tool_call, "gap_fields", default=()) or ())
+        if str(value).strip()
+    )
+    partial_gap = bool(_arg_value(tool_call, "partial_gap", default=False))
     search_complete = bool(
         _arg_value(tool_call, "search_complete", default=False)
     )
@@ -2751,6 +2789,7 @@ def record_explicit_code_gap(
     claim_root = (
         ctx.artifact_root / "research_tool_artifacts" / "authorized_claim_sets"
     )
+    authorized_positive_claim = False
     for path in sorted(claim_root.glob("*.json")) if claim_root.is_dir() else ():
         claim_set = AtomicClaimSetV3.model_validate_json(
             path.read_text(encoding="utf-8")
@@ -2760,8 +2799,12 @@ def record_explicit_code_gap(
             and claim.status in {"supported", "partial"}
             for claim in claim_set.claims
         ):
-            failures.append("gap_contradicts_authorized_positive_claim")
+            authorized_positive_claim = True
             break
+    if authorized_positive_claim and not partial_gap:
+        failures.append("gap_contradicts_authorized_positive_claim")
+    if partial_gap and not gap_fields:
+        failures.append("gap_partial_scope_missing")
     if failures:
         return make_observation(
             tool_call=tool_call,
@@ -2791,6 +2834,11 @@ def record_explicit_code_gap(
         "scope_exhausted": scope_exhausted,
         "terminal": True,
     }
+    if partial_gap:
+        # A bounded gap may coexist with already-authorized positive claims,
+        # but only when its unresolved fields are explicit and persisted.
+        payload["partial_gap"] = True
+        payload["gap_fields"] = list(gap_fields)
     existing = ctx.read_artifact("terminal_gaps", obligation_id_ref)
     replayed = existing is not None
     if existing is not None and existing != payload:

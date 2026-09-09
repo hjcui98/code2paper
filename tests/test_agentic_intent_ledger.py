@@ -154,3 +154,24 @@ def test_intent_coverage_scheduler_prioritization() -> None:
     assert schedule["unattempted_core_clause_ids"] == ("c2",)
     assert schedule["budget_constrained"] is True
     assert schedule["reserve_turns_needed"] == 1
+
+
+def test_seeded_candidate_does_not_count_as_core_research_attempt() -> None:
+    ledger = build_intent_implementation_ledger(
+        clauses=[{"clause_id": "c-seeded", "is_core": True}],
+        candidates_by_clause={"c-seeded": ["symbol:possible"]},
+    )
+
+    assert ledger.core_intent_attempt_coverage == 0.0
+    assert ledger.items[0].status == "author_spec_only"
+    assert ledger.items[0].query_attempts == ()
+
+    rejected = build_intent_implementation_ledger(
+        clauses=[{"clause_id": "c-rejected", "is_core": True}],
+        candidates_by_clause={"c-rejected": ["symbol:possible"]},
+        rejections_by_clause={
+            "c-rejected": "candidate_identity_resolution_failed",
+        },
+    )
+    assert rejected.core_intent_attempt_coverage == 1.0
+    assert rejected.items[0].status == "not_found_after_bounded_search"

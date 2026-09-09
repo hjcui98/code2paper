@@ -1148,6 +1148,32 @@ class TestSnapshotLoopStateRoundTrip:
 
         assert restore_loop_state_from_snapshot(runtime, payload) is None
 
+    def test_digest_without_authenticated_identity_sidecar_fails_closed(
+        self, snapshot: RepoSnapshot
+    ) -> None:
+        from code2paper.agentic.research_graph import (
+            initial_loop_state,
+            restore_loop_state_from_snapshot,
+            snapshot_loop_state,
+        )
+
+        obligation = _obligation("obl-sidecar", search_terms=("train",))
+        runtime = _runtime(
+            snapshot,
+            _agenda("run-sidecar", snapshot, obligation),
+            run_id="run-sidecar",
+        )
+        payload = snapshot_loop_state(initial_loop_state(runtime))
+
+        for digest_field, marker in (
+            ("symbol_index_digest", "sha256:missing-index"),
+            ("source_manifest_digest", "sha256:missing-manifest"),
+        ):
+            tampered = dict(payload)
+            tampered[digest_field] = marker
+            with pytest.raises(ValueError, match=digest_field.removesuffix("_digest")):
+                restore_loop_state_from_snapshot(runtime, tampered, strict=True)
+
     def test_round_trip_through_json_preserves_state(
         self, snapshot: RepoSnapshot
     ) -> None:

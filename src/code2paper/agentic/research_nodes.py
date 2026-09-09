@@ -69,6 +69,7 @@ from code2paper.agentic.execution_profile import (
 )
 from code2paper.agentic.implementation_scope import (
     ownership_rank,
+    resolve_candidate_binding,
     scope_role_for_candidate,
     seed_child_candidates_from_parents,
 )
@@ -76,6 +77,7 @@ from code2paper.agentic.research_models import (
     BUDGET_TOOL_KINDS,
     GapRequirementV1,
     GlobalSafetyBudgetV1,
+    CompileAttemptResultV1,
     PerObligationBudgetV1,
     ResearchAction,
     ResearchAgendaItemV1,
@@ -1315,20 +1317,22 @@ def _find_symbol_by_location(
     its operations into the running graph.
     """
 
-    for sym in symbol_index.symbols:
-        if (
-            sym.path == path
-            and sym.qualified_name == qualified_name
-            and sym.start_line == start_line
-        ):
-            return sym
-    # Fallback: match on (path, start_line) only — the qualified_name
-    # in the ref may differ from the index's qualified_name when the
-    # tool emits a short name (e.g. ``Bar`` vs ``module.Bar``).
-    for sym in symbol_index.symbols:
-        if sym.path == path and sym.start_line == start_line:
-            return sym
-    return None
+    binding = resolve_candidate_binding(
+        f"symbol:{path}:{qualified_name}:{start_line}",
+        symbols=tuple(getattr(symbol_index, "symbols", ()) or ()),
+        mode="updater",
+    )
+    if binding.ambiguous or len(binding.canonical_symbol_ids) != 1:
+        return None
+    symbol_id = binding.canonical_symbol_ids[0]
+    return next(
+        (
+            sym
+            for sym in (getattr(symbol_index, "symbols", ()) or ())
+            if str(getattr(sym, "symbol_id", "") or "") == symbol_id
+        ),
+        None,
+    )
 
 
 def _parse_behavior_ref_body(body: str) -> tuple[str, str, int] | None:
@@ -1361,6 +1365,7 @@ def behavior_graph_updater_node(
     behavior_graph: CodeBehaviorGraphV1,
     observations: tuple[ResearchObservationV1, ...],
     active_obligation_id: str,
+    symbol_index: Any | None = None,
 ) -> tuple[CodeBehaviorGraphV1, dict[str, Any]]:
     """Merge new behavior subgraphs extracted from observations.
 
@@ -1383,11 +1388,17 @@ def behavior_graph_updater_node(
 
     files = read_snapshot_files(runtime.repo_snapshot)
     adapter = runtime.language_adapter(files)
-    symbol_index = adapter.index_symbols(
-        repo_snapshot_id=runtime.repo_snapshot.snapshot_id,
-        project_tree_hash=runtime.repo_snapshot.project_tree_hash,
-        files=files,
-    )
+    # The repository indexer is the identity authority for the whole run.
+    # Reusing its explicit sidecar keeps qualified symbol ids stable across
+    # ingest, graph construction, compile, and promotion.  The local build
+    # remains a compatibility fallback for direct unit callers that have not
+    # entered the repository-indexed graph yet.
+    if symbol_index is None:
+        symbol_index = adapter.index_symbols(
+            repo_snapshot_id=runtime.repo_snapshot.snapshot_id,
+            project_tree_hash=runtime.repo_snapshot.project_tree_hash,
+            files=files,
+        )
     updated_graph = behavior_graph
     new_predicates: set[str] = set()
     new_relations: set[str] = set()
@@ -1616,6 +1627,7 @@ def _select_behavior_nodes_for_obligation(
     *,
     candidate_symbol_ids: list[str],
     candidate_behavior_node_ids: list[str],
+    symbols: Iterable[Any] = (),
 ) -> list[Any]:
     """Select behavior nodes relevant to an obligation.
 
@@ -1635,6 +1647,7 @@ def _select_behavior_nodes_for_obligation(
     """
 
     nodes_by_id = {n.node_id: n for n in behavior_graph.nodes}
+    selected: list[Any] = []
     if candidate_behavior_node_ids:
         normalized_node_ids = {
             value.removeprefix("behavior:")
@@ -1646,8 +1659,24 @@ def _select_behavior_nodes_for_obligation(
             for nid in normalized_node_ids
             if nid in nodes_by_id
         ]
-    else:
-        selected = _match_nodes_by_candidate(behavior_graph.nodes, candidate_symbol_ids)
+    if not selected:
+        # ``behavior:<path>:<name>:<line>`` refs are symbol locations, not
+        # node ids.  Preferring them used to select nothing and the obligation
+        # silently compiled an empty packet; fall back to the typed matcher,
+        # which resolves both ``symbol:`` and location refs.
+        selected = _match_nodes_by_candidate(
+            behavior_graph.nodes, candidate_symbol_ids, symbols=symbols
+        )
+    if not selected and candidate_behavior_node_ids:
+        selected = _match_nodes_by_candidate(
+            behavior_graph.nodes,
+            # Keep the typed ``behavior:`` prefix intact.  Stripping it here
+            # turns a location ref into an untyped ``path:name:line`` string,
+            # which would re-enable the legacy path-wide fallback and bind
+            # sibling nodes after identity resolution failed.
+            [str(value) for value in candidate_behavior_node_ids if value],
+            symbols=symbols,
+        )
     # De-duplicate by node_id while preserving sorted order for determinism.
     seen: set[str] = set()
     unique: list[Any] = []
@@ -1662,6 +1691,8 @@ def _select_behavior_nodes_for_obligation(
 def _match_nodes_by_candidate(
     nodes: list[Any],
     candidate_symbol_ids: list[str],
+    *,
+    symbols: Iterable[Any] = (),
 ) -> list[Any]:
     """Match behavior nodes against heterogeneous candidate identifiers.
 
@@ -1674,19 +1705,48 @@ def _match_nodes_by_candidate(
 
     if not candidate_symbol_ids:
         return []
-    # Typed symbol refs carry the exact indexed symbol location.  Prefer
-    # those over seed paths, otherwise a successful lookup of one function
-    # can accidentally compile every operation in the same file.
-    typed_symbol_ids = {
-        make_symbol_id(path, name, line)
-        for candidate in candidate_symbol_ids
-        if (parsed := split_symbol_ref(candidate)) is not None
-        for path, name, line in (parsed,)
-    }
-    if typed_symbol_ids:
-        return [n for n in nodes if n.symbol_id in typed_symbol_ids]
-
+    # Resolve typed locations through the shared identity boundary.  A typed
+    # candidate is never widened to a whole-file/path match after an
+    # ambiguous or missing-index resolution.
+    symbol_items = tuple(symbols)
     selected: list[Any] = []
+    saw_typed_candidate = False
+    for candidate in candidate_symbol_ids:
+        binding = resolve_candidate_binding(
+            candidate,
+            symbols=symbol_items,
+            behavior_nodes=nodes,
+            mode="match",
+        )
+        if (
+            split_symbol_ref(candidate) is not None
+            or split_span_ref(candidate) is not None
+            or is_behavior_ref(candidate)
+        ):
+            saw_typed_candidate = True
+        compatibility_identity = (
+            binding.rejection_code == "symbol_index_not_available_to_compile"
+            and bool(binding.behavior_node_ids)
+            and any(
+                str(getattr(node, "symbol_id", "") or "")
+                in set(binding.canonical_symbol_ids)
+                for node in nodes
+                if str(getattr(node, "node_id", "") or "")
+                in set(binding.behavior_node_ids)
+            )
+        )
+        if binding.ambiguous or (
+            binding.rejection_code and not compatibility_identity
+        ):
+            continue
+        selected.extend(
+            node
+            for node in nodes
+            if str(getattr(node, "node_id", "") or "") in binding.behavior_node_ids
+        )
+    if saw_typed_candidate:
+        return selected
+
     for candidate in candidate_symbol_ids:
         if not candidate:
             continue
@@ -1936,6 +1996,10 @@ def _rank_relevant_behavior_nodes(
     symbol_terms: dict[str, set[str]] = {}
     for candidate in obligation.candidate_symbol_ids:
         parsed = split_symbol_ref(candidate)
+        if parsed is None and is_behavior_ref(candidate):
+            parsed = _parse_behavior_ref_body(
+                candidate.split(":", 1)[1] if ":" in candidate else ""
+            )
         if parsed is None:
             continue
         path, name, line = parsed
@@ -2522,7 +2586,29 @@ def _compile_data_plane_failure(
     }
 
 
-def compile_candidate_node(
+def _compile_identity_failure(
+    *,
+    state: AgentStateV3,
+    obligation: ResearchAgendaItemV1,
+    code: str,
+    detail: str = "",
+) -> dict[str, Any]:
+    """Return an identity failure without converting it into a repository gap."""
+
+    requirement = f"identity:{code}" + (f":{detail}" if detail else "")
+    if requirement not in obligation.missing_information:
+        obligation.missing_information.append(requirement)
+    issue_token = hashlib.sha256(requirement.encode("utf-8")).hexdigest()[:16]
+    return {
+        "status": "researching",
+        "active_issue_id": f"issue:identity:{issue_token}",
+        "blocked_reason": code,
+        "candidate_symbol_ids": list(obligation.candidate_symbol_ids),
+        "candidate_behavior_node_ids": list(obligation.candidate_behavior_node_ids),
+    }
+
+
+def _compile_candidate_node_impl(
     state: AgentStateV3,
     *,
     runtime: ResearchGraphRuntime,
@@ -2530,6 +2616,7 @@ def compile_candidate_node(
     active_obligation_id: str,
     gain_tracker: InformationGainTracker,
     implementation_scope: ImplementationScopeV1 | None = None,
+    symbol_index: Any | None = None,
 ) -> dict[str, Any]:
     """Compile the active obligation's candidate into authorized claims (R4).
 
@@ -2578,10 +2665,80 @@ def compile_candidate_node(
     if active_obligation.status in {"supported", "explicit_gap", "blocked"}:
         return {"status": "researching"}
 
+    def _is_indexed_location_candidate(value: Any) -> bool:
+        raw_value = str(value)
+        if split_symbol_ref(raw_value) is not None:
+            return True
+        if is_behavior_ref(raw_value):
+            return _parse_behavior_ref_body(
+                raw_value.split(":", 1)[1] if ":" in raw_value else ""
+            ) is not None
+        return False
+
+    typed_candidates = tuple(
+        candidate
+        for candidate in (
+            *tuple(active_obligation.candidate_symbol_ids or ()),
+            *tuple(active_obligation.candidate_behavior_node_ids or ()),
+        )
+        if _is_indexed_location_candidate(candidate)
+    )
+    if typed_candidates and symbol_index is None:
+        # A legacy direct caller may already carry a stable symbol id whose
+        # exact (path, name, declaration-line) identity is present on the
+        # behavior node.  That is safe to retain for compatibility.  A leaf
+        # ref that only becomes qualified through the repository index must
+        # fail here instead of widening to a file/path match.
+        unresolved_without_index = []
+        for candidate in typed_candidates:
+            parsed = split_symbol_ref(str(candidate))
+            if parsed is None and is_behavior_ref(str(candidate)):
+                parsed = _parse_behavior_ref_body(
+                    str(candidate).split(":", 1)[1]
+                    if ":" in str(candidate) else ""
+                )
+            direct_id = (
+                make_symbol_id(parsed[0], parsed[1], parsed[2])
+                if parsed is not None else ""
+            )
+            if not any(
+                str(getattr(node, "symbol_id", "") or "") == direct_id
+                for node in behavior_graph.nodes
+            ):
+                unresolved_without_index.append(candidate)
+        if unresolved_without_index:
+            return _compile_identity_failure(
+                state=state,
+                obligation=active_obligation,
+                code="symbol_index_not_available_to_compile",
+            )
+    symbol_items = tuple(getattr(symbol_index, "symbols", ()) or ())
+    for candidate in typed_candidates:
+        binding = resolve_candidate_binding(
+            candidate,
+            symbols=symbol_items,
+            behavior_nodes=behavior_graph.nodes,
+            mode="compile",
+        )
+        if (
+            binding.rejection_code == "symbol_index_not_available_to_compile"
+            and binding.behavior_node_ids
+        ):
+            # Exact stable-id compatibility path handled above.  It is not
+            # the leaf-to-qualified resolution path that requires the index.
+            continue
+        if binding.ambiguous or binding.rejection_code:
+            return _compile_identity_failure(
+                state=state,
+                obligation=active_obligation,
+                code=(binding.rejection_code or "candidate_identity_resolution_failed"),
+                detail=str(candidate),
+            )
     selected_nodes = _select_behavior_nodes_for_obligation(
         behavior_graph,
         candidate_symbol_ids=active_obligation.candidate_symbol_ids,
         candidate_behavior_node_ids=active_obligation.candidate_behavior_node_ids,
+        symbols=symbol_items,
     )
     if implementation_scope is not None:
         # Scope is an authorization/ranking boundary, not a relevance score.
@@ -3022,6 +3179,171 @@ def compile_candidate_node(
     }
 
 
+def _evidence_ids_for_attempt(value: Any | None) -> tuple[tuple[str, ...], tuple[str, ...], tuple[str, ...]]:
+    """Extract concrete packet/fact/claim ids from a compile sidecar."""
+
+    if value is None:
+        return (), (), ()
+    def nested(name: str) -> Any:
+        if isinstance(value, Mapping):
+            return value.get(name)
+        return getattr(value, name, None)
+
+    return (
+        tuple(
+            str(getattr(item, "packet_id", "") or "")
+            for item in (getattr(nested("packet_set"), "packets", ()) or ())
+            if str(getattr(item, "packet_id", "") or "")
+        ),
+        tuple(
+            str(getattr(item, "fact_id", "") or "")
+            for item in (getattr(nested("fact_set"), "facts", ()) or ())
+            if str(getattr(item, "fact_id", "") or "")
+        ),
+        tuple(
+            str(getattr(item, "claim_id", "") or "")
+            for item in (getattr(nested("claim_set"), "claims", ()) or ())
+            if str(getattr(item, "claim_id", "") or "")
+        ),
+    )
+
+
+def compile_candidate_node(
+    state: AgentStateV3,
+    *,
+    runtime: ResearchGraphRuntime,
+    behavior_graph: CodeBehaviorGraphV1,
+    active_obligation_id: str,
+    gain_tracker: InformationGainTracker,
+    implementation_scope: ImplementationScopeV1 | None = None,
+    symbol_index: Any | None = None,
+    source_manifest: Any | None = None,
+    prior_compiled_evidence: Any | None = None,
+) -> dict[str, Any]:
+    """Run compilation and always emit a structured, digest-pinned attempt."""
+
+    update = _compile_candidate_node_impl(
+        state,
+        runtime=runtime,
+        behavior_graph=behavior_graph,
+        active_obligation_id=active_obligation_id,
+        gain_tracker=gain_tracker,
+        implementation_scope=implementation_scope,
+        symbol_index=symbol_index,
+    )
+    if "_compile_attempt" in update:
+        return update
+
+    obligation = next(
+        (
+            item
+            for item in runtime.agenda.items
+            if str(getattr(item, "obligation_id", "")) == str(active_obligation_id)
+        ),
+        None,
+    )
+    raw_ref_values: list[Any] = []
+    if obligation is not None:
+        raw_ref_values.extend(getattr(obligation, "candidate_symbol_ids", ()) or ())
+        raw_ref_values.extend(
+            getattr(obligation, "candidate_behavior_node_ids", ()) or ()
+        )
+    raw_refs = tuple(
+        str(value) for value in raw_ref_values if str(value).strip()
+    )
+    symbol_items = tuple(getattr(symbol_index, "symbols", ()) or ())
+    bindings = [
+        resolve_candidate_binding(
+            ref,
+            symbols=symbol_items,
+            behavior_nodes=behavior_graph.nodes,
+            mode="compile",
+        )
+        for ref in raw_refs
+    ]
+    canonical_ids = tuple(
+        dict.fromkeys(
+            symbol_id
+            for binding in bindings
+            for symbol_id in binding.canonical_symbol_ids
+        )
+    )
+    selected_node_ids = tuple(
+        dict.fromkeys(
+            node_id
+            for binding in bindings
+            for node_id in binding.behavior_node_ids
+        )
+    )
+    before_packets, before_facts, before_claims = _evidence_ids_for_attempt(
+        prior_compiled_evidence
+    )
+    after_value = update.get("_compiled_evidence") or update.get("_partial_evidence")
+    after_packets, after_facts, after_claims = _evidence_ids_for_attempt(after_value)
+    blocked_reason = str(update.get("blocked_reason", "") or "")
+    rejection_code = ""
+    if blocked_reason and blocked_reason != "supervisor_stop_blocked":
+        rejection_code = blocked_reason
+    elif obligation is not None:
+        identity_requirement = next(
+            (
+                str(value).split(":", 1)[1]
+                for value in (getattr(obligation, "missing_information", ()) or ())
+                if str(value).startswith("identity:")
+            ),
+            "",
+        )
+        rejection_code = identity_requirement or (
+            "data_plane_failure"
+            if str(update.get("active_issue_id", "")).startswith("issue:data-plane:")
+            else ""
+        )
+    retry_owner = "research_manager"
+    if "_compiled_evidence" in update:
+        outcome_stage = "compiled"
+        retry_owner = "none"
+    elif "_partial_evidence" in update:
+        outcome_stage = "partial"
+        retry_owner = "research_manager"
+    elif "_gap_accepted" in update:
+        outcome_stage = "gap"
+        retry_owner = "none" if update.get("_gap_accepted") else "research_manager"
+    elif update.get("status") == "blocked":
+        outcome_stage = "blocked"
+        retry_owner = "none"
+    elif rejection_code.startswith("candidate_identity") or rejection_code.startswith(
+        "symbol_index"
+    ):
+        outcome_stage = "identity_resolution"
+        retry_owner = "repository_indexer"
+    elif rejection_code:
+        outcome_stage = "data_plane"
+    else:
+        outcome_stage = "no_progress"
+    update["_compile_attempt"] = CompileAttemptResultV1(
+        obligation_id=str(active_obligation_id or "unknown"),
+        raw_candidate_refs=raw_refs,
+        canonical_symbol_ids=canonical_ids,
+        selected_behavior_node_ids=selected_node_ids,
+        packet_ids_before=before_packets,
+        packet_ids_after=after_packets,
+        fact_ids_before=before_facts,
+        fact_ids_after=after_facts,
+        claim_ids_before=before_claims,
+        claim_ids_after=after_claims,
+        outcome_stage=outcome_stage,
+        rejection_code=rejection_code,
+        retry_owner=retry_owner,
+        repo_snapshot_id=runtime.repo_snapshot.snapshot_id,
+        project_tree_hash=runtime.repo_snapshot.project_tree_hash,
+        symbol_index_digest=str(getattr(symbol_index, "content_digest", "") or ""),
+        source_manifest_digest=str(
+            getattr(source_manifest, "content_digest", "") or ""
+        ),
+    )
+    return update
+
+
 def _target_semantic_requirements_for_search(
     target: TypedBehaviorTargetV1,
 ) -> dict[str, str]:
@@ -3156,6 +3478,21 @@ def gap_finalizer_node(
         for item in active_obligation.missing_information
         if item.startswith("typed_relation:")
     )
+    partial_gap = (
+        active_obligation.status == "partial"
+        and bool(active_obligation.supported_claim_ids)
+    )
+    gap_fields = tuple(
+        str(value).strip()
+        for value in active_obligation.missing_information
+        if str(value).strip()
+    )
+    if partial_gap and not gap_fields:
+        # A partial compile can retain a validated claim while the alignment
+        # layer has no finer-grained missing token (for example an empty
+        # target slot).  Keep the bounded remainder explicit instead of
+        # allowing an unscoped partial gap or looping forever.
+        gap_fields = (f"obligation_remainder:{active_obligation_id}",)
     gap_observation = _execute_compile_data_plane_tool(
         ctx=runtime.tool_context(),
         obligation_id=active_obligation_id,
@@ -3171,6 +3508,8 @@ def gap_finalizer_node(
             "search_scope": search_scope,
             "attempted_tools": attempted_tools,
             "missing_relations": missing_relations,
+            "gap_fields": gap_fields,
+            "partial_gap": partial_gap,
             "search_complete": True,
             "scope_exhausted": bool(
                 gain_tracker.exhausted_tools(active_obligation_id)
@@ -3209,7 +3548,24 @@ def gap_finalizer_node(
         requirement_id=f"gap-req:{active_obligation_id}:{gap_ref}",
         description=(
             f"Exhaustive search for obligation {active_obligation_id} did not "
-            f"yield sufficient executable evidence to compile a supported claim."
+            f"yield sufficient executable evidence for the unresolved fields: "
+            f"{', '.join(gap_fields) if gap_fields else 'the complete obligation'}."
+        ),
+        required_predicate=next(
+            (
+                value.split(":", 1)[1]
+                for value in gap_fields
+                if value.startswith("typed_predicate:")
+            ),
+            "",
+        ),
+        required_relation=next(
+            (
+                value.split(":", 1)[1]
+                for value in gap_fields
+                if value.startswith("typed_relation:")
+            ),
+            "",
         ),
         # Preserve the actual frozen-source scope.  Recording the obligation
         # id here loses the provenance needed to audit an explicit gap.
@@ -3226,7 +3582,8 @@ def gap_finalizer_node(
         for requirement in active_obligation.gap_requirements
     ):
         active_obligation.gap_requirements.append(gap_requirement)
-    active_obligation.status = "explicit_gap"
+    if not partial_gap:
+        active_obligation.status = "explicit_gap"
 
     return {
         "explicit_gap_set_ref": new_gaps,

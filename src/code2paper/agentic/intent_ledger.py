@@ -151,7 +151,11 @@ def build_intent_implementation_ledger(
         ops = tuple(dict.fromkeys(str(o).strip() for o in op_map.get(cid, ()) if str(o).strip()))
         rejection = str(rej_map.get(cid, "")).strip()
 
-        has_attempt = bool(queries or candidates)
+        # A seeded candidate is a hypothesis, not a research attempt.  Core
+        # breadth coverage must be earned by an actual query/read action or a
+        # typed rejection; otherwise an intent-only candidate can make a
+        # never-searched obligation look attempted.
+        has_attempt = bool(queries or rejection)
         if is_core:
             total_core += 1
             if has_attempt:
@@ -176,7 +180,7 @@ def build_intent_implementation_ledger(
             status = "implemented_exact"
         elif facts or ops:
             status = "implemented_partial"
-        elif reads and rejection:
+        elif rejection:
             status = "repo_mismatch" if "mismatch" in rejection else "not_found_after_bounded_search"
         elif queries:
             status = "not_found_after_bounded_search"

@@ -74,6 +74,8 @@ MethodPlanReadiness = Literal[
     "candidate_ready",
     "candidate_ready_with_review",
     "blocked_for_safety",
+    "not_built",
+    "blocked_by_research",
 ]
 
 METHOD_PLAN_READINESS_STATES: tuple[MethodPlanReadiness, ...] = (
@@ -81,6 +83,8 @@ METHOD_PLAN_READINESS_STATES: tuple[MethodPlanReadiness, ...] = (
     "candidate_ready",
     "candidate_ready_with_review",
     "blocked_for_safety",
+    "not_built",
+    "blocked_by_research",
 )
 
 StoryNodeRoleV1 = Literal[

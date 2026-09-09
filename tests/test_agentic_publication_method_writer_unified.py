@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import hashlib
+import os
 from pathlib import Path
 from types import SimpleNamespace
 from typing import Any
@@ -43,6 +44,182 @@ from code2paper.agentic.mechanism_context_models import (
 from code2paper.schemas import LLMConfig
 from tests.test_agentic_publication_method_writer import _artifacts, _config
 from tests.test_agentic_mechanism_formalizer import _make_context
+
+
+def _unified_budget_env() -> None:
+    """Explicit small V2 live-budget values for deterministic tests."""
+
+    os.environ.update({
+        "CODE2PAPER_UNIFIED_MAX_PAGE_INPUT_TOKENS": "20000",
+        "CODE2PAPER_UNIFIED_MAX_TOTAL_INPUT_TOKENS": "400000",
+        "CODE2PAPER_UNIFIED_MAX_FORMALIZER_CALLS": "32",
+        "CODE2PAPER_UNIFIED_MAX_WRITER_CALLS": "64",
+        "CODE2PAPER_UNIFIED_MAX_REALIZER_CALLS": "64",
+        "CODE2PAPER_UNIFIED_MAX_OBLIGATIONS_PER_PAGE": "8",
+        "CODE2PAPER_UNIFIED_MAX_FORMULA_REPAIR_CALLS": "4",
+        "CODE2PAPER_MODEL_CONTEXT_TOKENS": "131072",
+    })
+
+
+def _clear_unified_budget_env() -> None:
+    for key in (
+        "CODE2PAPER_UNIFIED_MAX_PAGE_INPUT_TOKENS",
+        "CODE2PAPER_UNIFIED_MAX_TOTAL_INPUT_TOKENS",
+        "CODE2PAPER_UNIFIED_MAX_FORMALIZER_CALLS",
+        "CODE2PAPER_UNIFIED_MAX_WRITER_CALLS",
+        "CODE2PAPER_UNIFIED_MAX_REALIZER_CALLS",
+        "CODE2PAPER_UNIFIED_MAX_OBLIGATIONS_PER_PAGE",
+        "CODE2PAPER_UNIFIED_MAX_FORMULA_REPAIR_CALLS",
+        "CODE2PAPER_MODEL_CONTEXT_TOKENS",
+    ):
+        os.environ.pop(key, None)
+
+
+def _with_source_manifest(paths: dict[str, str], tmp_path: Path) -> dict[str, str]:
+    """Write the complete repository-authority closure required by V2."""
+
+    from code2paper.agentic.behavior_graph import SymbolIndexV2, SymbolRefV1
+    from code2paper.agentic.repo_snapshot import RepoSnapshot, SnapshotFile
+    from code2paper.agentic.research_models import ImplementationScopeV1
+    from code2paper.agentic.repository_authoring_artifacts import (
+        repository_authoring_identity_payload,
+    )
+    from code2paper.agentic.source_inventory import (
+        RepositorySourceEntryV1,
+        RepositorySourceManifestV1,
+    )
+
+    # The fixture evidence uses a stable synthetic source digest.  The source
+    # file is still materialized because the compiler's resolver reads the
+    # frozen snapshot root when it builds operation excerpts.
+    source_path = tmp_path / "encoder.py"
+    source_path.write_text(
+        "class Encoder:\n    def read(self, configured_input):\n        return configured_input\n",
+        encoding="utf-8",
+    )
+    snapshot = RepoSnapshot(
+        snapshot_id="repo:writer",
+        project_root=str(tmp_path),
+        project_tree_hash="sha256:tree",
+        included_files=[SnapshotFile(
+            path="encoder.py",
+            size=source_path.stat().st_size,
+            content_digest="sha256:source",
+        )],
+    )
+    symbol = SymbolRefV1(
+        symbol_id="sym:encoder",
+        path="encoder.py",
+        qualified_name="Encoder",
+        kind="class",
+        start_line=1,
+        end_line=3,
+    )
+    symbol_index = SymbolIndexV2(
+        repo_snapshot_id=snapshot.snapshot_id,
+        project_tree_hash=snapshot.project_tree_hash,
+        indexed_files=1,
+        indexed_symbols=1,
+        symbols=[symbol],
+        content_digest="sha256:fixture-symbol-index",
+    )
+    scope = ImplementationScopeV1(
+        target_entry_symbol_ids=(symbol.symbol_id,),
+        target_core_symbol_ids=(symbol.symbol_id,),
+        ownership_evidence_refs=(symbol_index.content_digest,),
+        confidence=1.0,
+    )
+    entry = RepositorySourceEntryV1(
+        path="encoder.py",
+        source_kind="first_party_executable",
+        ownership_role="target_core",
+        executable_authority=True,
+        content_digest="sha256:source",
+        symbol_ids=(symbol.symbol_id,),
+        classification_reason="fixture:first_party_executable",
+    )
+    manifest = RepositorySourceManifestV1(
+        repo_snapshot_id=snapshot.snapshot_id,
+        project_tree_hash=snapshot.project_tree_hash,
+        entries=(entry,),
+        target_core_paths=(entry.path,),
+    )
+
+    authoring_root = tmp_path / "artifacts" / "06_authoring"
+    authoring_root.mkdir(parents=True, exist_ok=True)
+    artifact_models = {
+        "repo_snapshot_v2": snapshot,
+        "repo_snapshot": snapshot,
+        "symbol_index_v2": symbol_index,
+        "symbol_index": symbol_index,
+        "implementation_scope_v1": scope,
+        "repository_source_manifest_v1": manifest,
+    }
+    for key, model in artifact_models.items():
+        path = authoring_root / f"{key}.json"
+        path.write_text(model.model_dump_json(indent=2), encoding="utf-8")
+        paths[key] = str(path)
+    identity_path = authoring_root / "repository_authoring_artifacts_v1.json"
+    identity_path.write_text(
+        json.dumps(
+            repository_authoring_identity_payload(
+                snapshot=snapshot,
+                symbol_index=symbol_index,
+                implementation_scope=scope,
+                source_manifest=manifest,
+            ),
+            ensure_ascii=False,
+            indent=2,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    paths["repository_authoring_artifacts_v1"] = str(identity_path)
+    return paths
+
+
+def _unified_artifacts(tmp_path: Path) -> dict[str, str]:
+    """Base artifacts plus the V2 source/budget preconditions."""
+
+    _unified_budget_env()
+    paths = _artifacts(tmp_path)
+    paths = _with_source_manifest(paths, tmp_path)
+    from code2paper.agentic.intent_compiler_v2 import IntentObligationGraphV2
+    from code2paper.agentic.repo_snapshot import RepoSnapshot
+    from code2paper.agentic.v3_runtime import build_research_agenda_from_intent_graph
+
+    graph = IntentObligationGraphV2(
+        method_goal="Explain the encoder.",
+        obligations=[{
+            "obligation_id": "obl-main",
+            "kind": "method_mainline",
+            "priority": "must_cover",
+            "source_field": "method_mainline",
+            "author_text": "Explain the encoder.",
+        }],
+    )
+    graph_path = tmp_path / "artifacts" / "intent_obligation_graph_v2.json"
+    graph_path.write_text(graph.model_dump_json(indent=2) + "\n")
+    snapshot = RepoSnapshot.model_validate_json(
+        Path(paths["repo_snapshot_v2"]).read_text()
+    )
+    agenda = build_research_agenda_from_intent_graph(
+        graph,
+        run_id="run:writer-fixture",
+        repo_snapshot=snapshot,
+    )
+    # The unified writer fixture represents a completed research hand-off;
+    # pending is reserved for the research supervisor and must fail the live
+    # admission gate.
+    for item in agenda.items:
+        item.status = "supported"
+        item.supported_claim_ids = ["claim-read"]
+    agenda.refresh_content_digest()
+    agenda_path = tmp_path / "artifacts" / "research_agenda_v1.json"
+    agenda_path.write_text(agenda.model_dump_json(indent=2) + "\n")
+    paths["intent_obligation_graph_v2"] = str(graph_path)
+    paths["research_agenda_v1"] = str(agenda_path)
+    return paths
 
 
 def _mock_writer_caller(config: LLMConfig, request: LLMRequest) -> LLMResponse:
@@ -132,7 +309,7 @@ def _mock_writer_caller(config: LLMConfig, request: LLMRequest) -> LLMResponse:
 
 
 def test_run_publication_method_writer_unified_mode(tmp_path: Path) -> None:
-    paths = _artifacts(tmp_path)
+    paths = _unified_artifacts(tmp_path)
 
     result, outputs = run_publication_method_writer(
         out_root=tmp_path,
@@ -178,7 +355,7 @@ def test_run_publication_method_writer_unified_mode(tmp_path: Path) -> None:
         Path(outputs["mechanism_context_set_v1"]).read_text(encoding="utf-8")
     )
     assert len(context_set.contexts) >= 1
-    assert context_set.contexts[0].mechanism_id == "mech_core"
+    assert context_set.contexts[0].mechanism_id == "mech_sym:encoder"
 
     # Validate NarrativePlanV3
     plan_v3 = NarrativePlanV3.model_validate_json(
@@ -303,7 +480,7 @@ def test_realizer_receipt_cannot_satisfy_section_writer_receipt() -> None:
         )
 
 
-def test_formalizer_delivery_probe_is_one_actual_request_per_page() -> None:
+def test_formalizer_without_formula_obligations_does_not_probe_pages() -> None:
     context = _make_context()
     view = build_mechanism_context_view(context)
     first = build_mechanism_context_slices(view)[0]
@@ -334,12 +511,13 @@ def test_formalizer_delivery_probe_is_one_actual_request_per_page() -> None:
         page_manifests={context.mechanism_id: manifest},
     )
 
-    assert len(requests) == 2
-    assert [request.input_payload["shared_payload_page_index"] for request in requests] == [0, 1]
-    assert all(len(request.input_payload["shared_payload_pages"]) == 1 for request in requests)
-    assert traces[0]["formalizer_page_delivery_receipts"][0]["accepted"] is True
+    assert requests == []
+    assert traces[0]["formalizer_page_delivery_receipts"][0]["accepted"] is False
+    assert traces[0]["formalizer_page_delivery_receipts"][0]["rejection_code"] == (
+        "formalizer_request_not_observed"
+    )
 def test_run_publication_method_writer_shadow_unified_mode(tmp_path: Path) -> None:
-    paths = _artifacts(tmp_path)
+    paths = _unified_artifacts(tmp_path)
 
     result, outputs = run_publication_method_writer(
         out_root=tmp_path,
@@ -364,7 +542,7 @@ def test_run_publication_method_writer_env_var_unified_cutover(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     monkeypatch.setenv("CODE2PAPER_AUTHORING_CONTEXT_MODE", "unified")
-    paths = _artifacts(tmp_path)
+    paths = _unified_artifacts(tmp_path)
 
     result, outputs = run_publication_method_writer(
         out_root=tmp_path,
@@ -387,7 +565,7 @@ def test_validate_authoring_run_contract_satisfied(tmp_path: Path) -> None:
         validate_authoring_run_contract,
     )
 
-    paths = _artifacts(tmp_path)
+    paths = _unified_artifacts(tmp_path)
     result, outputs = run_publication_method_writer(
         out_root=tmp_path,
         artifact_paths=paths,
@@ -413,7 +591,7 @@ def test_run_publication_method_writer_expected_artifact_gate_fail_closed(
     from unittest.mock import patch
     from code2paper.agentic.authoring_context_contract import build_authoring_run_contract
 
-    paths = _artifacts(tmp_path)
+    paths = _unified_artifacts(tmp_path)
     # Simulate an output file being deleted or missing from outputs before contract check
     orig_build = build_authoring_run_contract
 

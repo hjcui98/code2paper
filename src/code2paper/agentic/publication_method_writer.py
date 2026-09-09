@@ -8,10 +8,11 @@ import shutil
 import os
 import re
 import tempfile
+import time
 from collections.abc import Callable, Iterable, Mapping
 from pathlib import Path
 from types import SimpleNamespace
-from typing import Any, Literal
+from typing import Any, Literal, Sequence
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
@@ -80,7 +81,7 @@ from code2paper.agentic.text_repair_supervisor import (
     derive_repair_issues,
     failure_to_repair_scope,
 )
-from code2paper.agentic.research_models import TextRepairIssueV1
+from code2paper.agentic.research_models import ResearchAgendaV1, TextRepairIssueV1
 from code2paper.agentic.tool_runtime import atomic_write_bytes
 from code2paper.agentic.method_argument_models import (
     ConfigurationClaimSetV1,
@@ -138,9 +139,15 @@ from code2paper.agentic.publication_transaction_contract import (
 from code2paper.agentic.authoring_context_contract import (
     AuthoringContextMode,
     AuthoringRunContractV1,
+    RunIdentityV1,
     build_authoring_run_contract,
     resolve_authoring_context_mode,
     write_authoring_run_contract,
+)
+from code2paper.agentic.research_promotion import ObservationPromotionLedgerV1
+from code2paper.agentic.research_terminal import (
+    build_research_closure_admission,
+    evaluate_obligation_terminal_proof,
 )
 from code2paper.agentic.mechanism_realizer_composer import (
     MechanismDraftV1,
@@ -192,6 +199,47 @@ def _default_llm_caller(config: LLMConfig, request: LLMRequest) -> LLMResponse:
     """
 
     return LLMClient(config).complete(request)
+
+
+def _configured_model_context_tokens(
+    llm_config: LLMConfig,
+    *,
+    allow_legacy_default: bool,
+) -> int:
+    """Resolve a model context limit without inventing a V2 capability.
+
+    Unified admission must bind the limit to an explicit environment value or
+    the loaded capability profile.  The historical 131072 fallback remains
+    available only to the legacy lane so an unprofiled V2 request fails closed
+    before its first model call.
+    """
+
+    for key in (
+        "CODE2PAPER_MODEL_CONTEXT_TOKENS",
+        "CODE2PAPER_LLM_CONTEXT_TOKENS",
+    ):
+        raw = str(os.environ.get(key, "") or "").strip()
+        if not raw:
+            continue
+        try:
+            value = int(raw)
+        except ValueError:
+            return 0
+        return value if value > 0 else 0
+    try:
+        from code2paper.llm.capabilities import load_capability_profile
+
+        provider = getattr(llm_config.provider, "value", llm_config.provider)
+        capability = load_capability_profile(
+            provider=str(provider or ""),
+            model=str(getattr(llm_config, "model", "") or ""),
+        )
+        value = int(getattr(capability, "max_model_len", 0) or 0)
+        if value > 0:
+            return value
+    except (OSError, TypeError, ValueError, json.JSONDecodeError):
+        return 0
+    return 131072 if allow_legacy_default else 0
 
 AuthoringContextMode = Literal[
     "legacy",
@@ -575,11 +623,148 @@ def _build_mechanism_research_requests_v2(
     return tuple(requests)
 
 
+def _writer_research_preadmission_failures(
+    *,
+    artifact_paths: Mapping[str, str],
+    required: Sequence[str],
+) -> tuple[str, ...]:
+    """Check only the frozen Research closure before Writer planning.
+
+    This helper is intentionally side-effect free.  It is used before the
+    first unified model-backed phase so an upstream Research failure yields a
+    small, truthful admission artifact instead of a long list of downstream
+    ``missing`` outputs.
+    """
+
+    failures = [
+        "research_evidence_missing:" + str(key)
+        for key in required
+        if not artifact_paths.get(key)
+        or not Path(str(artifact_paths[key])).is_file()
+    ]
+    agenda = None
+    agenda_path = str(artifact_paths.get("research_agenda_v1") or "")
+    if agenda_path and Path(agenda_path).is_file():
+        try:
+            agenda = ResearchAgendaV1.model_validate_json(
+                Path(agenda_path).read_text(encoding="utf-8")
+            )
+        except (OSError, TypeError, ValueError, json.JSONDecodeError):
+            failures.append("research_agenda_invalid")
+    promotion_ledger = None
+    promotion_path = str(
+        artifact_paths.get("observation_promotion_ledger_v1") or ""
+    )
+    if promotion_path and Path(promotion_path).is_file():
+        try:
+            promotion_ledger = ObservationPromotionLedgerV1.model_validate_json(
+                Path(promotion_path).read_text(encoding="utf-8")
+            )
+        except (OSError, TypeError, ValueError, json.JSONDecodeError):
+            failures.append("observation_promotion_ledger_invalid")
+    if agenda is not None:
+        promotion_records = tuple(
+            getattr(promotion_ledger, "records", ()) or ()
+        )
+        for item in agenda.items:
+            if item.priority != "must_cover":
+                continue
+            item_records = tuple(
+                record
+                for record in promotion_records
+                if str(getattr(record, "obligation_id", "") or "")
+                == str(item.obligation_id)
+            )
+            proof = evaluate_obligation_terminal_proof(
+                item,
+                promotion_records=item_records,
+                # Old hand-built Writer fixtures predate the promotion
+                # ledger.  Keep their explicit supported IDs compatible; a
+                # persisted production ledger never takes this shortcut.
+                promoted_claim_ids=(
+                    ()
+                    if promotion_ledger is not None
+                    else tuple(item.supported_claim_ids or ())
+                ),
+            )
+            if proof.terminal:
+                continue
+            if item.status in {"pending", "in_progress"}:
+                failures.append(
+                    f"unified_core_intent_unsearched:{item.obligation_id}"
+                )
+            else:
+                failures.append(
+                    "unified_core_intent_terminal_proof_missing:"
+                    f"{item.obligation_id}"
+                )
+        for record in promotion_records:
+            if str(getattr(record, "status", "") or "") in {
+                "observed_unpromoted",
+                "behavior_built",
+                "packet_promoted",
+                "fact_promoted",
+            }:
+                failures.append(
+                    "unified_observation_promotion_incomplete:"
+                    f"{getattr(record, 'observation_id', '')}"
+                )
+    return tuple(dict.fromkeys(failures))
+
+
+def _persist_research_closure_admission(
+    *,
+    out_root: str | Path,
+    run_id: str,
+    artifact_paths: Mapping[str, str],
+    failure_codes: Sequence[str],
+    downstream_phases_planned: Sequence[str] = (),
+) -> str:
+    """Persist the upstream admission used by an early Writer return."""
+
+    snapshot_id = "unknown"
+    tree_hash = "unknown"
+    identity_path = str(artifact_paths.get("run_identity_v1") or "")
+    if identity_path and Path(identity_path).is_file():
+        try:
+            identity = RunIdentityV1.model_validate_json(
+                Path(identity_path).read_text(encoding="utf-8")
+            )
+            snapshot_id = identity.repo_snapshot_id
+            tree_hash = identity.project_tree_hash
+        except (OSError, TypeError, ValueError, json.JSONDecodeError):
+            pass
+    snapshot_path = str(artifact_paths.get("repo_snapshot_v2") or "")
+    if (
+        (snapshot_id == "unknown" or tree_hash == "unknown")
+        and snapshot_path
+        and Path(snapshot_path).is_file()
+    ):
+        try:
+            payload = json.loads(Path(snapshot_path).read_text(encoding="utf-8"))
+            snapshot_id = str(payload.get("snapshot_id") or snapshot_id)
+            tree_hash = str(payload.get("project_tree_hash") or tree_hash)
+        except (OSError, TypeError, ValueError, json.JSONDecodeError):
+            pass
+    admission = build_research_closure_admission(
+        run_id=str(run_id or "writer-run-unknown"),
+        repo_snapshot_id=snapshot_id,
+        project_tree_hash=tree_hash,
+        research_status="blocked" if failure_codes else "trusted",
+        failure_codes=failure_codes,
+        downstream_phases_planned=downstream_phases_planned,
+    )
+    path = method_output(Path(out_root), "research_closure_admission_v1")
+    _atomic_write_text(path, admission.model_dump_json(indent=2) + "\n")
+    return str(path)
+
+
 def _run_publication_method_writer_impl(
     *,
     out_root: str | Path,
     artifact_paths: dict[str, str],
     llm_config: LLMConfig,
+    run_id: str = "",
     llm_caller: Callable[[LLMConfig, LLMRequest], LLMResponse] | None = None,
     resume_section_ids: tuple[str, ...] = (),
     research_callback_artifacts: dict[str, tuple[Any, ...]] | None = None,
@@ -610,11 +795,21 @@ def _run_publication_method_writer_impl(
             blocked_reason=f"authoring_context_mode_invalid:{str(exc)[:180]}",
         )
         return result, _write_result_only(out_root, result)
+    model_context_tokens = _configured_model_context_tokens(
+        llm_config,
+        allow_legacy_default=effective_mode == "legacy",
+    )
     # A unified run may reconstruct the derived section plan from the frozen
     # research/authoring surfaces.  Keep the reconstruction trace separate
     # from the legacy Architect trace so the run contract can prove which
     # surface was actually used.
     unified_reconstruction_trace: dict[str, Any] = {}
+    # These are mandatory frozen inputs for the unified lane.  Keep them
+    # separate from the legacy reference agenda: the latter is a writer
+    # organization surface and cannot certify that repository research has
+    # reached a terminal state.
+    intent_graph: IntentObligationGraphV2 | None = None
+    research_agenda: ResearchAgendaV1 | None = None
     required = (
         "atomic_claims_v3",
         "code_facts_v1",
@@ -622,8 +817,42 @@ def _run_publication_method_writer_impl(
         "configuration_claims_v1",
         "method_completeness_matrix_v1",
     )
-    if effective_mode == "legacy":
+    if effective_mode in ("unified", "shadow_unified"):
+        required = (*required, "intent_obligation_graph_v2", "research_agenda_v1")
+    elif effective_mode == "legacy":
         required = (*required, "method_section_plan_v2")
+    research_admission_path = ""
+    if effective_mode in ("unified", "shadow_unified"):
+        preadmission_failures = _writer_research_preadmission_failures(
+            artifact_paths=artifact_paths,
+            required=required,
+        )
+        research_admission_path = _persist_research_closure_admission(
+            out_root=out_root,
+            run_id=run_id,
+            artifact_paths=artifact_paths,
+            failure_codes=preadmission_failures,
+            downstream_phases_planned=(
+                () if preadmission_failures else ("formalizer", "writer")
+            ),
+        )
+        if preadmission_failures:
+            result = PublicationWriterRunResultV1(
+                status="blocked",
+                plan_digest="",
+                claim_digest="",
+                blocked_reason=(
+                    "research_closure_admission_failed:"
+                    + ",".join(preadmission_failures)
+                ),
+            )
+            return result, _write_result_only(
+                out_root,
+                result,
+                extra_paths={
+                    "research_closure_admission_v1": research_admission_path,
+                },
+            )
     missing = [key for key in required if not artifact_paths.get(key) or not Path(artifact_paths[key]).is_file()]
     if missing:
         result = PublicationWriterRunResultV1(
@@ -638,6 +867,15 @@ def _run_publication_method_writer_impl(
         )
         return result, _write_result_only(out_root, result)
     try:
+        if effective_mode in ("unified", "shadow_unified"):
+            intent_graph = IntentObligationGraphV2.model_validate_json(
+                Path(artifact_paths["intent_obligation_graph_v2"])
+                .read_text(encoding="utf-8")
+            )
+            research_agenda = ResearchAgendaV1.model_validate_json(
+                Path(artifact_paths["research_agenda_v1"])
+                .read_text(encoding="utf-8")
+            )
         claims = load_atomic_claims_v3(artifact_paths["atomic_claims_v3"])
         facts = load_code_facts_v1(artifact_paths["code_facts_v1"])
         from code2paper.agentic.scientific_claim_ir import (
@@ -1068,6 +1306,15 @@ def _run_publication_method_writer_impl(
         return result, _write_result_only(out_root, result)
 
     unified_contexts: Any | None = None
+    unified_archive: Any | None = None
+    unified_workset_manifest: Any | None = None
+    unified_writer_workset_manifest: Any | None = None
+    unified_budget_envelope: Any | None = None
+    unified_formalizer_plan: Any | None = None
+    unified_writer_plan: Any | None = None
+    unified_writer_admission: Any | None = None
+    unified_realizer_plan: Any | None = None
+    unified_realizer_admission: Any | None = None
     unified_narrative_plan: Any | None = None
     unified_formula_packages: tuple[Any, ...] = ()
     unified_slices: dict[str, Any] = {}
@@ -1084,6 +1331,15 @@ def _run_publication_method_writer_impl(
     # only after every immutable page has crossed the actual caller boundary.
     writer_page_deliveries: dict[tuple[str, str], dict[int, bytes]] = {}
     writer_page_request_records: list[dict[str, Any]] = []
+    unified_v2_writer_page_request_records: list[dict[str, Any]] = []
+    unified_v2_writer_receipts: list[Any] = []
+    unified_v2_section_receipts: list[Any] = []
+    unified_v2_writer_aggregate_receipt: Any | None = None
+    unified_v2_realizer_receipts: list[Any] = []
+    unified_v2_binder_receipts: list[Any] = []
+    unified_v2_binder_failures: tuple[str, ...] = ()
+    binder_receipt_path = ""
+    unified_research_failures: tuple[str, ...] = ()
     formula_obs: dict[str, tuple[Any, ...]] = {}
     unified_payload_trace_path = ""
     shadow_failure: str = ""
@@ -1091,10 +1347,21 @@ def _run_publication_method_writer_impl(
     # pass.  Keep their paths in the same result map instead of attempting to
     # index a map that is only created after Writer/Validator complete.
     paths: dict[str, str] = {}
+    if research_admission_path:
+        paths["research_closure_admission_v1"] = research_admission_path
 
     if effective_mode in ("unified", "shadow_unified"):
         try:
             repo_ctx = _load_repository_authoring_context(artifact_paths)
+            repository_load_failures = tuple(
+                str(item) for item in (repo_ctx.get("load_failures") or ())
+                if str(item).strip()
+            )
+            if repository_load_failures:
+                raise ValueError(
+                    "unified_repository_authoring_context_failed:"
+                    + ";".join(repository_load_failures)
+                )
             closures = _compile_mechanism_evidence_closures(
                 argument_briefs=repo_ctx["argument_briefs"] or argument_briefs,
                 facets=repo_ctx["argument_facets"] or argument_facets,
@@ -1121,12 +1388,20 @@ def _run_publication_method_writer_impl(
                 claims=claims,
                 equations=equations,
             )
+            unified_research_failures = _unified_research_gate_failures(
+                intent_graph=intent_graph,
+                research_agenda=research_agenda,
+                contexts=unified_contexts,
+            )
             from code2paper.agentic.mechanism_context_compiler import (
                 validate_mechanism_context_completeness,
             )
             completeness_by_mechanism = {
                 str(ctx.mechanism_id): list(
-                    validate_mechanism_context_completeness(ctx)
+                    validate_mechanism_context_completeness(
+                        ctx,
+                        source_manifest=repo_ctx["source_manifest"],
+                    )
                 )
                 for ctx in (unified_contexts.contexts or ())
             }
@@ -1147,25 +1422,36 @@ def _run_publication_method_writer_impl(
                 + "\n",
             )
             paths["mechanism_context_completeness_v1"] = str(completeness_path)
-            repository_ready_failures = {
+            # These are structural admission failures, not a quality score.
+            # In unified production a ``partial`` readiness label cannot
+            # bypass disconnected paths, unknown source authority, missing
+            # witnesses, or unresolved operation closure.  Shadow mode keeps
+            # the older diagnostic behavior so it can compare the repaired
+            # closure without changing its compatibility semantics.
+            structural_failures = {
                 mechanism_id: failures
                 for mechanism_id, failures in completeness_by_mechanism.items()
                 if failures
-                and next(
-                    (
-                        str(ctx.context_readiness)
-                        for ctx in (unified_contexts.contexts or ())
-                        if str(ctx.mechanism_id) == mechanism_id
-                    ),
-                    "blocked",
-                )
-                == "repository_ready"
             }
-            if repository_ready_failures:
-                raise ValueError(
-                    "mechanism_context_completeness_failed:"
-                    + json.dumps(repository_ready_failures, sort_keys=True)
-                )
+            if effective_mode == "shadow_unified":
+                repository_ready_failures = {
+                    mechanism_id: failures
+                    for mechanism_id, failures in structural_failures.items()
+                    if next(
+                        (
+                            str(ctx.context_readiness)
+                            for ctx in (unified_contexts.contexts or ())
+                            if str(ctx.mechanism_id) == mechanism_id
+                        ),
+                        "blocked",
+                    )
+                    == "repository_ready"
+                }
+                if repository_ready_failures:
+                    raise ValueError(
+                        "mechanism_context_completeness_failed:"
+                        + json.dumps(repository_ready_failures, sort_keys=True)
+                    )
             context_set_path = method_output(Path(out_root), "mechanism_context_set_v1")
             _atomic_write_text(context_set_path, unified_contexts.model_dump_json(indent=2) + "\n")
             closure_path = method_output(Path(out_root), "mechanism_evidence_closures_v1")
@@ -1209,18 +1495,6 @@ def _run_publication_method_writer_impl(
                 equations=equations,
                 claims=claims,
             )
-            effective_formalization_caller = (
-                formalization_caller or llm_caller or _default_llm_caller
-            )
-            unified_formula_packages, formalizer_traces = _run_mechanism_formalizer(
-                unified_contexts,
-                unified_slices,
-                formula_obs,
-                llm_config=llm_config,
-                caller=effective_formalization_caller,
-                equations=equations,
-                page_manifests=unified_page_manifests,
-            )
             formula_obligation_path = method_output(
                 Path(out_root), "mechanism_formula_obligations_v1"
             )
@@ -1247,6 +1521,40 @@ def _run_publication_method_writer_impl(
                 + "\n",
             )
             paths["mechanism_formula_obligations_v1"] = str(formula_obligation_path)
+            # ---- V2 three-layer contract: archive → workset → plan → admission ----
+            # The obligation artifact is on disk before any model request; the
+            # page-centric formalizer runs only after a PASS admission.
+            effective_formalization_caller = (
+                formalization_caller or llm_caller or _default_llm_caller
+            )
+            v2_outcome = _run_unified_v2_formalizer_phase(
+                out_root=Path(out_root),
+                contexts=unified_contexts,
+                formula_obs=formula_obs,
+                equations=equations,
+                claims=claims,
+                facts=facts,
+                llm_config=llm_config,
+                caller=effective_formalization_caller,
+                artifact_paths=artifact_paths,
+                completeness_by_mechanism=completeness_by_mechanism,
+                model_context_tokens=model_context_tokens,
+                source_manifest=repo_ctx["source_manifest"],
+                repo_snapshot=repo_ctx["repo_snapshot"],
+                source_failures=repository_load_failures,
+                intent_graph=intent_graph,
+                research_failures=unified_research_failures,
+            )
+            formalizer_traces.extend(v2_outcome["traces"])
+            formula_obs = dict(v2_outcome.get("formula_obligations") or formula_obs)
+            unified_formula_packages = tuple(v2_outcome["packages"])
+            paths.update(v2_outcome["paths"])
+            unified_archive = v2_outcome.get("archive")
+            unified_workset_manifest = v2_outcome.get("manifest")
+            unified_budget_envelope = v2_outcome.get("envelope")
+            unified_formalizer_plan = v2_outcome.get("plan")
+            if v2_outcome["blocked"]:
+                raise ValueError(v2_outcome["blocked"])
             formula_package_path = method_output(
                 Path(out_root), "mechanism_formula_packages_v2"
             )
@@ -1282,6 +1590,95 @@ def _run_publication_method_writer_impl(
             narrative_plan_path = method_output(Path(out_root), "narrative_plan_v3")
             _atomic_write_text(narrative_plan_path, unified_narrative_plan.model_dump_json(indent=2) + "\n")
             paths["narrative_plan_v3"] = str(narrative_plan_path)
+
+            # The formalizer plan is bound to the formula-only workset
+            # manifest above.  Section pages are discovered only after the
+            # narrative plan is frozen, so keep a phase-specific composite
+            # manifest instead of mutating the already-receipted formalizer
+            # manifest underneath it.
+            from code2paper.agentic.unified_context_compiler import (
+                build_consumer_invocation_plan_v1,
+                evaluate_unified_live_admission_v1,
+                extend_writer_worksets_from_narrative_plan,
+            )
+            from code2paper.agentic.mechanism_context_compiler import (
+                validate_mechanism_context_structural_gates,
+            )
+
+            if (
+                unified_workset_manifest is None
+                or unified_budget_envelope is None
+                or unified_formalizer_plan is None
+                or unified_archive is None
+            ):
+                raise ValueError("unified_writer_phase_inputs_missing")
+            unified_writer_workset_manifest = extend_writer_worksets_from_narrative_plan(
+                unified_workset_manifest,
+                unified_narrative_plan,
+                max_page_input_tokens=unified_budget_envelope.max_page_input_tokens,
+                archive=unified_archive,
+            )
+            writer_manifest_path = method_output(
+                Path(out_root), "consumer_workset_manifest_v2.writer.2"
+            )
+            _atomic_write_text(
+                writer_manifest_path,
+                unified_writer_workset_manifest.model_dump_json(indent=2) + "\n",
+            )
+            paths["consumer_workset_manifest_v2.writer.2"] = str(writer_manifest_path)
+            unified_writer_plan = build_consumer_invocation_plan_v1(
+                unified_writer_workset_manifest,
+                unified_budget_envelope,
+                phase="writer",
+                parent_plan=unified_formalizer_plan,
+                plan_revision=2,
+                profile_digest=unified_budget_envelope.profile_digest,
+                model_identity_digest=unified_budget_envelope.model_identity_digest,
+                model_context_tokens=model_context_tokens,
+            )
+            writer_plan_path = method_output(
+                Path(out_root), "consumer_invocation_plan_v1.2"
+            )
+            _atomic_write_text(
+                writer_plan_path,
+                unified_writer_plan.model_dump_json(indent=2) + "\n",
+            )
+            paths["consumer_invocation_plan_v1.2"] = str(writer_plan_path)
+            writer_mechanism_diagnostics = validate_mechanism_context_structural_gates(
+                unified_contexts,
+                merge_proofs=unified_archive.merge_proofs,
+            )
+            writer_closed_set_failures = tuple(
+                f"{mechanism_id}:{failure}"
+                for mechanism_id, failures in sorted(completeness_by_mechanism.items())
+                for failure in failures
+            )
+            unified_writer_admission = evaluate_unified_live_admission_v1(
+                phase="writer",
+                plan=unified_writer_plan,
+                envelope=unified_budget_envelope,
+                archive=unified_archive,
+                manifest=unified_writer_workset_manifest,
+                run_digest=unified_archive.content_digest,
+                model_context_tokens=model_context_tokens,
+                closed_set_failures=writer_closed_set_failures,
+                research_failures=unified_research_failures,
+                mechanism_diagnostics=writer_mechanism_diagnostics,
+                source_failures=repository_load_failures,
+            )
+            writer_admission_path = method_output(
+                Path(out_root), "unified_live_admission_v1.writer.2"
+            )
+            _atomic_write_text(
+                writer_admission_path,
+                unified_writer_admission.model_dump_json(indent=2) + "\n",
+            )
+            paths["unified_live_admission_v1.writer.2"] = str(writer_admission_path)
+            if unified_writer_admission.status != "pass":
+                raise ValueError(
+                    "unified_writer_admission_failed:"
+                    + ",".join(unified_writer_admission.failure_codes)
+                )
         except Exception as exc:
             if effective_mode == "unified":
                 result = PublicationWriterRunResultV1(
@@ -1781,6 +2178,8 @@ def _run_publication_method_writer_impl(
                 for item in (values or ())
             ),
             page_manifests=unified_page_manifests,
+            consumer_workset_manifest=unified_writer_workset_manifest,
+            consumer_invocation_plan=unified_writer_plan,
             system_prompt="",
         )
     else:
@@ -1858,111 +2257,290 @@ def _run_publication_method_writer_impl(
         )
 
         def _capturing_writer_caller(config: Any, request: Any) -> Any:
-            base_caller = llm_caller or _default_llm_caller
-            response = base_caller(config, request)
             payload = getattr(request, "input_payload", None)
-            if isinstance(payload, Mapping) and payload.get("shared_page_bytes") is not None:
-                mid = str(payload.get("mechanism_id") or "").strip()
-                if mid:
-                    try:
-                        page_index = int(payload.get("page_index", -1))
-                    except (TypeError, ValueError):
-                        page_index = -1
-                    raw_page = payload.get("shared_page_bytes")
-                    if page_index >= 0:
-                        if isinstance(raw_page, bytes):
-                            page_bytes = bytes(raw_page)
-                        elif isinstance(raw_page, str):
-                            page_bytes = raw_page.encode("utf-8")
-                        else:
-                            page_bytes = b""
-                        if page_bytes:
-                            realizer_page_deliveries.setdefault(mid, {})[page_index] = page_bytes
-            metadata_rows = (
-                payload.get("shared_context_metadata", ())
-                if isinstance(payload, Mapping)
-                else ()
+            v2_rows = tuple(
+                row for row in (
+                    payload.get("shared_context_metadata", ())
+                    if isinstance(payload, Mapping)
+                    else ()
+                )
+                if isinstance(row, Mapping)
+                and str(row.get("v2_page_id") or "").strip()
             )
-            section_id = (
-                str(payload.get("section_id") or "").strip()
-                if isinstance(payload, Mapping)
-                else ""
+            base_caller = llm_caller or _default_llm_caller
+            if not v2_rows or unified_writer_workset_manifest is None:
+                # This branch is retained for shadow/compatibility callers;
+                # the production unified path always carries exactly one V2
+                # page metadata row after _publication_section_partitions.
+                return base_caller(config, request)
+
+            from code2paper.agentic.mechanism_context_models import (
+                canonical_json_bytes,
+                sha256_digest,
             )
-            seen_mechanisms: set[str] = set()
-            for row in metadata_rows or ():
-                if not isinstance(row, Mapping):
-                    continue
-                mid = str(row.get("mechanism_id") or "").strip()
-                if not mid or mid in seen_mechanisms:
-                    continue
-                manifest = unified_page_manifests.get(mid)
-                if manifest is None:
-                    continue
-                seen_mechanisms.add(mid)
-                try:
-                    page_index = int(row.get("page_index", -1))
-                except (TypeError, ValueError):
-                    page_index = -1
-                delivered, _ = shared_payload_page_bytes_from_request(
-                    request,
-                    consumer_role="writer",
-                    mechanism_id=mid,
-                )
-                # A section receipt is assembled from individually observed
-                # page requests.  If a caller ever hands us multiple pages in
-                # one request, treat that request as non-page-scoped and do
-                # not let it satisfy the aggregate receipt.
-                page_bytes = delivered[0] if len(delivered) == 1 else b""
-                delivery_key = (mid, section_id)
-                delivered_by_index = writer_page_deliveries.setdefault(
-                    delivery_key, {}
-                )
-                expected_page_bytes = (
-                    manifest.pages[page_index].serialized_bytes
-                    if 0 <= page_index < len(manifest.pages)
-                    else b""
-                )
-                # Preserve a previously observed exact page when a later
-                # retry is malformed; an accepted aggregate still proves
-                # that every page crossed this boundary exactly once in at
-                # least one actual request.
-                if (
-                    page_index >= 0
-                    and page_index not in delivered_by_index
-                ) or page_bytes == expected_page_bytes:
-                    if page_index >= 0:
-                        delivered_by_index[page_index] = page_bytes
-                writer_page_request_records.append({
-                    "section_id": section_id,
-                    "mechanism_id": mid,
-                    "page_index": page_index,
-                    "page_request_count": len(delivered),
-                    "page_bytes_digest": (
-                        "sha256:" + hashlib.sha256(page_bytes).hexdigest()
-                        if page_bytes else ""
-                    ),
-                    "accepted_page_bytes": page_bytes == expected_page_bytes
-                    and bool(page_bytes),
+            from code2paper.agentic.unified_context_compiler import (
+                consumer_request_envelope_digest,
+            )
+            from code2paper.agentic.unified_context_models import (
+                ActualRequestReceiptV2,
+                InvocationAttemptStartedV1,
+                UNIFIED_UNPLANNED_ACTUAL_REQUEST,
+            )
+            from code2paper.agentic.unified_invocation_ledger import (
+                invocation_dir,
+                last_started_attempt,
+                publish_attempt_completed,
+                publish_attempt_started,
+                publish_output_fragment,
+            )
+
+            # A section Writer request must carry one and only one immutable
+            # page.  Multiple rows mean the low-level partitioner failed to
+            # enforce the V2 contract; do not send that request to the model.
+            if len(v2_rows) != 1:
+                unified_v2_writer_page_request_records.append({
+                    "invocation_id": "",
+                    "section_id": str(payload.get("section_id") or ""),
+                    "page_id": "",
+                    "actual_technical_bytes_digest": "",
+                    "expected_technical_bytes_digest": "",
+                    "expected_request_envelope_digest": "",
+                    "actual_request_envelope_digest": "",
+                    "accepted": False,
+                    "request_failures": [
+                        f"{UNIFIED_UNPLANNED_ACTUAL_REQUEST}:multiple_v2_pages"
+                    ],
                 })
-                delivered_pages = tuple(
-                    delivered_by_index.get(index, b"")
-                    for index in range(len(manifest.pages))
+                from code2paper.export.run_manifest import hash_text
+                return LLMResponse(
+                    text="",
+                    response_hash=hash_text(""),
+                    blocked_reason=f"{UNIFIED_UNPLANNED_ACTUAL_REQUEST}:multiple_v2_pages",
                 )
-                receipt = build_shared_payload_delivery_receipt(
-                    manifest,
-                    consumer_role="writer",
-                    delivered_page_bytes=delivered_pages,
-                    actual_payload_bytes=(
-                        serialize_shared_mechanism_payload(
-                            unified_slices.get(mid, ())
-                        )
-                        if all(index in delivered_by_index for index in range(len(manifest.pages)))
-                        else None
+
+            row = v2_rows[0]
+            page_id = str(row.get("v2_page_id") or "")
+            invocation_id = str(row.get("writer_invocation_id") or "")
+            invocation_index = {
+                str(item.invocation_id): item
+                for item in (getattr(unified_writer_plan, "invocations", ()) or ())
+                if str(getattr(item, "invocation_id", ""))
+            }
+            invocation = invocation_index.get(invocation_id)
+            page = unified_writer_workset_manifest.page_by_id(page_id)
+            if invocation is None or page is None:
+                unified_v2_writer_page_request_records.append({
+                    "invocation_id": invocation_id,
+                    "section_id": str(payload.get("section_id") or ""),
+                    "page_id": page_id,
+                    "actual_technical_bytes_digest": "",
+                    "expected_technical_bytes_digest": (
+                        str(getattr(page, "technical_bytes_digest", ""))
+                    ),
+                    "expected_request_envelope_digest": str(
+                        getattr(invocation, "expected_request_envelope_digest", "")
+                    ),
+                    "actual_request_envelope_digest": "",
+                    "accepted": False,
+                    "request_failures": [
+                        f"{UNIFIED_UNPLANNED_ACTUAL_REQUEST}:{invocation_id or page_id}"
+                    ],
+                })
+                from code2paper.export.run_manifest import hash_text
+                return LLMResponse(
+                    text="",
+                    response_hash=hash_text(""),
+                    blocked_reason=f"{UNIFIED_UNPLANNED_ACTUAL_REQUEST}:{invocation_id or page_id}",
+                )
+
+            ledger_root = Path(out_root) / "artifacts" / "06_authoring" / "invocations"
+            attempt = last_started_attempt(ledger_root, invocation_id) + 1
+            started_at = time.time()
+            publish_attempt_started(
+                ledger_root,
+                InvocationAttemptStartedV1(
+                    invocation_id=invocation_id,
+                    attempt=attempt,
+                    plan_digest=unified_writer_plan.content_digest,
+                    page_id=page.page_id,
+                    expected_technical_bytes_digest=page.technical_bytes_digest,
+                    expected_request_envelope_digest=invocation.expected_request_envelope_digest,
+                    model_identity_digest=(
+                        unified_budget_envelope.model_identity_digest
+                        if unified_budget_envelope is not None
+                        else "unknown-model"
+                    ),
+                    started_at_unix=started_at,
+                ),
+            )
+
+            raw_pages = payload.get("shared_contexts") or ()
+            raw_page = raw_pages[0] if len(raw_pages) == 1 else b""
+            if isinstance(raw_page, bytes):
+                actual_page_bytes = bytes(raw_page)
+            elif isinstance(raw_page, str):
+                actual_page_bytes = raw_page.encode("utf-8")
+            elif isinstance(raw_page, Mapping):
+                actual_page_bytes = canonical_json_bytes(dict(raw_page))
+            else:
+                actual_page_bytes = b""
+            actual_page_digest = sha256_digest(actual_page_bytes) if actual_page_bytes else ""
+            actual_section_id = str(payload.get("section_id") or "")
+            actual_tasks = tuple(
+                str(value)
+                for value in (row.get("task_ids") or invocation.task_ids)
+                if str(value).strip()
+            )
+            expected_prompt_digest = str(row.get("writer_prompt_digest") or "")
+            request_failures: list[str] = []
+            if actual_page_bytes != canonical_json_bytes(dict(page.technical_payload)):
+                request_failures.append(
+                    f"unified_actual_page_bytes_mismatch:{invocation_id}"
+                )
+            if page_id != page.page_id:
+                request_failures.append("unified_actual_request_page_id_mismatch")
+            if actual_section_id != str(invocation.section_id):
+                request_failures.append("unified_actual_request_section_id_mismatch")
+            if tuple(sorted(actual_tasks)) != tuple(sorted(invocation.task_ids)):
+                request_failures.append("unified_actual_request_task_set_mismatch")
+            if str(getattr(request, "prompt_template_id", "")) != "unified_writer_page_v2":
+                request_failures.append("unified_actual_request_template_mismatch")
+            if expected_prompt_digest and sha256_digest(
+                str(getattr(request, "prompt", "")).encode("utf-8")
+            ) != expected_prompt_digest:
+                request_failures.append("unified_actual_request_prompt_mismatch")
+            if not str(getattr(request, "schema_name", "")) or not getattr(
+                request, "response_json_schema", None
+            ):
+                request_failures.append("unified_actual_request_schema_missing")
+
+            if not request_failures:
+                actual_envelope_digest = consumer_request_envelope_digest(
+                    page=page,
+                    role="writer",
+                    task_ids=actual_tasks,
+                    section_id=actual_section_id,
+                )
+            else:
+                actual_envelope_digest = sha256_digest(canonical_json_bytes({
+                    "request_input_hash": str(getattr(request, "input_hash", "")),
+                    "page_id": page_id,
+                    "technical_bytes_digest": actual_page_digest,
+                    "failures": sorted(set(request_failures)),
+                }))
+            if actual_envelope_digest != invocation.expected_request_envelope_digest:
+                request_failures.append("unified_actual_request_envelope_mismatch")
+
+            if request_failures:
+                # A mutated/unplanned request is rejected at the caller
+                # boundary.  Sending it to the provider would turn a
+                # representation-integrity violation into a real model call
+                # that the frozen plan never authorized.
+                from code2paper.export.run_manifest import hash_text
+                response = LLMResponse(
+                    text="",
+                    response_hash=hash_text(""),
+                    blocked_reason=(
+                        "unified_actual_request_rejected:"
+                        + ";".join(dict.fromkeys(request_failures))
                     ),
                 )
-                receipt_payload = receipt.model_dump(mode="json")
-                receipt_payload["section_id"] = section_id
-                writer_delivery_receipts.append(receipt_payload)
+            else:
+                try:
+                    response = base_caller(config, request)
+                except Exception as exc:  # noqa: BLE001 - receipt must record the call failure
+                    from code2paper.export.run_manifest import hash_text
+                    response = LLMResponse(
+                        text="",
+                        response_hash=hash_text(""),
+                        blocked_reason=f"writer_call_error:{type(exc).__name__}",
+                    )
+            if response is None:
+                from code2paper.export.run_manifest import hash_text
+                response = LLMResponse(
+                    text="",
+                    response_hash=hash_text(""),
+                    blocked_reason="writer_call_returned_none",
+                )
+            response_text = str(getattr(response, "text", "") or "")
+            response_digest = _digest_text(response_text)
+            fragment_digest = publish_output_fragment(
+                ledger_root,
+                invocation_id=invocation_id,
+                attempt=attempt,
+                fragment={
+                    "consumer_role": "writer",
+                    "section_id": actual_section_id,
+                    "page_id": page.page_id,
+                    "response_text": response_text,
+                    "response_hash": str(getattr(response, "response_hash", "")),
+                    "blocked_reason": str(getattr(response, "blocked_reason", "") or ""),
+                },
+            )
+            delivery_status = "accepted" if not request_failures else "rejected"
+            delivery_rejection = request_failures[0] if request_failures else ""
+            task_status = (
+                "complete"
+                if response_text.strip() and not getattr(response, "blocked_reason", "")
+                else "partial" if response_text.strip() else "failed"
+            )
+            receipt = ActualRequestReceiptV2(
+                invocation_id=invocation_id,
+                attempt=attempt,
+                consumer_role="writer",
+                phase="writer",
+                workset_id=invocation.workset_id,
+                task_ids=tuple(invocation.task_ids),
+                mechanism_id=invocation.mechanism_id,
+                section_id=invocation.section_id,
+                page_id=page.page_id,
+                actual_technical_bytes_digest=actual_page_digest,
+                actual_request_envelope_digest=actual_envelope_digest,
+                response_digest=response_digest,
+                fragment_digests=(fragment_digest,),
+                model_identity_digest=(
+                    unified_budget_envelope.model_identity_digest
+                    if unified_budget_envelope is not None
+                    else "unknown-model"
+                ),
+                started_at_unix=started_at,
+                finished_at_unix=time.time(),
+                delivery_status=delivery_status,  # type: ignore[arg-type]
+                delivery_rejection_code=delivery_rejection,
+                task_status=task_status,  # type: ignore[arg-type]
+                succeeded_task_ids=(tuple(invocation.task_ids) if task_status == "complete" else ()),
+                failed_task_ids=(tuple(invocation.task_ids) if task_status != "complete" else ()),
+                task_failures=tuple(
+                    {"code": str(item)}
+                    for item in request_failures
+                ) + (
+                    ({"code": str(getattr(response, "blocked_reason", ""))},)
+                    if getattr(response, "blocked_reason", "")
+                    else ()
+                ),
+                upstream_archive_digest=(
+                    unified_archive.content_digest if unified_archive is not None else ""
+                ),
+                upstream_workset_manifest_digest=unified_writer_workset_manifest.content_digest,
+                upstream_plan_digest=unified_writer_plan.content_digest,
+            )
+            publish_attempt_completed(ledger_root, receipt)
+            unified_v2_writer_receipts.append(receipt)
+            unified_v2_writer_page_request_records.append({
+                "invocation_id": invocation_id,
+                "section_id": actual_section_id,
+                "page_id": page.page_id,
+                "actual_technical_bytes_digest": actual_page_digest,
+                "expected_technical_bytes_digest": page.technical_bytes_digest,
+                "expected_request_envelope_digest": invocation.expected_request_envelope_digest,
+                "actual_request_envelope_digest": actual_envelope_digest,
+                "accepted": delivery_status == "accepted",
+                "response_nonempty": bool(response_text.strip()),
+                "task_status": task_status,
+                "receipt_digest": receipt.content_digest,
+                "attempt": attempt,
+                "request_failures": list(dict.fromkeys(request_failures)),
+            })
             return response
 
         effective_writer_caller = _capturing_writer_caller
@@ -1970,14 +2548,37 @@ def _run_publication_method_writer_impl(
         effective_writer_caller = llm_caller
     if effective_mode == "unified":
         try:
-            payload_trace = _assert_shared_payload_delivery(
-                contexts=unified_contexts,
-                shared_payload_slices=unified_slices,
-                formalizer_traces=formalizer_traces,
-                formula_obligations_by_mech=formula_obs,
-                writer_inputs=writer_inputs,
-                page_manifests=unified_page_manifests,
-            )
+            if unified_writer_workset_manifest is not None:
+                # V2 admission already proves the archive/workset/page
+                # projection.  Do not compare the V2 page bytes against the
+                # legacy mechanism manifest; that would silently make the
+                # compatibility serializer the production authority.
+                payload_trace = [
+                    {
+                        "schema_version": "2.0",
+                        "v2": True,
+                        "mechanism_id": str(workset.mechanism_id),
+                        "writer_consumers": [{
+                            "section_id": str(workset.section_id),
+                            "page_manifest_digest": str(
+                                unified_writer_workset_manifest.content_digest
+                            ),
+                            "page_ids": list(workset.required_page_ids),
+                            "writer_page_delivery_receipts": [],
+                        }],
+                    }
+                    for workset in unified_writer_workset_manifest.worksets
+                    if workset.task_kind == "section"
+                ]
+            else:
+                payload_trace = _assert_shared_payload_delivery(
+                    contexts=unified_contexts,
+                    shared_payload_slices=unified_slices,
+                    formalizer_traces=formalizer_traces,
+                    formula_obligations_by_mech=formula_obs,
+                    writer_inputs=writer_inputs,
+                    page_manifests=unified_page_manifests,
+                )
             unified_payload_trace_path = method_output(
                 Path(out_root), "mechanism_shared_payload_trace_v1"
             )
@@ -2586,120 +3187,151 @@ def _run_publication_method_writer_impl(
         output_by_section[section_id] = current.model_copy(update={
             "paragraphs": [*(current.paragraphs or ()), prior_paragraph],
         })
+    writer_input_by_section = (
+        _canonical_unified_writer_input_by_section(writer_inputs)
+        if effective_mode == "unified"
+        else {item.section_id: item for item in selected_inputs}
+    )
     aggregate_by_section = {item.section_id: item for item in writer.aggregate.sections}
     if effective_mode == "unified" and unified_narrative_plan is not None:
-        realizer = MechanismRealizer(llm_config=llm_config)
-        composer = SectionComposer(llm_config=llm_config)
-        realized_drafts: list[MechanismDraftV1] = []
-        for ctx in (unified_contexts.contexts if unified_contexts else ()):
-            m_slices = (unified_slices or {}).get(ctx.mechanism_id, ())
-            if m_slices:
-                for idx, sl in enumerate(m_slices):
-                    d = realizer.realize_draft(
-                        context=ctx,
-                        page_index=idx,
-                        page_slice=sl,
-                        formula_packages=unified_formula_packages,
-                        caller=effective_writer_caller,
-                    )
-                    realized_drafts.append(d)
-            else:
-                d = realizer.realize_draft(
-                    context=ctx,
-                    formula_packages=unified_formula_packages,
-                    caller=effective_writer_caller,
-                )
-                realized_drafts.append(d)
-            manifest = (unified_page_manifests or {}).get(str(ctx.mechanism_id))
-            if manifest is not None:
-                delivered_by_index = realizer_page_deliveries.get(
-                    str(ctx.mechanism_id), {}
-                )
-                delivered_pages = tuple(
-                    delivered_by_index[index]
-                    for index in range(len(manifest.pages))
-                    if index in delivered_by_index
-                )
-                realizer_receipt = build_shared_payload_delivery_receipt(
-                    manifest,
-                    consumer_role="writer",
-                    delivered_page_bytes=delivered_pages,
-                    actual_payload_bytes=(
-                        serialize_shared_mechanism_payload(
-                            (unified_slices or {}).get(str(ctx.mechanism_id), ())
-                        )
-                        if len(delivered_pages) == len(manifest.pages)
-                        else None
-                    ),
-                )
-                realizer_receipt_payload = realizer_receipt.model_dump(mode="json")
-                realizer_receipt_payload["section_id"] = (
-                    f"realizer:{ctx.mechanism_id}"
-                )
-                writer_delivery_receipts.append(realizer_receipt_payload)
+        realizer_outcome = _run_unified_v2_realizer_phase(
+            out_root=Path(out_root),
+            contexts=unified_contexts,
+            narrative_plan=unified_narrative_plan,
+            manifest=unified_writer_workset_manifest,
+            archive=unified_archive,
+            envelope=unified_budget_envelope,
+            parent_plan=unified_writer_plan,
+            formula_packages=unified_formula_packages,
+            llm_config=llm_config,
+            caller=llm_caller or _default_llm_caller,
+            model_context_tokens=model_context_tokens,
+            completeness_by_mechanism=completeness_by_mechanism,
+            research_failures=unified_research_failures,
+            source_failures=repository_load_failures,
+        )
+        paths.update(realizer_outcome.get("paths") or {})
+        unified_realizer_plan = realizer_outcome.get("plan")
+        unified_realizer_admission = realizer_outcome.get("admission")
+        unified_v2_realizer_receipts = list(
+            realizer_outcome.get("receipts") or ()
+        )
+        if realizer_outcome.get("blocked"):
+            raise ValueError(str(realizer_outcome["blocked"]))
+        _assert_unified_v2_realizer_delivery(
+            workset_manifest=unified_writer_workset_manifest,
+            invocation_plan=unified_realizer_plan,
+            receipts=unified_v2_realizer_receipts,
+        )
 
-        for sec in unified_narrative_plan.sections:
-            composed = composer.compose_publication_section(
-                section_plan=sec,
-                drafts=realized_drafts,
-                contexts=unified_contexts.contexts if unified_contexts else (),
-                formula_packages=unified_formula_packages,
-                formula_obligations=tuple(
-                    item for obs in formula_obs.values() for item in (obs or ())
-                ),
-                caller=effective_writer_caller,
+    if effective_mode == "unified" and unified_writer_workset_manifest is not None:
+        # Build the section and aggregate receipts from the independent
+        # actual-request receipts.  A section receipt is never synthesized
+        # from the Writer input manifest alone; an invocation must first have
+        # crossed the caller boundary and have an exact page digest.
+        from code2paper.agentic.unified_context_models import (
+            SectionWriterReceiptV2,
+            WriterAggregateReceiptV2,
+        )
+
+        records_by_invocation = {
+            str(record.get("invocation_id")): record
+            for record in unified_v2_writer_page_request_records
+            if str(record.get("invocation_id") or "").strip()
+        }
+        section_receipt_rows: list[dict[str, Any]] = []
+        for workset in unified_writer_workset_manifest.worksets:
+            if workset.task_kind != "section":
+                continue
+            required_invocations = tuple(
+                invocation.invocation_id
+                for invocation in (unified_writer_plan.invocations if unified_writer_plan else ())
+                if invocation.role == "writer"
+                and not invocation.is_repair
+                and invocation.workset_id == workset.workset_id
             )
-            existing = output_by_section.get(sec.section_id)
-            if (
-                existing is None
-                or not (existing.section_markdown or "").strip()
-                or len(existing.paragraphs or ()) < len(sec.paragraphs or ())
-            ):
-                output_by_section[sec.section_id] = composed
-            else:
-                existing_pids = {str(p.paragraph_id or "") for p in (existing.paragraphs or ())}
-                composed_by_pid = {str(p.paragraph_id or ""): p for p in (composed.paragraphs or ())}
-                updated_paras = list(existing.paragraphs or ())
-                needed_update = False
-                for p_plan in sec.paragraphs:
-                    pid = str(p_plan.paragraph_id or "")
-                    if pid not in existing_pids and pid in composed_by_pid:
-                        updated_paras.append(composed_by_pid[pid])
-                        needed_update = True
-                if needed_update:
-                    output_by_section[sec.section_id] = existing.model_copy(update={
-                        "paragraphs": updated_paras,
-                        "section_markdown": f"## {sec.heading}\n\n" + "\n\n".join(p.paragraph_markdown for p in updated_paras),
-                    })
+            completed_invocations = tuple(
+                invocation_id
+                for invocation_id in required_invocations
+                if records_by_invocation.get(invocation_id, {}).get("accepted")
+                and records_by_invocation.get(invocation_id, {}).get("response_nonempty")
+                and records_by_invocation.get(invocation_id, {}).get("task_status")
+                == "complete"
+            )
+            completed_receipt_digests = tuple(
+                str(records_by_invocation[invocation_id].get("receipt_digest") or "")
+                for invocation_id in completed_invocations
+                if str(records_by_invocation[invocation_id].get("receipt_digest") or "")
+            )
+            output = output_by_section.get(str(workset.section_id))
+            output_digest = (
+                _digest_text(str(output.section_markdown))
+                if output is not None
+                and str(output.section_markdown or "").strip()
+                and set(completed_invocations) == set(required_invocations)
+                else ""
+            )
+            section_receipt = SectionWriterReceiptV2(
+                section_id=str(workset.section_id),
+                workset_id=str(workset.workset_id),
+                plan_digest=unified_writer_plan.content_digest,
+                required_invocation_ids=required_invocations,
+                completed_invocation_ids=completed_invocations,
+                completed_receipt_digests=completed_receipt_digests,
+                output_digest=output_digest,
+            )
+            unified_v2_section_receipts.append(section_receipt)
+            section_receipt_rows.append(section_receipt.model_dump(mode="json"))
 
-        from code2paper.llm.section_writer import WriterSectionResult
-        from code2paper.llm.generation_trace import GenerationCallTrace
-        for sec_id, out_sec in output_by_section.items():
-            if sec_id not in aggregate_by_section or aggregate_by_section[sec_id].trace is None:
-                sec_hash = "sha256:" + hashlib.sha256(out_sec.section_markdown.encode("utf-8")).hexdigest()
-                sec_trace = GenerationCallTrace(
-                    call_id=f"composer-{sec_id}",
-                    prompt_template_id="phase5_method_writer_section_v1",
-                    role="method_writer",
-                    finish_reason="stop",
-                    response_hash=sec_hash,
-                )
-                sec_res = WriterSectionResult(
-                    section_id=sec_id,
-                    heading=out_sec.heading_text or sec_id,
-                    text=out_sec.section_markdown,
-                    finish_reason="stop",
-                    extended_budget_used=False,
-                    trace=sec_trace,
-                )
-                aggregate_by_section[sec_id] = sec_res
-                writer.aggregate.sections.append(sec_res)
-
-        if hasattr(writer.aggregate, "incomplete_sections"):
-            writer.aggregate.incomplete_sections = [
-                s for s in writer.aggregate.incomplete_sections
-                if s not in output_by_section or not output_by_section[s].paragraphs
-            ]
+        required_sections = tuple(
+            str(workset.section_id)
+            for workset in unified_writer_workset_manifest.worksets
+            if workset.task_kind == "section"
+        )
+        completed_sections = tuple(
+            receipt.section_id
+            for receipt in unified_v2_section_receipts
+            if receipt.output_digest
+            and set(receipt.completed_invocation_ids)
+            == set(receipt.required_invocation_ids)
+        )
+        unified_v2_writer_aggregate_receipt = WriterAggregateReceiptV2(
+            plan_digest=unified_writer_plan.content_digest,
+            required_section_ids=required_sections,
+            completed_section_ids=(
+                completed_sections if set(completed_sections) == set(required_sections) else ()
+            ),
+            section_receipt_digests=tuple(
+                receipt.content_digest for receipt in unified_v2_section_receipts
+            ),
+        )
+        section_receipts_path = method_output(
+            Path(out_root), "writer_section_receipts_v2"
+        )
+        _atomic_write_text(
+            section_receipts_path,
+            json.dumps(
+                {
+                    "schema_version": "2.0",
+                    "plan_digest": unified_writer_plan.content_digest,
+                    "receipts": section_receipt_rows,
+                    "content_digest": _digest_json(section_receipt_rows),
+                },
+                ensure_ascii=False,
+                indent=2,
+                sort_keys=True,
+            )
+            + "\n",
+        )
+        paths["writer_section_receipts_v2"] = str(section_receipts_path)
+        aggregate_receipt_path = method_output(
+            Path(out_root), "writer_aggregate_receipt_v2"
+        )
+        _atomic_write_text(
+            aggregate_receipt_path,
+            unified_v2_writer_aggregate_receipt.model_dump_json(indent=2) + "\n",
+        )
+        paths["writer_aggregate_receipt_v2"] = str(aggregate_receipt_path)
 
     # The preflight gate above proves that the frozen inputs are equivalent.
     # This second gate is the production acceptance gate: it is evaluated only
@@ -2708,28 +3340,64 @@ def _run_publication_method_writer_impl(
     # row can no longer stand in for consumer evidence.
     if effective_mode == "unified":
         try:
-            payload_trace = _assert_shared_payload_delivery(
-                contexts=unified_contexts,
-                shared_payload_slices=unified_slices,
-                formalizer_traces=formalizer_traces,
-                formula_obligations_by_mech=formula_obs,
-                # A callback resume may intentionally rerender only the
-                # affected sections.  The actual-receipt gate must scope its
-                # Writer obligation to the requests that were sent in this
-                # invocation; the preflight gate above still audits the full
-                # frozen input set.
-                writer_inputs=selected_inputs,
-                page_manifests=unified_page_manifests,
-                writer_delivery_receipts=writer_delivery_receipts,
-                require_actual_receipts=True,
-            )
-            for record in payload_trace:
-                for consumer in record.get("writer_consumers", ()):
-                    consumer["writer_page_request_records"] = [
-                        item for item in writer_page_request_records
-                        if item.get("mechanism_id") == record.get("mechanism_id")
-                        and item.get("section_id") == consumer.get("section_id")
+            if unified_writer_workset_manifest is not None:
+                writer_trace = _assert_unified_v2_writer_page_delivery(
+                    workset_manifest=unified_writer_workset_manifest,
+                    invocation_plan=unified_writer_plan,
+                    request_records=unified_v2_writer_page_request_records,
+                )
+                if (
+                    unified_v2_writer_aggregate_receipt is None
+                    or set(unified_v2_writer_aggregate_receipt.completed_section_ids)
+                    != set(unified_v2_writer_aggregate_receipt.required_section_ids)
+                ):
+                    raise ValueError(
+                        "unified_consumer_receipt_missing:writer:aggregate"
+                    )
+                payload_trace = []
+                for workset in unified_writer_workset_manifest.worksets:
+                    if workset.task_kind != "section":
+                        continue
+                    section_receipts = [
+                        item for item in writer_trace
+                        if item.get("section_id") == workset.section_id
                     ]
+                    payload_trace.append({
+                        "schema_version": "2.0",
+                        "v2": True,
+                        "mechanism_id": str(workset.mechanism_id),
+                        "writer_consumers": [{
+                            "section_id": str(workset.section_id),
+                            "page_manifest_digest": str(
+                                unified_writer_workset_manifest.content_digest
+                            ),
+                            "page_ids": list(workset.required_page_ids),
+                            "writer_page_delivery_receipts": section_receipts,
+                        }],
+                    })
+            else:
+                payload_trace = _assert_shared_payload_delivery(
+                    contexts=unified_contexts,
+                    shared_payload_slices=unified_slices,
+                    formalizer_traces=formalizer_traces,
+                    formula_obligations_by_mech=formula_obs,
+                    # A callback resume may intentionally rerender only the
+                    # affected sections.  The actual-receipt gate must scope its
+                    # Writer obligation to the requests that were sent in this
+                    # invocation; the preflight gate above still audits the full
+                    # frozen input set.
+                    writer_inputs=selected_inputs,
+                    page_manifests=unified_page_manifests,
+                    writer_delivery_receipts=writer_delivery_receipts,
+                    require_actual_receipts=True,
+                )
+                for record in payload_trace:
+                    for consumer in record.get("writer_consumers", ()):
+                        consumer["writer_page_request_records"] = [
+                            item for item in writer_page_request_records
+                            if item.get("mechanism_id") == record.get("mechanism_id")
+                            and item.get("section_id") == consumer.get("section_id")
+                        ]
             if unified_payload_trace_path:
                 _atomic_write_text(
                     unified_payload_trace_path,
@@ -2778,7 +3446,7 @@ def _run_publication_method_writer_impl(
     callback_recovery_traces: list[dict[str, Any]] = []
     retry_inputs: list[WriterSectionInput] = []
     retry_missing_by_section: dict[str, tuple[str, ...]] = {}
-    input_by_section = {item.section_id: item for item in selected_inputs}
+    input_by_section = writer_input_by_section
     for graph in plan.sections:
         output = output_by_section.get(graph.section_id)
         original_input = input_by_section.get(graph.section_id)
@@ -2862,7 +3530,7 @@ def _run_publication_method_writer_impl(
             publication_mode=original_input.publication_mode,
             argument_graph=original_input.argument_graph,
         ))
-    if retry_inputs:
+    if retry_inputs and effective_mode != "unified":
         retry_writer = write_publication_method_by_sections(
             llm_config,
             retry_inputs,
@@ -3043,7 +3711,7 @@ def _run_publication_method_writer_impl(
             publication_mode=original_input.publication_mode,
             argument_graph=original_input.argument_graph,
         ))
-    if facet_retry_inputs:
+    if facet_retry_inputs and effective_mode != "unified":
         facet_retry_writer = write_publication_method_by_sections(
             llm_config,
             facet_retry_inputs,
@@ -3180,6 +3848,11 @@ def _run_publication_method_writer_impl(
                 argument_graph=original_input.argument_graph,
             ))
         if not missing_section_inputs:
+            break
+        if effective_mode == "unified":
+            # V2 owns retries through a declared plan revision/resume.  The
+            # legacy whole-section retry here would create an unplanned
+            # Writer request and invalidate the actual-request ledger.
             break
         missing_retry_writer = write_publication_method_by_sections(
             llm_config,
@@ -4129,7 +4802,6 @@ def _run_publication_method_writer_impl(
         concept_cards=concept_cards,
         llm_config=llm_config,
     )
-    writer_input_by_section = {item.section_id: item for item in writer_inputs}
     style_repair_issues = _academic_rewrite_issues_by_section(
         output_by_section,
         claims=claims,
@@ -4765,6 +5437,80 @@ def _run_publication_method_writer_impl(
             ),
         )
 
+    active_plan = (
+        unified_narrative_plan
+        if effective_mode == "unified" and unified_narrative_plan is not None
+        else plan
+    )
+    # Binder is a separate V2 role and must finish before publication status is
+    # computed.  It consumes the final accepted Writer paragraphs, so a missing
+    # or failed Binder receipt cannot be hidden by a successful Writer receipt.
+    if effective_mode == "unified":
+        try:
+            binder_receipt_path, binder_receipts, binder_failures = (
+                _write_unified_v2_binder_receipts(
+                    out_root=out_root,
+                    archive=unified_archive,
+                    workset_manifest=unified_writer_workset_manifest,
+                    writer_plan=unified_writer_plan,
+                    narrative_plan=active_plan,
+                    section_inputs=writer_input_by_section,
+                    section_outputs=output_by_section,
+                    formula_packages=unified_formula_packages,
+                )
+            )
+            unified_v2_binder_receipts = list(binder_receipts)
+            unified_v2_binder_failures = tuple(binder_failures)
+            paths["binder_receipts_v2"] = binder_receipt_path
+        except Exception as exc:  # noqa: BLE001 - Binder failure is fail-closed
+            unified_v2_binder_failures = (
+                f"binder_receipt_build_failed:{exc.__class__.__name__}:{str(exc)[:180]}",
+            )
+            fallback_path = method_output(Path(out_root), "binder_receipts_v2")
+            _atomic_write_text(
+                fallback_path,
+                json.dumps(
+                    {
+                        "schema_version": "2.0",
+                        "consumer_role": "binder",
+                        "receipts": [],
+                        "failure_codes": list(unified_v2_binder_failures),
+                    },
+                    ensure_ascii=False,
+                    indent=2,
+                    sort_keys=True,
+                )
+                + "\n",
+            )
+            binder_receipt_path = str(fallback_path)
+            paths["binder_receipts_v2"] = binder_receipt_path
+        if not unified_v2_binder_receipts:
+            failures.append("unified_consumer_receipt_missing:binder")
+        if unified_v2_binder_failures:
+            failures.extend(unified_v2_binder_failures)
+        incomplete_binder = tuple(
+            receipt for receipt in unified_v2_binder_receipts
+            if str(getattr(receipt, "status", "failed")) != "complete"
+        )
+        if incomplete_binder:
+            failures.extend(
+                "unified_consumer_task_incomplete:binder:" + str(receipt.paragraph_id)
+                for receipt in incomplete_binder
+            )
+
+    transaction_assessment_path, transaction_assessment_digest = (
+        _write_paragraph_transaction_assessments(
+            out_root=out_root,
+            plan=active_plan,
+            section_inputs=writer_input_by_section,
+            section_outputs=output_by_section,
+            formalization_path=formalization_section_path,
+        )
+    )
+    paths["publication_paragraph_transaction_assessments_v1"] = (
+        transaction_assessment_path
+    )
+
     # Q0 candidate-first product status: a durable candidate exists whenever
     # any non-empty authored section was produced, even if its transaction
     # failed a required witness check.  Validation verdicts, quality gates,
@@ -4892,23 +5638,10 @@ def _run_publication_method_writer_impl(
             claim_digest=claims.content_digest,
             failure=f"outputs:{type(exc).__name__}:{str(exc)[:200]}",
         )
-    active_plan = unified_narrative_plan if (effective_mode == "unified" and unified_narrative_plan is not None) else plan
-    transaction_assessment_path, transaction_assessment_digest = (
-        _write_paragraph_transaction_assessments(
-            out_root=out_root,
-            plan=active_plan,
-            section_inputs={item.section_id: item for item in writer_inputs},
-            section_outputs=output_by_section,
-            formalization_path=formalization_section_path,
-        )
-    )
     writer_transaction_status = _writer_transaction_status_from_assessments(
         transaction_assessment_path,
         writer_aggregate=writer.aggregate.to_json_dict(),
         publication_status=status,
-    )
-    paths["publication_paragraph_transaction_assessments_v1"] = (
-        transaction_assessment_path
     )
     if unified_contexts is not None and unified_narrative_plan is not None:
         try:
@@ -13941,19 +14674,37 @@ def _normalize_section_heading_breaks(markdown: str, *, expected_heading: str = 
 def _load_repository_authoring_context(
     artifact_paths: Mapping[str, str],
 ) -> dict[str, Any]:
-    """Load research artifacts needed for unified mechanism authoring."""
+    """Load repository-bound authoring artifacts with typed load outcomes.
+
+    The legacy caller can still consume the optional values, but unified
+    orchestration receives ``load_failures`` and must stop on any required
+    source-boundary failure.  A malformed artifact is never converted into a
+    clean-looking ``None`` without recording why it was unavailable.
+    """
     from code2paper.agentic.behavior_graph import CodeBehaviorGraphV1
     from code2paper.agentic.behavior_graph import SymbolIndexV2
     from code2paper.agentic.repo_snapshot import RepoSnapshot
     from code2paper.agentic.python_behavior_adapter import PythonBehaviorAdapter
     from code2paper.agentic.research_models import ImplementationScopeV1
     from code2paper.agentic.source_inventory import RepositorySourceManifestV1
+    from code2paper.agentic.source_inventory import normalize_source_path
+    from code2paper.agentic.source_inventory import source_manifest_snapshot_failures
+    from code2paper.agentic.repository_authoring_artifacts import (
+        REPOSITORY_AUTHORING_BUILDER_VERSION,
+        repository_authoring_identity_payload,
+    )
     from code2paper.agentic.method_argument_brief_models import (
         AuthorMechanismFacetV1,
         FacetEvidenceAlignmentV1,
         CandidateFacetPolicyV1,
         MethodArgumentBriefSetV1,
     )
+
+    load_failures: list[str] = []
+
+    def _record_failure(code: str) -> None:
+        if code not in load_failures:
+            load_failures.append(code)
 
     behavior_graph = None
     graph_value = (
@@ -13967,6 +14718,7 @@ def _load_repository_authoring_context(
                 graph_payload = graph_payload.get("behavior_graph") or graph_payload.get("graph") or graph_payload
                 behavior_graph = CodeBehaviorGraphV1.model_validate(graph_payload)
         except Exception:
+            _record_failure("unified_behavior_graph_invalid")
             behavior_graph = None
 
     repo_snapshot = None
@@ -13981,7 +14733,10 @@ def _load_repository_authoring_context(
                 Path(snapshot_value).read_text(encoding="utf-8")
             )
         except Exception:
+            _record_failure("unified_repo_snapshot_invalid")
             repo_snapshot = None
+    elif snapshot_value:
+        _record_failure("unified_repo_snapshot_missing")
 
     symbol_index = None
     symbol_value = next((
@@ -13992,6 +14747,7 @@ def _load_repository_authoring_context(
         )
         if artifact_paths.get(key, "")
     ), "")
+    symbol_load_failed = False
     if symbol_value and Path(symbol_value).is_file():
         try:
             raw_symbol_payload = json.loads(Path(symbol_value).read_text(encoding="utf-8"))
@@ -13999,8 +14755,13 @@ def _load_repository_authoring_context(
                 raw_symbol_payload = raw_symbol_payload.get("symbol_index") or raw_symbol_payload.get("index") or raw_symbol_payload
             symbol_index = SymbolIndexV2.model_validate(raw_symbol_payload)
         except Exception:
+            symbol_load_failed = True
+            _record_failure("unified_symbol_index_invalid")
             symbol_index = None
-    if symbol_index is None and repo_snapshot is not None:
+    elif symbol_value:
+        symbol_load_failed = True
+        _record_failure("unified_symbol_index_missing")
+    if symbol_index is None and repo_snapshot is not None and not symbol_load_failed:
         try:
             source_files = {
                 item.path: Path(repo_snapshot.project_root, item.path).read_text(encoding="utf-8")
@@ -14013,6 +14774,7 @@ def _load_repository_authoring_context(
                 files=source_files,
             )
         except (OSError, UnicodeError, ValueError):
+            _record_failure("unified_symbol_index_rebuild_failed")
             symbol_index = None
 
     implementation_scope = None
@@ -14023,7 +14785,10 @@ def _load_repository_authoring_context(
                 Path(scope_value).read_text(encoding="utf-8")
             )
         except Exception:
+            _record_failure("unified_implementation_scope_invalid")
             implementation_scope = None
+    elif scope_value:
+        _record_failure("unified_implementation_scope_missing")
 
     source_manifest = None
     source_manifest_value = artifact_paths.get("repository_source_manifest_v1", "")
@@ -14033,7 +14798,99 @@ def _load_repository_authoring_context(
                 Path(source_manifest_value).read_text(encoding="utf-8")
             )
         except Exception:
+            _record_failure("unified_source_manifest_invalid")
             source_manifest = None
+    elif source_manifest_value:
+        _record_failure("unified_source_manifest_missing")
+
+    if repo_snapshot is None:
+        _record_failure("unified_repo_snapshot_missing")
+    if source_manifest is None:
+        _record_failure("unified_source_manifest_missing")
+    if symbol_index is None:
+        _record_failure("unified_symbol_index_missing")
+    if implementation_scope is None:
+        _record_failure("unified_implementation_scope_missing")
+    if repo_snapshot is not None and source_manifest is not None:
+        for failure in source_manifest_snapshot_failures(
+            source_manifest,
+            repo_snapshot,
+        ):
+            _record_failure(failure)
+        for anomaly in getattr(source_manifest, "anomaly_codes", ()) or ():
+            _record_failure(f"unified_source_manifest_anomaly:{anomaly}")
+    if repo_snapshot is not None and symbol_index is not None:
+        if str(getattr(symbol_index, "repo_snapshot_id", "") or "") != str(
+            getattr(repo_snapshot, "snapshot_id", "") or ""
+        ):
+            _record_failure("unified_symbol_index_snapshot_mismatch")
+        if str(getattr(symbol_index, "project_tree_hash", "") or "") != str(
+            getattr(repo_snapshot, "project_tree_hash", "") or ""
+        ):
+            _record_failure("unified_symbol_index_tree_hash_mismatch")
+        snapshot_paths = {
+            normalize_source_path(str(getattr(item, "path", "") or ""))
+            for item in (getattr(repo_snapshot, "included_files", ()) or ())
+        }
+        for symbol in getattr(symbol_index, "symbols", ()) or ():
+            symbol_path = normalize_source_path(
+                str(getattr(symbol, "path", "") or "")
+            )
+            if symbol_path and symbol_path not in snapshot_paths:
+                _record_failure(f"unified_symbol_source_path_missing:{symbol_path}")
+    if implementation_scope is not None and symbol_index is not None:
+        indexed_symbol_ids = {
+            str(getattr(symbol, "symbol_id", "") or "")
+            for symbol in (getattr(symbol_index, "symbols", ()) or ())
+            if str(getattr(symbol, "symbol_id", "") or "")
+        }
+        scoped_symbol_ids = {
+            str(symbol_id)
+            for field_name in (
+                "target_entry_symbol_ids",
+                "target_core_symbol_ids",
+                "target_dependency_symbol_ids",
+                "comparand_symbol_ids",
+                "evaluation_symbol_ids",
+                "configuration_symbol_ids",
+                "unknown_symbol_ids",
+            )
+            for symbol_id in (getattr(implementation_scope, field_name, ()) or ())
+            if str(symbol_id).strip()
+        }
+        for symbol_id in sorted(scoped_symbol_ids - indexed_symbol_ids):
+            _record_failure(f"unified_implementation_scope_symbol_missing:{symbol_id}")
+
+    # The four source-bound artifacts are one authority closure.  A separate
+    # persisted identity record binds their digests and builder version so a
+    # replay cannot mix a snapshot from one run with a symbol index/scope or
+    # manifest from another run.  This check is deliberately performed after
+    # individual parsing and cross-field checks, keeping malformed inputs
+    # typed and fail-closed before any consumer plan is built.
+    identity_value = artifact_paths.get("repository_authoring_artifacts_v1", "")
+    if not identity_value or not Path(identity_value).is_file():
+        _record_failure("unified_repository_authoring_identity_missing")
+    elif all(
+        item is not None
+        for item in (repo_snapshot, symbol_index, implementation_scope, source_manifest)
+    ):
+        try:
+            identity_payload = json.loads(
+                Path(identity_value).read_text(encoding="utf-8")
+            )
+            if not isinstance(identity_payload, Mapping):
+                raise ValueError("identity payload must be a mapping")
+            expected_identity = repository_authoring_identity_payload(
+                snapshot=repo_snapshot,
+                symbol_index=symbol_index,
+                implementation_scope=implementation_scope,
+                source_manifest=source_manifest,
+                builder_version=REPOSITORY_AUTHORING_BUILDER_VERSION,
+            )
+            if dict(identity_payload) != expected_identity:
+                _record_failure("unified_repository_authoring_identity_mismatch")
+        except Exception:
+            _record_failure("unified_repository_authoring_identity_invalid")
 
     briefs = None
     brief_value = artifact_paths.get("method_argument_briefs_v1", "")
@@ -14107,7 +14964,116 @@ def _load_repository_authoring_context(
         "publication_field_candidates": tuple(candidates),
         "evidence_packets": evidence_packets,
         "story_spine": tuple(_story_spine_models_from_artifact_paths(dict(artifact_paths))),
+        "load_failures": tuple(load_failures),
     }
+
+
+def _unified_research_gate_failures(
+    *,
+    intent_graph: Any | None,
+    research_agenda: Any | None,
+    contexts: Any | None,
+) -> tuple[str, ...]:
+    """Check the frozen intent/research ledger before any unified request.
+
+    The reference-method agenda is intentionally not accepted here.  This
+    gate consumes the research-plane agenda, checks that it is the same
+    obligation set as the typed intent graph, and requires every core item to
+    have a terminal research outcome.  A partial outcome is usable only when
+    it carries promoted evidence plus a typed, terminal explicit-gap record.
+    """
+
+    failures: list[str] = []
+    if intent_graph is None:
+        failures.append("unified_intent_graph_missing")
+    if research_agenda is None:
+        failures.append("unified_research_agenda_missing")
+    if intent_graph is None or research_agenda is None:
+        return tuple(dict.fromkeys(failures))
+
+    graph_rows = tuple(getattr(intent_graph, "obligations", ()) or ())
+    agenda_rows = tuple(getattr(research_agenda, "items", ()) or ())
+    graph_ids = [str(getattr(item, "obligation_id", "")).strip() for item in graph_rows]
+    agenda_ids = [str(getattr(item, "obligation_id", "")).strip() for item in agenda_rows]
+    if any(not value for value in graph_ids):
+        failures.append("unified_research_intent_obligation_id_missing")
+    if any(not value for value in agenda_ids):
+        failures.append("unified_research_agenda_obligation_id_missing")
+    if len(graph_ids) != len(set(graph_ids)):
+        failures.append("unified_research_intent_obligation_duplicate")
+    if len(agenda_ids) != len(set(agenda_ids)):
+        failures.append("unified_research_agenda_obligation_duplicate")
+    graph_id_set = set(graph_ids)
+    agenda_id_set = set(agenda_ids)
+    if graph_id_set != agenda_id_set:
+        failures.append("unified_research_obligation_set_mismatch")
+        for obligation_id in sorted(graph_id_set - agenda_id_set):
+            failures.append(f"unified_research_agenda_missing:{obligation_id}")
+        for obligation_id in sorted(agenda_id_set - graph_id_set):
+            failures.append(f"unified_research_intent_missing:{obligation_id}")
+
+    graph_digest = str(getattr(intent_graph, "content_digest", "") or "")
+    agenda_graph_digest = str(
+        getattr(research_agenda, "intent_graph_digest", "") or ""
+    )
+    if not agenda_graph_digest:
+        failures.append("unified_research_intent_digest_missing")
+    elif agenda_graph_digest != graph_digest:
+        failures.append("unified_research_intent_digest_mismatch")
+
+    graph_by_id = {
+        str(getattr(item, "obligation_id", "")): item for item in graph_rows
+    }
+    agenda_by_id = {
+        str(getattr(item, "obligation_id", "")): item for item in agenda_rows
+    }
+    for obligation_id in sorted(graph_id_set & agenda_id_set):
+        graph_item = graph_by_id[obligation_id]
+        agenda_item = agenda_by_id[obligation_id]
+        if str(getattr(graph_item, "priority", "")) != str(
+            getattr(agenda_item, "priority", "")
+        ):
+            failures.append(f"unified_research_priority_mismatch:{obligation_id}")
+
+    if contexts is None:
+        failures.append("unified_research_context_set_missing")
+    else:
+        context_snapshot = str(getattr(contexts, "repo_snapshot_id", "") or "")
+        context_tree = str(getattr(contexts, "project_tree_hash", "") or "")
+        agenda_snapshot = str(
+            getattr(research_agenda, "repo_snapshot_id", "") or ""
+        )
+        agenda_tree = str(
+            getattr(research_agenda, "project_tree_hash", "") or ""
+        )
+        if not agenda_snapshot or agenda_snapshot != context_snapshot:
+            failures.append("unified_research_snapshot_mismatch")
+        if not agenda_tree or agenda_tree != context_tree:
+            failures.append("unified_research_tree_hash_mismatch")
+
+    for item in agenda_rows:
+        if str(getattr(item, "priority", "")) != "must_cover":
+            continue
+        obligation_id = str(getattr(item, "obligation_id", "")).strip()
+        status = str(getattr(item, "status", "") or "")
+        if status in {"pending", "in_progress"}:
+            failures.append(f"unified_core_intent_unsearched:{obligation_id}")
+        elif status == "partial":
+            gap_requirements = tuple(getattr(item, "gap_requirements", ()) or ())
+            terminal_gap = bool(gap_requirements) and all(
+                str(getattr(requirement, "terminal", "")) == "explicit_gap"
+                and bool(getattr(requirement, "attempted_tools", ()) or ())
+                for requirement in gap_requirements
+            )
+            if not getattr(item, "supported_claim_ids", ()) or not terminal_gap:
+                failures.append(
+                    "unified_core_intent_partial_without_terminal_gap:"
+                    f"{obligation_id}"
+                )
+        elif status == "blocked":
+            failures.append(f"unified_core_intent_blocked:{obligation_id}")
+
+    return tuple(dict.fromkeys(failures))
 
 
 def _compile_mechanism_evidence_closures(
@@ -14248,6 +15214,924 @@ def _compile_mechanism_formula_obligations(
     return obs_by_mech
 
 
+def _run_unified_v2_formalizer_phase(
+    *,
+    out_root: Path,
+    contexts: Any,
+    formula_obs: Mapping[str, Any],
+    equations: Any,
+    claims: Any | None = None,
+    facts: Any | None = None,
+    llm_config: Any,
+    caller: Any | None,
+    artifact_paths: Mapping[str, str],
+    completeness_by_mechanism: Mapping[str, list[str]],
+    model_context_tokens: int,
+    source_manifest: Any | None = None,
+    repo_snapshot: Any | None = None,
+    intent_graph: Any | None = None,
+    research_failures: Sequence[str] = (),
+    source_failures: Sequence[str] = (),
+) -> dict[str, Any]:
+    """Run the formalizer phase through the V2 three-layer contract.
+
+    Order is fixed: archive → workset manifest → budget envelope → invocation
+    plan → admission → page-centric execution.  A FAIL admission blocks before
+    the first model request and returns the typed failure; the legacy
+    ``mechanism_context_page_manifest_v1`` remains on disk for shadow diff.
+    """
+
+    from code2paper.agentic.unified_context_compiler import (
+        UnifiedCompilerError,
+        build_consumer_invocation_plan_v1,
+        build_consumer_workset_manifest_v2,
+        build_run_invocation_budget_envelope_v1,
+        build_unified_context_archive_v2,
+        bind_formula_obligation_page_owners,
+        collect_archive_structural_diagnostics,
+        evaluate_unified_live_admission_v1,
+    )
+    from code2paper.agentic.unified_context_models import (
+        UNIFIED_INVOCATION_BUDGET_MISSING,
+        UNIFIED_PROJECT_TREE_HASH_MISMATCH,
+        UNIFIED_SOURCE_MANIFEST_INVALID,
+        UNIFIED_SOURCE_MANIFEST_MISSING,
+    )
+    from code2paper.agentic.unified_context_models import sha256_digest as _sha
+    from code2paper.agentic.repo_snapshot import repo_snapshot_identity_digest
+    from code2paper.agentic.source_inventory import source_manifest_snapshot_failures
+    from code2paper.agentic.mechanism_context_compiler import (
+        validate_mechanism_context_structural_gates,
+    )
+    from code2paper.agentic.mechanism_context_models import canonical_json_bytes
+
+    paths: dict[str, str] = {}
+    traces: list[dict[str, Any]] = []
+
+    def _persist(name: str, payload: dict[str, Any]) -> str:
+        target = method_output(out_root, name)
+        _atomic_write_text(
+            target,
+            json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
+        )
+        paths[name] = str(target)
+        return str(target)
+
+    try:
+        if source_manifest is None:
+            raise UnifiedCompilerError(
+                UNIFIED_SOURCE_MANIFEST_MISSING,
+                "unified formalizer admission requires a parsed source manifest",
+            )
+        if repo_snapshot is None:
+            raise UnifiedCompilerError(
+                UNIFIED_SOURCE_MANIFEST_INVALID,
+                "unified formalizer admission requires a parsed repository snapshot",
+            )
+        source_manifest_digest = str(
+            getattr(source_manifest, "content_digest", "") or ""
+        )
+        if not source_manifest_digest:
+            raise UnifiedCompilerError(
+                UNIFIED_SOURCE_MANIFEST_INVALID,
+                "source manifest content_digest is empty",
+            )
+        context_tree_hash = str(getattr(contexts, "project_tree_hash", "") or "")
+        snapshot_tree_hash = str(
+            getattr(repo_snapshot, "project_tree_hash", "") or ""
+        )
+        manifest_tree_hash = str(
+            getattr(source_manifest, "project_tree_hash", "") or ""
+        )
+        if not context_tree_hash or context_tree_hash != snapshot_tree_hash:
+            raise UnifiedCompilerError(
+                UNIFIED_PROJECT_TREE_HASH_MISMATCH,
+                "repository snapshot and context set tree hashes disagree",
+            )
+        if manifest_tree_hash != snapshot_tree_hash:
+            raise UnifiedCompilerError(
+                UNIFIED_PROJECT_TREE_HASH_MISMATCH,
+                "source manifest and repository snapshot tree hashes disagree",
+            )
+        snapshot_id = str(getattr(repo_snapshot, "snapshot_id", "") or "")
+        if snapshot_id != str(getattr(contexts, "repo_snapshot_id", "") or ""):
+            raise UnifiedCompilerError(
+                UNIFIED_PROJECT_TREE_HASH_MISMATCH,
+                "repository snapshot and context set snapshot IDs disagree",
+            )
+        if snapshot_id != str(getattr(source_manifest, "repo_snapshot_id", "") or ""):
+            raise UnifiedCompilerError(
+                UNIFIED_PROJECT_TREE_HASH_MISMATCH,
+                "source manifest and repository snapshot IDs disagree",
+            )
+        snapshot_failures = source_manifest_snapshot_failures(
+            source_manifest,
+            repo_snapshot,
+        )
+        if snapshot_failures:
+            raise UnifiedCompilerError(
+                UNIFIED_SOURCE_MANIFEST_INVALID,
+                ";".join(snapshot_failures),
+            )
+        repo_snapshot_digest = repo_snapshot_identity_digest(repo_snapshot)
+
+        archive = build_unified_context_archive_v2(
+            contexts,
+            source_manifest_digest=source_manifest_digest,
+            source_manifest=source_manifest,
+            repo_snapshot_digest=repo_snapshot_digest,
+            equations=equations,
+            claims=claims,
+            facts=facts,
+            intent_graph=intent_graph,
+        )
+        _persist("unified_context_archive_v2", json.loads(archive.model_dump_json()))
+
+        mechanism_diagnostics = validate_mechanism_context_structural_gates(
+            contexts,
+            merge_proofs=archive.merge_proofs,
+        )
+        archive_diagnostics = collect_archive_structural_diagnostics(archive)
+        mechanism_diagnostics.update({
+            "core_ownerless_count": max(
+                int(mechanism_diagnostics.get("core_ownerless_count", 0)),
+                int(archive_diagnostics.get("core_ownerless_count", 0)),
+            ),
+            "core_owner_conflict_count": max(
+                int(mechanism_diagnostics.get("core_owner_conflict_count", 0)),
+                int(archive_diagnostics.get("core_owner_conflict_count", 0)),
+            ),
+        })
+
+        profile_budget = {
+            "max_page_input_tokens": int(
+                os.environ.get("CODE2PAPER_UNIFIED_MAX_PAGE_INPUT_TOKENS", "0") or 0
+            ),
+            "max_total_input_tokens": int(
+                os.environ.get("CODE2PAPER_UNIFIED_MAX_TOTAL_INPUT_TOKENS", "0") or 0
+            ),
+            "max_formalizer_calls": int(
+                os.environ.get("CODE2PAPER_UNIFIED_MAX_FORMALIZER_CALLS", "0") or 0
+            ),
+            "max_writer_calls": int(
+                os.environ.get("CODE2PAPER_UNIFIED_MAX_WRITER_CALLS", "0") or 0
+            ),
+            "max_realizer_calls": int(
+                os.environ.get("CODE2PAPER_UNIFIED_MAX_REALIZER_CALLS", "0") or 0
+            ),
+            "max_obligations_per_page": int(
+                os.environ.get("CODE2PAPER_UNIFIED_MAX_OBLIGATIONS_PER_PAGE", "0") or 0
+            ),
+            "max_formula_repair_calls": int(
+                os.environ.get("CODE2PAPER_UNIFIED_MAX_FORMULA_REPAIR_CALLS", "0") or 0
+            ),
+        }
+        model_capabilities = {
+            "context_tokens": model_context_tokens,
+        }
+        envelope = build_run_invocation_budget_envelope_v1(
+            profile_budget=profile_budget,
+            model_capabilities=model_capabilities,
+            run_digest=archive.content_digest,
+            profile_digest=_sha(canonical_json_bytes(profile_budget)),
+            model_identity_digest=_sha(
+                str(getattr(llm_config, "model", "unknown")).encode("utf-8")
+            ),
+        )
+        _persist(
+            "run_invocation_budget_envelope_v1",
+            json.loads(envelope.model_dump_json()),
+        )
+
+        manifest = build_consumer_workset_manifest_v2(
+            archive,
+            formula_obligations_by_mechanism=dict(formula_obs),
+            max_page_input_tokens=envelope.max_page_input_tokens,
+            max_obligations_per_page=envelope.max_obligations_per_page,
+        )
+        formula_obs = bind_formula_obligation_page_owners(formula_obs, manifest)
+        _persist(
+            "mechanism_formula_obligations_v1",
+            {
+                "schema_version": "1.0",
+                "by_mechanism": {
+                    str(mid): [
+                        item.model_dump(mode="json")
+                        for item in (items or ())
+                    ]
+                    for mid, items in sorted(formula_obs.items())
+                },
+                "binding": {
+                    "kind": "primary_detail_page_owner",
+                    "page_ids": sorted({
+                        str(item.primary_page_id)
+                        for items in formula_obs.values()
+                        for item in (items or ())
+                        if str(getattr(item, "primary_page_id", ""))
+                    }),
+                },
+            },
+        )
+        _persist(
+            "consumer_workset_manifest_v2",
+            json.loads(manifest.model_dump_json()),
+        )
+
+        plan = build_consumer_invocation_plan_v1(
+            manifest,
+            envelope,
+            phase="formalizer",
+            plan_revision=1,
+            profile_digest=envelope.profile_digest,
+            model_identity_digest=envelope.model_identity_digest,
+            model_context_tokens=model_context_tokens,
+        )
+        _persist(
+            "consumer_invocation_plan_v1.1",
+            json.loads(plan.model_dump_json()),
+        )
+
+        closed_set_failures: list[str] = []
+        for mechanism_id, failures in sorted(completeness_by_mechanism.items()):
+            for failure in failures:
+                closed_set_failures.append(f"{mechanism_id}:{failure}")
+
+        admission = evaluate_unified_live_admission_v1(
+            phase="formalizer",
+            plan=plan,
+            envelope=envelope,
+            archive=archive,
+            manifest=manifest,
+            run_digest=archive.content_digest,
+            model_context_tokens=model_context_tokens,
+            closed_set_failures=tuple(closed_set_failures),
+            research_failures=tuple(research_failures),
+            mechanism_diagnostics=mechanism_diagnostics,
+            source_failures=source_failures,
+        )
+        _persist(
+            "unified_live_admission_v1.formalizer.1",
+            json.loads(admission.model_dump_json()),
+        )
+
+        if admission.status != "pass":
+            return {
+                "packages": [],
+                "formula_obligations": formula_obs,
+                "archive": archive,
+                "manifest": manifest,
+                "envelope": envelope,
+                "plan": plan,
+                "traces": [{
+                    "phase": "formalizer",
+                    "v2": True,
+                    "admission_status": admission.status,
+                    "failure_codes": list(admission.failure_codes),
+                }],
+                "paths": paths,
+                "blocked": (
+                    "unified_live_admission_failed:"
+                    + ",".join(sorted(admission.failure_codes))
+                ),
+            }
+
+        ledger_root = Path(out_root) / "artifacts" / "06_authoring" / "invocations"
+        obligations_by_id = {
+            str(item.obligation_id): item
+            for items in formula_obs.values()
+            for item in (items or ())
+        }
+        from code2paper.agentic.formalization_agent import (
+            execute_formalizer_invocation_plan,
+        )
+
+        execution = execute_formalizer_invocation_plan(
+            plan=plan,
+            workset_manifest=manifest,
+            archive=archive,
+            obligations_by_id=obligations_by_id,
+            llm_config=llm_config,
+            caller=caller,
+            equations=equations,
+            ledger_root=ledger_root,
+            model_identity_digest=envelope.model_identity_digest,
+            run_digest=archive.content_digest,
+        )
+        execution_path = _persist(
+            "formalizer_plan_execution_v2",
+            {
+                "schema_version": "2.0",
+                "plan_digest": execution.plan_digest,
+                "actual_main_calls": execution.actual_main_calls,
+                "actual_repair_calls": execution.actual_repair_calls,
+                "planned_main_invocations": execution.planned_main_invocations,
+                "repair_call_limit": execution.repair_call_limit,
+                "assertion_failures": list(execution.assertion_failures),
+                "task_failures": list(execution.task_failures)[:200],
+                "receipt_count": len(execution.receipts),
+                "accepted_package_count": len(execution.accepted_packages),
+            },
+        )
+        del execution_path
+        traces.append({
+            "phase": "formalizer",
+            "v2": True,
+            "admission_status": admission.status,
+            "actual_main_calls": execution.actual_main_calls,
+            "actual_repair_calls": execution.actual_repair_calls,
+            "planned_main_invocations": execution.planned_main_invocations,
+            "assertion_failures": list(execution.assertion_failures),
+        })
+        if execution.assertion_failures:
+            return {
+                "packages": list(execution.accepted_packages),
+                "formula_obligations": formula_obs,
+                "archive": archive,
+                "manifest": manifest,
+                "envelope": envelope,
+                "plan": plan,
+                "traces": traces,
+                "paths": paths,
+                "blocked": (
+                    "unified_formalizer_plan_assertion_failed:"
+                    + ",".join(sorted(execution.assertion_failures))
+                ),
+            }
+        return {
+            "packages": list(execution.accepted_packages),
+            "formula_obligations": formula_obs,
+            "archive": archive,
+            "manifest": manifest,
+            "envelope": envelope,
+            "plan": plan,
+            "traces": traces,
+            "paths": paths,
+            "blocked": "",
+        }
+    except UnifiedCompilerError as exc:
+        return {
+            "packages": [],
+            "formula_obligations": formula_obs if "formula_obs" in locals() else {},
+            "traces": [{
+                "phase": "formalizer",
+                "v2": True,
+                "compiler_failure_code": exc.failure_code,
+                "message": exc.message,
+            }],
+            "paths": paths,
+            "blocked": f"{exc.failure_code}:{exc.message[:180]}",
+        }
+
+
+def _run_unified_v2_realizer_phase(
+    *,
+    out_root: Path,
+    contexts: Any,
+    narrative_plan: Any,
+    manifest: Any,
+    archive: Any,
+    envelope: Any,
+    parent_plan: Any,
+    formula_packages: Sequence[Any],
+    llm_config: Any,
+    caller: Any | None,
+    model_context_tokens: int,
+    completeness_by_mechanism: Mapping[str, Sequence[str]],
+    research_failures: Sequence[str] = (),
+    source_failures: Sequence[str] = (),
+) -> dict[str, Any]:
+    """Execute the independent V2 Realizer phase, one immutable page at a time."""
+
+    from code2paper.agentic.unified_context_compiler import (
+        build_consumer_invocation_plan_v1,
+        build_consumer_request_payload,
+        consumer_request_envelope_digest,
+        consumer_response_json_schema,
+        evaluate_unified_live_admission_v1,
+        render_consumer_page_prompt,
+    )
+    from code2paper.agentic.unified_context_models import (
+        ActualRequestReceiptV2,
+        InvocationAttemptStartedV1,
+    )
+    from code2paper.agentic.unified_invocation_ledger import (
+        build_resume_plan,
+        last_started_attempt,
+        publish_attempt_completed,
+        publish_attempt_started,
+        publish_output_fragment,
+        read_completed_receipts,
+        rebuild_aggregate_fragments,
+    )
+    from code2paper.agentic.mechanism_context_models import (
+        canonical_json_bytes,
+        sha256_digest,
+    )
+    from code2paper.agentic.mechanism_realizer_composer import (
+        MechanismDraftV1,
+        MechanismRealizer,
+    )
+    from code2paper.agentic.mechanism_context_compiler import (
+        validate_mechanism_context_structural_gates,
+    )
+
+    paths: dict[str, str] = {}
+    ledger_root = Path(out_root) / "artifacts" / "06_authoring" / "invocations"
+    realizer_plan = build_consumer_invocation_plan_v1(
+        manifest,
+        envelope,
+        phase="realizer",
+        parent_plan=parent_plan,
+        plan_revision=3,
+        profile_digest=envelope.profile_digest,
+        model_identity_digest=envelope.model_identity_digest,
+        model_context_tokens=model_context_tokens,
+    )
+    realizer_plan_path = method_output(out_root, "consumer_invocation_plan_v1.3")
+    _atomic_write_text(realizer_plan_path, realizer_plan.model_dump_json(indent=2) + "\n")
+    paths["consumer_invocation_plan_v1.3"] = str(realizer_plan_path)
+
+    mechanism_diagnostics = validate_mechanism_context_structural_gates(
+        contexts,
+        merge_proofs=archive.merge_proofs,
+    )
+    closed_set_failures = tuple(
+        f"{mechanism_id}:{failure}"
+        for mechanism_id, failures in sorted(completeness_by_mechanism.items())
+        for failure in failures
+    )
+    admission = evaluate_unified_live_admission_v1(
+        phase="realizer",
+        plan=realizer_plan,
+        envelope=envelope,
+        archive=archive,
+        manifest=manifest,
+        run_digest=archive.content_digest,
+        model_context_tokens=model_context_tokens,
+        closed_set_failures=closed_set_failures,
+        research_failures=tuple(research_failures),
+        mechanism_diagnostics=mechanism_diagnostics,
+        source_failures=source_failures,
+    )
+    admission_path = method_output(out_root, "unified_live_admission_v1.realizer.3")
+    _atomic_write_text(admission_path, admission.model_dump_json(indent=2) + "\n")
+    paths["unified_live_admission_v1.realizer.3"] = str(admission_path)
+    if admission.status != "pass":
+        return {
+            "blocked": "unified_realizer_admission_failed:" + ",".join(admission.failure_codes),
+            "plan": realizer_plan,
+            "admission": admission,
+            "receipts": [],
+            "drafts": [],
+            "traces": [{
+                "phase": "realizer",
+                "v2": True,
+                "admission_status": admission.status,
+                "failure_codes": list(admission.failure_codes),
+            }],
+            "paths": paths,
+        }
+
+    context_by_id = {
+        str(context.mechanism_id): context
+        for context in (getattr(contexts, "contexts", ()) or ())
+    }
+    section_by_id: dict[str, Any] = {}
+    section_detail_ids: dict[str, set[str]] = {}
+    section_package_ids: dict[str, set[str]] = {}
+    for section in (getattr(narrative_plan, "sections", ()) or ()):
+        section_id = str(getattr(section, "section_id", ""))
+        if not section_id:
+            continue
+        section_by_id[section_id] = section
+        detail_ids: set[str] = set()
+        package_ids: set[str] = set()
+        for paragraph in (getattr(section, "paragraphs", ()) or ()):
+            for field_name in ("required_detail_ids", "optional_detail_ids", "detail_ids"):
+                detail_ids.update(
+                    str(value).strip()
+                    for value in (getattr(paragraph, field_name, ()) or ())
+                    if str(value).strip()
+                )
+            package_ids.update(
+                str(value).strip()
+                for value in (getattr(paragraph, "formula_package_ids", ()) or ())
+                if str(value).strip()
+            )
+        section_detail_ids[section_id] = detail_ids
+        section_package_ids[section_id] = package_ids
+
+    package_by_id = {
+        str(getattr(package, "package_id", "")): package
+        for package in formula_packages
+        if str(getattr(package, "package_id", ""))
+    }
+    page_index = manifest._page_index()
+    workset_by_id = {
+        str(workset.workset_id): workset
+        for workset in manifest.worksets
+    }
+    realizer = MechanismRealizer(llm_config=llm_config)
+    receipts: list[Any] = []
+    drafts: list[Any] = []
+    traces: list[dict[str, Any]] = []
+    invocation_ids = {
+        str(invocation.invocation_id)
+        for invocation in realizer_plan.invocations
+    }
+
+    resume_plan = build_resume_plan(
+        ledger_root,
+        realizer_plan,
+        archive_digest=archive.content_digest,
+        workset_manifest_digest=manifest.content_digest,
+        model_identity_digest=envelope.model_identity_digest,
+    )
+
+    for invocation in realizer_plan.invocations:
+        page = page_index.get(invocation.page_id)
+        workset = workset_by_id.get(invocation.workset_id)
+        if page is None or workset is None:
+            traces.append({
+                "invocation_id": invocation.invocation_id,
+                "status": "blocked",
+                "failure": "realizer_page_or_workset_missing",
+            })
+            continue
+
+        # Reuse only a completed task.  A transport-accepted but semantically
+        # failed draft must be executed again on resume; the receipt remains
+        # evidence of the failed attempt but cannot satisfy the Realizer gate.
+        decision = resume_plan.decisions.get(invocation.invocation_id)
+        reused = False
+        if decision is not None and decision.decision == "reuse":
+            prior_receipts = read_completed_receipts(
+                ledger_root, invocation.invocation_id
+            )
+            prior = next(
+                (
+                    receipt for receipt in prior_receipts
+                    if receipt.content_digest == decision.reuse_receipt_digest
+                    and receipt.task_status == "complete"
+                ),
+                None,
+            )
+            if prior is not None:
+                for fragment in rebuild_aggregate_fragments(
+                    ledger_root, realizer_plan, role="realizer"
+                ):
+                    if (
+                        fragment.get("invocation_id") == invocation.invocation_id
+                        and fragment.get("receipt_digest") == prior.content_digest
+                    ):
+                        payload = fragment.get("fragment") or {}
+                        raw_draft = payload.get("draft")
+                        if isinstance(raw_draft, Mapping):
+                            try:
+                                drafts.append(MechanismDraftV1.model_validate(raw_draft))
+                                receipts.append(prior)
+                                reused = True
+                            except Exception:
+                                reused = False
+                        break
+        if reused:
+            traces.append({
+                "invocation_id": invocation.invocation_id,
+                "status": "reused",
+                "page_id": page.page_id,
+            })
+            continue
+
+        section_id = str(invocation.section_id)
+        section = section_by_id.get(section_id)
+        mechanism_id = str(workset.mechanism_id)
+        page_header = page.technical_payload.get("mechanism_header", {})
+        header_mechanism_ids = {
+            str(value).strip()
+            for value in (
+                page_header.get("mechanism_ids", ())
+                if isinstance(page_header, Mapping)
+                else ()
+            )
+            if str(value).strip()
+        }
+        if not header_mechanism_ids and mechanism_id in context_by_id:
+            header_mechanism_ids.add(mechanism_id)
+        if section is not None:
+            header_mechanism_ids.update(
+                str(value).strip()
+                for value in (getattr(section, "mechanism_ids", ()) or ())
+                if str(value).strip()
+            )
+        source_contexts = [
+            context_by_id[value]
+            for value in sorted(header_mechanism_ids)
+            if value in context_by_id
+        ]
+        context = source_contexts[0] if source_contexts else context_by_id.get(mechanism_id)
+        if context is None and source_contexts:
+            context = source_contexts[0]
+        if context is None or caller is None or llm_config is None:
+            traces.append({
+                "invocation_id": invocation.invocation_id,
+                "status": "blocked",
+                "failure": "realizer_context_or_caller_missing",
+            })
+            continue
+
+        page_atoms = page.technical_payload.get("atoms", ())
+        page_detail_ids = {
+            str(value).strip().removeprefix("detail:")
+            for value in (page.technical_payload.get("detail_ids", ()) or ())
+            if str(value).strip()
+        }
+        page_detail_ids.update(
+            str(raw.get("detail_id") or raw.get("_atom_id", "")).strip()
+            .removeprefix("detail:")
+            for raw in page_atoms
+            if isinstance(raw, Mapping)
+            and (
+                str(raw.get("_atom_id", "")).startswith("detail:")
+                or str(raw.get("_atom_kind", "")) == "detail"
+            )
+        )
+        detail_pool: dict[str, Any] = {}
+        for source_context in source_contexts or ([context] if context is not None else []):
+            for detail in (getattr(source_context, "details", ()) or ()):
+                detail_pool.setdefault(str(detail.detail_id), detail)
+        scoped_detail_ids = page_detail_ids.intersection(set(detail_pool))
+        if section_detail_ids.get(section_id):
+            scoped_detail_ids &= section_detail_ids[section_id]
+        scoped_packages = tuple(
+            package_by_id[package_id]
+            for package_id in sorted(section_package_ids.get(section_id, set()))
+            if package_id in package_by_id
+            and (
+                not header_mechanism_ids
+                or str(getattr(package_by_id[package_id], "mechanism_id", ""))
+                in header_mechanism_ids
+            )
+        )
+
+        # Join pages deliberately use one synthetic context assembled from
+        # the explicitly declared owners.  It is only a request-local view;
+        # no new authority or repository fact is created, and the immutable
+        # page remains the source of the request bytes.
+        if len(source_contexts) > 1 or mechanism_id.startswith("join:"):
+            context = SimpleNamespace(
+                mechanism_id=mechanism_id,
+                mechanism_name=(
+                    str(page_header.get("mechanism_id") or section_id)
+                    if isinstance(page_header, Mapping)
+                    else section_id
+                ),
+                details=tuple(detail_pool.values()),
+            )
+
+        observed: dict[str, Any] = {}
+
+        def _capturing_realizer_caller(config: Any, request: Any) -> Any:
+            expected_payload = build_consumer_request_payload(
+                page=page,
+                role="realizer",
+                task_ids=invocation.task_ids,
+                section_id=invocation.section_id,
+            )
+            expected_prompt = render_consumer_page_prompt(
+                page=page,
+                role="realizer",
+                task_ids=invocation.task_ids,
+                section_id=invocation.section_id,
+            )
+            actual_payload = getattr(request, "input_payload", None)
+            actual_technical_payload = (
+                actual_payload.get("technical_payload")
+                if isinstance(actual_payload, Mapping)
+                else None
+            )
+            actual_bytes = (
+                canonical_json_bytes(dict(actual_technical_payload))
+                if isinstance(actual_technical_payload, Mapping)
+                else b""
+            )
+            actual_bytes_digest = sha256_digest(actual_bytes) if actual_bytes else ""
+            request_failures: list[str] = []
+            if actual_bytes != canonical_json_bytes(dict(page.technical_payload)):
+                request_failures.append("unified_actual_page_bytes_mismatch")
+            if str(getattr(request, "prompt_template_id", "")) != "unified_realizer_page_v2":
+                request_failures.append("unified_actual_request_template_mismatch")
+            if str(getattr(request, "schema_name", "")) != "unified_consumer_response_v2":
+                request_failures.append("unified_actual_request_schema_mismatch")
+            if str(getattr(request, "prompt", "")) != expected_prompt:
+                request_failures.append("unified_actual_request_prompt_mismatch")
+            if canonical_json_bytes(actual_payload) != canonical_json_bytes(expected_payload):
+                request_failures.append("unified_actual_request_payload_mismatch")
+            if getattr(request, "response_json_schema", None) != consumer_response_json_schema("realizer"):
+                request_failures.append("unified_actual_request_response_schema_mismatch")
+
+            if not request_failures:
+                actual_envelope_digest = consumer_request_envelope_digest(
+                    page=page,
+                    role="realizer",
+                    task_ids=invocation.task_ids,
+                    section_id=invocation.section_id,
+                )
+            else:
+                actual_envelope_digest = sha256_digest(canonical_json_bytes({
+                    "request_input_hash": str(getattr(request, "input_hash", "")),
+                    "technical_bytes_digest": actual_bytes_digest,
+                    "failures": sorted(set(request_failures)),
+                }))
+            if actual_envelope_digest != invocation.expected_request_envelope_digest:
+                request_failures.append("unified_actual_request_envelope_mismatch")
+
+            started_at = time.time()
+            attempt = last_started_attempt(ledger_root, invocation.invocation_id) + 1
+            publish_attempt_started(
+                ledger_root,
+                InvocationAttemptStartedV1(
+                    invocation_id=invocation.invocation_id,
+                    attempt=attempt,
+                    plan_digest=realizer_plan.content_digest,
+                    page_id=page.page_id,
+                    expected_technical_bytes_digest=page.technical_bytes_digest,
+                    expected_request_envelope_digest=invocation.expected_request_envelope_digest,
+                    model_identity_digest=envelope.model_identity_digest,
+                    started_at_unix=started_at,
+                ),
+            )
+            if request_failures:
+                from code2paper.export.run_manifest import hash_text
+                response = LLMResponse(
+                    text="",
+                    response_hash=hash_text(""),
+                    blocked_reason=(
+                        "unified_actual_request_rejected:"
+                        + ";".join(dict.fromkeys(request_failures))
+                    ),
+                )
+            else:
+                try:
+                    response = caller(config, request)
+                except Exception as exc:  # noqa: BLE001 - persist the failed actual call
+                    from code2paper.export.run_manifest import hash_text
+                    response = LLMResponse(
+                        text="",
+                        response_hash=hash_text(""),
+                        blocked_reason=f"realizer_call_error:{type(exc).__name__}",
+                    )
+            if response is None:
+                from code2paper.export.run_manifest import hash_text
+                response = LLMResponse(
+                    text="",
+                    response_hash=hash_text(""),
+                    blocked_reason="realizer_call_returned_none",
+                )
+            response_text = str(getattr(response, "text", "") or "")
+            observed.update({
+                "attempt": attempt,
+                "started_at": started_at,
+                "actual_bytes_digest": actual_bytes_digest,
+                "actual_envelope_digest": actual_envelope_digest,
+                "request_failures": tuple(dict.fromkeys(request_failures)),
+                "response": response,
+                "response_digest": _digest_text(response_text),
+            })
+            return response
+
+        draft = realizer.realize_draft(
+            context=context,
+            page_index=list(manifest.pages).index(page),
+            formula_packages=scoped_packages,
+            caller=_capturing_realizer_caller,
+            consumer_page=page,
+            consumer_invocation=invocation,
+            required_detail_ids=tuple(sorted(scoped_detail_ids)),
+            section_id=section_id,
+        )
+        drafts.append(draft)
+        if not observed:
+            traces.append({
+                "invocation_id": invocation.invocation_id,
+                "status": "blocked",
+                "failure": "realizer_actual_request_not_observed",
+                "draft_status": draft.status,
+                "draft_blocked_reason": draft.blocked_reason,
+            })
+            continue
+
+        observed_response = observed.get("response")
+        response_text = str(getattr(observed_response, "text", "") or "")
+        fragment_digest = publish_output_fragment(
+            ledger_root,
+            invocation_id=invocation.invocation_id,
+            attempt=int(observed["attempt"]),
+            fragment={
+                "consumer_role": "realizer",
+                "section_id": section_id,
+                "page_id": page.page_id,
+                "draft": draft.model_dump(mode="json"),
+                "response_text": response_text,
+                "response_hash": str(getattr(observed_response, "response_hash", "")),
+            },
+        )
+        request_failures = tuple(observed.get("request_failures", ()))
+        delivery_status = "accepted" if not request_failures else "rejected"
+        task_status = "complete" if draft.status == "accepted" else "failed"
+        receipt = ActualRequestReceiptV2(
+            invocation_id=invocation.invocation_id,
+            attempt=int(observed["attempt"]),
+            consumer_role="realizer",
+            phase="realizer",
+            workset_id=invocation.workset_id,
+            task_ids=tuple(invocation.task_ids),
+            mechanism_id=invocation.mechanism_id,
+            section_id=invocation.section_id,
+            page_id=page.page_id,
+            actual_technical_bytes_digest=str(observed["actual_bytes_digest"]),
+            actual_request_envelope_digest=str(observed["actual_envelope_digest"]),
+            response_digest=str(observed["response_digest"]),
+            fragment_digests=(fragment_digest,),
+            model_identity_digest=envelope.model_identity_digest,
+            started_at_unix=float(observed["started_at"]),
+            finished_at_unix=time.time(),
+            delivery_status=delivery_status,  # type: ignore[arg-type]
+            delivery_rejection_code=(request_failures[0] if request_failures else ""),
+            task_status=task_status,  # type: ignore[arg-type]
+            succeeded_task_ids=(tuple(invocation.task_ids) if task_status == "complete" else ()),
+            failed_task_ids=(tuple(invocation.task_ids) if task_status != "complete" else ()),
+            task_failures=tuple(
+                {"code": str(item)}
+                for item in (
+                    *request_failures,
+                    *(
+                        (draft.blocked_reason,)
+                        if draft.blocked_reason
+                        else ()
+                    ),
+                )
+            ),
+            upstream_archive_digest=archive.content_digest,
+            upstream_workset_manifest_digest=manifest.content_digest,
+            upstream_plan_digest=realizer_plan.content_digest,
+        )
+        publish_attempt_completed(ledger_root, receipt)
+        receipts.append(receipt)
+        traces.append({
+            "invocation_id": invocation.invocation_id,
+            "page_id": page.page_id,
+            "delivery_status": delivery_status,
+            "task_status": task_status,
+            "actual_technical_bytes_digest": observed["actual_bytes_digest"],
+            "actual_request_envelope_digest": observed["actual_envelope_digest"],
+        })
+
+    execution_payload = {
+        "schema_version": "2.0",
+        "phase": "realizer",
+        "plan_digest": realizer_plan.content_digest,
+        "planned_invocations": len(realizer_plan.invocations),
+        "actual_invocations": len(receipts),
+        "complete_tasks": sum(1 for receipt in receipts if receipt.task_status == "complete"),
+        "traces": traces,
+    }
+    execution_path = method_output(out_root, "realizer_plan_execution_v2")
+    _atomic_write_text(
+        execution_path,
+        json.dumps(execution_payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
+    )
+    paths["realizer_plan_execution_v2"] = str(execution_path)
+    receipts_path = method_output(out_root, "realizer_receipts_v2")
+    _atomic_write_text(
+        receipts_path,
+        json.dumps(
+            {
+                "schema_version": "2.0",
+                "plan_digest": realizer_plan.content_digest,
+                "receipts": [receipt.model_dump(mode="json") for receipt in receipts],
+                "content_digest": _digest_json([receipt.model_dump(mode="json") for receipt in receipts]),
+            },
+            ensure_ascii=False,
+            indent=2,
+            sort_keys=True,
+        )
+        + "\n",
+    )
+    paths["realizer_receipts_v2"] = str(receipts_path)
+    blocked = ""
+    if len(receipts) != len(realizer_plan.invocations):
+        blocked = "unified_realizer_receipt_missing"
+    return {
+        "blocked": blocked,
+        "plan": realizer_plan,
+        "admission": admission,
+        "receipts": receipts,
+        "drafts": drafts,
+        "traces": traces,
+        "paths": paths,
+    }
+
+
 def _run_mechanism_formalizer(
     contexts: Any,
     shared_payload_slices: Mapping[str, tuple[Any, ...]],
@@ -14386,46 +16270,6 @@ def _run_mechanism_formalizer(
             equations=equations,
             allow_deterministic_operation_fallback=False,
         )
-        if (
-            manifest is not None
-            and caller is not None
-            and llm_config is not None
-            and not all(
-                formalizer_page_deliveries.get(index)
-                == manifest.pages[index].serialized_bytes
-                for index in range(len(manifest.pages))
-            )
-        ):
-            # A mechanism without a formula obligation still has to prove
-            # that the Formalizer consumer received the immutable page pack.
-            # This no-op delivery probe is not allowed to create a formula;
-            # it exists solely to bind the receipt to an actual request at the
-            # caller boundary.
-            from code2paper.llm.client import LLMRequest
-
-            for page_index, page_value in enumerate(payload_pages):
-                _capturing_formalizer_caller(
-                    llm_config,
-                    LLMRequest(
-                        prompt_template_id="phase4_mechanism_formalizer_delivery_probe_v1",
-                        prompt=(
-                            "Return JSON only. Confirm receipt of the supplied "
-                            "mechanism context page; do not author a formula.\n"
-                            + page_value
-                        ),
-                        input_payload={
-                            "mechanism_id": mid,
-                            "shared_payload": page_value,
-                            "shared_payload_pages": [page_value],
-                            "shared_payload_page_index": page_index,
-                            "shared_payload_page_count": len(payload_pages),
-                            "shared_payload_digest": payload_digest,
-                            "delivery_probe": True,
-                        },
-                    ),
-                )
-            call_trace = dict(call_trace)
-            call_trace["formalizer_delivery_probe"] = True
         all_packages.extend(pkgs)
         call_trace = dict(call_trace)
         call_trace.update({
@@ -14492,6 +16336,550 @@ def _build_narrative_plan_v3(
     )
 
 
+def _writer_section_inputs_v2(
+    *,
+    narrative_plan: Any,
+    formula_packages: tuple[Any, ...] = (),
+    formula_obligations: tuple[Any, ...] = (),
+    consumer_workset_manifest: Any,
+    consumer_invocation_plan: Any,
+    system_prompt: str = "",
+) -> list[Any]:
+    """Build exactly one private Writer input for every V2 page invocation.
+
+    The public section id remains stable across page inputs.  The invocation
+    id is carried in the private metadata so the low-level structured decoder
+    can keep page state distinct while the returned outputs are merged back to
+    the canonical section.
+    """
+
+    from code2paper.llm.section_writer import WriterSectionInput
+    from code2paper.llm.section_writer import default_section_system_prompt
+    from code2paper.agentic.mechanism_context_models import canonical_json_bytes
+
+    def _dict(value: Any) -> dict[str, Any]:
+        if hasattr(value, "model_dump"):
+            return dict(value.model_dump(mode="json"))
+        return dict(value) if isinstance(value, Mapping) else {}
+
+    def _text_id(value: Any) -> str:
+        return str(value or "").strip()
+
+    def _detail_id(value: Any) -> str:
+        return _text_id(value).removeprefix("detail:")
+
+    def _page_detail_ids(page: Any) -> set[str]:
+        payload = getattr(page, "technical_payload", {}) or {}
+        result = {
+            _detail_id(value)
+            for value in (payload.get("detail_ids") or ())
+            if _detail_id(value)
+        }
+        for raw_atom in payload.get("atoms", ()) or ():
+            if not isinstance(raw_atom, Mapping):
+                continue
+            atom_id = _text_id(raw_atom.get("_atom_id"))
+            atom_kind = _text_id(raw_atom.get("_atom_kind"))
+            if atom_kind == "detail" or atom_id.startswith("detail:"):
+                candidate = raw_atom.get("detail_id") or atom_id.removeprefix("detail:")
+                if _detail_id(candidate):
+                    result.add(_detail_id(candidate))
+            for field_name in (
+                "source_detail_id", "target_detail_id", "source_detail_ids",
+                "target_detail_ids",
+            ):
+                values = raw_atom.get(field_name, ()) or ()
+                if isinstance(values, str):
+                    values = (values,)
+                result.update(
+                    _detail_id(value) for value in values if _detail_id(value)
+                )
+        return result
+
+    def _page_atom_ids(page: Any) -> set[str]:
+        return {
+            _text_id(value)
+            for value in (getattr(page, "atom_ids", ()) or ())
+            if _text_id(value)
+        }
+
+    def _target_dict(raw_target: Any) -> dict[str, Any]:
+        if isinstance(raw_target, Mapping):
+            return dict(raw_target)
+        return {
+            key: getattr(raw_target, key)
+            for key in (
+                "target_id", "target_kind", "detail_id", "semantic_atom",
+                "paper_role", "required_polarity", "required_conditions",
+                "allowed_anchor_ids", "allowed_exact_excerpts", "required",
+                "render_policy",
+            )
+            if hasattr(raw_target, key)
+        }
+
+    def _binding_contract(rows: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
+        all_detail_ids: list[str] = []
+        required_detail_ids: list[str] = []
+        detail_witness_contracts: dict[str, list[dict[str, Any]]] = {}
+        allowed_atom_ids: list[str] = []
+        required_atom_ids: list[str] = []
+        atom_contracts_by_detail: dict[str, list[dict[str, Any]]] = {}
+        formula_obligation_ids: list[str] = []
+        formula_package_ids: list[str] = []
+        for row in rows:
+            for value in (
+                *(row.get("required_detail_ids") or ()),
+                *(row.get("optional_detail_ids") or ()),
+            ):
+                value_text = _detail_id(value)
+                if value_text and value_text not in all_detail_ids:
+                    all_detail_ids.append(value_text)
+            for value in row.get("required_detail_ids") or ():
+                value_text = _detail_id(value)
+                if value_text and value_text not in required_detail_ids:
+                    required_detail_ids.append(value_text)
+            for value in row.get("formula_obligation_ids") or ():
+                value_text = _text_id(value)
+                if value_text and value_text not in formula_obligation_ids:
+                    formula_obligation_ids.append(value_text)
+            contract = row.get("witness_contract") or {}
+            targets = (
+                contract.get("targets", ())
+                if isinstance(contract, Mapping)
+                else getattr(contract, "targets", ())
+            ) or ()
+            for raw_target in targets:
+                target = _target_dict(raw_target)
+                target_id = _text_id(target.get("target_id"))
+                target_kind = _text_id(target.get("target_kind"))
+                if not target_id or not target_kind:
+                    continue
+                target["required"] = bool(
+                    target.get("required", target.get("render_policy") == "required")
+                )
+                detail_id = _detail_id(target.get("detail_id"))
+                if target_kind == "detail":
+                    detail_id = _detail_id(target_id)
+                if detail_id:
+                    detail_witness_contracts.setdefault(detail_id, []).append(target)
+                if target_kind == "atom":
+                    if target_id not in allowed_atom_ids:
+                        allowed_atom_ids.append(target_id)
+                    if target["required"] and target_id not in required_atom_ids:
+                        required_atom_ids.append(target_id)
+                    if detail_id:
+                        atom_contracts_by_detail.setdefault(detail_id, []).append(target)
+        return {
+            "allowed_detail_ids": all_detail_ids,
+            "required_detail_ids": required_detail_ids,
+            "allowed_atom_ids": allowed_atom_ids,
+            "required_atom_ids": required_atom_ids,
+            "detail_witness_contracts": detail_witness_contracts,
+            "atom_contracts_by_detail": atom_contracts_by_detail,
+            "allowed_formula_obligation_ids": formula_obligation_ids,
+            "allowed_formula_package_ids": formula_package_ids,
+            "required_rhetorical_moves": [],
+        }
+
+    page_index = consumer_workset_manifest._page_index()
+    invocation_by_page = {
+        _text_id(item.page_id): item
+        for item in (getattr(consumer_invocation_plan, "invocations", ()) or ())
+        if _text_id(getattr(item, "page_id", ""))
+        and str(getattr(item, "role", "")) == "writer"
+        and not bool(getattr(item, "is_repair", False))
+    }
+    packages = [_dict(item) for item in formula_packages]
+    obligations = [_dict(item) for item in formula_obligations]
+    package_by_id = {
+        _text_id(item.get("package_id")): item
+        for item in packages if _text_id(item.get("package_id"))
+    }
+    obligation_by_id = {
+        _text_id(item.get("obligation_id")): item
+        for item in obligations if _text_id(item.get("obligation_id"))
+    }
+    sections_by_id = {
+        _text_id(getattr(item, "section_id", "")): item
+        for item in (getattr(narrative_plan, "sections", ()) or ())
+        if _text_id(getattr(item, "section_id", ""))
+    }
+    prompt = system_prompt or default_section_system_prompt()
+    inputs: list[WriterSectionInput] = []
+
+    for section_id, section in sections_by_id.items():
+        workset = next(
+            (
+                item for item in consumer_workset_manifest.worksets
+                if _text_id(getattr(item, "workset_id", ""))
+                == f"workset:section:{section_id}"
+            ),
+            None,
+        )
+        if workset is None:
+            raise ValueError(f"unified_writer_workset_missing:{section_id}")
+        section_dict = _dict(section)
+        paragraph_rows = [
+            _dict(item)
+            for item in (section_dict.get("paragraphs") or ())
+            if isinstance(item, Mapping) or hasattr(item, "model_dump")
+        ]
+        pages = [page_index.get(_text_id(page_id)) for page_id in workset.required_page_ids]
+        if any(page is None for page in pages):
+            missing = [
+                _text_id(page_id) for page_id, page in zip(workset.required_page_ids, pages)
+                if page is None
+            ]
+            raise ValueError(f"unified_writer_page_missing:{section_id}:{','.join(missing)}")
+        pages = [page for page in pages if page is not None]
+        page_details = {_text_id(page.page_id): _page_detail_ids(page) for page in pages}
+        page_atoms = {_text_id(page.page_id): _page_atom_ids(page) for page in pages}
+        page_formula_ids = {
+            _text_id(page.page_id): {
+                _text_id(value)
+                for value in (page.technical_payload.get("formula_obligation_ids") or ())
+                if _text_id(value)
+            }
+            for page in pages
+        }
+        page_paragraph_ids = {
+            _text_id(page.page_id): {
+                _text_id(value)
+                for value in (page.technical_payload.get("paragraph_ids") or ())
+                if _text_id(value)
+            }
+            for page in pages
+        }
+        paragraph_page_id: dict[str, str] = {}
+        for row in paragraph_rows:
+            paragraph_id = _text_id(row.get("paragraph_id"))
+            if not paragraph_id:
+                raise ValueError(f"unified_writer_paragraph_id_missing:{section_id}")
+            marked = [
+                _text_id(page.page_id)
+                for page in pages
+                if paragraph_id in page_paragraph_ids[_text_id(page.page_id)]
+            ]
+            if len(marked) > 1:
+                raise ValueError(
+                    f"unified_writer_paragraph_spans_pages:{section_id}:{paragraph_id}"
+                )
+            if marked:
+                paragraph_page_id[paragraph_id] = marked[0]
+                continue
+            required = {
+                _detail_id(value) for value in (row.get("required_detail_ids") or ())
+                if _detail_id(value)
+            }
+            optional = {
+                _detail_id(value) for value in (row.get("optional_detail_ids") or ())
+                if _detail_id(value)
+            }
+            formula_ids = {
+                _text_id(value) for value in (row.get("formula_obligation_ids") or ())
+                if _text_id(value)
+            }
+            candidates = [
+                _text_id(page.page_id) for page in pages
+                if required & page_details[_text_id(page.page_id)]
+                or formula_ids & page_formula_ids[_text_id(page.page_id)]
+                or optional & page_details[_text_id(page.page_id)]
+            ]
+            if not candidates:
+                candidates = [_text_id(pages[0].page_id)] if pages else []
+            if not candidates:
+                raise ValueError(f"unified_writer_paragraph_page_missing:{section_id}:{paragraph_id}")
+            paragraph_page_id[paragraph_id] = candidates[0]
+
+        for paragraph_id, page_id in paragraph_page_id.items():
+            row = next(item for item in paragraph_rows if _text_id(item.get("paragraph_id")) == paragraph_id)
+            missing_required = {
+                _detail_id(value) for value in (row.get("required_detail_ids") or ())
+                if _detail_id(value)
+            } - page_details[page_id]
+            if missing_required:
+                raise ValueError(
+                    f"unified_writer_required_detail_not_on_page:{section_id}:{paragraph_id}:"
+                    + ",".join(sorted(missing_required))
+                )
+
+        section_mechanism_ids = {
+            _text_id(value) for value in (getattr(section, "mechanism_ids", ()) or ())
+            if _text_id(value)
+        }
+        section_packages = [
+            item for item in packages
+            if not section_mechanism_ids
+            or _text_id(item.get("mechanism_id")) in section_mechanism_ids
+        ]
+        section_obligations = [
+            item for item in obligations
+            if not section_mechanism_ids
+            or _text_id(item.get("mechanism_id")) in section_mechanism_ids
+        ]
+        for page in pages:
+            page_id = _text_id(page.page_id)
+            page_paragraph_id_set = page_paragraph_ids[page_id] | {
+                paragraph_id for paragraph_id, owner_page in paragraph_page_id.items()
+                if owner_page == page_id
+            }
+            page_detail_set = page_details[page_id]
+            page_obligation_set = set(page_formula_ids[page_id])
+            page_obligations: list[dict[str, Any]] = []
+            for obligation in section_obligations:
+                obligation_id = _text_id(obligation.get("obligation_id"))
+                consumer_id = _text_id(obligation.get("consumer_paragraph_id"))
+                source_details = {
+                    _detail_id(value)
+                    for value in (obligation.get("source_detail_ids") or ())
+                    if _detail_id(value)
+                }
+                primary_page = _text_id(obligation.get("primary_page_id"))
+                include = (
+                    (consumer_id and consumer_id in page_paragraph_id_set)
+                    or (obligation_id and obligation_id in page_obligation_set)
+                    or (primary_page and primary_page == page_id)
+                    or bool(source_details & page_detail_set)
+                )
+                if include:
+                    page_obligations.append(obligation)
+                    if obligation_id:
+                        page_obligation_set.add(obligation_id)
+            page_packages: list[dict[str, Any]] = []
+            for package in section_packages:
+                package_id = _text_id(package.get("package_id"))
+                consumer_id = _text_id(package.get("consumer_paragraph_id"))
+                satisfied = {
+                    _text_id(value)
+                    for value in (
+                        package.get("satisfied_obligation_ids") or
+                        ((package.get("obligation_id"),) if package.get("obligation_id") else ())
+                    )
+                    if _text_id(value)
+                }
+                source_details = {
+                    _detail_id(value)
+                    for value in (package.get("source_detail_ids") or ())
+                    if _detail_id(value)
+                }
+                if (
+                    (consumer_id and consumer_id in page_paragraph_id_set)
+                    or satisfied & page_obligation_set
+                    or source_details & page_detail_set
+                ):
+                    page_packages.append(package)
+
+            page_rows = [
+                row for row in paragraph_rows
+                if paragraph_page_id.get(_text_id(row.get("paragraph_id"))) == page_id
+            ]
+            page_narrative = dict(section_dict)
+            page_narrative.update({
+                "page_id": page_id,
+                "page_paragraph_ids": sorted(page_paragraph_id_set),
+                "paragraphs": page_rows,
+            })
+            invocation = next(
+                (
+                    item for item in (getattr(consumer_invocation_plan, "invocations", ()) or ())
+                    if _text_id(getattr(item, "page_id", "")) == page_id
+                    and _text_id(getattr(item, "workset_id", ""))
+                    == _text_id(getattr(workset, "workset_id", ""))
+                    and str(getattr(item, "role", "")) == "writer"
+                    and not bool(getattr(item, "is_repair", False))
+                ),
+                None,
+            )
+            if invocation is None:
+                raise ValueError(f"unified_writer_page_owner_missing:{section_id}:{page_id}")
+            page_bytes = canonical_json_bytes(dict(page.technical_payload))
+            metadata = {
+                "section_id": section_id,
+                "mechanism_id": _text_id(page.mechanism_id),
+                "page_id": page_id,
+                "v2_page_id": page_id,
+                "writer_invocation_id": _text_id(invocation.invocation_id),
+                "page_index": list(workset.required_page_ids).index(page_id),
+                "page_manifest_digest": _text_id(consumer_workset_manifest.content_digest),
+                "page_digest": _text_id(page.content_digest),
+                "page_bytes_digest": _text_id(page.technical_bytes_digest),
+                "technical_bytes_digest": _text_id(page.technical_bytes_digest),
+                "archive_digest": _text_id(page.archive_digest),
+                "task_ids": list(invocation.task_ids),
+                "invocation_max_output_tokens": int(
+                    getattr(invocation, "max_output_tokens", 0) or 0
+                ),
+                "writer_prompt_digest": _digest_text(prompt),
+            }
+            contract = _binding_contract(page_rows)
+            contract["allowed_formula_package_ids"] = list(
+                dict.fromkeys(
+                    [
+                        *contract["allowed_formula_package_ids"],
+                        *(
+                            _text_id(item.get("package_id"))
+                            for item in page_packages
+                            if _text_id(item.get("package_id"))
+                        ),
+                    ]
+                )
+            )
+            inputs.append(
+                WriterSectionInput(
+                    section_id=section_id,
+                    heading=_text_id(getattr(section, "heading", "")),
+                    prompt_payload={
+                        "section_id": section_id,
+                        "heading": _text_id(getattr(section, "heading", "")),
+                        "unified_v2_page_id": page_id,
+                        "writer_invocation_id": _text_id(invocation.invocation_id),
+                        # These private fields let post-call validation build
+                        # a canonical section view without using a page input
+                        # as a surrogate for the full narrative contract.
+                        # _llm_visible_section_payload deliberately omits them.
+                        "unified_v2_full_narrative_plan": section_dict,
+                        "unified_v2_full_argument_graph": {
+                            "paragraphs": paragraph_rows,
+                        },
+                        "narrative_plan": page_narrative,
+                        "shared_contexts": [page_bytes.decode("utf-8")],
+                        "shared_context_metadata": [metadata],
+                        "formula_packages": page_packages,
+                        "formula_obligations": page_obligations,
+                        "output_contract": "PublicationMethodSectionOutputV1",
+                        "paragraph_transaction_required": True,
+                        "formula_placeholders_required": bool(page_packages),
+                        "formula_generation_policy": "consume_only",
+                        "binding_contract": contract,
+                    },
+                    system_prompt=prompt,
+                    publication_mode=True,
+                    argument_graph={"paragraphs": page_rows},
+                )
+            )
+    return inputs
+
+
+def _canonical_unified_writer_input_by_section(
+    page_inputs: Sequence[Any],
+) -> dict[str, Any]:
+    """Rebuild a non-callable full-section view from page-scoped inputs."""
+
+    from code2paper.llm.section_writer import WriterSectionInput
+
+    result: dict[str, WriterSectionInput] = {}
+
+    def _append_unique(values: list[Any], additions: Iterable[Any], key: Callable[[Any], str]) -> None:
+        seen = {key(item) for item in values}
+        for item in additions:
+            item_key = key(item)
+            if item_key not in seen:
+                values.append(item)
+                seen.add(item_key)
+
+    for item in page_inputs:
+        section_id = str(getattr(item, "section_id", "") or "").strip()
+        if not section_id:
+            continue
+        payload = dict(getattr(item, "prompt_payload", {}) or {})
+        current = result.get(section_id)
+        if current is None:
+            full_plan = payload.get("unified_v2_full_narrative_plan") or payload.get(
+                "narrative_plan", {}
+            )
+            full_graph = payload.get("unified_v2_full_argument_graph") or {
+                "paragraphs": payload.get("narrative_plan", {}).get("paragraphs", ())
+                if isinstance(payload.get("narrative_plan"), Mapping)
+                else ()
+            }
+            canonical_payload = dict(payload)
+            canonical_payload.update({
+                "narrative_plan": full_plan,
+                "argument_graph": full_graph,
+                "shared_contexts": [],
+                "shared_context_metadata": [],
+                "formula_packages": [],
+                "formula_obligations": [],
+                "unified_v2_page_id": "",
+                "writer_invocation_id": "",
+            })
+            current = WriterSectionInput(
+                section_id=section_id,
+                heading=str(getattr(item, "heading", "") or ""),
+                prompt_payload=canonical_payload,
+                system_prompt=str(getattr(item, "system_prompt", "") or ""),
+                publication_mode=True,
+                argument_graph=dict(full_graph) if isinstance(full_graph, Mapping) else {},
+            )
+            result[section_id] = current
+        current_payload = dict(current.prompt_payload)
+        context_values = list(current_payload.get("shared_contexts") or ())
+        _append_unique(
+            context_values,
+            payload.get("shared_contexts") or (),
+            lambda value: _digest_text(
+                value.decode("utf-8") if isinstance(value, bytes) else str(value)
+            ),
+        )
+        metadata_values = list(current_payload.get("shared_context_metadata") or ())
+        _append_unique(
+            metadata_values,
+            payload.get("shared_context_metadata") or (),
+            lambda value: _digest_json(value),
+        )
+        package_values = list(current_payload.get("formula_packages") or ())
+        _append_unique(
+            package_values,
+            payload.get("formula_packages") or (),
+            lambda value: str(value.get("package_id") or _digest_json(value))
+            if isinstance(value, Mapping) else _digest_json(value),
+        )
+        obligation_values = list(current_payload.get("formula_obligations") or ())
+        _append_unique(
+            obligation_values,
+            payload.get("formula_obligations") or (),
+            lambda value: str(value.get("obligation_id") or _digest_json(value))
+            if isinstance(value, Mapping) else _digest_json(value),
+        )
+        contract = dict(current_payload.get("binding_contract") or {})
+        page_contract = payload.get("binding_contract") or {}
+        if isinstance(page_contract, Mapping):
+            for field_name in (
+                "allowed_detail_ids", "required_detail_ids", "allowed_atom_ids",
+                "required_atom_ids", "allowed_formula_obligation_ids",
+                "allowed_formula_package_ids", "required_rhetorical_moves",
+            ):
+                values = list(contract.get(field_name) or ())
+                _append_unique(values, page_contract.get(field_name) or (), lambda value: str(value))
+                contract[field_name] = values
+            for field_name in ("detail_witness_contracts", "atom_contracts_by_detail"):
+                merged = {
+                    str(key): list(value or ())
+                    for key, value in (contract.get(field_name) or {}).items()
+                }
+                for key, values in (page_contract.get(field_name) or {}).items():
+                    target_values = merged.setdefault(str(key), [])
+                    _append_unique(target_values, values or (), lambda value: _digest_json(value))
+                contract[field_name] = merged
+        current_payload.update({
+            "shared_contexts": context_values,
+            "shared_context_metadata": metadata_values,
+            "formula_packages": package_values,
+            "formula_obligations": obligation_values,
+            "binding_contract": contract,
+            "formula_placeholders_required": bool(package_values),
+        })
+        result[section_id] = WriterSectionInput(
+            section_id=current.section_id,
+            heading=current.heading,
+            prompt_payload=current_payload,
+            system_prompt=current.system_prompt,
+            publication_mode=True,
+            argument_graph=current.argument_graph,
+        )
+    return result
+
+
 def _writer_section_inputs_v3(
     *,
     narrative_plan: Any,
@@ -14499,12 +16887,28 @@ def _writer_section_inputs_v3(
     formula_packages: tuple[Any, ...] = (),
     formula_obligations: tuple[Any, ...] = (),
     page_manifests: Mapping[str, Any] | None = None,
+    consumer_workset_manifest: Any | None = None,
+    consumer_invocation_plan: Any | None = None,
     system_prompt: str = "",
 ) -> list[Any]:
     """Build the Writer-facing projection for each planned section in unified mode."""
     from code2paper.llm.section_writer import WriterSectionInput
+    from code2paper.llm.section_writer import default_section_system_prompt
     from code2paper.agentic.mechanism_context_projection import serialize_shared_mechanism_payload
-    from code2paper.agentic.mechanism_context_models import compute_consumer_request_digest
+    from code2paper.agentic.mechanism_context_models import (
+        canonical_json_bytes,
+        compute_consumer_request_digest,
+    )
+
+    if consumer_workset_manifest is not None:
+        return _writer_section_inputs_v2(
+            narrative_plan=narrative_plan,
+            formula_packages=formula_packages,
+            formula_obligations=formula_obligations,
+            consumer_workset_manifest=consumer_workset_manifest,
+            consumer_invocation_plan=consumer_invocation_plan,
+            system_prompt=system_prompt,
+        )
 
     inputs: list[WriterSectionInput] = []
     pkg_by_mech: dict[str, list[dict[str, Any]]] = {}
@@ -14594,6 +16998,56 @@ def _writer_section_inputs_v3(
                 sec_formula_pkgs.extend(pkg_by_mech[mid_str])
             if mid_str in obligation_by_mech:
                 sec_formula_obs.extend(obligation_by_mech[mid_str])
+
+        # V2 writer pages are the only technical bytes used by the production
+        # unified Writer.  The legacy loop above remains for shadow/diagnostic
+        # compatibility, but its full mechanism page pack is replaced here by
+        # the exact section workset closure and its frozen invocation owners.
+        if consumer_workset_manifest is not None:
+            workset = next(
+                (
+                    item for item in consumer_workset_manifest.worksets
+                    if str(getattr(item, "workset_id", ""))
+                    == f"workset:section:{sec_id}"
+                ),
+                None,
+            )
+            if workset is None:
+                raise ValueError(f"unified_writer_workset_missing:{sec_id}")
+            page_index_v2 = consumer_workset_manifest._page_index()
+            invocation_by_page = {
+                str(item.page_id): item
+                for item in (getattr(consumer_invocation_plan, "invocations", ()) or ())
+                if str(getattr(item, "page_id", ""))
+            }
+            sec_slices = []
+            sec_slice_metadata = []
+            for page_id in workset.required_page_ids:
+                page = page_index_v2.get(page_id)
+                invocation = invocation_by_page.get(str(page_id))
+                if page is None or invocation is None:
+                    raise ValueError(
+                        f"unified_writer_page_owner_missing:{sec_id}:{page_id}"
+                    )
+                page_bytes = canonical_json_bytes(dict(page.technical_payload))
+                sec_slices.append(page_bytes.decode("utf-8"))
+                sec_slice_metadata.append({
+                    "section_id": sec_id,
+                    "mechanism_id": str(page.mechanism_id),
+                    "page_id": str(page.page_id),
+                    "v2_page_id": str(page.page_id),
+                    "writer_invocation_id": str(invocation.invocation_id),
+                    "page_index": len(sec_slices) - 1,
+                    "page_manifest_digest": str(consumer_workset_manifest.content_digest),
+                    "page_digest": str(page.content_digest),
+                    "page_bytes_digest": str(page.technical_bytes_digest),
+                    "technical_bytes_digest": str(page.technical_bytes_digest),
+                    "archive_digest": str(page.archive_digest),
+                    "task_ids": list(invocation.task_ids),
+                    "writer_prompt_digest": _digest_text(
+                        system_prompt or default_section_system_prompt()
+                    ),
+                })
 
         paragraph_rows = list(sec_plan_dict.get("paragraphs") or ())
         all_detail_ids = list(dict.fromkeys(
@@ -14718,6 +17172,195 @@ def _writer_section_inputs_v3(
         )
 
     return inputs
+
+
+def _assert_unified_v2_writer_page_delivery(
+    *,
+    workset_manifest: Any,
+    invocation_plan: Any,
+    request_records: Iterable[Mapping[str, Any]],
+) -> list[dict[str, Any]]:
+    """Validate page bytes observed at the actual section Writer caller."""
+
+    from code2paper.agentic.unified_context_models import (
+        UNIFIED_ACTUAL_PAGE_BYTES_MISMATCH,
+    )
+
+    records_by_invocation: dict[str, list[Mapping[str, Any]]] = {}
+    for record in request_records or ():
+        invocation_id = str(record.get("invocation_id") or "").strip()
+        if invocation_id:
+            records_by_invocation.setdefault(invocation_id, []).append(record)
+        else:
+            raise ValueError("unified_unplanned_actual_request:writer:missing_invocation_id")
+    planned_invocation_ids = {
+        str(item.invocation_id)
+        for item in invocation_plan.invocations
+        if item.role == "writer" and not item.is_repair
+    }
+    unknown_invocations = sorted(set(records_by_invocation) - planned_invocation_ids)
+    if unknown_invocations:
+        raise ValueError(
+            "unified_unplanned_actual_request:writer:"
+            + ",".join(unknown_invocations)
+        )
+    page_index = workset_manifest._page_index()
+    traces: list[dict[str, Any]] = []
+    for invocation in invocation_plan.invocations:
+        if invocation.role != "writer" or invocation.is_repair:
+            continue
+        page = page_index.get(invocation.page_id)
+        records = records_by_invocation.get(invocation.invocation_id, ())
+        if page is None:
+            raise ValueError(
+                f"writer_v2_page_unknown:{invocation.invocation_id}:{invocation.page_id}"
+            )
+        accepted_records = [
+            record for record in records if bool(record.get("accepted"))
+        ]
+        if len(accepted_records) != 1:
+            raise ValueError(
+                f"writer_v2_invocation_acceptance_count:{invocation.invocation_id}:"
+                f"{len(accepted_records)}"
+            )
+        # A representation-only retry may cross the caller boundary more than
+        # once.  Rejected attempts are retained as evidence, but only one
+        # accepted delivery may satisfy the immutable invocation.  Content
+        # repairs remain owned by the Writer task and cannot create a second
+        # accepted page delivery for the same invocation.
+        record = accepted_records[0]
+        if str(record.get("page_id") or "") != page.page_id:
+            raise ValueError(
+                f"writer_v2_page_id_mismatch:{invocation.invocation_id}"
+            )
+        if str(record.get("actual_technical_bytes_digest") or "") != (
+            page.technical_bytes_digest
+        ):
+            raise ValueError(
+                f"{UNIFIED_ACTUAL_PAGE_BYTES_MISMATCH}:{invocation.invocation_id}"
+            )
+        if not bool(record.get("accepted")):
+            raise ValueError(
+                f"writer_v2_page_delivery_rejected:{invocation.invocation_id}"
+            )
+        if str(record.get("actual_request_envelope_digest") or "") != (
+            invocation.expected_request_envelope_digest
+        ):
+            raise ValueError(
+                f"unified_request_envelope_digest_mismatch:{invocation.invocation_id}"
+            )
+        if not bool(record.get("response_nonempty")) or str(
+            record.get("task_status") or ""
+        ) != "complete":
+            raise ValueError(
+                f"unified_consumer_task_incomplete:{invocation.invocation_id}"
+            )
+        traces.append({
+            "invocation_id": invocation.invocation_id,
+            "section_id": invocation.section_id,
+            "page_id": page.page_id,
+            "technical_bytes_digest": page.technical_bytes_digest,
+            "actual_technical_bytes_digest": record.get(
+                "actual_technical_bytes_digest", ""
+            ),
+            "accepted": True,
+            "response_nonempty": bool(record.get("response_nonempty")),
+            "receipt_digest": str(record.get("receipt_digest") or ""),
+            "attempt": int(record.get("attempt") or 0),
+        })
+    return traces
+
+
+def _assert_unified_v2_realizer_delivery(
+    *,
+    workset_manifest: Any,
+    invocation_plan: Any,
+    receipts: Iterable[Any],
+) -> list[dict[str, Any]]:
+    """Require an independent, complete receipt for every Realizer page."""
+
+    expected = {
+        str(item.invocation_id): item
+        for item in invocation_plan.invocations
+        if item.role == "realizer" and not item.is_repair
+    }
+    by_invocation: dict[str, list[Any]] = {}
+    for raw in receipts or ():
+        invocation_id = str(
+            raw.get("invocation_id") if isinstance(raw, Mapping)
+            else getattr(raw, "invocation_id", "")
+        ).strip()
+        if not invocation_id:
+            raise ValueError("unified_consumer_receipt_missing:realizer:invocation_id")
+        if invocation_id not in expected:
+            raise ValueError(
+                "unified_unplanned_actual_request:realizer:" + invocation_id
+            )
+        by_invocation.setdefault(invocation_id, []).append(raw)
+
+    page_index = workset_manifest._page_index()
+    traces: list[dict[str, Any]] = []
+    for invocation_id, invocation in expected.items():
+        rows = by_invocation.get(invocation_id, ())
+        accepted = [
+            row for row in rows
+            if str(
+                row.get("delivery_status") if isinstance(row, Mapping)
+                else getattr(row, "delivery_status", "")
+            ) == "accepted"
+        ]
+        if len(accepted) != 1:
+            raise ValueError(
+                f"unified_consumer_receipt_missing:realizer:{invocation_id}:accepted={len(accepted)}"
+            )
+        receipt = accepted[0]
+        value = (
+            receipt.get("page_id") if isinstance(receipt, Mapping)
+            else getattr(receipt, "page_id", "")
+        )
+        page = page_index.get(str(value))
+        if page is None or page.page_id != invocation.page_id:
+            raise ValueError(
+                f"unified_actual_page_bytes_mismatch:realizer:{invocation_id}"
+            )
+        actual_bytes_digest = str(
+            receipt.get("actual_technical_bytes_digest")
+            if isinstance(receipt, Mapping)
+            else getattr(receipt, "actual_technical_bytes_digest", "")
+        )
+        actual_envelope_digest = str(
+            receipt.get("actual_request_envelope_digest")
+            if isinstance(receipt, Mapping)
+            else getattr(receipt, "actual_request_envelope_digest", "")
+        )
+        if actual_bytes_digest != page.technical_bytes_digest:
+            raise ValueError(
+                f"unified_actual_page_bytes_mismatch:realizer:{invocation_id}"
+            )
+        if actual_envelope_digest != invocation.expected_request_envelope_digest:
+            raise ValueError(
+                f"unified_request_envelope_digest_mismatch:realizer:{invocation_id}"
+            )
+        task_status = str(
+            receipt.get("task_status") if isinstance(receipt, Mapping)
+            else getattr(receipt, "task_status", "")
+        )
+        if task_status != "complete":
+            raise ValueError(
+                f"unified_consumer_task_incomplete:realizer:{invocation_id}"
+            )
+        traces.append({
+            "invocation_id": invocation_id,
+            "section_id": invocation.section_id,
+            "page_id": page.page_id,
+            "actual_technical_bytes_digest": actual_bytes_digest,
+            "actual_request_envelope_digest": actual_envelope_digest,
+            "receipt_digest": str(
+                receipt.get("content_digest") if isinstance(receipt, Mapping)
+                else getattr(receipt, "content_digest", "")
+            ),
+        })
+    return traces
 
 
 def _assert_shared_payload_delivery(
@@ -18826,6 +21469,425 @@ def _write_paragraph_transaction_assessments(
     return str(path), str(payload["content_digest"])
 
 
+def _write_unified_v2_binder_receipts(
+    *,
+    out_root: str | Path,
+    archive: Any,
+    workset_manifest: Any,
+    writer_plan: Any,
+    narrative_plan: Any,
+    section_inputs: Mapping[str, WriterSectionInput],
+    section_outputs: dict[str, PublicationMethodSectionOutputV1],
+    formula_packages: Iterable[Any] = (),
+) -> tuple[str, tuple[Any, ...], tuple[str, ...]]:
+    """Bind frozen Writer paragraphs and persist independent Binder receipts.
+
+    The Binder is deliberately metadata-only: it may select exact substrings
+    already present in the Writer paragraph, but it never edits prose or
+    creates a new evidence/formula target.  Archive reverse checks are kept in
+    this role boundary so a syntactically valid Writer witness cannot become
+    evidence merely because the paragraph schema accepted its identifier.
+    """
+
+    from code2paper.agentic.publication_transaction_contract import (
+        _formula_package_terminal_disposition,
+        assess_paragraph_transaction,
+        bind_paragraph_witnesses,
+        paragraph_binding_targets,
+        required_anchors_from_plan_row,
+        required_targets_from_plan_row,
+    )
+    from code2paper.agentic.unified_context_models import BinderReceiptV2
+
+    def _dict(value: Any) -> dict[str, Any]:
+        if hasattr(value, "model_dump"):
+            return dict(value.model_dump(mode="json"))
+        return dict(value) if isinstance(value, Mapping) else {}
+
+    def _text(value: Any) -> str:
+        return str(value or "").strip()
+
+    def _id_aliases(value: Any, *prefixes: str) -> set[str]:
+        raw = _text(value)
+        if not raw:
+            return set()
+        result = {raw}
+        changed = True
+        while changed:
+            changed = False
+            for item in tuple(result):
+                for prefix in prefixes:
+                    if item.startswith(prefix):
+                        candidate = item[len(prefix):]
+                        if candidate and candidate not in result:
+                            result.add(candidate)
+                            changed = True
+        return result
+
+    def _plan_row(paragraph: Any) -> dict[str, Any]:
+        return _dict(paragraph)
+
+    def _formula_package_rows(values: Iterable[Any]) -> tuple[dict[str, Any], ...]:
+        return tuple(
+            _dict(item) for item in values
+            if _dict(item).get("package_id")
+        )
+
+    all_packages = _formula_package_rows(formula_packages)
+    package_by_id = {
+        _text(item.get("package_id")): item
+        for item in all_packages
+        if _text(item.get("package_id"))
+    }
+
+    archive_atoms = tuple(archive.all_atoms()) if archive is not None else ()
+    archive_atom_ids = {_text(item.atom_id) for item in archive_atoms if _text(item.atom_id)}
+    detail_ids: set[str] = set()
+    witness_atom_ids: set[str] = set()
+    operation_ids: set[str] = set()
+    fact_ids: set[str] = set()
+    claim_ids: set[str] = set()
+    equation_ids: set[str] = set()
+    obligation_ids: set[str] = set()
+    for atom in archive_atoms:
+        payload = _dict(getattr(atom, "payload", {}))
+        atom_id = _text(getattr(atom, "atom_id", ""))
+        kind = _text(getattr(atom, "atom_kind", ""))
+        if kind == "detail":
+            detail_ids.update(_id_aliases(
+                payload.get("detail_id") or atom_id,
+                "detail:",
+            ))
+            for raw in payload.get("witness_atoms") or ():
+                raw_atom = _dict(raw)
+                witness_atom_id = _text(raw_atom.get("atom_id"))
+                if witness_atom_id:
+                    witness_atom_ids.add(witness_atom_id)
+        elif kind == "operation":
+            operation_ids.update(_id_aliases(
+                payload.get("operation_id") or atom_id,
+                "operation:",
+            ))
+        elif kind == "equation":
+            equation_ids.update(_id_aliases(
+                payload.get("equation_id") or atom_id,
+                "equation:",
+            ))
+        elif kind == "evidence":
+            if payload.get("fact_id"):
+                fact_ids.update(_id_aliases(payload.get("fact_id"), "fact:", "evidence:fact:"))
+            if payload.get("claim_id"):
+                claim_ids.update(_id_aliases(payload.get("claim_id"), "claim:", "evidence:claim:"))
+        elif kind == "intent":
+            obligation_ids.add(_text(payload.get("obligation_id")))
+    obligation_ids.discard("")
+    obligation_ids.update(
+        _text(item)
+        for package in all_packages
+        for item in (package.get("satisfied_obligation_ids") or ())
+        if _text(item)
+    )
+    package_ids = set(package_by_id)
+
+    def _package_source_failures(package: Mapping[str, Any]) -> list[str]:
+        failures: list[str] = []
+        source_checks = (
+            ("source_detail_ids", detail_ids, "detail"),
+            ("bound_operation_ids", operation_ids, "operation"),
+            ("bound_fact_ids", fact_ids, "fact"),
+            ("bound_equation_ids", equation_ids, "equation"),
+        )
+        for field_name, known, label in source_checks:
+            for raw in package.get(field_name) or ():
+                aliases = _id_aliases(raw, f"{label}:", "evidence:fact:", "evidence:claim:")
+                if not aliases.intersection(known):
+                    failures.append(
+                        f"binder_archive_package_source_unmapped:{_text(package.get('package_id'))}:{label}:{_text(raw)}"
+                    )
+        return failures
+
+    def _packages_for_paragraph(
+        paragraph: Mapping[str, Any],
+        section_input: WriterSectionInput | None,
+    ) -> tuple[dict[str, Any], ...]:
+        local_values = (
+            (section_input.prompt_payload.get("formula_packages") or ())
+            if section_input is not None else ()
+        )
+        local = _formula_package_rows(local_values)
+        paragraph_ids = {
+            _text(item) for item in (
+                paragraph.get("formula_package_ids") or ()
+            ) if _text(item)
+        }
+        paragraph_ids.update(
+            _text(package.get("package_id"))
+            for package in all_packages
+            if any(
+                _text(obligation_id) in {
+                    _text(item) for item in (
+                        package.get("satisfied_obligation_ids") or ()
+                    )
+                }
+                for obligation_id in (paragraph.get("formula_obligation_ids") or ())
+            )
+        )
+        if not paragraph_ids:
+            return local
+        by_id = {
+            _text(package.get("package_id")): package
+            for package in (*local, *all_packages)
+            if _text(package.get("package_id"))
+        }
+        return tuple(by_id[item] for item in sorted(paragraph_ids) if item in by_id)
+
+    def _routes(
+        paragraph: Mapping[str, Any],
+        packages: tuple[dict[str, Any], ...],
+    ) -> dict[str, dict[str, Any]]:
+        routes: dict[str, dict[str, Any]] = {}
+        for obligation_id in (
+            _text(item) for item in (paragraph.get("formula_obligation_ids") or ())
+        ):
+            if not obligation_id:
+                continue
+            matches = tuple(
+                package for package in packages
+                if obligation_id in {
+                    _text(item) for item in (
+                        package.get("satisfied_obligation_ids") or ()
+                    ) if _text(item)
+                } or _text(package.get("obligation_id")) == obligation_id
+            )
+            routes[obligation_id] = {
+                "package_ids": tuple(
+                    _text(package.get("package_id"))
+                    for package in matches if _text(package.get("package_id"))
+                ),
+                "latex": (
+                    _text(matches[0].get("latex") or matches[0].get("markdown_block"))
+                    if matches else ""
+                ),
+                "terminal_disposition": (
+                    _formula_package_terminal_disposition(matches[0])
+                    if len(matches) == 1 else "failed"
+                ),
+            }
+        return routes
+
+    def _witness_key(kind: Any, target: Any) -> str:
+        return f"{_text(kind)}:{_text(target)}"
+
+    def _raw_witnesses(transaction: Any) -> tuple[dict[str, str], ...]:
+        rows: list[dict[str, str]] = []
+        raw_values = (
+            transaction.get("witnesses", ())
+            if isinstance(transaction, Mapping)
+            else getattr(transaction, "witnesses", ())
+        )
+        for raw in (raw_values or ()):
+            if isinstance(raw, Mapping):
+                kind = _text(raw.get("witness_kind") or raw.get("kind"))
+                target = _text(raw.get("target_id"))
+                exact = str(raw.get("exact_text") or "")
+            else:
+                kind = _text(getattr(raw, "witness_kind", ""))
+                target = _text(getattr(raw, "target_id", ""))
+                exact = str(getattr(raw, "exact_text", "") or "")
+            if kind and target:
+                rows.append({
+                    "witness_kind": kind,
+                    "target_id": target,
+                    "exact_text": exact,
+                })
+        return tuple(rows)
+
+    def _reverse_failures(
+        witnesses: tuple[dict[str, str], ...],
+        allowed_keys: set[str],
+        packages: tuple[dict[str, Any], ...],
+    ) -> list[str]:
+        failures: list[str] = []
+        local_package_ids = {
+            _text(package.get("package_id")) for package in packages
+            if _text(package.get("package_id"))
+        }
+        local_obligation_ids = {
+            _text(item)
+            for package in packages
+            for item in (
+                package.get("satisfied_obligation_ids") or ()
+            ) if _text(item)
+        }
+        for package in packages:
+            failures.extend(_package_source_failures(package))
+        for witness in witnesses:
+            kind = witness["witness_kind"]
+            target = witness["target_id"]
+            key = _witness_key(kind, target)
+            if key not in allowed_keys:
+                failures.append(f"binder_target_outside_closed_contract:{key}")
+            if kind == "detail" and not _id_aliases(target, "detail:").intersection(detail_ids):
+                failures.append(f"binder_archive_witness_unmapped:detail:{target}")
+            elif kind == "operation" and not _id_aliases(target, "operation:").intersection(operation_ids):
+                failures.append(f"binder_archive_witness_unmapped:operation:{target}")
+            elif kind == "fact" and not _id_aliases(target, "fact:", "evidence:fact:").intersection(fact_ids):
+                failures.append(f"binder_archive_witness_unmapped:fact:{target}")
+            elif kind == "atom":
+                if target not in archive_atom_ids and target not in witness_atom_ids:
+                    failures.append(f"binder_archive_witness_unmapped:atom:{target}")
+            elif kind == "formula":
+                if target not in local_package_ids and target not in local_obligation_ids:
+                    failures.append(f"binder_archive_witness_unmapped:formula:{target}")
+            elif kind == "claim" and not _id_aliases(target, "claim:", "evidence:claim:").intersection(claim_ids):
+                failures.append(f"binder_archive_witness_unmapped:claim:{target}")
+            elif kind == "equation" and not _id_aliases(target, "equation:").intersection(equation_ids):
+                failures.append(f"binder_archive_witness_unmapped:equation:{target}")
+        return list(dict.fromkeys(failures))
+
+    receipts: list[Any] = []
+    all_failures: list[str] = []
+    narrative_sections = getattr(narrative_plan, "sections", ()) or ()
+    for section in narrative_sections:
+        section_id = _text(getattr(section, "section_id", ""))
+        section_input = section_inputs.get(section_id)
+        output = section_outputs.get(section_id)
+        output_paragraphs = list(getattr(output, "paragraphs", ()) or ()) if output is not None else []
+        by_paragraph = {
+            _text(getattr(item, "paragraph_id", "")): item
+            for item in output_paragraphs
+            if _text(getattr(item, "paragraph_id", ""))
+        }
+        changed = False
+        for paragraph in (getattr(section, "paragraphs", ()) or ()):
+            row = _plan_row(paragraph)
+            paragraph_id = _text(row.get("paragraph_id"))
+            transaction = by_paragraph.get(paragraph_id)
+            packages = _packages_for_paragraph(row, section_input)
+            if transaction is not None:
+                bound = bind_paragraph_witnesses(
+                    transaction,
+                    plan_row=row,
+                    formula_packages=packages,
+                )
+                transaction = bound
+                by_paragraph[paragraph_id] = transaction
+                if bound != next(
+                    (item for item in output_paragraphs if _text(getattr(item, "paragraph_id", "")) == paragraph_id),
+                    bound,
+                ):
+                    changed = True
+            routes = _routes(row, packages)
+            assessment = assess_paragraph_transaction(
+                transaction or {"paragraph_id": paragraph_id},
+                plan_row=row,
+                formula_routes=routes,
+                required_anchors=required_anchors_from_plan_row(row),
+            )
+            target_rows = paragraph_binding_targets(
+                transaction or {"paragraph_id": paragraph_id},
+                plan_row=row,
+                formula_packages=packages,
+            )
+            allowed_pairs = {
+                (_text(item.get("witness_kind")), _text(item.get("target_id")))
+                for item in target_rows
+                if _text(item.get("witness_kind")) and _text(item.get("target_id"))
+            }
+            required_pairs = {
+                (kind, _text(target))
+                for kind, targets in assessment.required_by_kind.items()
+                for target in targets if _text(target)
+            }
+            for item in target_rows:
+                if bool(item.get("required", True)):
+                    required_pairs.add((_text(item.get("witness_kind")), _text(item.get("target_id"))))
+            allowed_keys = {
+                _witness_key(kind, target) for kind, target in allowed_pairs if kind and target
+            }
+            allowed_keys.update(
+                _witness_key(kind, target) for kind, target in required_pairs if kind and target
+            )
+            witnesses = _raw_witnesses(transaction) if transaction is not None else ()
+            witness_pairs = {(item["witness_kind"], item["target_id"]) for item in witnesses}
+            witnessed_pairs = set(witness_pairs)
+            for kind, targets in assessment.witnessed_by_kind.items():
+                witnessed_pairs.update((kind, _text(target)) for target in targets if _text(target))
+            reverse_failures = _reverse_failures(witnesses, allowed_keys, packages)
+            receipt_failures = [
+                f"binder_missing_target:{kind}:{target}"
+                for kind, targets in assessment.missing_by_kind.items()
+                for target in targets
+            ] + [
+                f"binder_invalid_witness:{item}"
+                for item in assessment.invalid_witnesses
+            ] + [
+                f"binder_semantic_failure:{item}"
+                for item in assessment.semantic_failures
+            ] + reverse_failures
+            receipt_failures = list(dict.fromkeys(receipt_failures))
+            body_value = (
+                transaction.get("paragraph_markdown", "")
+                if isinstance(transaction, Mapping)
+                else getattr(transaction, "paragraph_markdown", "")
+            )
+            body_present = bool(transaction is not None and _text(body_value))
+            status = (
+                "complete" if transaction is not None and assessment.valid and not receipt_failures
+                else "partial" if body_present else "failed"
+            )
+            writer_output_digest = (
+                _digest_json(transaction.model_dump(mode="json"))
+                if transaction is not None and hasattr(transaction, "model_dump")
+                else _digest_json(transaction) if isinstance(transaction, Mapping) else ""
+            )
+            witness_digest = _digest_json(list(witnesses))
+            required_keys = {
+                _witness_key(kind, target) for kind, target in required_pairs if kind and target
+            }
+            witnessed_keys = {
+                _witness_key(kind, target)
+                for kind, target in witnessed_pairs
+                if _witness_key(kind, target) in allowed_keys
+            }
+            receipt = BinderReceiptV2(
+                section_id=section_id,
+                paragraph_id=paragraph_id,
+                plan_digest=_text(getattr(writer_plan, "content_digest", "")),
+                archive_digest=_text(getattr(archive, "content_digest", "")),
+                workset_manifest_digest=_text(getattr(workset_manifest, "content_digest", "")),
+                writer_output_digest=writer_output_digest,
+                allowed_target_keys=tuple(sorted(allowed_keys)),
+                required_target_keys=tuple(sorted(required_keys)),
+                witnessed_target_keys=tuple(sorted(witnessed_keys)),
+                witness_digest=witness_digest,
+                status=status,
+                failure_codes=tuple(receipt_failures or (
+                    ("binder_writer_paragraph_missing",) if transaction is None else ()
+                )),
+            )
+            receipts.append(receipt)
+            all_failures.extend(receipt_failures)
+        if output is not None and changed:
+            section_outputs[section_id] = output.model_copy(update={
+                "paragraphs": [by_paragraph.get(_text(getattr(item, "paragraph_id", "")), item) for item in output_paragraphs],
+            })
+
+    rows = [item.model_dump(mode="json") for item in receipts]
+    payload = {
+        "schema_version": "2.0",
+        "consumer_role": "binder",
+        "plan_digest": _text(getattr(writer_plan, "content_digest", "")),
+        "archive_digest": _text(getattr(archive, "content_digest", "")),
+        "workset_manifest_digest": _text(getattr(workset_manifest, "content_digest", "")),
+        "receipts": rows,
+    }
+    payload["content_digest"] = _digest_json(payload)
+    path = method_output(Path(out_root), "binder_receipts_v2")
+    _atomic_write_text(path, json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n")
+    return str(path), tuple(receipts), tuple(dict.fromkeys(all_failures))
+
+
 def _unit_id_for_verdict(verdict: Any, final_claims: Any) -> str:
     """Resolve the unit id of one verdict through its atomic claim."""
 
@@ -19441,6 +22503,7 @@ def run_publication_method_writer(
     out_root: str | Path,
     artifact_paths: dict[str, str],
     llm_config: LLMConfig,
+    run_id: str = "",
     llm_caller: Callable[[LLMConfig, LLMRequest], LLMResponse] | None = None,
     resume_section_ids: tuple[str, ...] = (),
     research_callback_artifacts: dict[str, tuple[Any, ...]] | None = None,
@@ -19462,6 +22525,17 @@ def run_publication_method_writer(
     runs all receive the same mode metadata without duplicating those gates.
     """
 
+    explicit_run_id = str(run_id or "").strip()
+    effective_run_id = explicit_run_id or str(artifact_paths.get("run_id") or "").strip()
+    run_identity = None
+    identity_path = str(artifact_paths.get("run_identity_v1") or "").strip()
+    if identity_path and Path(identity_path).is_file():
+        try:
+            run_identity = RunIdentityV1.model_validate_json(
+                Path(identity_path).read_text(encoding="utf-8")
+            )
+        except (OSError, TypeError, ValueError, json.JSONDecodeError):
+            run_identity = None
     try:
         mode, source = resolve_authoring_context_mode(
             authoring_context_mode,
@@ -19479,7 +22553,8 @@ def run_publication_method_writer(
             effective_mode="legacy",
             mode_source="default",
             artifact_paths=artifact_paths,
-            run_id=str(artifact_paths.get("run_id") or ""),
+            run_id=effective_run_id,
+            run_identity=run_identity,
         )
         contract_path = write_authoring_run_contract(out_root, contract)
         result = result.model_copy(update={
@@ -19488,44 +22563,114 @@ def run_publication_method_writer(
             "effective_authoring_context_mode": "legacy",
             "authoring_context_mode_source": "default",
         })
+        try:
+            from code2paper.agentic.unified_invocation_ledger import write_run_terminal_event
+
+            terminal_path = write_run_terminal_event(
+                Path(out_root) / "artifacts" / "06_authoring" / "invocations",
+                run_digest=effective_run_id,
+                terminal_reason="authoring_context_mode_invalid",
+                terminal_stage="mode_resolution",
+                extra={"error_type": exc.__class__.__name__},
+            )
+        except OSError:
+            terminal_path = (
+                Path(out_root)
+                / "artifacts"
+                / "06_authoring"
+                / "invocations"
+                / "run_terminal_event.json"
+            )
         result_path = method_output(Path(out_root), "publication_writer_result_v1")
         _atomic_write_text(result_path, result.model_dump_json(indent=2) + "\n")
         return result, {
             "authoring_run_contract_v1": contract_path,
             "publication_writer_result_v1": str(result_path),
+            "run_terminal_event": str(terminal_path),
         }
 
-    result, paths = _run_publication_method_writer_impl(
-        out_root=out_root,
-        artifact_paths=artifact_paths,
-        llm_config=llm_config,
-        llm_caller=llm_caller,
-        resume_section_ids=resume_section_ids,
-        research_callback_artifacts=research_callback_artifacts,
-        research_mechanism_callback_artifacts=research_mechanism_callback_artifacts,
-        editor_caller=editor_caller,
-        rewrite_caller=rewrite_caller,
-        formalization_caller=formalization_caller,
-        architect_proposal_caller=architect_proposal_caller,
-        rebuild_architect_plan=rebuild_architect_plan,
-        concept_audit_override_keys=concept_audit_override_keys,
-        authoring_context_mode=mode,
-    )
+    ledger_root = Path(out_root) / "artifacts" / "06_authoring" / "invocations"
+    try:
+        result, paths = _run_publication_method_writer_impl(
+            out_root=out_root,
+            artifact_paths=artifact_paths,
+            llm_config=llm_config,
+            run_id=effective_run_id,
+            llm_caller=llm_caller,
+            resume_section_ids=resume_section_ids,
+            research_callback_artifacts=research_callback_artifacts,
+            research_mechanism_callback_artifacts=research_mechanism_callback_artifacts,
+            editor_caller=editor_caller,
+            rewrite_caller=rewrite_caller,
+            formalization_caller=formalization_caller,
+            architect_proposal_caller=architect_proposal_caller,
+            rebuild_architect_plan=rebuild_architect_plan,
+            concept_audit_override_keys=concept_audit_override_keys,
+            authoring_context_mode=mode,
+        )
+    except BaseException as exc:  # noqa: BLE001 - terminal state must survive interrupts
+        try:
+            from code2paper.agentic.unified_invocation_ledger import (
+                last_completed_invocation_id,
+                write_run_terminal_event,
+            )
 
-    run_id = str(artifact_paths.get("run_id") or "")
+            write_run_terminal_event(
+                ledger_root,
+                run_digest=effective_run_id,
+                terminal_reason=f"exception:{exc.__class__.__name__}",
+                terminal_stage="publication_method_writer",
+                last_completed_invocation_id=last_completed_invocation_id(ledger_root),
+                extra={"message": str(exc)[:240]},
+            )
+        except OSError:
+            pass
+        raise
+
     mode_digest = _digest_json({
         "mode": mode,
         "source": source,
-        "run_id": run_id,
+        "run_id": effective_run_id,
         "resume_section_ids": list(resume_section_ids),
     })
+    try:
+        from code2paper.agentic.unified_invocation_ledger import (
+            last_completed_invocation_id,
+            write_run_terminal_event,
+        )
+
+        terminal_path = write_run_terminal_event(
+            ledger_root,
+            run_digest=str(result.plan_digest or effective_run_id),
+            terminal_reason=(
+                "completed" if result.status == "success"
+                else "blocked" if result.status == "blocked"
+                else "incomplete"
+            ),
+            terminal_stage="publication_method_writer",
+            last_completed_invocation_id=last_completed_invocation_id(ledger_root),
+            extra={"authoring_context_mode": mode},
+        )
+    except OSError:
+        terminal_path = ledger_root / "run_terminal_event.json"
+    paths = {**paths, "run_terminal_event": str(terminal_path)}
     contract = build_authoring_run_contract(
         requested_mode=mode,
         effective_mode=mode,
         mode_source=source,
         artifact_paths=artifact_paths,
         output_paths=paths,
-        run_id=run_id,
+        run_id=effective_run_id,
+        repo_snapshot_id=(
+            str(run_identity.repo_snapshot_id) if run_identity is not None else ""
+        ),
+        project_tree_hash=(
+            str(run_identity.project_tree_hash) if run_identity is not None else ""
+        ),
+        code_sha=(
+            str(run_identity.code_commit_sha) if run_identity is not None else None
+        ),
+        run_identity=run_identity,
         initial_mode_digest=mode_digest,
         resume_mode_digest=(mode_digest if resume_section_ids else ""),
     )
@@ -19547,6 +22692,26 @@ def run_publication_method_writer(
             "authoring_context_mode_source": source,
             "authoring_run_contract_digest": contract.content_digest,
         })
+    try:
+        from code2paper.agentic.unified_invocation_ledger import (
+            last_completed_invocation_id,
+            write_run_terminal_event,
+        )
+
+        write_run_terminal_event(
+            ledger_root,
+            run_digest=str(result.plan_digest or effective_run_id),
+            terminal_reason=(
+                "completed" if result.status == "success"
+                else "blocked" if result.status == "blocked"
+                else "incomplete"
+            ),
+            terminal_stage="publication_method_writer",
+            last_completed_invocation_id=last_completed_invocation_id(ledger_root),
+            extra={"authoring_context_mode": mode},
+        )
+    except OSError:
+        pass
     result_path_value = paths.get("publication_writer_result_v1", "")
     if result_path_value:
         _atomic_write_text(
