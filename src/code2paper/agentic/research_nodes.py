@@ -68,7 +68,6 @@ from code2paper.agentic.execution_profile import (
     route_execution_profile,
 )
 from code2paper.agentic.implementation_scope import (
-    infer_implementation_scope,
     ownership_rank,
     scope_role_for_candidate,
     seed_child_candidates_from_parents,
@@ -108,7 +107,10 @@ from code2paper.agentic.research_tools import (
     execute_research_tool,
 )
 from code2paper.agentic.repo_snapshot import RepoSnapshot, build_repo_snapshot
-from code2paper.agentic.source_inventory import build_repository_source_manifest
+from code2paper.agentic.repository_authoring_artifacts import (
+    build_repository_authoring_artifacts,
+    read_snapshot_files,
+)
 from code2paper.agentic.state_v3 import AgentStateV3
 from code2paper.agentic.typed_refs import (
     behavior_refs,
@@ -750,15 +752,6 @@ def repository_indexer_node(
     LangGraph channels small.
     """
 
-    files = _read_snapshot_files(runtime.repo_snapshot)
-    adapter = runtime.language_adapter(files)
-    symbol_index = adapter.index_symbols(
-        repo_snapshot_id=runtime.repo_snapshot.snapshot_id,
-        project_tree_hash=runtime.repo_snapshot.project_tree_hash,
-        files=files,
-    )
-    symbol_index_digest = symbol_index.content_digest
-
     # Build an ownership projection at the same frozen boundary as the
     # symbol index.  The projection is intentionally generic: it uses typed
     # entry/intent hints and call connectivity, never project names or paper
@@ -773,17 +766,17 @@ def repository_indexer_node(
         if value not in author_texts:
             author_texts.append(value)
     explicit_entries = _entry_symbol_hints(runtime.intent_target_proposal_report)
-    scope = infer_implementation_scope(
-        symbol_index.symbols,
+    authoring = build_repository_authoring_artifacts(
+        runtime.repo_snapshot,
         author_texts=author_texts,
         entry_symbol_ids=explicit_entries,
-        evidence_refs=(symbol_index_digest,),
+        adapter_registry=runtime.adapter_registry,
+        adapter_language=runtime.adapter_language,
     )
-    source_manifest = build_repository_source_manifest(
-        runtime.repo_snapshot,
-        symbols=symbol_index.symbols,
-        implementation_scope=scope,
-    )
+    symbol_index = authoring.symbol_index
+    scope = authoring.implementation_scope
+    source_manifest = authoring.source_manifest
+    symbol_index_digest = symbol_index.content_digest
     scope_path = runtime.tool_context().write_artifact(
         "implementation_scopes", scope.content_digest, scope
     )
@@ -795,7 +788,7 @@ def repository_indexer_node(
         "implementation_scope_ref": scope.content_digest,
         "source_manifest_ref": source_manifest.content_digest,
         "behavior_graph_ref": _empty_behavior_graph_digest(
-            runtime.repo_snapshot, language=adapter.language
+            runtime.repo_snapshot, language=authoring.language
         ),
         "status": "repository_indexed",
         "_implementation_scope": scope,
@@ -1388,7 +1381,7 @@ def behavior_graph_updater_node(
     state) and a state update containing the new digest.
     """
 
-    files = _read_snapshot_files(runtime.repo_snapshot)
+    files = read_snapshot_files(runtime.repo_snapshot)
     adapter = runtime.language_adapter(files)
     symbol_index = adapter.index_symbols(
         repo_snapshot_id=runtime.repo_snapshot.snapshot_id,
@@ -1447,16 +1440,42 @@ def behavior_graph_updater_node(
                 rels = adapter.extract_relations(sym, source, ops)
             except Exception:
                 rels = []
-            for rel in rels:
+            # Interprocedural CALLS must be part of the frozen production graph
+            # too.  Building it only inside ``build_behavior_subgraph`` left
+            # persisted graphs with zero typed call edges, so a downstream
+            # owner/path closure could never prove a call chain.
+            from code2paper.agentic.behavior_graph_tools import (
+                _adapter_instance_attribute_types,
+                _extract_interprocedural_calls,
+            )
+
+            inter_calls, inter_unresolved, _callee_ids = _extract_interprocedural_calls(
+                symbol=sym,
+                nodes=list(ops),
+                symbol_index=symbol_index,
+                instance_attribute_types=_adapter_instance_attribute_types(
+                    adapter, files
+                ),
+            )
+            for rel in inter_calls:
                 new_relations.add(rel.kind)
             sym_graph = CodeBehaviorGraphV1(
                 repo_snapshot_id=runtime.repo_snapshot.snapshot_id,
                 project_tree_hash=runtime.repo_snapshot.project_tree_hash,
                 language=adapter.language,
                 nodes=ops,
-                relations=rels,
+                relations=[*rels, *inter_calls],
+                unresolved_relations=list(inter_unresolved),
             )
             updated_graph = updated_graph.merge(sym_graph)
+
+    # Bind resolved CALLS targets to the callee's first operation once the
+    # whole incremental graph is known.
+    from code2paper.agentic.behavior_graph_tools import (
+        _bind_resolved_call_target_nodes,
+    )
+
+    updated_graph = _bind_resolved_call_target_nodes(updated_graph)
 
     state_update: dict[str, Any] = {
         "behavior_graph_ref": updated_graph.content_digest,
@@ -3294,16 +3313,7 @@ def _read_snapshot_files(snapshot: RepoSnapshot) -> dict[str, str]:
     through ``project_root`` (the snapshot only stores content digests).
     """
 
-    root = snapshot.project_root
-    files: dict[str, str] = {}
-    for entry in snapshot.included_files:
-        if entry.kind != "file":
-            continue
-        try:
-            files[entry.path] = _read_text(Path(root) / entry.path)
-        except OSError:
-            continue
-    return files
+    return read_snapshot_files(snapshot)
 
 
 def _read_text(path: Path) -> str:

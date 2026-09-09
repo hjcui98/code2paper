@@ -28,7 +28,7 @@ import ast
 import hashlib
 import re
 from dataclasses import dataclass, field
-from typing import Any
+from typing import Any, Mapping
 
 from code2paper.agentic.behavior_graph import (
     BEHAVIOR_PREDICATES,
@@ -247,6 +247,98 @@ class PythonBehaviorAdapter:
         return index.model_copy(update={"content_digest": _index_digest(index)})
 
     # ------------------------------------------------------------------
+    # instance_attribute_types
+    # ------------------------------------------------------------------
+
+    def instance_attribute_types(
+        self, files: Mapping[str, str]
+    ) -> dict[str, dict[str, str]]:
+        """Map ``"<path>::<Class>"`` to ``{instance attribute: "<path>::<Class>"}``.
+
+        A submodule call such as ``self.model(x)`` has no same-class method
+        target, so it used to be dropped as ``dynamic_call``.  When the class
+        body assigns ``self.model = SomeClass(...)``, the call binds to that
+        class's ``forward``.  ``SomeClass`` is accepted only when it resolves
+        unambiguously: a class defined in the same file, an explicitly imported
+        class, or a name that is globally unique across the indexed files.
+        Anything else stays unresolved.
+        """
+
+        parsed: dict[str, ast.AST] = {}
+        for path, text in files.items():
+            if not path.endswith(".py"):
+                continue
+            try:
+                parsed[path] = ast.parse(text)
+            except SyntaxError:
+                continue
+        classes_by_name: dict[str, list[str]] = {}
+        for path, tree in parsed.items():
+            for node in ast.walk(tree):
+                if isinstance(node, ast.ClassDef):
+                    classes_by_name.setdefault(node.name, []).append(path)
+
+        def _module_path(module: str) -> list[str]:
+            relative = module.lstrip(".").replace(".", "/")
+            if not relative:
+                return []
+            return [
+                candidate for candidate in (f"{relative}.py", f"{relative}/__init__.py")
+                if candidate in parsed
+            ]
+
+        result: dict[str, dict[str, str]] = {}
+        for path, tree in parsed.items():
+            same_file_classes = {
+                node.name
+                for node in ast.walk(tree)
+                if isinstance(node, ast.ClassDef)
+            }
+            imported: dict[str, str] = {}
+            for node in ast.walk(tree):
+                if isinstance(node, ast.ImportFrom):
+                    for module_path in _module_path(node.module or ""):
+                        for alias in node.names:
+                            if alias.name in classes_by_name.get(alias.name, []):
+                                if module_path in classes_by_name[alias.name]:
+                                    imported[alias.asname or alias.name] = (
+                                        f"{module_path}::{alias.name}"
+                                    )
+            for class_node in ast.walk(tree):
+                if not isinstance(class_node, ast.ClassDef):
+                    continue
+                attrs: dict[str, str] = {}
+                for stmt in ast.walk(class_node):
+                    if not isinstance(stmt, ast.Assign):
+                        continue
+                    if not isinstance(stmt.value, ast.Call):
+                        continue
+                    callee = stmt.value.func
+                    if not isinstance(callee, ast.Name):
+                        continue
+                    target_key = ""
+                    if callee.id in same_file_classes:
+                        target_key = f"{path}::{callee.id}"
+                    elif callee.id in imported:
+                        target_key = imported[callee.id]
+                    elif len(classes_by_name.get(callee.id, ())) == 1:
+                        target_key = (
+                            f"{classes_by_name[callee.id][0]}::{callee.id}"
+                        )
+                    if not target_key:
+                        continue
+                    for target in stmt.targets:
+                        if (
+                            isinstance(target, ast.Attribute)
+                            and isinstance(target.value, ast.Name)
+                            and target.value.id in {"self", "cls"}
+                        ):
+                            attrs[target.attr] = target_key
+                if attrs:
+                    result[f"{path}::{class_node.name}"] = attrs
+        return result
+
+    # ------------------------------------------------------------------
     # extract_operations
     # ------------------------------------------------------------------
 
@@ -306,6 +398,8 @@ class PythonBehaviorAdapter:
         visitor = _BehaviorRelationVisitor(symbol=symbol, nodes=nodes)
         _visit_exact_symbol_scope(visitor, tree, symbol)
         visitor.add_configuration_relations()
+        visitor.add_executable_dataflow_relations()
+        visitor.add_sequential_control_relations()
         return visitor.relations
 
     # ------------------------------------------------------------------
@@ -1190,6 +1284,70 @@ class _BehaviorRelationVisitor(ast.NodeVisitor):
                         target=target,
                     )
                     existing.add(key)
+
+    def add_executable_dataflow_relations(self) -> None:
+        """Emit source-backed producer→consumer edges.
+
+        The operation visitor records the result name on assignment/call
+        nodes and the operand names on later expressions.  A matching name is
+        a conservative typed dependency; no natural-language or symbol-name
+        similarity is involved.  This edge is intentionally directional so a
+        downstream closure cannot walk from an output back into unrelated
+        callers.
+        """
+
+        existing = {
+            (relation.kind, relation.source_node_id, relation.target_node_id)
+            for relation in self.relations
+        }
+        for index, source in enumerate(self.nodes):
+            produced = str(source.result or "").strip().casefold()
+            if not produced:
+                continue
+            for target in self.nodes[index + 1:]:
+                consumed = {
+                    str(value).strip().casefold()
+                    for value in target.operands
+                    if str(value).strip()
+                }
+                if produced not in consumed:
+                    continue
+                key = ("DATA_DEPENDS_ON", source.node_id, target.node_id)
+                if key in existing:
+                    continue
+                self._add_relation(
+                    kind="DATA_DEPENDS_ON",
+                    source=source,
+                    target=target,
+                )
+                existing.add(key)
+
+    def add_sequential_control_relations(self) -> None:
+        """Connect the adapter's AST execution order with directed edges.
+
+        ``extract_operations`` visits expression inputs before their parent
+        operation, so the resulting list is a deterministic executable order
+        for the selected symbol.  Keeping these edges in the adapter makes
+        owner-entry reachability explicit instead of making the mechanism
+        compiler treat every node belonging to a symbol as a root.
+        """
+
+        existing = {
+            (relation.kind, relation.source_node_id, relation.target_node_id)
+            for relation in self.relations
+        }
+        for source, target in zip(self.nodes, self.nodes[1:]):
+            if source.node_id == target.node_id:
+                continue
+            key = ("NEXT_CONTROL", source.node_id, target.node_id)
+            if key in existing:
+                continue
+            self._add_relation(
+                kind="NEXT_CONTROL",
+                source=source,
+                target=target,
+            )
+            existing.add(key)
 
     def visit_If(self, node: ast.If) -> None:
         # TRUE_BRANCH / FALSE_BRANCH from the BRANCH node at this line.

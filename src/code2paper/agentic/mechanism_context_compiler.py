@@ -39,6 +39,7 @@ from code2paper.agentic.mechanism_context_models import (
     canonical_json_bytes,
     sha256_digest,
 )
+from code2paper.agentic.source_inventory import normalize_source_path
 
 
 _ACTIVE_STATUSES = frozenset({"active_default", "active_selected", "conditional"})
@@ -421,8 +422,19 @@ def _relation_endpoint(relation: Any, side: str, nodes: Mapping[str, Any]) -> st
             node_id for node_id, node in nodes.items()
             if _text(_get(node, "symbol_id")) == symbol_id
         ]
-        if len(matches) == 1:
-            return matches[0]
+        if matches:
+            # Inter-symbol CALLS relations carry a target SymbolRef and may
+            # omit a target node when the callee body was not part of the
+            # requested subgraph.  If the body is present, bind the edge to
+            # its first deterministic AST operation so directed reachability
+            # can continue without treating every symbol node as a root.
+            return min(
+                matches,
+                key=lambda node_id: (
+                    _span_order(_text(_get(nodes[node_id], "source_span_id"))),
+                    node_id,
+                ),
+            )
     return node_id or symbol_id
 
 
@@ -477,6 +489,33 @@ def _build_adapter_graph(
         return _get(result, "graph")
     except Exception:
         return None
+
+
+def _entry_start_nodes(
+    nodes: Mapping[str, Any],
+    entry_symbols: Iterable[str],
+) -> set[str]:
+    """Select one deterministic AST start node per owner entry symbol."""
+
+    starts: set[str] = set()
+    wanted = {str(value).strip() for value in entry_symbols if str(value).strip()}
+    for symbol_id in sorted(wanted):
+        candidates = [
+            (node_id, node)
+            for node_id, node in nodes.items()
+            if _text(_get(node, "symbol_id")) == symbol_id
+        ]
+        if not candidates:
+            continue
+        node_id, _node = min(
+            candidates,
+            key=lambda item: (
+                _span_order(_text(_get(item[1], "source_span_id"))),
+                item[0],
+            ),
+        )
+        starts.add(node_id)
+    return starts
 
 
 def _fact_operation_parts(fact: Any) -> tuple[str, tuple[str, ...], str, tuple[str, ...]]:
@@ -628,7 +667,7 @@ def _collect_seed_data(
     evidence_packets: Any | None = None,
     implementation_scope: Any | None = None,
     symbol_index: Any | None = None,
-) -> dict[str, dict[str, Any]]:
+) -> tuple[dict[str, dict[str, Any]], set[str]]:
     """Build narrow, exact-ID mechanism seeds from all available inputs.
 
     This function deliberately does not use text similarity.  A brief is
@@ -696,10 +735,21 @@ def _collect_seed_data(
         "implementation_symbol_ids", "source_symbol_ids", "symbol_ids",
         "bound_symbol_ids", "candidate_symbol_ids", "symbol_id",
     )
+    owner_symbol_fields = (
+        "entry_symbol_ids", "target_entry_symbol_ids", "entry_symbol_id",
+        "target_entry_symbol_id", "owner_symbol_ids", "owner_symbol_id",
+        "implementation_owner_symbol_ids", "implementation_owner_symbol_id",
+    )
 
     def explicit_symbol_ids(value: Any) -> tuple[str, ...]:
         result: list[str] = []
         for name in explicit_symbol_fields:
+            result.extend(_ids(_get(value, name, ())))
+        return tuple(dict.fromkeys(result))
+
+    def explicit_owner_symbol_ids(value: Any) -> tuple[str, ...]:
+        result: list[str] = []
+        for name in owner_symbol_fields:
             result.extend(_ids(_get(value, name, ())))
         return tuple(dict.fromkeys(result))
 
@@ -727,8 +777,14 @@ def _collect_seed_data(
     for node in story_values:
         story_id = _text(_get(node, "story_node_id") or _get(node, "node_id"))
         explicit_mid = _text(_get(node, "mechanism_id") or _get(node, "mechanism_key"))
-        mechanism_id = _canonical_mechanism_id(explicit_mid or story_id)
+        owner_symbols = explicit_owner_symbol_ids(node)
+        mechanism_id = _canonical_mechanism_id(
+            explicit_mid or (owner_symbols[0] if owner_symbols else "")
+        )
         if not mechanism_id:
+            # A narrative node without an executable owner is retained by the
+            # upstream intent artifacts, but cannot create a mechanism or
+            # acquire repository evidence through this compiler.
             continue
         row = add_mid(mechanism_id)
         if explicit_mid:
@@ -748,7 +804,8 @@ def _collect_seed_data(
         row["obligation_ids"].update(_ids(_get(node, "linked_obligation_ids", ())))
         row["bound_claim_ids"].update(_ids(_get(node, "linked_claim_ids", ())))
         row["bound_span_ids"].update(_ids(_get(node, "source_refs", ())))
-        row["entry_symbol_ids"].update(explicit_symbol_ids(node))
+        row["entry_symbol_ids"].update(owner_symbols)
+        row["candidate_symbol_ids"].update(explicit_symbol_ids(node))
         row["candidate_symbol_ids"].update(_ids(_get(node, "candidate_symbols_or_terms", ())))
         add_semantic_field(row, _get(node, "semantic_fields", {}))
 
@@ -757,9 +814,14 @@ def _collect_seed_data(
         brief_id = _text(_get(brief, "brief_id"))
         story_id = _text(_get(brief, "story_node_id"))
         explicit_mid = _text(_get(brief, "mechanism_id") or _get(brief, "mechanism_key"))
+        owner_symbols = explicit_owner_symbol_ids(brief)
         mechanism_id = _canonical_mechanism_id(
-            explicit_mid or story_to_mechanism.get(story_id, "") or story_id or brief_id
+            explicit_mid
+            or story_to_mechanism.get(story_id, "")
+            or (owner_symbols[0] if owner_symbols else "")
         )
+        if not mechanism_id:
+            continue
         row = add_mid(mechanism_id)
         if explicit_mid:
             row["explicit_mechanism_ids"].add(mechanism_id)
@@ -773,7 +835,8 @@ def _collect_seed_data(
         row["bound_equation_ids"].update(_ids(_get(brief, "equation_ids", ())))
         row["bound_span_ids"].update(_ids(_get(brief, "span_ids", ())))
         row["configuration_ids"].update(_ids(_get(brief, "configuration_ids", ())))
-        row["entry_symbol_ids"].update(explicit_symbol_ids(brief))
+        row["entry_symbol_ids"].update(owner_symbols)
+        row["candidate_symbol_ids"].update(explicit_symbol_ids(brief))
         row["candidate_symbol_ids"].update(_ids(_get(brief, "candidate_symbols_or_terms", ())))
         statement = _text(_get(brief, "author_statement") or _get(brief, "purpose"))
         if statement:
@@ -792,12 +855,15 @@ def _collect_seed_data(
         brief_id = _text(_get(facet, "brief_id"))
         story_id = _text(_get(facet, "story_node_id"))
         explicit_mid = _text(_get(facet, "mechanism_id") or _get(facet, "mechanism_key"))
+        owner_symbols = explicit_owner_symbol_ids(facet)
         mechanism_id = _canonical_mechanism_id(
             explicit_mid
             or brief_to_mechanism.get(brief_id, "")
             or story_to_mechanism.get(story_id, "")
-            or story_id or brief_id or fid
+            or (owner_symbols[0] if owner_symbols else "")
         )
+        if not mechanism_id:
+            continue
         row = add_mid(mechanism_id)
         if explicit_mid:
             row["explicit_mechanism_ids"].add(mechanism_id)
@@ -818,7 +884,8 @@ def _collect_seed_data(
         if statement:
             row["author_statements"].add(statement)
         row["search_terms"].update(_ids(_get(facet, "search_terms", ())))
-        row["entry_symbol_ids"].update(explicit_symbol_ids(facet))
+        row["entry_symbol_ids"].update(owner_symbols)
+        row["candidate_symbol_ids"].update(explicit_symbol_ids(facet))
         add_semantic_field(row, _get(facet, "semantic_fields", {}))
         alignment = alignment_by_facet.get(fid)
         if alignment is None:
@@ -851,9 +918,10 @@ def _collect_seed_data(
         explicit_mid = _text(
             _get(candidate, "mechanism_id") or _get(candidate, "mechanism_key")
         )
-        row = add_mid(
-            explicit_mid or facet_to_mechanism.get(fid, "") or fid
-        )
+        target_mid = explicit_mid or facet_to_mechanism.get(fid, "")
+        if not target_mid:
+            continue
+        row = add_mid(target_mid)
         if explicit_mid:
             row["explicit_mechanism_ids"].add(_canonical_mechanism_id(explicit_mid))
         row["facet_ids"].add(fid)
@@ -995,6 +1063,20 @@ def _collect_seed_data(
         "evaluation": set(_ids(scope_dump.get("evaluation_symbol_ids", ()))),
         "configuration": set(_ids(scope_dump.get("configuration_symbol_ids", ()))),
     }
+    scope_is_initial_owner_surface = not seeds
+    for entry_symbol_id in sorted(scope_groups["entry"]):
+        target_mid = next(
+            (
+                mechanism_id for mechanism_id, row in seeds.items()
+                if entry_symbol_id in row["entry_symbol_ids"]
+            ),
+            "",
+        )
+        if not target_mid and scope_is_initial_owner_surface:
+            target_mid = _canonical_mechanism_id(entry_symbol_id)
+        if target_mid:
+            row = add_mid(target_mid)
+            row["entry_symbol_ids"].add(entry_symbol_id)
     for row in seeds.values():
         known = row["entry_symbol_ids"] | row["candidate_symbol_ids"]
         if len(seeds) == 1:
@@ -1009,6 +1091,82 @@ def _collect_seed_data(
             row["scope_comparand_symbol_ids"].update(scope_groups["comparand"].intersection(known))
             row["scope_evaluation_symbol_ids"].update(scope_groups["evaluation"].intersection(known))
             row["scope_configuration_symbol_ids"].update(scope_groups["configuration"].intersection(known))
+
+    # A repository scope may be the first executable owner surface in a small
+    # run (there is no story/brief/facet yet).  Bind only the source records
+    # whose exact symbol handle is covered by that owner.  This keeps the
+    # owner-first partition fail-closed while preventing a valid scoped fact
+    # from being stranded merely because the scope seed was materialized after
+    # the initial fact/claim closure pass.
+    for row in seeds.values():
+        owner_handles = set(row["entry_symbol_ids"])
+        owner_handles.update(row["scope_target_symbol_ids"])
+        owner_handles.update(row["candidate_symbol_ids"])
+        if len(seeds) != 1 and not owner_handles:
+            continue
+        for fact in fact_values:
+            fact_handles = set(_ids(_get(fact, "scope")))
+            fact_handles.update(_ids(_get(fact, "subject")))
+            fact_handles.update(explicit_symbol_ids(fact))
+            if fact_handles.intersection(owner_handles):
+                row["bound_fact_ids"].update(_ids(_get(fact, "fact_id")))
+        bound_facts = set(row["bound_fact_ids"])
+        for claim in claim_values:
+            if bound_facts.intersection(_ids(_get(claim, "fact_ids", ()) )):
+                row["bound_claim_ids"].update(_ids(_get(claim, "claim_id")))
+        bound_claims = set(row["bound_claim_ids"])
+        for equation in equation_values:
+            if (
+                bound_facts.intersection(_ids(_get(equation, "fact_ids", ())))
+                or bound_claims.intersection(_ids(_get(equation, "claim_ids", ())))
+            ):
+                row["bound_equation_ids"].update(_ids(_get(equation, "equation_id")))
+
+    # Complete the exact fact → claim → equation closure for records attached
+    # by the scope-owner pass above.  The earlier pass remains necessary for
+    # intent-created seeds; this bounded second pass covers only newly bound
+    # owner records and does not introduce text-based associations.
+    while True:
+        changed = False
+        for row in seeds.values():
+            before = sum(len(row[name]) for name in (
+                "bound_fact_ids", "bound_claim_ids", "bound_equation_ids", "bound_span_ids",
+            ))
+            for fact_id in tuple(row["bound_fact_ids"]):
+                fact = fact_by_id.get(fact_id)
+                if fact is None:
+                    continue
+                row["bound_span_ids"].update(_ids(
+                    (*_ids(_get(fact, "direct_span_ids", ())),
+                     *_ids(_get(fact, "relation_span_ids", ())))
+                ))
+                row["bound_claim_ids"].update(_ids(_get(fact, "claim_ids", ())))
+                row["bound_equation_ids"].update(_ids(_get(fact, "equation_ids", ())))
+                row["bound_relation_ids"].update(_ids(_get(fact, "relation_evidence_ids", ())))
+            for claim_id in tuple(row["bound_claim_ids"]):
+                claim = claim_by_id.get(claim_id)
+                if claim is None:
+                    continue
+                row["bound_fact_ids"].update(_ids(_get(claim, "fact_ids", ())))
+                row["bound_span_ids"].update(_ids(_get(claim, "direct_evidence_ids", ())))
+                row["bound_span_ids"].update(_ids(_get(claim, "span_ids", ())))
+                row["bound_equation_ids"].update(_ids(_get(claim, "equation_ids", ())))
+                row["bound_relation_ids"].update(_ids(_get(claim, "relation_evidence_ids", ())))
+            for equation_id in tuple(row["bound_equation_ids"]):
+                equation = equation_by_id.get(equation_id)
+                if equation is None:
+                    continue
+                row["bound_fact_ids"].update(_ids(_get(equation, "fact_ids", ())))
+                row["bound_claim_ids"].update(_ids(_get(equation, "claim_ids", ())))
+                row["bound_span_ids"].update(_ids(_get(equation, "span_ids", ())))
+                row["bound_span_ids"].update(_ids(_get(equation, "direct_span_ids", ())))
+                row["bound_relation_ids"].update(_ids(_get(equation, "relation_evidence_ids", ())))
+            after = sum(len(row[name]) for name in (
+                "bound_fact_ids", "bound_claim_ids", "bound_equation_ids", "bound_span_ids",
+            ))
+            changed |= after != before
+        if not changed:
+            break
 
     # Resolve explicit qualified names to symbol ids only when the index has a
     # unique exact match.  This keeps free-form search terms out of graph
@@ -1030,12 +1188,114 @@ def _collect_seed_data(
                 resolved.add(_text(_get(exact[0], "symbol_id")))
         row["candidate_symbol_ids"].update(resolved)
 
+    # Owner-first seed typing (remediation plan section 9.4).  Only an
+    # explicit mechanism key, a MethodUnit owner, or a target entry symbol
+    # makes a seed an executable owner anchor.  Story/brief/facet-only rows
+    # are narrative organization and can never anchor or merge a mechanism.
+    for row in seeds.values():
+        if row["explicit_mechanism_ids"] or row["entry_symbol_ids"]:
+            row["seed_kind"] = "executable"
+        elif row["story_node_ids"] or row["brief_ids"] or row["facet_ids"]:
+            row["seed_kind"] = "narrative"
+        else:
+            row["seed_kind"] = "unresolved"
+
+    ownerless_seed_ids: set[str] = set()
     if not seeds and (fact_by_id or claim_by_id or equation_by_id):
-        row = seeds["mech_core"]
-        row["bound_fact_ids"].update(fact_by_id.keys())
-        row["bound_claim_ids"].update(claim_by_id.keys())
-        row["bound_equation_ids"].update(equation_by_id.keys())
-    return seeds
+        # Owner-first rule: facts without any owner anchor never become a
+        # project-wide pseudo mechanism.  They are reported as ownerless
+        # seeds so admission can fail closed instead of silently merging the
+        # whole authoring graph into one mechanism.
+        ownerless_seed_ids.update(fact_by_id.keys())
+        ownerless_seed_ids.update(claim_by_id.keys())
+        ownerless_seed_ids.update(equation_by_id.keys())
+    return dict(seeds), ownerless_seed_ids
+
+
+#: Relation kinds that may prove an executable path when their adapter defines
+#: the direction.  ``CONTAINS`` and plain text ordering never prove execution;
+#: ``ALIAS_OF``/``IMPLEMENTS``/``OVERRIDES`` only help owner resolution.
+_EXECUTABLE_RELATION_KINDS = frozenset({
+    "CALLS", "RETURNS_TO", "DATA_DEPENDS_ON", "CONTROL_DEPENDS_ON",
+    "READS_FROM", "WRITES_TO", "NEXT_CONTROL", "TRUE_BRANCH", "FALSE_BRANCH",
+})
+
+
+def _executable_adjacency(
+    nodes: Mapping[str, Any],
+    relations: Mapping[str, Any],
+) -> dict[str, list[tuple[str, str]]]:
+    """Directed source→target adjacency over executable relation kinds only."""
+
+    adjacency: dict[str, list[tuple[str, str]]] = defaultdict(list)
+    for rid, relation in relations.items():
+        kind = _text(_get(relation, "kind")).upper()
+        if kind not in _EXECUTABLE_RELATION_KINDS:
+            continue
+        source = _relation_endpoint(relation, "source", nodes)
+        target = _relation_endpoint(relation, "target", nodes)
+        if source in nodes and target in nodes and source != target:
+            adjacency[source].append((target, rid))
+    return adjacency
+
+
+def _reachable_closure(
+    adjacency: Mapping[str, list[tuple[str, str]]],
+    start_nodes: Iterable[str],
+) -> tuple[set[str], set[str]]:
+    """BFS reachability over the directed executable subgraph.
+
+    Real cycles are handled by the visited set, so a strongly connected
+    component is simply mutually reachable; no synthetic reverse edge is
+    introduced for a one-way producer→consumer chain.
+    """
+
+    seen_nodes: set[str] = set(start_nodes)
+    seen_relations: set[str] = set()
+    queue = deque(sorted(seen_nodes))
+    while queue:
+        current = queue.popleft()
+        for target, rid in sorted(adjacency.get(current, ()), key=lambda item: item[1]):
+            seen_relations.add(rid)
+            if target not in seen_nodes:
+                seen_nodes.add(target)
+                queue.append(target)
+    return seen_nodes, seen_relations
+
+
+def _directed_path_relations(
+    adjacency: Mapping[str, list[tuple[str, str]]],
+    start_nodes: Iterable[str],
+    goal_nodes: Iterable[str],
+) -> tuple[str, ...]:
+    """Return one deterministic directed relation path between two seed groups."""
+
+    goals = set(goal_nodes)
+    starts = sorted(set(start_nodes))
+    if not goals or not starts:
+        return ()
+    parents: dict[str, tuple[str, str]] = {}
+    queue = deque(starts)
+    visited = set(starts)
+    while queue:
+        current = queue.popleft()
+        if current in goals and current not in starts:
+            break
+        for target, rid in sorted(adjacency.get(current, ()), key=lambda item: item[1]):
+            if target not in visited:
+                visited.add(target)
+                parents[target] = (current, rid)
+                queue.append(target)
+    reachable_goal = next((goal for goal in sorted(goals) if goal in visited), None)
+    if reachable_goal is None:
+        return ()
+    relation_ids: list[str] = []
+    cursor = reachable_goal
+    while cursor in parents:
+        previous, rid = parents[cursor]
+        relation_ids.append(rid)
+        cursor = previous
+    return tuple(reversed(relation_ids))
 
 
 def _merge_mechanism_seed_rows(
@@ -1043,27 +1303,38 @@ def _merge_mechanism_seed_rows(
     *,
     facts: Any | None = None,
     graph: Any | None = None,
-) -> dict[str, dict[str, Any]]:
-    """Merge only independently evidenced mechanism seed fragments.
+) -> tuple[dict[str, dict[str, Any]], tuple[Any, ...]]:
+    """Owner-first mechanism partition with machine-verifiable merge proofs.
 
-    Story nodes and briefs are organization priors, not mechanism identity.
-    The legacy fallback of making one mechanism per story node fragments a
-    single implementation chain; the opposite fallback of merging all
-    author text contaminates unrelated mechanisms.  A merge is therefore
-    admitted only by exact evidence-handle overlap, an exact producer/result
-    to consumer/operand link, or a direct typed behavior-graph edge.  Two
-    distinct explicit mechanism keys are never merged.
+    Replaces the legacy ``evidence_overlap OR fact_flow_overlap OR
+    direct_graph_link`` transitive union: shared claims, spans, briefs,
+    facts, or a single graph adjacency never merge two seeds.  A merge is
+    admitted only when
+
+    1. both seeds declare the same explicit mechanism owner, or
+    2. both seeds' graph anchors are uniquely covered by one entry's directed
+       executable entry→output closure with no competing owner and a directed
+       executable path connects them.
+
+    Every decision is returned as a ``MechanismMergeProofV1`` so admission can
+    verify it; ``conflict`` proofs mark competing explicit owners and never
+    merge.
     """
 
-    if len(seeds) < 2:
-        return {str(key): dict(value) for key, value in seeds.items()}
+    from code2paper.agentic.unified_context_models import MechanismMergeProofV1
 
-    keys = tuple(sorted(str(key) for key in seeds))
-    parent = {key: key for key in keys}
-    explicit_by_root = {
-        key: set(seeds[key].get("explicit_mechanism_ids", ()))
+    merged_rows: dict[str, dict[str, Any]] = {
+        str(key): dict(value) for key, value in seeds.items()
+    }
+    if len(merged_rows) < 2:
+        return merged_rows, ()
+
+    keys = tuple(sorted(merged_rows))
+    explicit_by_key = {
+        key: set(merged_rows[key].get("explicit_mechanism_ids", ()))
         for key in keys
     }
+    parent = {key: key for key in keys}
 
     def find(key: str) -> str:
         root = parent[key]
@@ -1076,53 +1347,10 @@ def _merge_mechanism_seed_rows(
             key = next_key
         return root
 
-    def evidence_overlap(left: dict[str, Any], right: dict[str, Any]) -> bool:
-        for name in (
-            "bound_fact_ids",
-            "bound_claim_ids",
-            "bound_equation_ids",
-            "bound_span_ids",
-            "bound_relation_ids",
-        ):
-            if set(left.get(name, ())) & set(right.get(name, ())):
-                return True
-        return False
-
-    fact_by_id = {
-        _text(_get(item, "fact_id")): item
-        for item in _items(facts, "facts")
-        if _text(_get(item, "fact_id"))
-    }
-
-    def fact_flow_overlap(left: dict[str, Any], right: dict[str, Any]) -> bool:
-        def flow(row: dict[str, Any]) -> tuple[set[str], set[str]]:
-            produced: set[str] = set()
-            consumed: set[str] = set()
-            for fact_id in row.get("bound_fact_ids", ()):
-                fact = fact_by_id.get(str(fact_id))
-                if fact is None:
-                    continue
-                _predicate, operands, result, _conditions = _fact_operation_parts(fact)
-                consumed.update(
-                    value.casefold() for value in operands if value.strip()
-                )
-                if result.strip():
-                    produced.add(result.casefold())
-                subject = _text(_get(fact, "subject"))
-                if subject:
-                    consumed.add(subject.casefold())
-            return produced, consumed
-
-        left_produced, left_consumed = flow(left)
-        right_produced, right_consumed = flow(right)
-        return bool(
-            left_produced.intersection(right_consumed)
-            or right_produced.intersection(left_consumed)
-        )
-
     graph_nodes, graph_relations, _unresolved = _graph_parts(graph)
+    adjacency = _executable_adjacency(graph_nodes, graph_relations)
 
-    def graph_anchors(row: dict[str, Any]) -> set[str]:
+    def graph_anchors(row: Mapping[str, Any]) -> set[str]:
         symbols = set(row.get("entry_symbol_ids", ()))
         symbols.update(row.get("candidate_symbol_ids", ()))
         symbols.update(row.get("scope_target_symbol_ids", ()))
@@ -1139,56 +1367,220 @@ def _merge_mechanism_seed_rows(
             )
         }
 
-    def direct_graph_link(left: dict[str, Any], right: dict[str, Any]) -> bool:
-        left_nodes = graph_anchors(left)
-        right_nodes = graph_anchors(right)
-        if not left_nodes or not right_nodes:
+    anchors_by_key = {key: graph_anchors(merged_rows[key]) for key in keys}
+    closure_by_key: dict[str, tuple[set[str], set[str]]] = {
+        key: (
+            _reachable_closure(adjacency, anchors_by_key[key])
+            if anchors_by_key[key]
+            else (set(), set())
+        )
+        for key in keys
+    }
+
+    merge_proofs: list[MechanismMergeProofV1] = []
+
+    def proof(
+        left_key: str,
+        right_key: str,
+        *,
+        decision: str,
+        owner_anchor_id: str = "",
+        directed_path_relation_ids: tuple[str, ...] = (),
+        reason: str = "",
+        input_node_ids: Iterable[str] | None = None,
+        output_node_ids: Iterable[str] | None = None,
+    ) -> MechanismMergeProofV1:
+        return MechanismMergeProofV1(
+            left_seed_id=left_key,
+            right_seed_id=right_key,
+            owner_anchor_id=owner_anchor_id,
+            input_node_ids=tuple(sorted(
+                anchors_by_key.get(left_key, set())
+                if input_node_ids is None else set(input_node_ids)
+            )),
+            output_node_ids=tuple(sorted(
+                anchors_by_key.get(right_key, set())
+                if output_node_ids is None else set(output_node_ids)
+            )),
+            directed_path_relation_ids=directed_path_relation_ids,
+            decision=decision,  # type: ignore[arg-type]
+            reason=reason,
+        )
+
+    def _merge_roots(left_root: str, right_root: str) -> None:
+        """Union two roots while retaining the closure metadata on the root."""
+
+        parent[right_root] = left_root
+        explicit_by_key[left_root] = (
+            explicit_by_key[left_root] | explicit_by_key[right_root]
+        )
+        anchors_by_key[left_root] = (
+            anchors_by_key[left_root] | anchors_by_key[right_root]
+        )
+        left_nodes, left_relations = closure_by_key[left_root]
+        right_nodes, right_relations = closure_by_key[right_root]
+        closure_by_key[left_root] = (
+            left_nodes | right_nodes,
+            left_relations | right_relations,
+        )
+
+    def _owner_start_nodes(owner_anchor_id: str) -> set[str]:
+        return {
+            node_id for node_id, node in graph_nodes.items()
+            if node_id == owner_anchor_id
+            or _text(_get(node, "symbol_id")) == owner_anchor_id
+        }
+
+    def _common_terminal_output(
+        left_anchors: set[str], right_anchors: set[str]
+    ) -> bool:
+        """Require a common directed output when the graph exposes sinks.
+
+        A cyclic executable component has no literal sink.  In that case the
+        common reachable node itself is the SCC witness; the separate path
+        check below still prevents an unrelated shared anchor from merging.
+        """
+
+        left_nodes, _ = _reachable_closure(adjacency, left_anchors)
+        right_nodes, _ = _reachable_closure(adjacency, right_anchors)
+        common = left_nodes & right_nodes
+        if not common:
             return False
-        for relation in graph_relations.values():
-            source = _relation_endpoint(relation, "source", graph_nodes)
-            target = _relation_endpoint(relation, "target", graph_nodes)
-            if (
-                source in left_nodes and target in right_nodes
-                or source in right_nodes and target in left_nodes
-            ):
-                return True
-        return False
+        terminals = {
+            node_id for node_id in common
+            if not any(target in common for target, _ in adjacency.get(node_id, ()))
+        }
+        return bool(terminals or not any(adjacency.get(node_id) for node_id in common))
 
     for index, left_key in enumerate(keys):
         for right_key in keys[index + 1:]:
-            left = seeds[left_key]
-            right = seeds[right_key]
-            left_explicit = explicit_by_root[find(left_key)]
-            right_explicit = explicit_by_root[find(right_key)]
-            if left_explicit and right_explicit and left_explicit != right_explicit:
-                continue
-            if not (
-                evidence_overlap(left, right)
-                or fact_flow_overlap(left, right)
-                or direct_graph_link(left, right)
-            ):
-                continue
-            left_root, right_root = find(left_key), find(right_key)
+            left_root = find(left_key)
+            right_root = find(right_key)
             if left_root == right_root:
                 continue
-            merged_explicit = explicit_by_root[left_root] | explicit_by_root[right_root]
-            if len(merged_explicit) > 1:
+            left_explicit = explicit_by_key[left_root]
+            right_explicit = explicit_by_key[right_root]
+            if left_explicit and right_explicit:
+                if left_explicit == right_explicit:
+                    owner = sorted(left_explicit)[0]
+                    left_input_nodes = set(anchors_by_key.get(left_root, set()))
+                    right_output_nodes = set(anchors_by_key.get(right_root, set()))
+                    _merge_roots(left_root, right_root)
+                    merge_proofs.append(proof(
+                        left_key, right_key,
+                        decision="merged",
+                        owner_anchor_id=owner,
+                        input_node_ids=left_input_nodes,
+                        output_node_ids=right_output_nodes,
+                        reason="same_explicit_owner",
+                    ))
+                else:
+                    merge_proofs.append(proof(
+                        left_key, right_key,
+                        decision="conflict",
+                        reason="competing_explicit_owners",
+                    ))
                 continue
-            parent[right_root] = left_root
-            explicit_by_root[left_root] = merged_explicit
+            # Owner-first directed closure merge: both seed groups must be
+            # covered by one unique declared entry anchor.  A shared claim,
+            # span, fact, brief, or a single adjacency is not an owner proof.
+            left_anchors = anchors_by_key[left_root]
+            right_anchors = anchors_by_key[right_root]
+            if not left_anchors or not right_anchors:
+                continue
+            declared_entry_ids = set(
+                merged_rows[left_root].get("entry_symbol_ids", ())
+            ) | set(merged_rows[right_root].get("entry_symbol_ids", ()))
+            if not declared_entry_ids:
+                merge_proofs.append(proof(
+                    left_key, right_key,
+                    decision="shared",
+                    reason="no_unique_owner_entry_anchor",
+                    input_node_ids=left_anchors,
+                    output_node_ids=right_anchors,
+                ))
+                continue
+            if len(declared_entry_ids) != 1:
+                merge_proofs.append(proof(
+                    left_key, right_key,
+                    decision="conflict",
+                    reason="competing_entry_owner_anchors",
+                    input_node_ids=left_anchors,
+                    output_node_ids=right_anchors,
+                ))
+                continue
+            owner_anchor_id = next(iter(declared_entry_ids))
+            owner_starts = _owner_start_nodes(owner_anchor_id)
+            if not owner_starts:
+                merge_proofs.append(proof(
+                    left_key, right_key,
+                    decision="shared",
+                    owner_anchor_id=owner_anchor_id,
+                    reason="owner_entry_not_in_typed_graph",
+                    input_node_ids=left_anchors,
+                    output_node_ids=right_anchors,
+                ))
+                continue
+            owner_nodes, owner_relations = _reachable_closure(
+                adjacency, owner_starts
+            )
+            if not left_anchors <= owner_nodes or not right_anchors <= owner_nodes:
+                merge_proofs.append(proof(
+                    left_key, right_key,
+                    decision="shared",
+                    owner_anchor_id=owner_anchor_id,
+                    reason="owner_closure_does_not_cover_both_seed_groups",
+                    input_node_ids=left_anchors,
+                    output_node_ids=right_anchors,
+                ))
+                continue
+            path_relation_ids = _directed_path_relations(
+                adjacency, left_anchors, right_anchors
+            ) or _directed_path_relations(adjacency, right_anchors, left_anchors)
+            if not path_relation_ids:
+                merge_proofs.append(proof(
+                    left_key, right_key,
+                    decision="shared",
+                    owner_anchor_id=owner_anchor_id,
+                    reason="owner_closure_has_no_directed_seed_path",
+                    input_node_ids=left_anchors,
+                    output_node_ids=right_anchors,
+                ))
+                continue
+            if not _common_terminal_output(left_anchors, right_anchors):
+                merge_proofs.append(proof(
+                    left_key, right_key,
+                    decision="shared",
+                    owner_anchor_id=owner_anchor_id,
+                    directed_path_relation_ids=path_relation_ids,
+                    reason="owner_closure_has_no_common_terminal_output",
+                    input_node_ids=left_anchors,
+                    output_node_ids=right_anchors,
+                ))
+                continue
+            _merge_roots(left_root, right_root)
+            merge_proofs.append(proof(
+                left_key, right_key,
+                decision="merged",
+                owner_anchor_id=owner_anchor_id,
+                directed_path_relation_ids=path_relation_ids,
+                input_node_ids=left_anchors,
+                output_node_ids=right_anchors,
+                reason="unique_directed_entry_output_closure",
+            ))
 
     groups: dict[str, list[str]] = defaultdict(list)
     for key in keys:
         groups[find(key)].append(key)
-    merged_rows: dict[str, dict[str, Any]] = {}
+    merged_out: dict[str, dict[str, Any]] = {}
     for group_keys in groups.values():
         explicit = sorted(
-            set().union(*(set(seeds[key].get("explicit_mechanism_ids", ())) for key in group_keys))
+            set().union(*(set(merged_rows[key].get("explicit_mechanism_ids", ())) for key in group_keys))
         )
         winner = explicit[0] if explicit else group_keys[0]
         merged: dict[str, Any] = {}
         for key in group_keys:
-            row = seeds[key]
+            row = merged_rows[key]
             for name, value in row.items():
                 if name in {
                     "explicit_mechanism_ids",
@@ -1204,8 +1596,38 @@ def _merge_mechanism_seed_rows(
                 else:
                     merged.setdefault(name, value)
         merged.setdefault("seed_alias_ids", set()).update(group_keys)
-        merged_rows[winner] = merged
-    return merged_rows
+        merged_out[winner] = merged
+
+    applied_lefts = {
+        (item.left_seed_id, item.right_seed_id)
+        for item in merge_proofs if item.decision == "merged"
+    }
+    survivor_keys = set(merged_out)
+    for item in merge_proofs:
+        if item.decision != "merged":
+            continue
+        if item.left_seed_id in survivor_keys and item.right_seed_id in survivor_keys:
+            # Both sides survived grouping; the group winner carried the
+            # merged row, so this pair's proof stays valid as the record of
+            # why the rows now share one group.
+            continue
+    del applied_lefts
+    group_proof_map: dict[str, list[MechanismMergeProofV1]] = defaultdict(list)
+    for item in merge_proofs:
+        if item.decision != "merged":
+            continue
+        roots = {find(item.left_seed_id), find(item.right_seed_id)}
+        for root in roots:
+            winner_key = next(
+                (key for key in groups.get(root, ()) if key in merged_out),
+                None,
+            )
+            if winner_key:
+                group_proof_map[winner_key].append(item)
+    for winner_key, proofs in group_proof_map.items():
+        merged_out[winner_key].setdefault("merge_proofs", []).extend(proofs)
+
+    return merged_out, tuple(merge_proofs)
 
 
 def _reachable_graph_nodes(
@@ -1216,26 +1638,28 @@ def _reachable_graph_nodes(
     selected_seed_ids: Sequence[str],
     max_nodes: int = 256,
 ) -> tuple[set[str], set[str]]:
-    """Return the bounded typed component containing exact seed nodes."""
+    """Return the bounded forward executable closure of exact seed nodes.
 
-    adjacency: dict[str, list[tuple[str, str]]] = defaultdict(list)
-    for rid, relation in relations.items():
-        kind = _text(_get(relation, "kind")).upper()
-        if kind not in _GRAPH_RELATIONS:
-            continue
-        source = _relation_endpoint(relation, "source", nodes)
-        target = _relation_endpoint(relation, "target", nodes)
-        if source in nodes and target in nodes and source != target:
-            adjacency[source].append((target, rid))
-            adjacency[target].append((source, rid))
-    seeds = set(selected_seed_ids)
-    if not seeds:
-        seeds.update(
-            node_id for node_id, node in nodes.items()
-            if _text(_get(node, "symbol_id")) in set(entry_symbols)
+    Reverse traversal over a typed edge turns a downstream evidence hit into
+    authority for its callers and siblings.  That was the remaining
+    mechanism-inflation path after owner-first seed merging was introduced.
+    Only adapter-defined source→target executable relations may expand the
+    closure; narrative/containment/alias edges never do.
+    """
+
+    adjacency = _executable_adjacency(nodes, relations)
+    entry_starts = _entry_start_nodes(nodes, entry_symbols)
+    # Owner reachability must start at a declared owner entry.  A span/fact
+    # match is evidence to attach, never a traversal root: seeding the walk
+    # from it let one downstream evidence hit expand the whole symbol
+    # component.  Without a resolved entry the closure stays unexpanded, and
+    # the exact seed nodes are still retained for audit below.
+    if not entry_starts:
+        return (
+            {node_id for node_id in selected_seed_ids if node_id in nodes},
+            set(),
         )
-    if not seeds:
-        return set(), set()
+    seeds = entry_starts
     queue: deque[str] = deque(sorted(seeds))
     selected: set[str] = set(seeds)
     selected_relations: set[str] = set()
@@ -1248,6 +1672,12 @@ def _reachable_graph_nodes(
                 queue.append(target)
                 if len(selected) >= max_nodes:
                     break
+    # Preserve exact obligation-bound graph nodes for audit, without allowing
+    # an arbitrary downstream evidence hit to expand the executable closure.
+    selected.update(
+        node_id for node_id in selected_seed_ids
+        if node_id in nodes
+    )
     return selected, selected_relations
 
 
@@ -1316,7 +1746,7 @@ def compile_mechanism_evidence_closures(
     alignment_values = tuple(facet_alignments)
     candidate_values = tuple(field_candidates)
     story_values = tuple(story_spine)
-    seeds = _collect_seed_data(
+    seeds, ownerless_seed_ids = _collect_seed_data(
         argument_briefs=argument_briefs,
         facets=facet_values,
         facet_alignments=alignment_values,
@@ -1358,11 +1788,24 @@ def compile_mechanism_evidence_closures(
             entry_symbol_ids=entry_ids,
         )
 
+    # Narrative-only rows are organization metadata, not executable owners.
+    # Keep their IDs in the unresolved sidecar and remove them before the
+    # mechanism merge so they cannot bridge unrelated source closures.
+    narrative_seed_ids = {
+        str(key) for key, row in seeds.items()
+        if row.get("seed_kind") != "executable"
+    }
+    ownerless_seed_ids.update(narrative_seed_ids)
+    seed_count_before_merge = len(seeds)
+    seeds = {
+        str(key): row for key, row in seeds.items()
+        if row.get("seed_kind") == "executable"
+    }
     # Reconcile organization fragments only after the exact graph (including
     # an adapter-built graph) is available.  This prevents one story node per
     # mechanism fragmentation while keeping unrelated explicit mechanisms
     # isolated.
-    seeds = _merge_mechanism_seed_rows(seeds, facts=facts, graph=graph)
+    seeds, merge_proof_rows = _merge_mechanism_seed_rows(seeds, facts=facts, graph=graph)
     graph_nodes, graph_relations, unresolved_relations = _graph_parts(graph)
     fact_values = _items(facts, "facts")
     fact_by_id = {
@@ -1390,24 +1833,45 @@ def compile_mechanism_evidence_closures(
         "configuration": set(_ids(scope_dump.get("configuration_symbol_ids", ()))),
     }
 
+    source_span_failures: list[str] = []
+
+    def source_entry_for_span(span_id: str) -> tuple[Any | None, str]:
+        """Resolve one span to its manifest entry and a typed failure.
+
+        Legacy V1 callers may omit the source manifest and retain their older
+        diagnostic behavior.  Once a manifest is supplied (the unified lane),
+        an invalid handle or unknown path is recorded as an unresolved source
+        item instead of being silently converted into a verified-looking
+        ``unknown`` operation.
+        """
+
+        if source_manifest is None:
+            return None, ""
+        if not span_id:
+            return None, "unified_source_span_unmapped:empty_span"
+        match = re.match(r"^span:(.*):(\d+):(\d+)$", str(span_id))
+        if match is None:
+            return None, f"unified_source_span_unmapped:{span_id}"
+        path = normalize_source_path(match.group(1))
+        entry_for = getattr(source_manifest, "entry_for", None)
+        entry = entry_for(path) if callable(entry_for) else None
+        if entry is None:
+            for item in (_get(source_manifest, "entries", ()) or ()):
+                if normalize_source_path(_text(_get(item, "path"))) == path:
+                    entry = item
+                    break
+        if entry is None:
+            return None, f"unified_source_span_unmapped:{span_id}"
+        if not _text(_get(entry, "content_digest")):
+            return None, f"unified_source_entry_digest_missing:{path}"
+        return entry, ""
+
     def source_kind_for_span(span_id: str) -> str:
         """Resolve a source kind from a ``span:path:start:end`` handle."""
 
-        if not source_manifest or not span_id:
-            return "unknown"
-        match = re.match(r"^span:(.*):(\d+):(\d+)$", str(span_id))
-        if not match:
-            return "unknown"
-        path = match.group(1).replace("\\", "/").lstrip("./")
-        entry = None
-        entry_for = getattr(source_manifest, "entry_for", None)
-        if callable(entry_for):
-            entry = entry_for(path)
-        else:
-            for item in (_get(source_manifest, "entries", ()) or ()):
-                if _text(_get(item, "path")).replace("\\", "/").lstrip("./") == path:
-                    entry = item
-                    break
+        entry, failure = source_entry_for_span(span_id)
+        if failure:
+            source_span_failures.append(failure)
         return _text(_get(entry, "source_kind")) or "unknown"
 
     excluded_source_kinds = {
@@ -1432,13 +1896,26 @@ def compile_mechanism_evidence_closures(
             return "inactive_default", None, role
         if candidates.intersection(entry_ids):
             return "active_default", True, role
-        if not entry_ids or role in {"target_core", "target_support"}:
+        if not entry_ids:
             return "active_default", None, role
+        if role in {"target_core", "target_support"}:
+            # Ownership says whose code this is; it does not prove that the
+            # operation lies on the selected runtime path.
+            return "unknown", None, role
         return "active_default" if not scope_role_sets else "unknown", None, role
     graph_node_to_operation: dict[str, str] = {}
 
     closures: list[MechanismEvidenceClosureV1] = []
     for mechanism_id, seed in sorted(seeds.items()):
+        source_span_failure_start = len(source_span_failures)
+        seed_aliases = set(seed.get("seed_alias_ids", ())) | {str(mechanism_id)}
+        closure_merge_proofs = tuple(
+            proof for proof in merge_proof_rows
+            if {
+                _text(_get(proof, "left_seed_id")),
+                _text(_get(proof, "right_seed_id")),
+            } & seed_aliases
+        )
         requested_fact_ids = tuple(sorted(seed["bound_fact_ids"]))
         fact_chain = _compile_fact_chain(facts, requested_fact_ids)
         fact_atoms = list(fact_chain["operation_atoms"])
@@ -1463,15 +1940,15 @@ def compile_mechanism_evidence_closures(
             | set(seed["scope_target_symbol_ids"])
             | set(seed["scope_configuration_symbol_ids"])
         )
+        owner_entry_symbols = set(seed["entry_symbol_ids"])
         selected_seed_nodes = {
             node_id for node_id, node in graph_nodes.items()
             if _text(_get(node, "source_span_id")) in exact_span_set
-            or _text(_get(node, "symbol_id")) in candidate_symbols
         }
         selected_graph_nodes, selected_graph_relations = _reachable_graph_nodes(
             nodes=graph_nodes,
             relations=graph_relations,
-            entry_symbols=tuple(candidate_symbols),
+            entry_symbols=tuple(owner_entry_symbols),
             selected_seed_ids=tuple(selected_seed_nodes),
         )
         if selected_graph_nodes:
@@ -1482,23 +1959,15 @@ def compile_mechanism_evidence_closures(
             )
 
         # Reachability is calculated from explicit graph edges, not names.
-        entry_node_ids = {
-            node_id for node_id, node in graph_nodes.items()
-            if _text(_get(node, "symbol_id")) in set(seed["entry_symbol_ids"])
-        }
-        reachable_nodes: set[str] = set(entry_node_ids)
-        if entry_node_ids:
-            queue: deque[str] = deque(entry_node_ids)
-            while queue:
-                current = queue.popleft()
-                for rid, relation in graph_relations.items():
-                    if _text(_get(relation, "kind")).upper() not in _GRAPH_RELATIONS:
-                        continue
-                    source = _relation_endpoint(relation, "source", graph_nodes)
-                    target = _relation_endpoint(relation, "target", graph_nodes)
-                    if source == current and target in graph_nodes and target not in reachable_nodes:
-                        reachable_nodes.add(target)
-                        queue.append(target)
+        executable_adjacency = _executable_adjacency(graph_nodes, graph_relations)
+        entry_node_ids = _entry_start_nodes(
+            graph_nodes,
+            seed["entry_symbol_ids"],
+        )
+        reachable_nodes, _reachable_relation_ids = _reachable_closure(
+            executable_adjacency,
+            entry_node_ids,
+        )
 
         operations: list[EvidenceOperationV1] = []
         excluded_source_items: list[str] = []
@@ -1517,6 +1986,19 @@ def compile_mechanism_evidence_closures(
             default_branch, reachable_flag, scope_kind = path_resolution_inputs(
                 symbol_name, raw_symbol_name, set(seed["entry_symbol_ids"])
             )
+            matching_graph_nodes = {
+                node_id for node_id, node in graph_nodes.items()
+                if (
+                    span_id
+                    and _text(_get(node, "source_span_id")) == span_id
+                ) or (
+                    _text(atom.get("fact_id"))
+                    and _text(atom.get("fact_id"))
+                    in set(_ids(_get(node, "source_fact_ids", ())))
+                )
+            }
+            if entry_node_ids and matching_graph_nodes:
+                reachable_flag = bool(matching_graph_nodes.intersection(reachable_nodes))
             if scope_kind in {"comparand", "evaluation"} and not explicit_status:
                 explicit_status = "inactive_default"
             status = resolve_active_path_status(
@@ -1788,6 +2270,7 @@ def compile_mechanism_evidence_closures(
         unresolved_items = list(fact_chain.get("diagnostics", ()))
         unresolved_items.extend(callee_unresolved)
         unresolved_items.extend(excluded_source_items)
+        unresolved_items.extend(source_span_failures[source_span_failure_start:])
         for unresolved in unresolved_relations:
             source_node = _text(_get(unresolved, "source_node_id"))
             source_symbol = _text(_get(unresolved, "source_symbol_id"))
@@ -1872,6 +2355,17 @@ def compile_mechanism_evidence_closures(
             seed_facet_ids=tuple(sorted(seed["facet_ids"])),
             seed_obligation_ids=tuple(sorted(seed["obligation_ids"])),
             seed_author_statements=tuple(sorted(seed["author_statements"])),
+            seed_kind=str(seed.get("seed_kind", "executable")),
+            owner_anchor_id=str(
+                next(iter(sorted(seed.get("entry_symbol_ids", ()) or ())), "")
+            ),
+            merge_proof_ids=tuple(
+                str(proof.content_digest)
+                for proof in closure_merge_proofs
+                if getattr(proof, "content_digest", "")
+            ),
+            unresolved_seed_ids=tuple(sorted(ownerless_seed_ids)),
+            merge_proofs=closure_merge_proofs,
             entry_symbol_ids=tuple(sorted(seed["entry_symbol_ids"])),
             operation_nodes=tuple(operations),
             call_relation_ids=tuple(call_relation_ids),
@@ -1948,6 +2442,32 @@ def _operation_clusters(
         return ()
     by_id = {op.operation_id: op for op in operations}
     uf = _UnionFind(by_id)
+    span_sets: dict[str, set[str]] = {
+        operation.operation_id: (
+            {operation.source_span_id} if operation.source_span_id else set()
+        )
+        for operation in operations
+    }
+
+    def _guarded_union(left_id: str, right_id: str) -> bool:
+        """Union only while the merged group still names one source location.
+
+        A paper detail is one code step.  Allowing transitive unions to bridge
+        two distinct spans (through an unspanned operation) rebuilt the
+        symbol-component collapse this compiler exists to prevent, so the
+        span set of every group is tracked and a conflicting union is refused.
+        """
+
+        left_root, right_root = uf.find(left_id), uf.find(right_id)
+        if left_root == right_root:
+            return True
+        merged = span_sets.get(left_root, set()) | span_sets.get(right_root, set())
+        if len(merged) > 1:
+            return False
+        uf.union(left_id, right_id)
+        span_sets[uf.find(left_id)] = merged
+        return True
+
     relation_to_ops: dict[str, list[str]] = defaultdict(list)
     for op in operations:
         for relation_id in op.relation_ids:
@@ -1955,15 +2475,7 @@ def _operation_clusters(
     for operation_ids in relation_to_ops.values():
         unique = list(dict.fromkeys(operation_ids))
         for operation_id in unique[1:]:
-            left_op = by_id[unique[0]]
-            right_op = by_id[operation_id]
-            if (
-                left_op.source_span_id
-                and right_op.source_span_id
-                and left_op.source_span_id != right_op.source_span_id
-            ):
-                continue
-            uf.union(unique[0], operation_id)
+            _guarded_union(unique[0], operation_id)
 
     def values(operation: EvidenceOperationV1) -> tuple[set[str], set[str]]:
         operands = {
@@ -1978,10 +2490,8 @@ def _operation_clusters(
 
     for index, left in enumerate(operations):
         left_operands, left_results = values(left)
-        left_facts = set(left.source_fact_ids)
         for right in operations[index + 1:]:
             right_operands, right_results = values(right)
-            right_facts = set(right.source_fact_ids)
             has_distinct_spans = bool(
                 left.source_span_id
                 and right.source_span_id
@@ -1996,19 +2506,16 @@ def _operation_clusters(
                 and right.source_span_id
                 and left.source_span_id == right.source_span_id
             )
-            shared_fact = bool(left_facts.intersection(right_facts))
             producer_consumer = bool(
                 left_results.intersection(right_operands)
                 or right_results.intersection(left_operands)
             )
-            shared_guard = bool(
-                left.guard and right.guard and left.guard.strip() == right.guard.strip()
-            )
-            if same_span or shared_fact or (
-                (producer_consumer or shared_guard)
-                and (same_span or shared_fact or not left.source_span_id or not right.source_span_id)
-            ):
-                uf.union(left.operation_id, right.operation_id)
+            # Only a shared source statement or an explicit typed/data link
+            # groups operations.  A shared fact or guard alone is provenance,
+            # not execution order, and used to merge unrelated steps.
+            shared_relation = bool(set(left.relation_ids).intersection(right.relation_ids))
+            if same_span or producer_consumer or shared_relation:
+                _guarded_union(left.operation_id, right.operation_id)
     groups: dict[str, list[EvidenceOperationV1]] = defaultdict(list)
     for operation in operations:
         groups[uf.find(operation.operation_id)].append(operation)
@@ -2135,13 +2642,52 @@ def _mechanism_annotation_audit(
     core_ids = {
         detail.detail_id for detail in details if detail.importance == "core"
     }
+    detail_operations = {
+        detail.detail_id: tuple(
+            operation for operation in closure.operation_nodes
+            if operation.operation_id in set(detail.source_operation_ids)
+        )
+        for detail in details
+    }
+    # Endpoints are evidence-derived.  The old positional first/last fallback
+    # made any ordered detail list look connected.  An input detail consumes a
+    # source value without an upstream producer; an output detail returns or
+    # writes a value, or produces one that no other operation consumes.  When
+    # either endpoint set is empty the mechanism has no provable path.
+    consumed_values = {
+        str(operand).strip().casefold()
+        for operations in detail_operations.values()
+        for operation in operations
+        for operand in operation.operands
+        if str(operand).strip()
+    }
+    produced_values = {
+        str(operation.result).strip().casefold()
+        for operations in detail_operations.values()
+        for operation in operations
+        if str(operation.result).strip()
+    }
     input_ids = tuple(
         detail.detail_id for detail in details
-        if detail.role in {"input", "representation"}
-    ) or ((details[0].detail_id,) if details else ())
+        if detail.role == "input"
+        or any(
+            str(operand).strip()
+            and str(operand).strip().casefold() not in produced_values
+            for operation in detail_operations[detail.detail_id]
+            for operand in operation.operands
+        )
+    )
     output_ids = tuple(
-        detail.detail_id for detail in details if detail.role == "output"
-    ) or ((details[-1].detail_id,) if details else ())
+        detail.detail_id for detail in details
+        if any(
+            str(operation.predicate or "").upper() in {"RETURN", "WRITE"}
+            or (
+                str(operation.result).strip()
+                and str(operation.result).strip().casefold() not in consumed_values
+            )
+            for operation in detail_operations[detail.detail_id]
+        )
+    )
     # Only semantic/data-flow edges may establish completeness.  ``precedes``
     # is an ordering annotation emitted for paper organization; treating it
     # as an undirected graph made any adjacent detail list look connected.
@@ -2150,13 +2696,6 @@ def _mechanism_annotation_audit(
         if edge.relation == "precedes":
             continue
         adjacency[edge.source_detail_id].add(edge.target_detail_id)
-    detail_operations = {
-        detail.detail_id: tuple(
-            operation for operation in closure.operation_nodes
-            if operation.operation_id in set(detail.source_operation_ids)
-        )
-        for detail in details
-    }
     # Recompute producer/consumer links from operands/results across all
     # detail pairs, not merely adjacent pairs.  This is a deterministic data
     # flow check and deliberately does not infer a link from shared span,
@@ -2187,7 +2726,7 @@ def _mechanism_annotation_audit(
         reached.add(current)
         queue.extend(sorted(adjacency.get(current, ())))
     connected_outputs = tuple(detail_id for detail_id in output_ids if detail_id in reached)
-    disconnected_core = tuple(sorted(core_ids - reached))
+
     def _can_reach_output(start: str) -> bool:
         seen: set[str] = set()
         pending: deque[str] = deque([start])
@@ -2204,7 +2743,21 @@ def _mechanism_annotation_audit(
     connected_inputs = tuple(
         detail_id for detail_id in input_ids if _can_reach_output(detail_id)
     )
-    connected = bool(connected_outputs) and bool(connected_inputs) and not disconnected_core
+    # A detail is on the mechanism path only when it is reachable from an
+    # evidence-derived input *and* can reach an evidence-derived terminal
+    # output.  Core status is restricted to that path; everything else stays
+    # supporting/side-branch evidence in the archive.
+    on_path_ids = tuple(sorted(
+        detail_id for detail_id in reached if _can_reach_output(detail_id)
+    ))
+    disconnected_core = tuple(sorted(core_ids - set(on_path_ids)))
+    connected = (
+        bool(input_ids)
+        and bool(output_ids)
+        and bool(connected_outputs)
+        and bool(connected_inputs)
+        and not disconnected_core
+    )
 
     witness_complete = all(
         bool(detail.witness_atoms)
@@ -2278,8 +2831,12 @@ def _mechanism_annotation_audit(
     return {
         "connected_input_detail_ids": connected_inputs,
         "connected_output_detail_ids": connected_outputs,
+        "input_detail_ids": input_ids,
+        "output_detail_ids": output_ids,
         "disconnected_core_detail_ids": disconnected_core,
         "connected_input_to_output": connected,
+        "on_path_detail_ids": on_path_ids,
+        "core_path_endpoint_unknown": bool(details) and (not input_ids or not output_ids),
         "information_completeness": sum(completeness_parts) / denominator,
         "cluster_cohesion_score": (
             sum(cohesion_values) / len(cohesion_values) if cohesion_values else 0.0
@@ -2523,6 +3080,36 @@ def annotate_mechanism_paper_details(
     contexts: list[MechanismContextV1] = []
     shared_ref_specs: dict[str, list[tuple[str, str, str]]] = defaultdict(list)
     primary_detail_by_operation: dict[str, str] = {}
+    ownerless_seed_ids: set[str] = set()
+    for closure in closure_values:
+        ownerless_seed_ids.update(
+            str(seed_id)
+            for seed_id in (closure.unresolved_seed_ids or ())
+            if str(seed_id).strip()
+        )
+    # ``compile_mechanism_evidence_closures`` records the pre-merge seed
+    # count in its own diagnostics, but the annotation pass can also be
+    # called directly with frozen closures.  Keep this diagnostic total
+    # defined in both paths instead of allowing a direct annotation to fail
+    # with a NameError while building the context-set audit record.
+    seed_count_before_merge = len(closure_values) + len(ownerless_seed_ids)
+
+    # Obligation-bound claim surface (remediation plan point 5): a core
+    # detail must be bound to an author obligation/facet through an exact
+    # claim.  The brief clause claim handles are the only exact binding
+    # signal available at annotation time; when no brief carries any claim,
+    # binding is unprovable either way and only the source/path criteria
+    # apply (legacy fixtures without an authoring surface keep old behavior).
+    obligation_bound_claim_ids: set[str] = set()
+    for brief in _items(argument_briefs, "briefs"):
+        obligation_bound_claim_ids.update(_ids(_get(brief, "claim_ids", ())))
+        for clause in _get(brief, "clauses", ()) or ():
+            obligation_bound_claim_ids.update(_ids(_get(clause, "bound_claim_ids", ())))
+    obligation_bound_fact_ids: set[str] = set()
+    for claim_id in obligation_bound_claim_ids:
+        claim = claims_by_id.get(claim_id)
+        if claim is not None:
+            obligation_bound_fact_ids.update(_ids(_get(claim, "fact_ids", ())))
 
     for closure in closure_values:
         mechanism_id = closure.mechanism_id
@@ -2572,6 +3159,39 @@ def annotate_mechanism_paper_details(
             role = _detail_role(cluster, index, len(owned_clusters))
             importance = _detail_importance(cluster, role=role)
             status = _operation_status(cluster)
+            # Core redefinition (remediation plan point 5): ``active_default``
+            # alone never makes a detail core.  Core additionally requires
+            # first-party executable source and an exact obligation/facet
+            # claim binding; otherwise the cluster stays supporting (it is
+            # still archived losslessly, just not promoted to the spine).
+            if importance == "core":
+                cluster_fact_ids = {
+                    fact_id
+                    for operation in cluster
+                    for fact_id in _operation_fact_ids(operation.operation_id, closure)
+                }
+                cluster_claim_ids = {
+                    claim_id
+                    for fact_id in cluster_fact_ids
+                    for claim_id in _ids(_get(facts_by_id.get(fact_id), "claim_ids", ()))
+                }
+                cluster_spans = {
+                    operation.source_span_id for operation in cluster if operation.source_span_id
+                }
+                first_party = all(
+                    str(operation.source_kind or "unknown") == "first_party_executable"
+                    for operation in cluster
+                )
+                bound_by_claim = bool(
+                    cluster_claim_ids & obligation_bound_claim_ids
+                ) or bool(cluster_fact_ids & obligation_bound_fact_ids)
+                binding_surface_exists = bool(
+                    obligation_bound_claim_ids or obligation_bound_fact_ids
+                )
+                if not first_party or (
+                    binding_surface_exists and not bound_by_claim
+                ):
+                    importance = "supporting"
             detail_specs.append((
                 f"detail:{mechanism_id}:{index + 1}",
                 cluster,
@@ -2633,6 +3253,17 @@ def annotate_mechanism_paper_details(
                 item in {"vendor", "generated", "submodule", "dataset_or_checkpoint"}
                 for item in source_kinds
             )
+            # Source fail-closed authority (remediation plan section 9.3):
+            # repository authority requires every operation in the cluster to
+            # carry an explicit allowed first-party source kind resolved from
+            # the source manifest.  ``unknown``/``mixed``/excluded kinds and
+            # clusters without any manifest-resolved entry can never support a
+            # positive repository claim; they stay unresolved (or split).
+            allowed_first_party_kinds = {"first_party_executable"}
+            unmapped_source = any(
+                item not in allowed_first_party_kinds
+                for item in source_kinds
+            ) if source_kinds else True
             active_for_clean = (
                 status in _ACTIVE_STATUSES
                 and importance == "core"
@@ -2640,9 +3271,19 @@ def annotate_mechanism_paper_details(
             )
             evidence_authority: EvidenceAuthority = (
                 "repository_verified"
-                if source_operation_ids and status in _ACTIVE_STATUSES and not excluded_source
+                if (
+                    source_operation_ids
+                    and status in _ACTIVE_STATUSES
+                    and not excluded_source
+                    and not unmapped_source
+                )
                 else "repository_partial"
-                if source_operation_ids and status != "unknown" and not excluded_source
+                if (
+                    source_operation_ids
+                    and status != "unknown"
+                    and not excluded_source
+                    and not unmapped_source
+                )
                 else "unresolved"
             )
             publication_policy: PublicationPolicy = (
@@ -2815,6 +3456,61 @@ def annotate_mechanism_paper_details(
                 if edge.relation != "precedes"
                 or (edge.source_detail_id, edge.target_detail_id) not in semantic_pairs
             ]
+        # Author-intent-only rationale: a narrative anchor, never a source
+        # core.  It carries no executable operation, so the core conjunction
+        # (owner + first-party source + obligation binding + directed path)
+        # cannot hold and it stays supporting.
+        if not details and (
+            intent["author_statements"]
+            or intent["facet_ids"]
+            or intent["brief_ids"]
+            or intent["obligation_ids"]
+        ):
+            rationale_id = f"detail:{mechanism_id}:rationale"
+            details = [MechanismDetailV1(
+                detail_id=rationale_id,
+                primary_mechanism_id=mechanism_id,
+                order_index=0,
+                role="rationale",
+                importance="supporting",
+                claim_kind="rationale",
+                evidence_authority="author_intent_only",
+                publication_policy="annotated_only",
+                semantic_atom=intent["author_statements"][0] if intent["author_statements"] else f"Rationale for {mechanism_id}",
+                source_facet_ids=intent["facet_ids"],
+                source_brief_ids=intent["brief_ids"],
+                source_obligation_ids=intent["obligation_ids"],
+                author_statements=intent["author_statements"],
+                witness_atoms=(DetailWitnessAtomV1(
+                    atom_id=f"atom:{rationale_id}:rationale",
+                    atom_kind="operation",
+                    semantic_anchor=f"rationale for {mechanism_id}",
+                    required_polarity="unknown",
+                ),),
+            )]
+        # Core is restricted to the evidence-derived input→output path.  A
+        # detail off that path stays supporting evidence in the archive; it is
+        # demoted in importance, never deleted.  This first pass is structural
+        # (endpoints/path only); the final audit below re-runs against the
+        # frozen closure that carries dispositions and unresolved items.
+        path_audit = _mechanism_annotation_audit(closure, details, edges)
+        on_path_ids = set(path_audit["on_path_detail_ids"])
+        if any(
+            detail.importance == "core" and detail.detail_id not in on_path_ids
+            for detail in details
+        ):
+            def _demote_off_path(detail: MechanismDetailV1) -> MechanismDetailV1:
+                if detail.importance != "core" or detail.detail_id in on_path_ids:
+                    return detail
+                payload = detail.model_dump(mode="python")
+                payload["importance"] = "supporting"
+                payload["publication_policy"] = "annotated_only"
+                # The digest covers importance/publication_policy; clearing it
+                # lets the model recompute it instead of failing validation.
+                payload["content_digest"] = ""
+                return MechanismDetailV1.model_validate(payload)
+
+            details = [_demote_off_path(detail) for detail in details]
         dispositions: list[SourceOperationDispositionV1] = []
         detail_by_operation = {
             operation_id: primary_detail_by_operation[operation_id]
@@ -2877,6 +3573,11 @@ def annotate_mechanism_paper_details(
             seed_facet_ids=closure.seed_facet_ids,
             seed_obligation_ids=closure.seed_obligation_ids,
             seed_author_statements=closure.seed_author_statements,
+            seed_kind=closure.seed_kind,
+            owner_anchor_id=closure.owner_anchor_id,
+            merge_proof_ids=closure.merge_proof_ids,
+            unresolved_seed_ids=closure.unresolved_seed_ids,
+            merge_proofs=closure.merge_proofs,
             entry_symbol_ids=closure.entry_symbol_ids,
             operation_nodes=closure.operation_nodes,
             call_relation_ids=closure.call_relation_ids,
@@ -2898,48 +3599,21 @@ def annotate_mechanism_paper_details(
             source_operation_terminal_coverage=1.0 if closure.operation_nodes else 0.0,
             budget_exhausted=closure.budget_exhausted,
         )
-        if not details and (
-            intent["author_statements"]
-            or intent["facet_ids"]
-            or intent["brief_ids"]
-            or intent["obligation_ids"]
-        ):
-            rationale_id = f"detail:{mechanism_id}:rationale"
-            details = [MechanismDetailV1(
-                detail_id=rationale_id,
-                primary_mechanism_id=mechanism_id,
-                order_index=0,
-                role="rationale",
-                importance="core",
-                claim_kind="rationale",
-                evidence_authority="author_intent_only",
-                publication_policy="annotated_only",
-                semantic_atom=intent["author_statements"][0] if intent["author_statements"] else f"Rationale for {mechanism_id}",
-                source_facet_ids=intent["facet_ids"],
-                source_brief_ids=intent["brief_ids"],
-                source_obligation_ids=intent["obligation_ids"],
-                author_statements=intent["author_statements"],
-                witness_atoms=(DetailWitnessAtomV1(
-                    atom_id=f"atom:{rationale_id}:rationale",
-                    atom_kind="operation",
-                    semantic_anchor=f"rationale for {mechanism_id}",
-                    required_polarity="unknown",
-                ),),
-            )]
         detail_ids = tuple(detail.detail_id for detail in details)
-        input_ids = tuple(detail.detail_id for detail in details if detail.role in {"input", "representation"})
-        output_ids = tuple(detail.detail_id for detail in details if detail.role == "output")
-        annotation_audit = _mechanism_annotation_audit(
-            frozen_closure,
-            details,
-            edges,
-        )
+        annotation_audit = _mechanism_annotation_audit(frozen_closure, details, edges)
+        input_ids = tuple(annotation_audit["input_detail_ids"])
+        output_ids = tuple(annotation_audit["output_detail_ids"])
         audit_unresolved = tuple(dict.fromkeys(
             (
                 *frozen_closure.unresolved_items,
                 *(
                     f"disconnected_core_detail:{detail_id}"
                     for detail_id in annotation_audit["disconnected_core_detail_ids"]
+                ),
+                *(
+                    ("core_path_endpoint_unknown",)
+                    if annotation_audit["core_path_endpoint_unknown"]
+                    else ()
                 ),
                 *annotation_audit["cluster_split_audit"],
             )
@@ -2998,9 +3672,9 @@ def annotate_mechanism_paper_details(
             obligation_ids=intent["obligation_ids"],
             author_statements=intent["author_statements"],
             evidence_closure=frozen_closure,
-            input_detail_ids=input_ids or detail_ids[:1],
+            input_detail_ids=input_ids,
             ordered_detail_ids=detail_ids,
-            output_detail_ids=output_ids or detail_ids[-1:],
+            output_detail_ids=output_ids,
             details=tuple(details),
             edges=tuple(edges),
             shared_detail_refs=(),
@@ -3065,6 +3739,12 @@ def annotate_mechanism_paper_details(
         ),
         "",
     )
+    merge_proof_by_digest: dict[str, Any] = {}
+    for context in final_contexts:
+        for proof in context.evidence_closure.merge_proofs:
+            digest = _text(_get(proof, "content_digest"))
+            if digest:
+                merge_proof_by_digest[digest] = proof
     return MechanismContextSetV1(
         repo_snapshot_id=next((
             context.evidence_closure.repo_snapshot_id
@@ -3087,14 +3767,27 @@ def annotate_mechanism_paper_details(
             for context in final_contexts
         ])),
         contexts=tuple(final_contexts),
-        unresolved_seed_ids=tuple(
-            context.mechanism_id for context in final_contexts
-            if context.context_readiness in {"partial", "blocked"}
+        # ``unresolved_seed_ids`` means exactly "seed without an owner anchor".
+        # A mechanism that is merely partial/blocked is reported through its
+        # own completeness failure codes; conflating the two made the owner
+        # gate fire with ``unified_mechanism_owner_missing`` for mechanisms
+        # that do have a resolved owner.
+        unresolved_seed_ids=tuple(sorted(ownerless_seed_ids)),
+        compiler_diagnostics=tuple([
+            {
+                "kind": "owner_first_partition",
+                "seed_count_before_merge": seed_count_before_merge,
+                "mechanism_count_after_merge": len(final_contexts),
+                "ownerless_seed_count": len(ownerless_seed_ids),
+            },
+            *({
+                "mechanism_id": context.mechanism_id,
+                "unresolved_items": list(context.unresolved_items),
+            } for context in final_contexts if context.unresolved_items),
+        ]),
+        merge_proofs=tuple(
+            merge_proof_by_digest[key] for key in sorted(merge_proof_by_digest)
         ),
-        compiler_diagnostics=tuple({
-            "mechanism_id": context.mechanism_id,
-            "unresolved_items": list(context.unresolved_items),
-        } for context in final_contexts if context.unresolved_items),
     )
 
 
@@ -3148,14 +3841,85 @@ def compile_mechanism_contexts(
     )
 
 
+def _source_kind_for_manifest_span(
+    span_id: str,
+    source_manifest: Any | None,
+) -> str:
+    """Resolve a span's source kind from the authenticated manifest."""
+
+    if source_manifest is None:
+        return ""
+    match = re.match(r"^span:(.*):(\d+):(\d+)$", str(span_id or ""))
+    if match is None:
+        return "unknown"
+    path = normalize_source_path(match.group(1))
+    entry_for = getattr(source_manifest, "entry_for", None)
+    entry = entry_for(path) if callable(entry_for) else None
+    if entry is None:
+        entry = next(
+            (
+                item for item in (getattr(source_manifest, "entries", ()) or ())
+                if normalize_source_path(str(getattr(item, "path", "") or "")) == path
+            ),
+            None,
+        )
+    return _text(getattr(entry, "source_kind", "") if entry is not None else "") or "unknown"
+
+
+def _effective_detail_source_kind(
+    detail: MechanismDetailV1,
+    closure: MechanismEvidenceClosureV1,
+    source_manifest: Any | None,
+) -> str:
+    """Use manifest authority to migrate only stale unknown V1 labels.
+
+    Historical V1 contexts often persisted ``source_kind=unknown`` even when
+    their source spans are authenticated by a later repository manifest.  The
+    archive compiler already resolves that representation-only mismatch.  The
+    completeness gate must use the same resolution, while retaining explicit
+    non-unknown labels and rejecting unmapped or mixed source spans.
+    """
+
+    raw_kind = _text(detail.source_kind) or "unknown"
+    if source_manifest is None or raw_kind not in {"unknown", "mixed"}:
+        return raw_kind
+
+    operation_by_id = {
+        str(operation.operation_id): operation
+        for operation in (closure.operation_nodes or ())
+    }
+    kinds: list[str] = []
+    for span_id in detail.source_span_ids or ():
+        kinds.append(_source_kind_for_manifest_span(span_id, source_manifest))
+    for operation_id in detail.source_operation_ids or ():
+        operation = operation_by_id.get(str(operation_id))
+        if operation is None:
+            kinds.append("unknown")
+            continue
+        operation_kind = _text(operation.source_kind) or "unknown"
+        if operation_kind in {"unknown", "mixed"}:
+            operation_kind = _source_kind_for_manifest_span(
+                operation.source_span_id,
+                source_manifest,
+            )
+        kinds.append(operation_kind)
+    unique_kinds = tuple(dict.fromkeys(kinds))
+    if len(unique_kinds) == 1:
+        return unique_kinds[0]
+    return "mixed" if unique_kinds else raw_kind
+
+
 def validate_mechanism_context_completeness(
     context: MechanismContextV1,
+    *,
+    source_manifest: Any | None = None,
 ) -> tuple[str, ...]:
-    """Return fail-closed completeness failures for one frozen context.
+    """Return the structural failure set for one frozen context.
 
-    This validator intentionally reports rather than repairs.  An annotation
-    compiler may organize source operations, but it cannot manufacture the
-    missing input/output path, witness, active-path proof, or source binding.
+    This validator intentionally reports rather than repairs.  The output is
+    a closed set of structural failure codes, not an averaged score: owner,
+    source, typed path, and witness failures are never masked by a partial
+    readiness level, and none of them can pass by filtering.
     """
 
     failures: list[str] = []
@@ -3174,6 +3938,13 @@ def validate_mechanism_context_completeness(
         )
     if context.details and not context.connected_input_to_output:
         failures.append("connected_input_to_output_missing")
+    # A mechanism with executable operations must expose at least one core
+    # detail on the proven input→output path.  Otherwise the closure is a bag
+    # of supporting annotations, not a narratable mechanism.
+    if closure.operation_nodes and not any(
+        detail.importance == "core" for detail in context.details
+    ):
+        failures.append("core_detail_missing")
     for detail in context.details:
         if detail.importance != "core":
             continue
@@ -3189,6 +3960,17 @@ def validate_mechanism_context_completeness(
                     failures.append(f"core_witness_source_binding_missing:{atom.atom_id}")
         if detail.active_path_status == "unknown":
             failures.append(f"core_detail_active_path_unknown:{detail.detail_id}")
+        # Source fail-closed: a core detail with an unknown or mixed source
+        # kind is a structural failure regardless of readiness level.
+        effective_source_kind = _effective_detail_source_kind(
+            detail,
+            closure,
+            source_manifest,
+        )
+        if effective_source_kind in {"unknown", "mixed", ""} and detail.importance == "core":
+            failures.append(f"core_detail_source_kind_unresolved:{detail.detail_id}")
+        if effective_source_kind in {"vendor", "generated", "submodule", "dataset_or_checkpoint"}:
+            failures.append(f"core_detail_source_kind_excluded:{detail.detail_id}")
     if context.cluster_split_audit:
         failures.append("cluster_split_audit_open")
     if context.budget_exhausted:
@@ -3198,6 +3980,109 @@ def validate_mechanism_context_completeness(
     return tuple(dict.fromkeys(failures))
 
 
+def validate_mechanism_context_structural_gates(
+    context_set: MechanismContextSetV1,
+    *,
+    merge_proofs: Sequence[Any] = (),
+) -> dict[str, Any]:
+    """Project-level structural gates over a compiled context set.
+
+    Returns the machine-checkable owner/path/diagnostic summary consumed by
+    ``evaluate_unified_live_admission_v1``.  The gates are structural only:
+
+    - every core detail has exactly one primary owner (ownerless = 0);
+    - no detail is claimed as primary by two mechanisms (conflict = 0);
+    - every recorded merge is backed by a merge proof; where a proof exists
+      for a merged seed group, its decision must be ``merged``;
+    - the collapse ratio is reported as a diagnostic, never as a gate.
+    """
+
+    owner_counts: dict[str, set[str]] = {}
+    core_ownerless: list[str] = []
+    unowned_mechanisms: list[str] = []
+    ownerless_seed_ids: set[str] = {
+        str(seed_id)
+        for seed_id in (getattr(context_set, "unresolved_seed_ids", ()) or ())
+        if str(seed_id).strip()
+    }
+    for context in context_set.contexts:
+        ownerless_seed_ids.update(
+            str(seed_id)
+            for seed_id in (context.evidence_closure.unresolved_seed_ids or ())
+            if str(seed_id).strip()
+        )
+        # The primary owner of a mechanism is its resolved owner anchor.  A
+        # mechanism whose closure carries operations but no owner anchor is
+        # ownerless even though ``primary_mechanism_id`` is always populated.
+        owner_anchor = str(context.evidence_closure.owner_anchor_id or "").strip()
+        if context.evidence_closure.operation_nodes and not owner_anchor:
+            unowned_mechanisms.append(context.mechanism_id)
+        for detail in context.details:
+            owner_counts.setdefault(detail.detail_id, set()).add(
+                str(detail.primary_mechanism_id)
+            )
+            if detail.importance == "core" and (
+                not str(detail.primary_mechanism_id) or not owner_anchor
+            ):
+                core_ownerless.append(detail.detail_id)
+    conflicts = sorted(
+        detail_id for detail_id, owners in owner_counts.items() if len(owners) > 1
+    )
+    merged_seed_ids = {
+        (proof.left_seed_id, proof.right_seed_id)
+        for proof in merge_proofs
+        if getattr(proof, "decision", "") == "merged"
+    }
+    invalid_merge_proofs = [
+        f"merge_proof_missing_directed_path:{proof.left_seed_id}:{proof.right_seed_id}"
+        for proof in merge_proofs
+        if getattr(proof, "decision", "") == "merged"
+        and not getattr(proof, "directed_path_relation_ids", ())
+        and not getattr(proof, "owner_anchor_id", "")
+    ]
+    disconnected_core = sorted({
+        detail_id
+        for context in context_set.contexts
+        for detail_id in context.disconnected_core_detail_ids
+    })
+    unknown_active_path = sorted({
+        detail.detail_id
+        for context in context_set.contexts
+        for detail in context.details
+        if detail.importance == "core" and detail.active_path_status == "unknown"
+    })
+    seed_count = next(
+        (
+            int(item.get("seed_count_before_merge", 0))
+            for item in context_set.compiler_diagnostics
+            if item.get("kind") == "owner_first_partition"
+        ),
+        len(context_set.contexts),
+    )
+    return {
+        "core_ownerless_detail_ids": sorted(set(core_ownerless)),
+        "core_ownerless_seed_ids": sorted(ownerless_seed_ids),
+        "core_ownerless_mechanism_ids": sorted(set(unowned_mechanisms)),
+        "core_ownerless_count": (
+            len(set(core_ownerless))
+            + len(ownerless_seed_ids)
+            + len(set(unowned_mechanisms))
+        ),
+        "core_owner_conflict_detail_ids": conflicts,
+        "core_owner_conflict_count": len(conflicts),
+        "mechanism_count": len(context_set.contexts),
+        "seed_collapse_ratio": (
+            seed_count / len(context_set.contexts)
+            if context_set.contexts else 0.0
+        ),
+        "merge_proof_count": len(merge_proofs),
+        "merged_pair_count": len(merged_seed_ids),
+        "invalid_merge_proofs": sorted(set(invalid_merge_proofs)),
+        "disconnected_core_detail_count": len(disconnected_core),
+        "unknown_core_active_path_count": len(unknown_active_path),
+    }
+
+
 __all__ = [
     "DefinitionResolver",
     "resolve_active_path_status",
@@ -3205,4 +4090,5 @@ __all__ = [
     "annotate_mechanism_paper_details",
     "compile_mechanism_contexts",
     "validate_mechanism_context_completeness",
+    "validate_mechanism_context_structural_gates",
 ]

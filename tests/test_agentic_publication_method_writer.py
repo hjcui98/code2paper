@@ -632,7 +632,10 @@ def _artifacts(tmp_path: Path) -> dict[str, str]:
         fact_id="fact-read",
         subject="sym:encoder",
         predicate="reads",
-        object="configured_input",
+        # The terminal ``result=`` descriptor is the fixture's typed output;
+        # without it the mechanism has no input→output path and cannot be
+        # repository-ready under the structural closure gates.
+        object=["configured_input", "result=read_value"],
         scope="sym:encoder",
         direct_span_ids=["span:encoder.py:1:2"],
         semantic_context=["READ", "config_access"],
@@ -954,7 +957,9 @@ def test_publication_writer_blocks_corrupt_frozen_inputs_without_raising(
 
     assert result.status == "blocked"
     assert result.blocked_reason.startswith("publication_writer_inputs_invalid:")
-    assert set(outputs) == {"publication_writer_result_v1"}
+    # A blocked run must still publish its terminal event (stop/block/exception
+    # are all terminal states), and must not publish any generation artifact.
+    assert set(outputs) == {"publication_writer_result_v1", "run_terminal_event"}
     persisted = json.loads(Path(outputs["publication_writer_result_v1"]).read_text())
     assert persisted["status"] == "blocked"
 
@@ -976,7 +981,9 @@ def test_publication_writer_blocks_invalid_callback_sidecar_before_new_generatio
 
     assert result.status == "blocked"
     assert result.blocked_reason == "writing_research_callback_bundle_invalid"
-    assert set(outputs) == {"publication_writer_result_v1"}
+    # A blocked run must still publish its terminal event (stop/block/exception
+    # are all terminal states), and must not publish any generation artifact.
+    assert set(outputs) == {"publication_writer_result_v1", "run_terminal_event"}
 
 
 def test_publication_writer_blocks_malformed_explicit_callback_artifact(
@@ -993,7 +1000,9 @@ def test_publication_writer_blocks_malformed_explicit_callback_artifact(
 
     assert result.status == "blocked"
     assert result.blocked_reason.startswith("writing_research_callback_artifacts_invalid:")
-    assert set(outputs) == {"publication_writer_result_v1"}
+    # A blocked run must still publish its terminal event (stop/block/exception
+    # are all terminal states), and must not publish any generation artifact.
+    assert set(outputs) == {"publication_writer_result_v1", "run_terminal_event"}
 
 
 def test_callback_fulfillment_preserves_one_shot_resume_section(tmp_path: Path) -> None:

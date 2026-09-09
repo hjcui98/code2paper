@@ -745,6 +745,120 @@ def test_learnat_mcts_target_core_ownership() -> None:
     assert role == "target_core"
 
 
+def test_scope_entry_ranking_prefers_lifecycle_boundary_over_getter() -> None:
+    from code2paper.agentic.implementation_scope import infer_implementation_scope
+
+    symbols = [
+        {
+            "symbol_id": "sym:get-position",
+            "path": "src/model.py",
+            "qualified_name": "Reranker.get_passage_positional_encoding",
+            "docstring": "Get sinusoidal passage position encoding for the model.",
+            "kind": "method",
+        },
+        {
+            "symbol_id": "sym:forward",
+            "path": "src/model.py",
+            "qualified_name": "Reranker.forward",
+            "docstring": "Contextualize query and passage embeddings with document attention.",
+            "kind": "method",
+        },
+        {
+            "symbol_id": "sym:rerank",
+            "path": "src/model.py",
+            "qualified_name": "Reranker.rerank",
+            "docstring": "Rerank passages from query and contextual passage embeddings.",
+            "kind": "method",
+        },
+    ]
+
+    scope = infer_implementation_scope(
+        symbols,
+        author_texts=(
+            "Rerank passages by contextualizing query and passage embeddings "
+            "with document attention and positional encoding.",
+        ),
+    )
+
+    assert scope.target_entry_symbol_ids
+    assert "sym:get-position" not in scope.target_entry_symbol_ids
+    assert set(scope.target_entry_symbol_ids) <= {"sym:forward", "sym:rerank"}
+    assert scope.entry_inference_status == "lifecycle"
+    # Lexical overlap must not promote a helper into the target core either.
+    assert "sym:get-position" not in scope.target_core_symbol_ids
+    assert {"sym:forward", "sym:rerank"} & set(scope.target_core_symbol_ids)
+
+
+def test_scope_entry_status_reports_explicit_and_ambiguous_lanes() -> None:
+    from code2paper.agentic.implementation_scope import infer_implementation_scope
+
+    explicit = infer_implementation_scope(
+        [
+            {"symbol_id": "sym:a", "path": "a.py", "qualified_name": "A.forward", "kind": "method"},
+        ],
+        entry_symbol_ids=("sym:a",),
+    )
+    assert explicit.entry_inference_status == "explicit"
+    assert explicit.target_entry_symbol_ids == ("sym:a",)
+
+    ambiguous_symbols = [
+        {"symbol_id": f"sym:{index}", "path": f"m{index}.py",
+         "qualified_name": f"Model{index}.forward", "kind": "method"}
+        for index in range(3)
+    ]
+    ambiguous = infer_implementation_scope(ambiguous_symbols)
+    assert ambiguous.target_entry_symbol_ids == ()
+    assert ambiguous.entry_inference_status == "unresolved_ambiguous"
+
+
+def test_scope_helper_is_dependency_only_when_the_entry_calls_it() -> None:
+    from code2paper.agentic.implementation_scope import infer_implementation_scope
+
+    symbols = [
+        {
+            "symbol_id": "sym:forward",
+            "path": "src/model.py",
+            "qualified_name": "Reranker.forward",
+            "docstring": "Contextualize query and passage embeddings.",
+            "kind": "method",
+        },
+        {
+            "symbol_id": "sym:get-position",
+            "path": "src/model.py",
+            "qualified_name": "Reranker.get_passage_positional_encoding",
+            "docstring": "Get sinusoidal passage position encoding for the model.",
+            "kind": "method",
+        },
+    ]
+
+    class _Graph:
+        def __init__(self) -> None:
+            self.nodes = [
+                {"node_id": "n:forward", "symbol_id": "sym:forward"},
+                {"node_id": "n:get", "symbol_id": "sym:get-position"},
+            ]
+            self.relations = [
+                {
+                    "relation_id": "rel:calls",
+                    "kind": "CALLS",
+                    "source_node_id": "n:forward",
+                    "target_node_id": "n:get",
+                },
+            ]
+
+    scope = infer_implementation_scope(
+        symbols,
+        author_texts=("Contextualize query and passage embeddings.",),
+        entry_symbol_ids=("sym:forward",),
+        behavior_graph=_Graph(),
+    )
+
+    assert scope.target_entry_symbol_ids == ("sym:forward",)
+    assert "sym:forward" in scope.target_core_symbol_ids
+    assert "sym:get-position" not in scope.target_core_symbol_ids
+    assert "sym:get-position" in scope.target_dependency_symbol_ids
+
+
 # ---------------------------------------------------------------------------
 # P3: Observation promotion ledger
 # ---------------------------------------------------------------------------

@@ -407,3 +407,187 @@ def test_no_supported_relation_for_unresolved_target() -> None:
     for rel in result.graph.relations:
         if rel.kind == "CALLS":
             assert "softmax" not in (rel.target_symbol_id or "")
+
+
+# ---------------------------------------------------------------------------
+# Class-method call chains and attribute-call precision
+# ---------------------------------------------------------------------------
+
+
+def test_class_method_self_call_binds_to_callee_first_operation() -> None:
+    """``rerank -> self.forward`` must be a directed CALLS edge with a target."""
+
+    source = textwrap.dedent(
+        """\
+        class Reranker:
+            def forward(self, x):
+                return x + 1
+
+            def rerank(self, x):
+                return self.forward(x)
+        """
+    )
+    files = {"model.py": source}
+    index = _index(files)
+    result = _build(files, index, "Reranker.rerank", depth=1)
+
+    rerank_id = _sym_id(index, "Reranker.rerank")
+    forward_id = _sym_id(index, "Reranker.forward")
+    calls = [
+        rel for rel in result.graph.relations
+        if rel.kind == "CALLS"
+        and rel.source_symbol_id == rerank_id
+        and rel.target_symbol_id == forward_id
+    ]
+    assert calls, "expected a directed CALLS edge from rerank to forward"
+    # The callee body is included at depth 1, so the target node must be bound.
+    assert calls[0].target_node_id
+    target_node = next(
+        node for node in result.graph.nodes
+        if node.node_id == calls[0].target_node_id
+    )
+    assert target_node.symbol_id == forward_id
+
+
+def test_submodule_attribute_call_binds_to_assigned_class_forward() -> None:
+    """``self.model(x)`` binds to the assigned submodule, never the caller."""
+
+    source = textwrap.dedent(
+        """\
+        class Encoder:
+            def forward(self, x):
+                return x
+
+        class Reranker:
+            def __init__(self):
+                self.model = Encoder()
+
+            def forward(self, x):
+                return x
+
+            def rerank(self, x):
+                return self.model(x)
+        """
+    )
+    files = {"model.py": source}
+    index = _index(files)
+    result = _build(files, index, "Reranker.rerank", depth=1)
+
+    rerank_id = _sym_id(index, "Reranker.rerank")
+    forward_id = _sym_id(index, "Reranker.forward")
+    encoder_forward_id = _sym_id(index, "Encoder.forward")
+    assert not [
+        rel for rel in result.graph.relations
+        if rel.kind == "CALLS"
+        and rel.source_symbol_id == rerank_id
+        and rel.target_symbol_id == forward_id
+    ], "self.model(x) must not be bound to the caller's own forward"
+    # ``self.model = Encoder()`` binds the submodule call to Encoder.forward.
+    assert [
+        rel for rel in result.graph.relations
+        if rel.kind == "CALLS"
+        and rel.source_symbol_id == rerank_id
+        and rel.target_symbol_id == encoder_forward_id
+    ], "self.model(x) must bind to the assigned submodule class's forward"
+
+
+def test_submodule_call_with_unknown_attribute_type_stays_unresolved() -> None:
+    """``self.model = build_encoder()`` has no class type, so it is unresolved."""
+
+    source = textwrap.dedent(
+        """\
+        def build_encoder():
+            return None
+
+        class Reranker:
+            def __init__(self):
+                self.model = build_encoder()
+
+            def forward(self, x):
+                return x
+
+            def rerank(self, x):
+                return self.model(x)
+        """
+    )
+    files = {"model.py": source}
+    index = _index(files)
+    result = _build(files, index, "Reranker.rerank", depth=1)
+
+    rerank_id = _sym_id(index, "Reranker.rerank")
+    forward_id = _sym_id(index, "Reranker.forward")
+    assert not [
+        rel for rel in result.graph.relations
+        if rel.kind == "CALLS"
+        and rel.source_symbol_id == rerank_id
+        and rel.target_symbol_id == forward_id
+    ]
+    unresolved = [
+        item for item in result.graph.unresolved_relations
+        if item.target_hint == "self.model"
+    ]
+    assert unresolved
+    assert unresolved[0].reason in {"dynamic_call", "ambiguous_call_target"}
+
+
+def test_other_receiver_attribute_call_is_not_bound_by_short_name() -> None:
+    """``other.forward(x)`` must not resolve through a unique short name."""
+
+    source = textwrap.dedent(
+        """\
+        class Reranker:
+            def forward(self, x):
+                return x
+
+            def rerank(self, other, x):
+                return other.forward(x)
+        """
+    )
+    files = {"model.py": source}
+    index = _index(files)
+    result = _build(files, index, "Reranker.rerank", depth=1)
+
+    rerank_id = _sym_id(index, "Reranker.rerank")
+    forward_id = _sym_id(index, "Reranker.forward")
+    assert not [
+        rel for rel in result.graph.relations
+        if rel.kind == "CALLS"
+        and rel.source_symbol_id == rerank_id
+        and rel.target_symbol_id == forward_id
+    ], "other.forward(x) must not bind to this class's forward"
+    assert any(
+        item.target_hint == "other.forward"
+        for item in result.graph.unresolved_relations
+    )
+
+
+def test_module_receiver_call_resolves_by_module_stem() -> None:
+    """``utils.helper()`` resolves through the receiver's module name."""
+
+    files = {
+        "utils.py": textwrap.dedent(
+            """\
+            def helper(x):
+                return x
+            """
+        ),
+        "main.py": textwrap.dedent(
+            """\
+            import utils
+
+            def run(x):
+                return utils.helper(x)
+            """
+        ),
+    }
+    index = _index(files)
+    result = _build(files, index, "run", depth=1)
+
+    run_id = _sym_id(index, "run")
+    helper_id = _sym_id(index, "helper")
+    assert [
+        rel for rel in result.graph.relations
+        if rel.kind == "CALLS"
+        and rel.source_symbol_id == run_id
+        and rel.target_symbol_id == helper_id
+    ]

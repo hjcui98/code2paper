@@ -24,6 +24,7 @@ from code2paper.agentic.typed_refs import split_span_ref, split_symbol_ref
 
 
 _TOKEN_RE = re.compile(r"[A-Za-z][A-Za-z0-9_]{2,}")
+_CAMEL_BOUNDARY_RE = re.compile(r"(?<=[a-z0-9])(?=[A-Z])|(?<=[A-Z])(?=[A-Z][a-z])")
 _EVALUATION_RE = re.compile(
     r"(?:^|[/_.-])(eval(?:uate|uation)?|benchmark|metric|metrics|ablation|test|tests)(?:$|[/_.-])",
     re.I,
@@ -37,13 +38,44 @@ _CONFIG_RE = re.compile(
     re.I,
 )
 
+_SCOPE_STOPWORDS = frozenset({
+    "a", "an", "and", "are", "as", "at", "be", "by", "for", "from",
+    "in", "into", "is", "it", "its", "model", "of", "on", "or", "that",
+    "the", "this", "to", "using", "via", "we", "with",
+})
+_ENTRY_LIFECYCLE_TERMS = (
+    "forward", "encode", "decode", "infer", "predict", "generate", "train",
+    "fit", "run", "main", "rerank", "retrieve", "search", "execute",
+)
+_ENTRY_HELPER_PREFIXES = (
+    "get_", "set_", "load_", "save_", "make_", "build_", "create_",
+    "parse_", "format_", "validate_", "_",
+)
+
 _OWNERSHIP_GRAPH_RELATIONS = frozenset(
     {"CALLS", "RETURNS_TO", "CONTAINS", "IMPLEMENTS", "OVERRIDES"}
 )
 
 
 def _tokens(value: Any) -> set[str]:
-    return {item.casefold() for item in _TOKEN_RE.findall(str(value or ""))}
+    """Tokenize prose and identifiers without relying on project names.
+
+    Symbol indexes preserve Python's CamelCase spelling.  Treating
+    ``EBCarRerankerHybridAttention`` as one opaque token made the generic
+    owner selector prefer whichever equally-scored ``forward`` happened to
+    sort first.  Splitting identifier boundaries keeps the signal semantic
+    (``reranker``, ``hybrid``, ``attention``) while retaining the original
+    token for callers that use a compact name.
+    """
+
+    result: set[str] = set()
+    for item in _TOKEN_RE.findall(str(value or "")):
+        lowered = item.casefold()
+        result.add(lowered)
+        for piece in _CAMEL_BOUNDARY_RE.sub(" ", item).replace("_", " ").split():
+            if len(piece) >= 3:
+                result.add(piece.casefold())
+    return result
 
 
 def _attr(value: Any, name: str, default: Any = "") -> Any:
@@ -63,6 +95,48 @@ def _symbol_text(symbol: Any) -> str:
         str(_attr(symbol, name, "") or "")
         for name in ("qualified_name", "path", "kind", "docstring")
     )
+
+
+def _symbol_parent_key(symbol: Any, symbols_by_id: Mapping[str, Any]) -> str:
+    """Return a stable class/module grouping key for a symbol.
+
+    Real indexes carry ``parent_symbol_id``.  Small replay fixtures sometimes
+    omit the parent record, so the qualified-name prefix is a safe structural
+    fallback; it is never used as source evidence.
+    """
+
+    parent_id = str(_attr(symbol, "parent_symbol_id", "") or "").strip()
+    if parent_id and parent_id in symbols_by_id:
+        return parent_id
+    qualified_name = str(_attr(symbol, "qualified_name", "") or "")
+    if "." in qualified_name:
+        return qualified_name.rsplit(".", 1)[0]
+    return str(_attr(symbol, "path", "") or "")
+
+
+def _symbol_parent_context(symbol: Any, symbols_by_id: Mapping[str, Any]) -> str:
+    """Return the indexed parent context used for entry disambiguation."""
+
+    parent_id = str(_attr(symbol, "parent_symbol_id", "") or "").strip()
+    parent = symbols_by_id.get(parent_id)
+    if parent is not None:
+        return _symbol_text(parent)
+    qualified_name = str(_attr(symbol, "qualified_name", "") or "")
+    if "." in qualified_name:
+        return qualified_name.rsplit(".", 1)[0]
+    return str(_attr(symbol, "path", "") or "")
+
+
+def _is_public_lifecycle_symbol(symbol: Any) -> bool:
+    """Whether a symbol is a public lifecycle boundary, not a helper."""
+
+    kind = str(_attr(symbol, "kind", "") or "").casefold()
+    if kind not in {"function", "method"}:
+        return False
+    leaf = str(_attr(symbol, "qualified_name", "") or "").rsplit(".", 1)[-1].casefold()
+    if leaf.startswith(_ENTRY_HELPER_PREFIXES):
+        return False
+    return leaf in _ENTRY_LIFECYCLE_TERMS
 
 
 def _canonical_symbol_id(value: Any, symbols_by_id: Mapping[str, Any]) -> str:
@@ -134,7 +208,29 @@ def infer_implementation_scope(
             if resolved in by_id
         )
     )
-    intent_tokens = set().union(*(_tokens(item) for item in author_items)) if author_items else set()
+    def scope_tokens(value: Any) -> set[str]:
+        return _tokens(value) - _SCOPE_STOPWORDS
+
+    intent_tokens = (
+        set().union(*(scope_tokens(item) for item in author_items))
+        if author_items
+        else set()
+    )
+
+    def entry_score(symbol: Any, *, topology_bonus: int = 0) -> int:
+        """Score a structural entry candidate with parent context first."""
+
+        overlap = len(scope_tokens(_symbol_text(symbol)) & intent_tokens)
+        parent_overlap = len(
+            scope_tokens(_symbol_parent_context(symbol, by_id)) & intent_tokens
+        )
+        leaf_name = str(_attr(symbol, "qualified_name", "") or "").split(".")[-1].casefold()
+        lifecycle_bonus = 8 if _is_public_lifecycle_symbol(symbol) else 0
+        helper_penalty = 9 if leaf_name.startswith(_ENTRY_HELPER_PREFIXES) else 0
+        # Parent context is deliberately weighted more heavily than a method
+        # name.  ``forward`` exists in many nested model classes; a class
+        # whose name identifies the target component is the useful boundary.
+        return overlap * 2 + parent_overlap * 5 + lifecycle_bonus + topology_bonus - helper_penalty
 
     graph_nodes = {
         str(_attr(node, "node_id", "") or ""): node
@@ -143,17 +239,76 @@ def infer_implementation_scope(
     }
     graph_relations = tuple(getattr(behavior_graph, "relations", ()) or ()) if behavior_graph is not None else ()
 
-    # When the caller has no explicit entrypoint symbol, infer only a small,
-    # deterministic set of likely method roots.  This is a scope hint, not
-    # evidence: ambiguous symbols remain unknown and cannot authorize claims.
-    # Prefer roots exposed by the typed call/containment topology; lexical
-    # overlap is only a tie-breaker and never turns a baseline/evaluator into a
-    # target merely because it shares an API name.
-    if not entry_ids and by_id and graph_relations:
+    # When the caller has no explicit entrypoint symbol, prefer public
+    # lifecycle methods grouped under the semantically matching class/module.
+    # A helper such as ``get_passage_positional_encoding`` is never eligible
+    # for this lexical lane, even when its docstring shares every target term.
+    # If two distinct parent groups remain tied, keep the entry unresolved
+    # instead of selecting by symbol-id sort order.
+    entry_inference_status: str = (
+        "explicit" if entry_ids else "unresolved_missing"
+    )
+    entry_inference_ambiguous = False
+    if not entry_ids and by_id:
+        lifecycle_symbols = [
+            (symbol_id, symbol)
+            for symbol_id, symbol in by_id.items()
+            if _is_public_lifecycle_symbol(symbol)
+        ]
+        if lifecycle_symbols:
+            grouped: dict[str, list[tuple[str, Any]]] = {}
+            for symbol_id, symbol in lifecycle_symbols:
+                grouped.setdefault(
+                    _symbol_parent_key(symbol, by_id),
+                    [],
+                ).append((symbol_id, symbol))
+            group_scores: list[tuple[int, str]] = []
+            for parent_key, values in grouped.items():
+                parent_context = (
+                    _symbol_text(by_id[parent_key])
+                    if parent_key in by_id
+                    else parent_key
+                )
+                parent_overlap = len(scope_tokens(parent_context) & intent_tokens)
+                member_overlap = max(
+                    (len(scope_tokens(_symbol_text(symbol)) & intent_tokens) for _sid, symbol in values),
+                    default=0,
+                )
+                topology_bonus = sum(
+                    1 for _sid, symbol in values
+                    if str(_attr(symbol, "kind", "") or "").casefold() == "method"
+                )
+                group_scores.append((parent_overlap * 5 + member_overlap * 2 + topology_bonus, parent_key))
+            group_scores.sort(key=lambda item: (-item[0], item[1]))
+            best_score = group_scores[0][0]
+            best_groups = [key for score, key in group_scores if score == best_score]
+            # With no intent signal, one lifecycle group is still a safe
+            # boundary.  Several groups are genuinely ambiguous.
+            if best_score > 0 and len(best_groups) == 1:
+                entry_ids = tuple(
+                    symbol_id
+                    for symbol_id, _symbol in sorted(grouped[best_groups[0]], key=lambda item: item[0])
+                )
+                entry_inference_status = "lifecycle"
+            elif best_score == 0 and len(group_scores) == 1:
+                entry_ids = tuple(
+                    symbol_id
+                    for symbol_id, _symbol in sorted(grouped[best_groups[0]], key=lambda item: item[0])
+                )
+                entry_inference_status = "lifecycle"
+            elif len(best_groups) > 1:
+                entry_inference_ambiguous = True
+                entry_inference_status = "unresolved_ambiguous"
+
+    # Typed call-graph roots are a fallback after lifecycle detection.  They
+    # are considered only when the lifecycle lane produced no choice.  The
+    # graph direction is meaningful here; containment/alias edges are not
+    # treated as executable ownership edges.
+    if not entry_ids and not entry_inference_ambiguous and by_id and graph_relations:
         outgoing: dict[str, set[str]] = {}
         incoming: set[str] = set()
         for relation in graph_relations:
-            if str(_attr(relation, "kind", "") or "") not in _OWNERSHIP_GRAPH_RELATIONS:
+            if str(_attr(relation, "kind", "") or "") not in {"CALLS", "RETURNS_TO"}:
                 continue
             source_node = graph_nodes.get(str(_attr(relation, "source_node_id", "") or ""))
             source_symbol = str(_attr(relation, "source_symbol_id", "") or "") or str(
@@ -173,43 +328,51 @@ def infer_implementation_scope(
             path = str(_attr(symbol, "path", "") or "")
             if _EVALUATION_RE.search(path) or _COMPARAND_RE.search(path) or _CONFIG_RE.search(path):
                 continue
-            text = _symbol_text(symbol)
-            name = str(_attr(symbol, "qualified_name", "") or "").casefold()
-            overlap = len(_tokens(text) & intent_tokens)
-            lifecycle_bonus = 2 if any(
-                token in name.split(".")[-1]
-                for token in ("forward", "encode", "infer", "train", "fit", "run", "main")
-            ) else 0
-            root_scores.append((overlap * 3 + lifecycle_bonus + len(outgoing[symbol_id]), symbol_id))
+            root_scores.append((
+                entry_score(symbol, topology_bonus=len(outgoing[symbol_id])),
+                symbol_id,
+            ))
         root_scores.sort(key=lambda item: (-item[0], item[1]))
         if root_scores and (intent_tokens or len(root_scores) == 1):
             best_score = root_scores[0][0]
-            entry_ids = tuple(
-                symbol_id for score, symbol_id in root_scores if score == best_score
-            )[:3]
+            tied = [symbol_id for score, symbol_id in root_scores if score == best_score]
+            if len(tied) == 1:
+                entry_ids = tuple(tied)
+                entry_inference_status = "call_graph_root"
+            else:
+                entry_inference_ambiguous = True
+                entry_inference_status = "unresolved_ambiguous"
 
-    if not entry_ids and by_id and intent_tokens:
+    # Last-resort lexical selection is kept for fixtures that have no
+    # lifecycle boundary (for example a single class-level symbol).  It is
+    # disabled after an ambiguity so an unresolved owner cannot be guessed by
+    # the old ``sorted()[:3]`` behaviour.
+    if not entry_ids and not entry_inference_ambiguous and by_id and intent_tokens:
         scored: list[tuple[int, str]] = []
         for symbol_id, symbol in by_id.items():
             path = str(_attr(symbol, "path", "") or "")
-            text = _symbol_text(symbol)
             if _EVALUATION_RE.search(path) or _COMPARAND_RE.search(path) or _CONFIG_RE.search(path):
                 continue
             kind = str(_attr(symbol, "kind", "") or "").casefold()
             if kind not in {"function", "method", "class", "module"}:
                 continue
-            overlap = len(_tokens(text) & intent_tokens)
-            name = str(_attr(symbol, "qualified_name", "") or "").casefold()
-            lifecycle_bonus = 2 if any(
-                token in name.split(".")[-1]
-                for token in ("forward", "encode", "infer", "train", "fit", "run", "main")
-            ) else 0
-            if overlap or lifecycle_bonus:
-                scored.append((overlap * 3 + lifecycle_bonus, symbol_id))
+            leaf_name = str(_attr(symbol, "qualified_name", "") or "").split(".")[-1].casefold()
+            if leaf_name.startswith(_ENTRY_HELPER_PREFIXES):
+                # Helper names are never promoted solely by lexical overlap.
+                continue
+            score = entry_score(symbol)
+            if score > 0:
+                scored.append((score, symbol_id))
         scored.sort(key=lambda item: (-item[0], item[1]))
         if scored and scored[0][0] >= 2:
             best_score = scored[0][0]
-            entry_ids = tuple(symbol_id for score, symbol_id in scored if score == best_score)[:3]
+            tied = [symbol_id for score, symbol_id in scored if score == best_score]
+            if len(tied) == 1:
+                entry_ids = tuple(tied)
+                entry_inference_status = "lexical"
+            else:
+                entry_inference_ambiguous = True
+                entry_inference_status = "unresolved_ambiguous"
 
     reachable: set[str] = set(entry_ids)
     graph = behavior_graph
@@ -248,8 +411,14 @@ def infer_implementation_scope(
             roles[symbol_id] = {"unknown"}
             continue
         qname = str(_attr(symbol, "qualified_name", "") or "")
-        overlap = len(_tokens(text) & intent_tokens)
-        if overlap >= 2 and not _COMPARAND_RE.search(path):
+        overlap = len(scope_tokens(text) & intent_tokens)
+        # Helper names (``get_``/``set_``/``load_``/``save_``/... and private
+        # methods) never become target core from lexical overlap alone.  They
+        # may still be target dependencies when the typed graph proves the
+        # entry calls them; otherwise they stay audit-only ``unknown``.
+        leaf_name = qname.rsplit(".", 1)[-1].casefold()
+        is_helper = leaf_name.startswith(_ENTRY_HELPER_PREFIXES)
+        if overlap >= 2 and not is_helper and not _COMPARAND_RE.search(path):
             roles[symbol_id] = {"target_core"}
             continue
         if _EVALUATION_RE.search(path) or _EVALUATION_RE.search(qname):
@@ -266,7 +435,7 @@ def infer_implementation_scope(
                 roles[symbol_id] = {"configuration"}
                 continue
         if not roles[symbol_id]:
-            if overlap >= 2:
+            if overlap >= 2 and not is_helper:
                 roles[symbol_id] = {"target_core"}
             elif overlap == 1:
                 roles[symbol_id] = {"unknown"}
@@ -299,6 +468,7 @@ def infer_implementation_scope(
         configuration_symbol_ids=tuple(groups["configuration"]),
         unknown_symbol_ids=tuple(groups["unknown"]),
         ownership_evidence_refs=tuple(dict.fromkeys(str(item).strip() for item in evidence_refs if str(item).strip())),
+        entry_inference_status=entry_inference_status,
         confidence=confidence,
     )
 

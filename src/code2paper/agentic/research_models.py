@@ -266,6 +266,17 @@ class ImplementationScopeV1(_ResearchModel):
     configuration_symbol_ids: tuple[str, ...] = Field(default_factory=tuple)
     unknown_symbol_ids: tuple[str, ...] = Field(default_factory=tuple)
     ownership_evidence_refs: tuple[str, ...] = Field(default_factory=tuple)
+    # Which lane resolved the entry, or why it stayed unresolved.  Downstream
+    # consumers must treat ``unresolved_ambiguous`` as "no owner", never as a
+    # low-confidence entry to be guessed around.
+    entry_inference_status: Literal[
+        "explicit",
+        "lifecycle",
+        "call_graph_root",
+        "lexical",
+        "unresolved_ambiguous",
+        "unresolved_missing",
+    ] = "unresolved_missing"
     confidence: float = Field(default=0.0, ge=0.0, le=1.0)
     content_digest: str = ""
 

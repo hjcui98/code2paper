@@ -8325,14 +8325,32 @@ def build_narrative_plan_v3(
             transform_details = [d for d in core_clean_details if d.role in ("transformation", "branch", "condition")]
             formal_details = [d for d in core_clean_details if d.role in ("training_objective", "inference", "formalization")]
             output_details = [d for d in core_clean_details if d.role in ("output", "interface", "rationale", "limitation")]
+            # A detail may be placed in exactly one paragraph.  The old
+            # transformation fallback re-added every core-clean detail, so a
+            # mechanism whose only detail carries the ``output`` role was placed
+            # twice and failed ``duplicate_core_detail_placement``.
+            assigned_detail_ids = {
+                detail.detail_id
+                for group in (
+                    overview_details,
+                    transform_details,
+                    formal_details,
+                    output_details,
+                )
+                for detail in group
+            }
+            unassigned_details = [
+                detail for detail in core_clean_details
+                if detail.detail_id not in assigned_detail_ids
+            ]
 
             para_groups: list[tuple[str, list[Any]]] = []
             if overview_details:
                 para_groups.append(("overview_and_inputs", overview_details))
             if transform_details:
                 para_groups.append(("core_transformations", transform_details))
-            elif not overview_details and core_clean_details:
-                para_groups.append(("core_transformations", core_clean_details))
+            elif unassigned_details:
+                para_groups.append(("core_transformations", unassigned_details))
             if formal_details:
                 para_groups.append(("formal_objective", formal_details))
             if output_details:

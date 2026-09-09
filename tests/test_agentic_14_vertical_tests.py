@@ -147,7 +147,11 @@ def test_vertical_01_replay_cli_to_writer_unified() -> None:
 # Vertical Test 2: product agent -> writer unified (防止真实产品仍为 legacy)
 # ============================================================================
 def test_vertical_02_product_agent_to_writer_unified(tmp_path: Path) -> None:
-    paths = _artifacts(tmp_path)
+    # Unified mode requires the frozen research/source artifacts; the base
+    # fixture only carries the legacy authoring inputs.
+    from tests.test_agentic_publication_method_writer_unified import _unified_artifacts
+
+    paths = _unified_artifacts(tmp_path)
     result, outputs = run_publication_method_writer(
         out_root=tmp_path,
         artifact_paths=paths,
