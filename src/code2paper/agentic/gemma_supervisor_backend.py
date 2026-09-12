@@ -46,6 +46,7 @@ from pydantic import BaseModel, ConfigDict, Field, ValidationError, model_valida
 from code2paper.agentic.research_models import (
     ResearchAction,
     ResearchDecisionV1,
+    ResearchAgendaRevisionV1,
 )
 from code2paper.agentic.research_supervisor import (
     DeterministicSupervisorBackend,
@@ -310,6 +311,7 @@ class _ResearchManagerProposalV1(BaseModel):
     terminal_action: str = ""
     tool_calls: list[_ResearchManagerToolCallV1] = Field(default_factory=list)
     action: str = ""
+    agenda_revisions: list[ResearchAgendaRevisionV1] = Field(default_factory=list, max_length=3)
 
     @model_validator(mode="before")
     @classmethod
@@ -834,6 +836,7 @@ class GemmaSupervisorBackend:
                 fallback_action=self._fallback_fallback_action(context),
                 rationale=rationale,
                 produced_by="llm_proposal",
+                agenda_revisions=tuple(ResearchAgendaRevisionV1.model_validate(r) for r in proposal.get("agenda_revisions", ())),
             )
 
         if terminal_action:
@@ -956,6 +959,7 @@ class GemmaSupervisorBackend:
             fallback_action=fallback_action,
             rationale=rationale,
             produced_by="llm_proposal",
+            agenda_revisions=tuple(ResearchAgendaRevisionV1.model_validate(r) for r in proposal.get("agenda_revisions", ())),
         )
 
     def _build_model_tool_call(
@@ -1079,6 +1083,12 @@ class GemmaSupervisorBackend:
 
 
 _SYSTEM_PROMPT = (
+    "You may supply agenda_revisions to revise inferred behavior hypotheses or add research subquestions. "
+    "Each revision needs parent_obligation_id (the active obligation), question, reason, exact observed "
+    "source_span_ids, targets (TypedBehaviorTargetV1), and mode add_subquestion or revise_hypothesis. "
+    "Preserve the author's goal and constraints. These are hypotheses, never proof or supported status. "
+    "A revision may also select selected_entry_symbol_ids when its observed source_span_ids show "
+    "the entry's actual CALLS edges and the rationale explains why this is the intended method path. "
     "You are the repository Research Manager for Code2Paper. Your job is to "
     "study the implementation until you can answer the active author-facing "
     "method question with concrete code evidence. You receive a bounded "

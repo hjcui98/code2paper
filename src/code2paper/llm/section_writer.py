@@ -565,6 +565,7 @@ def _compact_formula_packages_for_llm(packages: Any) -> list[dict[str, Any]]:
                     "purpose", "latex", "prose_explanation",
                     "symbol_definitions", "symbol_table", "material_conditions",
                     "assumptions", "authority_status", "formula_lane",
+                "review_status", "evidence_authority", "claim_kind", "publication_policy",
                 )
                 if key in item
             })
@@ -575,6 +576,7 @@ def _compact_formula_packages_for_llm(packages: Any) -> list[dict[str, Any]]:
                 "package_id", "purpose", "prose_explanation",
                 "symbol_definitions", "symbol_table", "material_conditions",
                 "assumptions", "authority_status", "formula_lane",
+                "review_status", "evidence_authority", "claim_kind", "publication_policy",
                 "satisfied_obligation_ids", "consumer_paragraph_id",
                 "semantic_formula_digest",
             )
@@ -584,6 +586,13 @@ def _compact_formula_packages_for_llm(packages: Any) -> list[dict[str, Any]]:
             str(item.get("placeholder") or "").strip()
             or f"[[FORMULA:{package_id}]]"
         )
+        compact["publication_policy"] = (
+            "implementation_formula" if item.get("review_status") == "accepted"
+            and item.get("authority_status") == "code_verified"
+            and item.get("formula_lane") == "repository_derived"
+            else "State author-proposed or not yet verified next to the placeholder; never assert repository implementation."
+        )
+        compact["condition_policy"] = "Preserve every material condition explicitly in the paragraph containing the placeholder."
         compact_packages.append(compact)
     return compact_packages
 
@@ -869,6 +878,7 @@ def _compact_authoring_packets_v2_for_llm(
                 "package_id", "purpose",
                 "prose_explanation", "symbol_definitions", "symbol_table",
                 "material_conditions", "assumptions", "authority_status",
+                "review_status", "evidence_authority", "claim_kind", "publication_policy",
                 "formula_lane", "satisfied_obligation_ids",
                 "consumer_paragraph_id", "semantic_formula_digest",
             )

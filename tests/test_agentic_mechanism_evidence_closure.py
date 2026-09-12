@@ -56,21 +56,23 @@ def test_definition_resolver_finds_exact_and_unique_qname() -> None:
 
 
 def test_active_path_resolution_precedence() -> None:
-    # 1. Debug/logging is unreachable
-    assert resolve_active_path_status(symbol_name="debug_logging") == "unreachable"
+    # Names cannot prove reachability or configuration.
+    assert resolve_active_path_status(symbol_name="debug_logging") == "unknown"
+    assert resolve_active_path_status(symbol_name="debug_logging", reachable=False) == "unreachable"
 
     # 2. Vectorized alternative is inactive_default unless configured
-    assert resolve_active_path_status(symbol_name="calculate_scores_vectorized") == "inactive_default"
+    assert resolve_active_path_status(symbol_name="calculate_scores_vectorized") == "unknown"
     assert resolve_active_path_status(
         symbol_name="calculate_scores_vectorized",
-        author_config_overrides={"mode": "vectorized"},
+        author_config_overrides={"calculate_scores_vectorized": "active_selected"},
     ) == "active_selected"
 
     # 3. Guard implies conditional
     assert resolve_active_path_status(symbol_name="forward", guard="dim > 0") == "conditional"
 
     # 4. Standard active default
-    assert resolve_active_path_status(symbol_name="forward") == "active_default"
+    assert resolve_active_path_status(symbol_name="forward") == "unknown"
+    assert resolve_active_path_status(symbol_name="forward", reachable=True) == "active_default"
 
 
 def test_compile_mechanism_evidence_closures_lossless_membership() -> None:
@@ -123,4 +125,4 @@ def test_compile_mechanism_evidence_closures_lossless_membership() -> None:
     assert op_predicates == ["encode", "selective_scan"]
     assert "span:model.py:10:15" in closure.exact_span_ids
     assert "span:model.py:20:30" in closure.exact_span_ids
-    assert closure.default_activation == "active_default"
+    assert closure.default_activation == "unknown"

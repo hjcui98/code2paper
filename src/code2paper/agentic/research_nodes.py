@@ -264,6 +264,7 @@ class InformationGainTracker:
         self._seen_slots: dict[str, set[str]] = {}
         self._attempted_tools: dict[str, set[str]] = {}
         self._exhausted_tools: dict[str, set[str]] = {}
+        self._search_receipts: dict[str, list[dict[str, Any]]] = {}
         self._no_progress: dict[str, int] = {}
         self._gain_history: dict[str, list[str]] = {}
         self._last_gain_items: dict[str, tuple[str, ...]] = {}
@@ -293,7 +294,15 @@ class InformationGainTracker:
         self._attempted_tools.setdefault(obligation_id, set()).add(
             observation.tool_name
         )
-        if observation.status in {"success_empty", "scope_exhausted"}:
+        if observation.tool_name in {"search_symbols", "search_code", "find_entrypoints"}:
+            self._search_receipts.setdefault(obligation_id, []).append({
+                "observation_id": observation.observation_id,
+                "input_digest": observation.input_digest,
+                "tool": observation.tool_name, "status": observation.status,
+                "notes": list(observation.diagnostics.notes),
+                "candidate_count": observation.diagnostics.candidate_count,
+            })
+        if observation.status == "scope_exhausted" and "search_frontier_closed=true" in observation.diagnostics.notes:
             self._exhausted_tools.setdefault(obligation_id, set()).add(
                 observation.tool_name
             )
@@ -428,10 +437,13 @@ class InformationGainTracker:
         return tuple(sorted(self._exhausted_tools.get(obligation_id, set())))
 
     def targeted_search_exhausted(self, obligation_id: str) -> bool:
-        """Return whether structural and literal target searches were empty."""
+        """Require explicit frontier closure, not two query-local empty results."""
 
         exhausted = self._exhausted_tools.get(obligation_id, set())
         return {"search_symbols", "search_code"}.issubset(exhausted)
+
+    def search_receipts(self, obligation_id: str) -> tuple[dict[str, Any], ...]:
+        return tuple(self._search_receipts.get(obligation_id, ()))
 
     def snapshot(self) -> dict[str, Any]:
         """Return a JSON-serializable snapshot (for checkpoint persistence)."""
@@ -445,6 +457,7 @@ class InformationGainTracker:
             "seen_slots": {k: sorted(v) for k, v in self._seen_slots.items()},
             "attempted_tools": {k: sorted(v) for k, v in self._attempted_tools.items()},
             "exhausted_tools": {k: sorted(v) for k, v in self._exhausted_tools.items()},
+            "search_receipts": self._search_receipts,
             "no_progress": dict(self._no_progress),
             "gain_history": {k: list(v) for k, v in self._gain_history.items()},
             "last_gain_items": {k: list(v) for k, v in self._last_gain_items.items()},
@@ -464,6 +477,7 @@ class InformationGainTracker:
         tracker = cls()
         if not isinstance(snapshot, dict):
             return tracker
+        tracker._search_receipts = dict(snapshot.get("search_receipts") or {})
         for key, field in (
             ("seen_spans", "_seen_spans"),
             ("seen_symbols", "_seen_symbols"),
@@ -472,7 +486,6 @@ class InformationGainTracker:
             ("seen_relations", "_seen_relations"),
             ("seen_slots", "_seen_slots"),
             ("attempted_tools", "_attempted_tools"),
-            ("exhausted_tools", "_exhausted_tools"),
             ("no_progress", "_no_progress"),
             ("gain_history", "_gain_history"),
             ("last_gain_items", "_last_gain_items"),
@@ -507,6 +520,10 @@ class InformationGainTracker:
                     field,
                     {k: set(v) for k, v in value.items() if isinstance(v, (list, tuple, set))},
                 )
+        for obligation_id, receipts in tracker._search_receipts.items():
+            for receipt in receipts:
+                if receipt.get("status") == "scope_exhausted" and "search_frontier_closed=true" in receipt.get("notes", ()):
+                    tracker._exhausted_tools.setdefault(obligation_id, set()).add(receipt.get("tool", ""))
         return tracker
 
 
@@ -1031,6 +1048,11 @@ def research_supervisor_node(
         merge_results.append(merge_result)
     decision = merge_result.decision
     assert decision is not None  # policy merge always returns a decision
+    from code2paper.agentic.research_agenda_revision import apply_agenda_revisions
+    apply_agenda_revisions(runtime.agenda, decision, recent_observations)
+    for item in runtime.agenda.items:
+        if item.obligation_id not in per_obligation_budgets:
+            per_obligation_budgets[item.obligation_id] = DEFAULT_BUDGET_POLICY.envelope_for(item.obligation_id)
     return {
         "pending_tool_calls": list(decision.selected_tool_calls),
         "decision_trace_refs": [merge_result.trace_ref],
@@ -3132,17 +3154,17 @@ def gap_finalizer_node(
         arguments={
             "obligation_id_ref": active_obligation_id,
             "termination_reason": (
-                f"No executable evidence satisfied the obligation after "
+                f"Search remains inconclusive for the obligation after "
                 f"{gain_tracker.no_progress_counter(active_obligation_id)} "
                 "consecutive no-gain turns."
             ),
             "search_scope": search_scope,
             "attempted_tools": attempted_tools,
             "missing_relations": missing_relations,
-            "search_complete": True,
-            "scope_exhausted": bool(
-                gain_tracker.exhausted_tools(active_obligation_id)
-            ),
+            "search_complete": False,
+            "scope_exhausted": False,
+            "resolution_status": "search_inconclusive",
+            "search_receipts": gain_tracker.search_receipts(active_obligation_id),
         },
     )
     if gap_observation.status != "success":
@@ -3176,17 +3198,18 @@ def gap_finalizer_node(
     gap_requirement = GapRequirementV1(
         requirement_id=f"gap-req:{active_obligation_id}:{gap_ref}",
         description=(
-            f"Exhaustive search for obligation {active_obligation_id} did not "
-            f"yield sufficient executable evidence to compile a supported claim."
+            f"Research for obligation {active_obligation_id} remains inconclusive; "
+            "the attempted queries do not establish absence of an implementation."
         ),
         # Preserve the actual frozen-source scope.  Recording the obligation
         # id here loses the provenance needed to audit an explicit gap.
         search_scope=",".join(search_scope) if search_scope else active_obligation_id,
         attempted_tools=attempted_tools,
         terminal="explicit_gap",
+        resolution_status="search_inconclusive",
         rationale=(
-            f"Accepted after {gain_tracker.no_progress_counter(active_obligation_id)} "
-            f"consecutive no-gain turns."
+            f"Search inconclusive after {gain_tracker.no_progress_counter(active_obligation_id)} "
+            "consecutive no-gain turns; no negative implementation claim is authorized."
         ),
     )
     if not any(

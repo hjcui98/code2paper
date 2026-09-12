@@ -409,7 +409,9 @@ def _reconcile_publication_quality_with_final_validation(
         return state
     try:
         from code2paper.agentic.final_text_authorship import FinalTextAuthorshipLedgerV1
-        from code2paper.agentic.publication_quality import PublicationQualityIssueV1, PublicationQualityReportV1
+        from code2paper.agentic.publication_quality import (
+            PublicationQualityIssueV1, PublicationQualityReportV1, validation_support_metrics,
+        )
         from code2paper.agentic.trust_contracts import TextEvidenceValidationReport
 
         quality = PublicationQualityReportV1.model_validate_json(quality_path.read_text(encoding="utf-8"))
@@ -417,15 +419,19 @@ def _reconcile_publication_quality_with_final_validation(
         ledger = FinalTextAuthorshipLedgerV1.model_validate_json(ledger_path.read_text(encoding="utf-8"))
     except (OSError, ValueError):
         return state
-    checked = validation.checked_factual_claims
-    supported = validation.supported_claims + validation.caveated_claims
     unsupported = validation.unsupported_claims + validation.unverified_claims
     digest_bound = validation.input_text_digest == ledger.final_text_digest
-    validation_passed = validation.status == "passed" and unsupported == 0 and digest_bound
+    precision_fields = validation_support_metrics(
+        validation.model_dump(mode="json"), expected_text_digest=ledger.final_text_digest,
+    )
+    validation_passed = (
+        validation.status == "passed" and unsupported == 0 and digest_bound
+        and precision_fields["support_precision_status"] != "invalid"
+    )
     safety_payload = quality.safety.model_dump(mode="json")
     safety_payload.update({
         "unsupported_positive_claims": unsupported,
-        "support_precision": 1.0 if checked == 0 else round(supported / checked, 6),
+        **precision_fields,
         "source_integrity": bool(quality.safety.source_integrity and digest_bound),
         "final_text_validation_status": "passed" if validation_passed else "failed",
     })
@@ -524,6 +530,8 @@ def _reconcile_publication_writer_result_with_quality(
             validation_status = str(json.loads(Path(validation_value).read_text(encoding="utf-8")).get("status") or "")
         except (OSError, json.JSONDecodeError):
             validation_status = ""
+    if validation_status and quality.safety.final_text_validation_status in {"failed", "error"}:
+        validation_status = "failed"
     candidate_validation_status = (
         "not_run" if not validation_status else
         "passed" if validation_status == "passed" else "warnings"
@@ -568,6 +576,8 @@ def _reconcile_publication_writer_result_with_quality(
         and blocked_reason == result.blocked_reason
         and tuple(failures) == result.binding_failures
         and publication_ready == result.publication_ready
+        and candidate_validation_status == result.candidate_validation_status
+        and verified_validation_status == result.verified_validation_status
         and candidate_complete == result.candidate_complete
         and candidate_completion_status == result.candidate_completion_status
         and tuple(candidate_blocking_reasons) == result.candidate_blocking_reasons

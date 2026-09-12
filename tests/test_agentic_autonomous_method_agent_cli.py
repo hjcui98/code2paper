@@ -13,6 +13,7 @@ from pathlib import Path
 import pytest
 
 from code2paper.cli.main import main as cli_main
+from code2paper.main_cli import main as installed_cli_main
 
 FIXTURE_REPO = Path(__file__).resolve().parent / "fixtures" / "research_loop_project"
 FIXTURE_INTENT = (
@@ -30,13 +31,15 @@ def _isolate_llm_env(monkeypatch: pytest.MonkeyPatch) -> None:
 
 
 class TestMethodAgentCommand:
+    @pytest.mark.parametrize("entrypoint", [cli_main, installed_cli_main])
     def test_command_shape_runs_product_path(
         self,
         tmp_path: Path,
         capsys: pytest.CaptureFixture[str],
+        entrypoint,
     ) -> None:
         out_root = tmp_path / "out"
-        code = cli_main([
+        code = entrypoint([
             "method-agent",
             "run",
             "--repo", str(FIXTURE_REPO),
@@ -62,12 +65,12 @@ class TestMethodAgentCommand:
         # assertion guards against ``blocked`` (fallback exhaustion).
         research = summary["research"]
         assert research["status"] in {"trusted", "incomplete", "degraded"}
-        # The deterministic fixture must terminate with every obligation
-        # resolved (plan 13.3): not ``stop_blocked``, not turn-budget
-        # truncation, and a non-empty repository evidence chain.
+        # Terminal execution does not prove every question was resolved.
+        # The local empty search remains visible as an unresolved obligation.
         assert research["termination_reason"] == "all_obligations_terminal"
         evidence = summary["evidence"]
-        assert evidence["unresolved_obligations"] == 0
+        assert evidence["unresolved_obligations"] == 1
+        assert evidence["explicit_gaps"] == 0
         assert evidence["evidence_packets"] > 0
         assert evidence["verified_facts"] > 0
         assert evidence["supported_claims"] > 0

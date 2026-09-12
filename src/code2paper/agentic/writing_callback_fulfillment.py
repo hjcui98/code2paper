@@ -976,6 +976,7 @@ def fulfill_and_resume_writing_callbacks(
                 continuation_provider._last_round_request_ids = tuple(
                     item.request_id for item in selected
                 )
+                continuation_provider._last_round_section_ids = tuple(dict.fromkeys(item.section_id for item in selected))
                 revision_paths = continuation_provider.recompile_authoring_revision(
                     out_root=out_root,
                     artifact_paths={**artifact_paths, **writer_paths},
@@ -1073,6 +1074,12 @@ def fulfill_and_resume_writing_callbacks(
         )
         writer_status = effective_writer_transaction_status(writer_result)
         writer_blocked_reason = getattr(writer_result, "blocked_reason", "")
+        if trace_rows:
+            trace_rows[-1]["writer_status_after_resume"] = writer_status
+            trace_rows[-1]["writer_blocked_reason"] = writer_blocked_reason
+            trace_rows[-1]["research_fulfilled_is_prose_committed"] = False
+            trace_rows[-1]["final_text_digest_after_resume"] = getattr(writer_result, "final_text_digest", "")
+            trace_rows[-1]["writer_binding_failures"] = list(getattr(writer_result, "binding_failures", ()) or ())
         # A blocked resume writes only publication_writer_result_v1.  Keep
         # the 06_authoring bundle/formalization paths so the next round does
         # not fall back to a stale frozen copy.
@@ -2012,9 +2019,9 @@ class _BudgetedRepositoryCallbackProvider:
         artifact_id = "writing-callback:" + request.request_id + ":" + _short_digest(payload)
         artifact_dir = (
             self.callback_root.parent
-            / "research_tool_data" / "writing_callbacks" / request.request_id
+            / "research_tool_data" / "writing_callbacks" / ("request-" + _short_digest({"request_id": request.request_id}))
         )
-        artifact_path = artifact_dir / f"{artifact_id}.json"
+        artifact_path = artifact_dir / f"callback-{_short_digest(payload)}.json"
         _atomic_write_text(artifact_path, json.dumps(payload, ensure_ascii=False, indent=2) + "\n")
         digest = "sha256:" + hashlib.sha256(artifact_path.read_bytes()).hexdigest()
         reference = os_path_relative(artifact_path, self.callback_root)
@@ -2333,6 +2340,13 @@ class _ResearchGraphContinuationProvider:
             "authority_diff_count": len(authority_diff),
             "authority_diff": authority_diff,
         }
+        from code2paper.agentic.callback_plan_repair import preserve_unaffected_plan
+        planning["plan"], preserved_sections = preserve_unaffected_plan(
+            prior_plan, planning.get("plan"),
+            affected_section_ids=getattr(self, "_last_round_section_ids", ()),
+            authority_diff=authority_diff,
+        )
+        summary["authoring_revision"]["preserved_section_ids"] = list(preserved_sections)
         agent_trace: list[dict[str, Any]] = []
         trace_path = str(existing_paths.get("agent_trace") or "").strip()
         if trace_path and Path(trace_path).is_file():
@@ -3064,7 +3078,7 @@ class _ResearchGraphContinuationProvider:
         }
         chain_dir = (
             self.callback_root.parent
-            / "research_tool_data" / "writing_callbacks" / request.request_id
+            / "research_tool_data" / "writing_callbacks" / ("request-" + _short_digest({"request_id": request.request_id}))
         )
         chain_dir.mkdir(parents=True, exist_ok=True)
         chain_path = chain_dir / f"research_continuation_{_short_digest(chain_payload)}.json"
@@ -3122,9 +3136,9 @@ class _ResearchGraphContinuationProvider:
         artifact_id = "writing-callback:" + request.request_id + ":" + _short_digest(payload)
         artifact_dir = (
             self.callback_root.parent
-            / "research_tool_data" / "writing_callbacks" / request.request_id
+            / "research_tool_data" / "writing_callbacks" / ("request-" + _short_digest({"request_id": request.request_id}))
         )
-        artifact_path = artifact_dir / f"{artifact_id}.json"
+        artifact_path = artifact_dir / f"callback-{_short_digest(payload)}.json"
         _atomic_write_text(artifact_path, json.dumps(payload, ensure_ascii=False, indent=2) + "\n")
         digest = "sha256:" + hashlib.sha256(artifact_path.read_bytes()).hexdigest()
         reference = os_path_relative(artifact_path, self.callback_root)
@@ -3579,6 +3593,11 @@ def _parse_symbol_reference(
 
 def os_path_relative(path: Path, base: Path) -> str:
     return os.path.relpath(str(path.resolve()), str(base.resolve()))
+
+
+def _digest_json(payload: Any) -> str:
+    encoded = json.dumps(payload, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    return "sha256:" + hashlib.sha256(encoded).hexdigest()
 
 
 def _short_digest(payload: dict[str, Any]) -> str:

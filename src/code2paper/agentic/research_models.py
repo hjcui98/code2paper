@@ -251,6 +251,7 @@ class ImplementationScopeV1(_ResearchModel):
 
     schema_version: str = "1.0"
     target_entry_symbol_ids: tuple[str, ...] = Field(default_factory=tuple)
+    candidate_entry_symbol_ids: tuple[str, ...] = Field(default_factory=tuple)
     target_core_symbol_ids: tuple[str, ...] = Field(default_factory=tuple)
     target_dependency_symbol_ids: tuple[str, ...] = Field(default_factory=tuple)
     comparand_symbol_ids: tuple[str, ...] = Field(default_factory=tuple)
@@ -650,6 +651,7 @@ class GapRequirementV1(_ResearchModel):
     attempted_tools: tuple[str, ...] = Field(default_factory=tuple)
     terminal: Literal["open", "explicit_gap", "blocked"] = "open"
     rationale: str = ""
+    resolution_status: Literal["unsupported_with_scoped_evidence", "search_inconclusive", "budget_exhausted"] = "unsupported_with_scoped_evidence"
 
 
 class ResearchAgendaItemV1(_ResearchModel):
@@ -676,6 +678,8 @@ class ResearchAgendaItemV1(_ResearchModel):
     gap_requirements: list[GapRequirementV1] = Field(default_factory=list)
     no_progress_counter: int = 0
     last_information_gain: str = ""
+    parent_obligation_id: str = ""
+    revision_history: list[dict[str, Any]] = Field(default_factory=list)
 
     @field_validator("obligation_id")
     @classmethod
@@ -954,6 +958,18 @@ class ResearchIssueV1(_ResearchModel):
         return value
 
 
+class ResearchAgendaRevisionV1(_ResearchModel):
+    """A sourced research hypothesis; never an evidence authorization."""
+
+    parent_obligation_id: str
+    question: str = Field(min_length=1, max_length=1000)
+    reason: str = Field(min_length=1, max_length=1000)
+    source_span_ids: tuple[str, ...] = Field(min_length=1, max_length=16)
+    targets: tuple[TypedBehaviorTargetV1, ...] = Field(min_length=1, max_length=4)
+    mode: Literal["add_subquestion", "revise_hypothesis"] = "add_subquestion"
+    selected_entry_symbol_ids: tuple[str, ...] = Field(default_factory=tuple, max_length=4)
+
+
 class ResearchDecisionV1(_ResearchModel):
     """Structured decision returned by the research supervisor each turn.
 
@@ -981,6 +997,7 @@ class ResearchDecisionV1(_ResearchModel):
     fallback_action: ResearchAction | None = None
     rationale: str = ""
     produced_by: Literal["llm_proposal", "deterministic_fallback", "policy_override"] = "llm_proposal"
+    agenda_revisions: tuple[ResearchAgendaRevisionV1, ...] = Field(default_factory=tuple, max_length=3)
 
     @field_validator("decision_id", "run_id", "goal")
     @classmethod

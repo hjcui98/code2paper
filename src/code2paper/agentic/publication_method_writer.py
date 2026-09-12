@@ -11,7 +11,7 @@ import tempfile
 from collections.abc import Callable, Iterable, Mapping
 from pathlib import Path
 from types import SimpleNamespace
-from typing import Any, Literal
+from typing import Any, Literal, Sequence
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
@@ -1036,17 +1036,51 @@ def run_publication_method_writer(
                 caller=effective_formalization_caller,
                 equations=equations,
             )
+            previous_narrative = None
+            early_bundle = _load_callback_bundle(artifact_paths)
+            local_resume_ids = tuple(dict.fromkeys((*resume_section_ids,
+                *(early_bundle.resume_section_ids if early_bundle else ()),
+                *(early_bundle.mechanism_resume_section_ids if early_bundle else ()))))
+            previous_narrative_path = method_output(Path(out_root), "narrative_plan_v3")
+            if effective_mode == "unified" and local_resume_ids and previous_narrative_path.is_file():
+                from code2paper.agentic.method_architect import NarrativePlanV3
+                previous_narrative = NarrativePlanV3.model_validate_json(previous_narrative_path.read_text(encoding="utf-8"))
             unified_narrative_plan, architect_trace_v3 = _build_narrative_plan_v3(
                 unified_contexts,
                 story_spine=repo_ctx["story_spine"],
                 formula_packages=unified_formula_packages,
-                prior_plan=plan,
-                proposal_caller=architect_proposal_caller,
+                prior_plan=previous_narrative or plan,
+                proposal_caller=architect_proposal_caller or llm_caller or _default_llm_caller,
                 llm_config=llm_config,
             )
+            if previous_narrative is not None:
+                from code2paper.agentic.callback_plan_repair import preserve_unaffected_narrative
+                from code2paper.agentic.method_architect import validate_narrative_plan
+                try:
+                    unified_narrative_plan = preserve_unaffected_narrative(previous_narrative, unified_narrative_plan, affected_section_ids=local_resume_ids)
+                except ValueError:
+                    # A global proposal is unsuitable for a local transaction.
+                    # Rebuild affected contracts from current canonical evidence.
+                    unified_narrative_plan, _ = _build_narrative_plan_v3(unified_contexts,
+                        story_spine=repo_ctx["story_spine"], formula_packages=unified_formula_packages,
+                        prior_plan=previous_narrative, proposal_caller=None, llm_config=llm_config)
+                    unified_narrative_plan = preserve_unaffected_narrative(previous_narrative, unified_narrative_plan, affected_section_ids=local_resume_ids)
+                    architect_trace_v3["local_resume_proposal_rejected"] = True
+                local_failures = validate_narrative_plan(unified_narrative_plan, unified_contexts, formula_packages=unified_formula_packages)
+                if local_failures:
+                    raise ValueError("callback_narrative_contract_stale:" + ";".join(local_failures))
             narrative_plan_path = method_output(Path(out_root), "narrative_plan_v3")
             _atomic_write_text(narrative_plan_path, unified_narrative_plan.model_dump_json(indent=2) + "\n")
             paths["narrative_plan_v3"] = str(narrative_plan_path)
+            if effective_mode == "unified":
+                from code2paper.agentic.unified_plan_bridge import bridge_narrative_plan
+                plan = bridge_narrative_plan(plan, unified_narrative_plan, unified_contexts)
+                controller_plan_path = Path(out_root) / "artifacts" / "06_authoring" / "unified_method_section_plan_v2.json"
+                _atomic_write_text(controller_plan_path, plan.model_dump_json(indent=2) + "\n")
+                paths["unified_method_section_plan_v2"] = str(controller_plan_path)
+                architect_plan_path = str(controller_plan_path)
+                paths["method_section_plan_v2"] = str(controller_plan_path)
+                artifact_paths = {**artifact_paths, "method_section_plan_v2": str(controller_plan_path)}
         except Exception as exc:
             if effective_mode == "unified":
                 result = PublicationWriterRunResultV1(
@@ -1538,6 +1572,7 @@ def run_publication_method_writer(
     if effective_mode == "unified":
         writer_inputs = _writer_section_inputs_v3(
             narrative_plan=unified_narrative_plan,
+            controller_plan=plan,
             shared_payload_slices=unified_slices,
             formula_packages=unified_formula_packages,
             system_prompt="",
@@ -3997,6 +4032,13 @@ def run_publication_method_writer(
         proposition_alignment_report = {"error": f"{type(exc).__name__}:{str(exc)[:200]}", "sections": []}
         failures.append(f"proposition_alignment_fault:{type(exc).__name__}")
     try:
+        validation_report_path = final_validation_paths.get("text_evidence_validation", "")
+        quality_validation_report = None
+        if validation_report_path:
+            try:
+                quality_validation_report = load_text_evidence_validation(validation_report_path).model_dump(mode="json")
+            except (OSError, ValueError, TypeError):
+                quality_validation_report = {}  # Supplied but invalid, never a success default.
         quality = evaluate_publication_method_quality(
         final_text=final_text,
         plan=plan,
@@ -4029,6 +4071,7 @@ def run_publication_method_writer(
         # unverified positive claims.
         unsupported_positive_claims=len(final_validation_failures),
         final_text_validation_status=final_text_validation_status,
+        text_validation_report=quality_validation_report,
         final_validation_failures=final_validation_failures,
         # Concept-card lane: the reverse validator's supported verdicts are
         # the binding authority for supported-unit recall and the coverage
@@ -4426,16 +4469,6 @@ def run_publication_method_writer(
                 )
                 for artifact in artifact_items
             )
-            discovered_operation_ids = {
-                str(ctx.mechanism_id): tuple(
-                    str(getattr(operation, "operation_id", ""))
-                    for operation in (
-                        getattr(ctx.evidence_closure, "operation_nodes", ()) or ()
-                    )
-                    if str(getattr(operation, "operation_id", "") or "").strip()
-                )
-                for ctx in unified_contexts.contexts
-            }
             trace_v2 = write_method_content_trace_v2(
                 trace_v2_path,
                 contexts=unified_contexts,
@@ -4448,7 +4481,6 @@ def run_publication_method_writer(
                 writer_inputs=tuple(writer_inputs),
                 writer_traces=tuple(writer.aggregate.traces),
                 writer_outputs=output_by_section,
-                research_discovered_operation_ids=discovered_operation_ids,
                 callback_artifacts=trace_callback_artifacts,
             )
             paths["method_content_trace_v2"] = str(trace_v2_path)
@@ -11454,6 +11486,7 @@ def _rewrite_transaction_metrics(
             facet_missing_by_section[str(section_id)] = missing_count
     return {
         "validation_status": validation_status,
+        "required_target_set_digest": plan.content_digest,
         "validation_counts": validation_counts,
         "validation_detail": validation_detail,
         "unsupported_by_section": unsupported_by_section,
@@ -11483,6 +11516,9 @@ def _rewrite_transaction_has_cluster_gain(
     cluster_name: str,
 ) -> tuple[bool, str]:
     """Require non-regression everywhere and gain in the assigned cluster."""
+
+    if incumbent.get("required_target_set_digest") != candidate.get("required_target_set_digest"):
+        return False, "comparison_target_set_changed"
 
     if (
         incumbent.get("validation_status") == "passed"
@@ -13404,7 +13440,7 @@ def _load_repository_authoring_context(
     """Load research artifacts needed for unified mechanism authoring."""
     from code2paper.agentic.behavior_graph import CodeBehaviorGraphV1
     from code2paper.agentic.behavior_graph import SymbolIndexV2
-    from code2paper.agentic.repo_snapshot import RepoSnapshot
+    from code2paper.agentic.repo_snapshot import RepoSnapshot, read_verified_snapshot_sources
     from code2paper.agentic.python_behavior_adapter import PythonBehaviorAdapter
     from code2paper.agentic.research_models import ImplementationScopeV1
     from code2paper.agentic.method_argument_brief_models import (
@@ -13414,19 +13450,25 @@ def _load_repository_authoring_context(
         MethodArgumentBriefSetV1,
     )
 
+    def load_artifact(value: str, model: Any, *wrappers: str) -> Any:
+        if not value:
+            return None
+        try:
+            payload = json.loads(Path(value).read_text(encoding="utf-8"))
+            for key in wrappers:
+                if isinstance(payload, Mapping) and key in payload:
+                    payload = payload[key]
+                    break
+            return model.model_validate(payload)
+        except (OSError, ValueError, TypeError) as exc:
+            raise ValueError(f"repository_authoring_artifact_invalid:{model.__name__}:{value}") from exc
+
     behavior_graph = None
     graph_value = (
         artifact_paths.get("behavior_graph_v1", "")
         or artifact_paths.get("code_graph", "")
     )
-    if graph_value and Path(graph_value).is_file():
-        try:
-            graph_payload = json.loads(Path(graph_value).read_text(encoding="utf-8"))
-            if isinstance(graph_payload, Mapping):
-                graph_payload = graph_payload.get("behavior_graph") or graph_payload.get("graph") or graph_payload
-                behavior_graph = CodeBehaviorGraphV1.model_validate(graph_payload)
-        except Exception:
-            behavior_graph = None
+    behavior_graph = load_artifact(graph_value, CodeBehaviorGraphV1, "behavior_graph", "graph")
 
     repo_snapshot = None
     snapshot_value = (
@@ -13434,13 +13476,8 @@ def _load_repository_authoring_context(
         or artifact_paths.get("repo_snapshot", "")
         or artifact_paths.get("repository_snapshot", "")
     )
-    if snapshot_value and Path(snapshot_value).is_file():
-        try:
-            repo_snapshot = RepoSnapshot.model_validate_json(
-                Path(snapshot_value).read_text(encoding="utf-8")
-            )
-        except Exception:
-            repo_snapshot = None
+    repo_snapshot = load_artifact(snapshot_value, RepoSnapshot)
+    source_files = read_verified_snapshot_sources(repo_snapshot) if repo_snapshot is not None else None
 
     symbol_index = None
     symbol_value = next((
@@ -13451,48 +13488,49 @@ def _load_repository_authoring_context(
         )
         if artifact_paths.get(key, "")
     ), "")
-    if symbol_value and Path(symbol_value).is_file():
-        try:
-            raw_symbol_payload = json.loads(Path(symbol_value).read_text(encoding="utf-8"))
-            if isinstance(raw_symbol_payload, Mapping):
-                raw_symbol_payload = raw_symbol_payload.get("symbol_index") or raw_symbol_payload.get("index") or raw_symbol_payload
-            symbol_index = SymbolIndexV2.model_validate(raw_symbol_payload)
-        except Exception:
-            symbol_index = None
+    symbol_index = load_artifact(symbol_value, SymbolIndexV2, "symbol_index", "index")
     if symbol_index is None and repo_snapshot is not None:
-        try:
-            source_files = {
-                item.path: Path(repo_snapshot.project_root, item.path).read_text(encoding="utf-8")
-                for item in repo_snapshot.included_files
-                if item.kind == "file" and item.path.endswith(".py")
-            }
-            symbol_index = PythonBehaviorAdapter().index_symbols(
-                repo_snapshot_id=repo_snapshot.snapshot_id,
-                project_tree_hash=repo_snapshot.project_tree_hash,
-                files=source_files,
-            )
-        except (OSError, UnicodeError, ValueError):
-            symbol_index = None
+        symbol_index = PythonBehaviorAdapter().index_symbols(
+            repo_snapshot_id=repo_snapshot.snapshot_id,
+            project_tree_hash=repo_snapshot.project_tree_hash,
+            files=source_files,
+        )
 
     implementation_scope = None
     scope_value = artifact_paths.get("implementation_scope_v1", "")
-    if scope_value and Path(scope_value).is_file():
-        try:
-            implementation_scope = ImplementationScopeV1.model_validate_json(
-                Path(scope_value).read_text(encoding="utf-8")
-            )
-        except Exception:
-            implementation_scope = None
+    implementation_scope = load_artifact(scope_value, ImplementationScopeV1)
 
     briefs = None
     brief_value = artifact_paths.get("method_argument_briefs_v1", "")
-    if brief_value and Path(brief_value).is_file():
+    briefs = load_artifact(brief_value, MethodArgumentBriefSetV1)
+    identity = None
+    for artifact in (repo_snapshot, behavior_graph, symbol_index, implementation_scope, briefs):
+        if artifact is None:
+            continue
+        snapshot_id = getattr(artifact, "repo_snapshot_id", getattr(artifact, "snapshot_id", ""))
+        tree_hash = getattr(artifact, "project_tree_hash", "")
+        if not snapshot_id or not tree_hash:
+            continue
+        if identity is not None and identity != (snapshot_id, tree_hash):
+            raise ValueError(f"repository_authoring_identity_mismatch:{type(artifact).__name__}")
+        identity = (snapshot_id, tree_hash)
+
+    # Facts and claims may agree with each other yet belong to another run.
+    # Check their source identity against the repository handed to the compiler.
+    for key in ("code_facts_v1", "atomic_claims_v3", "evidence_packets_v3"):
+        value = artifact_paths.get(key, "")
+        if not value:
+            continue
         try:
-            briefs = MethodArgumentBriefSetV1.model_validate_json(
-                Path(brief_value).read_text(encoding="utf-8")
-            )
-        except Exception:
-            briefs = None
+            payload = json.loads(Path(value).read_text(encoding="utf-8"))
+            snapshot_id = payload.get("repo_snapshot_id", "")
+            tree_hash = payload.get("project_tree_hash", "")
+        except (OSError, ValueError, AttributeError) as exc:
+            raise ValueError(f"repository_authoring_artifact_invalid:{key}") from exc
+        if snapshot_id and tree_hash:
+            if identity is not None and identity != (snapshot_id, tree_hash):
+                raise ValueError(f"repository_authoring_identity_mismatch:{key}")
+            identity = (snapshot_id, tree_hash)
 
     facets: list[AuthorMechanismFacetV1] = []
     facet_value = artifact_paths.get("method_argument_facets_v1", "")
@@ -13547,7 +13585,7 @@ def _load_repository_authoring_context(
        "implementation_scope": implementation_scope,
         "repo_snapshot": repo_snapshot,
         "symbol_index": symbol_index,
-        "source_provider": repo_snapshot,
+        "source_provider": source_files,
         "argument_briefs": briefs,
         "argument_facets": tuple(facets),
         "facet_alignments": tuple(alignments),
@@ -13758,6 +13796,7 @@ def _build_narrative_plan_v3(
 def _writer_section_inputs_v3(
     *,
     narrative_plan: Any,
+    controller_plan: Any = None,
     shared_payload_slices: Mapping[str, Any],
     formula_packages: tuple[Any, ...] = (),
     system_prompt: str = "",
@@ -13777,6 +13816,14 @@ def _writer_section_inputs_v3(
         sec_id = str(getattr(section, "section_id", ""))
         heading = str(getattr(section, "heading", ""))
         sec_plan_dict = section.model_dump(mode="json") if hasattr(section, "model_dump") else dict(section)
+        controller_section = next((s for s in getattr(controller_plan, "sections", ()) if s.section_id == sec_id), None)
+        unit_ids = tuple(getattr(controller_section, "argument_unit_ids", ()))
+        units = [u for u in getattr(controller_plan, "argument_units", ()) if u.argument_unit_id in unit_ids]
+        controller_bindings = {"used_argument_unit_ids": list(unit_ids)}
+        for field in ("claim_ids", "equation_ids", "configuration_ids"):
+            controller_bindings["used_" + field] = list(dict.fromkeys(v for u in units for v in getattr(u, field, ())))
+        required_moves = [m.move for m in getattr(controller_section, "moves", ()) if m.required]
+        controller_bindings["completed_rhetorical_moves"] = required_moves
 
         sec_slices: list[str] = []
         sec_formula_pkgs: list[dict[str, Any]] = []
@@ -13892,6 +13939,7 @@ def _writer_section_inputs_v3(
             "section_id": sec_id,
             "heading": heading,
             "narrative_plan": sec_plan_dict,
+            "paragraph_plan": paragraph_rows,
             "shared_contexts": sec_slices,
             "shared_context_metadata": sec_slice_metadata,
             "formula_packages": sec_formula_pkgs,
@@ -13900,6 +13948,8 @@ def _writer_section_inputs_v3(
             "formula_placeholders_required": bool(sec_formula_pkgs),
             "formula_generation_policy": "consume_only",
             "binding_contract": {
+                **controller_bindings,
+                "allowed_paragraph_ids": [row["paragraph_id"] for row in paragraph_rows],
                 "allowed_detail_ids": all_detail_ids,
                 "required_detail_ids": required_detail_ids,
                 "allowed_atom_ids": allowed_atom_ids,
@@ -13914,7 +13964,7 @@ def _writer_section_inputs_v3(
                     if isinstance(item, Mapping)
                     and str(item.get("package_id") or "").strip()
                 ],
-                "required_rhetorical_moves": [],
+                "required_rhetorical_moves": required_moves,
             },
         }
 

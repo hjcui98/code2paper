@@ -27,6 +27,26 @@ from code2paper.agentic.publication_transaction_contract import (
 )
 
 
+@pytest.mark.parametrize("discovered, expected, recall, status, retention", [
+    (None, None, None, "not_measured", None),
+    ({"mech_loss": ("op:1",)}, None, None, "not_measured", 1.0),
+    ({"mech_loss": ("op:1",)}, {"mech_loss": ("op:1", "op:2")}, 0.5, "measured", 1.0),
+    ({"mech_loss": ("op:1", "op:2")}, {"mech_loss": ("op:1", "op:2")}, 1.0, "measured", 0.5),
+    ({}, {"mech_loss": ("op:1",)}, 0.0, "measured", None),
+    ({}, {}, None, "not_applicable", None),
+])
+def test_discovery_requires_independent_denominator(discovered, expected, recall, status, retention):
+    trace = build_method_content_trace_v2(
+        contexts=_make_context_set(), narrative_plan=None,
+        research_discovered_operation_ids=discovered,
+        expected_operation_ids=expected,
+    )
+    assert trace.funnel.mechanism_discovery_recall == recall
+    assert trace.funnel.discovery_metric_status == status
+    assert trace.funnel.closure_retention == retention
+    assert trace.funnel.funnel_survival_rates["discovery_recall"] == recall
+
+
 def _make_context_set() -> MechanismContextSetV1:
     op = EvidenceOperationV1(
         operation_id="op:1",

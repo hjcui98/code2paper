@@ -120,7 +120,7 @@ def test_run_publication_method_writer_unified_mode(tmp_path: Path) -> None:
         authoring_context_mode="unified",
     )
 
-    assert result.status in ("success", "incomplete")
+    assert result.status in ("success", "incomplete"), result.blocked_reason
     assert result.status != "blocked"
 
     # Check that unified artifacts exist in outputs
@@ -142,6 +142,9 @@ def test_run_publication_method_writer_unified_mode(tmp_path: Path) -> None:
     )
     assert len(plan_v3.sections) >= 1
     assert len(plan_v3.narrative_units) >= 1
+    controller = json.loads(Path(outputs["method_section_plan_v2"]).read_text(encoding="utf-8"))
+    assert [s["section_id"] for s in controller["sections"]] == [s.section_id for s in plan_v3.sections]
+    assert [[p["paragraph_id"] for p in s["paragraphs"]] for s in controller["sections"]] == [[p.paragraph_id for p in s.paragraphs] for s in plan_v3.sections]
 
     # Validate MethodContentTraceV2
     trace_v2 = MethodContentTraceV2.model_validate_json(
@@ -170,7 +173,7 @@ def test_run_publication_method_writer_shadow_unified_mode(tmp_path: Path) -> No
         authoring_context_mode="shadow_unified",
     )
 
-    assert result.status in ("success", "incomplete")
+    assert result.status in ("success", "incomplete"), result.blocked_reason
     assert result.status != "blocked"
 
     # Shadow mode produces both unified diagnostics and legacy outputs
@@ -194,7 +197,7 @@ def test_run_publication_method_writer_env_var_unified_cutover(
         llm_caller=_mock_writer_caller,
     )
 
-    assert result.status in ("success", "incomplete")
+    assert result.status in ("success", "incomplete"), result.blocked_reason
     assert "mechanism_context_set_v1" in outputs
     assert "narrative_plan_v3" in outputs
     assert "method_content_trace_v2" in outputs

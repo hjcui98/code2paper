@@ -163,8 +163,7 @@ def test_continuation_fulfills_request_through_original_research_graph() -> None
         )
         assert updated.requests[0].status == "fulfilled"
         artifact_id = updated.requests[0].fulfilled_artifact_ids[0]
-        artifact_dir = tmp / "artifacts" / "research_tool_data" / "writing_callbacks" / "request:cont:1"
-        artifact_file = artifact_dir / f"{artifact_id}.json"
+        artifact_file = (bundle_path.parent / updated.artifacts["request:cont:1"][0].artifact_ref).resolve()
         assert artifact_file.is_file()
         payload = json.loads(artifact_file.read_text(encoding="utf-8"))
         # Owning validator report: validated is a pure function of the checks,
@@ -290,10 +289,7 @@ def test_continuation_persists_concept_judgment_and_placement() -> None:
             bundle_path.read_text(encoding="utf-8")
         )
         artifact_id = updated.requests[0].fulfilled_artifact_ids[0]
-        artifact_file = (
-            tmp / "artifacts" / "research_tool_data" / "writing_callbacks"
-            / "request:cont:1" / f"{artifact_id}.json"
-        )
+        artifact_file = (bundle_path.parent / updated.artifacts["request:cont:1"][0].artifact_ref).resolve()
         payload = json.loads(artifact_file.read_text(encoding="utf-8"))
         assert "CK-RUN" in payload["concept_judgment"]
         placement = payload["placement"]

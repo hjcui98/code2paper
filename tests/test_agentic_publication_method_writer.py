@@ -5343,6 +5343,54 @@ def _quality_completeness(*, claim_ids: tuple[str, ...]) -> MethodCompletenessMa
     ),))
 
 
+@pytest.mark.parametrize("case, expected, metric_status", [
+    ("missing", None, "not_measured"),
+    ("partial", 0.6, "measured"),
+    ("zero", None, "not_applicable"),
+    ("stale_text", None, "invalid"),
+    ("invalid_counts", None, "invalid"),
+    ("blocked", None, "not_measured"),
+])
+def test_quality_precision_uses_exact_text_validation_counts(case, expected, metric_status):
+    from code2paper.agentic.final_text_claims import text_digest
+
+    text = "The encoder reads the configured input."
+    validation = {
+        "status": "failed", "input_text_digest": text_digest(text),
+        "checked_factual_claims": 5, "supported_claims": 3,
+        "caveated_claims": 1, "unsupported_claims": 1, "unverified_claims": 0,
+        "verification_mode": "lexical_only",
+    }
+    if case == "missing":
+        validation = None
+    elif case == "zero":
+        validation.update(status="passed", checked_factual_claims=0, supported_claims=0,
+                          caveated_claims=0, unsupported_claims=0)
+    elif case == "stale_text":
+        validation["input_text_digest"] = text_digest("an older candidate")
+    elif case == "invalid_counts":
+        validation["supported_claims"] = 10
+    elif case == "blocked":
+        validation["status"] = "blocked"
+    report = evaluate_publication_method_quality(
+        final_text=text,
+        plan=_quality_plan(claims=("claim-a",)),
+        completeness=_quality_completeness(claim_ids=("claim-a",)),
+        section_outputs=(),
+        ledger=ledger_from_section_outputs(text, (("section-a", text, "sha256:writer"),)),
+        text_validation_report=validation,
+    )
+    assert report.safety.support_precision == expected
+    assert report.safety.support_precision_status == metric_status
+    if case == "partial":
+        assert report.safety.checked_factual_claims == 5
+        assert report.safety.supported_claims == 3
+        assert report.safety.verification_mode == "lexical_only"
+        assert report.safety.unsupported_positive_claims == 1
+    if case in {"partial", "stale_text", "invalid_counts", "blocked"}:
+        assert not report.safety.hard_gate_passed
+
+
 def _quality_report(
     *,
     plan: MethodSectionPlanV2,
@@ -6753,8 +6801,8 @@ def test_callback_bundle_transitive_copy_rebases_and_reuses(tmp_path: Path) -> N
     frozen = tmp_path / "frozen-root"
     relative = (
         "research_tool_data/writing_callbacks/"
-        "request:MA-S2:limitations_or_mismatch/"
-        "writing-callback:request:MA-S2:limitations_or_mismatch:865141e7ce13.json"
+        "request-MA-S2/"
+        "865141e7ce13.json"
     )
     evidence = frozen / relative
     evidence.parent.mkdir(parents=True)
@@ -6793,7 +6841,7 @@ def test_callback_bundle_transitive_copy_rebases_and_reuses(tmp_path: Path) -> N
     assert copied_target.read_bytes() == evidence.read_bytes()
     rebased = report["bundle"]
     (rebased_artifact,) = rebased["artifacts"][request.request_id]
-    assert rebased_artifact["artifact_ref"] == f"../{relative}"
+    assert Path(rebased_artifact["artifact_ref"]).as_posix() == f"../{relative}"
 
     # The rebased bundle is digest-valid and Writer-consumable from the
     # fresh root: the file-backed preview resolves against the fresh bundle
@@ -6811,8 +6859,9 @@ def test_callback_bundle_transitive_copy_rebases_and_reuses(tmp_path: Path) -> N
     assert payload["artifact_preview"].startswith('{"objective"')
 
 
+@pytest.mark.parametrize("check_symlink", [False, True])
 def test_callback_bundle_transitive_copy_rejects_traversal_missing_and_tampered(
-    tmp_path: Path,
+    tmp_path: Path, check_symlink: bool,
 ) -> None:
     from code2paper.agentic.publication_method_writer import (
         rebase_callback_bundle_artifacts,
@@ -6875,14 +6924,19 @@ def test_callback_bundle_transitive_copy_rejects_traversal_missing_and_tampered(
     )
     assert any("artifact_digest_mismatch" in item for item in report["failures"]), report["failures"]
 
-    # Symlinked source.
-    link = frozen / "research_tool_data" / "callbacks" / "link.json"
-    link.symlink_to(outside)
-    linked = make_bundle("../research_tool_data/callbacks/link.json", good_digest)
-    report = rebase_callback_bundle_artifacts(
-        bundle_path=linked, frozen_root=frozen, fresh_root=fresh,
-    )
-    assert any("artifact_ref_symlink" in item for item in report["failures"]), report["failures"]
+    if check_symlink:
+        link = frozen / "research_tool_data" / "callbacks" / "link.json"
+        try:
+            link.symlink_to(outside)
+        except OSError as exc:
+            if getattr(exc, "winerror", None) == 1314:
+                pytest.skip("Windows account lacks symlink creation privilege")
+            raise
+        linked = make_bundle("../research_tool_data/callbacks/link.json", good_digest)
+        report = rebase_callback_bundle_artifacts(
+            bundle_path=linked, frozen_root=frozen, fresh_root=fresh,
+        )
+        assert any("artifact_ref_symlink" in item for item in report["failures"]), report["failures"]
 
     # Every rejected replay left the fresh root empty: nothing was copied.
     copied_anywhere = list((fresh / "research_tool_data").rglob("*")) if (

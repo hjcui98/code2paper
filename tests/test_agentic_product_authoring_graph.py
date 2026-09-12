@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from pathlib import Path
 
 import pytest
 
@@ -367,7 +368,7 @@ def test_writer_adapter_persists_receipts_and_recompiles_changed_evidence(
         stop_reason="open_issues_remain",
     )
 
-    assert state_path.endswith(
+    assert Path(state_path).as_posix().endswith(
         "artifacts/06_authoring/product_authoring_state_v1.json"
     )
     assert first.revision_id == "revision:0"

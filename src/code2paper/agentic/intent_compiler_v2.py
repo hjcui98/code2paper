@@ -135,8 +135,15 @@ INTENT_CONCEPTS: tuple[IntentConceptV1, ...] = (
     IntentConceptV1(
         concept_id="feature_combination",
         predicates=("CONCAT",),
-        terms_en=("concat", "concatenate", "concatenation", "combine"),
-        terms_cn=("拼接", "串联", "合并"),
+        terms_en=("concat", "concatenate", "concatenation"),
+        terms_cn=("拼接", "串联"),
+        role_hint="feature",
+    ),
+    IntentConceptV1(
+        concept_id="feature_fusion_hypothesis",
+        predicates=("COMPUTE",),
+        terms_en=("combine", "merge", "fuse", "fusion"),
+        terms_cn=("合并", "融合"),
         role_hint="feature",
     ),
     IntentConceptV1(

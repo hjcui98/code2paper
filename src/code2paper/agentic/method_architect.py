@@ -8133,13 +8133,20 @@ def build_narrative_plan_v3(
             continue
 
         prior_sections = getattr(prior_plan, "sections", ()) or ()
-        if prior_plan is not None and sec_idx - 1 < len(prior_sections):
-            prior_sec = prior_sections[sec_idx - 1]
+        matching_prior = [section for section in prior_sections if
+            ctx.mechanism_id in (getattr(section, "mechanism_ids", ()) or ())
+            or any(getattr(p, "mechanism_id", "") == ctx.mechanism_id
+                   for p in (getattr(section, "paragraphs", ()) or ()))]
+        if len(matching_prior) == 1:
+            prior_sec = matching_prior[0]
             section_id = str(prior_sec.section_id)
             heading = str(getattr(prior_sec, "heading", "") or f"{ctx.mechanism_name}")
             prior_paras = getattr(prior_sec, "paragraphs", ()) or ()
         else:
             section_id = f"sec_method_{sec_idx}"
+            reserved = {str(s.section_id) for s in prior_sections} | {s.section_id for s in sections}
+            while section_id in reserved:
+                section_id += "_new"
             heading = f"{ctx.mechanism_name}"
             prior_paras = ()
         paragraphs: list[NarrativeParagraphPlanV3] = []
@@ -8168,8 +8175,6 @@ def build_narrative_plan_v3(
             para_groups.append(("overview_and_inputs", overview_details))
         if transform_details:
             para_groups.append(("core_transformations", transform_details))
-        elif not overview_details and core_clean_details:
-            para_groups.append(("core_transformations", core_clean_details))
         if formal_details:
             para_groups.append(("formal_objective", formal_details))
         if output_details:
@@ -8217,10 +8222,13 @@ def build_narrative_plan_v3(
         all_unit_opt_details: list[str] = []
 
         for role_name, group_details in para_groups:
-            if para_idx - 1 < len(prior_paras):
-                p_id = str(prior_paras[para_idx - 1].paragraph_id)
+            matching_paras = [p for p in prior_paras if getattr(p, "role", "") == role_name]
+            if len(matching_paras) == 1:
+                p_id = str(matching_paras[0].paragraph_id)
             else:
                 p_id = f"{section_id}_p{para_idx}"
+            while p_id in para_ids:
+                p_id += "_new"
             para_ids.append(p_id)
 
             req_dids = tuple(
@@ -8331,6 +8339,66 @@ def build_narrative_plan_v3(
         raise ValueError(
             "narrative_plan_v3_invalid:" + ";".join(validation_failures[:16])
         )
+
+    trace["proposal_attempted"] = proposal_caller is not None and llm_config is not None
+    trace["proposal_accepted"] = False
+    if trace["proposal_attempted"]:
+        from code2paper.llm.client import LLMRequest
+        from code2paper.llm.response_schemas import _loads_json_or_extract_object
+        request = LLMRequest(
+            prompt_template_id="mechanism_narrative_architect_v3",
+            prompt=("Plan a Method narrative for the author's intent. Return a NarrativePlanV3 JSON object. "
+                    "You may reorder, merge related mechanisms into a section, or split a complex mechanism "
+                    "across sections. Preserve every required detail, formula placement, witness constraint "
+                    "and evidence authority. Change organization, reader questions and depth only; do not invent facts. "
+                    "Use stable paragraph IDs for unchanged content. Return all sections, narrative_units and formula_placements."),
+            input_payload={"story_spine": [x.model_dump(mode="json") if hasattr(x, "model_dump") else x for x in story_spine],
+                           "contexts": [{"mechanism_id": c.mechanism_id, "purpose": c.purpose,
+                                         "reader_question": c.reader_question,
+                                         "details": [d.model_dump(mode="json") for d in c.details]} for c in context_items],
+                           "base_plan": plan.model_dump(mode="json")},
+            schema_name="NarrativePlanV3", response_json_schema=NarrativePlanV3.model_json_schema(),
+        )
+        try:
+            response = proposal_caller(llm_config, request)
+            if response.blocked_reason:
+                raise ValueError(f"proposal_blocked:{response.blocked_reason}")
+            proposal_payload = _loads_json_or_extract_object(response.text)
+            def clear_narrative_digests(row):
+                # Content addresses are computed by the harness; the model
+                # cannot be required to recompute SHA-256 after reordering.
+                if isinstance(row, dict):
+                    row.pop("content_digest", None)
+                    for key in ("sections", "paragraphs", "narrative_units", "formula_placements"):
+                        for child in row.get(key, ()):
+                            clear_narrative_digests(child)
+            clear_narrative_digests(proposal_payload)
+            proposed = NarrativePlanV3.model_validate(proposal_payload)
+            failures = list(validate_narrative_plan(proposed, contexts, formula_packages=formula_packages))
+            original_targets = {(p.mechanism_id, did) for s in plan.sections for p in s.paragraphs for did in p.required_detail_ids}
+            proposed_targets = {(p.mechanism_id, did) for s in proposed.sections for p in s.paragraphs for did in p.required_detail_ids}
+            if not original_targets.issubset(proposed_targets):
+                failures.append("proposal_dropped_required_details")
+            canonical_targets = {(p.mechanism_id, t.get("target_kind"), t.get("target_id")): t
+                                 for s in plan.sections for p in s.paragraphs for t in p.witness_contract.get("targets", ())}
+            proposed_keys = {(p.mechanism_id, t.get("target_kind"), t.get("target_id"))
+                             for s in proposed.sections for p in s.paragraphs for t in p.witness_contract.get("targets", ())}
+            if not set(canonical_targets).issubset(proposed_keys):
+                failures.append("proposal_dropped_evidence_contract")
+            for s in proposed.sections:
+                for p in s.paragraphs:
+                    for t in p.witness_contract.get("targets", ()):
+                        if t != canonical_targets.get((p.mechanism_id, t.get("target_kind"), t.get("target_id"))):
+                            failures.append("proposal_changed_evidence_contract")
+            if failures:
+                raise ValueError(";".join(failures[:12]))
+            plan = proposed
+            trace["proposal_accepted"] = True
+        except (ValueError, TypeError, AttributeError) as exc:
+            trace["proposal_failure"] = str(exc)[:500]
+    trace["sections_planned"] = len(plan.sections)
+    trace["paragraphs_planned"] = sum(len(s.paragraphs) for s in plan.sections)
+    trace["formula_placements_count"] = len(plan.formula_placements)
 
     return plan, trace
 

@@ -96,6 +96,23 @@ def splice_formula_placeholders(
     replacements: list[tuple[int, int, str]] = []
     for start, end, package_id in spans:
         package = package_by_id[package_id]
+        package_row = dict(package) if isinstance(package, Mapping) else package.model_dump(mode="json")
+        disposition = _formula_package_terminal_disposition(package_row)
+        # The caller normally passes one frozen paragraph. Scope the caveat
+        # to the paragraph containing this placeholder, never a distant note.
+        paragraph_start = markdown.rfind("\n\n", 0, start) + 2
+        if paragraph_start == 1:
+            paragraph_start = 0
+        paragraph_end = markdown.find("\n\n", end)
+        local_text = markdown[paragraph_start:paragraph_end if paragraph_end >= 0 else len(markdown)]
+        caveated = bool(re.search(r"author[- ](?:proposed|intended)|design hypothesis|not (?:yet )?verified|requires? (?:author )?review|作者(?:设想|提出|意图)|尚未验证|待审", local_text, re.I))
+        if disposition == "failed" or (disposition == "review_required" and not caveated):
+            failures.append(f"formula_authority_unqualified:{package_id}")
+            continue
+        conditions = [str(c).strip() for c in package_row.get("material_conditions", ()) if str(c).strip()]
+        if conditions and any(c.casefold() not in local_text.casefold() for c in conditions):
+            failures.append(f"formula_material_condition_missing:{package_id}")
+            continue
         block = (
             package.get("markdown_block") if isinstance(package, Mapping)
             else getattr(package, "markdown_block", "")
@@ -1000,6 +1017,9 @@ def paragraph_binding_targets(
             )
         )
         if package is not None:
+            if _formula_package_terminal_disposition(package) != "accepted":
+                # Review/intent formulas cannot supply implementation witnesses.
+                continue
             consumer = str(package.get("consumer_paragraph_id") or "").strip()
             if consumer and paragraph_id and consumer != paragraph_id:
                 package = None
@@ -1346,6 +1366,8 @@ def bind_paragraph_witnesses(
             not in {"", "unknown"}
         )
         if package is None and not has_local_contract:
+            return ""
+        if package is not None and _formula_package_terminal_disposition(package) != "accepted":
             return ""
         values: list[str] = []
         if package is not None:

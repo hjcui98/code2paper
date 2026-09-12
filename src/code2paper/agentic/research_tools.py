@@ -556,6 +556,8 @@ class RecordExplicitCodeGapInput(_ResearchToolInputBase):
     missing_relations: tuple[str, ...] = Field(default_factory=tuple)
     search_complete: bool = False
     scope_exhausted: bool = False
+    resolution_status: Literal["unsupported_with_scoped_evidence", "search_inconclusive", "budget_exhausted"] = "unsupported_with_scoped_evidence"
+    search_receipts: tuple[dict[str, Any], ...] = Field(default_factory=tuple)
 
 
 class CheckObligationCoverageInput(_ResearchToolInputBase):
@@ -2721,22 +2723,24 @@ def record_explicit_code_gap(
     scope_exhausted = bool(
         _arg_value(tool_call, "scope_exhausted", default=False)
     )
+    resolution_status = str(_arg_value(tool_call, "resolution_status", default="unsupported_with_scoped_evidence"))
+    inconclusive = resolution_status in {"search_inconclusive", "budget_exhausted"}
     failures: list[str] = []
     if not search_scope:
         failures.append("gap_search_scope_missing")
-    if not search_complete:
+    if not search_complete and not inconclusive:
         failures.append("gap_search_not_complete")
     if not any(
         name in attempted_tools
         for name in ("search_code", "search_symbols", "find_entrypoints")
     ):
         failures.append("gap_search_strategy_missing_discovery")
-    if not scope_exhausted and not any(
+    if not inconclusive and not scope_exhausted and not any(
         name in attempted_tools
         for name in ("read_symbol", "read_code_span", "build_behavior_subgraph")
     ):
         failures.append("gap_search_strategy_missing_read")
-    if missing_relations and not any(
+    if not inconclusive and missing_relations and not any(
         name in attempted_tools
         for name in (
             "find_references",
@@ -2751,7 +2755,7 @@ def record_explicit_code_gap(
     claim_root = (
         ctx.artifact_root / "research_tool_artifacts" / "authorized_claim_sets"
     )
-    for path in sorted(claim_root.glob("*.json")) if claim_root.is_dir() else ():
+    for path in sorted(claim_root.glob("*.json")) if claim_root.is_dir() and not inconclusive else ():
         claim_set = AtomicClaimSetV3.model_validate_json(
             path.read_text(encoding="utf-8")
         )
@@ -2787,8 +2791,10 @@ def record_explicit_code_gap(
         "attempted_tools": list(attempted_tools),
         "missing_relations": list(missing_relations),
         "termination_reason": termination_reason,
-        "search_complete": True,
-        "scope_exhausted": scope_exhausted,
+        "search_complete": search_complete and not inconclusive,
+        "scope_exhausted": scope_exhausted and not inconclusive,
+        "resolution_status": resolution_status,
+        "search_receipts": list(_arg_value(tool_call, "search_receipts", default=()) or ()),
         "terminal": True,
     }
     existing = ctx.read_artifact("terminal_gaps", obligation_id_ref)
@@ -2928,7 +2934,14 @@ def execute_research_tool(
             tool_call,
             f"tool_call.repo_snapshot_id mismatch: {tool_call.repo_snapshot_id}",
         )
-    return executor(ctx, tool_call)
+    observation = executor(ctx, tool_call)
+    if tool_call.tool_name in {"search_symbols", "search_code", "find_entrypoints"}:
+        receipt = json.dumps({"arguments": dict(tool_call.arguments), "path_scope": list(tool_call.path_scope),
+                              "top_k": tool_call.top_k}, ensure_ascii=False, sort_keys=True)
+        observation = observation.model_copy(update={"diagnostics": observation.diagnostics.model_copy(update={
+            "notes": (*observation.diagnostics.notes, "search_request=" + receipt)
+        })})
+    return observation
 
 
 # ---------------------------------------------------------------------------

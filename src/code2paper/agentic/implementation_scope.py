@@ -88,11 +88,14 @@ def _canonical_symbol_id(value: Any, symbols_by_id: Mapping[str, Any]) -> str:
         if candidate in symbols_by_id:
             return candidate
     # Accept a compact path/name or path-only seed when it uniquely resolves.
+    matches = []
     for symbol_id, symbol in symbols_by_id.items():
         path = str(_attr(symbol, "path", "") or "")
         name = str(_attr(symbol, "qualified_name", "") or "")
         if raw in {path, f"{path}:{name}", f"{path}:{name.split('.')[-1]}"}:
-            return symbol_id
+            matches.append(symbol_id)
+    if len(matches) == 1:
+        return matches[0]
     return raw
 
 
@@ -134,6 +137,7 @@ def infer_implementation_scope(
         )
     )
     intent_tokens = set().union(*(_tokens(item) for item in author_items)) if author_items else set()
+    explicit_entry_ids = entry_ids
 
     graph_nodes = {
         str(_attr(node, "node_id", "") or ""): node
@@ -210,6 +214,10 @@ def infer_implementation_scope(
             best_score = scored[0][0]
             entry_ids = tuple(symbol_id for score, symbol_id in scored if score == best_score)[:3]
 
+    candidate_entry_ids = entry_ids
+    # Ranked names and generic lifecycle roots are navigation hypotheses.
+    # Only an explicitly selected root can authorize target ownership.
+    entry_ids = explicit_entry_ids
     reachable: set[str] = set(entry_ids)
     graph = behavior_graph
     if graph is not None:
@@ -257,9 +265,7 @@ def infer_implementation_scope(
                 continue
         if not roles[symbol_id]:
             overlap = len(_tokens(text) & intent_tokens)
-            if overlap >= 2:
-                roles[symbol_id] = {"target_core"}
-            elif overlap == 1:
+            if overlap >= 1:
                 roles[symbol_id] = {"unknown"}
             else:
                 roles[symbol_id] = {"unknown"}
@@ -283,6 +289,7 @@ def infer_implementation_scope(
             confidence = min(1.0, confidence + 0.15)
     return ImplementationScopeV1(
         target_entry_symbol_ids=entry_ids,
+        candidate_entry_symbol_ids=candidate_entry_ids,
         target_core_symbol_ids=tuple(groups["target_core"]),
         target_dependency_symbol_ids=tuple(groups["target_dependency"]),
         comparand_symbol_ids=tuple(groups["comparand"]),

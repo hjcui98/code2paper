@@ -90,6 +90,7 @@ from code2paper.agentic.method_product_models import (
     build_review_candidates_from_completeness,
 )
 from code2paper.agentic.method_proposition_compiler import compile_method_propositions
+from code2paper.agentic.method_argument_models import MethodSectionPlanV2
 from code2paper.agentic.method_proposition_evidence_provider import (
     build_method_proposition_evidence_judge,
 )
@@ -753,6 +754,7 @@ def build_typed_gaps(
 
     agenda = runtime.agenda
     gaps: list[TypedResearchGapV1] = []
+    observations = getattr(getattr(result, "loop_state", None), "observation_history", ())
     for item in agenda.items:
         if item.status == "explicit_gap":
             requirement = item.gap_requirements[-1] if item.gap_requirements else None
@@ -760,14 +762,14 @@ def build_typed_gaps(
                 requirement.rationale
                 if requirement is not None and requirement.rationale
                 else (
-                    f"Exhaustive search for obligation {item.obligation_id} "
-                    "did not yield sufficient executable evidence."
+                    f"Research for obligation {item.obligation_id} stopped "
+                    "without a recorded negative-evidence certificate."
                 )
             )
             gaps.append(TypedResearchGapV1(
                 gap_id=f"gap:{item.obligation_id}",
                 obligation_id=item.obligation_id,
-                status="explicit_gap",
+                status=("explicit_gap" if requirement is not None and requirement.resolution_status == "unsupported_with_scoped_evidence" else "unresolved"),
                 reason=reason,
                 attempted_tools=(
                     requirement.attempted_tools if requirement is not None else ()
@@ -781,11 +783,11 @@ def build_typed_gaps(
                     if requirement is not None
                     else ()
                 ),
-                stopping_reason="gap_finalizer_accepted",
+                stopping_reason=(requirement.resolution_status if requirement is not None else "search_inconclusive"),
                 trace_refs=(f"agenda:{item.obligation_id}",),
             ))
         elif item.status in {"pending", "in_progress"}:
-            attempted = tuple(dict.fromkeys(item.attempted_actions))
+            attempted = tuple(dict.fromkeys([*item.attempted_actions, *(o.tool_name for o in observations if o.obligation_id == item.obligation_id)]))
             stopping_reason = str(result.termination_reason or "").strip()
             if not attempted:
                 stopping_reason = "never_attempted"
@@ -816,7 +818,7 @@ def build_typed_gaps(
                 trace_refs=(f"agenda:{item.obligation_id}",),
             ))
         elif item.status == "blocked":
-            attempted = tuple(dict.fromkeys(item.attempted_actions))
+            attempted = tuple(dict.fromkeys([*item.attempted_actions, *(o.tool_name for o in observations if o.obligation_id == item.obligation_id)]))
             stopping_reason = str(result.termination_reason or "").strip()
             if not attempted:
                 stopping_reason = "never_attempted"
@@ -904,7 +906,8 @@ def build_product_planning(
     skipped when argument briefs are present.
     """
 
-    intent_graph = runtime.intent_graph
+    from code2paper.agentic.research_agenda_revision import intent_graph_with_research_revisions
+    intent_graph = intent_graph_with_research_revisions(runtime.intent_graph, runtime.agenda)
     repo_snapshot_id = runtime.repo_snapshot.snapshot_id
     project_tree_hash = runtime.repo_snapshot.project_tree_hash
 
@@ -1171,6 +1174,7 @@ def build_product_planning(
         "equations": equations,
         "configurations": configurations,
         "story_spine": story_spine,
+        "research_intent_graph": intent_graph,
         "authoring_projection": authoring_projection,
         "method_evidence": method_evidence,
         "claim_evidence_map": claim_evidence_map,
@@ -1239,6 +1243,8 @@ def _load_terminal_gap_artifacts(
             continue
         obligation_id = str(payload.get("obligation_id") or "").strip()
         gap_id = str(payload.get("gap_id") or "").strip()
+        if payload.get("resolution_status", "unsupported_with_scoped_evidence") != "unsupported_with_scoped_evidence":
+            continue
         if not obligation_id or not gap_id:
             continue
         gaps.append(ExplicitCodeGapV1(
@@ -1331,6 +1337,17 @@ def persist_product_artifacts(
         paths[key] = str(target)
         return str(target)
 
+    from code2paper.agentic.repo_snapshot import read_verified_snapshot_sources
+
+    source_files = read_verified_snapshot_sources(runtime.repo_snapshot)
+    symbol_index = runtime.language_adapter(source_files).index_symbols(
+        repo_snapshot_id=runtime.repo_snapshot.snapshot_id,
+        project_tree_hash=runtime.repo_snapshot.project_tree_hash,
+        files=source_files,
+    )
+    _write("repo_snapshot_v2", runtime.repo_snapshot.model_dump(mode="json"), product=False)
+    _write("symbol_index_v2", symbol_index.model_dump(mode="json"), product=False)
+
     # R3: persist the live behavior graph so facts/claims can be regenerated
     # from frozen research evidence (exact-guard recompilation input).
     _behavior_graph = getattr(
@@ -1345,9 +1362,10 @@ def persist_product_artifacts(
 
     paths["intent_obligation_graph_v2"] = _write(
         "intent_obligation_graph_v2",
-        runtime.intent_graph.model_dump(mode="json"),
+        (planning.get("research_intent_graph") or runtime.intent_graph).model_dump(mode="json"),
         product=False,
     )
+    _write("author_intent_graph_v2", runtime.intent_graph.model_dump(mode="json"), product=False)
     paths["research_agenda_v1"] = _write(
         "research_agenda_v1",
         runtime.agenda.model_dump(mode="json"),
@@ -2265,7 +2283,7 @@ def run_autonomous_method_agent(
     writer_status = "skipped_no_live_llm"
     writer_blocked_reason = ""
     writer_paths: dict[str, str] = {}
-    writer_artifact_paths = _writer_artifact_paths(resolved_out)
+    writer_artifact_paths = _writer_artifact_paths(resolved_out, persisted_paths=paths)
     if write_method_text:
         writer_paths, writer_status, writer_blocked_reason = _run_writer_surface(
             out_root=resolved_out,
@@ -2597,8 +2615,17 @@ def run_autonomous_method_agent(
     )
 
 
-def _writer_artifact_paths(out_root: Path) -> dict[str, str]:
+def _writer_artifact_paths(
+    out_root: Path, *, persisted_paths: dict[str, str] | None = None,
+) -> dict[str, str]:
+    # Current runs use their actual manifest; directory discovery can pick up
+    # artifacts left by an older run and lose newly introduced artifact types.
+    if persisted_paths is not None:
+        return dict(persisted_paths)
     names = (
+        "repo_snapshot_v2",
+        "symbol_index_v2",
+        "method_argument_briefs_v1",
         "intent_obligation_graph_v2",
         "research_agenda_v1",
         "authoring_projection_v1",

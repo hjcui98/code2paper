@@ -547,7 +547,7 @@ class TestDeterministicSupervisorBackend:
         )
 
     def test_backend_compiles_when_candidate_read_already_executed(self) -> None:
-        """A read already executed for another obligation must not be re-proposed.
+        """A read already executed for the same obligation must not be re-proposed.
 
         Policy rejects the exact re-read (identical snapshot bytes), so the
         deterministic supervisor must switch to COMPILE_EVIDENCE when the
@@ -562,13 +562,13 @@ class TestDeterministicSupervisorBackend:
             # fixture); only the exact read bytes are already in the run.
             missing_information=("describe the code-backed aggregation output",),
         )
-        # The read was executed while answering another obligation.
+        # The read was executed while answering this obligation.
         executed = ExecutedToolCallSummaryV1(
             tool_name="read_symbol",
             arguments={"path": "train.py", "symbol": "train", "top_k": 1},
             path_scope=("train.py",),
-            goal="READ_CANDIDATE for obl-0",
-            obligation_id="obl-0",
+            goal="READ_CANDIDATE for obl-1",
+            obligation_id="obl-1",
         )
         # Recent search found the same symbol (so READ_CANDIDATE would be the
         # naive next step).
@@ -694,8 +694,8 @@ class TestDeterministicSupervisorBackend:
             tool_name="read_code_span",
             arguments={"path": "train.py", "start_line": 1, "end_line": 30},
             path_scope=("train.py",),
-            goal="READ_CANDIDATE for obl-0",
-            obligation_id="obl-0",
+            goal="READ_CANDIDATE for obl-1",
+            obligation_id="obl-1",
         )
         search_call = _tool_call(tool_call_id="tc-search", tool_name="search_symbols")
         search_observation = _observation(
@@ -726,8 +726,8 @@ class TestDeterministicSupervisorBackend:
             tool_name="read_symbol",
             arguments={"path": "train.py", "symbol": "train", "top_k": 1},
             path_scope=("train.py",),
-            goal="READ_CANDIDATE for obl-0",
-            obligation_id="obl-0",
+            goal="READ_CANDIDATE for obl-1",
+            obligation_id="obl-1",
         )
         search_call = _tool_call(tool_call_id="tc-search", tool_name="search_symbols")
         search_observation = _observation(
@@ -1223,7 +1223,7 @@ class TestBuildDecisionContext:
                 },
                 path_scope=("src/model/ebcar_dedicated_attention_model.py",),
                 goal="read",
-                obligation_id="obl-0",
+                obligation_id="obl-1",
             ),
         )
         ctx = build_decision_context(

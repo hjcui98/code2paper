@@ -149,7 +149,7 @@ def test_trace_labels_rejected_section_with_body_as_rendered_invalid(
     assert trace.summary["blocked_representation"] == 0
 
 
-def test_content_trace_has_standard_output_name() -> None:
-    assert method_output(Path("/tmp/run"), "method_content_trace_v1").as_posix().endswith(
+def test_content_trace_has_standard_output_name(tmp_path: Path) -> None:
+    assert method_output(tmp_path / "run", "method_content_trace_v1").as_posix().endswith(
         "artifacts/research_product/method_content_trace_v1.json"
     )

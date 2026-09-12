@@ -42,7 +42,13 @@ class EpistemicSafetyMetricsV1(BaseModel):
     unsupported_positive_claims: int = 0
     source_integrity: bool = True
     final_text_validation_status: Literal["pending", "passed", "failed", "error"] = "pending"
-    support_precision: float = 1.0
+    support_precision: float | None = None
+    support_precision_status: Literal["measured", "not_measured", "not_applicable", "invalid"] = "not_measured"
+    checked_factual_claims: int | None = None
+    supported_claims: int | None = None
+    caveated_claims: int | None = None
+    verification_mode: str = ""
+    validation_text_digest: str = ""
     hard_gate_passed: bool
 
 
@@ -702,6 +708,38 @@ def find_code_trace_prose_sections(
     return tuple(flagged)
 
 
+def validation_support_metrics(
+    report: Mapping[str, Any] | None, *, expected_text_digest: str,
+) -> dict[str, Any]:
+    """One count/digest contract for Writer quality and runner reconciliation."""
+    fields: dict[str, Any] = {
+        "support_precision": None, "support_precision_status": "not_measured",
+        "checked_factual_claims": None, "supported_claims": None, "caveated_claims": None,
+        "verification_mode": "", "validation_text_digest": "",
+    }
+    if report is None:
+        return fields
+    count_keys = ("checked_factual_claims", "supported_claims", "caveated_claims",
+                  "unsupported_claims", "unverified_claims")
+    counts = [report.get(key) for key in count_keys]
+    valid_counts = all(type(value) is int and value >= 0 for value in counts)
+    valid_counts = valid_counts and counts[0] == sum(counts[1:])
+    valid_identity = bool(expected_text_digest) and report.get("input_text_digest") == expected_text_digest
+    if not (valid_counts and valid_identity and report.get("status") in {"passed", "failed", "blocked"}):
+        fields["support_precision_status"] = "invalid"
+        return fields
+    checked, supported, caveated, _, _ = counts
+    fields.update(
+        support_precision=(supported / checked if checked and report["status"] != "blocked" else None),
+        support_precision_status=("not_measured" if report["status"] == "blocked"
+                                  else "measured" if checked else "not_applicable"),
+        checked_factual_claims=checked, supported_claims=supported, caveated_claims=caveated,
+        verification_mode=str(report.get("verification_mode") or ""),
+        validation_text_digest=str(report["input_text_digest"]),
+    )
+    return fields
+
+
 def evaluate_publication_method_quality(
     *,
     final_text: str,
@@ -727,6 +765,7 @@ def evaluate_publication_method_quality(
     facts: Any | None = None,
     formula_packages_by_section: Mapping[str, Any] | None = None,
     concept_audit_override_keys: frozenset[str] = frozenset(),
+    text_validation_report: Mapping[str, Any] | None = None,
 ) -> PublicationQualityReportV1:
     """Evaluate safety and writing quality without collapsing them to one score.
 
@@ -846,13 +885,32 @@ def evaluate_publication_method_quality(
             claim_id=proposition_id,
         ))
 
+    from code2paper.agentic.final_text_claims import text_digest
+
+    precision_fields = validation_support_metrics(text_validation_report, expected_text_digest=text_digest(final_text))
+    if text_validation_report is not None:
+        report = text_validation_report
+        if precision_fields["support_precision_status"] == "invalid":
+            final_text_validation_status = "error"
+            issues.append(_issue(
+                "safety-validation-report-invalid", "epistemic_safety", "document",
+                "validation_report_identity_or_counts_invalid",
+                "Validation counts and text digest must describe this exact final text.",
+            ))
+        else:
+            unsupported_positive_claims = max(
+                unsupported_positive_claims, report["unsupported_claims"] + report["unverified_claims"],
+            )
+            if report["status"] != "passed":
+                final_text_validation_status = "failed" if report["status"] == "failed" else "error"
+
     safety = EpistemicSafetyMetricsV1(
         authorship_gate_passed=ledger.hard_gate_passed,
         binding_gate_passed=not binding_failures,
         unsupported_positive_claims=max(0, unsupported_positive_claims),
         source_integrity=source_integrity,
         final_text_validation_status=final_text_validation_status,
-        support_precision=1.0 if unsupported_positive_claims == 0 else 0.0,
+        **precision_fields,
         hard_gate_passed=(
             ledger.hard_gate_passed
             and not binding_failures

@@ -108,6 +108,7 @@ def build_mechanism_context_slices(
     *,
     max_supporting_per_slice: int = MAX_SUPPORTING_DETAILS_PER_SLICE,
     max_slices: int = MAX_MECHANISM_SLICES,
+    max_page_tokens: int = MAX_EXACT_EXCERPT_TOKENS_PER_SLICE,
 ) -> tuple[MechanismContextSliceV1, ...]:
     """Divide MechanismContextView into ordered slices with all core details preserved."""
     if not isinstance(view, MechanismContextViewV1):
@@ -118,17 +119,22 @@ def build_mechanism_context_slices(
     supporting_details = [d for d in all_details if d.get("importance") != "core"]
     cap = max(1, int(max_supporting_per_slice))
 
-    # Slice zero is the canonical core view.  Supporting details are chunked,
-    # but no detail or evidence is silently discarded when the nominal slice
-    # budget is reached: the final slice becomes an explicitly marked bounded
-    # remainder.  This preserves the lossless closure while making pressure
-    # visible to the caller.
-    detail_chunks: list[list[dict[str, Any]]] = [list(core_details)]
-    detail_chunks[0].extend(supporting_details[:cap])
-    remaining = supporting_details[cap:]
-    while remaining:
-        detail_chunks.append(remaining[:cap])
-        remaining = remaining[cap:]
+    # Paginate complete records. No detail or evidence is silently discarded
+    # when the nominal page budget is reached; resource pressure is explicit.
+    def pack(rows, count_limit):
+        chunks, current, used = [], [], 0
+        for row in rows:
+            size = len(canonical_json_bytes(row))
+            if current and (used + size > max_page_tokens or len(current) >= count_limit):
+                chunks.append(current)
+                current, used = [], 0
+            current.append(row)
+            used += size
+        return [*chunks, current] if current else chunks or [[]]
+
+    # Core memberships survive on every page, but core records are paginated
+    # too. Oversized atomic records remain intact and are explicitly flagged.
+    detail_chunks = pack([*core_details, *supporting_details], cap)
 
     evidence = [
         item for item in view.exact_evidence
@@ -140,7 +146,8 @@ def build_mechanism_context_slices(
     # One slice per evidence page is required even when all details fit in
     # slice zero. Evidence is lossless and therefore cannot be dropped
     # because there are fewer detail chunks.
-    evidence_chunk_count = max(1, (len(evidence) + 9) // 10)
+    evidence_chunks = pack(evidence, 10)
+    evidence_chunk_count = len(evidence_chunks)
     target_chunk_count = max(len(detail_chunks), evidence_chunk_count)
     while len(detail_chunks) < target_chunk_count:
         detail_chunks.append([])
@@ -209,17 +216,9 @@ def build_mechanism_context_slices(
         operation_ids_by_chunk[-1].extend(unassigned_operation_ids)
 
     slices: list[MechanismContextSliceV1] = []
-    evidence_chunk_size = 10
     for slice_idx, (chunk, detail_ids) in enumerate(zip(detail_chunks, detail_ids_by_chunk)):
         selected_ids = set(detail_ids)
-        selected_evidence = evidence[
-            slice_idx * evidence_chunk_size : (slice_idx + 1) * evidence_chunk_size
-        ]
-        if slice_idx == 0 and len(evidence) > evidence_chunk_size:
-            # Core evidence is never omitted merely because the first slice
-            # contains many core details.  Subsequent slices still carry the
-            # remaining exact evidence records.
-            selected_evidence = evidence[:evidence_chunk_size]
+        selected_evidence = evidence_chunks[slice_idx] if slice_idx < len(evidence_chunks) else []
         selected_edges = [
             edge for edge in all_edges
             if str(edge.get("source_detail_id") or "") in selected_ids
@@ -253,6 +252,9 @@ def build_mechanism_context_slices(
             "core_detail_ids": list(all_core_ids),
             "budget_exhausted": len(detail_chunks) > max_slices and slice_idx >= max_slices - 1,
         }
+        payload["page_token_limit"] = max_page_tokens
+        payload["input_token_upper_bound"] = len(canonical_json_bytes(payload)) + 128
+        payload["budget_exhausted"] = bool(payload["budget_exhausted"] or payload["input_token_upper_bound"] > max_page_tokens)
         slices.append(  # type: ignore[arg-type]
             MechanismContextSliceV1(
                 mechanism_id=view.mechanism_id,

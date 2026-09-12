@@ -546,18 +546,16 @@ def _no_duplicate_no_gain(
     not contain the turn index, so an exact rerun remains visible across
     turns and can be rejected after no gain.
 
-    ``executed_read_signatures`` additionally carries the normalized
+    ``executed_read_signatures`` is retained for checkpoint compatibility and carries the normalized
     content-read keys (``read_symbol`` path+symbol, ``read_code_span``
     path+span) already executed in this run, across obligations.  Reading
     the same exact source span returns the same bytes inside one repo
-    snapshot, so a cross-obligation re-read produces no new information;
-    the Manager must instead trace a caller/data/control/config relation
-    or read a different span.
+    snapshot. A different obligation can still extract new semantics from
+    these bytes, so only obligation-specific no-gain signatures are blocked.
     """
 
     no_progress_set = set(no_progress_tool_call_ids)
     recent_set = set(recent_tool_call_ids)
-    executed_read_set = set(executed_read_signatures)
     for call in decision.selected_tool_calls:
         if call.tool_call_id in no_progress_set:
             rejections.append(
@@ -568,10 +566,9 @@ def _no_duplicate_no_gain(
                     tool_call_id=call.tool_call_id,
                 )
             )
-        # Also reject exact re-runs of the *same* call within a single run
-        # (different turn, same id).  The supervisor should always advance
-        # the turn_index, producing a different id.
-        if call.tool_call_id in recent_set:
+        # A source reread may restore context or answer a new hypothesis.
+        # Once that reread makes no gain, the rule above blocks the loop.
+        if call.tool_call_id in recent_set and call.tool_name not in {"read_symbol", "read_code_span"}:
             rejections.append(
                 PolicyRejectionV1(
                     rule="duplicate_no_gain_call",
@@ -580,19 +577,10 @@ def _no_duplicate_no_gain(
                     tool_call_id=call.tool_call_id,
                 )
             )
-        read_signature = _content_read_signature(call)
-        if read_signature and read_signature in executed_read_set:
-            rejections.append(
-                PolicyRejectionV1(
-                    rule="duplicate_no_gain_call",
-                    reason=(
-                        "content read already executed for another "
-                        "obligation in this snapshot"
-                    ),
-                    detail=f"read_signature={read_signature}",
-                    tool_call_id=call.tool_call_id,
-                )
-            )
+        # Source identity is independent of research-question identity.
+        # An earlier obligation may have examined the same bytes for a
+        # different relation. Only the obligation-scoped call/no-gain
+        # identities above can establish a duplicate analysis attempt.
 
 
 def _content_read_signature(call: ResearchToolCallV1) -> str:

@@ -42,6 +42,8 @@ def validate_latex_smoke(latex: str) -> dict:
                 [engine, "-interaction=nonstopmode", "-halt-on-error", tex_path.name],
                 cwd=tmpdir,
                 text=True,
+                encoding="utf-8",
+                errors="replace",
                 stdout=subprocess.PIPE,
                 stderr=subprocess.STDOUT,
                 timeout=20,

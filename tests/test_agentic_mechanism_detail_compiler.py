@@ -62,7 +62,11 @@ def test_annotate_mechanism_paper_details_terminal_coverage() -> None:
     assert closure.source_operation_terminal_coverage == 1.0
     assert len(closure.operation_dispositions) == 2
     for disp in closure.operation_dispositions:
-        assert disp.disposition in ("absorbed_by_detail", "classified_supporting")
+        if disp.operation_id.endswith("2"):
+            assert disp.disposition == "explicitly_unresolved"
+            assert "unresolved_detail" in disp.reason_code
+        else:
+            assert disp.disposition == "absorbed_by_detail"
 
     # Check detail 1 has witness atoms for operation, operand, output, and condition
     d1 = ctx.details[0]
@@ -114,5 +118,6 @@ def test_compile_mechanism_contexts_end_to_end() -> None:
     assert len(cset.contexts) == 1
     ctx = cset.contexts[0]
     assert ctx.mechanism_id == "mech_ebcar_attention"
-    assert ctx.importance == "core"
+    assert ctx.importance == "supporting"
+    assert all(d.active_path_status == "unknown" for d in ctx.details)
     assert ctx.source_context_digest.startswith("sha256:")

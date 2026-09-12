@@ -106,6 +106,10 @@ class LLMClient:
         return response
 
     def _complete(self, request: LLMRequest, *, dry_run: bool = False) -> LLMResponse:
+        from code2paper.llm.input_budget import request_budget_failure
+        budget_failure = request_budget_failure(self.config, request)
+        if budget_failure:
+            return LLMResponse(text="", response_hash=hash_text(""), blocked_reason=budget_failure)
         if dry_run:
             return LLMResponse(
                 text="",

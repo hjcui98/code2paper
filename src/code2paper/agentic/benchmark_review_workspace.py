@@ -415,7 +415,7 @@ def materialize_review_workspace(queue_path: str | Path, out_root: str | Path) -
         context_path = contexts_root / f"{stem}.md"
         template = entry["review_template"]
         atomic_write_json(review_path, template)
-        context_path.write_text(_review_context(entry), encoding="utf-8")
+        context_path.write_text(_review_context(entry), encoding="utf-8", newline="\n")
         manifest_entries.append({
             "identity": list(identity),
             "review_path": str(review_path.relative_to(root)),

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import sys
 from pathlib import Path
 
 from code2paper.author_questionnaire import load_author_markers
@@ -18,8 +19,14 @@ from code2paper.validators.fidelity_validator import validate_method_fidelity_fr
 
 
 def main(argv: list[str] | None = None) -> int:
+    argv = list(sys.argv[1:] if argv is None else argv)
+    if argv[:1] == ["method-agent"]:
+        from code2paper.cli.main import main as product_main
+
+        return product_main(argv)
     parser = argparse.ArgumentParser(prog="code2paper")
     subparsers = parser.add_subparsers(dest="command", required=True)
+    subparsers.add_parser("method-agent", help="Autonomous Method Agent product path.")
 
     run_parser = subparsers.add_parser("run")
     run_parser.add_argument("--project", dest="project_root", required=True)

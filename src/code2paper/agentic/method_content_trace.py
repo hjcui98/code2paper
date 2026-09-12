@@ -862,6 +862,8 @@ class MechanismInformationFunnelV1(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
 
     repo_snapshot_id: str
+    # Historical field name: counts operations in the closure, not the
+    # independent reference population used for mechanism_discovery_recall.
     total_research_operations: int = 0
     total_context_details: int = 0
     core_context_details: int = 0
@@ -881,7 +883,11 @@ class MechanismInformationFunnelV1(BaseModel):
     writer_delivered_details: int = 0
     core_delivery_loss_rate: float = 0.0
     context_to_writer_core_loss_rate: float = 0.0
-    mechanism_discovery_recall: float = 0.0
+    mechanism_discovery_recall: float | None = None
+    discovery_metric_status: Literal["measured", "not_measured", "not_applicable"] = "not_measured"
+    expected_research_operations: int | None = None
+    discovered_expected_operations: int | None = None
+    closure_retention: float | None = None
     formula_obligation_recall: float = 0.0
     condition_recall: float = 0.0
     interface_recall: float = 0.0
@@ -916,7 +922,7 @@ class MechanismInformationFunnelV1(BaseModel):
     writer_input_tokens: int = 0
     shared_payload_tokens: int = 0
 
-    funnel_survival_rates: dict[str, float] = Field(default_factory=dict)
+    funnel_survival_rates: dict[str, float | None] = Field(default_factory=dict)
     metrics: dict[str, Any] = Field(default_factory=dict)
     content_digest: str = ""
 
@@ -970,7 +976,8 @@ def build_method_content_trace_v2(
     writer_inputs: Sequence[Any] = (),
     writer_traces: Sequence[Any] = (),
     writer_outputs: Mapping[str, Any] | Sequence[Any] | None = None,
-    research_discovered_operation_ids: Mapping[str, Sequence[str]] | Sequence[str] = (),
+    research_discovered_operation_ids: Mapping[str, Sequence[str]] | Sequence[str] | None = None,
+    expected_operation_ids: Mapping[str, Sequence[str]] | None = None,
     callback_artifacts: Sequence[Any] = (),
 ) -> MethodContentTraceV2:
     """Build V2 trace and information funnel from unified mechanism contexts."""
@@ -1269,7 +1276,8 @@ def build_method_content_trace_v2(
     writer_omitted = 0
     budget_exhausted = 0
     invalid_details = 0
-    research_discovered_operations = 0
+    research_discovered_operations = sum(len(values) for values in discovered_by_mechanism.values())
+    retained_discovered_operations = 0
     closed_operations = 0
     projected_details = 0
     formalizer_delivered_details = 0
@@ -1299,9 +1307,12 @@ def build_method_content_trace_v2(
             closed_operations += len(ops) if closure_dispositions else 0
             discovered_operations = discovered_by_mechanism.get(
                 context_mechanism_id,
-                {str(getattr(op, "operation_id", "")) for op in ops},
+                # Closure membership proves this row was observed, but is
+                # not an independent denominator for discovery recall.
+                {str(getattr(op, "operation_id", "")) for op in ops}
+                if research_discovered_operation_ids is None else set(),
             )
-            research_discovered_operations += sum(
+            retained_discovered_operations += sum(
                 1 for op in ops
                 if str(getattr(op, "operation_id", "")) in discovered_operations
             )
@@ -1888,9 +1899,29 @@ def build_method_content_trace_v2(
     def _ratio(numerator: int, denominator: int) -> float:
         return round(numerator / denominator, 4) if denominator else 1.0
 
-    survival_rates: dict[str, float] = {
-        "research_to_closure": _ratio(closed_operations, total_ops),
-        "discovery_recall": _ratio(research_discovered_operations, total_ops),
+    # Discovery needs a reference population independent of the closure.
+    # Missing evidence is unknown; an explicitly empty reference is N/A.
+    discovery_recall = None
+    discovery_status = "not_measured"
+    expected_count = None
+    discovered_expected_count = None
+    if expected_operation_ids is not None:
+        expected = {str(mid): set(_ids(values)) for mid, values in expected_operation_ids.items()}
+        expected_count = sum(len(values) for values in expected.values())
+        if research_discovered_operation_ids is not None:
+            discovered_expected_count = sum(
+                len(values & discovered_by_mechanism.get(mid, set()))
+                for mid, values in expected.items()
+            )
+            discovery_status = "measured" if expected_count else "not_applicable"
+            discovery_recall = _ratio(discovered_expected_count, expected_count) if expected_count else None
+    closure_retention = (
+        _ratio(retained_discovered_operations, research_discovered_operations)
+        if research_discovered_operations else None
+    )
+    survival_rates: dict[str, float | None] = {
+        "research_to_closure": closure_retention,
+        "discovery_recall": discovery_recall,
         "context_to_annotation": _ratio(annotated_details, total_details),
         "annotation_to_projection": _ratio(projected_details, annotated_details),
         "projection_to_formalizer": _ratio(formalizer_delivered_details, projected_details),
@@ -1969,7 +2000,11 @@ def build_method_content_trace_v2(
         writer_delivered_details=writer_delivered_details,
         core_delivery_loss_rate=core_delivery_loss_rate,
         context_to_writer_core_loss_rate=core_delivery_loss_rate,
-        mechanism_discovery_recall=_ratio(research_discovered_operations, total_ops),
+        mechanism_discovery_recall=discovery_recall,
+        discovery_metric_status=discovery_status,
+        expected_research_operations=expected_count,
+        discovered_expected_operations=discovered_expected_count,
+        closure_retention=closure_retention,
         formula_obligation_recall=round(formula_obligation_recall, 4),
         condition_recall=_ratio(condition_rendered, condition_total),
         interface_recall=_ratio(interface_rendered, interface_total),
@@ -2044,7 +2079,8 @@ def write_method_content_trace_v2(
     writer_inputs: Sequence[Any] = (),
     writer_traces: Sequence[Any] = (),
     writer_outputs: Mapping[str, Any] | Sequence[Any] | None = None,
-    research_discovered_operation_ids: Mapping[str, Sequence[str]] | Sequence[str] = (),
+    research_discovered_operation_ids: Mapping[str, Sequence[str]] | Sequence[str] | None = None,
+    expected_operation_ids: Mapping[str, Sequence[str]] | None = None,
     callback_artifacts: Sequence[Any] = (),
 ) -> MethodContentTraceV2:
     """Build and write the V2 trace at ``path``."""
@@ -2060,6 +2096,7 @@ def write_method_content_trace_v2(
         writer_traces=writer_traces,
         writer_outputs=writer_outputs,
         research_discovered_operation_ids=research_discovered_operation_ids,
+        expected_operation_ids=expected_operation_ids,
         callback_artifacts=callback_artifacts,
     )
     target = Path(path)

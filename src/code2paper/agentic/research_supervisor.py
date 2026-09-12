@@ -1126,6 +1126,8 @@ class DeterministicSupervisorBackend:
             return False
         candidate_line = self._candidate_symbol_line(context)
         for summary in context.executed_tool_calls:
+            if summary.obligation_id and summary.obligation_id != context.active_obligation.obligation_id:
+                continue
             if summary.tool_name not in {"read_symbol", "read_code_span"}:
                 continue
             arguments = summary.arguments or {}
@@ -1233,6 +1235,8 @@ class DeterministicSupervisorBackend:
             path_scope=proposed.path_scope,
         )
         for summary in context.executed_tool_calls:
+            if summary.obligation_id and summary.obligation_id != context.active_obligation.obligation_id:
+                continue
             if summary.tool_name != proposed.tool_name:
                 continue
             if summary.obligation_id and summary.obligation_id != obligation_id:
@@ -1615,7 +1619,7 @@ def build_decision_context(
                         line=None,
                     )
                     for summary in executed_tool_calls
-                    if summary.tool_name in {"read_symbol", "read_code_span"}
+                    if summary.obligation_id == active_obligation_id and summary.tool_name in {"read_symbol", "read_code_span"}
                 )
                 if not read_already:
                     kept_symbols.append(candidate)
@@ -1630,7 +1634,7 @@ def build_decision_context(
                     line=cand_line,
                 )
                 for summary in executed_tool_calls
-                if summary.tool_name in {"read_symbol", "read_code_span"}
+                if summary.obligation_id == active_obligation_id and summary.tool_name in {"read_symbol", "read_code_span"}
             )
             if not read_already:
                 kept_symbols.append(candidate)

@@ -207,6 +207,19 @@ def _executed_read_signatures(loop: "ResearchLoopState") -> tuple[str, ...]:
     return tuple(signatures)
 
 
+def _research_memory_observations(loop: "ResearchLoopState", obligation_id: str) -> tuple[ResearchObservationV1, ...]:
+    """Recall question-local notes and prior exact reads after an obligation switch.
+
+    These are projections of persisted observations, never new fact authority.
+    Full observations remain in the checkpoint; calls may reread omitted spans.
+    """
+    history = loop.observation_history or loop.recent_observations
+    local = [item for item in history if item.obligation_id == obligation_id][-8:]
+    prior = [item for item in history if item.obligation_id != obligation_id
+             and (item.notebook.code_excerpt or item.exact_span_ids)][-6:]
+    return tuple([*prior, *local])
+
+
 def _store_evidence_sidecar(
     loop: "ResearchLoopState",
     payload: dict[str, Any],
@@ -701,6 +714,8 @@ def _refresh_acquisition_ledger(
     # remain unknown/audit-only.
     if loop.implementation_scope_symbols:
         entry_ids = loop.implementation_scope.target_entry_symbol_ids
+        from code2paper.agentic.research_agenda_revision import selected_entry_roots
+        entry_ids = tuple(dict.fromkeys((*entry_ids, *selected_entry_roots(loop.runtime.agenda, loop.behavior_graph))))
         loop.implementation_scope = infer_implementation_scope(
             loop.implementation_scope_symbols,
             author_texts=tuple(
@@ -930,7 +945,7 @@ class ResearchLoopDriver:
                 runtime=runtime,
                 per_obligation_budgets=loop.per_obligation_budgets,
                 active_issue=loop.active_issue,
-                recent_observations=tuple(loop.recent_observations[-5:]),
+                recent_observations=_research_memory_observations(loop, active_obligation_id),
                 no_progress_counter=loop.gain_tracker.no_progress_counter(active_obligation_id),
                 no_progress_history=loop.gain_tracker.gain_history(active_obligation_id),
                 recent_tool_call_ids=tuple(loop.recent_tool_call_ids),
@@ -1478,7 +1493,7 @@ def _ctx_supervisor(
         runtime=runtime,
         per_obligation_budgets=loop.per_obligation_budgets,
         active_issue=loop.active_issue,
-        recent_observations=tuple(loop.recent_observations[-5:]),
+        recent_observations=_research_memory_observations(loop, active_obligation_id),
         no_progress_counter=loop.gain_tracker.no_progress_counter(active_obligation_id),
         no_progress_history=loop.gain_tracker.gain_history(active_obligation_id),
         recent_tool_call_ids=tuple(loop.recent_tool_call_ids),

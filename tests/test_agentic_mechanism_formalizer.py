@@ -1,6 +1,9 @@
 from __future__ import annotations
 
+import json
 import pytest
+from code2paper.llm.client import LLMRequest, LLMResponse
+from code2paper.schemas import LLMConfig
 from code2paper.agentic.formalization_agent import (
     MechanismFormulaObligationV1,
     MechanismFormulaPackageV2,
@@ -159,3 +162,47 @@ def test_run_mechanism_formalizer_no_cross_mechanism_fallback() -> None:
     assert len(pkgs) == 1
     assert trace["deterministic_packages"] == 1
     assert trace["mechanism_id"] == "mech_infonce"
+
+
+@pytest.mark.parametrize("blocked_reason,body", [
+    ("", json.dumps({
+        "latex": r"loss = \operatorname{compute_loss}(logits, labels)",
+        "prose_explanation": "The objective compares predictions with labels.",
+        "symbol_definitions": [["logits", "model scores"], ["labels", "targets"], ["loss", "objective"]],
+        "material_conditions": [], "assumptions": [],
+    })),
+    ("budget_exhausted", '{"latex":"loss = logits"}'),
+    ("", "not a formula response"),
+])
+def test_formalizer_uses_client_contract_without_operation_fallback(blocked_reason, body) -> None:
+    context = _make_context()
+    obligations = compile_mechanism_formula_obligations(context, author_formula_expectations=("loss",))
+    calls = []
+
+    def caller(config: LLMConfig, request: LLMRequest) -> LLMResponse:
+        calls.append(request)
+        assert request.prompt_template_id
+        assert request.input_payload["mechanism_id"] == context.mechanism_id
+        assert request.input_payload["shared_payload"] == "exact shared payload"
+        assert request.input_payload["obligation"]["obligation_id"] == obligations[0].obligation_id
+        return LLMResponse(text=body, response_hash="sha256:test", blocked_reason=blocked_reason)
+
+    packages, trace = run_mechanism_formalizer(
+        context=context, obligations=obligations,
+        shared_payload="exact shared payload", shared_payload_digest="sha256:shared",
+        llm_config=LLMConfig(provider="openai", model="test", cache=False), caller=caller,
+        allow_deterministic_operation_fallback=False,
+    )
+    assert len(calls) == 1, trace["failures"]
+    assert trace["llm_call_made"] is True
+    assert trace["deterministic_packages"] == 0
+    if blocked_reason:
+        assert packages == ()
+        assert any("budget_exhausted" in reason for reason in trace["failures"])
+    elif body.startswith("not"):
+        assert packages == ()
+        assert trace["failures"]
+    else:
+        assert len(packages) == 1, trace["failures"]
+        assert trace["llm_packages"] == 1
+        assert packages[0].bound_operation_ids == ("op:loss",)

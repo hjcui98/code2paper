@@ -5,16 +5,17 @@ from pathlib import Path
 import shutil
 import tempfile
 import uuid
+import os
 
 
 ROOT = Path(__file__).resolve().parents[1]
-TEMP_ROOT = ROOT / ".tmp" / "test_workspaces"
+TEMP_ROOT = ROOT.parent / ".tw" if os.name == "nt" else ROOT / ".tmp" / "test_workspaces"
 
 
 @contextmanager
 def workspace_tempdir():
     base_root = _resolve_temp_root()
-    path = base_root / f"tmp-{uuid.uuid4().hex}"
+    path = base_root / f"tmp-{uuid.uuid4().hex[:12]}"
     path.mkdir(parents=True, exist_ok=False)
     try:
         yield str(path)

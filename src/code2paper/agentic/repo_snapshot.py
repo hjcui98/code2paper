@@ -95,6 +95,32 @@ def snapshot_is_current(snapshot: RepoSnapshot) -> bool:
     return build_repo_snapshot(snapshot.project_root).project_tree_hash == snapshot.project_tree_hash
 
 
+def read_verified_snapshot_sources(snapshot: RepoSnapshot) -> dict[str, str]:
+    """Materialize text from the frozen identity, rejecting changed source bytes."""
+    tree_hash = _digest_json([item.model_dump(mode="json") for item in snapshot.included_files])
+    if (tree_hash != snapshot.project_tree_hash
+            or snapshot.snapshot_id != "repo:" + tree_hash.removeprefix("sha256:")):
+        raise ValueError("repository_snapshot_identity_invalid")
+    if not snapshot_is_current(snapshot):
+        raise ValueError("repository_source_drift")
+    root = Path(snapshot.project_root).resolve()
+    sources: dict[str, str] = {}
+    for item in snapshot.included_files:
+        if item.kind != "file":
+            continue
+        path = (root / item.path).resolve()
+        if not path.is_relative_to(root):
+            raise ValueError(f"repository_source_outside_snapshot:{item.path}")
+        data = path.read_bytes()
+        if _digest_bytes(data) != item.content_digest:
+            raise ValueError(f"repository_source_drift:{item.path}")
+        try:
+            sources[item.path] = data.decode("utf-8")
+        except UnicodeError:
+            continue  # Binary assets are verified but cannot supply source text.
+    return sources
+
+
 def _iter_snapshot_paths(root: Path):
     for current, dirnames, filenames in os.walk(root, topdown=True, followlinks=False):
         current_path = Path(current)

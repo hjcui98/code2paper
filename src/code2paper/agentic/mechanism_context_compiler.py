@@ -1870,60 +1870,24 @@ class _UnionFind:
 def _operation_clusters(
     closure: MechanismEvidenceClosureV1,
 ) -> tuple[tuple[EvidenceOperationV1, ...], ...]:
-    """Cluster operations by explicit source-level producer/consumer links.
-
-    A paper detail is allowed to span several operations, but only when the
-    closure provides a concrete reason for the grouping: a shared relation or
-    fact, a common source statement, a producer result consumed by another
-    operation, or an explicitly shared guard.  This keeps unrelated operations
-    separate without reintroducing positional ``first N`` compression.
-    """
+    """Group co-located instances of one operation; keep dependencies as edges."""
 
     operations = tuple(closure.operation_nodes)
     if not operations:
         return ()
     by_id = {op.operation_id: op for op in operations}
     uf = _UnionFind(by_id)
-    relation_to_ops: dict[str, list[str]] = defaultdict(list)
-    for op in operations:
-        for relation_id in op.relation_ids:
-            relation_to_ops[relation_id].append(op.operation_id)
-    for operation_ids in relation_to_ops.values():
-        unique = list(dict.fromkeys(operation_ids))
-        for operation_id in unique[1:]:
-            uf.union(unique[0], operation_id)
-
-    def values(operation: EvidenceOperationV1) -> tuple[set[str], set[str]]:
-        operands = {
-            str(value).strip().casefold()
-            for value in operation.operands
-            if str(value).strip()
-        }
-        results = {
-            str(operation.result).strip().casefold()
-        } if str(operation.result).strip() else set()
-        return operands, results
-
     for index, left in enumerate(operations):
-        left_operands, left_results = values(left)
-        left_facts = set(left.source_fact_ids)
         for right in operations[index + 1:]:
-            right_operands, right_results = values(right)
-            right_facts = set(right.source_fact_ids)
             same_span = bool(
                 left.source_span_id
                 and right.source_span_id
                 and left.source_span_id == right.source_span_id
             )
-            producer_consumer = bool(
-                left_results.intersection(right_operands)
-                or right_results.intersection(left_operands)
-            )
-            shared_fact = bool(left_facts.intersection(right_facts))
-            shared_guard = bool(
-                left.guard and right.guard and left.guard.strip() == right.guard.strip()
-            )
-            if same_span or producer_consumer or shared_fact or shared_guard:
+            # A shared function/guard/fact and data dependency are navigation
+            # links, not a single scientific statement. Keep dependencies in
+            # the closure; only co-located operations form one detail.
+            if same_span and left.predicate == right.predicate:
                 uf.union(left.operation_id, right.operation_id)
     groups: dict[str, list[EvidenceOperationV1]] = defaultdict(list)
     for operation in operations:
@@ -1950,9 +1914,7 @@ def _detail_role(
         return "branch" if "BRANCH" in predicates else "condition"
     if predicates.intersection({"CONFIGURED_BY", "LOAD"}):
         return "configuration"
-    if predicates.intersection({"RETURN", "WRITE"}) or (
-        cluster_index == total - 1 and any(op.result for op in operations)
-    ):
+    if predicates.intersection({"RETURN", "WRITE"}):
         return "output"
     if cluster_index == 0 and any(not op.operands for op in operations):
         return "input"
@@ -2333,9 +2295,10 @@ def annotate_mechanism_paper_details(
                 operation.guard for operation in cluster if operation.guard
             ))
             semantic_parts = [
-                ", ".join(predicates) or "unresolved operation",
-                f"inputs {', '.join(operands)}" if operands else "",
-                f"outputs {', '.join(results)}" if results else "",
+                (f"Compute {operation.result or 'an intermediate value'} using {operation.predicate}"
+                 + (f" on {', '.join(operation.operands)}" if operation.operands else "")
+                 + (f" when {operation.guard}" if operation.guard else ""))
+                for operation in cluster
             ]
             claim_kind: ClaimKind = (
                 "formalization"

@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import json
+import hashlib
+from pathlib import Path
 import os
 import tempfile
 import unittest
@@ -312,7 +314,7 @@ class LLMRuntimeTests(unittest.TestCase):
         self.assertEqual(trace["capability_profile"]["inference_mode"], "mtp")
         self.assertEqual(
             trace["capability_profile_source_digest"],
-            "sha256:1dce0d3e1e07a6dda065309cdade03907f414187b97e3a401fb6038b737af3a7",
+            "sha256:" + hashlib.sha256(Path(profile_path).read_bytes()).hexdigest(),
         )
 
     def test_cache_binds_prompt_and_capability_and_preserves_response_metadata(self) -> None:

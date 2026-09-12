@@ -31,7 +31,7 @@ class FineGrainedToolContract(BaseModel):
 def atomic_write_bytes(path: str | Path, data: bytes) -> Path:
     output = Path(path)
     output.parent.mkdir(parents=True, exist_ok=True)
-    descriptor, temporary = tempfile.mkstemp(prefix=f".{output.name}.", suffix=".tmp", dir=output.parent)
+    descriptor, temporary = tempfile.mkstemp(prefix=".write-", suffix=".tmp", dir=output.parent)
     try:
         with os.fdopen(descriptor, "wb") as handle:
             handle.write(data)

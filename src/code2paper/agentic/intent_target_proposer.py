@@ -125,6 +125,7 @@ class ObligationTargetProposalV1(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     obligation_id: str
+    revision_reason: str = Field(default="", max_length=800)
     targets: list[IntentTargetProposalV1] = Field(
         default_factory=list,
         max_length=_MAX_TARGETS_PER_OBLIGATION,
@@ -788,7 +789,7 @@ def _apply_proposal(
                 )
             missing_predicates = sorted(original_predicates - proposed_predicates)
             missing_relations = sorted(original_relations - proposed_relations)
-            if missing_predicates or missing_relations:
+            if (missing_predicates or missing_relations) and not item.revision_reason.strip():
                 detail = ",".join([
                     *(f"predicate={value}" for value in missing_predicates),
                     *(f"relation={value}" for value in missing_relations),
@@ -828,7 +829,12 @@ def _apply_proposal(
         enriched_obligation_count=enriched_count,
         original_graph_digest=graph.content_digest,
         enriched_graph_digest=enriched.content_digest,
-        response_metadata=metadata or {},
+        response_metadata={**(metadata or {}), "hypothesis_revisions": [
+            {"obligation_id": item.obligation_id, "reason": item.revision_reason,
+             "before": [t.model_dump(mode="json") for t in eligible_by_id[item.obligation_id].typed_behavior_targets],
+             "after": [t.model_dump(mode="json") for t in targets_by_id[item.obligation_id]]}
+            for item in proposal.obligations if item.revision_reason.strip()
+        ]},
     )
 
 
@@ -910,7 +916,10 @@ _SYSTEM_PROMPT = """You are the typed Intent Agent for a code-grounded research 
 Return only JSON matching the supplied schema.
 For every supplied obligation id, decompose the author's requested behavior into one or more minimal typed targets.
 Use only the supplied predicate and relation vocabularies.
-When mandatory_predicates or mandatory_relations is non-empty, your targets MUST
+The deterministic predicates/relations are initial hypotheses. You may replace
+an inferred hypothesis with revision_reason explaining the alternative reading
+of the author's intent. Preserve the author goal, not a guessed implementation.
+Without revision_reason, when mandatory_predicates or mandatory_relations is non-empty, your targets MUST
 collectively include every listed token and MUST NOT be empty.
 Separate semantically distinct actors or paths (for example draft generation versus target generation) into distinct roles.
 Populate concise inputs, transformations, decisions, outputs, conditions, search terms, and aliases when the author text states them.

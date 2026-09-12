@@ -575,11 +575,11 @@ class TestNoDuplicateNoGain:
         )
         assert "duplicate_no_gain_call" in result.rejection_rules
 
-    def test_cross_obligation_exact_read_is_rejected(self) -> None:
+    def test_cross_obligation_exact_read_is_allowed(self) -> None:
         # The same read_symbol span was already executed while answering a
         # different obligation.  Tool-call ids differ because they embed the
         # obligation id, so the id-level rule cannot see the duplicate; the
-        # normalized read signature must reject it.
+        # normalized read signature must not ban research for a new question.
         proposal = _decision(
             tool_calls=(
                 _tool_call(
@@ -606,9 +606,9 @@ class TestNoDuplicateNoGain:
                 "read_symbol:utils/gaussian_model.py::GaussianModel.get_prune_input_f15",
             ),
         )
-        assert "duplicate_no_gain_call" in result.rejection_rules
+        assert "duplicate_no_gain_call" not in result.rejection_rules
 
-    def test_cross_obligation_read_code_span_is_rejected(self) -> None:
+    def test_cross_obligation_read_code_span_is_allowed(self) -> None:
         proposal = _decision(
             tool_calls=(
                 _tool_call(
@@ -635,7 +635,7 @@ class TestNoDuplicateNoGain:
                 "read_code_span:utils/feature_utils.py:1:0",
             ),
         )
-        assert "duplicate_no_gain_call" in result.rejection_rules
+        assert "duplicate_no_gain_call" not in result.rejection_rules
 
     def test_different_span_read_is_not_rejected(self) -> None:
         proposal = _decision(

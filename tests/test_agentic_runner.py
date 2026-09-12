@@ -89,11 +89,28 @@ class AgenticRunnerTests(unittest.TestCase):
             self.assertEqual(reconciled.status, "publication_ready")
             self.assertEqual(reconciled.safety.final_text_validation_status, "passed")
             self.assertTrue(reconciled.safety.hard_gate_passed)
+            self.assertEqual(reconciled.safety.support_precision, 1.0)
+            self.assertEqual(reconciled.safety.support_precision_status, "measured")
             self.assertTrue(reconciled.final_integrity_gate_passed)
             writer_ready = PublicationWriterRunResultV1.model_validate_json(
                 writer_result_path.read_text(encoding="utf-8")
             )
             self.assertEqual(writer_ready.status, "success")
+
+            for update, precision, metric_status in (
+                ({"checked_factual_claims": 0, "supported_claims": 0}, None, "not_applicable"),
+                ({"checked_factual_claims": 2, "supported_claims": 1, "caveated_claims": 1}, 0.5, "measured"),
+                ({"input_text_digest": "sha256:another-text"}, None, "invalid"),
+                ({"supported_claims": 9}, None, "invalid"),
+            ):
+                with self.subTest(update=update):
+                    validation_path.write_text(validation.model_copy(update=update).model_dump_json(), encoding="utf-8")
+                    _reconcile_publication_quality_with_final_validation(state)
+                    measured = PublicationQualityReportV1.model_validate_json(quality_path.read_text(encoding="utf-8"))
+                    self.assertEqual(measured.safety.support_precision, precision)
+                    self.assertEqual(measured.safety.support_precision_status, metric_status)
+                    if metric_status == "invalid":
+                        self.assertFalse(measured.safety.hard_gate_passed)
 
             validation_path.write_text(validation.model_copy(update={
                 "status": "failed",

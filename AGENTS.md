@@ -1,100 +1,76 @@
-# Code2Paper Repository Guidelines
+# Code2Paper — Codex 工作指南
 
-## Authority Map
+## 产品目标
 
-Read `docs/README.md` first; it is the documentation entry point. For the current Research Agent
-development, preserve this precedence:
+根据作者意图和代码仓库，自主形成研究问题、定位实际执行路径、理解科学机制，生成准确、完整、可编辑成论文的 Method。
 
-1. `docs/agentic_robust_langgraph_research_writing_design_2026-07-19.md` constrains overall
-   architecture and trust direction. It is a specification, not a progress checklist.
-2. `docs/publication_ready_method_writer_design_2026-07-31.md` constrains Method Writer subsystem
-   quality and authority separation. It is a target design, not a completion ledger.
-3. `docs/post_r8_research_agent_execution_plan_2026-07-31.md` is the current execution authority.
-4. `docs/project_status_and_gap_report_2026-07-31.md` records current status when supported by its
-   cited artifacts. Dated reports and `/tmp` outputs prove only their bound code/input/protocol.
+近期优先完成研究到写作的质量闭环。测试数、合同通过数、流程跑通或历史 benchmark 不能替代正文质量。
 
-Method Authoring quality (Candidate/Verified product path) currently executes
-`docs/method_intent_first_authoring_redesign_2026-08-22.md`. That document implements
-Writer-design §§1.3 and 1.6 and revises the 2026-08-21 “license is purely deterministic”
-rule for the Candidate wording lane only. It does not replace items 1–4.
+## 工作方式
 
-`.agent/task.md`, `.agent/plan.md`, `.agent/implementation.md`, and `.agent/review.md` coordinate one
-task. They supplement but never replace the authorities above. If they conflict, stop and return to
-Codex instead of silently choosing a new architecture or weakening a gate.
+- Codex 直接负责分析、方案、代码修改、测试、产物审阅和必要的文档更新。
+- 用户已授权的工作持续推进到完成；常规实现选择、可逆修改和必要验证无需反复确认。
+- 多步骤任务先明确问题、变更范围和验收方式，然后分批实施。小修改不强制创建计划文件。
+- 根据当前代码和新证据调整方案，不受旧交接流程、过期验收状态或历史任务编号限制。
+- 保留用户无关改动；允许按需要使用分支或隔离目录。删除、覆盖和回滚必须限定在已授权范围。
+- 不自动提交、推送或合并；用户要求时再执行这些操作。
+- 历史报告中的执行禁令、固定工作区、固定 runtime 和角色分工不属于当前工作约束。
 
-The ignored `.agent-team/` directory is a legacy coordination record from an earlier workflow. Do
-not read or update it for the current task; the active handoff protocol is `.agent/`.
+## 文档与任务上下文
 
-## Codex and OpenCode Workflow
+- 用户当前目标和本次约定决定任务范围。
+- 本文件规定当前开发方式；`.agent/README.md` 说明临时任务记录的用法。
+- `docs/README.md` 是历史设计和报告的导航，不是当前完成度的证明。
+- 设计变更先阅读相关规范，保留有价值的约束；发现设计已不适用时，说明原因并更新相关文档，避免静默改变事实授权语义。
+- 不要求固定的 task/plan/implementation/review 四文件交接，不自动执行历史任务或沿用旧 PASS/REPAIR 结论。
+- 历史文档引用的已删除 `.agent` 文件可从 Git 历史查阅；它们不再作为当前指令。
 
-- Codex owns architecture judgment, root-cause diagnosis, task and plan documents, final read-only
-  acceptance, and integration decisions.
-- OpenCode default `build` owns implementation, tests, authorized real API execution, monitoring,
-  artifact analysis, in-direction repair, and `.agent/implementation.md`.
-- Work serially in the same worktree. The current uncommitted Post-R8 changes are part of the
-  baseline. Do not run `git reset`, `git clean`, checkout another branch, discard files, commit, or
-  merge.
-- OpenCode must not edit `AGENTS.md`, `.agent/task.md`, `.agent/plan.md`, `.agent/review.md`, or the
-  architecture, design, status, execution, and ADR documents cited by the plan.
-- After a Codex `REPAIR`, invoke `/implement` again in the same worktree. Do not create a new task
-  or plan for an in-direction correction.
-- Codex acceptance is read-only. It reviews OpenCode's diff, `.agent/implementation.md`, and frozen
-  artifacts without rerunning tests, benchmarks, model calls, or real APIs.
+按需参考：
 
-## Project Structure
+- `docs/agentic_robust_langgraph_research_writing_design_2026-07-19.md`：自主研究与证据边界。
+- `docs/publication_ready_method_writer_design_2026-07-31.md`：论文表达与多类证据授权。
+- `docs/code2paper_unified_mechanism_context_architecture_redesign_review_revised_v2_2026-09-05.md`：统一机制上下文的设计及相关 invariants。
 
-- Production package: `src/code2paper/`
-- Agentic research and publication pipeline: `src/code2paper/agentic/`
-- LLM clients, response recovery, role configuration, and section Writer: `src/code2paper/llm/`
-- Tests: `tests/`; live profiles: `tests/live/profiles/`
-- Operational and evaluation entry points: `scripts/`
-- Durable design, status, execution, and evidence indexes: `docs/`
-- Long-running output and live artifacts: fresh task-specific directories under `/tmp`
+文档日期、标题中的完成字样或旧测试记录，不能替代对当前代码和对应产物的核查。
 
-Preserve unrelated user changes in the dirty tree. Keep edits within the responsible subsystem and
-explain every necessary deviation in `.agent/implementation.md`.
+## 实现原则
 
-## Verification Commands
+- 作者意图决定重点、待验证假设和叙事组织；不能单独证明仓库已经实现某个机制或取得某种效果。
+- 区分目标方法、依赖、可选分支、基线和评测代码；函数存在不代表主路径使用它。
+- 正向实现主张绑定冻结源码证据；公式绑定运算、变量定义和适用条件。设计动机、作者声明、文献及实验结论按各自证据类型表达。
+- 保留可读 Candidate；未经验证的内容不能冒充 Verified。分别记录生成、验证、审阅和完成状态。
+- 校验器可修复，包括误报、错误指标和不合理匹配；用具体正反样例证明修复，不能靠删掉真实义务、跳过验证或把 missing 当 success 来过关。
+- 数据、接口或绑定错误在所属层修复；写作内容错误返回相应生成环节做有界修正，不用无来源的模板句冒充模型生成结果。
+- 保持源码身份、shared payload、公式授权、checkpoint 和最终文本摘要等已采用的契约；修改契约时同步更新生产者、消费者、测试和文档。
+- 通用生产代码不硬编码评测项目的文件名、符号、结论或参考答案；项目用例进入测试和评估数据。
+- 优先修复可复现根因，控制改动范围；不要为每个失败再增加一套平行 IR 或全局重试。
 
-- Focused tests: `python -m pytest -q <test paths>`
-- Full static suite, only when the active plan names a milestone: `python -m pytest -q`
-- Syntax/import check when relevant: `python -m compileall -q src tests`
-- Patch hygiene: `git diff --check`
+## 代码位置与入口
 
-Do not report progress by test count alone. Record the exact command, exit status, summary, and code
-state in `.agent/implementation.md`. OpenCode runs required verification; Codex does not rerun it
-during acceptance.
+- `src/code2paper/agentic/`：研究、机制上下文、规划、写作、回调与验证。
+- `src/code2paper/llm/`：模型客户端、结构化输出与 section writer。
+- `src/code2paper/cli/`：产品和历史入口；`tests/`：测试；`scripts/`：运行和评估工具。
+- `artifacts/`：已归档证据；`docs/`：持久设计、分析与运行报告。
+- `paperbanana_single_shot/`：图生成子模块，按任务需要处理。
 
-## Authorized Local LLM Runtime
+自主产品入口：`code2paper method-agent run --repo ... --author-intent ... --out ...`。
+使用前核查实际 CLI 参数。Publication Writer 的 `legacy/shadow_unified/unified` 是另一层模式选择，记录运行时真正生效的模式，不能从入口名称推断。
 
-The current designated local OpenAI-compatible runtime is:
+## 验证与交付
 
-- Base URL: `http://127.0.0.1:8003/v1`
-- Model: `qwen36-27b-nvfp4`
-- Context: `131072`
-- Profile: `tests/live/profiles/qwen36_vllm_budgeted.example.env`
+- Codex 可以并应当执行与改动相称的验证，不再限制为只读验收。
+- 逻辑修改运行相关测试；接口修改覆盖实际请求/响应类型和产品入口数据传递。文档修改检查内容、链接和 diff 即可。
+- 根据变更范围和未解决风险决定是否运行全量测试，不需要历史计划的特殊许可。
+- 常用命令：`python -m pytest -q <test paths>`；必要时 `python -m pytest -q`；语法检查 `python -m compileall -q src tests`；格式检查 `git diff --check`。
+- 选择已核实且依赖匹配的 Python 环境；不得假定固定 conda 名称或旧机器路径仍存在。
+- 报告修改内容、实际验证命令、结果、未完成项及限制；不能把静态检查或历史产物写成新的端到端验证。
+- 质量评估同时考虑事实、机制覆盖、公式/符号、可读性、修复增益和开销；报告指标对应的文本版本、分母和验证状态。
 
-Before a planned live run, record `/health`, `/v1/models`, model identity, queue/KV-cache state when
-available, and the fresh output directory. Never print or persist secrets. Monitor long requests.
-Controlled concurrency on one local model is allowed for independent project runs when the engine
-advertises sufficient sequence capacity: use distinct fresh output directories, cap Code2Paper at
-four concurrent runs, and monitor running/waiting requests, KV-cache pressure, OOMs, and aborts.
-Reduce concurrency when waiting persists or cache/resource pressure becomes unsafe. Do not repeat
-an unchanged failed run merely to wait for a lucky sample.
+## 模型运行与产物
 
-## Non-Negotiable Boundaries
-
-- Final positive Method claims require frozen repository evidence and reverse validation.
-- Author intent may guide scope and organization but cannot authorize implementation facts.
-- Keep evidence, qualifier, numeric/formula, authorship, callback, checkpoint, and final-integrity
-  gates fail-closed. Never pass by filtering claims, weakening matching, reducing obligations, or
-  treating missing output as success.
-- Harness recovery may repair representation-only damage. Content, binding, evidence, and wording
-  failures return to the owning Agent through a bounded, traced repair path.
-- Final prose lexical tokens may originate only from Writer, Formalizer, Editor, or Rewrite as
-  authorized by the current design.
-- Historical project profiles may support diagnostics but cannot supply production fact authority.
-- Project-specific source paths, symbols, claim text, or known answers must not enter generic
-  production logic.
-- A successful static suite or one live sample does not authorize D5 completion, rollout, default
-  cutover, or release freeze.
+- 模型、端点和预算来自本次用户配置或已验证环境，不固定旧的 localhost 端口、模型名或 Linux 路径。
+- 在已授权的任务范围内进行必要模型调用；确认端点可达、模型身份和能力配置，记录实际 runtime。授权未覆盖的付费服务或明显更大规模实验先明确范围。
+- localhost 只指当前执行环境；远端报告的回环地址不能当成本机服务。
+- 每次真实运行使用新的可识别输出目录，如仓库已忽略的 `outputs/<run-id>/`、平台临时目录或用户指定位置；不覆盖冻结基线。
+- 凭据仅从环境或受保护配置读取，不输出或提交密钥。
+- 根据资源和模型容量控制并发，记录失败与预算耗尽；相同输入反复失败时先诊断，再决定是否重跑。

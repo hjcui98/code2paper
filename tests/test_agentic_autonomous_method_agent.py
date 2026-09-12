@@ -171,7 +171,7 @@ class TestBuildProductResearchRuntime:
 
 
 class TestTypedGaps:
-    def test_unverifiable_claim_produces_explicit_gap(self, llm_none: LLMConfig) -> None:
+    def test_unverifiable_claim_produces_unresolved_gap(self, llm_none: LLMConfig, tmp_path: Path) -> None:
         from code2paper.agentic.autonomous_method_agent import (
             run_product_research_phase,
         )
@@ -188,12 +188,13 @@ class TestTypedGaps:
             claims=claims,
             run_id="r-gap",
             llm_config=llm_none,
+            artifact_root=tmp_path / "research-data",
         )
         loop = run_product_research_phase(runtime, max_turns=12)
         gaps = build_typed_gaps(runtime, loop, claim_set=None)
         matching = [gap for gap in gaps if gap.obligation_id.startswith("claim-")]
         assert matching, "unverifiable claim must produce a typed gap"
-        assert matching[0].status == "explicit_gap"
+        assert matching[0].status == "unresolved"
         assert matching[0].stopping_reason
         assert matching[0].attempted_tools
 
@@ -349,7 +350,7 @@ class TestRunAutonomousMethodAgent:
         gaps = json.loads(
             Path(result.artifact_paths["typed_gaps"]).read_text(encoding="utf-8")
         )
-        assert any(gap["status"] == "explicit_gap" for gap in gaps)
+        assert any(gap["status"] == "unresolved" for gap in gaps)
         review = json.loads(
             Path(result.artifact_paths["review_candidates"]).read_text(encoding="utf-8")
         )
@@ -392,7 +393,7 @@ class TestRunAutonomousMethodAgent:
         ]
         assert claim_rows
         assert any(
-            item["status"] == "explicit_code_gap" for item in claim_rows
+            item["status"] == "unverified_by_repository" for item in claim_rows
         )
 
     def test_missing_claims_file_fails_typed(self, tmp_path: Path) -> None:

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 import subprocess
+import pytest
 
 from code2paper.agentic.artifact_freshness import (
     build_check_artifact_freshness_tool,
@@ -242,7 +243,12 @@ def test_cache_key_binds_snapshot_producer_and_inputs() -> None:
 def test_symlink_records_target_without_following_external_content(tmp_path: Path) -> None:
     outside = tmp_path.parent / f"{tmp_path.name}-outside.txt"
     outside.write_text("external", encoding="utf-8")
-    (tmp_path / "link.py").symlink_to(outside)
+    try:
+        (tmp_path / "link.py").symlink_to(outside)
+    except OSError as exc:
+        if getattr(exc, "winerror", None) == 1314:
+            pytest.skip("Windows account lacks symlink creation privilege")
+        raise
     snapshot = build_repo_snapshot(tmp_path)
 
     link = snapshot.included_files[0]

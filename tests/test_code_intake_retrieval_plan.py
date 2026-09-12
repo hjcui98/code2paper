@@ -76,7 +76,7 @@ class CodeIntakeRetrievalPlanTests(unittest.TestCase):
             self.assertTrue(
                 any(
                     sn.get("role") == "method_agent"
-                    and sn.get("source", {}).get("path", "").endswith("agents/planner_agent.py")
+                    and Path(sn.get("source", {}).get("path", "")).as_posix().endswith("agents/planner_agent.py")
                     and "class PlannerAgent" in sn.get("text", "")
                     for sn in snippets
                 )

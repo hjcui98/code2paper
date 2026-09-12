@@ -18,7 +18,7 @@ from code2paper.agentic.equation_claims import (
     is_bare_binary_expression,
 )
 from code2paper.agentic.evidence_compiler_v3 import CodeFactSetV1
-from code2paper.agentic.method_argument_models import ProofObligationV1
+from code2paper.agentic.method_argument_models import ProofObligationV1, WritingResearchCallbackArtifactV1
 
 
 def _digest_json(value: Any) -> str:
@@ -694,52 +694,83 @@ def compile_mechanism_formula_obligations(
     if not formalizable_details:
         return ()
 
-    target_dids = tuple(d.detail_id for d in formalizable_details)
-    op_ids = tuple(dict.fromkeys(op_id for d in formalizable_details for op_id in getattr(d, "source_operation_ids", ())))
-    fact_ids = tuple(dict.fromkeys(f_id for d in formalizable_details for f_id in getattr(d, "source_fact_ids", ())))
-    conditions = tuple(dict.fromkeys(c for d in formalizable_details for c in getattr(d, "conditions", ())))
-    operand_sets = tuple(getattr(d, "operands", ()) for d in formalizable_details if getattr(d, "operands", ()))
-    predicates = [getattr(d, "predicate", "") for d in formalizable_details if getattr(d, "predicate", "")]
-    equation_ids = tuple(dict.fromkeys(
-        equation_id
-        for detail in formalizable_details
-        for equation_id in (getattr(detail, "source_equation_ids", ()) or ())
-    ))
+    # Partition by computational sink. Upstream details remain in each
+    # dependent sink's closure; disconnected calculations never share a goal.
+    import re
+    dependencies = {d.detail_id: set() for d in formalizable_details}
+    for consumer in formalizable_details:
+        names = {name for value in consumer.operands for name in re.findall(r"[A-Za-z_]\w*(?:\.[A-Za-z_]\w*)*", value)}
+        for producer in formalizable_details:
+            if producer.detail_id != consumer.detail_id and producer.result and producer.result in names:
+                dependencies[consumer.detail_id].add(producer.detail_id)
+    consumed = set().union(*dependencies.values())
+    sinks = [d.detail_id for d in formalizable_details if d.detail_id not in consumed]
+    if not sinks:  # Cyclic source dependencies remain one explicit closure.
+        sinks = [formalizable_details[-1].detail_id]
+    groups = []
+    covered = set()
+    for sink in [*sinks, *(d.detail_id for d in formalizable_details if d.detail_id not in sinks)]:
+        if sink in covered:
+            continue
+        selected, frontier = set(), [sink]
+        while frontier:
+            current = frontier.pop()
+            if current in selected:
+                continue
+            selected.add(current)
+            frontier.extend(dependencies[current])
+        covered.update(selected)
+        groups.append([d for d in formalizable_details if d.detail_id in selected])
+    obligations = []
+    for group in groups:
+        suffix = "" if len(groups) == 1 else ":" + hashlib.sha256("|".join(d.detail_id for d in group).encode()).hexdigest()[:12]
+        target_dids = tuple(d.detail_id for d in group)
+        op_ids = tuple(dict.fromkeys(op_id for d in group for op_id in getattr(d, "source_operation_ids", ())))
+        fact_ids = tuple(dict.fromkeys(f_id for d in group for f_id in getattr(d, "source_fact_ids", ())))
+        conditions = tuple(dict.fromkeys(c for d in group for c in getattr(d, "conditions", ())))
+        operand_sets = tuple(getattr(d, "operands", ()) for d in group if getattr(d, "operands", ()))
+        predicates = [getattr(d, "predicate", "") for d in group if getattr(d, "predicate", "")]
+        equation_ids = tuple(dict.fromkeys(
+            equation_id
+            for detail in group
+            for equation_id in (getattr(detail, "source_equation_ids", ()) or ())
+        ))
 
-    signatures = [
-        {
-            "predicate": getattr(d, "predicate", ""),
-            "operands": list(getattr(d, "operands", ())),
-            "result": getattr(d, "result", ""),
-        }
-        for d in formalizable_details
-    ]
-    goal = f"Formalize {' and '.join(predicates[:3]) or mid} operations."
+        signatures = [
+            {
+                "predicate": getattr(d, "predicate", ""),
+                "operands": list(getattr(d, "operands", ())),
+                "result": getattr(d, "result", ""),
+            }
+            for d in group
+        ]
+        goal = f"Formalize {' and '.join(predicates[:3]) or mid} operations."
 
-    ob = MechanismFormulaObligationV1(
-        obligation_id=f"ob:formula:{mid}",
-        mechanism_id=mid,
-        source_detail_ids=target_dids,
-        expectation="required" if author_formula_expectations else "preferred",
-        mathematical_goal=goal,
-        claim_kind="formalization",
-        required_evidence_authority=("repository_verified",),
-        required_operator_signatures=tuple(signatures),
-        required_operand_sets=operand_sets,
-        required_conditions=conditions,
-        notation_hints=tuple(author_formula_expectations),
-        source_operation_ids=op_ids,
-        source_fact_ids=fact_ids,
-        source_equation_ids=equation_ids,
-        source_facet_ids=tuple(dict.fromkeys(
-            facet_id for d in formalizable_details for facet_id in getattr(d, "source_facet_ids", ())
-        )),
-        source_obligation_ids=tuple(dict.fromkeys(
-            obligation_id for d in formalizable_details for obligation_id in getattr(d, "source_obligation_ids", ())
-        )),
-        source_context_digest=getattr(context, "source_context_digest", "") or getattr(context, "content_digest", ""),
-    )
-    return (ob,)
+        ob = MechanismFormulaObligationV1(
+            obligation_id=f"ob:formula:{mid}{suffix}",
+            mechanism_id=mid,
+            source_detail_ids=target_dids,
+            expectation="required" if author_formula_expectations else "preferred",
+            mathematical_goal=goal,
+            claim_kind="formalization",
+            required_evidence_authority=("repository_verified",),
+            required_operator_signatures=tuple(signatures),
+            required_operand_sets=operand_sets,
+            required_conditions=conditions,
+            notation_hints=tuple(author_formula_expectations),
+            source_operation_ids=op_ids,
+            source_fact_ids=fact_ids,
+            source_equation_ids=equation_ids,
+            source_facet_ids=tuple(dict.fromkeys(
+                facet_id for d in group for facet_id in getattr(d, "source_facet_ids", ())
+            )),
+            source_obligation_ids=tuple(dict.fromkeys(
+                obligation_id for d in group for obligation_id in getattr(d, "source_obligation_ids", ())
+            )),
+            source_context_digest=getattr(context, "source_context_digest", "") or getattr(context, "content_digest", ""),
+        )
+        obligations.append(ob)
+    return tuple(obligations)
 
 
 def _record_value(record: Any, name: str, default: Any = None) -> Any:
@@ -1348,18 +1379,45 @@ def adapt_mechanism_formula_package_to_legacy(
         symbol_definitions=package.symbol_definitions,
         material_conditions=package.material_conditions,
         assumptions=package.assumptions,
-        authority_status="code_verified" if package.evidence_authority == "repository_verified" and (package.bound_fact_ids or package.bound_equation_ids or package.bound_operation_ids) else "partial",
+        authority_status=("code_verified" if package.evidence_authority == "repository_verified" and package.formula_lane == "repository_derived" and (package.bound_fact_ids or package.bound_equation_ids or package.bound_operation_ids)
+                          else "author_intent" if package.formula_lane in {"author_intent", "author_intent_academic"} else "partial"),
         formula_lane=(
             "repository_derived"
             if package.formula_lane == "repository_derived" and (package.bound_fact_ids or package.bound_equation_ids or package.bound_operation_ids)
-            else "hybrid_partial"
+            else "author_intent_academic" if package.formula_lane in {"author_intent", "author_intent_academic"} else "hybrid_partial"
         ),
-        review_status="accepted" if package.review_status == "accepted" else "review_required",
+        review_status=("accepted" if package.review_status == "accepted" and package.evidence_authority == "repository_verified" and package.formula_lane == "repository_derived"
+                       else "rejected" if package.review_status == "rejected" else "review_required"),
         bound_fact_ids=package.bound_fact_ids,
         bound_equation_ids=package.bound_equation_ids,
         bound_operation_ids=package.bound_operation_ids,
         risks=package.risks,
         review_question=package.review_question,
+    )
+
+
+def _mechanism_formalizer_request(
+    *, prompt: str, context: Any, obligation: MechanismFormulaObligationV1,
+    shared_payload: str, shared_payload_digest: str,
+    view_digest: str, slice_digests: tuple[str, ...], consumer_request_digest: str,
+) -> Any:
+    """Use the normal client/cache identity for mechanism-scoped generation."""
+    from code2paper.llm.client import LLMRequest
+
+    return LLMRequest(
+        prompt_template_id="method_mechanism_formalizer_v2",
+        prompt=prompt,
+        input_payload={
+            "mechanism_id": context.mechanism_id,
+            "obligation": obligation.model_dump(mode="json"),
+            "source_context_digest": context.source_context_digest,
+            "shared_payload": shared_payload,
+            "shared_payload_digest": shared_payload_digest,
+            "view_digest": view_digest,
+            "slice_digests": list(slice_digests),
+            "consumer_request_digest": consumer_request_digest,
+        },
+        schema_name="mechanism_formula_v2",
     )
 
 
@@ -1432,15 +1490,22 @@ def _run_mechanism_formalizer_legacy(
                 f"Required operators: {ob.required_operator_signatures}\n"
                 f"Required conditions: {ob.required_conditions}\n"
                 f"Author notation hints: {author_notation_hints or ob.notation_hints}\n"
-                f"Mechanism Context Slice:\n{shared_payload}\n"
+                "Read the canonical context from input_payload.shared_payload.\n"
                 f"Return a valid JSON object with keys: latex, prose_explanation, symbol_definitions (list of [symbol, meaning]), material_conditions."
             )
             try:
-                from code2paper.llm.client import LLMRequest
                 from code2paper.llm.response_schemas import _loads_json_or_extract_object
-                response = caller(llm_config, LLMRequest(prompt=prompt))
+                response = caller(llm_config, _mechanism_formalizer_request(
+                    prompt=prompt, context=context, obligation=ob,
+                    shared_payload=shared_payload, shared_payload_digest=shared_payload_digest,
+                    view_digest=view_digest, slice_digests=slice_digests,
+                    consumer_request_digest=consumer_request_digest,
+                ))
                 call_trace["llm_call_made"] = True
-                parsed = _loads_json_or_extract_object(response.content if hasattr(response, "content") else str(response))
+                if response.blocked_reason:
+                    call_trace["failures"].append(f"llm_blocked:{response.blocked_reason}")
+                    continue
+                parsed = _loads_json_or_extract_object(response.text)
                 if isinstance(parsed, dict) and "latex" in parsed:
                     pkg = MechanismFormulaPackageV2(
                         package_id=f"pkg:formula:llm:{getattr(context, 'mechanism_id', '')}:{ob.obligation_id}",
@@ -1539,6 +1604,46 @@ def run_mechanism_formalizer(
         for obligation_id in package.satisfied_obligation_ids
     }
 
+    pending = [ob for ob in obligations if ob.expectation in ("required", "preferred")
+               and ob.obligation_id not in satisfied_obligation_ids]
+    batch_enabled = len(pending) > 1 and caller is not None and llm_config is not None
+    batch_outputs: dict[str, Any] = {}
+    if batch_enabled:
+        from code2paper.llm.client import LLMRequest, LLMResponse
+        from code2paper.llm.input_budget import request_budget_failure
+        from code2paper.llm.response_schemas import _loads_json_or_extract_object
+        request = LLMRequest(
+            prompt_template_id="method_mechanism_formalizer_batch_v2",
+            prompt=("Formalize each independent obligation from the canonical shared_payload. "
+                    "Return JSON {formulas:[{obligation_id,latex,prose_explanation,symbol_definitions,material_conditions,assumptions}]}. "
+                    "Keep each formula's exact operand membership, guards and local dependency chain. "
+                    "Do not infer monotonicity, numerical stability or empirical benefits without a source-backed derivation."),
+            input_payload={"mechanism_id": mechanism_id, "obligations": [ob.model_dump(mode="json") for ob in pending],
+                           "shared_payload": shared_payload, "shared_payload_digest": shared_payload_digest,
+                           "view_digest": view_digest, "slice_digests": list(slice_digests),
+                           "source_context_digest": getattr(context, "source_context_digest", "")},
+            schema_name="mechanism_formula_batch_v2",
+        )
+        try:
+            failure = request_budget_failure(llm_config, request)
+            if failure:
+                raise ValueError(failure)
+            response = caller(llm_config, request)
+            trace["llm_call_made"] = True
+            trace["batch_request_count"] = 1
+            if response.blocked_reason:
+                raise ValueError(response.blocked_reason)
+            rows = _loads_json_or_extract_object(response.text).get("formulas", [])
+            expected = {ob.obligation_id for ob in pending}
+            for row in rows:
+                oid = row.get("obligation_id", "")
+                if oid not in expected or oid in batch_outputs:
+                    raise ValueError("batch_formula_identity_mismatch")
+                batch_outputs[oid] = row
+        except Exception as exc:
+            batch_outputs.clear()
+            trace["failures"].append(f"formula_batch_failed:{type(exc).__name__}:{str(exc)[:180]}")
+
     def llm_package(obligation: MechanismFormulaObligationV1) -> MechanismFormulaPackageV2 | None:
         if caller is None or llm_config is None:
             return None
@@ -1562,16 +1667,35 @@ def run_mechanism_formalizer(
             f"Required operand sets: {obligation.required_operand_sets}\n"
             f"Required conditions: {obligation.required_conditions}\n"
             f"Shared payload digest: {shared_payload_digest}\n"
-            f"Shared mechanism context bytes:\n{shared_payload}\n"
+            "Read the canonical context from input_payload.shared_payload.\n"
             "Keys: latex, prose_explanation, symbol_definitions, material_conditions, assumptions."
         )
         try:
-            from code2paper.llm.client import LLMRequest
             from code2paper.llm.response_schemas import _loads_json_or_extract_object
-            response = caller(llm_config, LLMRequest(prompt=prompt))
+            request = _mechanism_formalizer_request(
+                prompt=prompt, context=context, obligation=obligation,
+                shared_payload=shared_payload, shared_payload_digest=shared_payload_digest,
+                view_digest=view_digest, slice_digests=slice_digests,
+                consumer_request_digest=consumer_request_digest,
+            )
+            if batch_enabled:
+                row = batch_outputs.get(obligation.obligation_id)
+                if row is None:
+                    trace["failures"].append(f"formula_batch_missing:{obligation.obligation_id}")
+                    return None
+                response = LLMResponse(text=json.dumps(row), response_hash=_digest_json(row))
+            else:
+                from code2paper.llm.input_budget import request_budget_failure
+                failure = request_budget_failure(llm_config, request)
+                if failure:
+                    raise ValueError(failure)
+                response = caller(llm_config, request)
             trace["llm_call_made"] = True
-            raw = response.content if hasattr(response, "content") else str(response)
-            parsed = _loads_json_or_extract_object(raw)
+            if response.blocked_reason:
+                trace["rejected_packages"] += 1
+                trace["failures"].append(f"llm_blocked:{response.blocked_reason}")
+                return None
+            parsed = _loads_json_or_extract_object(response.text)
             if not isinstance(parsed, dict) or not str(parsed.get("latex", "")).strip():
                 trace["rejected_packages"] += 1
                 trace["failures"].append(f"llm_invalid_response:{obligation.obligation_id}")
