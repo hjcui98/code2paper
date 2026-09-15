@@ -232,6 +232,60 @@ class LLMRuntimeTests(unittest.TestCase):
         self.assertEqual(response.text, '{"ok":true')
         self.assertFalse(response.blocked_reason)
 
+    def test_loopback_empty_stream_keeps_finish_and_late_usage_diagnostics(self) -> None:
+        """An empty finished stream must retain terminal metadata for repair."""
+
+        def fake_urlopen(request, timeout=0):  # noqa: ANN001
+            return _FakeStreamingResponse({"events": [
+                {"choices": [{"delta": {}, "finish_reason": "stop"}]},
+                {
+                    "choices": [],
+                    "usage": {
+                        "prompt_tokens": 31,
+                        "completion_tokens": 0,
+                        "total_tokens": 31,
+                    },
+                },
+            ]})
+
+        config = LLMConfig(
+            provider=LLMProvider.OPENAI,
+            model="local-model",
+            cache=False,
+            retry_max_attempts=1,
+        )
+        profile = LLMCapabilityProfile(response_mode=StructuredResponseMode.NATIVE_JSON_SCHEMA)
+        request = LLMRequest(
+            prompt_template_id="unit-stream-empty",
+            prompt="Return JSON.",
+            input_payload={},
+            response_json_schema={"type": "object", "properties": {"ok": {"type": "boolean"}}},
+        )
+        env = {
+            "CODE2PAPER_OPENAI_BASE_URL": "http://127.0.0.1:8003/v1",
+            "CODE2PAPER_LLM_STREAM_STRUCTURED": "1",
+            "CODE2PAPER_LLM_RETRY_MAX_ATTEMPTS": "1",
+        }
+        with patch.dict(os.environ, env, clear=True), patch(
+            "urllib.request.urlopen", side_effect=fake_urlopen
+        ):
+            response = LLMClient(config, capability_profile=profile).complete(request)
+
+        self.assertEqual(response.text, "")
+        self.assertEqual(
+            response.blocked_reason,
+            "provider_stream_finished_before_complete_json",
+        )
+        self.assertEqual(response.finish_reason, "stop")
+        self.assertEqual(response.provider_finish_reason, "stop")
+        self.assertEqual(
+            response.token_usage,
+            {"prompt_tokens": 31, "completion_tokens": 0, "total_tokens": 31},
+        )
+        self.assertEqual(response.provider_diagnostics["stream_events"], 2)
+        self.assertTrue(response.provider_diagnostics["finish_seen"])
+        self.assertTrue(response.provider_diagnostics["usage_seen"])
+
     def test_structured_stream_stops_at_done_on_keep_alive_connection(self) -> None:
         """[DONE] is terminal even when the HTTP socket remains open."""
 

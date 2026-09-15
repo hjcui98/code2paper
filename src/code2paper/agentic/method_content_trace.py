@@ -995,7 +995,21 @@ class MechanismInformationFunnelV1(BaseModel):
     writer_delivered_details: int = 0
     core_delivery_loss_rate: float = 0.0
     context_to_writer_core_loss_rate: float = 0.0
-    mechanism_discovery_recall: float = 0.0
+    #: Discovery recall is measured only against an independent expected
+    #: population.  ``None`` means the population was not supplied (unknown),
+    #: never a perfect score.
+    mechanism_discovery_recall: float | None = None
+    discovery_recall_status: Literal["measured", "not_measured", "not_applicable"] = "not_measured"
+    expected_operation_count: int | None = None
+    discovery_population_source: str = ""
+    #: Closure retention is a separate metric with its own denominator
+    #: (operations closed by the closure over operations in the closure).
+    closure_retention: float | None = None
+    closure_retention_status: Literal["measured", "not_applicable"] = "not_applicable"
+    #: Rates whose denominator was zero.  The legacy numeric field keeps its
+    #: historical value for compatibility, but readers can tell that it was
+    #: never measured instead of reading it as a perfect result.
+    zero_denominator_metrics: tuple[str, ...] = ()
     formula_obligation_recall: float = 0.0
     condition_recall: float = 0.0
     interface_recall: float = 0.0
@@ -1087,8 +1101,16 @@ def build_method_content_trace_v2(
     writer_outputs: Mapping[str, Any] | Sequence[Any] | None = None,
     research_discovered_operation_ids: Mapping[str, Sequence[str]] | Sequence[str] = (),
     callback_artifacts: Sequence[Any] = (),
+    expected_operation_ids: Mapping[str, Sequence[str]] | Sequence[str] | None = None,
+    expected_operation_source: str = "",
 ) -> MethodContentTraceV2:
-    """Build V2 trace and information funnel from unified mechanism contexts."""
+    """Build V2 trace and information funnel from unified mechanism contexts.
+
+    ``expected_operation_ids`` is an independent, evaluation-only population.
+    Discovery recall is measured only against it: the closure's own operation
+    set can never be reused as its own denominator, and a missing population
+    leaves the recall unknown instead of reporting a perfect score.
+    """
     assessments = paragraph_assessments or {}
     has_materialized_delivery = shared_payload_slices is not None
 
@@ -2038,6 +2060,56 @@ def build_method_content_trace_v2(
     def _ratio(numerator: int, denominator: int) -> float:
         return round(numerator / denominator, 4) if denominator else 1.0
 
+    def _optional_ratio(numerator: int, denominator: int) -> float | None:
+        """Ratio that stays unknown when the denominator carries no sample."""
+
+        return round(numerator / denominator, 4) if denominator else None
+
+    # R3: discovery recall needs an independent expected population; the
+    # closure's own operation set is never reused as its own denominator.
+    expected_operations: set[str] | None = None
+    expected_source = str(expected_operation_source or "").strip()
+    if expected_operation_ids is not None:
+        if isinstance(expected_operation_ids, Mapping):
+            expected_operations = {
+                str(value).strip()
+                for values in expected_operation_ids.values()
+                for value in _ids(values)
+                if str(value).strip()
+            }
+        else:
+            expected_operations = {
+                str(value).strip() for value in _ids(expected_operation_ids)
+                if str(value).strip()
+            }
+    closure_operation_ids = {
+        str(getattr(operation, "operation_id", "") or "").strip()
+        for context in getattr(contexts, "contexts", ())
+        for operation in (
+            getattr(getattr(context, "evidence_closure", None), "operation_nodes", ()) or ()
+        )
+        if str(getattr(operation, "operation_id", "") or "").strip()
+    }
+    if expected_operations is None:
+        discovery_recall_status: Literal["measured", "not_measured", "not_applicable"] = "not_measured"
+        discovery_recall_value: float | None = None
+        expected_operation_count: int | None = None
+    elif not expected_operations:
+        discovery_recall_status = "not_applicable"
+        discovery_recall_value = None
+        expected_operation_count = 0
+    else:
+        discovery_recall_status = "measured"
+        expected_operation_count = len(expected_operations)
+        discovery_recall_value = _optional_ratio(
+            len(expected_operations & closure_operation_ids),
+            len(expected_operations),
+        )
+    closure_retention_value = _optional_ratio(closed_operations, total_ops)
+    closure_retention_status: Literal["measured", "not_applicable"] = (
+        "measured" if closure_retention_value is not None else "not_applicable"
+    )
+
     survival_rates: dict[str, float] = {
         "research_to_closure": _ratio(closed_operations, total_ops),
         "discovery_recall": _ratio(research_discovered_operations, total_ops),
@@ -2050,6 +2122,19 @@ def build_method_content_trace_v2(
         "writer_to_candidate": _ratio(candidate_accepted, writer_rendered),
         "candidate_to_verified": _ratio(verified_validated, candidate_accepted),
     }
+    zero_denominator_metrics = tuple(sorted(
+        name for name, denominator in {
+            "research_to_closure": total_ops,
+            "context_to_annotation": total_details,
+            "annotation_to_projection": annotated_details,
+            "projection_to_formalizer": projected_details,
+            "projection_to_writer": projected_details,
+            "context_to_plan": total_details,
+            "plan_to_writer": planned_details,
+            "writer_to_candidate": writer_rendered,
+            "candidate_to_verified": candidate_accepted,
+        }.items() if not denominator
+    ))
     core_delivery_loss_rate = (
         round((len(clean_core_ids) - len(writer_core_ids)) / len(clean_core_ids), 4)
         if clean_core_ids else 0.0
@@ -2119,7 +2204,13 @@ def build_method_content_trace_v2(
         writer_delivered_details=writer_delivered_details,
         core_delivery_loss_rate=core_delivery_loss_rate,
         context_to_writer_core_loss_rate=core_delivery_loss_rate,
-        mechanism_discovery_recall=_ratio(research_discovered_operations, total_ops),
+        mechanism_discovery_recall=discovery_recall_value,
+        discovery_recall_status=discovery_recall_status,
+        expected_operation_count=expected_operation_count,
+        discovery_population_source=expected_source,
+        closure_retention=closure_retention_value,
+        closure_retention_status=closure_retention_status,
+        zero_denominator_metrics=zero_denominator_metrics,
         formula_obligation_recall=round(formula_obligation_recall, 4),
         condition_recall=_ratio(condition_rendered, condition_total),
         interface_recall=_ratio(interface_rendered, interface_total),
@@ -2201,6 +2292,8 @@ def write_method_content_trace_v2(
     writer_outputs: Mapping[str, Any] | Sequence[Any] | None = None,
     research_discovered_operation_ids: Mapping[str, Sequence[str]] | Sequence[str] = (),
     callback_artifacts: Sequence[Any] = (),
+    expected_operation_ids: Mapping[str, Sequence[str]] | Sequence[str] | None = None,
+    expected_operation_source: str = "",
 ) -> MethodContentTraceV2:
     """Build and write the V2 trace at ``path``."""
     trace = build_method_content_trace_v2(
@@ -2216,6 +2309,8 @@ def write_method_content_trace_v2(
         writer_outputs=writer_outputs,
         research_discovered_operation_ids=research_discovered_operation_ids,
         callback_artifacts=callback_artifacts,
+        expected_operation_ids=expected_operation_ids,
+        expected_operation_source=expected_operation_source,
     )
     target = Path(path)
     target.parent.mkdir(parents=True, exist_ok=True)

@@ -649,6 +649,18 @@ def _breadth_first_frontier_transition(
     return None
 
 
+def _span_line_range(span_id: str) -> tuple[int, int] | None:
+    """Parse ``span:<path>:<start>:<end>`` into absolute line numbers."""
+
+    parts = str(span_id or "").split(":")
+    if len(parts) < 4 or parts[0] != "span":
+        return None
+    try:
+        return int(parts[-2]), int(parts[-1])
+    except ValueError:
+        return None
+
+
 def _level_synchronous_frontier_transition(
     node: ast.For,
 ) -> tuple[str, tuple[str, ...]] | None:
@@ -1187,6 +1199,15 @@ class _BehaviorRelationVisitor(ast.NodeVisitor):
     relations: list[BehaviorRelationV1] = field(default_factory=list)
     _seq: int = 0
     _node_by_line: dict[int, list[BehaviorNodeV1]] = field(default_factory=dict)
+    #: Mutually exclusive arms of one ``if`` statement, as absolute snapshot
+    #: line ranges ``((start, end), (start, end), ...)``.  ``NEXT_CONTROL``
+    #: is a *sequential* claim: chaining the end of one arm to the start of
+    #: another asserts an execution order the source does not have, and the
+    #: mechanism compiler then propagates the true-arm guard into the else
+    #: arm and reports a polarity conflict for perfectly legal code.
+    _exclusive_arm_groups: list[tuple[tuple[int, int], ...]] = field(
+        default_factory=list
+    )
 
     def __post_init__(self) -> None:
         for n in self.nodes:
@@ -1322,6 +1343,50 @@ class _BehaviorRelationVisitor(ast.NodeVisitor):
                 )
                 existing.add(key)
 
+    def _span_lines(self, node: BehaviorNodeV1) -> tuple[int, int] | None:
+        return _span_line_range(node.source_span_id)
+
+    def _ast_span_id(self, node: ast.AST) -> str:
+        start = getattr(node, "lineno", 1)
+        end = getattr(node, "end_lineno", start) or start
+        offset = self.symbol.start_line - 1
+        return make_span_id(self.symbol.path, start + offset, end + offset)
+
+    def _arm_position(
+        self,
+        node: BehaviorNodeV1,
+    ) -> tuple[tuple[int, int], ...]:
+        """Return every enclosing ``(group_index, arm_index)`` for a node.
+
+        Branch groups are nested for ordinary nested ``if`` statements and
+        for the AST representation of ``elif``.  Returning only the first
+        matching group made an inner arm look like the enclosing arm, so the
+        sequential pass could connect two mutually exclusive inner arms.
+        Keeping the full ancestor path lets the caller reject a proposed edge
+        when *any* common ancestor selects different arms.
+        """
+
+        span = self._span_lines(node)
+        if span is None:
+            return ()
+        positions: list[tuple[int, int]] = []
+        for group_index, arms in enumerate(self._exclusive_arm_groups):
+            for arm_index, (start, end) in enumerate(arms):
+                if start <= span[0] and span[1] <= end:
+                    positions.append((group_index, arm_index))
+                    break
+        return tuple(positions)
+
+    @staticmethod
+    def _is_terminal_control(node: BehaviorNodeV1) -> bool:
+        """Whether a node terminates the current sequential arm."""
+
+        # The adapter currently emits RETURN as the explicit terminal control
+        # predicate.  Keep this helper closed over known terminal predicates;
+        # adding a new predicate later must be an intentional extension rather
+        # than silently reintroducing a post-return edge.
+        return node.predicate in {"RETURN", "RAISE", "BREAK", "CONTINUE"}
+
     def add_sequential_control_relations(self) -> None:
         """Connect the adapter's AST execution order with directed edges.
 
@@ -1330,6 +1395,12 @@ class _BehaviorRelationVisitor(ast.NodeVisitor):
         for the selected symbol.  Keeping these edges in the adapter makes
         owner-entry reachability explicit instead of making the mechanism
         compiler treat every node belonging to a symbol as a root.
+
+        The order is only asserted *within* one control-flow arm.  Two arms of
+        the same ``if`` are mutually exclusive, so the pass never chains the
+        end of one arm to the start of the other; instead each reached arm end
+        is joined to the first node after the statement, which is the real
+        control-flow join.
         """
 
         existing = {
@@ -1338,6 +1409,21 @@ class _BehaviorRelationVisitor(ast.NodeVisitor):
         }
         for source, target in zip(self.nodes, self.nodes[1:]):
             if source.node_id == target.node_id:
+                continue
+            if self._is_terminal_control(source):
+                # A source-level return is not an execution predecessor for
+                # the following AST node, even when that node is the real
+                # statement after an enclosing conditional.
+                continue
+            source_arms = self._arm_position(source)
+            target_arms = dict(self._arm_position(target))
+            if any(
+                target_arms.get(group_index) is not None
+                and target_arms[group_index] != arm_index
+                for group_index, arm_index in source_arms
+            ):
+                # A sequential edge between two exclusive arms is not a fact
+                # about the program; the join edges below replace it.
                 continue
             key = ("NEXT_CONTROL", source.node_id, target.node_id)
             if key in existing:
@@ -1349,7 +1435,63 @@ class _BehaviorRelationVisitor(ast.NodeVisitor):
             )
             existing.add(key)
 
+        for arms in self._exclusive_arm_groups:
+            group_end = max(end for _start, end in arms)
+            join = next(
+                (
+                    node
+                    for node in self.nodes
+                    if (span := self._span_lines(node)) is not None
+                    and span[0] > group_end
+                ),
+                None,
+            )
+            if join is None:
+                continue
+            for start, end in arms:
+                arm_nodes = [
+                    node
+                    for node in self.nodes
+                    if (span := self._span_lines(node)) is not None
+                    and start <= span[0]
+                    and span[1] <= end
+                ]
+                if not arm_nodes:
+                    continue
+                arm_end = arm_nodes[-1]
+                if self._is_terminal_control(arm_end):
+                    # This arm cannot flow to the post-conditional join.
+                    continue
+                if arm_end.node_id == join.node_id:
+                    continue
+                key = ("NEXT_CONTROL", arm_end.node_id, join.node_id)
+                if key in existing:
+                    continue
+                self._add_relation(
+                    kind="NEXT_CONTROL",
+                    source=arm_end,
+                    target=join,
+                )
+                existing.add(key)
+
     def visit_If(self, node: ast.If) -> None:
+        # Record the mutually exclusive arms before visiting them so the
+        # sequential-control pass can tell an arm boundary from an execution
+        # order.
+        arms: list[tuple[int, int]] = []
+        for statements in (node.body, node.orelse):
+            if not statements:
+                continue
+            spans = [
+                lines
+                for statement in statements
+                if (lines := _span_line_range(self._ast_span_id(statement)))
+                is not None
+            ]
+            if spans:
+                arms.append((min(s for s, _e in spans), max(e for _s, e in spans)))
+        if len(arms) > 1:
+            self._exclusive_arm_groups.append(tuple(arms))
         # TRUE_BRANCH / FALSE_BRANCH from the BRANCH node at this line.
         branch_nodes = [
             n for n in self._nodes_at(node.lineno) if n.predicate == "BRANCH"

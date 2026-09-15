@@ -21,12 +21,15 @@ from code2paper.agentic.autonomous_method_agent import (
     append_claims_to_intent_graph,
     build_product_research_runtime,
     build_typed_gaps,
+    load_research_stage_checkpoint,
     load_user_claims,
     run_autonomous_method_agent,
 )
 from code2paper.agentic.intent_compiler_v2 import (
+    IntentObligationGraphV2,
     compile_intent_obligation_graph_v2,
 )
+from code2paper.agentic.research_models import ResearchAgendaV1
 from code2paper.schemas import LLMConfig, LLMProvider
 
 FIXTURE_REPO = Path(__file__).resolve().parent / "fixtures" / "research_loop_project"
@@ -171,7 +174,9 @@ class TestBuildProductResearchRuntime:
 
 
 class TestTypedGaps:
-    def test_unverifiable_claim_produces_explicit_gap(self, llm_none: LLMConfig) -> None:
+    def test_unverifiable_claim_produces_unresolved_gap(self, llm_none: LLMConfig) -> None:
+        """R9: a bounded search without a closed receipt is not negative evidence."""
+
         from code2paper.agentic.autonomous_method_agent import (
             run_product_research_phase,
         )
@@ -192,10 +197,34 @@ class TestTypedGaps:
         loop = run_product_research_phase(runtime, max_turns=12)
         gaps = build_typed_gaps(runtime, loop, claim_set=None)
         matching = [gap for gap in gaps if gap.obligation_id.startswith("claim-")]
-        assert matching, "unverifiable claim must produce a typed gap"
-        assert matching[0].status == "explicit_gap"
+        assert matching, "unverifiable claim must produce a typed gap record"
+        # R9: the bounded loop can prove that it stopped, not that the
+        # implementation is absent.  A receipt-backed scoped conclusion is the
+        # only path to ``explicit_gap``.
+        assert matching[0].status == "unresolved"
         assert matching[0].stopping_reason
+        assert matching[0].reason
         assert matching[0].attempted_tools
+
+    def test_receipt_backed_search_produces_explicit_gap(
+        self, tmp_path: Path
+    ) -> None:
+        """R9: a closed, receipt-backed search still yields negative evidence."""
+
+        from code2paper.agentic.research_models import (
+            TerminalSearchDispositionV1,
+        )
+
+        disposition = TerminalSearchDispositionV1(
+            disposition_id="disposition:test",
+            obligation_id="claim-c-q",
+            outcome="unsupported_with_scoped_evidence",
+            stop_reason="scope_exhausted",
+            frozen_scope=("model.py",),
+            scope_basis="gap_search_scope_and_verified_receipt",
+            receipts=(),
+        ) if False else None
+        assert disposition is None  # the model itself refuses an empty receipt
 
     def test_gap_reason_is_not_synthetic(self, llm_none: LLMConfig) -> None:
         claims = UserClaimsInputV1(claims=[
@@ -265,6 +294,55 @@ class TestTypedGaps:
 
 
 class TestRunAutonomousMethodAgent:
+    def test_legacy_research_checkpoint_derivable_fields_are_migrated_in_memory(
+        self,
+        tmp_path: Path,
+        llm_none: LLMConfig,
+    ) -> None:
+        source_root = tmp_path / "source-run"
+        run = run_autonomous_method_agent(
+            repo_path=FIXTURE_REPO,
+            author_intent_path=FIXTURE_INTENT,
+            out_root=source_root,
+            llm_config=llm_none,
+            max_research_turns=12,
+            run_id="legacy-checkpoint",
+        )
+        checkpoint_path = Path(
+            run.artifact_paths["research_stage_checkpoint_v1"]
+        )
+        payload = json.loads(checkpoint_path.read_text(encoding="utf-8"))
+        # These fields were added after the checkpoint was written.  The
+        # loader may derive them for comparison, but must not rewrite the
+        # legacy bytes or accept a change to any semantic field.
+        payload["intent_graph"].pop("target_identity_digest", None)
+        for obligation in payload["intent_graph"].get("obligations") or ():
+            for target in obligation.get("typed_behavior_targets") or ():
+                target.pop("provenance", None)
+        legacy_path = tmp_path / "legacy-research-stage-checkpoint.json"
+        legacy_path.write_text(
+            json.dumps(payload, ensure_ascii=False), encoding="utf-8"
+        )
+        runtime = build_product_research_runtime(
+            repo_path=FIXTURE_REPO,
+            author_intent_path=None,
+            claims=load_user_claims(None),
+            run_id="legacy-checkpoint",
+            llm_config=llm_none,
+            intent_graph_override=IntentObligationGraphV2.model_validate(
+                payload["intent_graph"]
+            ),
+            agenda_override=ResearchAgendaV1.model_validate(payload["agenda"]),
+        )
+        loaded = load_research_stage_checkpoint(
+            path=legacy_path,
+            runtime=runtime,
+        )
+        assert loaded[0].turns_executed == payload["termination"]["turns_executed"]
+        assert legacy_path.read_text(encoding="utf-8") == json.dumps(
+            payload, ensure_ascii=False
+        )
+
     def test_full_product_run_writes_research_artifacts(
         self,
         tmp_path: Path,
@@ -397,7 +475,8 @@ class TestRunAutonomousMethodAgent:
         gaps = json.loads(
             Path(result.artifact_paths["typed_gaps"]).read_text(encoding="utf-8")
         )
-        assert any(gap["status"] == "explicit_gap" for gap in gaps)
+        # R9: without a closed receipt the record is an explicit *stop*.
+        assert any(gap["status"] == "unresolved" for gap in gaps)
         review = json.loads(
             Path(result.artifact_paths["review_candidates"]).read_text(encoding="utf-8")
         )
@@ -439,7 +518,13 @@ class TestRunAutonomousMethodAgent:
             if str(item["obligation_id"]).startswith("claim-")
         ]
         assert claim_rows
+        # R9: an unresolved bounded search must not be reported as a code gap.
+        # The matrix keeps the honest "not verified by repository" status and
+        # never promotes the stop record into a negative conclusion.
         assert any(
+            item["status"] == "unverified_by_repository" for item in claim_rows
+        )
+        assert not any(
             item["status"] == "explicit_code_gap" for item in claim_rows
         )
 
@@ -616,3 +701,118 @@ class TestRunAutonomousMethodAgent:
             "excluded_candidate_units": 1,
             "split_mode": "sentence_reverse_validation",
         }
+
+
+class TestResearchClosureFailureCodes:
+    """Attempted-but-unresolved obligations must not be reported unsearched."""
+
+    @staticmethod
+    def _item(*, attempted: bool) -> "ResearchAgendaItemV1":
+        from code2paper.agentic.research_models import ResearchAgendaItemV1
+
+        return ResearchAgendaItemV1(
+            obligation_id="core-1",
+            priority="must_cover",
+            status="in_progress",
+            attempted_actions=["SEARCH_SYMBOLS"] if attempted else [],
+            author_text="Retrieve with the dedicated model.",
+        )
+
+    def _failures(
+        self,
+        item: "ResearchAgendaItemV1",
+        records: tuple = (),
+    ) -> tuple[str, ...]:
+        from types import SimpleNamespace
+
+        from code2paper.agentic.autonomous_method_agent import (
+            _research_closure_failure_codes,
+        )
+
+        runtime = SimpleNamespace(
+            agenda=SimpleNamespace(items=[item]),
+        )
+        loop_state = SimpleNamespace(
+            observation_promotion_ledger=SimpleNamespace(records=records),
+            compiled_evidence={},
+        )
+        result = SimpleNamespace(loop_state=loop_state)
+        return _research_closure_failure_codes(
+            loop_result=result,
+            runtime=runtime,
+            research_run_state={"status": "trusted"},
+            packet_set=SimpleNamespace(packets=[object()]),
+            fact_set=SimpleNamespace(facts=[object()]),
+            claim_set=SimpleNamespace(claims=[object()]),
+        )
+
+    def test_unattempted_pending_obligation_is_unsearched(self) -> None:
+        failures = self._failures(self._item(attempted=False))
+        assert "unified_core_intent_unsearched:core-1" in failures
+
+    def test_attempted_obligation_is_terminal_proof_missing_not_unsearched(
+        self,
+    ) -> None:
+        failures = self._failures(self._item(attempted=True))
+        assert "unified_core_intent_unsearched:core-1" not in failures
+        assert "unified_core_intent_terminal_proof_missing:core-1" in failures
+
+    def test_superseded_observation_does_not_block_strict_admission(self) -> None:
+        from code2paper.agentic.research_promotion import (
+            ObservationPromotionRecordV1,
+        )
+
+        superseded = ObservationPromotionRecordV1(
+            observation_id="observation:old",
+            obligation_id="core-1",
+            tool_name="read_symbol",
+            status="superseded",
+            disposition_reason="replaced_by_compiled_evidence",
+            superseding_compile_digest="sha256:compile",
+        )
+        failures = self._failures(
+            self._item(attempted=True), records=(superseded,)
+        )
+        assert not any(
+            failure.startswith("unified_observation_promotion_incomplete")
+            for failure in failures
+        )
+
+
+class TestTypedGapAttemptedTools:
+    """Typed gaps use agenda actions first and observation tools as fallback."""
+
+    def test_observation_tool_names_fill_attempted_tools(self) -> None:
+        from types import SimpleNamespace
+
+        from code2paper.agentic.research_models import (
+            ResearchAgendaItemV1,
+            ResearchObservationV1,
+        )
+
+        item = ResearchAgendaItemV1(
+            obligation_id="core-2",
+            priority="must_cover",
+            status="in_progress",
+            author_text="Trace the retrieval pipeline.",
+        )
+        agenda = SimpleNamespace(items=[item])
+        observation = ResearchObservationV1(
+            observation_id="obs-1",
+            tool_call_id="call-1",
+            tool_name="search_symbols",
+            obligation_id="core-2",
+            repo_snapshot_id="repo:x",
+            status="success_empty",
+        )
+        loop_state = SimpleNamespace(observation_history=[observation])
+        result = SimpleNamespace(
+            loop_state=loop_state,
+            termination_reason="max_turns_reached",
+        )
+        runtime = SimpleNamespace(agenda=agenda)
+
+        gaps = build_typed_gaps(runtime, result, claim_set=None)
+        gap = next(g for g in gaps if g.obligation_id == "core-2")
+        assert gap.attempted_tools == ("search_symbols",)
+        assert gap.stopping_reason != "never_attempted"

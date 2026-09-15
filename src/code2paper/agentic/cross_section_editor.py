@@ -15,6 +15,7 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 from code2paper.llm.client import LLMClient, LLMRequest, LLMResponse
 from code2paper.llm.capabilities import StructuredResponseMode, load_capability_profile
 from code2paper.llm.providers import load_llm_config_from_env
+from code2paper.llm.role_config import EDITOR, apply_role_config
 from code2paper.llm.response_schemas import (
     PUBLICATION_METHOD_EDITOR_SCHEMA,
     PublicationMethodEditorOutputV1,
@@ -131,7 +132,10 @@ class CrossSectionEditor:
         Verifier/Writer/Rewrite owners.
         """
 
-        base_config = config or load_llm_config_from_env()
+        base_config = apply_role_config(
+            config or load_llm_config_from_env(),
+            EDITOR,
+        )
         ordered_ids = _ordered_editor_section_ids(sections, document_context)
         try:
             configured_batch_size = int(
@@ -174,7 +178,10 @@ class CrossSectionEditor:
             {section_id: section_text},
             section_contexts={section_id: section_context},
             document_context=document_context,
-            config=config or load_llm_config_from_env(),
+            config=apply_role_config(
+                config or load_llm_config_from_env(),
+                EDITOR,
+            ),
             caller=caller,
         )
 

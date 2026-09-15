@@ -8,9 +8,11 @@ evidence fact by itself.
 
 from __future__ import annotations
 
+import hashlib
 import re
 from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any
 
 from code2paper.agentic.behavior_graph import make_symbol_id
@@ -21,7 +23,7 @@ from code2paper.agentic.research_models import (
     ImplementationScopeV1,
 )
 from code2paper.agentic.source_inventory import classify_source_kind
-from code2paper.agentic.typed_refs import split_span_ref, split_symbol_ref
+from code2paper.agentic.typed_refs import split_config_ref, split_span_ref, split_symbol_ref
 
 
 _TOKEN_RE = re.compile(r"[A-Za-z][A-Za-z0-9_]{2,}")
@@ -165,12 +167,24 @@ def _canonical_symbol_id(value: Any, symbols_by_id: Mapping[str, Any]) -> str:
         if candidate in symbols_by_id:
             return candidate
         return raw
-    # Accept a compact path/name or path-only seed when it uniquely resolves.
-    for symbol_id, symbol in symbols_by_id.items():
-        path = str(_attr(symbol, "path", "") or "")
-        name = str(_attr(symbol, "qualified_name", "") or "")
-        if raw in {path, f"{path}:{name}", f"{path}:{name.split('.')[-1]}"}:
-            return symbol_id
+    # Accept a compact path/name or path-only seed only when it resolves to
+    # exactly one indexed symbol.  A colliding basename across packages, or a
+    # path that hosts several candidates, stays ambiguous: the previous
+    # first-match behaviour silently bound an arbitrary symbol.
+    matches = [
+        symbol_id
+        for symbol_id, symbol in symbols_by_id.items()
+        if raw in {
+            str(_attr(symbol, "path", "") or ""),
+            f"{str(_attr(symbol, 'path', '') or '')}:{str(_attr(symbol, 'qualified_name', '') or '')}",
+            (
+                f"{str(_attr(symbol, 'path', '') or '')}:"
+                f"{str(_attr(symbol, 'qualified_name', '') or '').split('.')[-1]}"
+            ),
+        }
+    ]
+    if len(matches) == 1:
+        return matches[0]
     return raw
 
 
@@ -482,6 +496,158 @@ def resolve_candidate_binding(
         index_available=bool(symbol_items),
         ambiguous=ambiguous,
         rejection_code=rejection_code,
+    )
+
+
+@dataclass(frozen=True)
+class ConfigurationBindingV1:
+    """Deterministic binding of one ``config:`` reference to a frozen file.
+
+    Configuration identity is verified against the snapshot record, not the
+    Python symbol index: the file must belong to the frozen snapshot, its
+    bytes must still match the recorded content digest, the dotted keypath
+    must exist exactly once, and the declaration line must equal the line
+    carried by the reference.  Any ambiguity fails closed.
+    """
+
+    raw_ref: str
+    path: str = ""
+    line: int = 0
+    keypath: str = ""
+    content_digest: str = ""
+    column: int = 0
+    ambiguous: bool = False
+    rejection_code: str = ""
+
+    @property
+    def resolved(self) -> bool:
+        return bool(
+            self.path and self.keypath and self.line > 0
+        ) and not self.ambiguous and not self.rejection_code
+
+    @property
+    def exact_span_id(self) -> str:
+        if not self.resolved:
+            return ""
+        return f"span:{self.path}:{self.line}:{self.line}"
+
+
+def resolve_configuration_binding(
+    candidate: Any,
+    *,
+    repo_snapshot: Any,
+) -> ConfigurationBindingV1:
+    """Resolve one ``config:<path>:<line>:<keypath>`` candidate.
+
+    The candidate is verified against the frozen snapshot only.  A config
+    key is never resolved through ``SymbolIndexV2`` and never widened to a
+    file-level match when the exact keypath cannot be confirmed.
+    """
+
+    from code2paper.agentic.retrieval import config_key_entries
+
+    raw = str(candidate or "").strip()
+    parsed = split_config_ref(raw)
+    if parsed is None:
+        return ConfigurationBindingV1(
+            raw_ref=raw, rejection_code="configuration_ref_malformed"
+        )
+    path, line, keypath = parsed
+    path = _normalized_source_path(path)
+    if not path or line < 1 or not keypath:
+        return ConfigurationBindingV1(
+            raw_ref=raw, rejection_code="configuration_ref_malformed"
+        )
+    records = {
+        _normalized_source_path(_attr(item, "path", "")): item
+        for item in (getattr(repo_snapshot, "included_files", None) or ())
+        if str(_attr(item, "path", "") or "").strip()
+    }
+    record = records.get(path)
+    if record is None or str(_attr(record, "kind", "file") or "file") != "file":
+        return ConfigurationBindingV1(
+            raw_ref=raw,
+            path=path,
+            line=line,
+            keypath=keypath,
+            rejection_code="configuration_file_not_in_snapshot",
+        )
+    root = Path(str(getattr(repo_snapshot, "project_root", "") or "")).resolve()
+    target = (root / path).resolve()
+    try:
+        target.relative_to(root)
+    except ValueError:
+        return ConfigurationBindingV1(
+            raw_ref=raw,
+            path=path,
+            line=line,
+            keypath=keypath,
+            rejection_code="configuration_file_not_in_snapshot",
+        )
+    try:
+        data = target.read_bytes()
+    except OSError:
+        return ConfigurationBindingV1(
+            raw_ref=raw,
+            path=path,
+            line=line,
+            keypath=keypath,
+            rejection_code="configuration_file_unreadable",
+        )
+    digest = "sha256:" + hashlib.sha256(data).hexdigest()
+    expected_digest = str(_attr(record, "content_digest", "") or "")
+    if expected_digest and digest != expected_digest:
+        return ConfigurationBindingV1(
+            raw_ref=raw,
+            path=path,
+            line=line,
+            keypath=keypath,
+            content_digest=digest,
+            rejection_code="configuration_snapshot_content_drift",
+        )
+    text = data.decode("utf-8", errors="ignore")
+    entries = config_key_entries(
+        text=text,
+        rel_path=path,
+        warnings=[],
+    )
+    exact = [entry for entry in entries if entry[0] == keypath]
+    keypaths = {entry[0] for entry in exact}
+    if not exact:
+        return ConfigurationBindingV1(
+            raw_ref=raw,
+            path=path,
+            line=line,
+            keypath=keypath,
+            content_digest=digest,
+            rejection_code="configuration_key_not_found",
+        )
+    if len(keypaths) > 1:
+        return ConfigurationBindingV1(
+            raw_ref=raw,
+            path=path,
+            line=line,
+            keypath=keypath,
+            content_digest=digest,
+            ambiguous=True,
+            rejection_code="configuration_key_ambiguous",
+        )
+    declared_line = int(exact[0][1])
+    if declared_line != line:
+        return ConfigurationBindingV1(
+            raw_ref=raw,
+            path=path,
+            line=line,
+            keypath=keypath,
+            content_digest=digest,
+            rejection_code="configuration_line_mismatch",
+        )
+    return ConfigurationBindingV1(
+        raw_ref=raw,
+        path=path,
+        line=line,
+        keypath=keypath,
+        content_digest=digest,
     )
 
 
@@ -1115,6 +1281,197 @@ def seed_child_candidates_from_parents(
     return tuple(changed)
 
 
+_CONFIG_NOISE_TOKENS = frozenset({
+    "config",
+    "configuration",
+    "conf",
+    "yaml",
+    "yml",
+    "toml",
+    "json",
+    "settings",
+    "setting",
+    "defaults",
+    "default",
+})
+
+
+def _obligation_semantic_tokens(obligation: Any) -> set[str]:
+    """Collect the obligation's own semantic tokens for candidate selection."""
+
+    values: list[str] = [str(_attr(obligation, "author_text", "") or "")]
+    for target in (getattr(obligation, "typed_behavior_targets", None) or ()):
+        for field in (
+            "role",
+            "description",
+            "verbs",
+            "objects",
+            "decisions",
+            "conditions",
+            "outputs",
+            "transformations",
+            "search_terms",
+            "required_relations",
+            "desired_predicates",
+        ):
+            raw = _attr(target, field, ())
+            if isinstance(raw, str):
+                values.append(raw)
+            else:
+                values.extend(str(item) for item in (raw or ()))
+        for slot in (getattr(target, "semantic_slots", None) or ()):
+            values.extend(str(term) for term in (getattr(slot, "terms", None) or ()))
+    return _tokens(" ".join(values)) - _SCOPE_STOPWORDS
+
+
+def _config_candidate_parts(value: str) -> tuple[str, str, str] | None:
+    """Return ``(group, option, keypath)`` for a config candidate ref."""
+
+    parsed = split_config_ref(value)
+    if parsed is None:
+        return None
+    path, _line, keypath = parsed
+    segments = [segment for segment in path.replace("\\", "/").split("/") if segment]
+    group = segments[-2] if len(segments) >= 2 else (segments[0] if segments else "")
+    filename = segments[-1] if segments else path
+    option = filename.rsplit(".", 1)[0]
+    return group, option, keypath
+
+
+def _default_configuration_branches(
+    repo_snapshot: Any,
+) -> tuple[dict[str, str], set[str]]:
+    """Read Hydra-style ``defaults`` groups from the frozen snapshot.
+
+    Returns ``({group: option}, ambiguous_groups)``.  Any entry that is not
+    confirmed by every declaration of the same group is reported ambiguous
+    so the caller fails closed instead of guessing a branch.
+    """
+
+    from code2paper.agentic.retrieval import parse_config_payload
+
+    options: dict[str, str] = {}
+    conflicts: set[str] = set()
+    for record in (getattr(repo_snapshot, "included_files", None) or ()):
+        path = str(_attr(record, "path", "") or "")
+        if str(_attr(record, "kind", "file") or "file") != "file":
+            continue
+        if not path.lower().endswith((".yaml", ".yml", ".json", ".toml")):
+            continue
+        root = Path(str(getattr(repo_snapshot, "project_root", "") or ""))
+        target = root / path
+        try:
+            text = target.read_text(encoding="utf-8", errors="ignore")
+        except OSError:
+            continue
+        payload = parse_config_payload(text=text, rel_path=path, warnings=[])
+        defaults = payload.get("defaults") if isinstance(payload, Mapping) else None
+        entries: list[tuple[str, Any]] = []
+        if isinstance(defaults, Mapping):
+            entries.extend((str(key), value) for key, value in defaults.items())
+        elif isinstance(defaults, list):
+            for item in defaults:
+                if isinstance(item, Mapping):
+                    entries.extend((str(key), value) for key, value in item.items())
+                elif isinstance(item, str) and ":" in item:
+                    key, value = item.split(":", 1)
+                    entries.append((key.strip(), value.strip()))
+        for group, value in entries:
+            if not group or group.startswith("_"):
+                continue
+            option = ""
+            if isinstance(value, str):
+                option = value.strip()
+            elif isinstance(value, (list, tuple)) and value:
+                option = str(value[0]).strip()
+            if not option or option.startswith("_") or option.startswith("override"):
+                continue
+            option = option.split(".")[0].strip()
+            if not option:
+                continue
+            existing = options.get(group)
+            if existing is not None and existing != option:
+                conflicts.add(group)
+            options[group] = option
+    for group in conflicts:
+        options.pop(group, None)
+    return options, conflicts
+
+
+def select_configuration_candidates(
+    candidates: Iterable[str],
+    *,
+    obligation: Any,
+    repo_snapshot: Any = None,
+) -> tuple[tuple[str, ...], tuple[str, ...], str]:
+    """Split config candidates into the active evidence set and alternatives.
+
+    Selection uses only obligation/behavior-target semantics and the frozen
+    configuration defaults; it never resolves a Python symbol and never
+    creates a behavior node.  Returns ``(selected, not_selected, failure)``
+    where a non-empty failure is a typed fail-closed identity code.
+    """
+
+    parsed: list[tuple[str, str, str, str]] = []
+    for candidate in candidates:
+        parts = _config_candidate_parts(str(candidate))
+        if parts is None:
+            continue
+        group, option, keypath = parts
+        parsed.append((str(candidate), group, option, keypath))
+    if not parsed:
+        return (), (), ""
+
+    obligation_tokens = _obligation_semantic_tokens(obligation)
+    relevant: list[tuple[str, str, str, str]] = []
+    for entry in parsed:
+        _candidate, group, option, keypath = entry
+        candidate_tokens = (
+            _tokens(f"{group} {option} {keypath}")
+            - _SCOPE_STOPWORDS
+            - _CONFIG_NOISE_TOKENS
+        )
+        if obligation_tokens and not (candidate_tokens & obligation_tokens):
+            continue
+        relevant.append(entry)
+    if not relevant:
+        return (), tuple(entry[0] for entry in parsed), ""
+
+    branches: dict[str, str] = {}
+    ambiguous_groups: set[str] = set()
+    if repo_snapshot is not None:
+        branches, ambiguous_groups = _default_configuration_branches(repo_snapshot)
+
+    grouped: dict[str, list[tuple[str, str, str, str]]] = {}
+    for entry in relevant:
+        grouped.setdefault(entry[1], []).append(entry)
+
+    selected: list[str] = []
+    not_selected: list[str] = []
+    for group, entries in grouped.items():
+        options = {entry[2] for entry in entries}
+        if len(options) <= 1:
+            selected.extend(entry[0] for entry in entries)
+            continue
+        active = branches.get(group, "")
+        if group in ambiguous_groups or not active:
+            return (), tuple(entry[0] for entry in parsed), "configuration_branch_ambiguous"
+        if active not in options:
+            return (), tuple(entry[0] for entry in parsed), "configuration_branch_ambiguous"
+        for entry in entries:
+            if entry[2] == active:
+                selected.append(entry[0])
+            else:
+                not_selected.append(entry[0])
+    selected_set = set(selected)
+    not_selected.extend(
+        entry[0]
+        for entry in parsed
+        if entry[0] not in selected_set and entry[0] not in not_selected
+    )
+    return tuple(selected), tuple(not_selected), ""
+
+
 def build_candidate_acquisition_ledger(
     *,
     scope: ImplementationScopeV1,
@@ -1124,6 +1481,7 @@ def build_candidate_acquisition_ledger(
     compiled_by_obligation: Mapping[str, Any] | None = None,
     symbols: Iterable[Any] = (),
     source_manifest: Any | None = None,
+    repo_snapshot: Any | None = None,
     repo_snapshot_id: str = "",
     project_tree_hash: str = "",
 ) -> CandidateAcquisitionLedgerV1:
@@ -1137,12 +1495,93 @@ def build_candidate_acquisition_ledger(
     # supervisor obligation switch must not erase its read provenance.
     nodes = tuple(getattr(behavior_graph, "nodes", ()) or ()) if behavior_graph is not None else ()
     symbol_items = tuple(symbols)
+    config_selection: dict[str, tuple[set[str], set[str], str]] = {}
+    for agenda in agenda_items:
+        oid = str(getattr(agenda, "obligation_id", "") or "")
+        config_candidates = [
+            str(candidate).strip()
+            for candidate in (getattr(agenda, "candidate_symbol_ids", ()) or ())
+            if str(candidate).strip() and split_config_ref(str(candidate)) is not None
+        ]
+        if not config_candidates:
+            continue
+        selected, unselected, failure = select_configuration_candidates(
+            config_candidates,
+            obligation=agenda,
+            repo_snapshot=repo_snapshot,
+        )
+        config_selection[oid] = (set(selected), set(unselected), failure)
     records: list[CandidateAcquisitionRecordV1] = []
     for agenda in agenda_items:
         obligation_id = str(getattr(agenda, "obligation_id", "") or "")
+        selected_config, unselected_config, config_failure = config_selection.get(
+            obligation_id, (set(), set(), "")
+        )
         for rank, candidate in enumerate(getattr(agenda, "candidate_symbol_ids", ()) or (), start=1):
             candidate_id = str(candidate).strip()
             if not candidate_id:
+                continue
+            if split_config_ref(candidate_id) is not None:
+                if candidate_id in unselected_config:
+                    records.append(CandidateAcquisitionRecordV1(
+                        obligation_id=obligation_id,
+                        candidate_symbol_id=candidate_id,
+                        ownership_role="configuration",
+                        discovered_rank=rank,
+                        terminal_status="not_selected",
+                        rejection_reason="candidate_not_selected_for_compile",
+                        resolution_status="inactive_alternative",
+                        rejection_code="candidate_not_selected_for_compile",
+                    ))
+                    continue
+                if config_failure or candidate_id not in selected_config:
+                    reason = config_failure or "candidate_not_selected_for_compile"
+                    records.append(CandidateAcquisitionRecordV1(
+                        obligation_id=obligation_id,
+                        candidate_symbol_id=candidate_id,
+                        ownership_role="configuration",
+                        discovered_rank=rank,
+                        terminal_status="discovered",
+                        rejection_reason=reason,
+                        rejection_code=reason,
+                    ))
+                    continue
+                binding = (
+                    resolve_configuration_binding(
+                        candidate_id, repo_snapshot=repo_snapshot
+                    )
+                    if repo_snapshot is not None
+                    else ConfigurationBindingV1(
+                        raw_ref=candidate_id,
+                        rejection_code="configuration_snapshot_not_available",
+                    )
+                )
+                if binding.ambiguous or binding.rejection_code:
+                    records.append(CandidateAcquisitionRecordV1(
+                        obligation_id=obligation_id,
+                        candidate_symbol_id=candidate_id,
+                        ownership_role="configuration",
+                        discovered_rank=rank,
+                        terminal_status="discovered",
+                        rejection_reason=(
+                            binding.rejection_code or "configuration_binding_ambiguous"
+                        ),
+                        rejection_code=(
+                            binding.rejection_code or "configuration_binding_ambiguous"
+                        ),
+                    ))
+                    continue
+                records.append(CandidateAcquisitionRecordV1(
+                    obligation_id=obligation_id,
+                    candidate_symbol_id=candidate_id,
+                    ownership_role="configuration",
+                    discovered_rank=rank,
+                    read_status="success",
+                    read_observation_refs=(binding.exact_span_id,),
+                    terminal_status="read",
+                    resolution_status="implemented_partial",
+                    rejection_code="configuration_evidence_not_compiled",
+                ))
                 continue
             # Search/read refs may have either a location ref or the stable
             # symbol id.  Match exact refs first, then location/span evidence.

@@ -14,6 +14,7 @@ from __future__ import annotations
 import hashlib
 import json
 import math
+import re
 from typing import Any, Literal, Mapping
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
@@ -228,6 +229,15 @@ class MechanismEvidenceClosureV1(BaseModel):
     seed_facet_ids: tuple[str, ...] = ()
     seed_obligation_ids: tuple[str, ...] = ()
     seed_author_statements: tuple[str, ...] = ()
+    seed_kind: Literal["executable", "narrative", "unresolved"] = "executable"
+    owner_anchor_id: str = ""
+    merge_proof_ids: tuple[str, ...] = ()
+    # Keep the proof objects beside their IDs while the V1 context is being
+    # annotated.  The V2 archive still re-validates and owns the canonical
+    # proof collection; this field prevents the annotation pass from losing
+    # the machine-checkable evidence needed to materialize that archive.
+    merge_proofs: tuple[Any, ...] = ()
+    unresolved_seed_ids: tuple[str, ...] = ()
 
     entry_symbol_ids: tuple[str, ...] = ()
     operation_nodes: tuple[EvidenceOperationV1, ...] = ()
@@ -724,6 +734,11 @@ class MechanismContextSetV1(BaseModel):
     contexts: tuple[MechanismContextV1, ...]
     unresolved_seed_ids: tuple[str, ...] = ()
     compiler_diagnostics: tuple[dict[str, Any], ...] = ()
+    # Kept as opaque values here to avoid a dependency cycle with the V2
+    # archive models.  The owner compiler supplies MechanismMergeProofV1
+    # instances; the V2 archive validates them when it materializes the
+    # lossless merge-proof collection.
+    merge_proofs: tuple[Any, ...] = ()
 
     content_digest: str = ""
 
@@ -892,6 +907,138 @@ def compute_consumer_request_digest(
     return sha256_digest(canonical_json_bytes(combined))
 
 
+# The V1 context contract predates the owner/path fields introduced by the
+# unified archive compiler.  Those fields are present in current V1 dumps but
+# absent from historical V1 dumps, so loading a historical artifact with the
+# current models changes the derived nested digests.  Compatibility is kept
+# deliberately narrow: the old root digest must first verify against the
+# historical field shape, and only then may derived digest fields be removed
+# and recomputed by the current validators.
+_LEGACY_CONTEXT_CLOSURE_FIELDS = frozenset({
+    "seed_kind",
+    "owner_anchor_id",
+    "merge_proof_ids",
+    "merge_proofs",
+    "unresolved_seed_ids",
+})
+_SHA256_DIGEST_RE = re.compile(r"sha256:[0-9a-f]{64}\Z")
+
+
+def _is_sha256_digest(value: Any) -> bool:
+    return isinstance(value, str) and _SHA256_DIGEST_RE.fullmatch(value) is not None
+
+
+def _legacy_context_shape_is_supported(payload: Mapping[str, Any]) -> bool:
+    """Return whether ``payload`` is the pre-owner-extension V1 shape."""
+
+    # ``merge_proofs`` was added to the context-set container in the current
+    # contract.  The root ``unresolved_seed_ids`` is intentionally not tested
+    # here because it already existed in historical V1.
+    if "merge_proofs" in payload:
+        return False
+    contexts = payload.get("contexts")
+    if not isinstance(contexts, (list, tuple)):
+        return False
+    for context in contexts:
+        if not isinstance(context, Mapping):
+            return False
+        closure = context.get("evidence_closure")
+        if not isinstance(closure, Mapping):
+            return False
+        if any(field in closure for field in _LEGACY_CONTEXT_CLOSURE_FIELDS):
+            return False
+    return True
+
+
+def _legacy_context_digest_payload(
+    value: Any,
+    path: tuple[str | int, ...] = (),
+    *,
+    drop_source_context_digest: bool = False,
+) -> Any:
+    """Serialize a historical context shape without selected derived fields."""
+
+    if isinstance(value, Mapping):
+        cleaned: dict[Any, Any] = {}
+        for key, item in value.items():
+            name = str(key)
+            if name == "content_digest" or (
+                drop_source_context_digest and name == "source_context_digest"
+            ):
+                continue
+            if not path and name == "merge_proofs":
+                continue
+            if (
+                len(path) == 3
+                and path[0] == "contexts"
+                and path[2] == "evidence_closure"
+                and name in _LEGACY_CONTEXT_CLOSURE_FIELDS
+            ):
+                continue
+            cleaned[key] = _legacy_context_digest_payload(
+                item,
+                path + (name,),
+                drop_source_context_digest=drop_source_context_digest,
+            )
+        return cleaned
+    if isinstance(value, (list, tuple)):
+        return [
+            _legacy_context_digest_payload(
+                item,
+                path + (index,),
+                drop_source_context_digest=drop_source_context_digest,
+            )
+            for index, item in enumerate(value)
+        ]
+    return value
+
+
+def load_mechanism_context_set_v1_payload(
+    payload: Mapping[str, Any],
+    *,
+    allow_legacy_digest_recompute: bool = True,
+) -> tuple[MechanismContextSetV1, bool]:
+    """Load a V1 context set and narrowly migrate old derived digests.
+
+    The boolean return value is ``True`` only for a verified historical V1
+    migration.  A migrated model is suitable for V2 archive rebuilding after
+    the normal source/owner/path gates; it is not a V2 receipt or resume
+    artifact.  A semantic mutation, unknown field, unsupported schema, or
+    changed historical root digest remains a hard load failure.
+    """
+
+    if not isinstance(payload, Mapping):
+        raise TypeError("mechanism context set payload must be a mapping")
+    try:
+        return MechanismContextSetV1.model_validate(payload), False
+    except Exception as strict_error:
+        if (
+            not allow_legacy_digest_recompute
+            or str(payload.get("schema_version") or "") != "1.0"
+            or not _legacy_context_shape_is_supported(payload)
+        ):
+            raise strict_error
+
+        declared_digest = payload.get("content_digest")
+        if not _is_sha256_digest(declared_digest):
+            raise strict_error
+        legacy_payload = _legacy_context_digest_payload(payload)
+        if sha256_digest(canonical_json_bytes(legacy_payload)) != declared_digest:
+            # The original V1 content was not preserved.  Do not turn a
+            # changed artifact into a fresh current-digest artifact.
+            raise strict_error
+        migrated_payload = _legacy_context_digest_payload(
+            payload,
+            drop_source_context_digest=True,
+        )
+        try:
+            return MechanismContextSetV1.model_validate(migrated_payload), True
+        except Exception:
+            # Preserve the strict error as the public failure contract; the
+            # migration attempt is only an internal compatibility path.
+            raise strict_error
+
+
 __all__ = [
     "ActivePathStatus",
     "DetailRole",
@@ -915,6 +1062,7 @@ __all__ = [
     "SharedDetailRefV1",
     "MechanismContextV1",
     "MechanismContextSetV1",
+    "load_mechanism_context_set_v1_payload",
     "MechanismContextViewV1",
     "MechanismContextSliceV1",
     "shared_slice_payload_record",

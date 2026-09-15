@@ -469,6 +469,9 @@ _TOOL_CALLING_ACTIONS: frozenset[str] = frozenset({
     "COMPILE_FACTS",
     "DECOMPOSE_CLAIMS",
     "REWRITE_SENTENCES",
+    # Submitting a target revision is an autonomous tool selection: the agent
+    # noticed the target itself was wrong and asked the harness to re-scope it.
+    "PROPOSE_TARGET_REVISION",
 })
 
 

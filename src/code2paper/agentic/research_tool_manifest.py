@@ -66,6 +66,28 @@ RESEARCH_TOOL_DESCRIPTIONS: dict[str, str] = {
         "'ref:<path>:<line>' refs.  Use import_only=True to restrict to "
         "import sites."
     ),
+    "close_search_frontier": (
+        "Derive the active obligation's search receipt from the executions "
+        "that actually ran and return its 'search_receipt_id'.  The tool "
+        "takes no evidence arguments: it reports whether the frontier is "
+        "closed and, if not, exactly which results are unread, truncated or "
+        "failed.  Pass the returned id to record_explicit_code_gap; a "
+        "negative conclusion requires a closed receipt."
+    ),
+    "record_explicit_code_gap": (
+        "Record the obligation's terminal outcome.  Without an authenticated "
+        "'search_receipt_id' from close_search_frontier the record is an "
+        "honest bounded stop (search_inconclusive or budget_exhausted) and "
+        "never a negative conclusion."
+    ),
+    "propose_target_revision": (
+        "Submit a revision proposal for the active obligation's typed targets "
+        "(R10).  The proposal cites the observation/relation refs that "
+        "motivated it and may not claim author_explicit provenance.  The tool "
+        "only stores the submission: the harness authenticates the cited refs "
+        "against the execution ledger, spends the run's proposal budget and "
+        "decides acceptance."
+    ),
 }
 
 
@@ -252,7 +274,9 @@ def build_research_structured_tools(
                     ctx=ctx,
                     kwargs=kwargs,
                 )
-                observation = executor_fn(ctx, tool_call)
+                # R9: funnel through the dispatcher (not the bare executor) so
+                # the execution ledger records what really ran.
+                observation = execute_research_tool(ctx, tool_call)
                 return observation.model_dump(mode="json")
 
             return _run

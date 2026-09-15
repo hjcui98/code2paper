@@ -37,6 +37,7 @@ from typing import Any
 SYMBOL_REF = "symbol"
 SPAN_REF = "span"
 BEHAVIOR_REF = "behavior"
+CONFIG_REF = "config"
 PACKET_REF = "packet"
 FACT_REF = "fact"
 CLAIM_REF = "claim"
@@ -47,6 +48,7 @@ ALL_REF_TYPES: frozenset[str] = frozenset({
     SYMBOL_REF,
     SPAN_REF,
     BEHAVIOR_REF,
+    CONFIG_REF,
     PACKET_REF,
     FACT_REF,
     CLAIM_REF,
@@ -90,6 +92,25 @@ def build_behavior_ref(node_id: str) -> str:
     if not node_id:
         raise ValueError("behavior ref requires a non-empty node_id")
     return f"{BEHAVIOR_REF}:{node_id}"
+
+
+def build_config_ref(path: str, line: int, keypath: str) -> str:
+    """Build a ``config:<path>:<line>:<keypath>`` reference.
+
+    Configuration keys are a separate typed namespace from executable Python
+    symbols.  A config reference must never be routed through the Python
+    symbol index: the dotted keypath is not a qualified name and the line is
+    the declaration line, not a definition line.
+    """
+
+    if not path:
+        raise ValueError("config ref requires a non-empty path")
+    if line < 1:
+        raise ValueError("config ref requires line >= 1")
+    keypath = str(keypath or "").strip()
+    if not keypath:
+        raise ValueError("config ref requires a non-empty keypath")
+    return f"{CONFIG_REF}:{path}:{line}:{keypath}"
 
 
 def build_packet_ref(status: str, packet_id: str) -> str:
@@ -191,6 +212,10 @@ def is_behavior_ref(ref: str) -> bool:
     return ref_type(ref) == BEHAVIOR_REF
 
 
+def is_config_ref(ref: str) -> bool:
+    return ref_type(ref) == CONFIG_REF
+
+
 def is_packet_ref(ref: str) -> bool:
     return ref_type(ref) == PACKET_REF
 
@@ -240,6 +265,36 @@ def split_symbol_ref(ref: str) -> tuple[str, str, int] | None:
     if not path or not name or line < 1:
         return None
     return path, name, line
+
+
+def split_config_ref(ref: str) -> tuple[str, int, str] | None:
+    """Split a ``config:<path>:<line>:<keypath>`` reference into fields.
+
+    Returns ``(path, line, keypath)`` or ``None`` when the reference is not
+    a valid config ref.  The path may contain ``:`` so the split is anchored
+    from the right: the last two ``:``-delimited segments are the declaration
+    line and the dotted keypath; everything before is the path.  The keypath
+    itself must not contain whitespace or ``:`` so a malformed free-text ref
+    cannot degrade into a file-level match.
+    """
+
+    if not is_config_ref(ref):
+        return None
+    body = ref_body(ref)
+    parts = body.rsplit(":", 2)
+    if len(parts) < 3:
+        return None
+    path, line_str, keypath = parts
+    try:
+        line = int(line_str)
+    except ValueError:
+        return None
+    keypath = keypath.strip()
+    if not path or line < 1 or not keypath:
+        return None
+    if any(ch.isspace() for ch in keypath) or ":" in keypath:
+        return None
+    return path, line, keypath
 
 
 def split_span_ref(ref: str) -> tuple[str, int, int] | None:
@@ -327,6 +382,10 @@ def behavior_refs(refs: list[str]) -> list[str]:
     return refs_of_type(refs, BEHAVIOR_REF)
 
 
+def config_refs(refs: list[str]) -> list[str]:
+    return refs_of_type(refs, CONFIG_REF)
+
+
 def packet_refs(refs: list[str]) -> list[str]:
     return refs_of_type(refs, PACKET_REF)
 
@@ -352,6 +411,7 @@ __all__ = [
     "SYMBOL_REF",
     "SPAN_REF",
     "BEHAVIOR_REF",
+    "CONFIG_REF",
     "PACKET_REF",
     "FACT_REF",
     "CLAIM_REF",
@@ -362,6 +422,7 @@ __all__ = [
     "build_symbol_ref",
     "build_span_ref",
     "build_behavior_ref",
+    "build_config_ref",
     "build_packet_ref",
     "build_fact_ref",
     "build_claim_ref",
@@ -375,6 +436,7 @@ __all__ = [
     "is_symbol_ref",
     "is_span_ref",
     "is_behavior_ref",
+    "is_config_ref",
     "is_packet_ref",
     "is_fact_ref",
     "is_claim_ref",
@@ -382,6 +444,7 @@ __all__ = [
     "is_entrypoint_ref",
     # Field extraction
     "split_symbol_ref",
+    "split_config_ref",
     "split_span_ref",
     "split_generic_ref",
     "split_entrypoint_ref",
@@ -390,6 +453,7 @@ __all__ = [
     "symbol_refs",
     "span_refs",
     "behavior_refs",
+    "config_refs",
     "packet_refs",
     "fact_refs",
     "claim_refs",

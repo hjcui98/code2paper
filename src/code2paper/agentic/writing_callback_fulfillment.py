@@ -53,6 +53,11 @@ from code2paper.agentic.research_models import (
 )
 from code2paper.agentic.research_tools import ResearchToolContext, execute_research_tool
 from code2paper.agentic.behavior_graph_tools import build_behavior_subgraph
+from code2paper.agentic.callback_dependency_closure import (
+    CallbackAuthorityDeltaV1,
+    compute_callback_dependency_closure,
+    narrow_resume_sections,
+)
 from code2paper.agentic.digest import digest_json as _digest_json
 from code2paper.agentic.generic_fact_compiler import FactCompilerInputV1, compile_facts_from_behavior_graph
 from code2paper.llm.client import LLMClient, LLMRequest, LLMResponse
@@ -159,6 +164,20 @@ class WritingCallbackFulfillmentResultV1(BaseModel):
     new_fact_ids: tuple[str, ...] = Field(default_factory=tuple)
     new_detail_ids: tuple[str, ...] = Field(default_factory=tuple)
     remaining_core_intent_ids: tuple[str, ...] = Field(default_factory=tuple)
+    # R8: the five stages are recorded separately.  A fulfilled research
+    # request with a failed Writer is not committed prose, and a rebuilt
+    # revision is not a resumed section.
+    research_fulfilled: bool = False
+    revision_rebuilt: bool = False
+    writer_resumed: bool = False
+    prose_committed: bool = False
+    final_validation_status: str = ""
+    resume_scope_source: str = ""
+    resume_scope_verified: bool = False
+    resume_scope_evidence: str = ""
+    budget_rounds_consumed: int = 0
+    dependency_closure: dict[str, Any] = Field(default_factory=dict)
+    stage_identity: dict[str, Any] = Field(default_factory=dict)
     stopped_reason: str = ""
     trace_path: str = ""
 
@@ -804,6 +823,35 @@ def fulfill_and_resume_writing_callbacks(
             "",
             WritingCallbackFulfillmentResultV1(stopped_reason="callback_gated_off"),
         )
+    budget_state_path = _callback_budget_state_path(out_root)
+    consumed_rounds, budget_record_ok = _read_consumed_rounds(budget_state_path)
+    if not budget_record_ok:
+        # Fail closed: an unreadable budget record cannot prove how much of
+        # the callback budget a previous attempt consumed.
+        return (
+            writer_paths,
+            "blocked",
+            "callback_budget_record_corrupt",
+            WritingCallbackFulfillmentResultV1(
+                rounds_attempted=0,
+                budget_rounds_consumed=0,
+                stopped_reason="callback_budget_record_corrupt",
+            ),
+        )
+    remaining_rounds = max(0, env_rounds - consumed_rounds)
+    if remaining_rounds <= 0:
+        # R8: a replay must not restart the callback budget.  The consumed
+        # round count is durable, so re-entering an exhausted run stops here.
+        return (
+            writer_paths,
+            "incomplete",
+            "",
+            WritingCallbackFulfillmentResultV1(
+                rounds_attempted=consumed_rounds,
+                budget_rounds_consumed=consumed_rounds,
+                stopped_reason="callback_round_budget_exhausted_durably",
+            ),
+        )
     bundle_path = str(
         writer_paths.get("writing_research_callback_artifacts_v1")
         or artifact_paths.get("writing_research_callback_artifacts_v1")
@@ -919,6 +967,33 @@ def fulfill_and_resume_writing_callbacks(
                 initial_writer_payload = loaded
         except (OSError, TypeError, ValueError, json.JSONDecodeError):
             initial_writer_payload = {}
+    def _stage_identity(paths: Mapping[str, Any]) -> dict[str, Any]:
+        identity = _authoring_context_identity(
+            paths, fallback_mode=authoring_context_mode
+        )
+        return {
+            "mode": str(identity["mode"]),
+            "source_context_digest": str(identity["source_context_digest"]),
+            "page_manifest_digest": str(identity["page_manifest_digest"]),
+            "contract_present": bool(identity["contract_present"]),
+        }
+
+    stage_state_path = _callback_stage_state_path(out_root)
+    persisted_stages, stage_record_ok = _read_stage_state(stage_state_path)
+    if not stage_record_ok:
+        return (
+            writer_paths,
+            "blocked",
+            "callback_stage_record_corrupt",
+            WritingCallbackFulfillmentResultV1(
+                stopped_reason="callback_stage_record_corrupt",
+            ),
+        )
+    stage_identity: dict[str, Any] = {
+        **persisted_stages,
+        "initial": _stage_identity({**artifact_paths, **writer_paths}),
+    }
+    _write_stage_state(stage_state_path, stage_identity)
     initial_identity = _authoring_context_identity(
         {**artifact_paths, **writer_paths},
         fallback_mode=authoring_context_mode,
@@ -979,8 +1054,14 @@ def fulfill_and_resume_writing_callbacks(
     consecutive_no_gain = 0
     seen_semantic_digests: set[str] = set()
 
-    for round_index in range(1, budget.max_callback_rounds + 1):
-        result = result.model_copy(update={"rounds_attempted": round_index})
+    for round_index in range(1, remaining_rounds + 1):
+        _record_consumed_rounds(
+            budget_state_path, consumed_rounds + round_index
+        )
+        result = result.model_copy(update={
+            "rounds_attempted": consumed_rounds + round_index,
+            "budget_rounds_consumed": consumed_rounds + round_index,
+        })
         open_requests = [
             item for item in bundle.requests if item.status in {"open", "partial"}
         ]
@@ -1230,6 +1311,17 @@ def fulfill_and_resume_writing_callbacks(
         # every downstream authoring artifact before fulfilling the callback, so
         # the resumed Writer never consumes a stale brief/plan/formula view.
         revision_paths: dict[str, str] = {}
+        # R8 correction: freeze the authority content *before* the rebuild.
+        # The rebuild persists into the same output root, so comparing the
+        # previous and rebuilt path mappings afterwards would diff the new
+        # bytes against themselves and report an empty delta.
+        authority_before = _authority_revision_snapshot(
+            {**artifact_paths, **writer_paths}
+        )
+        authority_before_narrative_plan = _load_narrative_plan(
+            {**artifact_paths, **writer_paths}
+        )
+        authority_before_plan = _load_plan({**artifact_paths, **writer_paths})
         if continuation_provider is not None:
             try:
                 continuation_provider._last_round_request_ids = tuple(
@@ -1251,6 +1343,11 @@ def fulfill_and_resume_writing_callbacks(
                 })
                 break
             artifact_paths.update(revision_paths)
+            result = result.model_copy(update={"revision_rebuilt": True})
+            stage_identity["revision_rebuilt"] = _stage_identity(
+                {**artifact_paths, **writer_paths}
+            )
+            _write_stage_state(stage_state_path, stage_identity)
 
         try:
             slot_progress = _slot_progress_from_artifacts(artifacts, callback_root)
@@ -1272,6 +1369,13 @@ def fulfill_and_resume_writing_callbacks(
                 ),
             })
             break
+        # R8 stage 1: the research request is fulfilled by its owning
+        # validator; nothing about the Writer or the prose is claimed yet.
+        result = result.model_copy(update={"research_fulfilled": True})
+        stage_identity["research_fulfilled"] = _stage_identity(
+            {**artifact_paths, **writer_paths}
+        )
+        _write_stage_state(stage_state_path, stage_identity)
         local_fulfilled.update(
             request_id for request_id in artifacts
         )
@@ -1325,10 +1429,116 @@ def fulfill_and_resume_writing_callbacks(
             request_id: tuple(items)
             for request_id, items in (bundle.mechanism_artifacts or {}).items()
         } or mechanism_artifacts
-        resume_sections = tuple(dict.fromkeys((
+        requested_resume_sections = tuple(dict.fromkeys((
             *bundle.resume_section_ids,
             *bundle.mechanism_resume_section_ids,
         )))
+        # R8 correction: the closure is computed from the authority diff of the
+        # REBUILT artifacts (the revision that just landed), not only from the
+        # ids added this round, and it maps through the rebuilt plan and
+        # narrative plan.  A closure that reaches beyond the requested set
+        # expands the resume scope; an unmappable target blocks the resume.
+        rebuilt_plan = _load_plan(merged_paths) or plan
+        rebuilt_narrative_plan = _load_narrative_plan(merged_paths)
+        # The rebuilt revision's own plan/narrative/context are the mapping
+        # authority for a closure (which section owns the changed object),
+        # even when the Writer keeps the incumbent plan for paragraph
+        # identity.  Without it a legitimate rebuild would be unmappable.
+        mapping_paths = {**merged_paths, **revision_paths}
+        mapping_plan = _load_plan(mapping_paths) or rebuilt_plan
+        mapping_narrative_plan = (
+            _load_narrative_plan(mapping_paths) or rebuilt_narrative_plan
+        )
+        authority_after = _authority_revision_snapshot(mapping_paths)
+        rebuild_delta = _authority_delta_from_snapshots(
+            before=authority_before,
+            after=authority_after,
+            fallback_detail_ids=tuple(sorted(new_detail_ids)),
+            fallback_operation_ids=tuple(sorted(new_operation_ids)),
+            fallback_fact_ids=tuple(sorted(new_fact_ids)),
+        )
+        # R8 correction: facts, operations, conditions and formula obligations
+        # are propagated through BOTH dependency graphs, so prose that a
+        # deleted or downgraded fact used to support also enters the closure.
+        target_owner_map = _delta_target_owner_map(
+            before=authority_before,
+            after=authority_after,
+            previous_plan=authority_before_plan or mapping_plan,
+            previous_narrative_plan=(
+                authority_before_narrative_plan or mapping_narrative_plan
+            ),
+            rebuilt_plan=mapping_plan,
+            rebuilt_narrative_plan=mapping_narrative_plan,
+        )
+        added_target_ids: list[str] = []
+        for category, prefix in (
+            ("facts", "fact"),
+            ("operations", "operation"),
+        ):
+            previous_ids = set((authority_before.get(category) or {}).keys())
+            added_target_ids.extend(
+                f"{prefix}:{value}"
+                for value in (authority_after.get(category) or {})
+                if value not in previous_ids
+            )
+        previous_conditions = set(
+            (authority_before.get("detail_conditions") or {}).keys()
+        )
+        added_target_ids.extend(
+            f"condition:detail:{detail_id}:conditions"
+            for detail_id in (authority_after.get("detail_conditions") or {})
+            if detail_id not in previous_conditions
+        )
+        previous_obligations = {
+            key: tuple(value)
+            for key, value in (
+                authority_before.get("formula_obligations") or {}
+            ).items()
+        }
+        added_target_ids.extend(
+            f"formula_obligation:{key}"
+            for key, value in (
+                authority_after.get("formula_obligations") or {}
+            ).items()
+            if tuple(value) != previous_obligations.get(key)
+            and key not in previous_obligations
+        )
+        round_closure = compute_callback_dependency_closure(
+            rebuild_delta,
+            plan=mapping_plan,
+            narrative_plan=mapping_narrative_plan,
+            previous_plan=authority_before_plan,
+            previous_narrative_plan=authority_before_narrative_plan,
+            target_owner_map=target_owner_map,
+            added_target_ids=tuple(added_target_ids),
+        )
+        (
+            resume_sections,
+            resume_scope_source,
+            unresolved_scope_targets,
+        ) = narrow_resume_sections(
+            requested_section_ids=requested_resume_sections,
+            closure=round_closure,
+        )
+        trace_rows[-1]["dependency_closure"] = round_closure.model_dump(mode="json")
+        trace_rows[-1]["resume_scope_source"] = resume_scope_source
+        trace_rows[-1]["requested_resume_section_ids"] = list(
+            requested_resume_sections
+        )
+        trace_rows[-1]["resolved_resume_section_ids"] = list(resume_sections)
+        trace_rows[-1]["authority_delta"] = rebuild_delta.model_dump(mode="json")
+        result = result.model_copy(update={
+            "resume_scope_source": resume_scope_source,
+            "dependency_closure": round_closure.model_dump(mode="json"),
+        })
+        if unresolved_scope_targets:
+            # Fail closed: the requested scope cannot be proven sufficient.
+            result = result.model_copy(update={
+                "stopped_reason": "callback_resume_scope_unproven:"
+                + ",".join(unresolved_scope_targets[:5]),
+            })
+            trace_rows[-1]["stopped_reason"] = result.stopped_reason
+            return writer_paths, "blocked", result.stopped_reason, result
         writer_kwargs: dict[str, Any] = {}
         if resume_mechanism_artifacts:
             writer_kwargs["research_mechanism_callback_artifacts"] = resume_mechanism_artifacts
@@ -1348,6 +1558,67 @@ def fulfill_and_resume_writing_callbacks(
         )
         writer_status = effective_writer_transaction_status(writer_result)
         writer_blocked_reason = getattr(writer_result, "blocked_reason", "")
+        # R8 correction: verify the scope the Writer actually adopted.  A
+        # writer that resumed fewer sections than the proven closure leaves an
+        # affected section unrevalidated, which must block rather than look
+        # like a successful resume.
+        from code2paper.agentic.publication_method_writer import (
+            _actually_regenerated_section_ids,
+        )
+
+        adopted_sections = tuple(
+            getattr(writer_result, "resumed_section_ids", ()) or ()
+        )
+        scope_evidence = "writer_resumed_section_ids"
+        if not adopted_sections:
+            adopted_sections = _actually_regenerated_section_ids(
+                getattr(writer_result, "writer_aggregate", None),
+                tuple(resume_sections),
+            )
+            scope_evidence = "writer_generation_traces"
+        adopted_sections = tuple(
+            dict.fromkeys(
+                str(value) for value in adopted_sections if str(value).strip()
+            )
+        )
+        if not adopted_sections:
+            # No positive evidence either way.  Do not claim the scope was
+            # adopted, and do not convert missing telemetry into a block.
+            scope_evidence = "unavailable"
+        unadopted = tuple(
+            section_id
+            for section_id in resume_sections
+            if section_id not in adopted_sections
+        )
+        resume_scope_verified = bool(adopted_sections) and not unadopted
+        trace_rows[-1]["adopted_resume_section_ids"] = list(adopted_sections)
+        trace_rows[-1]["resume_scope_verified"] = resume_scope_verified
+        trace_rows[-1]["resume_scope_evidence"] = scope_evidence
+        result = result.model_copy(update={
+            "resume_scope_verified": resume_scope_verified,
+            "resume_scope_evidence": scope_evidence,
+        })
+        if unadopted and scope_evidence != "unavailable":
+            result = result.model_copy(update={
+                "stopped_reason": "callback_resume_scope_not_adopted:"
+                + ",".join(unadopted[:5]),
+            })
+            _write_stage_state(stage_state_path, stage_identity)
+            return writer_paths, "blocked", result.stopped_reason, result
+        # R8 stages 3-5: a resumed Writer is not committed prose, and a
+        # blocked Writer keeps the previous committed Candidate intact.
+        writer_stage_paths = {**artifact_paths, **writer_paths, **next_paths}
+        stage_identity["writer_resumed"] = _stage_identity(writer_stage_paths)
+        _write_stage_state(stage_state_path, stage_identity)
+        result = result.model_copy(update={
+            "writer_resumed": bool(requested_resume_sections)
+            or bool(resume_sections),
+            "prose_committed": writer_status == "success",
+            "final_validation_status": str(
+                getattr(writer_result, "status", "") or writer_status
+            ),
+            "stage_identity": dict(stage_identity),
+        })
         # A blocked resume writes only publication_writer_result_v1.  Keep
         # the 06_authoring bundle/formalization paths so the next round does
         # not fall back to a stale frozen copy.
@@ -1530,12 +1801,498 @@ def _load_claims_input(artifact_paths: dict[str, str]) -> Any | None:
         return None
 
 
+def _delta_target_owner_map(
+    *,
+    before: Mapping[str, Any],
+    after: Mapping[str, Any],
+    previous_plan: Any | None,
+    previous_narrative_plan: Any | None,
+    rebuilt_plan: Any | None,
+    rebuilt_narrative_plan: Any | None,
+) -> dict[str, tuple[str, ...]]:
+    """Resolve fact/operation/condition/formula targets to owning sections.
+
+    R8 correction: authority that a rebuild deleted or downgraded no longer
+    appears in the new dependency graph, so the owners are resolved through the
+    previous graph as well.  A target that neither graph can place stays out of
+    the map and therefore blocks the resume as an unresolved target.
+    """
+
+    sections_by_detail: dict[str, list[str]] = {}
+    owners: dict[str, list[str]] = {}
+
+    def _add(target_key: str, section_id: str) -> None:
+        if section_id and section_id not in owners.setdefault(target_key, []):
+            owners[target_key].append(section_id)
+
+    for narrative_plan in (previous_narrative_plan, rebuilt_narrative_plan):
+        for section in (getattr(narrative_plan, "sections", ()) or ()):
+            section_id = str(getattr(section, "section_id", "") or "")
+            for paragraph in (getattr(section, "paragraphs", ()) or ()):
+                for detail_id in (
+                    *tuple(getattr(paragraph, "required_detail_ids", ()) or ()),
+                    *tuple(getattr(paragraph, "optional_detail_ids", ()) or ()),
+                ):
+                    key = str(detail_id).strip()
+                    if section_id and section_id not in sections_by_detail.setdefault(
+                        key, []
+                    ):
+                        sections_by_detail[key].append(section_id)
+                for obligation_id in (
+                    getattr(paragraph, "formula_obligation_ids", ()) or ()
+                ):
+                    _add(f"formula_obligation:{obligation_id}", section_id)
+
+    def _detail_owners(detail_id: Any) -> tuple[str, ...]:
+        return tuple(sections_by_detail.get(str(detail_id), ()))
+
+    unit_by_id: dict[str, Any] = {}
+    for plan in (previous_plan, rebuilt_plan):
+        for unit in (getattr(plan, "argument_units", ()) or ()):
+            unit_by_id[str(getattr(unit, "argument_unit_id", "") or "")] = unit
+    sections_by_unit: dict[str, list[str]] = {}
+    for plan in (previous_plan, rebuilt_plan):
+        for section in (getattr(plan, "sections", ()) or ()):
+            section_id = str(getattr(section, "section_id", "") or "")
+            for unit_id in (getattr(section, "argument_unit_ids", ()) or ()):
+                key = str(unit_id)
+                if section_id and section_id not in sections_by_unit.setdefault(
+                    key, []
+                ):
+                    sections_by_unit[key].append(section_id)
+    sections_by_claim: dict[str, list[str]] = {}
+    for unit_id, unit in unit_by_id.items():
+        for claim_id in (getattr(unit, "claim_ids", ()) or ()):
+            key = str(claim_id).strip()
+            if not key:
+                continue
+            for section_id in sections_by_unit.get(unit_id, ()):
+                if section_id not in sections_by_claim.setdefault(key, []):
+                    sections_by_claim[key].append(section_id)
+
+    for snapshot in (before, after):
+        for claim_id, fact_ids in (snapshot.get("claim_facts") or {}).items():
+            for section_id in sections_by_claim.get(str(claim_id), ()):
+                for fact_id in fact_ids or ():
+                    _add(f"fact:{fact_id}", section_id)
+    for snapshot in (before, after):
+        for detail_id, values in (snapshot.get("detail_operations") or {}).items():
+            for operation_id in values or ():
+                for section_id in _detail_owners(detail_id):
+                    _add(f"operation:{operation_id}", section_id)
+        for detail_id, values in (snapshot.get("detail_facts") or {}).items():
+            for fact_id in values or ():
+                for section_id in _detail_owners(detail_id):
+                    _add(f"fact:{fact_id}", section_id)
+        for detail_id in (snapshot.get("detail_conditions") or {}):
+            for section_id in _detail_owners(detail_id):
+                _add(f"condition:detail:{detail_id}:conditions", section_id)
+    return {key: tuple(values) for key, values in owners.items()}
+
+
+def _authority_revision_snapshot(paths: Mapping[str, str]) -> dict[str, Any]:
+    """Freeze the authority-relevant content of one revision.
+
+    R8 correction: the diff must compare *content*, never two path mappings.
+    A rebuild persists into the same output root, so by the time the callback
+    compares ``previous_paths`` with ``rebuilt_paths`` the "previous" path can
+    already hold the new bytes.  The snapshot is captured before the rebuild
+    and carries the contracts (values, states, conditions, authority lanes and
+    ids) the diff needs.
+    """
+
+    from code2paper.agentic.mechanism_context_models import (
+        canonical_json_bytes,
+        sha256_digest,
+    )
+
+    def _digest(value: Any) -> str:
+        return sha256_digest(canonical_json_bytes(value))
+
+    def _read(key: str) -> Mapping[str, Any]:
+        value = str(paths.get(key) or "")
+        if not value or not Path(value).is_file():
+            return {}
+        try:
+            payload = json.loads(Path(value).read_text(encoding="utf-8"))
+        except (OSError, TypeError, ValueError, json.JSONDecodeError):
+            return {}
+        return payload if isinstance(payload, Mapping) else {}
+
+    snapshot: dict[str, Any] = {
+        "claims": {},
+        "claim_facts": {},
+        "details": {},
+        "operations": {},
+        "facts": {},
+        "equations": {},
+        "configurations": {},
+        "formula_packages": {},
+        "formula_obligations": {},
+        "detail_operations": {},
+        "detail_facts": {},
+        "detail_conditions": {},
+    }
+
+    claims_payload = _read("atomic_claim_set_v3") or _read("atomic_claims_v3")
+    for item in claims_payload.get("claims", ()) or ():
+        if not isinstance(item, Mapping):
+            continue
+        claim_id = str(item.get("claim_id") or "").strip()
+        if not claim_id:
+            continue
+        snapshot["claims"][claim_id] = _digest({
+            key: item.get(key)
+            for key in (
+                "status", "claim_kind", "required_qualifiers", "polarity",
+                "math_op_kind", "covers_obligation_ids", "text",
+            )
+        })
+        snapshot["claim_facts"][claim_id] = sorted(
+            str(value) for value in (item.get("fact_ids") or ())
+            if str(value).strip()
+        )
+
+    contexts_payload = _read("mechanism_context_set_v1")
+    for context in contexts_payload.get("contexts", ()) or ():
+        if not isinstance(context, Mapping):
+            continue
+        closure = context.get("evidence_closure")
+        operations = (
+            closure.get("operation_nodes", ()) if isinstance(closure, Mapping) else ()
+        ) or ()
+        for operation in operations:
+            if not isinstance(operation, Mapping):
+                continue
+            operation_id = str(operation.get("operation_id") or "").strip()
+            if not operation_id:
+                continue
+            snapshot["operations"][operation_id] = _digest({
+                key: operation.get(key)
+                for key in (
+                    "predicate", "operands", "result", "source_span_id",
+                    "active_path_status", "guard_conditions",
+                )
+            })
+        for detail in context.get("details", ()) or ():
+            if not isinstance(detail, Mapping):
+                continue
+            detail_id = str(detail.get("detail_id") or "").strip()
+            if not detail_id:
+                continue
+            snapshot["details"][detail_id] = _digest({
+                key: detail.get(key)
+                for key in (
+                    "role", "importance", "claim_kind", "evidence_authority",
+                    "active_path_status", "publication_policy", "polarity",
+                    "conditions", "semantic_atom", "subject", "predicate",
+                    "operands", "result", "exact_excerpts",
+                )
+            })
+            snapshot["detail_operations"][detail_id] = sorted(
+                str(value) for value in (detail.get("source_operation_ids") or ())
+                if str(value).strip()
+            )
+            snapshot["detail_facts"][detail_id] = sorted(
+                str(value) for value in (detail.get("source_fact_ids") or ())
+                if str(value).strip()
+            )
+            conditions = detail.get("conditions") or ()
+            if conditions:
+                snapshot["detail_conditions"][detail_id] = _digest(list(conditions))
+
+    facts_payload = _read("code_facts_v1")
+    for fact in facts_payload.get("facts", ()) or ():
+        if not isinstance(fact, Mapping):
+            continue
+        fact_id = str(fact.get("fact_id") or "").strip()
+        if not fact_id:
+            continue
+        snapshot["facts"][fact_id] = _digest({
+            key: fact.get(key)
+            for key in (
+                "subject", "predicate", "object", "scope", "validation_status",
+                "direct_span_ids", "semantic_context",
+            )
+        })
+
+    equations_payload = _read("equation_claims_v1")
+    for equation in equations_payload.get("equations", ()) or ():
+        if not isinstance(equation, Mapping):
+            continue
+        equation_id = str(equation.get("equation_id") or "").strip()
+        if not equation_id:
+            continue
+        snapshot["equations"][equation_id] = _digest({
+            key: equation.get(key)
+            for key in (
+                "expression", "prose_claim_id", "fact_ids", "conditions",
+                "formula_role", "validation_status", "canonical_identity",
+            )
+        })
+
+    configurations_payload = _read("configuration_claims_v1")
+    for claim in configurations_payload.get("claims", ()) or ():
+        if not isinstance(claim, Mapping):
+            continue
+        configuration_id = str(claim.get("configuration_id") or "").strip()
+        if not configuration_id:
+            continue
+        snapshot["configurations"][configuration_id] = _digest({
+            key: claim.get(key)
+            for key in (
+                "key", "value", "state", "definition_span_ids",
+                "entrypoint_span_ids", "override_chain", "conditions",
+                "source_fact_ids", "active", "unresolved_reason",
+            )
+        })
+
+    packages_payload = _read("mechanism_formula_packages_v2")
+    for package in packages_payload.get("packages", ()) or ():
+        if not isinstance(package, Mapping):
+            continue
+        package_id = str(package.get("package_id") or "").strip()
+        if not package_id:
+            continue
+        snapshot["formula_packages"][package_id] = _digest({
+            key: package.get(key)
+            for key in (
+                "authority_status", "formula_lane", "review_status",
+                "prose_explanation", "satisfied_obligation_ids",
+            )
+        })
+        for obligation_id in package.get("satisfied_obligation_ids", ()) or ():
+            key = str(obligation_id).strip()
+            if key:
+                snapshot["formula_obligations"].setdefault(key, []).append(
+                    package_id
+                )
+    for key, values in snapshot["formula_obligations"].items():
+        snapshot["formula_obligations"][key] = sorted(values)
+    return snapshot
+
+
+def _authority_delta_between_snapshots(
+    before: Mapping[str, Any],
+    after: Mapping[str, Any],
+) -> CallbackAuthorityDeltaV1:
+    """Return every added, changed and *removed* authority object."""
+
+    def _changed(category: str) -> tuple[str, ...]:
+        previous = dict(before.get(category, {}) or {})
+        current = dict(after.get(category, {}) or {})
+        return tuple(sorted(
+            key
+            for key in set(previous) | set(current)
+            if previous.get(key) != current.get(key)
+        ))
+
+    def _changed_or_removed(category: str) -> tuple[str, ...]:
+        """Ids that existed before and were changed or removed.
+
+        A purely *added* object cannot invalidate prose that was already
+        committed, and unit-owned objects (claims/equations/configurations)
+        are mapped through the frozen incumbent MethodUnit plan, which by
+        contract does not include ids the rebuild newly minted.  Reporting an
+        addition as an invalidation would therefore demand a mapping the
+        frozen plan can never prove.
+        """
+
+        previous = dict(before.get(category, {}) or {})
+        current = dict(after.get(category, {}) or {})
+        return tuple(sorted(
+            key
+            for key in previous
+            if previous.get(key) != current.get(key)
+        ))
+
+    def _changed_membership(category: str) -> tuple[str, ...]:
+        previous = dict(before.get(category, {}) or {})
+        current = dict(after.get(category, {}) or {})
+        return tuple(sorted(
+            key
+            for key in set(previous) | set(current)
+            if list(previous.get(key, ())) != list(current.get(key, ()))
+        ))
+
+    condition_ids = tuple(sorted(
+        f"detail:{detail_id}:conditions"
+        for detail_id in set(
+            (before.get("detail_conditions") or {}).keys()
+        ) | set((after.get("detail_conditions") or {}).keys())
+        if (before.get("detail_conditions") or {}).get(detail_id)
+        != (after.get("detail_conditions") or {}).get(detail_id)
+    ))
+    return CallbackAuthorityDeltaV1(
+        detail_ids=_changed("details"),
+        operation_ids=_changed("operations"),
+        fact_ids=_changed("facts"),
+        claim_ids=_changed_or_removed("claims"),
+        equation_ids=_changed_or_removed("equations"),
+        configuration_ids=_changed_or_removed("configurations"),
+        condition_ids=condition_ids,
+        formula_obligation_ids=_changed_membership("formula_obligations"),
+    )
+
+
+def _authority_delta_from_snapshots(
+    *,
+    before: Mapping[str, Any],
+    after: Mapping[str, Any],
+    fallback_detail_ids: tuple[str, ...] = (),
+    fallback_operation_ids: tuple[str, ...] = (),
+    fallback_fact_ids: tuple[str, ...] = (),
+) -> CallbackAuthorityDeltaV1:
+    """Diff two frozen revisions and fold in the round's observed ids."""
+
+    delta = _authority_delta_between_snapshots(before, after)
+    if not (fallback_detail_ids or fallback_operation_ids or fallback_fact_ids):
+        return delta
+    return delta.model_copy(update={
+        "detail_ids": tuple(sorted(set(delta.detail_ids) | set(fallback_detail_ids))),
+        "operation_ids": tuple(sorted(
+            set(delta.operation_ids) | set(fallback_operation_ids)
+        )),
+        "fact_ids": tuple(sorted(set(delta.fact_ids) | set(fallback_fact_ids))),
+    })
+
+
+def _authority_delta_from_revision(
+    *,
+    previous_paths: Mapping[str, str],
+    rebuilt_paths: Mapping[str, str],
+    fallback_detail_ids: tuple[str, ...] = (),
+    fallback_operation_ids: tuple[str, ...] = (),
+    fallback_fact_ids: tuple[str, ...] = (),
+) -> CallbackAuthorityDeltaV1:
+    """Return the typed authority change between two revisions.
+
+    Path-based convenience wrapper: each mapping is snapshotted at call time.
+    Callers that rebuild into the same output root must capture the "before"
+    snapshot *before* the rebuild and use
+    :func:`_authority_delta_from_snapshots` instead.
+    """
+
+    return _authority_delta_from_snapshots(
+        before=_authority_revision_snapshot(previous_paths),
+        after=_authority_revision_snapshot(rebuilt_paths),
+        fallback_detail_ids=fallback_detail_ids,
+        fallback_operation_ids=fallback_operation_ids,
+        fallback_fact_ids=fallback_fact_ids,
+    )
+
+
 def _load_plan(artifact_paths: dict[str, str]) -> MethodSectionPlanV2 | None:
     value = artifact_paths.get("method_section_plan_v2", "")
     if not value or not Path(value).is_file():
         return None
     try:
         return MethodSectionPlanV2.model_validate_json(Path(value).read_text(encoding="utf-8"))
+    except (OSError, TypeError, ValueError):
+        return None
+
+
+def _callback_budget_state_path(out_root: Path | str) -> Path:
+    return (
+        Path(out_root) / "artifacts" / "research_tool_data"
+        / "writing_callback_budget_v1.json"
+    )
+
+
+def _callback_stage_state_path(out_root: Path | str) -> Path:
+    return (
+        Path(out_root) / "artifacts" / "research_tool_data"
+        / "writing_callback_stage_state_v1.json"
+    )
+
+
+def _read_stage_state(path: Path) -> tuple[dict[str, Any], bool]:
+    """Return ``(stage_state, record_ok)`` for the durable stage record."""
+
+    if not path.is_file():
+        return {}, True
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, TypeError, ValueError, json.JSONDecodeError):
+        return {}, False
+    if not isinstance(payload, Mapping):
+        return {}, False
+    stages = payload.get("stages")
+    if not isinstance(stages, Mapping):
+        return {}, False
+    return {str(key): value for key, value in stages.items()}, True
+
+
+def _write_stage_state(path: Path, stages: Mapping[str, Any]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    _atomic_write_text(
+        path,
+        json.dumps(
+            {
+                "schema_version": "callback_stage_state_v1",
+                "stages": dict(stages),
+            },
+            ensure_ascii=False,
+            indent=2,
+            sort_keys=True,
+        )
+        + "\n",
+    )
+
+
+def _read_consumed_rounds(path: Path) -> tuple[int, bool]:
+    """Return ``(consumed_rounds, record_ok)`` for the durable budget record.
+
+    R8 correction: a corrupt or unreadable record must not read as "no rounds
+    consumed" — that would silently restart the budget after a crash.  The
+    caller blocks instead.
+    """
+
+    if not path.is_file():
+        return 0, True
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, TypeError, ValueError, json.JSONDecodeError):
+        return 0, False
+    if not isinstance(payload, Mapping):
+        return 0, False
+    try:
+        return max(0, int(payload.get("consumed_rounds") or 0)), True
+    except (TypeError, ValueError):
+        return 0, False
+
+
+def _record_consumed_rounds(path: Path, consumed: int) -> None:
+    """Persist the consumed round count atomically before the round runs."""
+
+    path.parent.mkdir(parents=True, exist_ok=True)
+    _atomic_write_text(
+        path,
+        json.dumps(
+            {
+                "schema_version": "callback_round_budget_v1",
+                "consumed_rounds": int(consumed),
+            },
+            ensure_ascii=False,
+            indent=2,
+            sort_keys=True,
+        )
+        + "\n",
+    )
+
+
+def _load_narrative_plan(artifact_paths: Mapping[str, str]) -> Any | None:
+    """Load the frozen narrative plan for typed detail-to-section mapping."""
+
+    value = str(artifact_paths.get("narrative_plan_v3", "") or "")
+    if not value or not Path(value).is_file():
+        return None
+    try:
+        from code2paper.agentic.method_architect import NarrativePlanV3
+
+        return NarrativePlanV3.model_validate_json(
+            Path(value).read_text(encoding="utf-8")
+        )
     except (OSError, TypeError, ValueError):
         return None
 
@@ -2342,9 +3099,11 @@ class _BudgetedRepositoryCallbackProvider:
             self.callback_root.parent
             / "research_tool_data" / "writing_callbacks" / request.request_id
         )
-        artifact_path = artifact_dir / f"{artifact_id}.json"
-        _atomic_write_text(artifact_path, json.dumps(payload, ensure_ascii=False, indent=2) + "\n")
-        digest = "sha256:" + hashlib.sha256(artifact_path.read_bytes()).hexdigest()
+        artifact_path, digest = _write_callback_artifact(
+            artifact_dir,
+            artifact_id=artifact_id,
+            payload=payload,
+        )
         reference = os_path_relative(artifact_path, self.callback_root)
         return {
             "artifact_id": artifact_id,
@@ -2353,6 +3112,7 @@ class _BudgetedRepositoryCallbackProvider:
             "argument_unit_id": request.argument_unit_id,
             "authority_lane": "executable_hard",
             "artifact_ref": reference,
+            "artifact_path": str(artifact_path),
             "artifact_digest": digest,
             "validated": True,
         }
@@ -3452,9 +4212,11 @@ class _ResearchGraphContinuationProvider:
             self.callback_root.parent
             / "research_tool_data" / "writing_callbacks" / request.request_id
         )
-        artifact_path = artifact_dir / f"{artifact_id}.json"
-        _atomic_write_text(artifact_path, json.dumps(payload, ensure_ascii=False, indent=2) + "\n")
-        digest = "sha256:" + hashlib.sha256(artifact_path.read_bytes()).hexdigest()
+        artifact_path, digest = _write_callback_artifact(
+            artifact_dir,
+            artifact_id=artifact_id,
+            payload=payload,
+        )
         reference = os_path_relative(artifact_path, self.callback_root)
         artifact = {
             "artifact_id": artifact_id,
@@ -3463,6 +4225,7 @@ class _ResearchGraphContinuationProvider:
             "argument_unit_id": request.argument_unit_id,
             "authority_lane": "executable_hard",
             "artifact_ref": reference,
+            "artifact_path": str(artifact_path),
             "artifact_digest": digest,
             "validated": bool(report["validated"]),
         }
@@ -3912,6 +4675,48 @@ def os_path_relative(path: Path, base: Path) -> str:
 def _short_digest(payload: dict[str, Any]) -> str:
     encoded = json.dumps(payload, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode("utf-8")
     return hashlib.sha256(encoded).hexdigest()[:12]
+
+
+#: Characters that stay portable across POSIX and Windows filesystems.  A
+#: logical artifact ID keeps its ``:`` separators inside the JSON; only the
+#: on-disk name is sanitized.
+_CALLBACK_FILENAME_SAFE_RE = re.compile(r"[^A-Za-z0-9._-]+")
+
+
+def _portable_callback_filename(artifact_id: str) -> str:
+    sanitized = _CALLBACK_FILENAME_SAFE_RE.sub("-", str(artifact_id)).strip("-.")
+    return f"{(sanitized or 'callback-artifact')[:120]}.json"
+
+
+def _write_callback_artifact(
+    artifact_dir: Path,
+    *,
+    artifact_id: str,
+    payload: Mapping[str, Any],
+) -> tuple[Path, str]:
+    """Write one digest-pinned callback artifact without silent overwrite.
+
+    The filename is portable and the logical identity stays in the payload.
+    Rewriting byte-identical content is idempotent; a different payload under
+    the same 48-bit truncated identity is written to a disambiguated name, and
+    a further conflict fails closed instead of replacing evidence.
+    """
+
+    artifact_dir.mkdir(parents=True, exist_ok=True)
+    text = json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n"
+    digest = "sha256:" + hashlib.sha256(text.encode("utf-8")).hexdigest()
+    path = artifact_dir / _portable_callback_filename(artifact_id)
+    if path.exists():
+        if path.read_text(encoding="utf-8") == text:
+            return path, digest
+        full = digest.removeprefix("sha256:")
+        path = artifact_dir / _portable_callback_filename(
+            f"{artifact_id}-{full[:24]}"
+        )
+        if path.exists() and path.read_text(encoding="utf-8") != text:
+            raise ValueError(f"writing_callback_artifact_conflict:{artifact_id}")
+    _atomic_write_text(path, text)
+    return path, digest
 
 
 __all__ = [

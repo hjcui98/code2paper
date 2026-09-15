@@ -1195,6 +1195,9 @@ class WritingResearchCallbackArtifactV1(_MethodModel):
     argument_unit_id: str
     authority_lane: AuthorityLaneV1
     artifact_ref: str
+    # R6: the resolved on-disk path is recorded explicitly so a portable
+    # filename never has to be reconstructed from the logical artifact id.
+    artifact_path: str = ""
     artifact_digest: str
     validated: bool = False
     # Optional V2 owner/delta metadata.  The old section/unit binding remains

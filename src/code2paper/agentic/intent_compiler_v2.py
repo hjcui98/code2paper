@@ -135,8 +135,32 @@ INTENT_CONCEPTS: tuple[IntentConceptV1, ...] = (
     IntentConceptV1(
         concept_id="feature_combination",
         predicates=("CONCAT",),
-        terms_en=("concat", "concatenate", "concatenation", "combine"),
-        terms_cn=("拼接", "串联", "合并"),
+        terms_en=(
+            "concat", "concatenate", "concatenates", "concatenated",
+            "concatenating", "concatenation",
+        ),
+        terms_cn=("拼接", "串联"),
+        role_hint="feature",
+    ),
+    # R4: ``combine``/``merge``/``fuse`` describe a *fusion* outcome, not a
+    # concatenation.  The author's vague word must not become a CONCAT
+    # requirement that a weighted sum or attention fusion cannot satisfy, so
+    # this concept accepts any fusion-shaped step.  An author who explicitly
+    # asks for concatenation still gets the strict CONCAT requirement through
+    # ``feature_combination`` (or ``result_composition``), and explicit
+    # order/condition constraints are never relaxed by this hypothesis layer.
+    IntentConceptV1(
+        concept_id="feature_fusion",
+        predicates=(
+            "CONCAT", "STACK", "AGGREGATE", "COMPUTE", "CALL", "ATTEND",
+            "REDUCE", "TRANSFORM",
+        ),
+        terms_en=(
+            "combine", "combines", "combined", "combining", "combination",
+            "merge", "merges", "merged", "merging", "fusion", "fuse", "fuses",
+            "fused", "fusing", "aggregate", "aggregates", "aggregation",
+        ),
+        terms_cn=("合并", "融合", "聚合"),
         role_hint="feature",
     ),
     IntentConceptV1(
@@ -462,6 +486,11 @@ class IntentObligationGraphV2(BaseModel):
     obligations: list[IntentObligationV2] = Field(default_factory=list)
     relations: list[IntentObligationRelationV2] = Field(default_factory=list)
     content_digest: str = ""
+    # R10: provenance decides whether a target may be revised away.  It is kept
+    # out of ``content_digest`` so pre-R10 frozen artifacts keep their identity,
+    # but it is part of this separate identity digest that a revision and its
+    # journal bind.
+    target_identity_digest: str = ""
 
     @model_validator(mode="after")
     def _compute_digest(self) -> "IntentObligationGraphV2":
@@ -507,6 +536,24 @@ class IntentObligationGraphV2(BaseModel):
         }
         digest = _digest_payload(payload)
         object.__setattr__(self, "content_digest", digest)
+        identity_payload = [
+            {
+                "obligation_id": o.obligation_id,
+                "target_id": t.target_id,
+                "provenance": t.provenance,
+                "desired_predicates": sorted(t.desired_predicates),
+                "required_relations": sorted(t.required_relations),
+                "conditions": sorted(t.conditions),
+                "inputs": sorted(t.inputs),
+                "decisions": sorted(t.decisions),
+                "outputs": sorted(t.outputs),
+            }
+            for o in self.obligations
+            for t in o.typed_behavior_targets
+        ]
+        object.__setattr__(
+            self, "target_identity_digest", _digest_payload(identity_payload)
+        )
         return self
 
 
@@ -630,6 +677,9 @@ def _build_typed_targets(
         targets.append(TypedBehaviorTargetV1(
             target_id=target_id,
             role=role,
+            # The target is derived from the author's own text, so it carries
+            # author authority and may not be revised away.
+            provenance="author_explicit",
             desired_predicates=predicate_group,
             predicate_groups=(predicate_group,) if predicate_group else (),
             required_relations=tuple(sorted(concept.relations)),

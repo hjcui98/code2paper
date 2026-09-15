@@ -83,6 +83,7 @@ from code2paper.llm.writer_section_repair import (
 from code2paper.llm.response_schemas import (
     PUBLICATION_PARAGRAPH_BINDING_SCHEMA,
     PUBLICATION_METHOD_SECTION_SCHEMA,
+    PublicationContentWitnessV1,
     PublicationMethodParagraphOutputV1,
     PublicationMethodSectionOutputV1,
     PublicationParagraphBindingResponseV1,
@@ -565,6 +566,10 @@ def _compact_formula_packages_for_llm(packages: Any) -> list[dict[str, Any]]:
                     "purpose", "latex", "prose_explanation",
                     "symbol_definitions", "symbol_table", "material_conditions",
                     "assumptions", "authority_status", "formula_lane",
+                    # R5: the machine-readable disposition must survive the
+                    # projection; a natural-language policy hint is not a
+                    # substitute for these fields.
+                    "review_status", "schema_version", "source_detail_ids",
                 )
                 if key in item
             })
@@ -577,6 +582,9 @@ def _compact_formula_packages_for_llm(packages: Any) -> list[dict[str, Any]]:
                 "assumptions", "authority_status", "formula_lane",
                 "satisfied_obligation_ids", "consumer_paragraph_id",
                 "semantic_formula_digest",
+                # R5 metadata round-trip: lane + review + version + exact
+                # source detail identity are consumer inputs, not prose.
+                "review_status", "schema_version", "source_detail_ids",
             )
             if key in item
         }
@@ -735,6 +743,186 @@ def _compact_writer_facet_coverage_repair_for_llm(
     if isinstance(packet, Mapping):
         compact["mechanism_authoring_packet"] = _compact_authoring_packet_for_llm(packet)
     compact.pop("mechanism_drafts", None)
+    return compact
+
+
+_WRITER_PAGE_NARRATIVE_FIELDS = (
+    "section_id",
+    "heading",
+    "mechanism_ids",
+    "page_id",
+    "page_paragraph_ids",
+    "content_digest",
+)
+_WRITER_PARAGRAPH_NARRATIVE_FIELDS = (
+    "paragraph_id",
+    "section_id",
+    "role",
+    "mechanism_id",
+    "required_detail_ids",
+    "optional_detail_ids",
+    "formula_obligation_ids",
+    "formula_package_ids",
+    "suggested_depth",
+    "reader_goal",
+    "transition_from",
+    "transition_to",
+    "content_digest",
+)
+_WRITER_TARGET_FIELDS = (
+    "target_id",
+    "target_kind",
+    "detail_id",
+    "required",
+)
+
+
+def _compact_writer_target_contract_for_llm(value: Any) -> dict[str, Any]:
+    """Keep only the closed target identity needed to organize a page.
+
+    The complete witness contract remains on ``WriterSectionInput`` for the
+    post-call binder.  The page's immutable technical payload is separately
+    visible to the model, so repeating semantic atoms, anchors, and exact
+    excerpts in every paragraph/target contract only inflates the request and
+    creates a second surface that can drift from the page.
+    """
+
+    if hasattr(value, "model_dump"):
+        value = value.model_dump(mode="json")
+    if not isinstance(value, Mapping):
+        return {}
+    return {
+        key: value[key]
+        for key in _WRITER_TARGET_FIELDS
+        if key in value
+    }
+
+
+def _compact_writer_witness_contract_for_llm(value: Any) -> Any:
+    if hasattr(value, "model_dump"):
+        value = value.model_dump(mode="json")
+    if not isinstance(value, Mapping):
+        return value
+    compact = {
+        key: value[key]
+        for key in ("schema_version", "paragraph_id", "rhetorical_goal")
+        if key in value
+    }
+    targets = value.get("targets") or ()
+    if not isinstance(targets, (str, bytes)):
+        compact["targets"] = [
+            target
+            for raw_target in targets
+            if (target := _compact_writer_target_contract_for_llm(raw_target))
+        ]
+    return compact
+
+
+def _compact_writer_narrative_plan_for_llm(
+    value: Any,
+    *,
+    include_witness_contract: bool = True,
+) -> Any:
+    """Project the page-local narrative contract without changing its owner.
+
+    This is an LLM-visible projection only.  The unprojected narrative plan
+    stays in ``prompt_payload`` and is used by deterministic validation and
+    section reconstruction after the call.
+    """
+
+    if hasattr(value, "model_dump"):
+        value = value.model_dump(mode="json")
+    if not isinstance(value, Mapping):
+        return value
+
+    compact: dict[str, Any] = {
+        key: value[key]
+        for key in _WRITER_PAGE_NARRATIVE_FIELDS
+        if key in value
+    }
+    paragraphs: list[dict[str, Any]] = []
+    for raw_row in value.get("paragraphs") or ():
+        if hasattr(raw_row, "model_dump"):
+            raw_row = raw_row.model_dump(mode="json")
+        if not isinstance(raw_row, Mapping):
+            continue
+        row = {
+            key: raw_row[key]
+            for key in _WRITER_PARAGRAPH_NARRATIVE_FIELDS
+            if key in raw_row
+        }
+        refs: list[dict[str, Any]] = []
+        seen_refs: set[tuple[str, str, str, str]] = set()
+        for raw_ref in raw_row.get("shared_detail_refs") or ():
+            if hasattr(raw_ref, "model_dump"):
+                raw_ref = raw_ref.model_dump(mode="json")
+            if not isinstance(raw_ref, Mapping):
+                continue
+            ref = {
+                key: raw_ref[key]
+                for key in (
+                    "detail_id",
+                    "primary_mechanism_id",
+                    "consumer_mechanism_id",
+                    "role",
+                )
+                if key in raw_ref
+            }
+            ref_key = tuple(str(ref.get(key) or "") for key in (
+                "detail_id",
+                "primary_mechanism_id",
+                "consumer_mechanism_id",
+                "role",
+            ))
+            if ref and ref_key not in seen_refs:
+                seen_refs.add(ref_key)
+                refs.append(ref)
+        if refs:
+            row["shared_detail_refs"] = refs
+        if include_witness_contract and "witness_contract" in raw_row:
+            row["witness_contract"] = _compact_writer_witness_contract_for_llm(
+                raw_row["witness_contract"]
+            )
+        paragraphs.append(row)
+    compact["paragraphs"] = paragraphs
+    return compact
+
+
+def _compact_writer_binding_contract_for_llm(value: Any) -> Any:
+    """Project the Writer binding contract for the actual model request.
+
+    Atom-level matching is a Binder responsibility.  Sending the complete
+    atom target maps to the Writer duplicated the same frozen witness atoms
+    already present in ``shared_contexts`` and made otherwise legal pages
+    exceed the real request cap.  The complete contract remains private on
+    ``WriterSectionInput`` and is still used by the deterministic transaction
+    and Binder gates; the model-facing contract keeps only the paragraph /
+    Detail / formula identity surface needed to organize prose.
+    """
+
+    if hasattr(value, "model_dump"):
+        value = value.model_dump(mode="json")
+    if not isinstance(value, Mapping):
+        return value
+    compact: dict[str, Any] = {}
+    for key in (
+        "allowed_detail_ids",
+        "required_detail_ids",
+        "allowed_formula_obligation_ids",
+        "allowed_formula_package_ids",
+        "required_rhetorical_moves",
+    ):
+        if key in value:
+            compact[key] = list(value.get(key) or ())
+    compact["atom_binding"] = {
+        "owner": "binder",
+        "required_atom_count": len(value.get("required_atom_ids") or ()),
+        "instruction": (
+            "Do not treat atom witness declarations as completed binding. "
+            "The deterministic Binder attaches exact atom substrings after "
+            "the Writer paragraph content is accepted."
+        ),
+    }
     return compact
 
 
@@ -1189,6 +1377,19 @@ def _llm_visible_section_payload(section: WriterSectionInput) -> dict[str, Any]:
                 section.prompt_payload.get("paragraph_transaction_required")
             ),
         }
+        # Unified page inputs carry the immutable technical payload as a
+        # structured object.  Keep that object complete, but project the
+        # duplicated narrative/binding metadata to the small identity surface
+        # the Writer needs for organization.  The full values remain private
+        # on ``section.prompt_payload`` for deterministic validation.
+        result["narrative_plan"] = _compact_writer_narrative_plan_for_llm(
+            result["narrative_plan"],
+            # The immutable page already carries every frozen witness atom.
+            # Keep the compact target identities visible for organization,
+            # while leaving semantic atoms, anchors, excerpts, and exact atom
+            # binding to the private deterministic Binder contract.
+            include_witness_contract=True,
+        )
         # These are harness-issued contracts, not model-authored evidence.
         # Keep them in the actual LLM request so the Writer can emit
         # Detail/Atom witnesses without learning technical facts from a
@@ -1201,12 +1402,17 @@ def _llm_visible_section_payload(section: WriterSectionInput) -> dict[str, Any]:
         ):
             if key in section.prompt_payload:
                 result[key] = section.prompt_payload[key]
+        if "binding_contract" in result:
+            result["binding_contract"] = _compact_writer_binding_contract_for_llm(
+                result["binding_contract"]
+            )
         for key in (
             "repair_feedback",
             "writer_section_repair",
             "previous_attempt_error",
             "previous_attempt_section_markdown",
             "callback_owner_retry_instruction",
+            "candidate_partial_handoff",
         ):
             if key in section.prompt_payload:
                 result[key] = section.prompt_payload[key]
@@ -1244,6 +1450,7 @@ def _llm_visible_section_payload(section: WriterSectionInput) -> dict[str, Any]:
             "callback_owner_retry_instruction",
             "writer_section_repair",
             "writer_facet_coverage_repair",
+            "candidate_partial_handoff",
         ):
             if key in section.prompt_payload:
                 result[key] = section.prompt_payload[key]
@@ -1279,6 +1486,68 @@ def _llm_visible_section_payload(section: WriterSectionInput) -> dict[str, Any]:
             repair
         )
     return result
+
+
+def build_publication_writer_request(
+    section: WriterSectionInput,
+    *,
+    system_prompt: str,
+    schema_name: str,
+    response_json_schema: dict[str, Any] | None,
+) -> LLMRequest:
+    """Build the exact first-pass request used by the publication Writer.
+
+    The unified budget meter and the live Writer must operate on one request
+    serializer.  Keeping this construction beside the production Writer
+    avoids a diagnostic entry point quietly measuring a reconstructed payload
+    that differs from the bytes sent by ``write_method_by_sections``.
+    """
+
+    v2_page_section = any(
+        isinstance(item, Mapping)
+        and str(item.get("v2_page_id") or "").strip()
+        for item in (section.prompt_payload.get("shared_context_metadata") or ())
+    )
+    if v2_page_section and response_json_schema is not None:
+        paragraph_ids = list(dict.fromkeys(
+            str(row.get("paragraph_id") or "").strip()
+            for row in (section.argument_graph.get("paragraphs") or ())
+            if isinstance(row, Mapping) and str(row.get("paragraph_id") or "").strip()
+        ))
+        if paragraph_ids:
+            # Scope identities in the shared prepare/send serializer, before
+            # metering and freezing the envelope. Repair requests reuse this
+            # schema and may return a subset, but never an invented/typo ID.
+            response_json_schema = copy.deepcopy(response_json_schema)
+            paragraph_def = response_json_schema.get("$defs", {}).get(
+                "PublicationMethodParagraphOutputV1", {}
+            )
+            id_property = paragraph_def.get("properties", {}).get("paragraph_id")
+            if isinstance(id_property, dict):
+                id_property["enum"] = paragraph_ids
+                # The page-local enum is the complete identity contract.  The
+                # base model's generic min/max-length annotations are
+                # redundant once every permitted value is enumerated, and
+                # materially inflate the schema repeated on every page.  Do
+                # not drop the closed set: it remains the fail-closed guard
+                # against an invented or cross-page paragraph id.
+                id_property.pop("maxLength", None)
+                id_property.pop("minLength", None)
+    return LLMRequest(
+        prompt_template_id=(
+            "unified_writer_page_v2"
+            if v2_page_section
+            else "phase5_method_writer_section_v1"
+        ),
+        prompt=system_prompt,
+        input_payload={
+            "section_id": section.section_id,
+            "heading": section.heading,
+            **_llm_visible_section_payload(section),
+        },
+        schema_name=schema_name,
+        response_json_schema=response_json_schema,
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -1466,11 +1735,38 @@ def _merge_publication_partition_outputs(
     if len(outputs) == 1:
         return outputs[0]
     base = outputs[0]
-    markdown_parts = [
-        part.section_markdown.strip()
-        for part in outputs
-        if str(part.section_markdown or "").strip()
-    ]
+
+    def _body_without_section_heading(value: Any) -> tuple[str, str]:
+        """Return one leading H2 heading and the substantive body.
+
+        Page/partition Writers may each repeat the section heading.  The
+        section merge owns the structural H2, so retaining those headings
+        would create duplicate section boundaries in the final Candidate.
+        Deeper headings (``###`` and below) are prose owned and remain intact.
+        """
+
+        lines = str(value or "").strip().splitlines()
+        while lines and not lines[0].strip():
+            lines.pop(0)
+        heading = ""
+        if lines and re.match(r"^##(?!#)\s+", lines[0].strip()):
+            heading = re.sub(r"^##(?!#)\s+", "", lines.pop(0).strip()).strip()
+            while lines and not lines[0].strip():
+                lines.pop(0)
+        return heading, "\n".join(lines).strip()
+
+    headings: list[str] = []
+    markdown_parts: list[str] = []
+    for part in outputs:
+        heading, body = _body_without_section_heading(part.section_markdown)
+        if heading:
+            headings.append(heading)
+        if body:
+            markdown_parts.append(body)
+    heading = str(base.heading_text or "").strip() or (headings[0] if headings else "")
+    merged_markdown = "\n\n".join(markdown_parts)
+    if heading:
+        merged_markdown = f"## {heading}" + (f"\n\n{merged_markdown}" if merged_markdown else "")
     rendered_facets: set[str] = set()
     rendered_field_candidates: set[str] = set()
     deferred_facets: set[str] = set()
@@ -1517,7 +1813,7 @@ def _merge_publication_partition_outputs(
     deferred_details -= rendered_details
     return base.model_copy(
         update={
-            "section_markdown": "\n\n".join(markdown_parts),
+            "section_markdown": merged_markdown,
             "rendered_from_facet_ids": tuple(sorted(rendered_facets)),
             "rendered_field_candidate_ids": tuple(sorted(rendered_field_candidates)),
             "deferred_facet_ids": tuple(sorted(deferred_facets)),
@@ -1998,12 +2294,15 @@ def write_method_by_sections(
     content_transaction_assessor: Callable[
         [WriterSectionInput, LLMResponse, LLMResponse], tuple[bool, str]
     ] | None = None,
+    response_attempt_sink: Callable[[WriterSectionInput, LLMResponse], None] | None = None,
     accepted_response_sink: Callable[[WriterSectionInput, LLMResponse], None] | None = None,
 ) -> WriterAggregateResult:
     """Render a Method document by calling the writer once per section.
 
     See module docstring for the writer protocol (default 8192 budget,
-    extended 12288 on ``finish_reason="length"``, cumulative 24576 cap).
+    extended 12288 on ``finish_reason="length"``, with the legacy cumulative
+    cap retained for legacy sections and a declared per-page cap for unified
+    V2 sections).
 
     ``base_config`` is the base LLM config; per-call configs are
     derived by :func:`apply_role_config` with ``role="method_writer"``.
@@ -2020,9 +2319,106 @@ def write_method_by_sections(
     caller = llm_caller or _default_llm_caller
     normalized_sections = list(sections)
     cap = dynamic_writer_cumulative_budget(normalized_sections)
+    # Unified V2 supplies one immutable page invocation per input section and
+    # authorizes one bounded Writer-owned content repair for that page.  The
+    # legacy cumulative output cap is intentionally small (24,576 tokens) and
+    # would otherwise stop a full multi-page V2 run after a few pages, even
+    # though every page has its own frozen output ceiling.  Give V2 the sum of
+    # its declared primary ceilings plus one equal repair allowance; the
+    # per-page invocation ceiling and unified input ledger remain authoritative.
+    v2_output_ceiling_total = 0
+    v2_section_count = 0
+    for section in normalized_sections:
+        payload = section.prompt_payload or {}
+        metadata_rows = payload.get("shared_context_metadata") or ()
+        if not any(
+            isinstance(item, Mapping)
+            and str(item.get("v2_page_id") or "").strip()
+            for item in metadata_rows
+        ):
+            continue
+        v2_section_count += 1
+        ceiling_values: list[Any] = [payload.get("invocation_max_output_tokens")]
+        ceiling_values.extend(
+            item.get("invocation_max_output_tokens")
+            for item in metadata_rows
+            if isinstance(item, Mapping)
+        )
+        ceiling = int(
+            apply_role_config(base_config, METHOD_WRITER).max_output_tokens or 0
+        )
+        for value in ceiling_values:
+            try:
+                parsed_ceiling = int(value)
+            except (TypeError, ValueError):
+                continue
+            if parsed_ceiling > 0:
+                ceiling = parsed_ceiling
+                break
+        v2_output_ceiling_total += max(1, ceiling)
+    if v2_section_count:
+        cap = max(cap, 2 * v2_output_ceiling_total)
+
+    def planned_v2_output_ceiling(section: WriterSectionInput) -> int | None:
+        """Read the immutable per-invocation output ceiling, if present."""
+
+        payload = section.prompt_payload or {}
+        candidates: list[Any] = [payload.get("invocation_max_output_tokens")]
+        candidates.extend(
+            row.get("invocation_max_output_tokens")
+            for row in (payload.get("shared_context_metadata") or ())
+            if isinstance(row, Mapping)
+        )
+        for value in candidates:
+            try:
+                ceiling = int(value or 0)
+            except (TypeError, ValueError):
+                continue
+            if ceiling > 0:
+                return ceiling
+        return None
 
     result = WriterAggregateResult(cumulative_budget_cap=cap)
     rendered_sections: list[str] = []
+
+    def record_response_attempt(
+        section: WriterSectionInput,
+        response: LLMResponse,
+    ) -> None:
+        """Persist each transport/content attempt without synthesizing prose.
+
+        The unified caller uses the attempt sink to bind content acceptance to
+        the exact transport attempt.  A later accepted-response callback may
+        update the same attempt after paragraph-repair merging, but it must
+        never cause a rejected attempt to disappear from the ledger.
+        """
+
+        if response_attempt_sink is not None:
+            response_attempt_sink(section, response)
+
+    def record_rejected_content_attempt(
+        section: WriterSectionInput,
+        response: LLMResponse,
+        reason: str,
+    ) -> None:
+        """Keep a non-committed repair visible in the attempt ledger.
+
+        A repair can be non-empty and still fail the paragraph transaction
+        (for example, a title-only or no-gain candidate).  Such a response
+        does not pass through the final accepted-response sink, so annotate a
+        copy with the owner rejection before publishing its content sidecar.
+        The response sent to the caller and the incumbent selection remain
+        unchanged.
+        """
+
+        if response_attempt_sink is None:
+            return
+        if not response.blocked_reason and reason:
+            response = replace(
+                response,
+                blocked_reason=f"writer_content_repair_rejected:{reason}",
+            )
+        record_response_attempt(section, response)
 
     for index, section in enumerate(normalized_sections):
         # Stop issuing LLM calls once the cumulative budget is exhausted.
@@ -2054,11 +2450,15 @@ def write_method_by_sections(
         call_config_for_partition = apply_role_config(
             base_config, METHOD_WRITER, extended_writer_budget=False
         )
+        invocation_ceiling = planned_v2_output_ceiling(section)
         call_config_for_partition = call_config_for_partition.model_copy(
             update={
                 "max_output_tokens": min(
                     call_config_for_partition.max_output_tokens,
                     cap - result.cumulative_budget_consumed,
+                    invocation_ceiling
+                    if invocation_ceiling is not None
+                    else call_config_for_partition.max_output_tokens,
                 )
             }
         )
@@ -2072,6 +2472,23 @@ def write_method_by_sections(
             if publication_section
             else [section]
         )
+        # Unified V2 has already frozen one invocation per immutable page.
+        # The low-level Writer retry/partition machinery is intentionally a
+        # V1 compatibility path: allowing it to issue an extension,
+        # representation retry, or content repair here would create actual
+        # requests that are absent from the frozen V2 plan.  A V2 page failure
+        # is therefore returned to the owning orchestration layer, where a
+        # declared plan revision/resume can retry that page.
+        v2_page_section = any(
+            isinstance(item, Mapping)
+            and str(item.get("v2_page_id") or "").strip()
+            for item in (section.prompt_payload.get("shared_context_metadata") or ())
+        )
+        if v2_page_section:
+            # Context partitioning is a compatibility recovery mechanism.  It
+            # must not silently turn one frozen V2 page invocation into
+            # multiple actual requests that are absent from the plan.
+            partition_targets = [section]
         partition_markdown_parts: list[str] = []
         accepted_response: LLMResponse | None = None
         accepted_trace: GenerationCallTrace | None = None
@@ -2093,32 +2510,46 @@ def write_method_by_sections(
                     publication_mode=work_section.publication_mode,
                     argument_graph=work_section.argument_graph,
                 )
-            part_schema = _closed_set_publication_schema(
-                response_json_schema,
-                section=work_section,
-            )
-            request = LLMRequest(
-                prompt_template_id=f"phase5_method_writer_section_v1",
-                prompt=system_prompt,
-                input_payload={
-                    "section_id": work_section.section_id,
-                    "heading": work_section.heading,
-                    **_llm_visible_section_payload(work_section),
-                },
+            if v2_page_section:
+                # The V2 envelope binds one immutable page to one section.
+                # Bind that exact section identity in the stable role schema;
+                # the shared request builder binds the page's paragraph IDs
+                # before both preparation/metering and actual submission.
+                from code2paper.agentic.unified_context_compiler import (
+                    consumer_response_json_schema,
+                )
+
+                part_schema = consumer_response_json_schema(
+                    "writer",
+                    section_id=work_section.section_id,
+                )
+            else:
+                part_schema = _closed_set_publication_schema(
+                    response_json_schema,
+                    section=work_section,
+                )
+            request = build_publication_writer_request(
+                work_section,
+                system_prompt=system_prompt,
                 schema_name=schema_name,
                 response_json_schema=part_schema,
             )
+            part_schema = request.response_json_schema
             repair_input_payload = dict(request.input_payload or {})
 
             # First attempt: default budget.
             call_config = apply_role_config(
                 base_config, METHOD_WRITER, extended_writer_budget=False
             )
+            invocation_ceiling = planned_v2_output_ceiling(work_section)
             call_config = call_config.model_copy(
                 update={
                     "max_output_tokens": min(
                         call_config.max_output_tokens,
                         cap - result.cumulative_budget_consumed,
+                        invocation_ceiling
+                        if invocation_ceiling is not None
+                        else call_config.max_output_tokens,
                     )
                 }
             )
@@ -2136,6 +2567,7 @@ def write_method_by_sections(
                 response = blocked_response
             else:
                 response = _safe_call(caller, call_config, request)
+            record_response_attempt(work_section, response)
             part_extended_used = False
 
             default_used = _output_tokens_used(response)
@@ -2154,6 +2586,8 @@ def write_method_by_sections(
             result.cumulative_budget_consumed = default_cumulative
 
             if (
+                not v2_page_section
+                and
                 response.finish_reason == "length"
                 and (
                     not response.blocked_reason
@@ -2186,6 +2620,7 @@ def write_method_by_sections(
                     extended_response = blocked_response
                 else:
                     extended_response = _safe_call(caller, extended_config, request)
+                record_response_attempt(work_section, extended_response)
                 extended_token_used = _output_tokens_used(extended_response)
                 extended_cumulative = min(
                     cap, result.cumulative_budget_consumed + extended_token_used
@@ -2206,6 +2641,8 @@ def write_method_by_sections(
                     part_extended_used = True
                     extended_used = True
             elif (
+                not v2_page_section
+                and
                 accepted_response.finish_reason != "length"
                 and accepted_response.blocked_reason
                 and (
@@ -2247,6 +2684,7 @@ def write_method_by_sections(
                     retry_response = blocked_response
                 else:
                     retry_response = _safe_call(caller, retry_config, retry_request)
+                record_response_attempt(work_section, retry_response)
                 retry_token_used = _output_tokens_used(retry_response)
                 retry_cumulative = min(
                     cap, result.cumulative_budget_consumed + retry_token_used
@@ -2293,6 +2731,17 @@ def write_method_by_sections(
                 token_usage=(
                     last_response.token_usage if last_response is not None else None
                 ),
+                provider_finish_reason=(
+                    last_response.provider_finish_reason
+                    if last_response is not None else ""
+                ),
+                thinking_chars=(
+                    last_response.thinking_chars if last_response is not None else 0
+                ),
+                provider_diagnostics=(
+                    last_response.provider_diagnostics
+                    if last_response is not None else None
+                ),
                 metadata=last_response.metadata if last_response is not None else None,
             )
             repair_input_payload = {
@@ -2316,6 +2765,8 @@ def write_method_by_sections(
             original_writer_view = section.prompt_payload.get("writer_view")
             if isinstance(original_writer_view, Mapping):
                 writer_view = _compact_writer_view_for_llm(original_writer_view)
+        visible_formula_obligations: Any = ()
+        visible_formula_packages: Any = ()
         if isinstance(writer_view, dict):
             visible_formula_obligations = (
                 repair_input_payload.get("formula_obligations")
@@ -2342,20 +2793,46 @@ def write_method_by_sections(
                     visible_formula_packages
                 ),
             }
+        elif v2_page_section:
+            # Unified V2 deliberately keeps the legacy WriterView out of the
+            # provider request.  Transaction repair still belongs to the
+            # Writer owner, so use a compact progress surface and carry the
+            # page-local formula contract from the immutable request payload.
+            # The old branch left this view empty even though V2 already
+            # carried ``formula_packages`` at the top level.  As a result a
+            # formula/content repair could not tell the Writer which exact
+            # placeholder to restore, while the primary request and the
+            # deterministic splice gate still knew that the package existed.
+            # Copying only the already-frozen compact fields keeps the repair
+            # within the same page contract; it does not recover or invent
+            # WriterView authority.
+            visible_formula_obligations = (
+                repair_input_payload.get("formula_obligations")
+                or section.prompt_payload.get("formula_obligations")
+                or ()
+            )
+            visible_formula_packages = (
+                repair_input_payload.get("formula_packages")
+                or section.prompt_payload.get("formula_packages")
+                or ()
+            )
+            writer_view = {
+                "formula_obligations": list(visible_formula_obligations),
+                "formula_packages": _compact_formula_packages_for_llm(
+                    visible_formula_packages
+                ),
+            }
         transaction_failure = _is_writer_content_repairable_failure(
             accepted_response.blocked_reason
         )
-        if (
-            isinstance(writer_view, dict)
-            and (accepted_response.text or "").strip()
-            and (not accepted_response.blocked_reason or transaction_failure)
-            and result.cumulative_budget_consumed < cap
-        ):
-            # The structured wrapper cannot expose its metadata here, so use
-            # the model's required set as the conservative initial rendered
-            # set only when the prose contains no typed failure. The repair
-            # request asks the Writer to return explicit proposition IDs.
-            incumbent_progress, content_failures = assess_writer_section_progress(
+        if v2_page_section and transaction_failure:
+            content_failures = [
+                "transaction:" + str(accepted_response.blocked_reason or "")
+            ]
+        else:
+            content_failures = []
+        if v2_page_section:
+            incumbent_progress, _ = assess_writer_section_progress(
                 accepted_response.text or "",
                 writer_view=writer_view,
                 rendered_proposition_ids=(),
@@ -2364,16 +2841,76 @@ def write_method_by_sections(
                     if visible_formula_packages else None
                 ),
             )
+        if (
+            isinstance(writer_view, dict)
+            # A provider can terminate before emitting any JSON bytes.  That
+            # is still a representation-only failure owned by the Writer, so
+            # a V2 page may use its one declared content-repair attempt even
+            # when the incumbent text is empty.  The repair response remains
+            # subject to the normal page transaction/evidence gates below.
+            and (
+                (accepted_response.text or "").strip()
+                or (v2_page_section and transaction_failure)
+            )
+            and (not accepted_response.blocked_reason or transaction_failure)
+            and result.cumulative_budget_consumed < cap
+            and (not v2_page_section or transaction_failure)
+        ):
+            # The structured wrapper cannot expose its metadata here, so use
+            # the model's required set as the conservative initial rendered
+            # set only when the prose contains no typed failure. The repair
+            # request asks the Writer to return explicit proposition IDs.
+            if not v2_page_section:
+                incumbent_progress, content_failures = assess_writer_section_progress(
+                    accepted_response.text or "",
+                    writer_view=writer_view,
+                    rendered_proposition_ids=(),
+                    rendered_formula_package_ids=(
+                        _response_rendered_formula_package_ids(accepted_response)
+                        if visible_formula_packages else None
+                    ),
+                )
             try:
                 configured_rounds = int(os.environ.get("CODE2PAPER_MAX_WRITER_REPAIR_ROUNDS", "3"))
             except ValueError:
                 configured_rounds = 3
-            max_rounds = max(0, min(configured_rounds, 4))
+            max_rounds = (
+                1 if v2_page_section
+                else max(0, min(configured_rounds, 4))
+            )
             transaction_repair_used = False
             for repair_round in range(1, max_rounds + 1):
                 if not content_failures or result.cumulative_budget_consumed >= cap:
                     break
-                repair_payload = dict(request.input_payload)
+                if v2_page_section:
+                    # Keep the immutable page and its compact page-local
+                    # contracts, while dropping duplicated first-pass
+                    # scaffolding.  The request envelope binds the page,
+                    # task set, prompt, and schema; the repair packet itself
+                    # carries the Writer-owned semantic delta.  This keeps a
+                    # declared second attempt within the same run budget.
+                    repair_payload = {
+                        key: request.input_payload[key]
+                        for key in (
+                            "section_id",
+                            "heading",
+                            "narrative_plan",
+                            "shared_contexts",
+                            "shared_context_metadata",
+                            "binding_contract",
+                            "formula_packages",
+                            "formula_obligations",
+                            "formula_placeholders_required",
+                            "formula_generation_policy",
+                            "output_contract",
+                            "paragraph_transaction_required",
+                            "unified_v2_page_id",
+                            "writer_invocation_id",
+                        )
+                        if key in request.input_payload
+                    }
+                else:
+                    repair_payload = dict(request.input_payload)
                 repair_packet = build_writer_section_repair_packet(
                     section_id=section.section_id,
                     attempt=repair_round,
@@ -2392,7 +2929,11 @@ def write_method_by_sections(
                     mode="json"
                 )
                 repair_request = LLMRequest(
-                    prompt_template_id=request.prompt_template_id + "_content_repair_v1",
+                    prompt_template_id=(
+                        request.prompt_template_id
+                        if v2_page_section
+                        else request.prompt_template_id + "_content_repair_v1"
+                    ),
                     prompt=request.prompt,
                     input_payload=repair_payload,
                     schema_name=request.schema_name,
@@ -2443,6 +2984,11 @@ def write_method_by_sections(
                     (repair_response.blocked_reason and not repair_transaction_failure)
                     or not (repair_response.text or "").strip()
                 ):
+                    record_rejected_content_attempt(
+                        section,
+                        repair_response,
+                        repair_response.blocked_reason or "empty_response",
+                    )
                     break
                 candidate_progress, candidate_failures = assess_writer_section_progress(
                     repair_response.text or "",
@@ -2463,6 +3009,11 @@ def write_method_by_sections(
                     )
                 if content_transaction_assessor is not None or content_transaction_validator is not None:
                     if not transaction_ok:
+                        record_rejected_content_attempt(
+                            section,
+                            repair_response,
+                            str(transaction_reason or "transaction_rejected"),
+                        )
                         result.writer_repair_transaction_rejections.append({
                             "section_id": section.section_id,
                             "repair_round": repair_round,
@@ -2494,11 +3045,33 @@ def write_method_by_sections(
                     # reach this branch.
                     if repair_response.blocked_reason and repair_transaction_failure:
                         repair_response = replace(repair_response, blocked_reason=None)
+                # A response that still carries a typed failure has not been
+                # content-accepted.  In particular, the low-level V2 entry
+                # may be used without the orchestration-layer assessor; it
+                # must not count a title-only or paragraph-transaction-failed
+                # response as a repair commit merely because it is non-empty.
+                if repair_response.blocked_reason:
+                    record_rejected_content_attempt(
+                        section,
+                        repair_response,
+                        str(repair_response.blocked_reason),
+                    )
+                    result.writer_repair_no_progress_stops += 1
+                    break
                 # Run the semantic/evidence transaction before the local
                 # progress comparison.  This preserves an actionable owner
                 # failure (and permits its single correction turn) when a
                 # stylistic improvement introduces an unsupported positive.
-                if not repair_is_monotonic(incumbent_progress, candidate_progress):
+                if not (
+                    v2_page_section and content_transaction_assessor is not None
+                ) and not repair_is_monotonic(
+                    incumbent_progress, candidate_progress
+                ):
+                    record_rejected_content_attempt(
+                        section,
+                        repair_response,
+                        "no_monotonic_gain",
+                    )
                     result.writer_repair_no_progress_stops += 1
                     break
                 accepted_response = repair_response
@@ -3640,6 +4213,62 @@ def _assembled_section_heading(
     return normalize_publication_heading(planned or written)
 
 
+def _recover_known_paragraph_heading(
+    transaction: PublicationMethodParagraphOutputV1,
+    *,
+    section: WriterSectionInput,
+) -> tuple[PublicationMethodParagraphOutputV1, dict[str, Any] | None]:
+    """Remove one known section heading accidentally fused into a paragraph.
+
+    Paragraph transactions are prose-only, while the legacy section prompt
+    used to require the section H2 unconditionally.  A model can therefore
+    return ``## planned headingThe body...``.  Reuse the production heading
+    boundary normalizer, then remove only the exact planned heading line.  No
+    unknown heading, sentence, or body token is discarded.
+    """
+
+    body = str(transaction.paragraph_markdown or "").strip()
+    heading = normalize_publication_heading(section.heading)
+    if not body or not heading:
+        return transaction, None
+    # This is deliberately local/lazy: publication_method_writer imports this
+    # module, so importing its representation helper at module load time would
+    # create an import cycle.
+    from code2paper.agentic.publication_method_writer import (
+        _normalize_section_heading_breaks,
+    )
+
+    normalized = _normalize_section_heading_breaks(
+        body,
+        expected_heading=heading,
+    )
+    lines = normalized.splitlines()
+    first_index = next(
+        (index for index, line in enumerate(lines) if line.strip()),
+        None,
+    )
+    if first_index is None:
+        return transaction, None
+    first = lines[first_index].strip()
+    if not first.startswith("#"):
+        return transaction, None
+    if normalize_publication_heading(first) != heading:
+        return transaction, None
+    # Remove only structural blank lines introduced between the known heading
+    # and the body.  The body wording and all numeric tokens remain verbatim.
+    remainder = "\n".join(lines[first_index + 1:]).lstrip("\r\n")
+    recovered = transaction.model_copy(update={"paragraph_markdown": remainder})
+    return recovered, {
+        "section_id": section.section_id,
+        "paragraph_id": str(transaction.paragraph_id),
+        "operation": "repair_known_section_heading_from_paragraph",
+        "expected_heading": heading,
+        "body_before_digest": hashlib.sha256(body.encode("utf-8")).hexdigest(),
+        "body_after_digest": hashlib.sha256(remainder.encode("utf-8")).hexdigest(),
+        "body_chars_after": len(remainder),
+    }
+
+
 def _normalize_publication_paragraph_transaction(
     output: PublicationMethodSectionOutputV1,
     *,
@@ -3675,8 +4304,33 @@ def _normalize_publication_paragraph_transaction(
     if not expected_ids:
         failures.append("paragraph_transactions_without_plan")
     by_id: dict[str, PublicationMethodParagraphOutputV1] = {}
+    expected_ids_by_casefold: dict[str, tuple[str, ...]] = {}
+    for expected_id in expected_ids:
+        key = expected_id.casefold()
+        expected_ids_by_casefold[key] = (
+            *expected_ids_by_casefold.get(key, ()),
+            expected_id,
+        )
     for transaction in transactions:
         paragraph_id = str(transaction.paragraph_id)
+        if expected_ids and paragraph_id not in set(expected_ids):
+            casefold_matches = expected_ids_by_casefold.get(
+                paragraph_id.casefold(), ()
+            )
+            if len(casefold_matches) == 1 and casefold_matches[0] not in by_id:
+                canonical_id = casefold_matches[0]
+                model_value = paragraph_id
+                transaction = transaction.model_copy(
+                    update={"paragraph_id": canonical_id}
+                )
+                paragraph_id = canonical_id
+                if binder_recovery_sink is not None:
+                    binder_recovery_sink.append({
+                        "section_id": section.section_id,
+                        "paragraph_id": canonical_id,
+                        "operation": "repair_casefold_paragraph_id",
+                        "model_value": model_value,
+                    })
         if paragraph_id in by_id:
             failures.append(f"duplicate_paragraph_transaction:{paragraph_id}")
         elif expected_ids and paragraph_id not in set(expected_ids):
@@ -3706,6 +4360,12 @@ def _normalize_publication_paragraph_transaction(
         transaction = by_id.get(paragraph_id)
         if transaction is None:
             continue
+        transaction, heading_recovery = _recover_known_paragraph_heading(
+            transaction,
+            section=section,
+        )
+        if heading_recovery is not None and binder_recovery_sink is not None:
+            binder_recovery_sink.append(heading_recovery)
         # Stage B Binder: select exact substrings from the frozen Writer body
         # before any transaction assessment.  The Binder is representation
         # metadata only; it cannot change the paragraph or introduce ids.
@@ -3713,6 +4373,10 @@ def _normalize_publication_paragraph_transaction(
             bind_paragraph_witnesses,
         )
         body = transaction.paragraph_markdown.strip()
+        prose_lines = [line for line in body.splitlines() if not re.match(r"^\s*#", line)]
+        if not any(char.isalnum() for char in "\n".join(prose_lines)):
+            failures.append(f"paragraph_body_not_substantive:{paragraph_id}")
+
         plan_row = plan_by_id.get(paragraph_id, {})
         section_claim_ids = {
             str(value)
@@ -3871,7 +4535,14 @@ def _normalize_publication_paragraph_transaction(
                 continue
             if (
                 str(target.get("target_kind") or "").strip() == "atom"
-                and bool(target.get("required", target.get("render_policy") == "required"))
+                and bool(
+                    target.get(
+                        "required",
+                        True
+                        if "render_policy" not in target
+                        else target.get("render_policy") == "required",
+                    )
+                )
                 and str(target.get("detail_id") or "").strip()
                 and str(target.get("target_id") or "").strip()
             ):
@@ -3887,7 +4558,10 @@ def _normalize_publication_paragraph_transaction(
                 failures.append(
                     f"missing_required_atom_witness:{paragraph_id}:detail:{detail_id}"
                 )
-            elif ("detail", detail_id) not in witnessed:
+            elif (
+                not required_atoms_by_detail.get(str(detail_id))
+                and ("detail", detail_id) not in witnessed
+            ):
                 failures.append(f"missing_exact_witness:{paragraph_id}:detail:{detail_id}")
             aggregate_fields["rendered_detail_ids"].add(str(detail_id))
         rendered_detail_ids = set(str(value) for value in transaction.rendered_detail_ids)
@@ -4144,6 +4818,8 @@ def write_publication_method_by_sections(
     content_transaction_assessor: Callable[
         [WriterSectionInput, LLMResponse, LLMResponse], tuple[bool, str]
     ] | None = None,
+    response_attempt_sink: Callable[[WriterSectionInput, LLMResponse], None] | None = None,
+    page_acceptance_sink: Callable[[WriterSectionInput, LLMResponse], None] | None = None,
 ) -> PublicationWriterResult:
     """Run the content-first publication Writer contract.
 
@@ -4154,7 +4830,32 @@ def write_publication_method_by_sections(
 
     caller = llm_caller or _default_llm_caller
     source_sections = list(sections)
-    private_sections_by_id = {item.section_id: item for item in source_sections}
+    def _section_state_key(section: WriterSectionInput) -> str:
+        payload = section.prompt_payload or {}
+        invocation_id = str(payload.get("writer_invocation_id") or "").strip()
+        if invocation_id:
+            return invocation_id
+        for row in payload.get("shared_context_metadata", ()) or ():
+            if isinstance(row, Mapping):
+                invocation_id = str(row.get("writer_invocation_id") or "").strip()
+                if invocation_id:
+                    return invocation_id
+        return section.section_id
+
+    def _request_state_key(payload: Mapping[str, Any]) -> str:
+        invocation_id = str(payload.get("writer_invocation_id") or "").strip()
+        if invocation_id:
+            return invocation_id
+        for row in payload.get("shared_context_metadata", ()) or ():
+            if isinstance(row, Mapping):
+                invocation_id = str(row.get("writer_invocation_id") or "").strip()
+                if invocation_id:
+                    return invocation_id
+        return str(payload.get("section_id") or "")
+
+    private_sections_by_key = {
+        _section_state_key(item): item for item in source_sections
+    }
     # A ``finish_reason=length`` call may be followed by an extended retry.
     # Keep every parsed attempt long enough to match it to the response that
     # the section protocol ultimately accepts; exposing both attempts would
@@ -4169,9 +4870,11 @@ def write_publication_method_by_sections(
         section: WriterSectionInput,
         response: LLMResponse,
     ) -> None:
+        if page_acceptance_sink is not None:
+            page_acceptance_sink(section, response)
         metadata = response.metadata
         if isinstance(metadata, PublicationMethodSectionOutputV1):
-            accepted_outputs_by_section[section.section_id] = metadata.model_copy(
+            accepted_outputs_by_section[_section_state_key(section)] = metadata.model_copy(
                 update={"section_id": section.section_id}
             )
 
@@ -4183,7 +4886,8 @@ def write_publication_method_by_sections(
             # cause behind a secondary schema-parse error.
             return response
         scoped_section_id = str(request.input_payload.get("section_id") or "")
-        private_section = private_sections_by_id.get(scoped_section_id)
+        request_state_key = _request_state_key(request.input_payload)
+        private_section = private_sections_by_key.get(request_state_key)
         private_payload = (
             private_section.prompt_payload if private_section is not None else {}
         )
@@ -4232,8 +4936,19 @@ def write_publication_method_by_sections(
                 response_mode=response.response_mode,
                 finish_reason=response.finish_reason,
                 token_usage=_failed_response_token_usage(response),
+                provider_finish_reason=response.provider_finish_reason,
+                thinking_chars=response.thinking_chars,
+                provider_diagnostics=response.provider_diagnostics,
             )
         parsed = _sanitize_publication_output_overlap(parsed)
+        expected_scoped_section_id = scoped_section_id or (
+            private_section.section_id if private_section is not None else ""
+        )
+        parsed = _recover_casefold_publication_section_id(
+            parsed,
+            expected_section_id=expected_scoped_section_id,
+            recovery_sink=recovery_traces,
+        )
         formula_placeholder_failures: list[str] = []
         if (
             isinstance(private_payload, dict)
@@ -4279,11 +4994,13 @@ def write_publication_method_by_sections(
             replaced_transactions: list[PublicationMethodParagraphOutputV1] = []
             for transaction in parsed_transactions:
                 paragraph_id = str(transaction.paragraph_id or "").strip()
+                insertion_witnesses: list[dict[str, str]] = []
                 replaced, failures = splice_formula_placeholders(
                     transaction.paragraph_markdown,
                     formula_packages,
                     required_package_ids=paragraph_owner_ids.get(paragraph_id, ()),
                     allowed_package_ids=paragraph_owner_ids.get(paragraph_id, ()),
+                    witness_sink=insertion_witnesses,
                 )
                 if failures:
                     recovered_transaction, recovered_package_ids = (
@@ -4326,6 +5043,25 @@ def write_publication_method_by_sections(
                 # representation repair only—the later Binder still needs
                 # an exact formula witness in the resulting body.
                 if not failures:
+                    existing_keys = {
+                        (witness.witness_kind, witness.target_id)
+                        for witness in transaction.witnesses
+                    }
+                    recovered_witnesses = [
+                        PublicationContentWitnessV1.model_validate(witness)
+                        for witness in insertion_witnesses
+                        if (witness["witness_kind"], witness["target_id"]) not in existing_keys
+                    ]
+                    if recovered_witnesses:
+                        transaction_updates["witnesses"] = [
+                            *transaction.witnesses, *recovered_witnesses,
+                        ]
+                        recovery_traces.append({
+                            "section_id": scoped_section_id,
+                            "paragraph_id": paragraph_id,
+                            "operation": "bind_formula_placeholder_occurrences",
+                            "witnesses": [w.model_dump(mode="json") for w in recovered_witnesses],
+                        })
                     transaction_updates["used_formula_package_ids"] = list(
                         dict.fromkeys([
                             *(
@@ -4361,7 +5097,7 @@ def write_publication_method_by_sections(
                     for item in parsed.paragraphs
                     if str(item.paragraph_markdown or "").strip()
                 )
-            parsed_outputs_by_section[section_id] = [
+            parsed_outputs_by_section[request_state_key] = [
                 parsed.model_copy(update={"section_id": section_id})
             ]
             return LLMResponse(
@@ -4375,6 +5111,9 @@ def write_publication_method_by_sections(
                 response_mode=response.response_mode,
                 finish_reason=response.finish_reason,
                 token_usage=_failed_response_token_usage(response),
+                provider_finish_reason=response.provider_finish_reason,
+                thinking_chars=response.thinking_chars,
+                provider_diagnostics=response.provider_diagnostics,
                 metadata=parsed,
             )
         section_id = str(request.input_payload.get("section_id") or parsed.section_id or "")
@@ -4383,11 +5122,24 @@ def write_publication_method_by_sections(
             and private_payload.get("paragraph_transaction_required")
         )
         if private_section is not None:
+            is_v2_page_request = any(
+                isinstance(item, Mapping)
+                and str(item.get("v2_page_id") or "").strip()
+                for item in (
+                    private_payload.get("shared_context_metadata", ())
+                    if isinstance(private_payload, Mapping)
+                    else ()
+                )
+            )
             parsed, paragraph_failures = _normalize_publication_paragraph_transaction(
                 parsed,
                 section=private_section,
                 require_transactions=transaction_required and not content_repair_request,
-                binder_caller=caller,
+                # V2 Binder calls are not hidden inside a Writer page
+                # invocation.  The V2 orchestration layer owns any declared
+                # Binder phase; keep the low-level compatibility Binder out
+                # of the actual V2 request stream.
+                binder_caller=(None if is_v2_page_request else caller),
                 binder_base_config=base_config,
                 binder_trace_sink=binder_traces,
                 binder_recovery_sink=recovery_traces,
@@ -4400,7 +5152,7 @@ def write_publication_method_by_sections(
             # transaction incomplete.  The owner repair path can now see the
             # actual incumbent text and attempt a scoped semantic correction;
             # no invalid paragraph is ever counted as rendered.
-            parsed_outputs_by_section[section_id] = [
+            parsed_outputs_by_section[request_state_key] = [
                 parsed.model_copy(update={"section_id": section_id})
             ]
             return LLMResponse(
@@ -4414,6 +5166,9 @@ def write_publication_method_by_sections(
                 response_mode=response.response_mode,
                 finish_reason=response.finish_reason,
                 token_usage=_failed_response_token_usage(response),
+                provider_finish_reason=response.provider_finish_reason,
+                thinking_chars=response.thinking_chars,
+                provider_diagnostics=response.provider_diagnostics,
                 metadata=parsed,
             )
         if not transaction_required and not str(parsed.section_markdown or "").strip():
@@ -4425,6 +5180,9 @@ def write_publication_method_by_sections(
                 response_mode=response.response_mode,
                 finish_reason=response.finish_reason,
                 token_usage=_failed_response_token_usage(response),
+                provider_finish_reason=response.provider_finish_reason,
+                thinking_chars=response.thinking_chars,
+                provider_diagnostics=response.provider_diagnostics,
             )
         grounding_contract = private_payload.get("grounding_contract") or {}
         contract_failures = _publication_contract_failures(
@@ -4449,14 +5207,17 @@ def write_publication_method_by_sections(
                 response_mode=response.response_mode,
                 finish_reason=response.finish_reason,
                 token_usage=_failed_response_token_usage(response),
+                provider_finish_reason=response.provider_finish_reason,
+                thinking_chars=response.thinking_chars,
+                provider_diagnostics=response.provider_diagnostics,
             )
         partition_meta = request.input_payload.get("writer_context_partition")
         if partition_meta:
-            parsed_outputs_by_section.setdefault(section_id, []).append(
+            parsed_outputs_by_section.setdefault(request_state_key, []).append(
                 parsed.model_copy(update={"section_id": section_id})
             )
         else:
-            parsed_outputs_by_section[section_id] = [
+            parsed_outputs_by_section[request_state_key] = [
                 parsed.model_copy(update={"section_id": section_id})
             ]
         return LLMResponse(
@@ -4467,6 +5228,9 @@ def write_publication_method_by_sections(
             response_mode=response.response_mode,
             finish_reason=response.finish_reason,
             token_usage=response.token_usage,
+            provider_finish_reason=response.provider_finish_reason,
+            thinking_chars=response.thinking_chars,
+            provider_diagnostics=response.provider_diagnostics,
             metadata=parsed,
         )
 
@@ -4497,11 +5261,26 @@ def write_publication_method_by_sections(
         publication_mode=True,
         content_transaction_validator=content_transaction_validator,
         content_transaction_assessor=content_transaction_assessor,
+        response_attempt_sink=response_attempt_sink,
         accepted_response_sink=capture_accepted_response,
     )
-    parsed_outputs: list[PublicationMethodSectionOutputV1] = []
-    for section_result in aggregate.sections:
-        candidates = parsed_outputs_by_section.get(section_result.section_id, [])
+    # The low-level writer returns one result per input.  Unified V2 inputs
+    # intentionally repeat a canonical section id for its page invocations,
+    # so select by the private invocation state key first and only then merge
+    # the page outputs back to one public section result.
+    selected_by_section: dict[str, list[PublicationMethodSectionOutputV1]] = {}
+    grouped_section_results: dict[str, list[WriterSectionResult]] = {}
+    section_result_order: list[str] = []
+    for index, section in enumerate(normalized_sections):
+        if index >= len(aggregate.sections):
+            continue
+        section_result = aggregate.sections[index]
+        section_id = section.section_id
+        if section_id not in grouped_section_results:
+            section_result_order.append(section_id)
+        grouped_section_results.setdefault(section_id, []).append(section_result)
+        state_key = _section_state_key(section)
+        candidates = parsed_outputs_by_section.get(state_key, [])
         if not candidates:
             continue
         # ``write_method_by_sections`` is the state owner.  Its sink captures
@@ -4510,20 +5289,16 @@ def write_publication_method_by_sections(
         # parsed attempt merely because it contains more complete metadata.
         if (
             section_result.section_id not in aggregate.context_partitioned_section_ids
-            and section_result.section_id in accepted_outputs_by_section
+            and state_key in accepted_outputs_by_section
         ):
-            selected = accepted_outputs_by_section[section_result.section_id]
-            parsed_outputs.append(selected)
-            aggregate.research_requests.extend(selected.new_research_requests)
-            continue
-        # The accepted text is the exact structured section_markdown returned
-        # through ``write_method_by_sections``.  Prefer that match so a
-        # shorter first response is not selected when the extended response
-        # was accepted; fall back to the latest parsed attempt for providers
-        # that normalize the text before returning it.
-        if len(candidates) > 1 and section_result.section_id in aggregate.context_partitioned_section_ids:
+            selected = accepted_outputs_by_section[state_key]
+        elif len(candidates) > 1 and section_result.section_id in aggregate.context_partitioned_section_ids:
             selected = _merge_publication_partition_outputs(candidates)
         else:
+            # The accepted text is the exact structured section_markdown
+            # returned through ``write_method_by_sections``.  Prefer that
+            # match so a shorter first response is not selected when an
+            # extended response was accepted.
             selected = next(
                 (
                     candidate
@@ -4532,8 +5307,60 @@ def write_publication_method_by_sections(
                 ),
                 candidates[0] if section_result.incomplete else candidates[-1],
             )
+        selected_by_section.setdefault(section_id, []).append(
+            selected.model_copy(update={"section_id": section_id})
+        )
+
+    parsed_outputs: list[PublicationMethodSectionOutputV1] = []
+    for section_id in section_result_order:
+        candidates = selected_by_section.get(section_id, [])
+        if not candidates:
+            continue
+        selected = _merge_publication_partition_outputs(candidates)
+        selected = selected.model_copy(update={"section_id": section_id})
         parsed_outputs.append(selected)
         aggregate.research_requests.extend(selected.new_research_requests)
+
+    # Keep the aggregate contract section-scoped as well.  Downstream gates
+    # must not see duplicate section ids merely because a section was split
+    # over several immutable pages.
+    merged_results: list[WriterSectionResult] = []
+    for section_id in section_result_order:
+        rows = grouped_section_results.get(section_id, [])
+        if not rows:
+            continue
+        if len(rows) == 1:
+            merged_results.append(rows[0])
+            continue
+        texts = [str(row.text or "").strip() for row in rows if str(row.text or "").strip()]
+        merged_results.append(
+            WriterSectionResult(
+                section_id=section_id,
+                heading=rows[0].heading,
+                text="\n\n".join(texts),
+                finish_reason=rows[-1].finish_reason,
+                extended_budget_used=any(row.extended_budget_used for row in rows),
+                blocked_reason=next(
+                    (str(row.blocked_reason) for row in rows if row.blocked_reason),
+                    "",
+                ),
+                trace=rows[-1].trace,
+                incomplete=any(row.incomplete for row in rows),
+                new_research_requests=[
+                    item for row in rows for item in row.new_research_requests
+                ],
+                self_identified_risks=[
+                    item for row in rows for item in row.self_identified_risks
+                ],
+            )
+        )
+    aggregate.sections = merged_results
+    aggregate.incomplete_sections = list(dict.fromkeys(
+        row.section_id for row in merged_results if row.incomplete
+    ))
+    aggregate.concatenated_markdown = "\n\n".join(
+        row.text for row in merged_results if str(row.text or "").strip()
+    )
     aggregate.response_recovery_traces.extend(recovery_traces)
     aggregate.traces.extend(binder_traces)
     return PublicationWriterResult(aggregate=aggregate, outputs=parsed_outputs)
@@ -4699,6 +5526,40 @@ def _decode_publication_callback_moves(
     return json.dumps(payload, ensure_ascii=False), bridge_fields
 
 
+def _recover_casefold_publication_section_id(
+    output: PublicationMethodSectionOutputV1,
+    *,
+    expected_section_id: str,
+    recovery_sink: list[dict[str, Any]] | None = None,
+) -> PublicationMethodSectionOutputV1:
+    """Recover a uniquely scoped section-id case mutation.
+
+    The request-scoped section id is the authority.  A provider may preserve
+    the identifier's characters while changing the case of hexadecimal
+    letters (as happened for a Qwen JSON response).  That is representation
+    damage, so it is safe to canonicalize only when both ids are non-empty and
+    their case-folded values are identical.  Cross-section ids and arbitrary
+    near-misses remain fail-closed at ``_publication_contract_failures``.
+    """
+
+    actual = str(output.section_id or "").strip()
+    expected = str(expected_section_id or "").strip()
+    if (
+        not actual
+        or not expected
+        or actual == expected
+        or actual.casefold() != expected.casefold()
+    ):
+        return output
+    if recovery_sink is not None:
+        recovery_sink.append({
+            "section_id": expected,
+            "operation": "repair_casefold_section_id",
+            "model_value": actual,
+        })
+    return output.model_copy(update={"section_id": expected})
+
+
 def _publication_contract_failures(
     output: PublicationMethodSectionOutputV1,
     *,
@@ -4844,9 +5705,369 @@ def _hard_publication_binding_failures(failures: Iterable[str]) -> list[str]:
     ]
 
 
+def _publication_body_has_substantive_text(body: Any) -> bool:
+    """Check body content without treating a heading as prose."""
+
+    lines = [
+        line for line in str(body or "").splitlines()
+        if not re.match(r"^\s*#", line)
+    ]
+    return any(char.isalnum() for char in "\n".join(lines))
+
+
+def assess_publication_writer_response(
+    section: WriterSectionInput,
+    response: LLMResponse,
+) -> dict[str, Any]:
+    """Return the production paragraph/content acceptance metrics.
+
+    The unified single-page runner and the full publication Writer must score
+    the same parsed response through the same transaction, formula, authority,
+    and substantive-body gates.  This function is intentionally pure: it
+    reads the normalized response metadata and never promotes a partial result.
+    """
+
+    output = response.metadata
+    empty = {
+        "valid_target_count": 0,
+        "required_target_count": 0,
+        "valid_atom_count": 0,
+        "required_atom_count": 0,
+        "missing_atom_count": 0,
+        "invalid_count": 1,
+        "invalid_witness_count": 1,
+        "valid_paragraph_count": 0,
+        "formula_exact_body_count": 0,
+        "formula_consumed_count": 0,
+        "authority_violation_count": 1,
+        "authority_failures": ("transaction_metadata_missing",),
+        "missing": ("transaction_metadata_missing",),
+        "failures": ["metadata_missing"],
+    }
+    if not isinstance(output, PublicationMethodSectionOutputV1):
+        if response.blocked_reason:
+            empty["failures"].append(str(response.blocked_reason))
+        return empty
+
+    from code2paper.agentic.publication_transaction_contract import (
+        _formula_package_terminal_disposition,
+        _witness_constraints_from_plan_row,
+        assess_paragraph_transaction,
+        required_anchors_from_plan_row,
+    )
+
+    packages = tuple(
+        item for item in (section.prompt_payload.get("formula_packages") or ())
+        if isinstance(item, Mapping)
+    )
+    obligations = tuple(
+        item for item in (section.prompt_payload.get("formula_obligations") or ())
+        if isinstance(item, Mapping)
+    )
+    formula_routes: dict[str, dict[str, Any]] = {}
+    has_explicit_routes = any(
+        str(package.get("obligation_id") or "").strip()
+        or bool(package.get("satisfied_obligation_ids"))
+        for package in packages
+    )
+    for obligation in obligations:
+        obligation_id = str(obligation.get("obligation_id") or "").strip()
+        if not obligation_id:
+            continue
+        matches = [
+            package for package in packages
+            if obligation_id in {
+                *(
+                    str(value).strip()
+                    for value in (package.get("satisfied_obligation_ids") or ())
+                    if str(value).strip()
+                ),
+                *(
+                    [str(package.get("obligation_id") or "").strip()]
+                    if str(package.get("obligation_id") or "").strip()
+                    else []
+                ),
+            }
+        ]
+        if not matches and not has_explicit_routes:
+            facet_ids = {
+                str(value) for value in (obligation.get("facet_ids") or ())
+            }
+            matches = [
+                package for package in packages
+                if not facet_ids
+                or facet_ids.intersection(
+                    set(str(value) for value in (package.get("bound_facet_ids") or ()))
+                )
+            ]
+        formula_routes[obligation_id] = {
+            "package_ids": tuple(
+                str(package.get("package_id") or "")
+                for package in matches
+                if str(package.get("package_id") or "").strip()
+            ),
+            "latex": str(
+                matches[0].get("markdown_block")
+                or matches[0].get("latex")
+                or ""
+            ) if matches else "",
+            "terminal_disposition": (
+                _formula_package_terminal_disposition(matches[0])
+                if len(matches) == 1 else "failed"
+            ),
+        }
+
+    plans = tuple(
+        item for item in (section.argument_graph.get("paragraphs") or ())
+        if isinstance(item, Mapping)
+    )
+    transactions = {
+        str(item.paragraph_id): item
+        for item in (output.paragraphs or ())
+        if str(item.paragraph_id or "").strip()
+    }
+    metrics: dict[str, Any] = {
+        "valid_target_count": 0,
+        "required_target_count": 0,
+        "valid_atom_count": 0,
+        "required_atom_count": 0,
+        "missing_atom_count": 0,
+        "invalid_count": 0,
+        "invalid_witness_count": 0,
+        "valid_paragraph_count": 0,
+        "formula_exact_body_count": 0,
+        "formula_consumed_count": 0,
+        "authority_violation_count": 0,
+        "authority_failures": (),
+        "missing": [],
+        "failures": [],
+    }
+    assessments: dict[str, Any] = {}
+    for plan_row in plans:
+        paragraph_id = str(plan_row.get("paragraph_id") or "")
+        transaction = transactions.get(paragraph_id)
+        if transaction is None:
+            missing_assessment = assess_paragraph_transaction(
+                {"paragraph_id": paragraph_id},
+                plan_row=plan_row,
+                formula_routes=formula_routes,
+            )
+            missing_count = sum(
+                len(values) for values in missing_assessment.missing_by_kind.values()
+            )
+            metrics["required_target_count"] += sum(
+                len(values) for values in missing_assessment.required_by_kind.values()
+            )
+            required_atoms = {
+                key for key, local in _witness_constraints_from_plan_row(plan_row).items()
+                if key[0] == "atom" and local.get("required", True)
+            }
+            metrics["required_atom_count"] += len(required_atoms)
+            metrics["missing_atom_count"] += len(required_atoms)
+            metrics["invalid_count"] += 1
+            metrics["invalid_witness_count"] += max(1, missing_count)
+            metrics["missing"].append(f"missing_paragraph:{paragraph_id}")
+            metrics["failures"].append(f"missing_paragraph:{paragraph_id}")
+            continue
+        assessment = assess_paragraph_transaction(
+            transaction,
+            plan_row=plan_row,
+            formula_routes=formula_routes,
+            required_anchors=required_anchors_from_plan_row(plan_row),
+        )
+        assessments[paragraph_id] = assessment
+        required_count = sum(
+            len(values) for values in assessment.required_by_kind.values()
+        )
+        metrics["required_target_count"] += required_count
+        required_atoms = {
+            key for key, local in _witness_constraints_from_plan_row(plan_row).items()
+            if key[0] == "atom" and local.get("required", True)
+        }
+        witnessed_atoms = {
+            key for key in required_atoms
+            if key in {
+                (
+                    str(item.witness_kind or "").strip(),
+                    str(item.target_id or "").strip(),
+                )
+                for item in (transaction.witnesses or ())
+            }
+        }
+        metrics["required_atom_count"] += len(required_atoms)
+        metrics["valid_atom_count"] += len(witnessed_atoms)
+        metrics["missing_atom_count"] += len(required_atoms - witnessed_atoms)
+        metrics["valid_target_count"] += sum(
+            len(values) for values in assessment.witnessed_by_kind.values()
+        )
+        metrics["invalid_witness_count"] += (
+            len(assessment.invalid_witnesses)
+            + len(assessment.semantic_failures)
+            + sum(len(values) for values in assessment.missing_by_kind.values())
+        )
+        metrics["valid_paragraph_count"] += int(assessment.valid)
+        if not assessment.valid and required_count:
+            metrics["invalid_count"] += 1
+            for kind, values in assessment.missing_by_kind.items():
+                for target in values:
+                    failure = f"{paragraph_id}:{kind}:{target}"
+                    metrics["missing"].append(failure)
+                    metrics["failures"].append(failure)
+            metrics["failures"].extend(
+                f"{paragraph_id}:{failure}"
+                for failure in assessment.semantic_failures
+            )
+        metrics["failures"].extend(
+            f"{paragraph_id}:{failure}"
+            for failure in assessment.invalid_witnesses
+        )
+
+    if response.blocked_reason and str(response.blocked_reason).startswith(
+        "publication_paragraph_transaction_failed:"
+    ):
+        metrics["invalid_count"] += 1
+        metrics["invalid_witness_count"] += 1
+        metrics["missing"].append("response_blocked:paragraph_transaction")
+        metrics["failures"].append("response_blocked:paragraph_transaction")
+
+    for paragraph in output.paragraphs or ():
+        if not _publication_body_has_substantive_text(paragraph.paragraph_markdown):
+            metrics["invalid_count"] += 1
+            metrics["invalid_witness_count"] += 1
+            failure = f"non_substantive:{paragraph.paragraph_id}"
+            metrics["failures"].append(failure)
+
+    accepted_packages = tuple(
+        package for package in packages
+        if _formula_package_terminal_disposition(package) == "accepted"
+    )
+    for package in accepted_packages:
+        package_id = str(package.get("package_id") or "").strip()
+        consumer_id = str(package.get("consumer_paragraph_id") or "").strip()
+        transaction = transactions.get(consumer_id)
+        if transaction is None:
+            continue
+        body = str(transaction.paragraph_markdown or "")
+        block = str(package.get("markdown_block") or "")
+        exact = bool(block and body.count(block) == 1)
+        if exact:
+            metrics["formula_exact_body_count"] += 1
+        assessment = assessments.get(consumer_id)
+        if (
+            exact
+            and assessment is not None
+            and assessment.valid
+            and package_id in set(transaction.used_formula_package_ids or ())
+        ):
+            metrics["formula_consumed_count"] += 1
+
+    authority_output = output
+    if section.prompt_payload.get("paragraph_transaction_required"):
+        authority_output = output.model_copy(update={
+            "rendered_from_facet_ids": [],
+            "rendered_field_candidate_ids": [],
+            "rendered_paragraph_ids": [],
+            "rendered_slot_ids": [],
+            "rendered_edge_ids": [],
+            "used_formula_package_ids": [],
+        })
+    contract = section.prompt_payload.get("binding_contract") or {}
+    allow_subset = bool(
+        (section.prompt_payload.get("grounding_contract") or {}).get(
+            "callback_required"
+        )
+    )
+    authority_failures = tuple(_hard_publication_binding_failures(
+        _publication_contract_failures(
+            authority_output,
+            expected_section_id=section.section_id,
+            contract=contract,
+            allow_subset=allow_subset,
+        )
+    ))
+    metrics["authority_failures"] = authority_failures
+    metrics["authority_violation_count"] = len(authority_failures)
+    metrics["failures"].extend(
+        f"authority:{failure}" for failure in authority_failures
+    )
+    if response.blocked_reason:
+        metrics["failures"].append(str(response.blocked_reason))
+    metrics["missing"] = tuple(dict.fromkeys(str(item) for item in metrics["missing"]))
+    metrics["failures"] = list(dict.fromkeys(str(item) for item in metrics["failures"]))
+    return metrics
+
+
+def assess_publication_content_acceptance(
+    section: WriterSectionInput,
+    response: LLMResponse,
+) -> tuple[bool, dict[str, Any]]:
+    """Apply the final shared content acceptance rule to one response."""
+
+    metrics = assess_publication_writer_response(section, response)
+    paragraph_count = sum(
+        1 for item in (section.argument_graph.get("paragraphs") or ())
+        if isinstance(item, Mapping)
+    )
+    accepted = bool(
+        not metrics["failures"]
+        and metrics["invalid_count"] == 0
+        and metrics["valid_paragraph_count"] == paragraph_count
+        and metrics["valid_atom_count"] == metrics["required_atom_count"]
+    )
+    return accepted, metrics
+
+
+def assess_publication_content_progress(
+    section: WriterSectionInput,
+    incumbent: LLMResponse,
+    candidate: LLMResponse,
+) -> tuple[bool, str]:
+    """Require bounded monotonic gain using the shared production metrics."""
+
+    old = assess_publication_writer_response(section, incumbent)
+    new = assess_publication_writer_response(section, candidate)
+    for key in ("invalid_count", "invalid_witness_count", "authority_violation_count"):
+        if new[key] > old[key]:
+            return False, f"{key}_regressed"
+    for key in (
+        "valid_paragraph_count",
+        "valid_target_count",
+        "valid_atom_count",
+        "formula_exact_body_count",
+        "formula_consumed_count",
+    ):
+        if new[key] < old[key]:
+            return False, f"{key}_regressed"
+    gains = (
+        ("invalid_count", "invalid_gain", "lower"),
+        ("invalid_witness_count", "witness_gain", "lower"),
+        ("valid_paragraph_count", "paragraph_gain", "higher"),
+        ("valid_target_count", "target_gain", "higher"),
+        ("valid_atom_count", "atom_gain", "higher"),
+        ("formula_exact_body_count", "formula_exact_gain", "higher"),
+        ("formula_consumed_count", "formula_consumption_gain", "higher"),
+        ("authority_violation_count", "authority_gain", "lower"),
+    )
+    for key, reason, direction in gains:
+        if (
+            direction == "lower" and new[key] < old[key]
+        ) or (
+            direction == "higher" and new[key] > old[key]
+        ):
+            return True, reason
+    return False, "no_content_gain"
+
+
 _WRITER_CONTENT_REPAIRABLE_FAILURE_PREFIXES = (
     "publication_paragraph_transaction_failed:",
     "publication_section_binding_failed:formula_placeholder:",
+    # The local structured stream may end before emitting a JSON object at
+    # all.  This is transport/representation damage, not content authority;
+    # route it through the same single Writer-owned V2 repair as other typed
+    # representation failures.  The empty primary is never accepted.
+    "provider_stream_finished_before_complete_json",
+    "provider_stream_done_without_json_content",
+    "provider_stream_ended_before_complete_json",
 )
 
 
@@ -4879,6 +6100,134 @@ def _response_rendered_formula_package_ids(
     return tuple(dict.fromkeys(ids))
 
 
+def _publication_atom_candidate_spans(
+    body: str,
+    constraints: Mapping[str, Any],
+) -> tuple[str, ...]:
+    """Find bounded Binder candidates for diagnostics, never acceptance.
+
+    A candidate is reported only when the existing body contains a unique
+    sentence/guard span that passes the same local condition and polarity
+    checks used by the Binder.  Ambiguous or weak lexical overlap is reported
+    as missing content so the Writer is not told that a vague sentence is
+    already sufficient.
+    """
+
+    from code2paper.agentic.publication_transaction_contract import (
+        _anchor_compatible,
+        _binding_anchors,
+        _semantic_tokens,
+        _witness_satisfies_constraints,
+    )
+
+    text = str(body or "")
+    semantic = str(constraints.get("semantic_atom") or "").strip()
+    anchors = _binding_anchors(constraints)
+    if not anchors:
+        return ()
+    sentences: list[str] = [
+        sentence.strip()
+        for sentence in re.split(r"(?<=[.!?])\s+|\n+", text)
+        if sentence.strip()
+    ]
+    for sentence in tuple(sentences):
+        for match in re.finditer(
+            r"(?is)\b(?:when|if|whenever|provided|assuming|under|with)\b"
+            r".*?(?=,\s|;\s|:\s|$)",
+            sentence,
+        ):
+            clause = match.group(0).strip(" ,;:")
+            if clause and clause not in sentences:
+                sentences.append(clause)
+    scored: list[tuple[float, str]] = []
+    for sentence in sentences:
+        if text.count(sentence) != 1:
+            continue
+        if not _witness_satisfies_constraints(sentence, constraints):
+            continue
+        if not _anchor_compatible(sentence, text, anchors):
+            continue
+        sentence_tokens = _semantic_tokens(sentence)
+        best_score = 0.0
+        best_overlap = 0
+        for anchor in anchors:
+            anchor_tokens = _semantic_tokens(anchor)
+            overlap = len(sentence_tokens.intersection(anchor_tokens))
+            if overlap < 2:
+                continue
+            score = (
+                0.75 * overlap / max(1, len(anchor_tokens))
+                + 0.25 * overlap / max(1, len(sentence_tokens))
+            )
+            if score > best_score:
+                best_score = score
+                best_overlap = overlap
+        if best_overlap >= 2 and best_score >= 0.24:
+            scored.append((best_score, sentence))
+    scored.sort(key=lambda item: (-item[0], item[1]))
+    return tuple(sentence for _score, sentence in scored[:3])
+
+
+def _publication_missing_atom_targets(
+    plan_row: Mapping[str, Any],
+    transaction: Any,
+    *,
+    missing_detail_ids: Iterable[str],
+) -> tuple[dict[str, Any], ...]:
+    """Project every unclosed required atom to its actual repair owner."""
+
+    from code2paper.agentic.publication_transaction_contract import (
+        _witness_satisfies_constraints,
+        _witness_constraints_from_plan_row,
+    )
+
+    constraints = _witness_constraints_from_plan_row(plan_row)
+    body = str(getattr(transaction, "paragraph_markdown", "") or "")
+    witnessed: set[tuple[str, str]] = set()
+    for item in (getattr(transaction, "witnesses", ()) or ()):
+        key = (
+            str(item.witness_kind or "").strip(),
+            str(item.target_id or "").strip(),
+        )
+        local = constraints.get(key)
+        exact = str(item.exact_text or "")
+        if (
+            local is not None
+            and body.count(exact) == 1
+            and _witness_satisfies_constraints(exact, local)
+        ):
+            witnessed.add(key)
+    missing_details = {str(value).strip() for value in missing_detail_ids if str(value).strip()}
+    targets: list[dict[str, Any]] = []
+    for (kind, _target_id), local in constraints.items():
+        if kind != "atom" or not local.get("required", True):
+            continue
+        detail_id = str(local.get("detail_id") or "").strip()
+        if missing_details and detail_id not in missing_details:
+            continue
+        key = (kind, _target_id)
+        if key in witnessed:
+            continue
+        candidates = _publication_atom_candidate_spans(body, local)
+        binding_gap = bool(candidates)
+        targets.append({
+            "paper_role": str(local.get("paper_role") or ""),
+            "semantic_atom": str(local.get("semantic_atom") or ""),
+            "conditions": list(local.get("conditions") or ()),
+            "polarity": str(local.get("polarity") or "unknown"),
+            "authorized_source_excerpts": list(local.get("exact") or ()),
+            "candidate_spans": list(candidates),
+            "gap_kind": "missing_binding" if binding_gap else "missing_content",
+            "repair_owner": "binder" if binding_gap else "writer",
+            "failure_reason": (
+                "existing prose has a bounded candidate span but no accepted witness"
+                if binding_gap
+                else "no unique bounded span satisfies the atom contract"
+            ),
+        })
+    return tuple(targets)
+
+
 def _publication_paragraph_repair_contract(
     section: WriterSectionInput,
     response: LLMResponse,
@@ -4889,8 +6238,11 @@ def _publication_paragraph_repair_contract(
     identity and acceptance.  This projection is deliberately reader-facing:
     it tells the Writer which semantic atoms are absent from which paragraph,
     while withholding source ids/spans and never asking the model to reproduce
-    Harness metadata.  A content retry may return only the listed paragraphs;
-    the caller merges those candidates with the incumbent valid siblings.
+    Harness metadata.  Bounded exact excerpts are included only as authorized
+    wording anchors, so a repair can bind to the frozen source without exposing
+    internal identifiers.  A content retry may return only the listed
+    paragraphs; the caller merges those candidates with the incumbent valid
+    siblings.
     """
 
     graph = section.argument_graph if isinstance(section.argument_graph, dict) else {}
@@ -5006,9 +6358,19 @@ def _publication_paragraph_repair_contract(
         if not missing_by_kind and not assessment.invalid_witnesses and not assessment.semantic_failures:
             continue
         constraints = _witness_constraints_from_plan_row(plan_row)
+        missing_atom_targets = _publication_missing_atom_targets(
+            plan_row,
+            transaction,
+            missing_detail_ids=missing_by_kind.get("detail", ()),
+        )
         semantic_targets: list[dict[str, Any]] = []
         for kind, target_ids in missing_by_kind.items():
             for target_id in target_ids:
+                # A required Detail is proved losslessly by its atom set.  The
+                # Writer needs each atom's owner and gap, not an aggregate
+                # detail label that cannot tell it what to repair.
+                if kind == "detail" and missing_atom_targets:
+                    continue
                 local = constraints.get((kind, target_id), {})
                 target: dict[str, Any] = {
                     "target_kind": kind,
@@ -5016,6 +6378,7 @@ def _publication_paragraph_repair_contract(
                     "semantic_atom": str(local.get("semantic_atom") or ""),
                     "conditions": list(local.get("conditions") or ()),
                     "polarity": str(local.get("polarity") or "unknown"),
+                    "authorized_source_excerpts": list(local.get("exact") or ()),
                 }
                 if kind == "formula":
                     route = formula_routes.get(target_id, {})
@@ -5047,17 +6410,21 @@ def _publication_paragraph_repair_contract(
                             ),
                         })
                 semantic_targets.append(target)
+        semantic_targets.extend(missing_atom_targets)
         repairs.append({
             "paragraph_id": paragraph_id,
             "paragraph_role": str(raw_plan.get("paragraph_role") or ""),
             "repair_mode": "rewrite_only_missing_paragraph_content",
             "missing_targets_by_kind": missing_by_kind,
             "missing_targets": semantic_targets,
+            "missing_atom_targets": list(missing_atom_targets),
             "invalid_witnesses": list(assessment.invalid_witnesses),
             "semantic_failures": list(assessment.semantic_failures),
             "instruction": (
                 "Repair only this paragraph. Preserve its correct existing content, "
                 "add natural Method sentences for every missing semantic target, "
+                "using the authorized source excerpts as wording anchors when "
+                "provided, "
                 "and emit the exact formula placeholder when one is listed. "
                 "Do not mention ids, validators, or this repair packet."
             ),
@@ -5131,12 +6498,17 @@ def _merge_publication_repair_response(
     section_markdown = f"## {heading}\n\n{body}" if heading and body else body
 
     def union(field_name: str) -> list[str]:
-        return list(dict.fromkeys(
-            str(value).strip()
-            for paragraph in merged_by_id.values()
-            for value in (getattr(paragraph, field_name) or ())
-            if str(value).strip()
-        ))
+        values: list[str] = []
+        for paragraph in merged_by_id.values():
+            raw = getattr(paragraph, field_name) or ()
+            # ``paragraph_id`` is scalar while the other merged fields are
+            # lists.  Treating a scalar as an iterable previously stored one
+            # character per id in the repair commit metadata.
+            items = (raw,) if isinstance(raw, str) else raw
+            values.extend(
+                str(value).strip() for value in items if str(value).strip()
+            )
+        return list(dict.fromkeys(values))
 
     def merge_items(field_name: str) -> list[Any]:
         """Preserve incumbent state, then retain new diagnostic items."""
@@ -5175,6 +6547,8 @@ def _merge_publication_repair_response(
         "section_markdown": section_markdown,
         "paragraphs": [merged_by_id[item] for item in ordered_ids if item in merged_by_id],
         "rendered_paragraph_ids": union("paragraph_id"),
+        "rendered_detail_ids": union("rendered_detail_ids"),
+        "deferred_detail_ids": union("deferred_detail_ids"),
         "rendered_from_facet_ids": union("rendered_from_facet_ids"),
         "rendered_field_candidate_ids": union("rendered_field_candidate_ids"),
         "rendered_slot_ids": union("rendered_slot_ids"),
@@ -5239,6 +6613,13 @@ def _safe_call(
             text="",
             response_hash=hash_text(""),
             blocked_reason=f"section_writer_llm_error:{exc.__class__.__name__}",
+            finish_reason=str(getattr(exc, "finish_reason", "") or ""),
+            provider_finish_reason=str(
+                getattr(exc, "provider_finish_reason", "") or ""
+            ),
+            thinking_chars=int(getattr(exc, "thinking_chars", 0) or 0),
+            token_usage=getattr(exc, "token_usage", None),
+            provider_diagnostics=getattr(exc, "diagnostics", None),
         )
 
 

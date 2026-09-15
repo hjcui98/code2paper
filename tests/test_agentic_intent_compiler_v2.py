@@ -609,3 +609,66 @@ def test_story_spine_links_claims_through_exact_obligation_ids() -> None:
     assert stage_node.linked_claim_ids == ("spine-claim-1",)
     other = next(node for node in spine if node is not stage_node)
     assert not set(other.linked_claim_ids).intersection(stage_node.linked_claim_ids)
+
+
+def test_fusion_vocabulary_does_not_force_concatenation() -> None:
+    """R4: combine/merge/fuse is a fusion hypothesis, not a CONCAT demand."""
+
+    from code2paper.agentic.intent_compiler_v2 import (
+        INTENT_CONCEPTS,
+        compile_intent_obligation_graph_v2,
+    )
+
+    concepts = {concept.concept_id: concept for concept in INTENT_CONCEPTS}
+    explicit = concepts["feature_combination"]
+    fusion = concepts["feature_fusion"]
+
+    # Explicit concatenation keeps the strict CONCAT requirement.
+    assert explicit.predicates == ("CONCAT",)
+    assert "combine" not in explicit.terms_en
+    assert "合并" not in explicit.terms_cn
+
+    # Vague fusion accepts several fusion shapes instead of demanding CONCAT.
+    assert "CONCAT" in fusion.predicates
+    assert len(fusion.predicates) > 1
+    assert "combine" in fusion.terms_en
+    assert "merge" in fusion.terms_en
+    assert "fuse" in fusion.terms_en
+
+    from code2paper.agentic.author_intent_summary import AuthorIntentSummary
+
+    concise = compile_intent_obligation_graph_v2(AuthorIntentSummary(
+        method_goal="Combine the two feature streams before scoring.",
+        method_mainline="Combine the two feature streams before scoring.",
+    ))
+    predicates = {
+        predicate
+        for obligation in concise.obligations
+        for target in obligation.typed_behavior_targets
+        for predicate in target.desired_predicates
+    }
+    assert "CONCAT" in predicates
+    assert predicates - {"CONCAT"}
+
+
+def test_explicit_concatenation_keeps_the_concat_requirement() -> None:
+    from code2paper.agentic.author_intent_summary import AuthorIntentSummary
+    from code2paper.agentic.intent_compiler_v2 import (
+        compile_intent_obligation_graph_v2,
+    )
+
+    graph = compile_intent_obligation_graph_v2(AuthorIntentSummary(
+        method_goal=(
+            "Concatenate the query and passage embeddings along the last axis."
+        ),
+        method_mainline=(
+            "Concatenate the query and passage embeddings along the last axis."
+        ),
+    ))
+    predicates = {
+        predicate
+        for obligation in graph.obligations
+        for target in obligation.typed_behavior_targets
+        for predicate in target.desired_predicates
+    }
+    assert "CONCAT" in predicates

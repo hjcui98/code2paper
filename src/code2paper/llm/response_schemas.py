@@ -7,7 +7,7 @@ import hashlib
 import json
 import re
 from collections.abc import Iterable
-from typing import Any, Literal, TypeVar
+from typing import Annotated, Any, Literal, TypeVar
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
@@ -24,6 +24,41 @@ METHOD_FACET_DECOMPOSITION_SCHEMA = "method_facet_decomposition_v1"
 METHOD_FACET_ALIGNMENT_SCHEMA = "method_facet_alignment_v1"
 
 T = TypeVar("T", bound=BaseModel)
+
+
+# The V2 Formalizer response is a closed model-authored surface.  Keep the
+# bounds here (rather than relying on the prose prompt) so the same contract is
+# visible to native structured decoding, the response parser, and the package
+# validator.  Empty condition/assumption lists are meaningful, but every item
+# that is present must be a non-empty string.
+_FORMALIZER_ID = Annotated[str, Field(min_length=1, max_length=240)]
+_FORMALIZER_LATEX = Annotated[str, Field(min_length=1, max_length=12_000)]
+_FORMALIZER_EXPLANATION = Annotated[str, Field(min_length=1, max_length=8_000)]
+_FORMALIZER_SYMBOL_PART = Annotated[str, Field(min_length=1, max_length=2_000)]
+_FORMALIZER_CONDITION = Annotated[str, Field(min_length=1, max_length=2_000)]
+_FORMALIZER_SYMBOL_PAIR = Annotated[
+    list[_FORMALIZER_SYMBOL_PART],
+    Field(min_length=2, max_length=2),
+]
+
+
+class UnifiedFormalizerResultV2(BaseModel):
+    """Model-authored fields only; source authority is checked by Formalizer."""
+
+    model_config = ConfigDict(extra="forbid", strict=True)
+
+    obligation_id: _FORMALIZER_ID
+    latex: _FORMALIZER_LATEX
+    prose_explanation: _FORMALIZER_EXPLANATION
+    symbol_definitions: list[_FORMALIZER_SYMBOL_PAIR] = Field(max_length=128)
+    material_conditions: list[_FORMALIZER_CONDITION] = Field(max_length=128)
+    assumptions: list[_FORMALIZER_CONDITION] = Field(max_length=128)
+
+
+class UnifiedFormalizerResponseV2(BaseModel):
+    model_config = ConfigDict(extra="forbid", strict=True)
+
+    results: list[UnifiedFormalizerResultV2] = Field(min_length=1, max_length=64)
 
 
 class PublicationUnresolvedPointV1(BaseModel):

@@ -34,6 +34,168 @@ class PublicationQualityIssueV1(BaseModel):
     stage_id: str = ""
 
 
+SupportPrecisionStatus = Literal[
+    "measured", "not_measured", "not_applicable", "invalid", "blocked",
+]
+
+_PRECISION_COUNT_FIELDS = (
+    "checked_factual_claims",
+    "supported_claims",
+    "caveated_claims",
+    "unsupported_claims",
+    "unverified_claims",
+)
+
+
+class SupportPrecisionMetricV1(BaseModel):
+    """Support precision bound to one prose revision and verifier mode.
+
+    ``support_precision`` may only be reported from a real reverse-validation
+    report of *this* text.  A missing report is ``not_measured``, a zero
+    decided denominator is ``not_applicable``, a digest or count inconsistency
+    is ``invalid``, and a blocked validator is ``blocked``; none of those may
+    be reported as a measured score.  ``caveated`` claims are never folded
+    into ``supported``, and ``unsupported``/``unverified`` counts are always
+    preserved even when the precision itself stays undefined.
+    """
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    status: SupportPrecisionStatus = "not_measured"
+    precision: float | None = None
+    supported: int = 0
+    caveated: int = 0
+    unsupported: int = 0
+    unverified: int = 0
+    checked: int = 0
+    verification_mode: str = ""
+    input_text_digest: str = ""
+    expected_text_digest: str = ""
+    report_digest: str = ""
+    report_status: str = ""
+    failure_codes: tuple[str, ...] = ()
+    #: A weaker verifier mode (``lexical_only``) can never authorize the
+    #: Verified lane, even when its precision is 1.0.
+    verified_authorized: bool = False
+
+
+def _precision_count(report: Any, field: str) -> tuple[int, str]:
+    """Return a validated non-negative integer count, or an invalid marker."""
+
+    value = getattr(report, field, 0)
+    if isinstance(value, bool):
+        # ``bool`` is an ``int`` subclass in Python; a boolean must never be
+        # silently accepted as a measurement count.
+        return 0, f"support_precision_count_boolean:{field}"
+    if not isinstance(value, int):
+        return 0, f"support_precision_count_invalid:{field}"
+    if value < 0:
+        return 0, f"support_precision_count_negative:{field}"
+    return value, ""
+
+
+def compute_support_precision_metric(
+    *,
+    report: Any | None,
+    text_digest: str,
+    report_digest: str = "",
+) -> SupportPrecisionMetricV1:
+    """Compute support precision strictly from a bound validation report.
+
+    ``text_digest`` is the digest of the prose the metric is reported for.
+    A report whose ``input_text_digest`` names a different text can never
+    contribute a number, and neither can a report whose counts do not
+    partition ``checked_factual_claims``.
+    """
+
+    if report is None:
+        return SupportPrecisionMetricV1(
+            status="not_measured",
+            expected_text_digest=str(text_digest or ""),
+            failure_codes=("support_precision_report_missing",),
+        )
+
+    failures: list[str] = []
+    counts: dict[str, int] = {}
+    for field in _PRECISION_COUNT_FIELDS:
+        value, failure = _precision_count(report, field)
+        counts[field] = value
+        if failure:
+            failures.append(failure)
+
+    report_text_digest = str(getattr(report, "input_text_digest", "") or "")
+    report_status = str(getattr(report, "status", "") or "")
+    verification_mode = str(getattr(report, "verification_mode", "") or "")
+    base = {
+        "supported": counts["supported_claims"],
+        "caveated": counts["caveated_claims"],
+        "unsupported": counts["unsupported_claims"],
+        "unverified": counts["unverified_claims"],
+        "checked": counts["checked_factual_claims"],
+        "verification_mode": verification_mode,
+        "input_text_digest": report_text_digest,
+        "expected_text_digest": str(text_digest or ""),
+        "report_digest": str(report_digest or ""),
+        "report_status": report_status,
+    }
+
+    if failures:
+        return SupportPrecisionMetricV1(
+            status="invalid", precision=None, failure_codes=tuple(dict.fromkeys(failures)), **base
+        )
+    if report_status == "blocked":
+        return SupportPrecisionMetricV1(
+            status="blocked",
+            precision=None,
+            failure_codes=("support_precision_report_blocked",),
+            **base,
+        )
+    if not report_text_digest or report_text_digest != str(text_digest or ""):
+        return SupportPrecisionMetricV1(
+            status="invalid",
+            precision=None,
+            failure_codes=("support_precision_text_mismatch",),
+            **base,
+        )
+    partition = (
+        counts["supported_claims"]
+        + counts["caveated_claims"]
+        + counts["unsupported_claims"]
+        + counts["unverified_claims"]
+    )
+    if partition != counts["checked_factual_claims"]:
+        return SupportPrecisionMetricV1(
+            status="invalid",
+            precision=None,
+            failure_codes=("support_precision_count_mismatch",),
+            **base,
+        )
+    denominator = counts["supported_claims"] + counts["unsupported_claims"]
+    if denominator == 0:
+        return SupportPrecisionMetricV1(
+            status="not_applicable",
+            precision=None,
+            failure_codes=("support_precision_zero_denominator",),
+            **base,
+        )
+    if counts["unverified_claims"]:
+        failures.append("support_precision_unverified_claims_present")
+    precision = round(counts["supported_claims"] / denominator, 6)
+    verified_authorized = bool(
+        report_status == "passed"
+        and verification_mode == "semantic"
+        and counts["unsupported_claims"] == 0
+        and counts["unverified_claims"] == 0
+    )
+    return SupportPrecisionMetricV1(
+        status="measured",
+        precision=precision,
+        failure_codes=tuple(dict.fromkeys(failures)),
+        verified_authorized=verified_authorized,
+        **base,
+    )
+
+
 class EpistemicSafetyMetricsV1(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
 
@@ -42,7 +204,12 @@ class EpistemicSafetyMetricsV1(BaseModel):
     unsupported_positive_claims: int = 0
     source_integrity: bool = True
     final_text_validation_status: Literal["pending", "passed", "failed", "error"] = "pending"
-    support_precision: float = 1.0
+    #: ``None`` unless a real report of this text measured it; a historical
+    #: V1 report keeps its stored number but its metric stays ``not_measured``.
+    support_precision: float | None = None
+    support_precision_metric: SupportPrecisionMetricV1 = Field(
+        default_factory=SupportPrecisionMetricV1
+    )
     hard_gate_passed: bool
 
 
@@ -132,6 +299,11 @@ def quality_issue_severity(
 class PublicationQualityReportV1(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
+    # Compatibility: the stored version stays 1.0 so existing readers keep
+    # parsing historical reports.  The semantic change of ``support_precision``
+    # (a measured number vs. an inferred one) is carried by the explicit
+    # ``safety.support_precision_metric.status``; a report without that field
+    # is a legacy report and is never treated as measured.
     schema_version: str = "1.0"
     status: Literal["publication_ready", "incomplete", "blocked"]
     plan_gate_passed: bool
@@ -727,6 +899,7 @@ def evaluate_publication_method_quality(
     facts: Any | None = None,
     formula_packages_by_section: Mapping[str, Any] | None = None,
     concept_audit_override_keys: frozenset[str] = frozenset(),
+    validation_report: Any | None = None,
 ) -> PublicationQualityReportV1:
     """Evaluate safety and writing quality without collapsing them to one score.
 
@@ -846,17 +1019,28 @@ def evaluate_publication_method_quality(
             claim_id=proposition_id,
         ))
 
+    support_metric = compute_support_precision_metric(
+        report=validation_report,
+        text_digest="sha256:" + hashlib.sha256(final_text.encode("utf-8")).hexdigest(),
+        report_digest=str(getattr(validation_report, "content_digest", "") or ""),
+    )
+    # The caller's count and the report's count may disagree; the gate may
+    # only become stricter, never looser.
+    effective_unsupported = max(0, int(unsupported_positive_claims))
+    if support_metric.status in {"measured", "not_applicable"}:
+        effective_unsupported = max(effective_unsupported, support_metric.unsupported)
     safety = EpistemicSafetyMetricsV1(
         authorship_gate_passed=ledger.hard_gate_passed,
         binding_gate_passed=not binding_failures,
-        unsupported_positive_claims=max(0, unsupported_positive_claims),
+        unsupported_positive_claims=effective_unsupported,
         source_integrity=source_integrity,
         final_text_validation_status=final_text_validation_status,
-        support_precision=1.0 if unsupported_positive_claims == 0 else 0.0,
+        support_precision=support_metric.precision,
+        support_precision_metric=support_metric,
         hard_gate_passed=(
             ledger.hard_gate_passed
             and not binding_failures
-            and unsupported_positive_claims == 0
+            and effective_unsupported == 0
             and source_integrity
             and final_text_validation_status == "passed"
         ),
@@ -1791,8 +1975,35 @@ def evaluate_publication_method_quality(
         # witness, so keep the metric conservative and identical rather than
         # inventing package ids.
         accepted_formula_package_ids = set(used_formula_package_ids)
+    rendered_formula_package_ids: set[str] = set()
+    for packages in (formula_packages_by_section or {}).values():
+        for package in packages or ():
+            if not isinstance(package, Mapping):
+                continue
+            package_id = str(
+                package.get("package_id") or package.get("formula_package_id") or ""
+            ).strip()
+            latex = str(package.get("latex") or "").strip()
+            markdown_block = str(package.get("markdown_block") or "").strip()
+            if package_id and (
+                (markdown_block and markdown_block in final_text)
+                or (latex and latex in final_text)
+            ):
+                rendered_formula_package_ids.add(package_id)
     formula_routed = len(all_formula_obligations)
-    formula_rendered_display_math = len(rendered_equations)
+    # This diagnostic describes the actual Candidate surface, not the legacy
+    # equation-id lane.  Count complete display environments directly so a
+    # generated Formalizer package cannot be reported as rendered merely
+    # because Writer echoed its id in a witness sidecar.
+    formula_rendered_display_math = (
+        len(re.findall(r"\$\$[\s\S]+?\$\$", final_text))
+        + len(re.findall(r"\\\[[\s\S]+?\\\]", final_text))
+        + len(re.findall(
+            r"\\begin\{(?:equation\*?|align\*?|gather\*?)\}[\s\S]+?"
+            r"\\end\{(?:equation\*?|align\*?|gather\*?)\}",
+            final_text,
+        ))
+    )
     content_units_discovered = len(plan.argument_units)
     planned_unit_ids = {
         str(getattr(unit, "argument_unit_id", "") or "")
@@ -1856,7 +2067,13 @@ def evaluate_publication_method_quality(
             "routed": formula_routed,
             "accepted_packages": len(accepted_formula_package_ids),
             "consumed_packages": len(
-                accepted_formula_package_ids & used_formula_package_ids
+                accepted_formula_package_ids
+                & used_formula_package_ids
+                & (
+                    rendered_formula_package_ids
+                    if formula_packages_by_section
+                    else used_formula_package_ids
+                )
             ),
             "rendered_display_math": formula_rendered_display_math,
             "obligation_coverage": formula_obligation_coverage,

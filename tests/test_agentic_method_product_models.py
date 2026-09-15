@@ -79,8 +79,15 @@ def test_lane_enum_and_policy_defaults_are_stable() -> None:
     assert "repository_verified" in METHOD_EVIDENCE_LANES
     assert "author_intent_unverified" in METHOD_EVIDENCE_LANES
     assert "formalization_pending" in METHOD_EVIDENCE_LANES
-    assert len(METHOD_PLAN_READINESS_STATES) == 4
-    for state in ("verified_ready", "candidate_ready", "candidate_ready_with_review", "blocked_for_safety"):
+    assert len(METHOD_PLAN_READINESS_STATES) == 6
+    for state in (
+        "verified_ready",
+        "candidate_ready",
+        "candidate_ready_with_review",
+        "blocked_for_safety",
+        "not_built",
+        "blocked_by_research",
+    ):
         assert state in METHOD_PLAN_READINESS_STATES
 
     policy = build_default_method_output_policy()

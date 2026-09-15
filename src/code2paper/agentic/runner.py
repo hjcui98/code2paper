@@ -409,7 +409,11 @@ def _reconcile_publication_quality_with_final_validation(
         return state
     try:
         from code2paper.agentic.final_text_authorship import FinalTextAuthorshipLedgerV1
-        from code2paper.agentic.publication_quality import PublicationQualityIssueV1, PublicationQualityReportV1
+        from code2paper.agentic.publication_quality import (
+            PublicationQualityIssueV1,
+            PublicationQualityReportV1,
+            compute_support_precision_metric,
+        )
         from code2paper.agentic.trust_contracts import TextEvidenceValidationReport
 
         quality = PublicationQualityReportV1.model_validate_json(quality_path.read_text(encoding="utf-8"))
@@ -417,15 +421,28 @@ def _reconcile_publication_quality_with_final_validation(
         ledger = FinalTextAuthorshipLedgerV1.model_validate_json(ledger_path.read_text(encoding="utf-8"))
     except (OSError, ValueError):
         return state
-    checked = validation.checked_factual_claims
-    supported = validation.supported_claims + validation.caveated_claims
-    unsupported = validation.unsupported_claims + validation.unverified_claims
+    # R3: one shared metric decides what the report may claim.  Caveated
+    # claims are never folded into ``supported``, a zero decided denominator
+    # is ``not_applicable`` rather than a perfect score, and an unbound or
+    # inconsistent report yields no number at all.
+    support_metric = compute_support_precision_metric(
+        report=validation,
+        text_digest=str(ledger.final_text_digest or ""),
+        report_digest=str(getattr(validation, "content_digest", "") or ""),
+    )
+    unsupported = int(validation.unsupported_claims) + int(validation.unverified_claims)
     digest_bound = validation.input_text_digest == ledger.final_text_digest
-    validation_passed = validation.status == "passed" and unsupported == 0 and digest_bound
+    validation_passed = (
+        validation.status == "passed"
+        and unsupported == 0
+        and digest_bound
+        and support_metric.status in {"measured", "not_applicable"}
+    )
     safety_payload = quality.safety.model_dump(mode="json")
     safety_payload.update({
         "unsupported_positive_claims": unsupported,
-        "support_precision": 1.0 if checked == 0 else round(supported / checked, 6),
+        "support_precision": support_metric.precision,
+        "support_precision_metric": support_metric.model_dump(mode="json"),
         "source_integrity": bool(quality.safety.source_integrity and digest_bound),
         "final_text_validation_status": "passed" if validation_passed else "failed",
     })
@@ -573,6 +590,15 @@ def _reconcile_publication_writer_result_with_quality(
         and tuple(candidate_blocking_reasons) == result.candidate_blocking_reasons
         and verified_complete == result.verified_complete
         and tuple(verified_blocking_reasons) == result.verified_blocking_reasons
+        # R3: an unchanged overall status must still be written back when the
+        # observable candidate/verified validation state, its warning
+        # partition, or the quality binding changed.
+        and candidate_validation_status == result.candidate_validation_status
+        and verified_validation_status == result.verified_validation_status
+        and dict(quality.candidate_warnings_by_severity or {})
+        == dict(result.candidate_warnings_by_severity or {})
+        and str(getattr(quality, "content_digest", "") or "")
+        == str(getattr(result, "publication_quality_digest", "") or "")
     ):
         return
     result_payload = result.model_dump(mode="json")
@@ -583,6 +609,7 @@ def _reconcile_publication_writer_result_with_quality(
         "publication_ready": publication_ready,
         "candidate_validation_status": candidate_validation_status,
         "verified_validation_status": verified_validation_status,
+        "publication_quality_digest": str(getattr(quality, "content_digest", "") or ""),
         "candidate_warnings_by_severity": dict(quality.candidate_warnings_by_severity or {}),
         "candidate_completion_status": candidate_completion_status,
         "candidate_complete": candidate_complete,

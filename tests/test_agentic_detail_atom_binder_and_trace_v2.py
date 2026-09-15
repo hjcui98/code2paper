@@ -23,6 +23,8 @@ from code2paper.agentic.method_content_trace import (
 from code2paper.agentic.publication_transaction_contract import (
     ParagraphTransactionAssessmentV1,
     assess_paragraph_transaction,
+    bind_paragraph_witnesses,
+    required_anchors_from_plan_row,
     required_targets_from_plan_row,
 )
 
@@ -145,6 +147,54 @@ def test_required_targets_and_detail_atom_transaction_assessment() -> None:
     assert "d:loss" in assessment_invalid.missing_by_kind.get("detail", ())
 
 
+@pytest.mark.parametrize(
+    ("body", "valid"),
+    [
+        ("The embeddings are multiplied by the bias and residual.", False),
+        ("The embeddings, bias, and residual are added together.", True),
+        ("The embeddings and bias are added together.", False),
+        ("The embeddings, bias, and residual are not added together.", False),
+        ("The result = embeddings + bias + residual is used.", True),
+    ],
+)
+def test_additive_atom_binding_requires_operation_and_operands(
+    body: str, valid: bool,
+) -> None:
+    row = {
+        "paragraph_id": "p1",
+        "required_detail_ids": ["detail:aggregate"],
+        "witness_contract": {"targets": [{
+            "target_kind": "atom",
+            "target_id": "atom:sum",
+            "detail_id": "detail:aggregate",
+            "semantic_atom": "additive aggregation",
+            "required": True,
+            "allowed_exact_excerpts": ["result = embeddings + bias + residual"],
+        }]},
+    }
+    transaction = {"paragraph_id": "p1", "paragraph_markdown": body, "witnesses": []}
+    bound = bind_paragraph_witnesses(transaction, plan_row=row)
+    assessment = assess_paragraph_transaction(
+        bound, plan_row=row, required_anchors=required_anchors_from_plan_row(row)
+    )
+    assert assessment.valid is valid
+    assert ("detail:aggregate" in bound.get("rendered_detail_ids", ())) is valid
+    if not valid:
+        declared = {
+            **transaction,
+            "rendered_detail_ids": ["detail:aggregate"],
+            "witnesses": [{
+                "witness_kind": "atom",
+                "target_id": "atom:sum",
+                "exact_text": body,
+            }],
+        }
+        direct = assess_paragraph_transaction(
+            declared, plan_row=row, required_anchors=required_anchors_from_plan_row(row)
+        )
+        assert direct.valid is False
+
+
 def test_method_content_trace_v2_and_information_funnel() -> None:
     context_set = _make_context_set()
     para_plan = NarrativeParagraphPlanV3(
@@ -214,6 +264,56 @@ def test_method_content_trace_v2_and_information_funnel() -> None:
     assert trace.funnel.verified_validated_details == 1
     assert trace.funnel.funnel_survival_rates["candidate_to_verified"] == 1.0
     assert row.primary_loss_layer == ""
+
+
+def test_discovery_recall_requires_an_independent_expected_population() -> None:
+    """R3: the closure is never its own discovery denominator."""
+
+    context_set = _make_context_set()
+
+    # No population supplied: the recall is unknown, not perfect.
+    no_population = build_method_content_trace_v2(contexts=context_set)
+    assert no_population.funnel.discovery_recall_status == "not_measured"
+    assert no_population.funnel.mechanism_discovery_recall is None
+    assert no_population.funnel.expected_operation_count is None
+    assert no_population.funnel.discovery_population_source == ""
+
+    # An explicitly supplied but empty population has no denominator.
+    empty_population = build_method_content_trace_v2(
+        contexts=context_set,
+        expected_operation_ids=[],
+        expected_operation_source="fixture:empty",
+    )
+    assert empty_population.funnel.discovery_recall_status == "not_applicable"
+    assert empty_population.funnel.mechanism_discovery_recall is None
+    assert empty_population.funnel.expected_operation_count == 0
+
+    # A missing expected operation lowers the measured recall.
+    partial = build_method_content_trace_v2(
+        contexts=context_set,
+        expected_operation_ids=["op:1", "op:missing"],
+        expected_operation_source="fixture:independent",
+    )
+    assert partial.funnel.discovery_recall_status == "measured"
+    assert partial.funnel.mechanism_discovery_recall == 0.5
+    assert partial.funnel.expected_operation_count == 2
+    assert partial.funnel.discovery_population_source == "fixture:independent"
+
+    # A complete population measures a full recall without touching the
+    # closure retention metric, which has its own denominator.
+    complete = build_method_content_trace_v2(
+        contexts=context_set,
+        expected_operation_ids=["op:1"],
+        expected_operation_source="fixture:independent",
+    )
+    assert complete.funnel.discovery_recall_status == "measured"
+    assert complete.funnel.mechanism_discovery_recall == 1.0
+    assert complete.funnel.closure_retention_status == "measured"
+    assert complete.funnel.closure_retention == 1.0
+    # The legacy numeric rate keeps its historical value, but the funnel says
+    # which rates had no sample instead of letting 1.0 read as measured.
+    assert "candidate_to_verified" in complete.funnel.zero_denominator_metrics
+    assert complete.funnel.funnel_survival_rates["candidate_to_verified"] == 1.0
 
 
 def test_extended_loss_taxonomy_classification() -> None:

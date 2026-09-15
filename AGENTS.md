@@ -9,7 +9,8 @@ development, preserve this precedence:
    architecture and trust direction. It is a specification, not a progress checklist.
 2. `docs/publication_ready_method_writer_design_2026-07-31.md` constrains Method Writer subsystem
    quality and authority separation. It is a target design, not a completion ledger.
-3. `docs/post_r8_research_agent_execution_plan_2026-07-31.md` is the current execution authority.
+3. `docs/post_r8_research_agent_execution_plan_2026-07-31.md` is the Post-R8 execution baseline;
+   use the applicable subsystem revisions indexed by `docs/README.md` for subsequent work.
 4. `docs/project_status_and_gap_report_2026-07-31.md` records current status when supported by its
    cited artifacts. Dated reports and `/tmp` outputs prove only their bound code/input/protocol.
 
@@ -18,28 +19,37 @@ Method Authoring quality (Candidate/Verified product path) currently executes
 Writer-design §§1.3 and 1.6 and revises the 2026-08-21 “license is purely deterministic”
 rule for the Candidate wording lane only. It does not replace items 1–4.
 
-`.agent/task.md`, `.agent/plan.md`, `.agent/implementation.md`, and `.agent/review.md` coordinate one
-task. They supplement but never replace the authorities above. If they conflict, stop and return to
-Codex instead of silently choosing a new architecture or weakening a gate.
+For Method Agent mainline work, also follow
+`docs/method_agent_master_agent_mainline_execution_repair_plan_2026-08-17.md`. Unified Context work
+follows the 2026-09-06 and 2026-09-08 execution revisions indexed by `docs/README.md`. These are
+scoped revisions, not permission to replace the overall architecture or weaken quality gates.
 
-The ignored `.agent-team/` directory is a legacy coordination record from an earlier workflow. Do
-not read or update it for the current task; the active handoff protocol is `.agent/`.
+The current user request defines the task. `.agent/README.md` describes optional local records;
+they supplement the design documents and do not independently authorize work. Resolve stale task
+instructions against the current request and applicable design; ask only if a substantive conflict
+remains unresolved. Do not silently choose a new architecture or weaken a gate.
 
-## Codex and OpenCode Workflow
+`.agent/archive/` and the ignored `.agent-team/` are historical records, not active instructions.
+Do not load them by default; consult `.agent/archive/` only when historical evidence is needed.
+Do not read or update `.agent-team/`.
 
-- Codex owns architecture judgment, root-cause diagnosis, task and plan documents, final read-only
-  acceptance, and integration decisions.
-- OpenCode default `build` owns implementation, tests, authorized real API execution, monitoring,
-  artifact analysis, in-direction repair, and `.agent/implementation.md`.
-- Work serially in the same worktree. The current uncommitted Post-R8 changes are part of the
-  baseline. Do not run `git reset`, `git clean`, checkout another branch, discard files, commit, or
-  merge.
-- OpenCode must not edit `AGENTS.md`, `.agent/task.md`, `.agent/plan.md`, `.agent/review.md`, or the
-  architecture, design, status, execution, and ADR documents cited by the plan.
-- After a Codex `REPAIR`, invoke `/implement` again in the same worktree. Do not create a new task
-  or plan for an in-direction correction.
-- Codex acceptance is read-only. It reviews OpenCode's diff, `.agent/implementation.md`, and frozen
-  artifacts without rerunning tests, benchmarks, model calls, or real APIs.
+## Codex Workflow
+
+- Codex owns diagnosis, planning, implementation, tests, authorized live execution, monitoring,
+  artifact analysis, review, and in-direction repair. Complete the requested work directly.
+- OpenCode is no longer part of this repository's development workflow. Older documents requiring
+  OpenCode/build handoff, `/implement`, role-specific file prohibitions, or Codex-only read-only
+  acceptance are superseded by this section. Their product contracts, evidence requirements,
+  live admission conditions, and quality gates remain applicable.
+- Work in the current worktree and preserve existing uncommitted changes as the baseline. Do not
+  reset, clean, discard unrelated files, switch branches, commit, or merge without user authorization.
+- Keep planning proportional to the task. Small changes do not require separate task, plan,
+  implementation, and review documents. For substantial work, record the scope, decisions,
+  verification, and remaining gaps in `.agent/implementation.md` or the relevant durable document.
+- Codex may update code, tests, and relevant documentation within the authorized scope. Fix review
+  findings and run appropriate verification directly; no external-agent handoff is required.
+- If the user explicitly requests read-only review, honor that scope. Otherwise review may include
+  verification and repair. Do not launch tests, benchmarks, or live runs unrelated to the task.
 
 ## Project Structure
 
@@ -52,27 +62,31 @@ not read or update it for the current task; the active handoff protocol is `.age
 - Long-running output and live artifacts: fresh task-specific directories under `/tmp`
 
 Preserve unrelated user changes in the dirty tree. Keep edits within the responsible subsystem and
-explain every necessary deviation in `.agent/implementation.md`.
+explain necessary scope deviations in the task record or final response.
 
 ## Verification Commands
 
 - Focused tests: `python -m pytest -q <test paths>`
-- Full static suite, only when the active plan names a milestone: `python -m pytest -q`
+- Full static suite for broad changes or an applicable milestone: `python -m pytest -q`
 - Syntax/import check when relevant: `python -m compileall -q src tests`
 - Patch hygiene: `git diff --check`
 
-Do not report progress by test count alone. Record the exact command, exit status, summary, and code
-state in `.agent/implementation.md`. OpenCode runs required verification; Codex does not rerun it
-during acceptance.
+Codex runs verification appropriate to the change. Documentation-only edits normally need link and
+patch-hygiene checks, not pytest or live APIs. Do not report progress by test count alone. For
+substantial work, record exact commands, exit statuses, behavior summaries, and code state in
+`.agent/implementation.md` or the relevant evidence report. Distinguish newly observed results from
+historical results and unverified claims; repeat checks only when changes or unresolved concerns
+justify it.
 
 ## Authorized Local LLM Runtime
 
 The current designated local OpenAI-compatible runtime is:
 
-- Base URL: `http://127.0.0.1:8003/v1`
-- Model: `qwen36-27b-nvfp4`
+- Base URL: `http://127.0.0.1:8006/v1`
+- Model: `qwen38-27b-nvfp4`
 - Context: `131072`
-- Profile: `tests/live/profiles/qwen36_vllm_budgeted.example.env`
+- Profile: `tests/live/profiles/qwen38_vllm_budgeted.example.env`
+  (capability profile: `tests/live/profiles/qwen38_vllm_budgeted_capabilities.json`)
 
 Before a planned live run, record `/health`, `/v1/models`, model identity, queue/KV-cache state when
 available, and the fresh output directory. Never print or persist secrets. Monitor long requests.

@@ -344,7 +344,7 @@ def _structural_rejections(
         "SEARCH_SYMBOLS", "READ_CANDIDATE", "TRACE_CALLS", "TRACE_DATA_FLOW",
         "INSPECT_BRANCH", "INSPECT_CONFIG", "SEARCH_HINTS",
         "BUILD_BEHAVIOR_SUBGRAPH", "PROPOSE_PACKET", "COMPILE_FACTS",
-        "DECOMPOSE_CLAIMS", "REWRITE_SENTENCES",
+        "DECOMPOSE_CLAIMS", "REWRITE_SENTENCES", "PROPOSE_TARGET_REVISION",
     }
     terminal_actions = {
         "STOP_BLOCKED", "RECORD_GAP", "COMPILE_EVIDENCE", "PLAN_METHOD"
@@ -390,6 +390,10 @@ def _action_issue_match(
     # forbidding this action here forced the manager to keep searching (or
     # claim STOP_BLOCKED) after it had already found the needed code.
     allowed = {expected_action, "COMPILE_EVIDENCE", "RECORD_GAP", "STOP_BLOCKED"}
+    # A revision proposal is the cross-cutting move: it says the *target* is
+    # wrong, so it cannot depend on which evidence issue is currently active.
+    # The harness still assesses every proposal on its own merits.
+    allowed |= {"PROPOSE_TARGET_REVISION"}
     # For trace_data_flow / inspect_branch / inspect_config we also accept the
     # closely related actions (the fallback table is intentionally coarse).
     if expected_action == "TRACE_CALLS":
@@ -546,13 +550,13 @@ def _no_duplicate_no_gain(
     not contain the turn index, so an exact rerun remains visible across
     turns and can be rejected after no gain.
 
-    ``executed_read_signatures`` additionally carries the normalized
-    content-read keys (``read_symbol`` path+symbol, ``read_code_span``
-    path+span) already executed in this run, across obligations.  Reading
-    the same exact source span returns the same bytes inside one repo
-    snapshot, so a cross-obligation re-read produces no new information;
-    the Manager must instead trace a caller/data/control/config relation
-    or read a different span.
+    ``executed_read_signatures`` carries the obligation-scoped analysis keys
+    (``<obligation>|<tool>:<path>:<symbol|span>``) already executed in this
+    run.  The no-gain rule is per obligation: the same obligation may not
+    re-read the same span, while a *different* obligation may reuse the
+    snapshot-identical bytes for its own graph/claim compilation.  The byte
+    identity stays available for caching, but it is never the reason to
+    reject another question's read.
     """
 
     no_progress_set = set(no_progress_tool_call_ids)
@@ -580,14 +584,14 @@ def _no_duplicate_no_gain(
                     tool_call_id=call.tool_call_id,
                 )
             )
-        read_signature = _content_read_signature(call)
+        read_signature = _obligation_read_signature(call)
         if read_signature and read_signature in executed_read_set:
             rejections.append(
                 PolicyRejectionV1(
                     rule="duplicate_no_gain_call",
                     reason=(
-                        "content read already executed for another "
-                        "obligation in this snapshot"
+                        "content read already executed for this obligation "
+                        "in this snapshot"
                     ),
                     detail=f"read_signature={read_signature}",
                     tool_call_id=call.tool_call_id,
@@ -596,18 +600,23 @@ def _no_duplicate_no_gain(
 
 
 def _content_read_signature(call: ResearchToolCallV1) -> str:
-    """Normalized identity of a content read within one repo snapshot.
-
-    Delegates to the shared canonical identity so policy merge and the
-    deterministic supervisor cannot drift apart.  The signature
-    deliberately omits obligation id and turn index: the returned source
-    bytes are identical whenever the same span is read again in the same
-    snapshot, regardless of which obligation prompted the read.
-    """
+    """Normalized byte identity of a content read within one repo snapshot."""
 
     from code2paper.agentic.research_read_identity import content_read_signature
 
     return content_read_signature(call.tool_name, call.arguments)
+
+
+def _obligation_read_signature(call: ResearchToolCallV1) -> str:
+    """Obligation-scoped analysis identity used by the no-gain rule."""
+
+    from code2paper.agentic.research_read_identity import obligation_read_signature
+
+    return obligation_read_signature(
+        str(getattr(call, "obligation_id", "") or ""),
+        call.tool_name,
+        call.arguments,
+    )
 
 
 def _no_authority_overreach(

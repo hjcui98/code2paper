@@ -80,6 +80,54 @@ def _access_terms(object_value: str | list[str]) -> tuple[str, ...]:
     return (text,)
 
 
+_RESOLVED_CONFIGURATION_STATES = frozenset({"default", "actual", "conditional"})
+
+
+def _supersede_unresolved_accesses(
+    claims: list[ConfigurationClaimV1],
+) -> list[ConfigurationClaimV1]:
+    """Drop a bare access observation once the same key has a value.
+
+    A key with definition evidence is no longer "unresolved"; keeping both
+    records would leave the branch resolver choosing between two claims for one
+    key.  The value lanes themselves (``actual`` / ``default`` /
+    ``conditional``) stay separate -- they are different authority lanes, not
+    competing values -- and rejected (``unreachable``) records are never
+    silently removed.
+    """
+
+    resolved_keys = {
+        claim.key
+        for claim in claims
+        if claim.state in _RESOLVED_CONFIGURATION_STATES
+    }
+    if not resolved_keys:
+        return claims
+    return [
+        claim
+        for claim in claims
+        if not (claim.state == "unresolved" and claim.key in resolved_keys)
+    ]
+
+
+def _restore_declared_scalar(value: str) -> str | int | float | bool:
+    """Restore a declared configuration scalar from its exact rendering."""
+
+    text = value.strip()
+    if text.casefold() == "true":
+        return True
+    if text.casefold() == "false":
+        return False
+    if re.fullmatch(r"[+-]?\d+", text):
+        return int(text)
+    if re.fullmatch(r"[+-]?(?:\d+\.\d*|\.\d+|\d+)(?:[eE][+-]?\d+)?", text):
+        try:
+            return float(text)
+        except ValueError:
+            return value
+    return value
+
+
 def compile_configuration_claims(
     fact_set: CodeFactSetV1,
     *,
@@ -156,6 +204,15 @@ def compile_configuration_claims(
                 fact.object if isinstance(fact.object, (str, int, float, bool)) or fact.object is None
                 else json.dumps(fact.object, ensure_ascii=False, sort_keys=True)
             )
+            if (
+                isinstance(value, str)
+                and "config_definition" in markers
+            ):
+                # A repository configuration file carries a typed value that
+                # the fact's string object can only render.  Restore the exact
+                # declared scalar here; anything not a strict scalar literal
+                # stays the declared text rather than becoming a guess.
+                value = _restore_declared_scalar(value)
             unresolved_reason = ""
         else:
             # Bare config access: the key is the exact access expression and
@@ -185,6 +242,7 @@ def compile_configuration_claims(
             active=state != "unreachable",
             unresolved_reason=unresolved_reason,
         ))
+    claims = _supersede_unresolved_accesses(claims)
     # Content-addressed de-duplication keeps the writer budget stable when a
     # relation and its corresponding access are observed more than once.  A
     # resolved claim dedups on its exact identity; an unresolved access dedups

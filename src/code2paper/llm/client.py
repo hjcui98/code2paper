@@ -13,6 +13,7 @@ import json
 import os
 import socket
 import tempfile
+import threading
 import time
 import urllib.error
 import urllib.request
@@ -29,11 +30,36 @@ from code2paper.llm.capabilities import LLMCapabilityProfile, StructuredResponse
 from code2paper.llm.retry_policy import RetryPolicy
 from code2paper.schemas import LLMConfig, LLMProvider
 
-_STREAM_METRICS: dict[str, object] = {
-    "usage": None,
-    "thinking_chars": 0,
-    "finish_reason": "",
-}
+class _StreamMetrics(threading.local):
+    """Keep concurrent caller diagnostics separate without retaining reasoning text."""
+
+    def __init__(self) -> None:
+        self.values: dict[str, object] = {}
+
+    def get(self, key: str, default: object = None) -> object:
+        return self.values.get(key, default)
+
+    def __getitem__(self, key: str) -> object:
+        return self.values[key]
+
+    def __setitem__(self, key: str, value: object) -> None:
+        self.values[key] = value
+
+    def reset(self) -> None:
+        self.values = {
+            "usage": None,
+            "thinking_chars": 0,
+            "finish_reason": "",
+            "finish_seen": False,
+            "usage_seen": False,
+            "stream_events": 0,
+            "terminal_status": "",
+            "partial_text": "",
+        }
+
+
+_STREAM_METRICS = _StreamMetrics()
+
 
 
 @dataclass(frozen=True)
@@ -66,10 +92,16 @@ class LLMResponse:
     response_mode: str = ""
     finish_reason: str = ""
     token_usage: dict[str, int] | None = None
+    provider_finish_reason: str = ""
+    thinking_chars: int = 0
     # Optional in-process structured payload retained by publication writers
     # for semantic transaction comparison.  It is never serialized into the
     # provider cache or emitted as reader-facing prose.
     metadata: object | None = None
+    # Transport diagnostics are intentionally separate from structured
+    # content metadata. They survive blocked/partial responses and are safe to
+    # persist in the invocation ledger.
+    provider_diagnostics: dict[str, object] | None = None
 
 
 @dataclass(frozen=True)
@@ -78,6 +110,9 @@ class _ProviderResult:
     response_mode: str = ""
     finish_reason: str = ""
     token_usage: dict[str, int] | None = None
+    provider_finish_reason: str = ""
+    thinking_chars: int = 0
+    provider_diagnostics: dict[str, object] | None = None
 
 
 class LLMClient:
@@ -122,6 +157,7 @@ class LLMClient:
                     response_mode=cached_result.response_mode,
                     finish_reason=cached_result.finish_reason,
                     token_usage=cached_result.token_usage,
+                    provider_diagnostics=cached_result.provider_diagnostics,
                 )
         if self.config.provider.value == "none":
             return LLMResponse(
@@ -135,14 +171,57 @@ class LLMClient:
                 response_hash=hash_text(""),
                 blocked_reason="llm_api_key_missing",
             )
+        _STREAM_METRICS.reset()
         try:
             result = self._complete_provider_with_semantic_retry(request)
         except ProviderTimeoutError as exc:
             if self.config.fail_on_timeout:
                 raise
-            return LLMResponse(text="", response_hash=hash_text(""), blocked_reason=str(exc))
+            partial_text = str(getattr(exc, "partial_text", "") or "")
+            return LLMResponse(
+                text=partial_text, response_hash=hash_text(partial_text), blocked_reason=str(exc),
+                finish_reason=str(
+                    getattr(exc, "finish_reason", "")
+                    or _STREAM_METRICS.get("finish_reason")
+                    or ""
+                ),
+                provider_finish_reason=str(
+                    getattr(exc, "provider_finish_reason", "")
+                    or _STREAM_METRICS.get("finish_reason")
+                    or ""
+                ),
+                thinking_chars=int(_STREAM_METRICS.get("thinking_chars") or 0),
+                token_usage=(
+                    getattr(exc, "token_usage", None)
+                    or _normalized_usage(_STREAM_METRICS.get("usage"))
+                ),
+                provider_diagnostics=(
+                    getattr(exc, "diagnostics", None) or _stream_diagnostics()
+                ),
+            )
         except ProviderRuntimeError as exc:
-            return LLMResponse(text="", response_hash=hash_text(""), blocked_reason=str(exc))
+            partial_text = str(getattr(exc, "partial_text", "") or "")
+            return LLMResponse(
+                text=partial_text, response_hash=hash_text(partial_text), blocked_reason=str(exc),
+                finish_reason=str(
+                    getattr(exc, "finish_reason", "")
+                    or _STREAM_METRICS.get("finish_reason")
+                    or ""
+                ),
+                provider_finish_reason=str(
+                    getattr(exc, "provider_finish_reason", "")
+                    or _STREAM_METRICS.get("finish_reason")
+                    or ""
+                ),
+                thinking_chars=int(_STREAM_METRICS.get("thinking_chars") or 0),
+                token_usage=(
+                    getattr(exc, "token_usage", None)
+                    or _normalized_usage(_STREAM_METRICS.get("usage"))
+                ),
+                provider_diagnostics=(
+                    getattr(exc, "diagnostics", None) or _stream_diagnostics()
+                ),
+            )
         if self.config.cache:
             _write_cache(self.config, request, self.capability_profile, result)
         return LLMResponse(
@@ -151,6 +230,9 @@ class LLMClient:
             response_mode=result.response_mode,
             finish_reason=result.finish_reason,
             token_usage=result.token_usage,
+            provider_finish_reason=result.provider_finish_reason,
+            thinking_chars=result.thinking_chars,
+            provider_diagnostics=result.provider_diagnostics,
         )
 
     def _complete_provider_with_semantic_retry(self, request: LLMRequest) -> _ProviderResult:
@@ -162,7 +244,14 @@ class LLMClient:
             result = self._complete_provider(request)
             if result.text is not None and result.text.strip():
                 return result
-            last_error = ProviderRuntimeError("provider_response_empty_content")
+            last_error = ProviderRuntimeError(
+                "provider_response_empty_content",
+                partial_text=str(result.text or ""),
+                finish_reason=result.finish_reason,
+                provider_finish_reason=result.provider_finish_reason,
+                token_usage=result.token_usage,
+                diagnostics=result.provider_diagnostics,
+            )
             if attempt < attempts and delay_seconds > 0:
                 time.sleep(delay_seconds)
                 delay_seconds *= max(1.0, retry_policy.backoff_multiplier)
@@ -283,7 +372,10 @@ class LLMClient:
                 text=text,
                 response_mode=response_mode.value,
                 finish_reason="structured_complete",
+                provider_finish_reason=str(_STREAM_METRICS.get("finish_reason") or ""),
+                thinking_chars=int(_STREAM_METRICS.get("thinking_chars") or 0),
                 token_usage=_normalized_usage(_STREAM_METRICS.get("usage")),
+                provider_diagnostics=_stream_diagnostics(),
             )
         response = _post_json(
             base_url,
@@ -373,11 +465,41 @@ class LLMClient:
 
 
 class ProviderRuntimeError(RuntimeError):
-    pass
+    """Provider failure that retains observable response-side diagnostics."""
+
+    def __init__(
+        self,
+        message: str,
+        *,
+        partial_text: str = "",
+        finish_reason: str = "",
+        provider_finish_reason: str = "",
+        token_usage: dict[str, int] | None = None,
+        diagnostics: dict[str, object] | None = None,
+    ) -> None:
+        super().__init__(message)
+        self.partial_text = str(partial_text or "")
+        self.finish_reason = str(finish_reason or "")
+        self.provider_finish_reason = str(provider_finish_reason or "")
+        self.token_usage = token_usage
+        self.diagnostics = diagnostics
 
 
 class ProviderTimeoutError(ProviderRuntimeError):
     pass
+
+
+def _stream_diagnostics() -> dict[str, object]:
+    """Expose bounded SSE state without persisting model-authored content."""
+
+    partial_text = str(_STREAM_METRICS.get("partial_text") or "")
+    return {
+        "stream_events": int(_STREAM_METRICS.get("stream_events") or 0),
+        "finish_seen": bool(_STREAM_METRICS.get("finish_seen", False)),
+        "usage_seen": bool(_STREAM_METRICS.get("usage_seen", False)),
+        "terminal_status": str(_STREAM_METRICS.get("terminal_status") or ""),
+        "partial_chars": len(partial_text),
+    }
 
 
 def _post_json(
@@ -484,6 +606,11 @@ def _post_openai_stream_until_complete_json(
     _STREAM_METRICS["usage"] = None
     _STREAM_METRICS["thinking_chars"] = 0
     _STREAM_METRICS["finish_reason"] = ""
+    _STREAM_METRICS["finish_seen"] = False
+    _STREAM_METRICS["usage_seen"] = False
+    _STREAM_METRICS["stream_events"] = 0
+    _STREAM_METRICS["terminal_status"] = ""
+    _STREAM_METRICS["partial_text"] = ""
     for attempt in range(1, attempts + 1):
         request = urllib.request.Request(
             url,
@@ -491,26 +618,39 @@ def _post_openai_stream_until_complete_json(
             headers={"Content-Type": "application/json", **headers},
             method="POST",
         )
+        accumulated = ""
+        complete_text: str | None = None
+        finish_seen = False
         try:
-            accumulated = ""
-            complete_text: str | None = None
             with urllib.request.urlopen(request, timeout=timeout_seconds) as response:
                 iterator = iter(response)
                 last_content_at = time.monotonic()
                 received_progress = False
+                terminal_events = 0
                 while True:
-                    inactivity_limit = min(timeout_seconds, 30 if received_progress else 120)
+                    if finish_seen:
+                        terminal_events += 1
+                        if terminal_events > 64:
+                            break
+                    inactivity_limit = min(timeout_seconds, 2 if finish_seen else (30 if received_progress else 120))
                     inactivity_remaining = inactivity_limit - (
                         time.monotonic() - last_content_at
                     )
                     if inactivity_remaining <= 0:
+                        if finish_seen:
+                            break
                         if complete_text is not None:
                             return complete_text
                         complete = _first_complete_json(accumulated)
                         if complete is not None:
                             return complete
                         raise ProviderTimeoutError(
-                            "provider_timeout_error:stream_inactivity"
+                            "provider_timeout_error:stream_inactivity",
+                            partial_text=accumulated,
+                            finish_reason=str(_STREAM_METRICS.get("finish_reason") or ""),
+                            provider_finish_reason=str(_STREAM_METRICS.get("finish_reason") or ""),
+                            token_usage=_normalized_usage(_STREAM_METRICS.get("usage")),
+                            diagnostics=_stream_diagnostics(),
                         )
                     # HTTPResponse uses a BufferedReader.  Selecting on its
                     # raw socket can report "not ready" after urllib has
@@ -523,11 +663,18 @@ def _post_openai_stream_until_complete_json(
                         try:
                             raw_line = response.readline()
                         except (TimeoutError, socket.timeout):
+                            if finish_seen:
+                                break
                             complete = _first_complete_json(accumulated)
                             if complete is not None:
                                 return complete
                             raise ProviderTimeoutError(
-                                "provider_timeout_error:stream_inactivity"
+                                "provider_timeout_error:stream_inactivity",
+                                partial_text=accumulated,
+                                finish_reason=str(_STREAM_METRICS.get("finish_reason") or ""),
+                                provider_finish_reason=str(_STREAM_METRICS.get("finish_reason") or ""),
+                                token_usage=_normalized_usage(_STREAM_METRICS.get("usage")),
+                                diagnostics=_stream_diagnostics(),
                             )
                         if not raw_line:
                             break
@@ -555,15 +702,25 @@ def _post_openai_stream_until_complete_json(
                             # byte on a keep-alive socket can only hang.
                             return accumulated
                         raise ProviderRuntimeError(
-                            "provider_stream_done_without_json_content"
+                            "provider_stream_finished_before_complete_json" if finish_seen
+                            else "provider_stream_done_without_json_content",
+                            partial_text=accumulated,
+                            finish_reason=str(_STREAM_METRICS.get("finish_reason") or ""),
+                            provider_finish_reason=str(_STREAM_METRICS.get("finish_reason") or ""),
+                            token_usage=_normalized_usage(_STREAM_METRICS.get("usage")),
+                            diagnostics=_stream_diagnostics(),
                         )
                     try:
                         event = json.loads(data)
                     except json.JSONDecodeError:
                         continue
+                    _STREAM_METRICS["stream_events"] = int(
+                        _STREAM_METRICS.get("stream_events") or 0
+                    ) + 1
                     usage = event.get("usage")
                     if isinstance(usage, dict):
                         _STREAM_METRICS["usage"] = usage
+                        _STREAM_METRICS["usage_seen"] = True
                     try:
                         choice = (event.get("choices") or [None])[0] or {}
                         delta = choice.get("delta") or {}
@@ -572,6 +729,7 @@ def _post_openai_stream_until_complete_json(
                     finish_reason = choice.get("finish_reason")
                     if finish_reason:
                         _STREAM_METRICS["finish_reason"] = str(finish_reason)
+                        _STREAM_METRICS["finish_seen"] = True
                     content = delta.get("content")
                     reasoning_content = delta.get("reasoning_content")
                     if isinstance(reasoning_content, str) and reasoning_content:
@@ -586,6 +744,7 @@ def _post_openai_stream_until_complete_json(
                             received_progress = True
                         if complete_text is None:
                             accumulated += content
+                            _STREAM_METRICS["partial_text"] = accumulated
                             complete = _first_complete_json(accumulated)
                             if complete is not None:
                                 # The usage-only SSE event is normally emitted
@@ -602,33 +761,31 @@ def _post_openai_stream_until_complete_json(
                                 # the owning parser still fail-closes.
                                 return accumulated
                     if finish_reason:
-                        if complete_text is not None:
-                            # Do not return before the usage-only terminal
-                            # event; it carries both prompt and completion
-                            # token counts on vLLM/OpenAI-compatible streams.
-                            continue
-                        complete = _first_complete_json(accumulated)
-                        if complete is not None:
-                            return complete
-                        # The provider finished the stream before a complete
-                        # JSON value arrived.  Preserve the model's own bytes
-                        # instead of discarding them: the writer's recovery
-                        # layer may close an unambiguous container suffix
-                        # (representation-only repair).  Only a truly empty
-                        # accumulation is a hard transport failure.
-                        if accumulated.strip():
-                            return accumulated
-                        raise ProviderRuntimeError(
-                            "provider_stream_finished_before_complete_json"
-                        )
+                        # A finish choice precedes terminal usage. Drain it for
+                        # empty and malformed responses too, with a bounded deadline.
+                        finish_seen = True
+                        last_content_at = time.monotonic()
+                        _STREAM_METRICS["finish_seen"] = True
+                        _STREAM_METRICS["terminal_status"] = "finish_seen"
             if complete_text is not None:
+                _STREAM_METRICS["terminal_status"] = "complete_json"
                 return complete_text
             complete = _first_complete_json(accumulated)
             if complete is not None:
+                _STREAM_METRICS["terminal_status"] = "complete_json"
                 return complete
             if accumulated.strip():
+                _STREAM_METRICS["terminal_status"] = "partial_eof"
                 return accumulated
-            last_error = ProviderRuntimeError("provider_stream_ended_before_complete_json")
+            last_error = ProviderRuntimeError(
+                "provider_stream_finished_before_complete_json" if finish_seen
+                else "provider_stream_ended_before_complete_json",
+                partial_text=accumulated,
+                finish_reason=str(_STREAM_METRICS.get("finish_reason") or ""),
+                provider_finish_reason=str(_STREAM_METRICS.get("finish_reason") or ""),
+                token_usage=_normalized_usage(_STREAM_METRICS.get("usage")),
+                diagnostics=_stream_diagnostics(),
+            )
             if attempt >= attempts:
                 raise last_error
         except urllib.error.HTTPError as exc:
@@ -646,7 +803,14 @@ def _post_openai_stream_until_complete_json(
             complete = _first_complete_json(accumulated)
             if complete is not None:
                 return complete
-            last_error = ProviderTimeoutError("provider_timeout_error:read_timeout")
+            last_error = ProviderTimeoutError(
+                "provider_timeout_error:read_timeout",
+                partial_text=accumulated,
+                finish_reason=str(_STREAM_METRICS.get("finish_reason") or ""),
+                provider_finish_reason=str(_STREAM_METRICS.get("finish_reason") or ""),
+                token_usage=_normalized_usage(_STREAM_METRICS.get("usage")),
+                diagnostics=_stream_diagnostics(),
+            )
             if attempt >= attempts:
                 raise last_error from exc
         if attempt < attempts and delay_seconds > 0:

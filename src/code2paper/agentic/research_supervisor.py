@@ -31,7 +31,7 @@ from __future__ import annotations
 import hashlib
 import json
 import re
-from typing import Any, Protocol, runtime_checkable
+from typing import Any, Literal, Protocol, runtime_checkable
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
@@ -266,6 +266,28 @@ class ExecutedToolCallSummaryV1(BaseModel):
     obligation_id: str = ""
 
 
+class PriorReadMemoryV1(BaseModel):
+    """One bounded, explainable prior read projected into the current context.
+
+    The projection is deliberately *not* a coverage claim: it carries at most
+    a small number of relevant earlier reads with the reason each was
+    selected, while the full observation history stays in the run artifacts.
+    """
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    observation_id: str
+    obligation_id: str = ""
+    tool_name: str = ""
+    path: str = ""
+    symbol: str = ""
+    exact_span_ids: tuple[str, ...] = Field(default_factory=tuple)
+    result_refs: tuple[str, ...] = Field(default_factory=tuple)
+    status: str = ""
+    selection_reason: str = ""
+    recency_rank: int = 0
+
+
 class ResearchDecisionContextV1(BaseModel):
     """Compact context the supervisor sees each turn (R3.2).
 
@@ -308,6 +330,12 @@ class ResearchDecisionContextV1(BaseModel):
     hard_rules: tuple[str, ...] = Field(default_factory=tuple)
     unresolved_must_cover_ids: tuple[str, ...] = Field(default_factory=tuple)
     behavior_template_search_hints: tuple[BehaviorTemplateSearchHintV1, ...] = Field(default_factory=tuple)
+    #: Bounded projection of relevant earlier reads for the active question.
+    #: It is context, never coverage: the full history stays persisted and
+    #: ``prior_reads_truncated`` marks that more memory exists.
+    relevant_prior_reads: tuple[PriorReadMemoryV1, ...] = Field(default_factory=tuple)
+    prior_reads_truncated: bool = False
+    prior_reads_projection_status: Literal["bounded_projection"] = "bounded_projection"
 
     @field_validator("run_id", "repo_snapshot_id")
     @classmethod
@@ -483,7 +511,7 @@ class DeterministicSupervisorBackend:
             "SEARCH_SYMBOLS", "READ_CANDIDATE", "TRACE_CALLS", "TRACE_DATA_FLOW",
             "INSPECT_BRANCH", "INSPECT_CONFIG", "SEARCH_HINTS",
             "BUILD_BEHAVIOR_SUBGRAPH", "PROPOSE_PACKET", "COMPILE_FACTS",
-            "DECOMPOSE_CLAIMS", "REWRITE_SENTENCES",
+            "DECOMPOSE_CLAIMS", "REWRITE_SENTENCES", "PROPOSE_TARGET_REVISION",
         }
         if action in tool_calling_actions and not tool_calls:
             if action != "SEARCH_SYMBOLS" and context.active_obligation is not None:
@@ -799,7 +827,10 @@ class DeterministicSupervisorBackend:
             if symbol is not None:
                 arguments["symbol"] = symbol
         elif tool_name == "inspect_configuration":
-            arguments["config_key"] = ""
+            # A requirement produced by a branch-gating access names the exact
+            # key; scanning the whole repository would leave the key that
+            # actually gates the branch to chance.
+            arguments["config_key"] = self._configuration_key(context)
             arguments["top_k"] = 20
         elif tool_name == "search_semantic_hints":
             query = self._search_query(context)
@@ -890,6 +921,21 @@ class DeterministicSupervisorBackend:
         return tuple(paths)
 
     # --- heuristics for argument construction ---------------------------
+
+    def _configuration_key(self, context: ResearchDecisionContextV1) -> str:
+        """The configuration key a pending requirement asks for, if any."""
+
+        obl = context.active_obligation
+        if obl is None:
+            return ""
+        for requirement in (
+            *tuple(getattr(obl, "missing_information", ()) or ()),
+            *tuple(context.missing_information or ()),
+        ):
+            text = str(requirement or "")
+            if text.startswith("configuration:branch_key:"):
+                return text.split(":", 2)[2].strip()
+        return ""
 
     def _search_query(self, context: ResearchDecisionContextV1) -> str:
         obl = context.active_obligation
@@ -1099,15 +1145,14 @@ class DeterministicSupervisorBackend:
     def _candidate_read_already_executed(
         self, context: ResearchDecisionContextV1
     ) -> bool:
-        """Return whether the exact read for the top candidate already ran.
+        """Return whether the exact read for the top candidate already ran
+        for the *current* obligation.
 
-        The executed-call summaries are assembled across obligations: a
-        ``read_symbol`` / ``read_code_span`` executed while answering another
-        obligation returned the same snapshot-bound source bytes, so policy
-        correctly rejects a re-read.  The deterministic supervisor must not
-        keep proposing a doomed READ_CANDIDATE; callers switch to
-        COMPILE_EVIDENCE (when the behavior graph carries the candidate) or
-        to a different search strategy.
+        R4: the no-gain rule is per obligation.  A read executed while
+        answering another obligation returned snapshot-identical bytes that
+        the current obligation may reuse, but it does not answer the current
+        question, so the deterministic supervisor must not treat it as an
+        already-executed read for this candidate.
 
         Identity is exact and fail-closed:
 
@@ -1124,9 +1169,17 @@ class DeterministicSupervisorBackend:
         path = self._read_symbol_path(context)
         if target is None or path is None:
             return False
+        active_obligation_id = (
+            context.active_obligation.obligation_id
+            if context.active_obligation is not None else ""
+        )
         candidate_line = self._candidate_symbol_line(context)
         for summary in context.executed_tool_calls:
             if summary.tool_name not in {"read_symbol", "read_code_span"}:
+                continue
+            if active_obligation_id and str(
+                getattr(summary, "obligation_id", "") or ""
+            ) != active_obligation_id:
                 continue
             arguments = summary.arguments or {}
             if content_read_covers_line(
@@ -1480,6 +1533,7 @@ _ACTION_DEFAULT_TOOL: dict[ResearchAction, str | None] = {
     "INSPECT_CONFIG": "inspect_configuration",
     "SEARCH_HINTS": "search_semantic_hints",
     "BUILD_BEHAVIOR_SUBGRAPH": "build_behavior_subgraph",
+    "PROPOSE_TARGET_REVISION": "propose_target_revision",
     "PROPOSE_PACKET": "propose_evidence_packet",
     "COMPILE_FACTS": "compile_code_facts",
     "DECOMPOSE_CLAIMS": "decompose_atomic_claims",
@@ -1522,6 +1576,7 @@ _TOOL_KIND_MAP: dict[str, ToolKind] = {
     "authorize_atomic_claims": "packet_repair",
     "record_explicit_code_gap": "other",
     "check_obligation_coverage": "other",
+    "propose_target_revision": "packet_repair",
 }
 
 
@@ -1555,6 +1610,8 @@ def build_decision_context(
     executed_tool_calls: tuple[ExecutedToolCallSummaryV1, ...] = (),
     unresolved_must_cover_ids: tuple[str, ...] | None = None,
     behavior_template_search_hints: tuple[BehaviorTemplateSearchHintV1, ...] = (),
+    observation_history: tuple[ResearchObservationV1, ...] = (),
+    memory_budget: int = 8,
     behavior_graph: Any | None = None,
 ) -> ResearchDecisionContextV1:
     """Assemble a ``ResearchDecisionContextV1`` from graph state.
@@ -1588,6 +1645,19 @@ def build_decision_context(
     # Filter it out here so both owners move to a trace/inspect/search
     # strategy or a different span instead of churning policy fallbacks.
     if active_obligation is not None and executed_tool_calls:
+        # R4: only reads executed for *this* obligation are a no-gain repeat.
+        # Another obligation's read yields reusable bytes but does not answer
+        # this question, so the candidate must stay visible.
+        active_obligation_id = active_obligation.obligation_id
+        own_obligation_reads = tuple(
+            summary for summary in executed_tool_calls
+            if summary.tool_name in {"read_symbol", "read_code_span"}
+            and (
+                not active_obligation_id
+                or str(getattr(summary, "obligation_id", "") or "")
+                == active_obligation_id
+            )
+        )
         kept_symbols: list[str] = []
         for candidate in top_symbols:
             parsed = (
@@ -1614,8 +1684,7 @@ def build_decision_context(
                         symbol=cand_symbol,
                         line=None,
                     )
-                    for summary in executed_tool_calls
-                    if summary.tool_name in {"read_symbol", "read_code_span"}
+                    for summary in own_obligation_reads
                 )
                 if not read_already:
                     kept_symbols.append(candidate)
@@ -1629,8 +1698,7 @@ def build_decision_context(
                     symbol=cand_symbol,
                     line=cand_line,
                 )
-                for summary in executed_tool_calls
-                if summary.tool_name in {"read_symbol", "read_code_span"}
+                for summary in own_obligation_reads
             )
             if not read_already:
                 kept_symbols.append(candidate)
@@ -1747,8 +1815,115 @@ def build_decision_context(
                 "BUILD_BEHAVIOR_SUBGRAPH",
                 "COMPILE_EVIDENCE",
                 "RECORD_GAP",
+                # R10: the manager may always report that the obligation's own
+                # typed targets look wrong.  Submitting that proposal spends no
+                # budget and changes nothing by itself; the harness assesses it.
+                "PROPOSE_TARGET_REVISION",
             ]
         )
+
+    # R4 memory projection: from the persistent observation history, project
+    # the reads that are relevant to the active question -- first this
+    # obligation's own earlier reads, then reads sharing an exact symbol or
+    # span with the current candidates.  The projection is bounded and each
+    # entry names why it was selected; the full history stays persisted and
+    # ``prior_reads_truncated`` marks that more memory exists.  It is context,
+    # never a coverage claim.
+    candidate_paths: set[str] = set()
+    candidate_symbol_names: set[str] = set()
+    for candidate in (getattr(active_obligation, "candidate_symbol_ids", ()) or ()):
+        raw_candidate = str(candidate or "").strip()
+        if not raw_candidate:
+            continue
+        parsed = (
+            split_symbol_ref(raw_candidate)
+            if is_symbol_ref(raw_candidate)
+            else None
+        )
+        if parsed is not None:
+            candidate_paths.add(parsed[0])
+            candidate_symbol_names.add(parsed[1])
+            continue
+        # ``sym:<path>:<name>[:<line>]`` and path-only candidates, matching
+        # the tolerance used by the top-candidate filter above.
+        body = raw_candidate
+        if body.startswith("sym:") or body.startswith("symbol:"):
+            body = body.split(":", 1)[1]
+        if ":" not in body:
+            candidate_paths.add(body)
+            continue
+        head, tail = body.rsplit(":", 1)
+        if tail.isdigit() and ":" in head:
+            path, name = head.rsplit(":", 1)
+        else:
+            path, name = head, tail
+        candidate_paths.add(path)
+        if name and not name.isdigit():
+            candidate_symbol_names.add(name)
+    candidate_ids = set(
+        str(value)
+        for value in (getattr(active_obligation, "candidate_symbol_ids", ()) or ())
+    )
+    projected: list[PriorReadMemoryV1] = []
+    selected_observation_ids: set[str] = set()
+    active_obligation_id = (
+        active_obligation.obligation_id if active_obligation is not None else ""
+    )
+    ordered_history = tuple(reversed(tuple(observation_history)))
+    relevant_history_reads = 0
+    for recency_rank, observation in enumerate(ordered_history):
+        if observation.tool_name not in {"read_symbol", "read_code_span"}:
+            continue
+        observation_id = str(observation.observation_id or "")
+        if not observation_id or observation_id in selected_observation_ids:
+            continue
+        spans = tuple(str(value) for value in (observation.exact_span_ids or ()))
+        observed_refs = [
+            split_symbol_ref(ref)
+            for ref in (observation.result_refs or ())
+            if is_symbol_ref(ref)
+        ]
+        observed_refs = [ref for ref in observed_refs if ref is not None]
+        observed_paths = {ref[0] for ref in observed_refs}
+        observed_symbols = {ref[1] for ref in observed_refs}
+        span_paths = {
+            span[len("span:"):].rsplit(":", 2)[0]
+            for span in spans
+            if span.startswith("span:") and span.count(":") >= 3
+        }
+        observed_paths.update(span_paths)
+        reason = ""
+        if active_obligation_id and observation.obligation_id == active_obligation_id:
+            reason = "same_obligation"
+        elif observed_symbols & candidate_symbol_names:
+            reason = "shared_symbol"
+        elif candidate_ids & set(spans) or any(
+            span in candidate_ids for span in spans
+        ):
+            reason = "shared_span"
+        elif observed_paths & candidate_paths:
+            reason = "shared_path"
+        if not reason:
+            continue
+        relevant_history_reads += 1
+        if len(projected) >= max(0, int(memory_budget)):
+            continue
+        selected_observation_ids.add(observation_id)
+        projected.append(PriorReadMemoryV1(
+            observation_id=observation_id,
+            obligation_id=str(observation.obligation_id or ""),
+            tool_name=str(observation.tool_name or ""),
+            path=sorted(observed_paths)[0] if observed_paths else "",
+            symbol=sorted(observed_symbols)[0] if observed_symbols else "",
+            exact_span_ids=spans[:4],
+            result_refs=tuple(str(value) for value in (observation.result_refs or ()))[:4],
+            status=str(observation.status or ""),
+            selection_reason=reason,
+            recency_rank=recency_rank,
+        ))
+    # Truncation means "more relevant memory exists than the budget showed";
+    # an irrelevant observation is not a truncated memory.
+    prior_reads_truncated = relevant_history_reads > len(projected)
 
     return ResearchDecisionContextV1(
         run_id=run_id,
@@ -1777,6 +1952,8 @@ def build_decision_context(
         hard_rules=tuple(hard_rules),
         unresolved_must_cover_ids=tuple(unresolved_ids or ()),
         behavior_template_search_hints=behavior_template_search_hints,
+        relevant_prior_reads=tuple(projected),
+        prior_reads_truncated=prior_reads_truncated,
     )
 
 

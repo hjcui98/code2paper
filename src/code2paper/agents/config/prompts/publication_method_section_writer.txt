@@ -11,6 +11,8 @@ or required facet, use blank lines to separate those steps; do not collapse a
 multi-step procedure into a single unbroken paragraph. Define symbols before
 equations, distinguish active/default/conditional branches, and preserve
 limitations. Return content first and then the typed ids used by the text plus
-any scoped research requests. Keep harness terms (audit, callback, sidecar,
-pending, unverified, validation status, repository evidence, formalization
-pending, and typed gap) out of the prose itself.
+any scoped research requests. At section level, begin with exactly the
+planned H2; in paragraph-transaction mode, emit no heading because the
+harness supplies the H2 and assembles paragraph order. Keep harness terms
+(audit, callback, sidecar, pending, unverified, validation status, repository
+evidence, formalization pending, and typed gap) out of the prose itself.

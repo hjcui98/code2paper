@@ -9,6 +9,11 @@ import os
 import re
 import tempfile
 import time
+from code2paper.agentic.unified_invocation_ledger import (
+    publish_provider_request, publish_provider_response,
+    publish_writer_content_acceptance, read_writer_content_acceptance,
+)
+
 from collections.abc import Callable, Iterable, Mapping
 from pathlib import Path
 from types import SimpleNamespace
@@ -144,8 +149,16 @@ from code2paper.agentic.authoring_context_contract import (
     resolve_authoring_context_mode,
     write_authoring_run_contract,
 )
-from code2paper.agentic.research_promotion import ObservationPromotionLedgerV1
+from code2paper.agentic.research_promotion import (
+    ObservationPromotionLedgerV1,
+    promotion_record_blocks_candidate,
+)
 from code2paper.agentic.research_terminal import (
+    CandidateClaimBindingV1,
+    CandidateHandoffV1,
+    CandidateRetryLedgerV1,
+    ResearchClosureAdmissionV1,
+    build_candidate_handoff,
     build_research_closure_admission,
     evaluate_obligation_terminal_proof,
 )
@@ -164,6 +177,7 @@ from code2paper.llm.response_schemas import (
 )
 from code2paper.llm.section_writer import (
     WriterSectionInput,
+    assess_publication_writer_response,
     write_publication_method_by_sections,
 )
 from code2paper.schemas import ClaimEvidenceMap, LLMConfig, LLMProvider, MethodEvidence, RawEvidencePack
@@ -187,6 +201,613 @@ _UNANCHORED_OWNER_CALLBACK_MOVES = frozenset({
     "algorithm_or_data_flow",
     "mechanism_overview",
 })
+
+
+def _canonical_realizer_detail_id(value: Any) -> str:
+    """Return the single detail-id spelling used at the Realizer boundary."""
+
+    text = str(value or "").strip()
+    if not text:
+        return ""
+    return "detail:" + text.removeprefix("detail:")
+
+
+def _realizer_detail_scope(
+    *,
+    page: Any,
+    source_contexts: Sequence[Any],
+    section_detail_ids: Sequence[Any] = (),
+) -> tuple[set[str], dict[str, Any]]:
+    """Resolve page markers against context details without losing prefixes.
+
+    Consumer pages and narrative plans historically use both ``detail:X`` and
+    ``X`` spellings.  The context model retains the prefixed spelling.  The
+    Realizer must therefore canonicalize both sides before intersecting them;
+    otherwise a valid page is presented to the model with an empty required
+    detail set and every returned detail is rejected as out of scope.
+    """
+
+    payload = getattr(page, "technical_payload", {}) or {}
+    if not isinstance(payload, Mapping):
+        payload = {}
+    page_detail_ids: set[str] = set()
+    raw_detail_ids = payload.get("detail_ids", ()) or ()
+    if isinstance(raw_detail_ids, str):
+        raw_detail_ids = (raw_detail_ids,)
+    for value in raw_detail_ids:
+        canonical = _canonical_realizer_detail_id(value)
+        if canonical:
+            page_detail_ids.add(canonical)
+
+    for raw in payload.get("atoms", ()) or ():
+        if not isinstance(raw, Mapping):
+            continue
+        atom_id = str(raw.get("_atom_id", "")).strip()
+        atom_kind = str(raw.get("_atom_kind", "")).strip()
+        if atom_kind != "detail" and not atom_id.startswith("detail:"):
+            continue
+        canonical = _canonical_realizer_detail_id(
+            raw.get("detail_id") or atom_id
+        )
+        if canonical:
+            page_detail_ids.add(canonical)
+
+    detail_pool: dict[str, Any] = {}
+    for source_context in source_contexts:
+        for detail in (getattr(source_context, "details", ()) or ()):
+            canonical = _canonical_realizer_detail_id(
+                getattr(detail, "detail_id", "")
+            )
+            if canonical:
+                detail_pool.setdefault(canonical, detail)
+
+    scoped_detail_ids = page_detail_ids.intersection(set(detail_pool))
+    if section_detail_ids:
+        section_scope = {
+            canonical
+            for value in section_detail_ids
+            if (canonical := _canonical_realizer_detail_id(value))
+        }
+        scoped_detail_ids &= section_scope
+    return scoped_detail_ids, detail_pool
+
+
+def _ordered_candidate_rows_preserving_input(
+    *,
+    section: Any,
+    rows: Sequence[Mapping[str, Any]],
+) -> tuple[Mapping[str, Any], ...]:
+    """Order candidate rows without rehydrating them from the old plan.
+
+    Candidate rows are a reduced, page-scoped view.  Replacing them with the
+    original Narrative paragraphs silently restores details that the page did
+    not own and drops legal fragment rows created by pagination.  The incoming
+    mapping is therefore the sole content authority; the frozen section only
+    supplies the order and the closed paragraph-id set.
+    """
+
+    known_ids = tuple(
+        str(getattr(paragraph, "paragraph_id", "") or "").strip()
+        for paragraph in (getattr(section, "paragraphs", ()) or ())
+    )
+    known = set(known_ids)
+    section_order = {paragraph_id: index for index, paragraph_id in enumerate(known_ids)}
+    by_id: dict[str, tuple[int, Mapping[str, Any]]] = {}
+    for row in rows or ():
+        if not isinstance(row, Mapping):
+            raise ValueError("narrative candidate row must be a mapping")
+        paragraph_id = str(row.get("paragraph_id") or "").strip()
+        if not paragraph_id:
+            raise ValueError("narrative candidate row has no paragraph_id")
+        if paragraph_id in by_id:
+            raise ValueError(f"narrative candidate row is duplicated:{paragraph_id}")
+        parent_id = paragraph_id
+        fragment_index = 0
+        if paragraph_id not in known:
+            match = re.fullmatch(r"(.+)__f([1-9][0-9]*)", paragraph_id)
+            if match is None or match.group(1) not in known:
+                raise ValueError(
+                    f"narrative candidate row is outside section:{paragraph_id}"
+                )
+            parent_id = match.group(1)
+            fragment_index = int(match.group(2))
+            witness_contract = row.get("witness_contract") or {}
+            declared_parent = str(
+                row.get("parent_paragraph_id")
+                or (
+                    witness_contract.get("parent_paragraph_id", "")
+                    if isinstance(witness_contract, Mapping) else ""
+                )
+                or ""
+            ).strip()
+            if declared_parent != parent_id:
+                raise ValueError(
+                    f"narrative candidate fragment parent mismatch:{paragraph_id}"
+                )
+        row_section_id = str(row.get("section_id") or "").strip()
+        section_id = str(getattr(section, "section_id", "") or "").strip()
+        if row_section_id and section_id and row_section_id != section_id:
+            raise ValueError(
+                f"narrative candidate row section mismatch:{paragraph_id}"
+            )
+        by_id[paragraph_id] = (section_order[parent_id], row)
+    return tuple(
+        row for _paragraph_id, (_section_index, row) in sorted(
+            by_id.items(),
+            key=lambda item: (
+                item[1][0],
+                0 if "__f" not in item[0] else int(item[0].rsplit("__f", 1)[1]),
+                item[0],
+            ),
+        )
+    )
+
+
+def _narrative_target_sets(plan: Any) -> dict[str, tuple[str, ...]]:
+    """Return the closed target sets used to prove pagination conservation."""
+
+    result: dict[str, tuple[str, ...]] = {}
+    for section in (getattr(plan, "sections", ()) or ()):
+        details: list[str] = []
+        formulas: list[str] = []
+        packages: list[str] = []
+        for paragraph in (getattr(section, "paragraphs", ()) or ()):
+            for value in (
+                *(getattr(paragraph, "required_detail_ids", ()) or ()),
+                *(getattr(paragraph, "optional_detail_ids", ()) or ()),
+            ):
+                value = str(value).strip()
+                if value and value not in details:
+                    details.append(value)
+            for value in (getattr(paragraph, "formula_obligation_ids", ()) or ()):
+                value = str(value).strip()
+                if value and value not in formulas:
+                    formulas.append(value)
+            for value in (getattr(paragraph, "formula_package_ids", ()) or ()):
+                value = str(value).strip()
+                if value and value not in packages:
+                    packages.append(value)
+        result[str(getattr(section, "section_id", ""))] = (
+            tuple(details), tuple(formulas), tuple(packages)
+        )
+    return result
+
+
+def _candidate_partial_handoff_rows(handoff: Any | None) -> tuple[dict[str, Any], ...]:
+    """Project the authenticated partial handoff once for every Writer request."""
+
+    if handoff is None or not bool(getattr(handoff, "eligible", False)):
+        return ()
+    rows: list[dict[str, Any]] = []
+    for partial in (getattr(handoff, "partial_obligations", ()) or ()):
+        rows.append({
+            "obligation_id": partial.obligation_id,
+            "missing_fields": list(partial.missing_fields),
+            "unresolved_fields": [
+                field.model_dump(mode="json")
+                for field in partial.unresolved_fields
+            ],
+            "qualifier": partial.qualifier,
+            "allowed_wording_boundary": partial.allowed_wording_boundary,
+            "qualifier_clear": partial.qualifier_clear,
+            "post_partial_retry_count": partial.post_partial_retry_count,
+            "semantic_gain_on_retry": partial.semantic_gain_on_retry,
+            "writer_instruction": (
+                "Use repository evidence only for the resolved portion. "
+                "Treat every missing field as unresolved author specification "
+                "or explicit uncertainty; do not state it as a repository-"
+                "verified implementation fact. Preserve the exact qualifier "
+                "and allowed wording boundary supplied below."
+            ),
+        })
+    return tuple(rows)
+
+
+def _file_digest_value(value: str | Path) -> str:
+    path = Path(value) if str(value or "").strip() else None
+    if path is None or not path.is_file():
+        return ""
+    try:
+        return "sha256:" + hashlib.sha256(path.read_bytes()).hexdigest()
+    except OSError:
+        return ""
+
+
+def _unified_auxiliary_budget_envelope(
+    *,
+    base_envelope: Any,
+    llm_config: LLMConfig,
+    out_root: Path,
+    tokenizer: Any | None,
+) -> Any:
+    """Return the envelope that explicitly authorizes Editor/Rewrite calls.
+
+    Older frozen Formalizer checkpoints contain the original four-role
+    envelope.  A current run may opt the two publication repair roles into the
+    same total reservation through the active profile; in that case build a
+    derived envelope with the same run identity and persist the derivation.
+    No role is added when the profile does not declare it, so a missing
+    declaration remains a fail-closed auxiliary call.
+    """
+
+    from code2paper.agentic.unified_context_compiler import (
+        build_run_invocation_budget_envelope_v1,
+        declared_extra_roles,
+        read_unified_budget_profile,
+        read_unified_extra_roles,
+    )
+    from code2paper.agentic.mechanism_context_models import (
+        canonical_json_bytes,
+        sha256_digest,
+    )
+
+    base_roles = {
+        str(role)
+        for role in (getattr(base_envelope, "max_calls_by_role", {}) or {})
+    }
+    required_roles = {"editor", "local_rewrite"}
+    if required_roles.issubset(base_roles):
+        return base_envelope
+
+    profile_budget = read_unified_budget_profile(os.environ)
+    profile_budget.update(read_unified_extra_roles(os.environ))
+    declared = set(declared_extra_roles(profile_budget))
+    if not required_roles.issubset(declared):
+        # The caller wrapper will return a typed missing-role block.  Do not
+        # manufacture partial budget fields here.
+        return base_envelope
+
+    model_identity_payload: dict[str, Any] = {
+        "model": str(getattr(llm_config, "model", "") or "")
+    }
+    tokenizer_identity = str(getattr(tokenizer, "identity", "") or "").strip()
+    if tokenizer_identity:
+        model_identity_payload["tokenizer_identity"] = tokenizer_identity
+    model_identity_digest = sha256_digest(
+        canonical_json_bytes(model_identity_payload)
+    )
+    token_meter = getattr(base_envelope, "token_meter", None)
+    if tokenizer is not None and tokenizer_identity:
+        from code2paper.agentic.unified_context_models import (
+            model_chat_template_tokenizer_meter,
+        )
+
+        token_meter = model_chat_template_tokenizer_meter(tokenizer_identity)
+    envelope = build_run_invocation_budget_envelope_v1(
+        profile_budget=profile_budget,
+        model_capabilities={
+            "context_tokens": int(
+                getattr(base_envelope, "model_context_tokens", 0) or 0
+            ),
+        },
+        run_digest=str(getattr(base_envelope, "run_digest", "") or ""),
+        profile_digest=sha256_digest(canonical_json_bytes(profile_budget)),
+        model_identity_digest=model_identity_digest,
+        token_meter=token_meter,
+    )
+    target = method_output(out_root, "run_invocation_budget_envelope_v1.auxiliary")
+    payload = envelope.model_dump(mode="json")
+    payload.update({
+        "schema_version": "1.0",
+        "envelope_kind": "publication_auxiliary_derived",
+        "source_envelope_digest": str(
+            getattr(base_envelope, "content_digest", "") or ""
+        ),
+        "declared_extra_roles": sorted(declared),
+    })
+    _atomic_write_text(
+        target,
+        json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
+    )
+    return envelope
+
+
+def _adapt_narrative_plan_to_method_section_plan(
+    *,
+    narrative_plan: Any,
+    legacy_plan: MethodSectionPlanV2,
+    completeness: Any | None = None,
+) -> tuple[MethodSectionPlanV2, dict[str, Any]]:
+    """Expose the current Narrative identity through legacy plan interfaces.
+
+    The adapter is intentionally one-way.  Section/paragraph identity and
+    formula placement come from the current Narrative plan.  Legacy units and
+    obligations are retained only when immutable source anchors identify one
+    unique Narrative section; unmatched or ambiguous rows remain explicit in
+    the adapter trace and therefore fail the Candidate gate.
+    """
+
+    from code2paper.agentic.method_argument_models import (
+        MoveAuthorityProofV1,
+        ParagraphWitnessContractV1,
+        SectionArgumentGraphV1,
+        SectionArgumentMoveV1,
+        SectionParagraphPlanV1,
+    )
+
+    role_map = {
+        "configuration": "interface",
+        "condition": "mismatch",
+        "transformation": "construction",
+        "output": "output",
+        "representation": "overview",
+        "input": "interface",
+        "interface": "interface",
+        "formula": "formula",
+    }
+    narrative_units = tuple(getattr(narrative_plan, "narrative_units", ()) or ())
+    sections: list[Any] = []
+    section_map: list[dict[str, Any]] = []
+    anchors_by_section: dict[str, set[str]] = {}
+    for section in (getattr(narrative_plan, "sections", ()) or ()):
+        section_id = str(getattr(section, "section_id", "") or "").strip()
+        unit = next(
+            (item for item in narrative_units
+             if str(getattr(item, "section_id", "") or "") == section_id),
+            None,
+        )
+        paragraphs: list[Any] = []
+        section_anchors: set[str] = set()
+        for paragraph in (getattr(section, "paragraphs", ()) or ()):
+            contract = None
+            raw_contract = getattr(paragraph, "witness_contract", {}) or {}
+            if raw_contract:
+                raw_targets = (
+                    raw_contract.get("targets", ())
+                    if isinstance(raw_contract, Mapping)
+                    else getattr(raw_contract, "targets", ())
+                )
+                for target in raw_targets or ():
+                    allowed = (
+                        target.get("allowed_anchor_ids", ())
+                        if isinstance(target, Mapping)
+                        else getattr(target, "allowed_anchor_ids", ())
+                    )
+                    section_anchors.update(
+                        str(value).strip()
+                        for value in (allowed or ())
+                        if str(value).strip()
+                    )
+                try:
+                    contract = ParagraphWitnessContractV1.model_validate({
+                        **dict(raw_contract),
+                        "paragraph_id": str(paragraph.paragraph_id),
+                    })
+                except (TypeError, ValueError):
+                    # Keep the adapter fail-closed: malformed Narrative
+                    # contracts are represented as no legacy witness route,
+                    # not as an asserted contract.
+                    contract = None
+            paragraphs.append(SectionParagraphPlanV1(
+                paragraph_id=str(paragraph.paragraph_id),
+                paragraph_role=role_map.get(
+                    str(getattr(paragraph, "role", "") or "").casefold(),
+                    "step_sequence",
+                ),
+                formula_obligation_ids=tuple(
+                    str(value) for value in (
+                        getattr(paragraph, "formula_obligation_ids", ()) or ()
+                    ) if str(value).strip()
+                ),
+                witness_contract=contract,
+                transition_from=str(getattr(paragraph, "transition_from", "") or ""),
+                transition_to=str(getattr(paragraph, "transition_to", "") or ""),
+            ))
+        formula_ids = tuple(dict.fromkeys(
+            str(value)
+            for paragraph in paragraphs
+            for value in (getattr(paragraph, "formula_obligation_ids", ()) or ())
+            if str(value).strip()
+        ))
+        section_anchors.update(formula_ids)
+        section_anchors.update(
+            str(value).strip()
+            for value in (getattr(section, "mechanism_ids", ()) or ())
+            if str(value).strip()
+        )
+        anchors_by_section[section_id] = section_anchors
+        sections.append(SectionArgumentGraphV1(
+            section_id=section_id,
+            heading=str(getattr(section, "heading", "") or ""),
+            reader_question=str(
+                getattr(unit, "reader_question", "") or getattr(section, "heading", "")
+            ),
+            argument_unit_ids=(),
+            moves=(),
+            paragraphs=tuple(paragraphs),
+            formula_obligation_ids=formula_ids,
+            depth_budget=max(1, len(paragraphs)),
+            page_budget=float(max(1, len(paragraphs))),
+        ))
+        section_map.append({
+            "section_id": section_id,
+            "paragraph_ids": [str(item.paragraph_id) for item in paragraphs],
+            "mechanism_ids": [str(value) for value in (
+                getattr(section, "mechanism_ids", ()) or ()
+            )],
+        })
+
+    source_units = tuple(
+        str(item.argument_unit_id)
+        for item in (getattr(legacy_plan, "argument_units", ()) or ())
+        if str(getattr(item, "argument_unit_id", "") or "").strip()
+    )
+    source_obligations = tuple(
+        str(item.obligation_id)
+        for item in (getattr(legacy_plan, "obligation_assignments", ()) or ())
+        if str(getattr(item, "obligation_id", "") or "").strip()
+    )
+    assigned_units_by_section: dict[str, list[str]] = {
+        str(section.section_id): [] for section in sections
+    }
+    unit_assignment: dict[str, str] = {}
+    ambiguous_units: dict[str, list[str]] = {}
+    for unit in (getattr(legacy_plan, "argument_units", ()) or ()):
+        unit_id = str(getattr(unit, "argument_unit_id", "") or "").strip()
+        if not unit_id:
+            continue
+        unit_refs = {
+            str(value).strip()
+            for field_name in (
+                "source_artifact_ids", "claim_ids", "equation_ids",
+                "configuration_ids", "behavior_relation_ids",
+            )
+            for value in (getattr(unit, field_name, ()) or ())
+            if str(value).strip()
+        }
+        scores = sorted(
+            (
+                len(unit_refs & anchors),
+                section_id,
+            )
+            for section_id, anchors in anchors_by_section.items()
+        )
+        best_score = scores[-1][0] if scores else 0
+        best_sections = [
+            section_id for score, section_id in scores
+            if score == best_score and score > 0
+        ]
+        if len(best_sections) == 1:
+            owner = best_sections[0]
+            assigned_units_by_section[owner].append(unit_id)
+            unit_assignment[unit_id] = owner
+        elif best_sections:
+            ambiguous_units[unit_id] = best_sections
+
+    sections = [
+        section.model_copy(update={
+            "argument_unit_ids": tuple(
+                assigned_units_by_section.get(str(section.section_id), ())
+            ),
+        })
+        for section in sections
+    ]
+    unassigned_units = tuple(
+        unit_id for unit_id in source_units if unit_id not in unit_assignment
+    )
+    assigned_obligations: list[Any] = []
+    obligation_owner_candidates: dict[str, str] = {}
+    obligation_assignment: dict[str, str] = {}
+    obligation_unit: dict[str, str] = {}
+    for unit in (getattr(legacy_plan, "argument_units", ()) or ()):
+        unit_id = str(getattr(unit, "argument_unit_id", "") or "").strip()
+        owner = unit_assignment.get(unit_id, "")
+        if not owner:
+            continue
+        for obligation_id in (getattr(unit, "source_obligation_ids", ()) or ()):
+            obligation_id = str(obligation_id or "").strip()
+            if obligation_id:
+                obligation_owner_candidates.setdefault(obligation_id, owner)
+                obligation_unit.setdefault(obligation_id, unit_id)
+    for assignment in (getattr(legacy_plan, "obligation_assignments", ()) or ()):
+        obligation_id = str(getattr(assignment, "obligation_id", "") or "").strip()
+        unit_id = str(getattr(assignment, "argument_unit_id", "") or "").strip()
+        owner = unit_assignment.get(unit_id) or obligation_owner_candidates.get(obligation_id)
+        owner_unit = unit_id if unit_id in unit_assignment else obligation_unit.get(obligation_id, "")
+        if not owner or not owner_unit:
+            continue
+        update = {"section_id": owner, "argument_unit_id": owner_unit}
+        if str(getattr(assignment, "placement_state", "") or "") == "unplaced":
+            # A uniquely rebound legacy obligation is assigned only if the
+            # compiler supplied an actual rhetorical move.  The adapter never
+            # guesses a move from prose or an identifier prefix.
+            required_move = str(getattr(assignment, "required_move", "") or "").strip()
+            if not required_move:
+                continue
+            update.update({"placement_state": "assigned", "unresolved_reason": ""})
+        assigned_obligations.append(assignment.model_copy(update=update))
+        obligation_assignment[obligation_id] = owner
+    move_rows_by_section: dict[str, dict[str, list[str]]] = {}
+    move_assignments_by_key: dict[tuple[str, str], list[Any]] = {}
+    for assignment in assigned_obligations:
+        section_id = str(assignment.section_id)
+        move = str(assignment.required_move)
+        move_rows_by_section.setdefault(section_id, {}).setdefault(move, []).append(
+            str(assignment.argument_unit_id)
+        )
+        move_assignments_by_key.setdefault((section_id, move), []).append(assignment)
+    sections = [
+        section.model_copy(update={
+            "moves": tuple(
+                SectionArgumentMoveV1(
+                    move=move,
+                    argument_unit_ids=tuple(dict.fromkeys(unit_ids)),
+                    required=True,
+                )
+                for move, unit_ids in sorted(
+                    move_rows_by_section.get(str(section.section_id), {}).items()
+                )
+            ),
+        })
+        for section in sections
+    ]
+    move_proofs = []
+    for (section_id, move), assignments in sorted(move_assignments_by_key.items()):
+        anchors = tuple(dict.fromkeys(
+            str(anchor).strip()
+            for assignment in assignments
+            for anchor in (assignment.supporting_anchor_ids or ())
+            if str(anchor).strip()
+        ))
+        obligation_ids = tuple(str(assignment.obligation_id) for assignment in assignments)
+        move_proofs.append(MoveAuthorityProofV1(
+            section_id=section_id,
+            argument_unit_ids=tuple(dict.fromkeys(
+                str(assignment.argument_unit_id) for assignment in assignments
+            )),
+            move=move,
+            required=True,
+            anchor_ids=anchors,
+            unresolved_obligation_ids=() if anchors else obligation_ids,
+            state="anchored" if anchors else "open",
+        ))
+    adapted = MethodSectionPlanV2(
+        plan_id=str(getattr(narrative_plan, "plan_id", "") or legacy_plan.plan_id),
+        method_name=legacy_plan.method_name,
+        sections=tuple(sections),
+        # Preserve source scope and bind a unit only when its immutable source
+        # ids have one unique Narrative-section owner.  Ambiguous/unmatched
+        # units stay explicit in the adapter trace and block completion.
+        argument_units=tuple(legacy_plan.argument_units),
+        method_units=(),
+        venue=legacy_plan.venue,
+        audience=legacy_plan.audience,
+        total_page_budget=float(sum(section.page_budget for section in sections)),
+        incomplete_sections=(),
+        obligation_assignments=tuple(assigned_obligations),
+        move_authority_proofs=tuple(move_proofs),
+        critical_high_obligation_ids=tuple(
+            str(item.obligation_id) for item in assigned_obligations
+        ),
+        completeness_digest=(
+            str(
+                getattr(legacy_plan, "completeness_digest", "")
+                or getattr(completeness, "content_digest", "")
+                or ""
+            )
+            if assigned_obligations else ""
+        ),
+    )
+    trace = {
+        "schema_version": "1.0",
+        "adapter": "narrative_to_method_section_plan_v1",
+        "source_plan_digest": str(legacy_plan.content_digest),
+        "source_plan_id": str(legacy_plan.plan_id),
+        "source_argument_unit_ids": list(source_units),
+        "source_obligation_ids": list(source_obligations),
+        "current_narrative_plan_digest": str(getattr(narrative_plan, "content_digest", "")),
+        "current_narrative_plan_id": str(getattr(narrative_plan, "plan_id", "")),
+        "current_sections": section_map,
+        "argument_unit_section_bindings": dict(sorted(unit_assignment.items())),
+        "obligation_section_bindings": dict(sorted(obligation_assignment.items())),
+        "ambiguous_source_argument_unit_sections": dict(sorted(ambiguous_units.items())),
+        "unassigned_source_argument_unit_ids": list(unassigned_units),
+        "unassigned_source_obligation_ids": [
+            item for item in source_obligations if item not in obligation_assignment
+        ],
+        "binding_policy": "unique_exact_source_anchor_to_narrative_section",
+    }
+    return adapted, trace
 
 
 def _default_llm_caller(config: LLMConfig, request: LLMRequest) -> LLMResponse:
@@ -623,6 +1244,80 @@ def _build_mechanism_research_requests_v2(
     return tuple(requests)
 
 
+def _research_ledger_receipt_verifier(
+    artifact_paths: Mapping[str, str],
+) -> Any | None:
+    """Return the ledger re-authentication adapter for the research data plane.
+
+    The terminal gaps live next to the execution ledger under the same
+    ``research_tool_artifacts`` root, so a consumer can rebuild the adapter from
+    the persisted gap path without an in-memory runtime.
+    """
+
+    from code2paper.agentic.research_execution_ledger import (
+        authenticate_search_receipt,
+    )
+
+    roots: list[Path] = []
+    for key in ("terminal_gaps", "typed_gaps", "research_tool_data"):
+        raw = str(artifact_paths.get(key) or "").strip()
+        if not raw:
+            continue
+        path = Path(raw)
+        if path.is_dir():
+            roots.append(path)
+        elif path.name and path.parent.is_dir():
+            roots.append(path.parent)
+    for root in roots:
+        if (root / "execution_ledger").is_dir():
+            ledger_root = root
+            break
+        if (root / "research_tool_artifacts" / "execution_ledger").is_dir():
+            ledger_root = root / "research_tool_artifacts"
+            break
+    else:
+        return None
+
+    class _Snapshot:
+        def __init__(self, snapshot_id: str, project_tree_hash: str) -> None:
+            self.snapshot_id = snapshot_id
+            self.project_tree_hash = project_tree_hash
+
+    class _Context:
+        """Minimal context exposing the ledger root and a receipt's identity."""
+
+        def __init__(
+            self,
+            artifact_root: Path,
+            snapshot_id: str = "",
+            project_tree_hash: str = "",
+        ) -> None:
+            self.artifact_root = artifact_root
+            self.repo_snapshot = _Snapshot(snapshot_id, project_tree_hash)
+
+    from code2paper.agentic.research_execution_ledger import (
+        load_persisted_receipt,
+    )
+
+    placeholder = _Context(ledger_root)
+
+    def _reader(receipt_id: str) -> Any:
+        stored, _authentication = load_persisted_receipt(
+            placeholder, str(receipt_id)
+        )
+        if stored is None:
+            return None
+        # The reader re-derives the receipt from the ledger that holds it; the
+        # consumer then compares the returned identity with the declared one.
+        context = _Context(
+            ledger_root, stored.repo_snapshot_id, stored.project_tree_hash
+        )
+        receipt, _failures = authenticate_search_receipt(context, str(receipt_id))
+        return receipt
+
+    return _reader
+
+
 def _writer_research_preadmission_failures(
     *,
     artifact_paths: Mapping[str, str],
@@ -662,10 +1357,65 @@ def _writer_research_preadmission_failures(
             )
         except (OSError, TypeError, ValueError, json.JSONDecodeError):
             failures.append("observation_promotion_ledger_invalid")
+    candidate_path = str(artifact_paths.get("candidate_handoff_v1") or "")
+    candidate_handoff, candidate_handoff_failures = (
+        _load_authenticated_candidate_handoff(artifact_paths)
+        if candidate_path
+        else (None, ())
+    )
+    failures.extend(candidate_handoff_failures)
+    if candidate_handoff is not None:
+        journal_path = str(
+            artifact_paths.get("research_revision_journal_v1") or ""
+        ).strip()
+        if journal_path and Path(journal_path).is_file():
+            from code2paper.agentic.research_revision_contract import (
+                handoff_matches_revision,
+                load_revision_journal,
+            )
+
+            try:
+                journal = load_revision_journal(journal_path)
+            except (OSError, ValueError, json.JSONDecodeError):
+                failures.append("research_revision_journal_invalid")
+                journal = None
+            if journal is not None and not handoff_matches_revision(
+                candidate_handoff, journal
+            ):
+                # R10 §15.6: an old handoff must not be reused under the new
+                # targets, even when its own digests are intact.
+                failures.append(
+                    "research_revision_handoff_stale:"
+                    f"{candidate_handoff.revision_id or 'unversioned'}"
+                )
     if agenda is not None:
         promotion_records = tuple(
             getattr(promotion_ledger, "records", ()) or ()
         )
+        if candidate_handoff is not None:
+            if (
+                candidate_handoff.run_id != agenda.run_id
+                or candidate_handoff.repo_snapshot_id != agenda.repo_snapshot_id
+                or candidate_handoff.project_tree_hash != agenda.project_tree_hash
+            ):
+                failures.append(
+                    "candidate_handoff_run_mismatch"
+                    if candidate_handoff.run_id != agenda.run_id
+                    else "candidate_handoff_snapshot_mismatch"
+                )
+            expected_core_ids = {
+                item.obligation_id for item in agenda.items if item.priority == "must_cover"
+            }
+            if set(candidate_handoff.must_cover_obligation_ids) != expected_core_ids:
+                failures.append("candidate_handoff_core_set_mismatch")
+        candidate_partials = {
+            item.obligation_id: item
+            for item in (
+                candidate_handoff.partial_obligations
+                if candidate_handoff is not None and candidate_handoff.eligible
+                else ()
+            )
+        }
         for item in agenda.items:
             if item.priority != "must_cover":
                 continue
@@ -686,10 +1436,26 @@ def _writer_research_preadmission_failures(
                     if promotion_ledger is not None
                     else tuple(item.supported_claim_ids or ())
                 ),
+                # R9: negative evidence must re-authenticate against the run's
+                # execution ledger that produced the terminal gap.
+                receipt_verifier=_research_ledger_receipt_verifier(artifact_paths),
             )
             if proof.terminal:
                 continue
-            if item.status in {"pending", "in_progress"}:
+            partial_handoff = candidate_partials.get(item.obligation_id)
+            if (
+                partial_handoff is not None
+                and item.status == "partial"
+                and partial_handoff.qualifier_clear
+                and partial_handoff.post_partial_retry_count == 1
+                and partial_handoff.promoted_claim_ids
+            ):
+                # Candidate's bounded partial proof is sufficient for this
+                # lane; the strict terminal proof above remains false and
+                # therefore still blocks Verified.
+                continue
+            attempted = bool(item.attempted_actions or item_records)
+            if not attempted:
                 failures.append(
                     f"unified_core_intent_unsearched:{item.obligation_id}"
                 )
@@ -698,18 +1464,457 @@ def _writer_research_preadmission_failures(
                     "unified_core_intent_terminal_proof_missing:"
                     f"{item.obligation_id}"
                 )
+        agenda_by_id = {item.obligation_id: item for item in agenda.items}
         for record in promotion_records:
-            if str(getattr(record, "status", "") or "") in {
-                "observed_unpromoted",
-                "behavior_built",
-                "packet_promoted",
-                "fact_promoted",
-            }:
-                failures.append(
-                    "unified_observation_promotion_incomplete:"
-                    f"{getattr(record, 'observation_id', '')}"
-                )
+            if not promotion_record_blocks_candidate(
+                record,
+                candidate_handoff,
+                agenda_by_id.get(str(getattr(record, "obligation_id", "") or "")),
+            ):
+                # Non-core/deferred observations and explicit
+                # superseded/not-selected dispositions are review warnings,
+                # not a global Candidate blocker.
+                continue
+            failures.append(
+                "unified_observation_promotion_incomplete:"
+                f"{getattr(record, 'observation_id', '')}"
+            )
     return tuple(dict.fromkeys(failures))
+
+
+def _unified_source_read_failures(
+    source_reader: Any,
+) -> tuple[tuple[str, ...], tuple[str, ...]]:
+    """Split a verified reader's failures for the unified source gate.
+
+    R2 made every rejected source read fatal so damaged, escaping or unlisted
+    bytes can never be flattened into empty text.  A *declared partition
+    exclusion* is a different thing: the frozen manifest already classified
+    that path as vendor/generated/submodule/dataset-or-checkpoint, so no
+    readable bytes were ever promised for it.  It stays recorded and visible
+    instead of aborting the lane; every integrity failure still aborts.
+    """
+
+    from code2paper.agentic.repo_snapshot import split_source_read_failures
+
+    return split_source_read_failures(
+        getattr(source_reader, "failures", ()) or ()
+    )
+
+
+def _persist_source_partition_exclusions(
+    out_root: Any, exclusions: Sequence[str]
+) -> str:
+    """Persist the source-partition exclusions the unified lane observed."""
+
+    failures = [str(item) for item in exclusions]
+    payload = {
+        "schema_version": "1.0",
+        "failure_code": "unified_source_partition_excluded",
+        "excluded_paths": [
+            item.split(":", 1)[1] if ":" in item else item for item in failures
+        ],
+        "failures": failures,
+        "content_digest": _digest_json(failures),
+    }
+    path = method_output(
+        Path(out_root), "unified_source_partition_exclusions_v1"
+    )
+    _atomic_write_text(
+        path, json.dumps(payload, ensure_ascii=False, indent=2) + "\n"
+    )
+    return str(path)
+
+
+def _load_candidate_handoff(
+    artifact_paths: Mapping[str, str],
+) -> CandidateHandoffV1 | None:
+    """Load the optional authenticated Research -> Candidate handoff."""
+
+    path_value = str(artifact_paths.get("candidate_handoff_v1") or "").strip()
+    if not path_value or not Path(path_value).is_file():
+        return None
+    try:
+        return CandidateHandoffV1.model_validate_json(
+            Path(path_value).read_text(encoding="utf-8")
+        )
+    except (OSError, TypeError, ValueError, json.JSONDecodeError):
+        return None
+
+
+def _candidate_claim_binding_from_claim(
+    claim: Any,
+    obligation_id: str,
+) -> CandidateClaimBindingV1:
+    return CandidateClaimBindingV1(
+        claim_id=str(getattr(claim, "claim_id", "") or "").strip(),
+        obligation_id=str(obligation_id or "").strip(),
+        canonical_identity=str(
+            getattr(claim, "canonical_identity", "") or ""
+        ).strip(),
+        fact_ids=tuple(
+            str(value).strip()
+            for value in (getattr(claim, "fact_ids", ()) or ())
+            if str(value).strip()
+        ),
+        direct_evidence_ids=tuple(
+            str(value).strip()
+            for value in (getattr(claim, "direct_evidence_ids", ()) or ())
+            if str(value).strip()
+        ),
+        relation_evidence_ids=tuple(
+            str(value).strip()
+            for value in (getattr(claim, "relation_evidence_ids", ()) or ())
+            if str(value).strip()
+        ),
+        required_qualifiers=tuple(
+            str(value).strip()
+            for value in (getattr(claim, "required_qualifiers", ()) or ())
+            if str(value).strip()
+        ),
+        allowed_wording_boundary=str(
+            getattr(claim, "allowed_wording_boundary", "") or ""
+        ).strip(),
+    )
+
+
+def _load_candidate_retry_ledger(
+    artifact_paths: Mapping[str, str],
+) -> CandidateRetryLedgerV1 | None:
+    path_value = str(artifact_paths.get("candidate_retry_ledger_v1") or "").strip()
+    if not path_value or not Path(path_value).is_file():
+        return None
+    try:
+        return CandidateRetryLedgerV1.model_validate_json(
+            Path(path_value).read_text(encoding="utf-8")
+        )
+    except (OSError, TypeError, ValueError, json.JSONDecodeError):
+        return None
+
+
+def _candidate_handoff_revalidation_failures(
+    *,
+    artifact_paths: Mapping[str, str],
+    handoff: CandidateHandoffV1,
+) -> tuple[str, ...]:
+    """Rebuild Candidate eligibility from frozen Research artifacts."""
+
+    failures: list[str] = []
+    agenda = None
+    agenda_path = str(artifact_paths.get("research_agenda_v1") or "").strip()
+    if agenda_path and Path(agenda_path).is_file():
+        try:
+            agenda = ResearchAgendaV1.model_validate_json(
+                Path(agenda_path).read_text(encoding="utf-8")
+            )
+        except (OSError, TypeError, ValueError, json.JSONDecodeError):
+            failures.append("candidate_agenda_invalid")
+    else:
+        failures.append("candidate_agenda_missing")
+
+    promotion_ledger = None
+    promotion_path = str(
+        artifact_paths.get("observation_promotion_ledger_v1") or ""
+    ).strip()
+    if promotion_path and Path(promotion_path).is_file():
+        try:
+            promotion_ledger = ObservationPromotionLedgerV1.model_validate_json(
+                Path(promotion_path).read_text(encoding="utf-8")
+            )
+        except (OSError, TypeError, ValueError, json.JSONDecodeError):
+            failures.append("candidate_promotion_ledger_invalid")
+    else:
+        failures.append("candidate_promotion_ledger_missing")
+
+    retry_ledger = _load_candidate_retry_ledger(artifact_paths)
+    if retry_ledger is None:
+        failures.append("candidate_retry_ledger_invalid_or_missing")
+
+    claim_set = None
+    claim_path = str(artifact_paths.get("atomic_claims_v3") or "").strip()
+    if claim_path and Path(claim_path).is_file():
+        try:
+            claim_set = load_atomic_claims_v3(claim_path)
+        except (OSError, TypeError, ValueError, json.JSONDecodeError):
+            failures.append("candidate_claim_set_invalid")
+    else:
+        failures.append("candidate_claim_set_missing")
+
+    if agenda is None or promotion_ledger is None or retry_ledger is None or claim_set is None:
+        return tuple(dict.fromkeys(failures))
+
+    if handoff.run_id != agenda.run_id:
+        failures.append("candidate_handoff_run_mismatch")
+    if handoff.repo_snapshot_id != agenda.repo_snapshot_id:
+        failures.append("candidate_handoff_snapshot_mismatch")
+    if handoff.project_tree_hash != agenda.project_tree_hash:
+        failures.append("candidate_handoff_tree_hash_mismatch")
+    for label, value in (
+        ("retry_run", retry_ledger.run_id),
+        ("retry_snapshot", retry_ledger.repo_snapshot_id),
+        ("retry_tree", retry_ledger.project_tree_hash),
+        ("promotion_snapshot", promotion_ledger.repo_snapshot_id),
+        ("promotion_tree", promotion_ledger.project_tree_hash),
+        ("claim_snapshot", claim_set.repo_snapshot_id),
+        ("claim_tree", claim_set.project_tree_hash),
+    ):
+        if label.endswith("run") and value != agenda.run_id:
+            failures.append(f"candidate_{label}_mismatch")
+        elif label.endswith("snapshot") and value != agenda.repo_snapshot_id:
+            failures.append(f"candidate_{label}_mismatch")
+        elif label.endswith("tree") and value != agenda.project_tree_hash:
+            failures.append(f"candidate_{label}_mismatch")
+
+    claims_by_obligation: dict[str, tuple[Any, ...]] = {}
+    for claim in claim_set.claims:
+        for obligation_id in (
+            getattr(claim, "covers_obligation_ids", ()) or ()
+        ):
+            claims_by_obligation.setdefault(str(obligation_id), ())
+            claims_by_obligation[str(obligation_id)] = (
+                *claims_by_obligation[str(obligation_id)],
+                claim,
+            )
+
+    records = tuple(promotion_ledger.records or ())
+    rebuilt = build_candidate_handoff(
+        run_id=agenda.run_id,
+        repo_snapshot_id=agenda.repo_snapshot_id,
+        project_tree_hash=agenda.project_tree_hash,
+        agenda_items=tuple(agenda.items),
+        promotion_records=records,
+        compiled_claims_by_obligation=claims_by_obligation,
+        post_partial_retry_counts=retry_ledger.post_partial_retry_counts,
+        retry_gain_by_obligation=retry_ledger.semantic_gain_by_obligation,
+        structural_failure_codes=handoff.structural_failure_codes,
+        agenda_digest=agenda.content_digest,
+        promotion_ledger_digest=promotion_ledger.content_digest,
+        retry_ledger_digest=retry_ledger.content_digest,
+        revision_id=handoff.revision_id,
+    )
+    if not rebuilt.eligible:
+        failures.append("candidate_handoff_recomputed_ineligible")
+    from code2paper.agentic.research_terminal import handoff_payload_identity
+
+    # Compare the recomputed *content* rather than a digest produced by a
+    # particular scheme: R10's ``revision_id`` shifts both the id and the
+    # content digest of an otherwise unchanged handoff, and a frozen pre-R10
+    # artifact must stay verifiable.
+    if handoff_payload_identity(rebuilt) != handoff_payload_identity(handoff):
+        failures.append("candidate_handoff_id_recompute_mismatch")
+        failures.append("candidate_handoff_digest_recompute_mismatch")
+
+    claim_by_id = {
+        str(claim.claim_id): claim
+        for claim in claim_set.claims
+        if str(claim.claim_id or "").strip()
+    }
+    fact_ids: set[str] = set()
+    fact_path = str(artifact_paths.get("code_facts_v1") or "").strip()
+    if fact_path and Path(fact_path).is_file():
+        try:
+            fact_ids = {
+                str(fact.fact_id)
+                for fact in load_code_facts_v1(fact_path).facts
+            }
+        except (OSError, TypeError, ValueError, json.JSONDecodeError):
+            failures.append("candidate_fact_set_invalid")
+    else:
+        failures.append("candidate_fact_set_missing")
+    evidence_ids: set[str] = set()
+    packet_path = str(artifact_paths.get("evidence_packets_v3") or "").strip()
+    if packet_path and Path(packet_path).is_file():
+        try:
+            packet_set = load_evidence_packets_v3(packet_path)
+            evidence_ids = {
+                str(span.span_id)
+                for packet in packet_set.packets
+                for span in packet.spans
+            }
+            evidence_ids.update(
+                str(relation.relation_id)
+                for packet in packet_set.packets
+                for relation in packet.relations
+            )
+        except (OSError, TypeError, ValueError, json.JSONDecodeError):
+            failures.append("candidate_evidence_packet_invalid")
+    else:
+        failures.append("candidate_evidence_packet_missing")
+
+    for binding in handoff.claim_bindings:
+        claim = claim_by_id.get(binding.claim_id)
+        if claim is None:
+            failures.append(f"candidate_claim_missing:{binding.claim_id}")
+            continue
+        try:
+            expected = _candidate_claim_binding_from_claim(claim, binding.obligation_id)
+        except (TypeError, ValueError):
+            failures.append(f"candidate_claim_binding_invalid:{binding.claim_id}")
+            continue
+        if expected.model_dump(mode="json") != binding.model_dump(mode="json"):
+            failures.append(f"candidate_claim_binding_mismatch:{binding.claim_id}")
+        if not set(binding.fact_ids).issubset(fact_ids):
+            failures.append(f"candidate_claim_fact_lineage_missing:{binding.claim_id}")
+        if not set(binding.direct_evidence_ids).issubset(evidence_ids):
+            failures.append(f"candidate_claim_evidence_lineage_missing:{binding.claim_id}")
+        if not set(binding.relation_evidence_ids).issubset(evidence_ids):
+            failures.append(
+                f"candidate_claim_relation_lineage_missing:{binding.claim_id}"
+            )
+
+    promoted_by_obligation: dict[str, tuple[str, ...]] = {}
+    for record in records:
+        if str(record.status) != "claim_promoted":
+            continue
+        obligation_id = str(record.obligation_id)
+        promoted_by_obligation[obligation_id] = tuple(dict.fromkeys((
+            *promoted_by_obligation.get(obligation_id, ()),
+            *tuple(str(value) for value in record.claim_ids if str(value).strip()),
+        )))
+    binding_ids_by_obligation: dict[str, tuple[str, ...]] = {}
+    for binding in handoff.claim_bindings:
+        binding_ids_by_obligation[binding.obligation_id] = tuple(dict.fromkeys((
+            *binding_ids_by_obligation.get(binding.obligation_id, ()),
+            binding.claim_id,
+        )))
+    for obligation_id in (*handoff.supported_obligation_ids, *handoff.partial_obligation_ids):
+        if binding_ids_by_obligation.get(obligation_id, ()) != promoted_by_obligation.get(
+            obligation_id,
+            (),
+        ):
+            failures.append(f"candidate_promotion_claim_binding_mismatch:{obligation_id}")
+
+    return tuple(dict.fromkeys(failures))
+
+
+def _load_authenticated_candidate_handoff(
+    artifact_paths: Mapping[str, str],
+) -> tuple[CandidateHandoffV1 | None, tuple[str, ...]]:
+    path_value = str(artifact_paths.get("candidate_handoff_v1") or "").strip()
+    if not path_value:
+        return None, ()
+    if not Path(path_value).is_file():
+        return None, ("candidate_handoff_missing",)
+    try:
+        handoff = CandidateHandoffV1.model_validate_json(
+            Path(path_value).read_text(encoding="utf-8")
+        )
+    except (OSError, TypeError, ValueError, json.JSONDecodeError):
+        return None, ("candidate_handoff_invalid",)
+    failures = _candidate_handoff_revalidation_failures(
+        artifact_paths=artifact_paths,
+        handoff=handoff,
+    )
+    if failures:
+        return None, failures
+    return handoff, ()
+
+
+def _evidence_identity_failures(
+    *,
+    snapshot: Any | None,
+    facts: Any | None,
+    claims: Any | None,
+    equations: Any | None,
+) -> tuple[str, ...]:
+    """Return cross-run evidence identity failures for one revision.
+
+    Facts, atomic claims and equation claims may declare the snapshot they
+    were compiled against.  When the declaration exists it must name this
+    revision's snapshot exactly; otherwise a stale or foreign artifact would
+    be silently re-bound to (or emptied against) the current tree.
+    """
+
+    expected_snapshot_id = str(getattr(snapshot, "snapshot_id", "") or "")
+    expected_tree_hash = str(getattr(snapshot, "project_tree_hash", "") or "")
+    failures: list[str] = []
+    for label, value in (
+        ("code_facts", facts),
+        ("atomic_claims", claims),
+        ("equation_claims", equations),
+    ):
+        declared_snapshot = str(getattr(value, "repo_snapshot_id", "") or "")
+        declared_tree = str(getattr(value, "project_tree_hash", "") or "")
+        if declared_snapshot and declared_snapshot != expected_snapshot_id:
+            failures.append(f"unified_{label}_snapshot_mismatch")
+        if declared_tree and declared_tree != expected_tree_hash:
+            failures.append(f"unified_{label}_tree_hash_mismatch")
+    return tuple(dict.fromkeys(failures))
+
+
+def _load_expected_operation_population(
+    artifact_paths: Mapping[str, str],
+) -> tuple[Any | None, str]:
+    """Load the evaluation-only expected operation population.
+
+    R3: discovery recall may only be measured against a population that is
+    independent of the compiled closure.  The artifact is optional and is
+    never used as production fact authority; when it is absent the funnel
+    reports ``not_measured`` instead of scoring the closure against itself.
+    """
+
+    path_value = str(
+        artifact_paths.get("expected_mechanism_operations_v1", "") or ""
+    ).strip()
+    if not path_value or not Path(path_value).is_file():
+        return None, ""
+    try:
+        payload = json.loads(Path(path_value).read_text(encoding="utf-8"))
+    except (OSError, TypeError, ValueError):
+        return None, ""
+    source = path_value
+    expected: Any | None = None
+    if isinstance(payload, Mapping):
+        source = str(payload.get("content_digest", "") or path_value)
+        operations = payload.get("operations")
+        if isinstance(operations, Mapping):
+            expected = operations
+        elif isinstance(operations, (list, tuple)):
+            expected = tuple(str(item) for item in operations if str(item).strip())
+        else:
+            expected = {
+                str(mechanism_id): tuple(
+                    str(item) for item in (values or ()) if str(item).strip()
+                )
+                for mechanism_id, values in payload.items()
+                if isinstance(values, (list, tuple))
+            } or None
+    elif isinstance(payload, (list, tuple)):
+        expected = tuple(str(item) for item in payload if str(item).strip())
+    if expected is None:
+        return None, ""
+    return expected, source
+
+
+def _candidate_lane_research_failures(
+    strict_failures: Sequence[str],
+    *,
+    candidate_handoff: CandidateHandoffV1 | None,
+) -> tuple[str, ...]:
+    """Keep structural Research failures while opening only the Candidate lane.
+
+    The unified consumer admissions still need a Research gate, but a bounded
+    partial handoff is allowed to pass that gate.  Only the exact per-obligation
+    ``partial_without_terminal_gap`` failure is removable, and only for a
+    partial explicitly authenticated by the handoff.  Identity, source,
+    ownership, lineage, and every other failure remain fail-closed.
+    """
+
+    if candidate_handoff is None or not candidate_handoff.eligible:
+        return tuple(dict.fromkeys(str(item) for item in strict_failures if str(item)))
+    partial_ids = set(candidate_handoff.partial_obligation_ids)
+    allowed_prefix = "unified_core_intent_partial_without_terminal_gap:"
+    kept: list[str] = []
+    for raw_failure in strict_failures:
+        failure = str(raw_failure or "").strip()
+        if (
+            failure.startswith(allowed_prefix)
+            and failure.removeprefix(allowed_prefix) in partial_ids
+        ):
+            continue
+        if failure:
+            kept.append(failure)
+    return tuple(dict.fromkeys(kept))
 
 
 def _persist_research_closure_admission(
@@ -721,6 +1926,16 @@ def _persist_research_closure_admission(
     downstream_phases_planned: Sequence[str] = (),
 ) -> str:
     """Persist the upstream admission used by an early Writer return."""
+
+    existing_admission = None
+    existing_path = str(artifact_paths.get("research_closure_admission_v1") or "")
+    if existing_path and Path(existing_path).is_file():
+        try:
+            existing_admission = ResearchClosureAdmissionV1.model_validate_json(
+                Path(existing_path).read_text(encoding="utf-8")
+            )
+        except (OSError, TypeError, ValueError, json.JSONDecodeError):
+            existing_admission = None
 
     snapshot_id = "unknown"
     tree_hash = "unknown"
@@ -746,13 +1961,42 @@ def _persist_research_closure_admission(
             tree_hash = str(payload.get("project_tree_hash") or tree_hash)
         except (OSError, TypeError, ValueError, json.JSONDecodeError):
             pass
+    candidate_handoff, _candidate_handoff_failures = (
+        _load_authenticated_candidate_handoff(artifact_paths)
+        if artifact_paths.get("candidate_handoff_v1")
+        else (None, ())
+    )
     admission = build_research_closure_admission(
         run_id=str(run_id or "writer-run-unknown"),
         repo_snapshot_id=snapshot_id,
         project_tree_hash=tree_hash,
-        research_status="blocked" if failure_codes else "trusted",
-        failure_codes=failure_codes,
-        downstream_phases_planned=downstream_phases_planned,
+        research_status=(
+            existing_admission.research_status
+            if existing_admission is not None
+            else ("blocked" if failure_codes else "trusted")
+        ),
+        failure_codes=(
+            existing_admission.failure_codes
+            if existing_admission is not None and existing_admission.failure_codes
+            else failure_codes
+        ),
+        downstream_phases_planned=tuple(dict.fromkeys((
+            *(existing_admission.downstream_phases_planned if existing_admission is not None else ()),
+            *downstream_phases_planned,
+        ))),
+        candidate_handoff_allowed=bool(
+            candidate_handoff is not None and candidate_handoff.eligible
+        ),
+        candidate_handoff_id=(
+            candidate_handoff.handoff_id
+            if candidate_handoff is not None and candidate_handoff.eligible
+            else ""
+        ),
+        candidate_warning_codes=(
+            candidate_handoff.warning_codes
+            if candidate_handoff is not None and candidate_handoff.eligible
+            else ()
+        ),
     )
     path = method_output(Path(out_root), "research_closure_admission_v1")
     _atomic_write_text(path, admission.model_dump_json(indent=2) + "\n")
@@ -773,11 +2017,24 @@ def _run_publication_method_writer_impl(
     rewrite_caller: Callable[[LLMConfig, LLMRequest], LLMResponse] | None = None,
     formalization_caller: Callable[[LLMConfig, LLMRequest], LLMResponse] | None = None,
     architect_proposal_caller: Callable[..., str | None] | None = None,
+    proposal_llm_caller: Callable[..., Any] | None = None,
+    # The served model's own tokenizer, when the run has one.  Proposal calls
+    # are then measured by the same rule the unified pipeline uses; without it
+    # a ``model_tokenizer`` envelope leaves them recorded-only instead of
+    # measured by a different rule.
+    proposal_tokenizer: Any | None = None,
+    # The served model tokenizer for unified page requests.  The plan and every
+    # pre-send boundary must receive the same object; a live unified replay
+    # supplies this from the runtime's /tokenize endpoint.
+    unified_tokenizer: Any | None = None,
     rebuild_architect_plan: bool = False,
     # R1 explicit author-story override: concept keys the author story names
     # as scientifically material are never filtered as audit_only.
     concept_audit_override_keys: tuple[str, ...] = (),
     authoring_context_mode: AuthoringContextMode | str | None = None,
+    formalizer_phase_checkpoint: str | Path | None = None,
+    authoring_stage: Literal["full", "prepare", "execute-prepared"] = "full",
+    authoring_execution_manifest_digest: str = "",
 ) -> tuple[PublicationWriterRunResultV1, dict[str, str]]:
     """Write section-scoped Method prose from the multi-authority plan."""
     # Resolve the lane before any legacy artifact preflight.  In particular,
@@ -1349,10 +2606,38 @@ def _run_publication_method_writer_impl(
     paths: dict[str, str] = {}
     if research_admission_path:
         paths["research_closure_admission_v1"] = research_admission_path
+    candidate_handoff, _candidate_handoff_failures = (
+        _load_authenticated_candidate_handoff(artifact_paths)
+        if artifact_paths.get("candidate_handoff_v1")
+        else (None, ())
+    )
+    candidate_partial_handoff_rows = _candidate_partial_handoff_rows(candidate_handoff)
+    candidate_lane_research_failures: tuple[str, ...] = ()
+
+    if authoring_stage not in {"full", "prepare", "execute-prepared"}:
+        result = PublicationWriterRunResultV1(
+            status="blocked",
+            plan_digest=plan.content_digest if plan is not None else "",
+            claim_digest=claims.content_digest if "claims" in locals() else "",
+            blocked_reason=f"authoring_stage_invalid:{authoring_stage}",
+        )
+        return result, _write_result_only(out_root, result)
+    if authoring_stage in {"prepare", "execute-prepared"} and not formalizer_phase_checkpoint:
+        formalizer_phase_checkpoint = out_root
 
     if effective_mode in ("unified", "shadow_unified"):
         try:
             repo_ctx = _load_repository_authoring_context(artifact_paths)
+            graph_rebuild = repo_ctx.get("behavior_graph_rebuild")
+            if graph_rebuild is not None:
+                graph_rebuild_path = method_output(
+                    Path(out_root), "behavior_graph_rebuild_v1"
+                )
+                _atomic_write_text(
+                    graph_rebuild_path,
+                    json.dumps(graph_rebuild, ensure_ascii=False, indent=2) + "\n",
+                )
+                paths["behavior_graph_rebuild_v1"] = str(graph_rebuild_path)
             repository_load_failures = tuple(
                 str(item) for item in (repo_ctx.get("load_failures") or ())
                 if str(item).strip()
@@ -1362,36 +2647,135 @@ def _run_publication_method_writer_impl(
                     "unified_repository_authoring_context_failed:"
                     + ";".join(repository_load_failures)
                 )
-            closures = _compile_mechanism_evidence_closures(
-                argument_briefs=repo_ctx["argument_briefs"] or argument_briefs,
-                facets=repo_ctx["argument_facets"] or argument_facets,
-                facet_alignments=repo_ctx["facet_alignments"] or facet_alignments,
-                field_candidates=repo_ctx["publication_field_candidates"] or publication_field_candidates,
-                story_spine=repo_ctx["story_spine"],
-                facts=facts,
-                claims=claims,
-                equations=equations,
-                configurations=configurations,
-                evidence_packets=repo_ctx["evidence_packets"] or evidence_packets_v3,
-                behavior_graph=repo_ctx["behavior_graph"],
-                implementation_scope=repo_ctx["implementation_scope"],
-                symbol_index=repo_ctx["symbol_index"],
-                source_provider=repo_ctx["source_provider"],
-                source_manifest=repo_ctx["source_manifest"],
-            )
-            unified_contexts = _annotate_mechanism_paper_details(
-                closures,
-                story_spine=repo_ctx["story_spine"],
-                argument_briefs=repo_ctx["argument_briefs"] or argument_briefs,
-                facets=repo_ctx["argument_facets"] or argument_facets,
+            # R2: evidence artifacts must belong to this revision's snapshot.
+            # A fact/claim set from another run is refused instead of being
+            # silently re-bound to (or emptied against) the current tree.
+            identity_failures = _evidence_identity_failures(
+                snapshot=repo_ctx.get("repo_snapshot"),
                 facts=facts,
                 claims=claims,
                 equations=equations,
             )
+            if identity_failures:
+                raise ValueError(";".join(identity_failures))
+            if formalizer_phase_checkpoint:
+                # A completed Formalizer checkpoint owns the exact context
+                # projection that its archive, page plan, and accepted
+                # fragments consumed.  Recompiling paper annotations here can
+                # change importance/policy (and therefore the context digest)
+                # even when the source archive is unchanged.  Load that
+                # persisted projection and validate its repository identity;
+                # the phase loader below performs the archive/manifest/plan
+                # and package revalidation against this same object.
+                from code2paper.agentic.mechanism_context_models import (
+                    load_mechanism_context_set_v1_payload,
+                )
+
+                checkpoint_context_candidates = (
+                    Path(formalizer_phase_checkpoint) / "artifacts" / "06_authoring"
+                    / "mechanism_context_set_v1.json",
+                    Path(formalizer_phase_checkpoint) / "artifacts"
+                    / "mechanism_context_set_v1.json",
+                    Path(formalizer_phase_checkpoint) / "mechanism_context_set_v1.json",
+                )
+                checkpoint_context_path = next(
+                    (path for path in checkpoint_context_candidates if path.is_file()),
+                    checkpoint_context_candidates[0],
+                )
+                if not checkpoint_context_path.is_file():
+                    raise ValueError(
+                        "formalizer_phase_checkpoint_missing:mechanism_context_set_v1"
+                    )
+                checkpoint_contexts, context_set_migrated = (
+                    load_mechanism_context_set_v1_payload(
+                        json.loads(
+                            checkpoint_context_path.read_text(encoding="utf-8")
+                        )
+                    )
+                )
+                if str(checkpoint_contexts.repo_snapshot_id) != str(
+                    getattr(repo_ctx["repo_snapshot"], "snapshot_id", "") or ""
+                ):
+                    raise ValueError(
+                        "formalizer_phase_checkpoint_context_snapshot_mismatch"
+                    )
+                if str(checkpoint_contexts.project_tree_hash) != str(
+                    getattr(repo_ctx["repo_snapshot"], "project_tree_hash", "") or ""
+                ):
+                    raise ValueError(
+                        "formalizer_phase_checkpoint_context_tree_hash_mismatch"
+                    )
+                unified_contexts = checkpoint_contexts
+                closures = tuple(
+                    getattr(context, "evidence_closure")
+                    for context in (unified_contexts.contexts or ())
+                )
+                paths["mechanism_context_set_checkpoint_v1"] = str(
+                    checkpoint_context_path
+                )
+                if context_set_migrated:
+                    formalizer_traces.append({
+                        "phase": "context_set_loader",
+                        "context_set_migrated": True,
+                        "source": str(checkpoint_context_path),
+                    })
+            else:
+                closures = _compile_mechanism_evidence_closures(
+                    argument_briefs=repo_ctx["argument_briefs"] or argument_briefs,
+                    facets=repo_ctx["argument_facets"] or argument_facets,
+                    facet_alignments=repo_ctx["facet_alignments"] or facet_alignments,
+                    field_candidates=repo_ctx["publication_field_candidates"] or publication_field_candidates,
+                    story_spine=repo_ctx["story_spine"],
+                    facts=facts,
+                    claims=claims,
+                    equations=equations,
+                    configurations=configurations,
+                    evidence_packets=repo_ctx["evidence_packets"] or evidence_packets_v3,
+                    behavior_graph=repo_ctx["behavior_graph"],
+                    implementation_scope=repo_ctx["implementation_scope"],
+                    symbol_index=repo_ctx["symbol_index"],
+                    source_provider=repo_ctx["source_provider"],
+                    source_manifest=repo_ctx["source_manifest"],
+                )
+                unified_contexts = _annotate_mechanism_paper_details(
+                    closures,
+                    story_spine=repo_ctx["story_spine"],
+                    argument_briefs=repo_ctx["argument_briefs"] or argument_briefs,
+                    facets=repo_ctx["argument_facets"] or argument_facets,
+                    facts=facts,
+                    claims=claims,
+                    equations=equations,
+                )
             unified_research_failures = _unified_research_gate_failures(
                 intent_graph=intent_graph,
                 research_agenda=research_agenda,
                 contexts=unified_contexts,
+            )
+            # R2: a verified source reader records every rejected read (path
+            # escape, unlisted path, digest drift, deleted or binary file).
+            # Those are source-boundary failures and must stop the unified
+            # lane instead of being flattened into empty text.  A declared
+            # partition exclusion (vendor/generated/submodule/dataset) is a
+            # manifest classification outcome rather than damaged evidence, so
+            # it is persisted as typed, visible output and does not abort.
+            source_reader = repo_ctx.get("source_provider")
+            source_read_failures, partition_exclusions = (
+                _unified_source_read_failures(source_reader)
+            )
+            if partition_exclusions:
+                paths["unified_source_partition_exclusions_v1"] = (
+                    _persist_source_partition_exclusions(
+                        out_root, partition_exclusions
+                    )
+                )
+            if source_read_failures:
+                raise ValueError(
+                    "unified_source_read_failed:"
+                    + ";".join(source_read_failures)
+                )
+            candidate_lane_research_failures = _candidate_lane_research_failures(
+                unified_research_failures,
+                candidate_handoff=candidate_handoff,
             )
             from code2paper.agentic.mechanism_context_compiler import (
                 validate_mechanism_context_completeness,
@@ -1527,24 +2911,45 @@ def _run_publication_method_writer_impl(
             effective_formalization_caller = (
                 formalization_caller or llm_caller or _default_llm_caller
             )
-            v2_outcome = _run_unified_v2_formalizer_phase(
-                out_root=Path(out_root),
-                contexts=unified_contexts,
-                formula_obs=formula_obs,
-                equations=equations,
-                claims=claims,
-                facts=facts,
-                llm_config=llm_config,
-                caller=effective_formalization_caller,
-                artifact_paths=artifact_paths,
-                completeness_by_mechanism=completeness_by_mechanism,
-                model_context_tokens=model_context_tokens,
-                source_manifest=repo_ctx["source_manifest"],
-                repo_snapshot=repo_ctx["repo_snapshot"],
-                source_failures=repository_load_failures,
-                intent_graph=intent_graph,
-                research_failures=unified_research_failures,
-            )
+            if formalizer_phase_checkpoint:
+                v2_outcome = _load_completed_unified_formalizer_phase(
+                    checkpoint_root=Path(formalizer_phase_checkpoint),
+                    out_root=Path(out_root),
+                    contexts=unified_contexts,
+                    formula_obs=formula_obs,
+                    equations=equations,
+                    claims=claims,
+                    facts=facts,
+                    llm_config=llm_config,
+                    completeness_by_mechanism=completeness_by_mechanism,
+                    model_context_tokens=model_context_tokens,
+                    source_manifest=repo_ctx["source_manifest"],
+                    repo_snapshot=repo_ctx["repo_snapshot"],
+                    intent_graph=intent_graph,
+                    research_failures=candidate_lane_research_failures,
+                    source_failures=repository_load_failures,
+                    tokenizer=unified_tokenizer,
+                )
+            else:
+                v2_outcome = _run_unified_v2_formalizer_phase(
+                    out_root=Path(out_root),
+                    contexts=unified_contexts,
+                    formula_obs=formula_obs,
+                    equations=equations,
+                    claims=claims,
+                    facts=facts,
+                    llm_config=llm_config,
+                    caller=effective_formalization_caller,
+                    artifact_paths=artifact_paths,
+                    completeness_by_mechanism=completeness_by_mechanism,
+                    model_context_tokens=model_context_tokens,
+                    source_manifest=repo_ctx["source_manifest"],
+                    repo_snapshot=repo_ctx["repo_snapshot"],
+                    source_failures=repository_load_failures,
+                    intent_graph=intent_graph,
+                    research_failures=candidate_lane_research_failures,
+                    tokenizer=unified_tokenizer,
+                )
             formalizer_traces.extend(v2_outcome["traces"])
             formula_obs = dict(v2_outcome.get("formula_obligations") or formula_obs)
             unified_formula_packages = tuple(v2_outcome["packages"])
@@ -1555,6 +2960,24 @@ def _run_publication_method_writer_impl(
             unified_formalizer_plan = v2_outcome.get("plan")
             if v2_outcome["blocked"]:
                 raise ValueError(v2_outcome["blocked"])
+            formalizer_phase_reservation = dict(
+                v2_outcome.get("phase_reservation") or {}
+            )
+            if formalizer_phase_reservation:
+                reservation_path = method_output(
+                    Path(out_root), "formalizer_phase_reservation_v1"
+                )
+                _atomic_write_text(
+                    reservation_path,
+                    json.dumps(
+                        formalizer_phase_reservation,
+                        ensure_ascii=False,
+                        indent=2,
+                        sort_keys=True,
+                    )
+                    + "\n",
+                )
+                paths["formalizer_phase_reservation_v1"] = str(reservation_path)
             formula_package_path = method_output(
                 Path(out_root), "mechanism_formula_packages_v2"
             )
@@ -1565,6 +2988,7 @@ def _run_publication_method_writer_impl(
                     for item in unified_formula_packages
                 ],
                 "formalizer_traces": formalizer_traces,
+                "phase_reused": bool(v2_outcome.get("phase_reused", False)),
             }
             formula_package_payload["content_digest"] = _digest_json(
                 formula_package_payload
@@ -1579,14 +3003,97 @@ def _run_publication_method_writer_impl(
                 + "\n",
             )
             paths["mechanism_formula_packages_v2"] = str(formula_package_path)
+            # R10 §15 / round-4 review: the organization proposal calls are
+            # real model calls.  When the run has a frozen budget envelope they
+            # are measured with the same meter the rest of the pipeline uses;
+            # when the envelope declares a tokenizer this scope does not hold,
+            # the calls stay unmetered rather than measured by another rule.
+            from code2paper.agentic.proposal_call_accounting import (
+                proposal_call_meter_from_envelope,
+            )
+            from code2paper.llm.role_config import METHOD_PROPOSITION_ARCHITECT
+
+            try:
+                _envelope_for_meter = unified_budget_envelope
+            except NameError:  # pragma: no cover - branch without a v2 outcome
+                _envelope_for_meter = None
+            _proposal_meter = proposal_call_meter_from_envelope(
+                _envelope_for_meter,
+                consumer_role=str(METHOD_PROPOSITION_ARCHITECT),
+                model_identity=str(
+                    getattr(_envelope_for_meter, "model_identity_digest", "")
+                    or ""
+                ),
+                run_digest=str(
+                    os.environ.get("CODE2PAPER_AUXILIARY_RUN_DIGEST", "")
+                    or getattr(unified_archive, "content_digest", "")
+                    or getattr(_envelope_for_meter, "run_digest", "")
+                    or ""
+                ),
+                revision_id=(
+                    f"narrative-plan:{getattr(unified_formalizer_plan, 'plan_revision', 0)}"
+                    if unified_formalizer_plan is not None
+                    else ""
+                ),
+                # Durable started/completed for proposal calls: the tally is
+                # written before each send, so an interrupted run resumes with
+                # its unsettled reservations still visible.
+                accounting_root=out_root,
+                tokenizer=proposal_tokenizer,
+            )
+            # A four-role envelope cannot authorize an auxiliary proposal
+            # request.  The unified product path therefore takes the existing
+            # deterministic organization fallback unless the role was
+            # explicitly declared in the envelope; an injected caller cannot
+            # bypass that budget decision.
+            effective_architect_proposal_caller = (
+                architect_proposal_caller
+                if _proposal_meter is not None
+                else None
+            )
+            proposal_llm_config = llm_config if _proposal_meter is not None else None
             unified_narrative_plan, architect_trace_v3 = _build_narrative_plan_v3(
                 unified_contexts,
                 story_spine=repo_ctx["story_spine"],
                 formula_packages=unified_formula_packages,
                 prior_plan=plan,
-                proposal_caller=architect_proposal_caller,
-                llm_config=llm_config,
+                proposal_caller=effective_architect_proposal_caller,
+                llm_config=proposal_llm_config,
+                proposal_llm_caller=proposal_llm_caller,
+                proposal_call_meter=_proposal_meter,
             )
+            narrative_target_sets_before = _narrative_target_sets(unified_narrative_plan)
+            # R10 §15 / round-4 review: persist the proposal-call tally the
+            # plan builder measured.  A trace without measured rows writes
+            # nothing, so "recorded" can never be mistaken for "measured".
+            try:
+                from code2paper.agentic.proposal_call_accounting import (
+                    accounting_from_plan_trace,
+                    carry_over_unsettled,
+                    load_durable_accounting,
+                    write_proposal_call_accounting,
+                )
+
+                proposal_accounting = accounting_from_plan_trace(
+                    architect_trace_v3 or {}
+                )
+                if proposal_accounting is not None:
+                    # Attempts that started and never settled stay in the
+                    # artifact even when a later tally replaces the file.
+                    proposal_accounting = carry_over_unsettled(
+                        proposal_accounting,
+                        load_durable_accounting(_proposal_meter),
+                    )
+                    accounting_path = write_proposal_call_accounting(
+                        out_root, proposal_accounting
+                    )
+                    paths["proposal_call_accounting_v1"] = str(accounting_path)
+            except Exception as exc:  # noqa: BLE001 - strict accounting is a gate
+                if _proposal_meter is not None and _proposal_meter.budget_required:
+                    raise ValueError(
+                        "proposal_accounting_persistence_failed:"
+                        f"{type(exc).__name__}"
+                    ) from exc
             narrative_plan_path = method_output(Path(out_root), "narrative_plan_v3")
             _atomic_write_text(narrative_plan_path, unified_narrative_plan.model_dump_json(indent=2) + "\n")
             paths["narrative_plan_v3"] = str(narrative_plan_path)
@@ -1597,10 +3104,23 @@ def _run_publication_method_writer_impl(
             # manifest instead of mutating the already-receipted formalizer
             # manifest underneath it.
             from code2paper.agentic.unified_context_compiler import (
+                account_unified_request_tokens,
                 build_consumer_invocation_plan_v1,
+                consumer_response_json_schema,
                 evaluate_unified_live_admission_v1,
                 extend_writer_worksets_from_narrative_plan,
+                fit_narrative_plan_to_page_budget,
             )
+            from code2paper.agentic.unified_context_models import (
+                ConsumerWorksetManifestV2,
+                ConsumerWorksetV2,
+            )
+            from code2paper.agentic.method_architect import (
+                NarrativeParagraphPlanV3,
+                NarrativeSectionPlanV3,
+            )
+            from code2paper.llm.response_schemas import PUBLICATION_METHOD_SECTION_SCHEMA
+            from code2paper.llm.section_writer import build_publication_writer_request
             from code2paper.agentic.mechanism_context_compiler import (
                 validate_mechanism_context_structural_gates,
             )
@@ -1612,12 +3132,428 @@ def _run_publication_method_writer_impl(
                 or unified_archive is None
             ):
                 raise ValueError("unified_writer_phase_inputs_missing")
-            unified_writer_workset_manifest = extend_writer_worksets_from_narrative_plan(
-                unified_workset_manifest,
-                unified_narrative_plan,
-                max_page_input_tokens=unified_budget_envelope.max_page_input_tokens,
-                archive=unified_archive,
+            writer_formula_obligations = tuple(
+                item
+                for values in formula_obs.values()
+                for item in (values or ())
             )
+            writer_request_cap = int(
+                unified_budget_envelope.max_request_input_tokens_by_role["writer"]
+            )
+            writer_request_budget = unified_budget_envelope.request_budget_by_role.get(
+                "writer"
+            )
+            if writer_request_budget is None:
+                raise ValueError("unified_writer_request_budget_missing")
+            writer_output_reserve = int(writer_request_budget.output_token_reserve)
+
+            def _writer_invocation_id(section_id: str, page_id: str) -> str:
+                component = "".join(
+                    character if character.isalnum() or character in "-_." else "-"
+                    for character in str(section_id)
+                )[:120]
+                return f"inv:writer:{component}:{page_id}"
+
+            def _writer_bootstrap_plan(manifest: Any) -> Any:
+                """Build only the private input-owner surface used for metering.
+
+                This is deliberately not persisted or admitted.  The real plan
+                is rebuilt below after all final page request material has been
+                measured.
+                """
+
+                invocations: list[Any] = []
+                page_index = manifest._page_index()
+                for workset in manifest.worksets:
+                    if str(getattr(workset, "task_kind", "")) != "section":
+                        continue
+                    for page_id in workset.required_page_ids:
+                        page = page_index.get(str(page_id))
+                        if page is None:
+                            continue
+                        invocation_id = _writer_invocation_id(
+                            str(workset.section_id), str(page.page_id)
+                        )
+                        invocations.append(SimpleNamespace(
+                            invocation_id=invocation_id,
+                            role="writer",
+                            phase="writer",
+                            workset_id=str(workset.workset_id),
+                            task_ids=tuple(workset.task_ids),
+                            mechanism_id=str(workset.mechanism_id),
+                            section_id=str(workset.section_id),
+                            page_id=str(page.page_id),
+                            max_output_tokens=writer_output_reserve,
+                            max_attempts=2,
+                            is_repair=False,
+                        ))
+                return SimpleNamespace(invocations=tuple(invocations))
+
+            section_by_id = {
+                str(section.section_id): section
+                for section in (getattr(unified_narrative_plan, "sections", ()) or ())
+            }
+
+            def _ordered_candidate_rows(
+                section_id: str,
+                rows: Sequence[Mapping[str, Any]],
+            ) -> tuple[Mapping[str, Any], ...]:
+                section = section_by_id.get(str(section_id))
+                if section is None:
+                    raise ValueError(f"unified_writer_section_missing:{section_id}")
+                return _ordered_candidate_rows_preserving_input(
+                    section=section,
+                    rows=rows,
+                )
+
+            def _temporary_narrative_plan(
+                section_id: str,
+                rows: Sequence[Mapping[str, Any]],
+            ) -> Any:
+                section = section_by_id.get(str(section_id))
+                if section is None:
+                    raise ValueError(f"unified_writer_section_missing:{section_id}")
+                paragraph_models = []
+                for row in _ordered_candidate_rows(section_id, rows):
+                    payload = dict(row)
+                    payload["content_digest"] = ""
+                    paragraph_models.append(
+                        NarrativeParagraphPlanV3.model_validate(payload)
+                    )
+                return SimpleNamespace(sections=(NarrativeSectionPlanV3(
+                    section_id=str(section.section_id),
+                    heading=str(section.heading),
+                    mechanism_ids=tuple(section.mechanism_ids),
+                    paragraphs=tuple(paragraph_models),
+                ),), narrative_units=(), formula_placements=())
+
+            def _manifest_with_candidate_page(
+                base_manifest: Any,
+                page: Any,
+                section_id: str,
+            ) -> ConsumerWorksetManifestV2:
+                section_workset_id = f"workset:section:{section_id}"
+                base_workset = next(
+                    (
+                        item for item in base_manifest.worksets
+                        if str(item.workset_id) == section_workset_id
+                    ),
+                    None,
+                )
+                old_page_ids = set(
+                    str(item)
+                    for item in (
+                        getattr(base_workset, "required_page_ids", ())
+                        if base_workset is not None else ()
+                    )
+                )
+                pages = tuple(
+                    item for item in base_manifest.pages
+                    if str(item.page_id) not in old_page_ids
+                    and str(item.page_id) != str(page.page_id)
+                ) + (page,)
+                worksets = tuple(
+                    item for item in base_manifest.worksets
+                    if str(item.workset_id) != section_workset_id
+                ) + (ConsumerWorksetV2(
+                    workset_id=section_workset_id,
+                    task_kind="section",
+                    task_ids=(str(section_id),),
+                    mechanism_id=str(page.mechanism_id),
+                    section_id=str(section_id),
+                    required_atom_ids=tuple(sorted(page.atom_ids)),
+                    required_page_ids=(str(page.page_id),),
+                ),)
+                return ConsumerWorksetManifestV2(
+                    archive_digest=base_manifest.archive_digest,
+                    source_manifest_digest=base_manifest.source_manifest_digest,
+                    pages=pages,
+                    worksets=worksets,
+                    projection_diagnostics=tuple(base_manifest.projection_diagnostics),
+                )
+
+            def _writer_request_for_page(
+                *,
+                page: Any,
+                section_id: str,
+                rows: Sequence[Mapping[str, Any]],
+                manifest_context: Any,
+            ) -> tuple[str, Any]:
+                candidate_manifest = _manifest_with_candidate_page(
+                    manifest_context, page, section_id
+                )
+                bootstrap_plan = _writer_bootstrap_plan(candidate_manifest)
+                candidate_plan = _temporary_narrative_plan(section_id, rows)
+                candidate_inputs = _writer_section_inputs_v3(
+                    narrative_plan=candidate_plan,
+                    # Candidate measurement must use the same shared payload
+                    # slices as the final production request.  Omitting them
+                    # here would let a page pass the re-pagination probe and
+                    # then discover the overflow only after the manifest has
+                    # been frozen.
+                    shared_payload_slices=unified_slices,
+                    formula_packages=tuple(unified_formula_packages),
+                    formula_obligations=writer_formula_obligations,
+                    page_manifests={},
+                    consumer_workset_manifest=candidate_manifest,
+                    consumer_invocation_plan=bootstrap_plan,
+                    system_prompt="",
+                    candidate_partial_handoff=candidate_partial_handoff_rows,
+                )
+                page_inputs = [
+                    item for item in candidate_inputs
+                    if str(
+                        (item.prompt_payload or {}).get("unified_v2_page_id", "")
+                    ) == str(page.page_id)
+                ]
+                if len(page_inputs) != 1:
+                    raise ValueError(
+                        f"unified_writer_request_material_page_count:{section_id}:"
+                        f"{page.page_id}:{len(page_inputs)}"
+                    )
+                writer_input = page_inputs[0]
+                request = build_publication_writer_request(
+                    writer_input,
+                    system_prompt=writer_input.system_prompt,
+                    schema_name=PUBLICATION_METHOD_SECTION_SCHEMA,
+                    response_json_schema=consumer_response_json_schema(
+                        "writer",
+                        section_id=section_id,
+                    ),
+                )
+                invocation_id = str(
+                    (writer_input.prompt_payload or {}).get(
+                        "writer_invocation_id", ""
+                    )
+                )
+                if not invocation_id:
+                    raise ValueError(
+                        f"unified_writer_request_material_invocation_missing:{page.page_id}"
+                    )
+                return invocation_id, request
+
+            def _measure_writer_request(
+                *,
+                page: Any,
+                invocation_id: str,
+                request: Any,
+            ) -> tuple[dict[str, Any], Any]:
+                accounting = account_unified_request_tokens(
+                    consumer_role="writer",
+                    request_budget=writer_request_budget,
+                    max_input_tokens=writer_request_cap,
+                    model_context_tokens=int(
+                        unified_budget_envelope.model_context_tokens
+                    ),
+                    safety_margin_tokens=int(
+                        unified_budget_envelope.safety_margin_tokens
+                    ),
+                    meter=unified_budget_envelope.token_meter,
+                    rendered_prompt=str(getattr(request, "prompt", "")),
+                    input_payload=getattr(request, "input_payload", None),
+                    response_schema=(
+                        getattr(request, "response_json_schema", None) or {}
+                    ),
+                    tokenizer=unified_tokenizer,
+                    invocation_id=invocation_id,
+                    page_id=str(page.page_id),
+                )
+                material = {
+                    "rendered_prompt": str(getattr(request, "prompt", "")),
+                    "input_payload": dict(getattr(request, "input_payload", {}) or {}),
+                    "response_schema": dict(
+                        getattr(request, "response_json_schema", None) or {}
+                    ),
+                    "input_tokens": int(accounting.input_tokens),
+                }
+                return material, accounting
+
+            # The first request-aware revision must be able to observe an
+            # over-budget original paragraph.  Extending the base manifest
+            # here would compile that paragraph before
+            # ``fit_narrative_plan_to_page_budget`` gets a chance to split it,
+            # causing the recovery path to fail with
+            # ``unified_atomic_page_over_budget``.  Candidate-page probes add
+            # their temporary section workset themselves; the final manifest
+            # is rebuilt below only after the narrative plan has been revised.
+            request_manifest_context = unified_workset_manifest
+            request_material_by_invocation: dict[str, Mapping[str, Any]] = {}
+            request_measurement_rows: list[dict[str, Any]] = []
+
+            for request_revision in range(1, 4):
+                section_by_id = {
+                    str(section.section_id): section
+                    for section in (getattr(unified_narrative_plan, "sections", ()) or ())
+                }
+
+                def _estimate_writer_page_request(
+                    page: Any,
+                    section_id: str,
+                    rows: Sequence[Mapping[str, Any]],
+                ) -> int:
+                    invocation_id, request = _writer_request_for_page(
+                        page=page,
+                        section_id=section_id,
+                        rows=rows,
+                        manifest_context=request_manifest_context,
+                    )
+                    material, accounting = _measure_writer_request(
+                        page=page,
+                        invocation_id=invocation_id,
+                        request=request,
+                    )
+                    request_measurement_rows.append({
+                        "revision": request_revision,
+                        "kind": "candidate_page",
+                        "section_id": str(section_id),
+                        "page_id": str(page.page_id),
+                        "invocation_id": invocation_id,
+                        "paragraph_ids": [
+                            str(row.get("paragraph_id") or "")
+                            for row in _ordered_candidate_rows(section_id, rows)
+                            if isinstance(row, Mapping)
+                        ],
+                        "input_tokens": int(accounting.input_tokens),
+                        "fits": bool(accounting.fits),
+                    })
+                    return int(accounting.input_tokens)
+
+                unified_narrative_plan, paragraph_revision_failures, revision_diag = (
+                    fit_narrative_plan_to_page_budget(
+                        unified_narrative_plan,
+                        archive=unified_archive,
+                        max_page_input_tokens=unified_budget_envelope.max_page_input_tokens,
+                        formula_packages=unified_formula_packages,
+                        formula_obligations=writer_formula_obligations,
+                        request_token_estimator=_estimate_writer_page_request,
+                        max_request_input_tokens=writer_request_cap,
+                    )
+                )
+                if _narrative_target_sets(unified_narrative_plan) != narrative_target_sets_before:
+                    raise ValueError("narrative_target_set_conservation_failed")
+                if revision_diag.get("split_paragraphs"):
+                    revised_plan_path = method_output(
+                        Path(out_root), "narrative_plan_v3.revision.2"
+                    )
+                    _atomic_write_text(
+                        revised_plan_path,
+                        unified_narrative_plan.model_dump_json(indent=2) + "\n",
+                    )
+                    paths["narrative_plan_v3.revision.2"] = str(revised_plan_path)
+                if paragraph_revision_failures:
+                    raise ValueError(
+                        "narrative_plan_page_budget_unresolved:"
+                        + ";".join(paragraph_revision_failures)
+                    )
+
+                from code2paper.agentic.method_architect import (
+                    validate_narrative_plan as _validate_revised_narrative_plan,
+                )
+
+                revised_plan_failures = _validate_revised_narrative_plan(
+                    unified_narrative_plan,
+                    unified_contexts,
+                    formula_packages=unified_formula_packages,
+                )
+                if revised_plan_failures:
+                    raise ValueError(
+                        "narrative_plan_v3_revision_invalid:"
+                        + ";".join(revised_plan_failures[:16])
+                    )
+
+                unified_writer_workset_manifest = extend_writer_worksets_from_narrative_plan(
+                    unified_workset_manifest,
+                    unified_narrative_plan,
+                    max_page_input_tokens=unified_budget_envelope.max_page_input_tokens,
+                    archive=unified_archive,
+                    formula_packages=unified_formula_packages,
+                    formula_obligations=writer_formula_obligations,
+                    request_token_estimator=_estimate_writer_page_request,
+                    max_request_input_tokens=writer_request_cap,
+                )
+
+                # Re-materialize every final page against the complete manifest.
+                # This closes the digest loop: page splitting can change the
+                # manifest digest, which is itself part of the Writer request.
+                final_materials: dict[str, Mapping[str, Any]] = {}
+                final_over_budget: list[str] = []
+                final_bootstrap_plan = _writer_bootstrap_plan(
+                    unified_writer_workset_manifest
+                )
+                final_inputs = _writer_section_inputs_v3(
+                    narrative_plan=unified_narrative_plan,
+                    shared_payload_slices=unified_slices,
+                    formula_packages=tuple(unified_formula_packages),
+                    formula_obligations=writer_formula_obligations,
+                    page_manifests=unified_page_manifests,
+                    consumer_workset_manifest=unified_writer_workset_manifest,
+                    consumer_invocation_plan=final_bootstrap_plan,
+                    system_prompt="",
+                    candidate_partial_handoff=candidate_partial_handoff_rows,
+                )
+                final_page_index = unified_writer_workset_manifest._page_index()
+                for writer_input in final_inputs:
+                    payload = writer_input.prompt_payload or {}
+                    page_id = str(payload.get("unified_v2_page_id") or "")
+                    page = final_page_index.get(page_id)
+                    invocation_id = str(
+                        payload.get("writer_invocation_id") or ""
+                    )
+                    if page is None or not invocation_id:
+                        raise ValueError(
+                            f"unified_writer_final_request_material_missing:{page_id}"
+                        )
+                    request = build_publication_writer_request(
+                        writer_input,
+                        system_prompt=writer_input.system_prompt,
+                        schema_name=PUBLICATION_METHOD_SECTION_SCHEMA,
+                        response_json_schema=consumer_response_json_schema(
+                            "writer",
+                            section_id=writer_input.section_id,
+                        ),
+                    )
+                    material, accounting = _measure_writer_request(
+                        page=page,
+                        invocation_id=invocation_id,
+                        request=request,
+                    )
+                    final_materials[invocation_id] = material
+                    request_measurement_rows.append({
+                        "revision": request_revision,
+                        "kind": "final_page",
+                        "section_id": str(writer_input.section_id),
+                        "page_id": page_id,
+                        "invocation_id": invocation_id,
+                        "input_tokens": int(accounting.input_tokens),
+                        "fits": bool(accounting.fits),
+                    })
+                    if not accounting.fits:
+                        final_over_budget.append(
+                            f"{invocation_id}:{accounting.input_tokens}>{writer_request_cap}"
+                        )
+                request_material_by_invocation = final_materials
+                if not final_over_budget:
+                    break
+                request_manifest_context = unified_writer_workset_manifest
+            else:
+                raise ValueError(
+                    "unified_writer_request_repagination_unresolved:"
+                    + ";".join(final_over_budget[:16])
+                )
+
+            measurements_path = method_output(
+                Path(out_root), "writer_request_measurements_v1"
+            )
+            _atomic_write_text(
+                measurements_path,
+                json.dumps({
+                    "request_cap": writer_request_cap,
+                    "revisions": request_measurement_rows,
+                    "final_manifest_digest": unified_writer_workset_manifest.content_digest,
+                    "final_invocation_count": len(request_material_by_invocation),
+                }, ensure_ascii=False, indent=2) + "\n",
+            )
+            paths["writer_request_measurements_v1"] = str(measurements_path)
             writer_manifest_path = method_output(
                 Path(out_root), "consumer_workset_manifest_v2.writer.2"
             )
@@ -1631,11 +3567,29 @@ def _run_publication_method_writer_impl(
                 unified_budget_envelope,
                 phase="writer",
                 parent_plan=unified_formalizer_plan,
+                parent_active_invocation_ids=tuple(
+                    formalizer_phase_reservation.get("active_invocation_ids") or ()
+                ),
                 plan_revision=2,
                 profile_digest=unified_budget_envelope.profile_digest,
                 model_identity_digest=unified_budget_envelope.model_identity_digest,
                 model_context_tokens=model_context_tokens,
+                tokenizer=unified_tokenizer,
+                request_material_by_invocation=request_material_by_invocation,
             )
+            from code2paper.agentic.unified_invocation_ledger import register_invocation_plan
+            lookahead_realizer_plan = build_consumer_invocation_plan_v1(
+                unified_writer_workset_manifest, unified_budget_envelope,
+                phase="realizer", parent_plan=unified_writer_plan, plan_revision=3,
+                profile_digest=unified_budget_envelope.profile_digest,
+                model_identity_digest=unified_budget_envelope.model_identity_digest,
+                model_context_tokens=model_context_tokens,
+                tokenizer=unified_tokenizer,
+            )
+            register_invocation_plan(
+                Path(out_root) / "artifacts/06_authoring/invocations", lookahead_realizer_plan,
+            )
+
             writer_plan_path = method_output(
                 Path(out_root), "consumer_invocation_plan_v1.2"
             )
@@ -1662,9 +3616,10 @@ def _run_publication_method_writer_impl(
                 run_digest=unified_archive.content_digest,
                 model_context_tokens=model_context_tokens,
                 closed_set_failures=writer_closed_set_failures,
-                research_failures=unified_research_failures,
+                research_failures=candidate_lane_research_failures,
                 mechanism_diagnostics=writer_mechanism_diagnostics,
                 source_failures=repository_load_failures,
+                request_material_by_invocation=request_material_by_invocation,
             )
             writer_admission_path = method_output(
                 Path(out_root), "unified_live_admission_v1.writer.2"
@@ -1679,6 +3634,165 @@ def _run_publication_method_writer_impl(
                     "unified_writer_admission_failed:"
                     + ",".join(unified_writer_admission.failure_codes)
                 )
+
+            # From this boundary onward every transaction/quality helper must
+            # see the same current Narrative section and paragraph IDs that
+            # the Writer just admitted.  Keep the old Architect plan as a
+            # separately digested source surface and use an explicit adapter
+            # rather than silently mixing its MA-S* identifiers into the
+            # current Narrative graph.
+            if effective_mode == "unified":
+                legacy_source_path = method_output(
+                    Path(out_root), "method_section_plan_v2.legacy_source"
+                )
+                _atomic_write_text(
+                    legacy_source_path,
+                    plan.model_dump_json(indent=2) + "\n",
+                )
+                adapted_plan, adapter_trace = (
+                    _adapt_narrative_plan_to_method_section_plan(
+                        narrative_plan=unified_narrative_plan,
+                        legacy_plan=plan,
+                        completeness=completeness,
+                    )
+                )
+                adapter_trace_path = method_output(
+                    Path(out_root), "method_section_plan_adapter_v1"
+                )
+                _atomic_write_text(
+                    adapter_trace_path,
+                    json.dumps(adapter_trace, ensure_ascii=False, indent=2) + "\n",
+                )
+                current_plan_path = method_output(
+                    Path(out_root), "method_section_plan_v2"
+                )
+                _atomic_write_text(
+                    current_plan_path,
+                    adapted_plan.model_dump_json(indent=2) + "\n",
+                )
+                paths["method_section_plan_v2.legacy_source"] = str(legacy_source_path)
+                paths["method_section_plan_adapter_v1"] = str(adapter_trace_path)
+                paths["method_section_plan_v2"] = str(current_plan_path)
+                artifact_paths["method_section_plan_v2"] = str(current_plan_path)
+                plan = adapted_plan
+
+            if authoring_stage in {"prepare", "execute-prepared"}:
+                prepare_path = method_output(
+                    Path(out_root), "authoring_prepare_result_v1"
+                )
+                request_material_digest = _digest_json({
+                    str(key): dict(value)
+                    for key, value in sorted(
+                        request_material_by_invocation.items()
+                    )
+                })
+                prepare_fields = {
+                    "schema_version": "1.0",
+                    "stage": "prepare",
+                    "run_id": str(run_id or ""),
+                    "execution_manifest_digest": str(
+                        authoring_execution_manifest_digest or ""
+                    ),
+                    "archive_digest": str(unified_archive.content_digest),
+                    "formalizer_manifest_digest": str(unified_workset_manifest.content_digest),
+                    "formalizer_plan_digest": str(unified_formalizer_plan.content_digest),
+                    "budget_envelope_digest": str(unified_budget_envelope.content_digest),
+                    "narrative_plan_digest": str(unified_narrative_plan.content_digest),
+                    "writer_manifest_digest": str(unified_writer_workset_manifest.content_digest),
+                    "writer_plan_digest": str(unified_writer_plan.content_digest),
+                    "writer_admission_digest": str(unified_writer_admission.content_digest),
+                    "request_measurements_digest": _file_digest_value(
+                        str(paths.get("writer_request_measurements_v1") or "")
+                    ),
+                    "request_material_digest": request_material_digest,
+                    "request_material_invocation_ids": sorted(
+                        str(key) for key in request_material_by_invocation
+                    ),
+                    "target_sets": _narrative_target_sets(unified_narrative_plan),
+                    "target_sets_digest": _digest_json(
+                        _narrative_target_sets(unified_narrative_plan)
+                    ),
+                    "tokenizer_identity": str(
+                        getattr(unified_tokenizer, "identity", "") or ""
+                    ),
+                    "model_calls": 0,
+                    "paths": {
+                        key: value for key, value in sorted(paths.items())
+                        if key in {
+                            "unified_context_archive_v2",
+                            "consumer_workset_manifest_v2",
+                            "run_invocation_budget_envelope_v1",
+                            "formalizer_phase_budget_envelope_v1",
+                            "run_invocation_budget_envelope_v1.auxiliary",
+                            "consumer_invocation_plan_v1.1",
+                            "formalizer_plan_execution_v2",
+                            "formalizer_phase_reservation_v1",
+                            "mechanism_formula_obligations_v1",
+                            "mechanism_formula_packages_v2",
+                            "narrative_plan_v3",
+                            "narrative_plan_v3.revision.2",
+                            "consumer_workset_manifest_v2.writer.2",
+                            "consumer_invocation_plan_v1.2",
+                            "writer_request_measurements_v1",
+                            "unified_live_admission_v1.formalizer.1",
+                            "unified_live_admission_v1.writer.2",
+                            "method_section_plan_v2",
+                            "method_section_plan_v2.legacy_source",
+                            "method_section_plan_adapter_v1",
+                        }
+                    },
+                }
+                if authoring_stage == "execute-prepared":
+                    if not prepare_path.is_file():
+                        raise ValueError("authoring_prepare_result_missing")
+                    stored_prepare = json.loads(
+                        prepare_path.read_text(encoding="utf-8")
+                    )
+                    if not isinstance(stored_prepare, Mapping):
+                        raise ValueError("authoring_prepare_result_invalid")
+                    stored_digest = str(stored_prepare.get("content_digest") or "")
+                    stored_body = {
+                        key: value for key, value in stored_prepare.items()
+                        if key != "content_digest"
+                    }
+                    if not stored_digest or _digest_json(stored_body) != stored_digest:
+                        raise ValueError("authoring_prepare_result_digest_mismatch")
+                    for key in (
+                        "archive_digest", "formalizer_manifest_digest",
+                        "formalizer_plan_digest", "budget_envelope_digest",
+                        "narrative_plan_digest", "writer_manifest_digest",
+                        "writer_plan_digest", "writer_admission_digest",
+                        "execution_manifest_digest",
+                        "request_measurements_digest", "request_material_digest",
+                        "target_sets_digest", "tokenizer_identity",
+                    ):
+                        if stored_prepare.get(key) != prepare_fields.get(key):
+                            raise ValueError(
+                                f"authoring_prepare_result_binding_mismatch:{key}"
+                            )
+                    paths["authoring_prepare_result_v1"] = str(prepare_path)
+                else:
+                    prepare_body = dict(prepare_fields)
+                    prepare_body["content_digest"] = _digest_json(prepare_body)
+                    _atomic_write_text(
+                        prepare_path,
+                        json.dumps(prepare_body, ensure_ascii=False, indent=2, sort_keys=True)
+                        + "\n",
+                    )
+                    paths["authoring_prepare_result_v1"] = str(prepare_path)
+                    result = PublicationWriterRunResultV1(
+                        status="incomplete",
+                        plan_digest=plan.content_digest,
+                        claim_digest=claims.content_digest,
+                        writer_transaction_status="not_run",
+                        blocked_reason="authoring_prepare_complete",
+                        requested_authoring_context_mode=effective_mode,
+                        effective_authoring_context_mode=effective_mode,
+                        candidate_generation_status="not_started",
+                    )
+                    return result, _write_result_only(
+                        out_root, result, extra_paths=paths
+                    )
         except Exception as exc:
             if effective_mode == "unified":
                 result = PublicationWriterRunResultV1(
@@ -2181,6 +4295,7 @@ def _run_publication_method_writer_impl(
             consumer_workset_manifest=unified_writer_workset_manifest,
             consumer_invocation_plan=unified_writer_plan,
             system_prompt="",
+            candidate_partial_handoff=candidate_partial_handoff_rows,
         )
     else:
         try:
@@ -2247,6 +4362,50 @@ def _run_publication_method_writer_impl(
             )
             for item in writer_inputs
         ]
+    # ``candidate_partial_handoff`` is part of the input builder above.  It is
+    # deliberately present before request measurement, plan freezing, and the
+    # actual caller boundary; adding it here would make the frozen envelope
+    # differ from the bytes sent to the Writer.
+    effective_editor_caller = editor_caller or llm_caller
+    effective_rewrite_caller = rewrite_caller or llm_caller
+    if effective_mode == "unified" and unified_budget_envelope is not None:
+        # Editor and Rewrite are direct model consumers, but they are still
+        # part of this run's finite authoring reservation.  The wrapper owns
+        # the durable start/measure/send/finish boundary and returns a typed
+        # block before transport when the active profile omitted either role.
+        from code2paper.agentic.proposal_call_accounting import (
+            build_budgeted_auxiliary_llm_caller,
+        )
+
+        auxiliary_envelope = _unified_auxiliary_budget_envelope(
+            base_envelope=unified_budget_envelope,
+            llm_config=llm_config,
+            out_root=Path(out_root),
+            tokenizer=unified_tokenizer,
+        )
+        auxiliary_envelope_path = method_output(
+            Path(out_root), "run_invocation_budget_envelope_v1.auxiliary"
+        )
+        if auxiliary_envelope is not unified_budget_envelope:
+            paths["run_invocation_budget_envelope_v1.auxiliary"] = str(
+                auxiliary_envelope_path
+            )
+        effective_editor_caller = build_budgeted_auxiliary_llm_caller(
+            llm_config,
+            auxiliary_envelope,
+            accounting_root=out_root,
+            tokenizer=unified_tokenizer,
+            base_caller=editor_caller or llm_caller or _default_llm_caller,
+            revision_id=f"publication-editor:{plan.content_digest}",
+        )
+        effective_rewrite_caller = build_budgeted_auxiliary_llm_caller(
+            llm_config,
+            auxiliary_envelope,
+            accounting_root=out_root,
+            tokenizer=unified_tokenizer,
+            base_caller=rewrite_caller or llm_caller or _default_llm_caller,
+            revision_id=f"publication-rewrite:{plan.content_digest}",
+        )
     if effective_mode == "unified":
         from code2paper.agentic.mechanism_context_pages import (
             build_shared_payload_delivery_receipt,
@@ -2255,6 +4414,31 @@ def _run_publication_method_writer_impl(
         from code2paper.agentic.mechanism_context_projection import (
             serialize_shared_mechanism_payload,
         )
+
+        writer_ledger_root = (
+            Path(out_root) / "artifacts" / "06_authoring" / "invocations"
+        )
+        writer_resume_plan = None
+        writer_resume_fragments: dict[tuple[str, str], Mapping[str, Any]] = {}
+        if (
+            unified_writer_plan is not None
+            and unified_archive is not None
+            and unified_writer_workset_manifest is not None
+            and unified_budget_envelope is not None
+        ):
+            writer_resume_plan, writer_resume_fragments = (
+                _load_unified_writer_resume_state(
+                    ledger_root=writer_ledger_root,
+                    invocation_plan=unified_writer_plan,
+                    archive_digest=str(unified_archive.content_digest),
+                    workset_manifest_digest=str(
+                        unified_writer_workset_manifest.content_digest
+                    ),
+                    model_identity_digest=str(
+                        unified_budget_envelope.model_identity_digest
+                    ),
+                )
+            )
 
         def _capturing_writer_caller(config: Any, request: Any) -> Any:
             payload = getattr(request, "input_payload", None)
@@ -2279,11 +4463,16 @@ def _run_publication_method_writer_impl(
                 sha256_digest,
             )
             from code2paper.agentic.unified_context_compiler import (
+                account_unified_request_tokens,
                 consumer_request_envelope_digest,
+                remaining_run_input_tokens,
+                spend_input_tokens_by_role,
             )
             from code2paper.agentic.unified_context_models import (
                 ActualRequestReceiptV2,
                 InvocationAttemptStartedV1,
+                UNIFIED_INVOCATION_BUDGET_EXCEEDED,
+                UNIFIED_INVOCATION_BUDGET_MISSING,
                 UNIFIED_UNPLANNED_ACTUAL_REQUEST,
             )
             from code2paper.agentic.unified_invocation_ledger import (
@@ -2292,6 +4481,10 @@ def _run_publication_method_writer_impl(
                 publish_attempt_completed,
                 publish_attempt_started,
                 publish_output_fragment,
+                read_all_completed_receipts,
+                check_run_budget_before_send,
+                register_invocation_plan,
+                unsettled_started_attempt_records,
             )
 
             # A section Writer request must carry one and only one immutable
@@ -2353,26 +4546,7 @@ def _run_publication_method_writer_impl(
                     blocked_reason=f"{UNIFIED_UNPLANNED_ACTUAL_REQUEST}:{invocation_id or page_id}",
                 )
 
-            ledger_root = Path(out_root) / "artifacts" / "06_authoring" / "invocations"
-            attempt = last_started_attempt(ledger_root, invocation_id) + 1
-            started_at = time.time()
-            publish_attempt_started(
-                ledger_root,
-                InvocationAttemptStartedV1(
-                    invocation_id=invocation_id,
-                    attempt=attempt,
-                    plan_digest=unified_writer_plan.content_digest,
-                    page_id=page.page_id,
-                    expected_technical_bytes_digest=page.technical_bytes_digest,
-                    expected_request_envelope_digest=invocation.expected_request_envelope_digest,
-                    model_identity_digest=(
-                        unified_budget_envelope.model_identity_digest
-                        if unified_budget_envelope is not None
-                        else "unknown-model"
-                    ),
-                    started_at_unix=started_at,
-                ),
-            )
+            ledger_root = writer_ledger_root
 
             raw_pages = payload.get("shared_contexts") or ()
             raw_page = raw_pages[0] if len(raw_pages) == 1 else b""
@@ -2392,7 +4566,11 @@ def _run_publication_method_writer_impl(
                 if str(value).strip()
             )
             expected_prompt_digest = str(row.get("writer_prompt_digest") or "")
+            is_writer_content_repair = isinstance(
+                payload.get("writer_section_repair"), Mapping
+            )
             request_failures: list[str] = []
+            sent_to_caller = False
             if actual_page_bytes != canonical_json_bytes(dict(page.technical_payload)):
                 request_failures.append(
                     f"unified_actual_page_bytes_mismatch:{invocation_id}"
@@ -2420,6 +4598,11 @@ def _run_publication_method_writer_impl(
                     role="writer",
                     task_ids=actual_tasks,
                     section_id=actual_section_id,
+                    request_payload=getattr(request, "input_payload", None),
+                    rendered_prompt=str(getattr(request, "prompt", "")),
+                    response_schema=(
+                        getattr(request, "response_json_schema", None) or {}
+                    ),
                 )
             else:
                 actual_envelope_digest = sha256_digest(canonical_json_bytes({
@@ -2428,8 +4611,337 @@ def _run_publication_method_writer_impl(
                     "technical_bytes_digest": actual_page_digest,
                     "failures": sorted(set(request_failures)),
                 }))
-            if actual_envelope_digest != invocation.expected_request_envelope_digest:
+            # A bounded content repair intentionally adds a repair packet to
+            # the same page request.  Its envelope is therefore different
+            # from the frozen primary invocation; the page identity, prompt,
+            # schema, and transport budget are still checked above/below, but
+            # the primary envelope digest is not reused as a repair digest.
+            if (
+                actual_envelope_digest != invocation.expected_request_envelope_digest
+                and not is_writer_content_repair
+            ):
                 request_failures.append("unified_actual_request_envelope_mismatch")
+
+            # A completed Writer page is reusable only when the current
+            # request is byte/digest-identical to the admitted invocation.
+            # Replaying the exact persisted response keeps the section parser
+            # and downstream gates active without charging the provider or
+            # manufacturing a new receipt.
+            if (
+                not request_failures
+                and writer_resume_plan is not None
+                and not is_writer_content_repair
+            ):
+                decision = writer_resume_plan.decisions.get(invocation_id)
+                if decision is not None and decision.decision == "reuse":
+                    fragment = writer_resume_fragments.get(
+                        (invocation_id, str(decision.reuse_receipt_digest))
+                    )
+                    fragment_payload = (
+                        fragment.get("fragment") if fragment is not None else None
+                    )
+                    response_text = (
+                        str(fragment_payload.get("response_text") or "")
+                        if isinstance(fragment_payload, Mapping)
+                        else ""
+                    )
+                    if response_text.strip():
+                        from code2paper.export.run_manifest import hash_text
+
+                        prior_attempt = int(
+                            getattr(decision, "next_attempt", 1) or 1
+                        ) - 1
+                        unified_v2_writer_page_request_records.append({
+                            "invocation_id": invocation_id,
+                            "section_id": actual_section_id,
+                            "page_id": page.page_id,
+                            "actual_technical_bytes_digest": actual_page_digest,
+                            "expected_technical_bytes_digest": page.technical_bytes_digest,
+                            "expected_request_envelope_digest": invocation.expected_request_envelope_digest,
+                            "actual_request_envelope_digest": actual_envelope_digest,
+                            "accepted": True,
+                            "response_hash": (
+                                str(fragment_payload.get("response_hash") or "")
+                                if isinstance(fragment_payload, Mapping)
+                                else ""
+                            ),
+                            "response_nonempty": True,
+                            # Transport delivery and paragraph-content
+                            # acceptance are separate gates.  This reused
+                            # response crossed the caller boundary; its
+                            # content acceptance is still evaluated by the
+                            # normal Writer transaction path below.
+                            "transport_response_status": "nonempty",
+                            "task_status": "complete",
+                            "content_accepted": True,
+                            "content_acceptance_status": "accepted",
+                            "repair_committed": False,
+                            "resume_eligible": True,
+                            "receipt_digest": str(decision.reuse_receipt_digest),
+                            "attempt": prior_attempt,
+                            "reused_from_ledger": True,
+                            "request_failures": [],
+                        })
+                        return LLMResponse(
+                            text=response_text,
+                            response_hash=(
+                                str(fragment_payload.get("response_hash") or "")
+                                if isinstance(fragment_payload, Mapping)
+                                else ""
+                            ) or hash_text(response_text),
+                            blocked_reason=(
+                                str(fragment_payload.get("blocked_reason") or "")
+                                if isinstance(fragment_payload, Mapping)
+                                else ""
+                            ),
+                            cached=True,
+                            response_mode="durable_ledger_reuse",
+                            finish_reason="resume_reuse",
+                        )
+
+            attempt = last_started_attempt(ledger_root, invocation_id) + 1
+            if attempt > int(getattr(invocation, "max_attempts", 0) or 0):
+                request_failures.append(
+                    f"attempt_limit_exhausted:{invocation_id}:{attempt}>"
+                    f"{int(getattr(invocation, 'max_attempts', 0) or 0)}"
+                )
+            started_at = time.time()
+            # Primary attempts are bound to the immutable plan envelope.  A
+            # content repair is a bounded, page-preserving request whose
+            # payload deliberately adds the repair packet; bind its started
+            # marker to the exact serialized envelope that will be metered and
+            # recorded in the receipt.  Otherwise a valid repair receipt can
+            # never be selected by the durable resume check because its
+            # repair envelope necessarily differs from the primary one.
+            started_request_envelope_digest = (
+                actual_envelope_digest
+                if is_writer_content_repair and not request_failures
+                else invocation.expected_request_envelope_digest
+            )
+            publish_attempt_started(
+                ledger_root,
+                InvocationAttemptStartedV1(
+                    invocation_id=invocation_id,
+                    attempt=attempt,
+                    plan_digest=unified_writer_plan.content_digest,
+                    page_id=page.page_id,
+                    expected_technical_bytes_digest=page.technical_bytes_digest,
+                    expected_request_envelope_digest=started_request_envelope_digest,
+                    model_identity_digest=(
+                        unified_budget_envelope.model_identity_digest
+                        if unified_budget_envelope is not None
+                        else "unknown-model"
+                    ),
+                    started_at_unix=started_at,
+                    content_repair_attempt=is_writer_content_repair,
+                ),
+            )
+
+            # R6: measure the actual request with the frozen envelope meter
+            # before it can be sent.  An over-budget request is rejected at
+            # this boundary and still receives a durable receipt.
+            token_accounting = None
+            if unified_budget_envelope is not None:
+                role_budget = unified_budget_envelope.request_budget_by_role.get("writer")
+                if role_budget is None:
+                    request_failures.append(
+                        f"{UNIFIED_INVOCATION_BUDGET_MISSING}:role_budget:"
+                        f"{invocation_id}"
+                    )
+                else:
+                    token_accounting = account_unified_request_tokens(
+                        consumer_role="writer",
+                        rendered_prompt=str(getattr(request, "prompt", "")),
+                        input_payload=getattr(request, "input_payload", None),
+                        response_schema=(
+                            getattr(request, "response_json_schema", None) or {}
+                        ),
+                        request_budget=role_budget,
+                        # The writer/realizer request carries role scaffolding
+                        # around the admitted consumer envelope, so the send
+                        # boundary enforces the declared per-request cap.  The
+                        # envelope digests above still prove the page bytes,
+                        # task set and prompt are the frozen ones.
+                        max_input_tokens=int(
+                            unified_budget_envelope.max_request_input_tokens_by_role[
+                                "writer"
+                            ]
+                        ),
+                        model_context_tokens=int(
+                            unified_budget_envelope.model_context_tokens
+                        ),
+                        safety_margin_tokens=int(
+                            unified_budget_envelope.safety_margin_tokens
+                        ),
+                        meter=unified_budget_envelope.token_meter,
+                        tokenizer=unified_tokenizer,
+                        invocation_id=invocation_id,
+                        page_id=page.page_id,
+                        scaffolding_reserve_tokens=0,
+                    )
+                    if not token_accounting.fits:
+                        request_failures.append(
+                            f"{UNIFIED_INVOCATION_BUDGET_EXCEEDED}:"
+                            f"actual_request_input_tokens:{invocation_id}:"
+                            f"{token_accounting.input_tokens}>"
+                            f"{token_accounting.max_input_tokens}"
+                        )
+                    elif (
+                        not is_writer_content_repair
+                        and token_accounting.input_tokens > int(
+                            invocation.max_input_tokens
+                        )
+                    ):
+                        # The plan value is an upper bound for this role: the
+                        # request may not exceed what admission reserved.
+                        request_failures.append(
+                            f"{UNIFIED_INVOCATION_BUDGET_EXCEEDED}:"
+                            f"planned_request_input_tokens:{invocation_id}:"
+                            f"{token_accounting.input_tokens}>"
+                            f"{int(invocation.max_input_tokens)}"
+                        )
+                    else:
+                        try:
+                            # R6 correction: the debit covers the run and its
+                            # whole revision lineage.  Filtering receipts by
+                            # the current plan digest let a previous revision's
+                            # spend disappear from the bound.
+                            register_invocation_plan(
+                                ledger_root, unified_writer_plan
+                            )
+                            completed_receipts = read_all_completed_receipts(
+                                ledger_root, strict=True
+                            )
+                            spent_by_role = spend_input_tokens_by_role(
+                                completed_receipts,
+                            )
+                            # The declared retry reserve is additive headroom;
+                            # it must not be allowed to consume the allowance
+                            # for primary pages that have not been sent yet.
+                            # Keep the full spend in ``spent_by_role`` for the
+                            # durable whole-run/global check, while keeping a
+                            # primary-only view for the current phase check.
+                            primary_spent_by_role = spend_input_tokens_by_role(
+                                receipt
+                                for receipt in completed_receipts
+                                if not bool(
+                                    getattr(receipt, "content_repair_attempt", False)
+                                )
+                            )
+                            # A crash between the provider call and its
+                            # receipt may still have spent tokens: reserve the
+                            # planned input for every unsettled attempt.
+                            unsettled_records = unsettled_started_attempt_records(
+                                ledger_root,
+                                unified_writer_plan,
+                                exclude=(invocation_id, attempt),
+                            )
+                            unmetered = [
+                                record for record in unsettled_records
+                                if record.plan_source == "unknown"
+                            ]
+                            if unmetered:
+                                raise ValueError(
+                                    "unified_unsettled_attempt_unmetered:"
+                                    + ",".join(
+                                        f"{record.invocation_id}:{record.attempt}"
+                                        for record in unmetered[:5]
+                                    )
+                                )
+                            unsettled_input_tokens = sum(
+                                record.planned_input_tokens
+                                for record in unsettled_records
+                            )
+                            spent_by_role["writer"] = (
+                                int(spent_by_role.get("writer", 0))
+                                + unsettled_input_tokens
+                            )
+                            # Retain unsettled primary attempts against the
+                            # primary allowance. A content-repair marker is
+                            # already protected by the separate retry reserve;
+                            # charging it here would make the primary page
+                            # appear to have been spent twice.
+                            primary_spent_by_role["writer"] = (
+                                int(primary_spent_by_role.get("writer", 0))
+                                + sum(
+                                    record.planned_input_tokens
+                                    for record in unsettled_records
+                                    if not record.content_repair_attempt
+                                )
+                            )
+                        except Exception as exc:  # noqa: BLE001 - fail closed
+                            spent_by_role = {}
+                            primary_spent_by_role = {}
+                            failure_code = (
+                                "run_ledger_corrupt"
+                                if "unified_receipt_corrupt" in str(exc)
+                                else "run_ledger_unreadable"
+                            )
+                            request_failures.append(
+                                f"{UNIFIED_INVOCATION_BUDGET_MISSING}:"
+                                f"{failure_code}:{invocation_id}:"
+                                f"{type(exc).__name__}"
+                            )
+                        if is_writer_content_repair:
+                            # A repair is explicitly covered by the additive
+                            # retry reserve and still goes through the global
+                            # cumulative meter below.  Do not compare it to
+                            # the primary-only allowance.
+                            remaining = remaining_run_input_tokens(
+                                reserved_input_tokens_by_role=(
+                                    unified_writer_plan.reserved_input_tokens_by_role
+                                ),
+                                spent_input_tokens_by_role=spent_by_role,
+                                role="writer",
+                            )
+                        else:
+                            # Primary delivery must retain all future primary
+                            # pages.  Repairs may spend the separately
+                            # declared retry reserve, but cannot starve this
+                            # phase's frozen primary plan.
+                            primary_reserved = int(
+                                (
+                                    unified_writer_plan.planned_input_tokens_by_role
+                                    or {}
+                                ).get("writer", 0)
+                                or 0
+                            )
+                            remaining = primary_reserved - int(
+                                primary_spent_by_role.get("writer", 0) or 0
+                            )
+                        # A content repair is a second attempt explicitly
+                        # admitted by the invocation's ``max_attempts``.
+                        # Its payload is a bounded Writer-owned repair packet,
+                        # so the durable cumulative meter below is the
+                        # authority for this attempt.  The primary check above
+                        # deliberately excludes repair spend so later primary
+                        # pages retain their frozen allowance.
+                        if (
+                            token_accounting.input_tokens > remaining
+                            and not is_writer_content_repair
+                        ):
+                            request_failures.append(
+                                f"{UNIFIED_INVOCATION_BUDGET_EXCEEDED}:"
+                                f"run_reservation:{invocation_id}:"
+                                f"{token_accounting.input_tokens}>{remaining}"
+                            )
+                        if not request_failures:
+                            request_failures.extend(
+                                check_run_budget_before_send(
+                                    ledger_root,
+                                    unified_budget_envelope,
+                                    role="writer",
+                                    invocation_id=invocation_id,
+                                    is_content_repair=is_writer_content_repair,
+                                    request_input_tokens=int(
+                                        token_accounting.input_tokens
+                                    ),
+                                    current_reserved_input_tokens=int(
+                                        invocation.max_input_tokens
+                                    ),
+                                    current_attempt_recorded=True,
+                                )
+                            )
 
             if request_failures:
                 # A mutated/unplanned request is rejected at the caller
@@ -2446,6 +4958,8 @@ def _run_publication_method_writer_impl(
                     ),
                 )
             else:
+                publish_provider_request(ledger_root, invocation.invocation_id, attempt, request, config)
+                sent_to_caller = True
                 try:
                     response = base_caller(config, request)
                 except Exception as exc:  # noqa: BLE001 - receipt must record the call failure
@@ -2480,9 +4994,7 @@ def _run_publication_method_writer_impl(
             delivery_status = "accepted" if not request_failures else "rejected"
             delivery_rejection = request_failures[0] if request_failures else ""
             task_status = (
-                "complete"
-                if response_text.strip() and not getattr(response, "blocked_reason", "")
-                else "partial" if response_text.strip() else "failed"
+                "partial" if response_text.strip() else "failed"
             )
             receipt = ActualRequestReceiptV2(
                 invocation_id=invocation_id,
@@ -2503,10 +5015,17 @@ def _run_publication_method_writer_impl(
                     if unified_budget_envelope is not None
                     else "unknown-model"
                 ),
+                provider_usage=getattr(response, "token_usage", None),
+                provider_diagnostics_digest=(publish_provider_response(
+                    ledger_root, invocation_id, attempt, response,
+                ) if sent_to_caller else ""),
+                reserved_input_tokens=int(invocation.max_input_tokens),
+                token_accounting=token_accounting,
                 started_at_unix=started_at,
                 finished_at_unix=time.time(),
                 delivery_status=delivery_status,  # type: ignore[arg-type]
                 delivery_rejection_code=delivery_rejection,
+                sent_to_caller=sent_to_caller,
                 task_status=task_status,  # type: ignore[arg-type]
                 succeeded_task_ids=(tuple(invocation.task_ids) if task_status == "complete" else ()),
                 failed_task_ids=(tuple(invocation.task_ids) if task_status != "complete" else ()),
@@ -2518,6 +5037,7 @@ def _run_publication_method_writer_impl(
                     if getattr(response, "blocked_reason", "")
                     else ()
                 ),
+                content_repair_attempt=is_writer_content_repair,
                 upstream_archive_digest=(
                     unified_archive.content_digest if unified_archive is not None else ""
                 ),
@@ -2536,9 +5056,18 @@ def _run_publication_method_writer_impl(
                 "actual_request_envelope_digest": actual_envelope_digest,
                 "accepted": delivery_status == "accepted",
                 "response_nonempty": bool(response_text.strip()),
+                # ``task_status`` on the immutable transport receipt is not
+                # a content verdict.  Keep an explicit response-level field
+                # for the page-delivery gate so a non-empty but invalid
+                # paragraph can proceed to the bounded Writer repair path.
+                "transport_response_status": (
+                    "nonempty" if response_text.strip() else "empty"
+                ),
                 "task_status": task_status,
                 "receipt_digest": receipt.content_digest,
+                "response_hash": str(getattr(response, "response_hash", "")),
                 "attempt": attempt,
+                "content_repair_attempt": is_writer_content_repair,
                 "request_failures": list(dict.fromkeys(request_failures)),
             })
             return response
@@ -2867,6 +5396,12 @@ def _run_publication_method_writer_impl(
     ) -> dict[str, Any]:
         """Summarize required target progress from the actual parsed output."""
 
+        # Keep the full production path and the single-page admission probe
+        # on one transaction/formula/authority/content assessor.  The legacy
+        # implementation below is retained in this snapshot only as a source
+        # reference for older reports; this return is the live path.
+        return assess_publication_writer_response(section, response)
+
         output = response.metadata
         if not isinstance(output, PublicationMethodSectionOutputV1):
             return {
@@ -3149,6 +5684,84 @@ def _run_publication_method_writer_impl(
                 return True, reason
         return False, "required_target_coverage_no_gain"
 
+    def record_writer_page_acceptance(section: WriterSectionInput, response: LLMResponse) -> None:
+        if effective_mode != "unified" or unified_writer_plan is None:
+            return
+        invocation_id = str(section.prompt_payload.get("writer_invocation_id") or "")
+        if not invocation_id:
+            return
+        matching_digests = {record.get("receipt_digest") for record in unified_v2_writer_page_request_records
+                            if record.get("invocation_id") == invocation_id
+                            and record.get("response_hash") == response.response_hash}
+        candidates = sorted(
+            (r for r in unified_v2_writer_receipts if r.content_digest in matching_digests),
+            key=lambda item: item.attempt,
+        )
+        if not candidates:
+            # A digest-validated reuse is re-parsed by the Writer, but does
+            # not manufacture a new transport/content receipt.
+            if writer_resume_plan and writer_resume_plan.decisions.get(invocation_id, None) is not None:
+                if writer_resume_plan.decisions[invocation_id].decision == "reuse":
+                    return
+            return
+        # The provider may legally return the same response hash on a primary
+        # and its bounded repair.  Match callbacks to the first attempt that
+        # has not received a content sidecar yet; using only the latest
+        # attempt would attach a primary callback to the repair receipt and
+        # could make an uncommitted repair look reusable.
+        unrecorded = [
+            receipt for receipt in candidates
+            if read_writer_content_acceptance(writer_ledger_root, receipt) is None
+        ]
+        if not unrecorded:
+            # The accepted-response callback is allowed to repeat after the
+            # attempt sink.  The sidecar is already authoritative, so do not
+            # rewrite a rejected repair with the incumbent response.
+            return
+        receipt = unrecorded[0]
+        assessment = _assess_structured_writer_output(section, response)
+        failures = list(assessment.get("missing") or ())
+        for key in ("invalid_count", "invalid_witness_count", "authority_violation_count"):
+            if assessment.get(key, 0):
+                failures.append(key)
+        if response.blocked_reason:
+            failures.append(str(response.blocked_reason))
+        metadata = response.metadata
+        if not isinstance(metadata, PublicationMethodSectionOutputV1) or not metadata.paragraphs:
+            failures.append("paragraph_metadata_missing")
+        else:
+            for paragraph in metadata.paragraphs:
+                body = "\n".join(line for line in paragraph.paragraph_markdown.splitlines()
+                                 if not re.match(r"^\s*#", line))
+                if not any(char.isalnum() for char in body):
+                    failures.append("paragraph_body_not_substantive")
+        accepted = not failures
+        content_digest = publish_writer_content_acceptance(
+            writer_ledger_root, receipt, accepted=accepted,
+            response_text=metadata.model_dump_json() if hasattr(metadata, "model_dump_json") else "",
+            failures=list(dict.fromkeys(failures)),
+        )
+        transport_accepted = bool(
+            receipt.delivery_status == "accepted"
+            and receipt.sent_to_caller
+            and receipt.response_digest
+        )
+        for record in unified_v2_writer_page_request_records:
+            if record.get("receipt_digest") == receipt.content_digest:
+                record.update({
+                    "content_accepted": accepted,
+                    "content_acceptance_status": (
+                        "accepted" if accepted else "rejected"
+                    ),
+                    "content_receipt_digest": content_digest,
+                    "repair_committed": bool(
+                        record.get("content_repair_attempt")
+                        and transport_accepted
+                        and accepted
+                    ),
+                    "resume_eligible": bool(transport_accepted and accepted),
+                })
+
     writer = write_publication_method_by_sections(
         llm_config,
         selected_inputs,
@@ -3156,7 +5769,13 @@ def _run_publication_method_writer_impl(
         content_transaction_validator=(
             validate_writer_transaction if propositions is not None else None
         ),
+        page_acceptance_sink=record_writer_page_acceptance,
         content_transaction_assessor=assess_writer_transaction_responses,
+        # Persist every transport attempt, including a rejected primary
+        # content response.  The final accepted-response sink remains active
+        # because a merged repair response can carry metadata that differs
+        # from the raw provider response.
+        response_attempt_sink=record_writer_page_acceptance,
     )
     output_by_section = dict(prior_outputs or {})
     for section_id in effective_resume_section_ids:
@@ -3207,8 +5826,9 @@ def _run_publication_method_writer_impl(
             caller=llm_caller or _default_llm_caller,
             model_context_tokens=model_context_tokens,
             completeness_by_mechanism=completeness_by_mechanism,
-            research_failures=unified_research_failures,
+            research_failures=candidate_lane_research_failures,
             source_failures=repository_load_failures,
+            tokenizer=unified_tokenizer,
         )
         paths.update(realizer_outcome.get("paths") or {})
         unified_realizer_plan = realizer_outcome.get("plan")
@@ -3234,11 +5854,18 @@ def _run_publication_method_writer_impl(
             WriterAggregateReceiptV2,
         )
 
-        records_by_invocation = {
-            str(record.get("invocation_id")): record
-            for record in unified_v2_writer_page_request_records
-            if str(record.get("invocation_id") or "").strip()
-        }
+        records_by_invocation: dict[str, Mapping[str, Any]] = {}
+        for record in unified_v2_writer_page_request_records:
+            invocation_id = str(record.get("invocation_id") or "").strip()
+            if not invocation_id:
+                continue
+            prior = records_by_invocation.get(invocation_id)
+            # A bounded content repair may cross the same immutable page
+            # boundary twice: a rejected budget/transport attempt must not
+            # overwrite the accepted page delivery that already satisfies
+            # the immutable Writer invocation.
+            if prior is None or bool(record.get("accepted")):
+                records_by_invocation[invocation_id] = record
         section_receipt_rows: list[dict[str, Any]] = []
         for workset in unified_writer_workset_manifest.worksets:
             if workset.task_kind != "section":
@@ -3255,8 +5882,9 @@ def _run_publication_method_writer_impl(
                 for invocation_id in required_invocations
                 if records_by_invocation.get(invocation_id, {}).get("accepted")
                 and records_by_invocation.get(invocation_id, {}).get("response_nonempty")
-                and records_by_invocation.get(invocation_id, {}).get("task_status")
-                == "complete"
+                and records_by_invocation.get(invocation_id, {}).get(
+                    "content_accepted"
+                ) is True
             )
             completed_receipt_digests = tuple(
                 str(records_by_invocation[invocation_id].get("receipt_digest") or "")
@@ -3346,14 +5974,45 @@ def _run_publication_method_writer_impl(
                     invocation_plan=unified_writer_plan,
                     request_records=unified_v2_writer_page_request_records,
                 )
-                if (
-                    unified_v2_writer_aggregate_receipt is None
-                    or set(unified_v2_writer_aggregate_receipt.completed_section_ids)
-                    != set(unified_v2_writer_aggregate_receipt.required_section_ids)
-                ):
-                    raise ValueError(
-                        "unified_consumer_receipt_missing:writer:aggregate"
+                aggregate_complete = bool(
+                    unified_v2_writer_aggregate_receipt is not None
+                    and set(unified_v2_writer_aggregate_receipt.completed_section_ids)
+                    == set(unified_v2_writer_aggregate_receipt.required_section_ids)
+                )
+                if not aggregate_complete:
+                    # A transport-complete page whose content transaction is
+                    # rejected (or whose content sidecar is unavailable) is
+                    # a valid incomplete product outcome: keep the transport
+                    # evidence and let the section-quality gate report the
+                    # content failure.  A missing transport receipt is
+                    # different and remains a hard caller-boundary failure.
+                    required_writer_ids = {
+                        str(item.invocation_id)
+                        for item in (unified_writer_plan.invocations if unified_writer_plan else ())
+                        if item.role == "writer" and not item.is_repair
+                    }
+                    records_by_id: dict[str, Mapping[str, Any]] = {}
+                    for record in unified_v2_writer_page_request_records:
+                        invocation_id = str(record.get("invocation_id") or "")
+                        if not invocation_id:
+                            continue
+                        prior = records_by_id.get(invocation_id)
+                        # Preserve the immutable primary transport record over
+                        # a later rejected content-repair attempt.
+                        if prior is None or (
+                            bool(record.get("accepted"))
+                            and not bool(record.get("content_repair_attempt"))
+                        ):
+                            records_by_id[invocation_id] = record
+                    transport_complete = bool(required_writer_ids) and all(
+                        records_by_id.get(invocation_id, {}).get("accepted")
+                        and records_by_id.get(invocation_id, {}).get("response_nonempty")
+                        for invocation_id in required_writer_ids
                     )
+                    if not transport_complete:
+                        raise ValueError(
+                            "unified_consumer_receipt_missing:writer:aggregate"
+                        )
                 payload_trace = []
                 for workset in unified_writer_workset_manifest.worksets:
                     if workset.task_kind != "section":
@@ -3415,14 +6074,33 @@ def _run_publication_method_writer_impl(
             )
             return result, _write_result_only(out_root, result)
 
+    # The legacy MethodSectionPlanV2 adapter remains the compatibility surface
+    # for claim/evidence helpers, while the unified NarrativePlanV3 is the
+    # identity authority for paragraph transactions and final composition.
+    # Keep both handles explicit so downstream artifacts cannot accidentally
+    # derive a digest from the adapter after a page split.
+    active_plan = (
+        unified_narrative_plan
+        if effective_mode == "unified" and unified_narrative_plan is not None
+        else plan
+    )
+    active_plan_digest = str(getattr(active_plan, "content_digest", "") or "")
+
     unit_by_id = {item.argument_unit_id: item for item in plan.argument_units}
     authority_proofs = plan.proofs_by_key()
     accepted: list[tuple[str, str, str]] = []
-    failures: list[str] = list(dict.fromkeys(
-        f"research_readiness_warning:{item}"
-        for item in research_readiness_warnings
-        if str(item).strip()
-    ))
+    failures: list[str] = list(dict.fromkeys([
+        *(
+            f"research_closure_strict_failure:{item}"
+            for item in unified_research_failures
+            if effective_mode == "unified" and str(item).strip()
+        ),
+        *(
+            f"research_readiness_warning:{item}"
+            for item in research_readiness_warnings
+            if str(item).strip()
+        ),
+    ]))
     section_rows: list[dict[str, Any]] = []
     # Binding-contract faults (unknown or duplicate IDs) are malformed Writer
     # responses rather than reviewable prose.  Keep the old blocked semantics
@@ -4412,6 +7090,92 @@ def _run_publication_method_writer_impl(
             "output": output.model_dump(mode="json") if output is not None else None,
         })
 
+    if effective_mode == "unified":
+        # A complete paragraph transaction is the Writer-owned content
+        # surface.  The aggregate section text may be a shorter/normalized
+        # representation and must not discard formula blocks that are present
+        # in the immutable paragraph outputs.  This is deterministic
+        # composition of actual Writer bytes; it does not author or repair
+        # prose.
+        output_by_section = _reconcile_complete_paragraph_sections(
+            plan=active_plan,
+            output_by_section=output_by_section,
+        )
+        paragraph_text_by_section = {
+            str(section_id): str(output.section_markdown or "")
+            for section_id, output in output_by_section.items()
+            if output is not None
+            and str(output.section_markdown or "").strip()
+            and _complete_paragraph_transaction_markdown(
+                section=next(
+                    (
+                        item for item in (getattr(active_plan, "sections", ()) or ())
+                        if str(getattr(item, "section_id", "") or "") == str(section_id)
+                    ),
+                    None,
+                ),
+                output=output,
+            )
+        }
+        if paragraph_text_by_section:
+            # The aggregate section response can be marked incomplete solely
+            # because its compatibility projection dropped a formula block.
+            # Once every current Narrative paragraph transaction is complete,
+            # the section is accepted from that transaction surface.  Only
+            # the narrow aggregate marker is forgiven; malformed response
+            # bindings and other section failures remain fail-closed.
+            accepted_by_id = {
+                str(section_id): (str(text), str(response_ref))
+                for section_id, text, response_ref in accepted
+            }
+            response_ref_by_section = {
+                str(section_id): str(
+                    aggregate.trace.response_hash
+                    if aggregate is not None and aggregate.trace is not None
+                    else prior_response_refs.get(str(section_id), "")
+                )
+                for section_id, aggregate in aggregate_by_section.items()
+            }
+            for row in section_rows:
+                section_id = str(row.get("section_id") or "")
+                paragraph_text = paragraph_text_by_section.get(section_id)
+                if paragraph_text:
+                    row_failures = tuple(
+                        str(value) for value in (row.get("failures") or ())
+                        if str(value) and str(value) != "writer_output_incomplete"
+                    )
+                    response_ref = response_ref_by_section.get(section_id, "")
+                    if not row_failures and response_ref:
+                        accepted_by_id[section_id] = (paragraph_text, response_ref)
+                        row["accepted"] = True
+                        # Keep the authoritative response text in the
+                        # serialized section result.  The paragraph-backed
+                        # section may still retain aggregate diagnostics in
+                        # writer_aggregate.traces for audit.
+                        row["failures"] = []
+                if section_id in output_by_section:
+                    row["output"] = output_by_section[section_id].model_dump(mode="json")
+            ordered_section_ids = [
+                str(getattr(section, "section_id", "") or "")
+                for section in (getattr(active_plan, "sections", ()) or ())
+                if str(getattr(section, "section_id", "") or "").strip()
+            ]
+            ordered_section_ids.extend(
+                section_id for section_id in accepted_by_id
+                if section_id not in ordered_section_ids
+            )
+            accepted = [
+                (
+                    section_id,
+                    text,
+                    response_ref,
+                )
+                for section_id in ordered_section_ids
+                if (text_response := accepted_by_id.get(section_id)) is not None
+                for text, response_ref in (text_response,)
+                if str(text or "").strip() and str(response_ref or "").strip()
+            ]
+
     incumbent_digest_before_run = _incumbent_candidate_digest(out_root)
     accepted, output_by_section, incumbent_merge_warnings = _merge_accepted_with_incumbent(
         accepted=accepted,
@@ -4419,7 +7183,7 @@ def _run_publication_method_writer_impl(
         plan=plan,
         effective_resume_section_ids=effective_resume_section_ids,
         out_root=out_root,
-        plan_digest=plan.content_digest,
+        plan_digest=active_plan_digest,
         claim_digest=claims.content_digest,
         proposition_set_digest=(
             propositions.content_digest if propositions is not None else ""
@@ -4436,7 +7200,7 @@ def _run_publication_method_writer_impl(
     candidate_checkpoint_written = False
     candidate_preview = _compose_candidate_markdown(
         accepted=accepted,
-        plan=plan,
+        plan=active_plan,
         section_outputs=output_by_section,
         excluded_section_ids=candidate_excluded_section_ids,
     )
@@ -4447,7 +7211,7 @@ def _run_publication_method_writer_impl(
             final_text=candidate_preview,
             accepted=accepted,
             rendered_text="\n\n".join(text for _section_id, text, _ref in accepted),
-            plan_digest=plan.content_digest,
+            plan_digest=active_plan_digest,
             claim_digest=claims.content_digest,
             proposition_set_digest=(propositions.content_digest if propositions is not None else ""),
             reason="first_nonempty_writer_output",
@@ -4508,7 +7272,7 @@ def _run_publication_method_writer_impl(
                 ],
             },
             config=llm_config,
-            caller=editor_caller or llm_caller,
+            caller=effective_editor_caller,
         )
         if not editor_result.blocked_reason and editor_result.patches:
             editor_result = _select_safe_editor_section_transactions(
@@ -4521,7 +7285,7 @@ def _run_publication_method_writer_impl(
                 outputs=output_by_section,
                 section_contexts=editor_section_contexts,
                 llm_config=llm_config,
-                editor_caller=editor_caller or llm_caller,
+                editor_caller=effective_editor_caller,
                 qualifier_terms_by_section=qualifier_terms_by_section,
             )
         if editor_result.blocked_reason:
@@ -4633,7 +7397,7 @@ def _run_publication_method_writer_impl(
                         stage="editor_accepted",
                         final_text="\n\n".join(text for _section_id, text, _ref in accepted),
                         accepted=accepted,
-                        plan_digest=plan.content_digest,
+                        plan_digest=active_plan_digest,
                         claim_digest=claims.content_digest,
                         proposition_set_digest=(propositions.content_digest if propositions is not None else ""),
                         reason="editor_transaction_accepted",
@@ -4814,6 +7578,9 @@ def _run_publication_method_writer_impl(
     rewrite_transitions: list[RepairTransitionV1] = []
     rewrite_results: list[dict[str, Any]] = []
     rewrite_failures: list[str] = []
+    # R8: the rewrite-transaction comparison state, bound even when rewrite is
+    # disabled so the snapshot can always be persisted.
+    transaction_state: dict[str, Any] = {}
     rewrite_transition_path = ""
     rewrite_results_path = ""
     rewrite_transition_digest = ""
@@ -4932,7 +7699,7 @@ def _run_publication_method_writer_impl(
                 claims=claims,
                 validation_paths=final_validation_paths,
                 llm_config=llm_config,
-                rewrite_caller=rewrite_caller,
+                rewrite_caller=effective_rewrite_caller,
                 additional_issues_by_section=style_repair_issues,
                 writer_context_by_section=writer_input_by_section,
                 qualifier_terms_by_section=qualifier_terms_by_section,
@@ -5088,11 +7855,31 @@ def _run_publication_method_writer_impl(
                 break
             if not applied_transitions:
                 break  # no further semantic gain this round: stop
+    # R8: persist the final transaction snapshot, including the separately
+    # computed required-target-set digest and per-target failures, so the
+    # comparison denominator survives the run.
+    try:
+        final_transaction_metrics = transaction_state.get("metrics") or {}
+        transaction_metrics_path = method_output(
+            Path(out_root), "rewrite_transaction_metrics_v1"
+        )
+        _atomic_write_text(
+            transaction_metrics_path,
+            json.dumps(
+                final_transaction_metrics,
+                ensure_ascii=False,
+                indent=2,
+                sort_keys=True,
+            ) + "\n",
+        )
+        paths["rewrite_transaction_metrics_v1"] = str(transaction_metrics_path)
+    except (OSError, TypeError, ValueError) as exc:  # noqa: BLE001 - diagnostic
+        failures.append(f"rewrite_transaction_metrics_unpersisted:{type(exc).__name__}")
     # Q0: persist the incumbent after every accepted rewrite transaction (or
     # after the rollback restored the pre-rewrite incumbent).
     candidate_after_rewrite = _compose_candidate_markdown(
         accepted=accepted,
-        plan=plan,
+        plan=active_plan,
         section_outputs=output_by_section,
         excluded_section_ids=candidate_excluded_section_ids,
     )
@@ -5103,7 +7890,7 @@ def _run_publication_method_writer_impl(
             final_text=candidate_after_rewrite,
             accepted=accepted,
             rendered_text="\n\n".join(text for _section_id, text, _ref in accepted),
-            plan_digest=plan.content_digest,
+            plan_digest=active_plan_digest,
             claim_digest=claims.content_digest,
             proposition_set_digest=(propositions.content_digest if propositions is not None else ""),
             reason="rewrite_round_completed",
@@ -5190,10 +7977,24 @@ def _run_publication_method_writer_impl(
     except Exception as exc:  # noqa: BLE001 — model fault: candidate survives as a warning
         proposition_alignment_report = {"error": f"{type(exc).__name__}:{str(exc)[:200]}", "sections": []}
         failures.append(f"proposition_alignment_fault:{type(exc).__name__}")
+    # R3: support precision is measured only from the reverse-validation
+    # report of this exact text.  The report is passed in so the quality
+    # layer records a bound measurement (or an explicit non-measured state)
+    # instead of inferring a score from the absence of failures.
+    quality_validation_report: Any | None = None
+    try:
+        quality_report_path = str(
+            final_validation_paths.get("text_evidence_validation", "") or ""
+        )
+        if quality_report_path and Path(quality_report_path).is_file():
+            quality_validation_report = load_text_evidence_validation(
+                quality_report_path
+            )
+    except (OSError, TypeError, ValueError):
+        quality_validation_report = None
     try:
         quality = evaluate_publication_method_quality(
-        final_text=final_text,
-        plan=plan,
+        final_text=final_text,        plan=plan,
         completeness=completeness,
         section_outputs=tuple(
             output_by_section[section_id]
@@ -5224,6 +8025,7 @@ def _run_publication_method_writer_impl(
         unsupported_positive_claims=len(final_validation_failures),
         final_text_validation_status=final_text_validation_status,
         final_validation_failures=final_validation_failures,
+        validation_report=quality_validation_report,
         # Concept-card lane: the reverse validator's supported verdicts are
         # the binding authority for supported-unit recall and the coverage
         # matrix (the Writer's used_claim_ids may be empty and there is no
@@ -5243,7 +8045,7 @@ def _run_publication_method_writer_impl(
     except Exception as exc:  # noqa: BLE001 — report/model fault: republish the durable candidate
         return _publish_checkpoint_fallback(
             out_root=out_root,
-            plan_digest=plan.content_digest,
+            plan_digest=active_plan_digest,
             claim_digest=claims.content_digest,
             failure=f"quality:{type(exc).__name__}:{str(exc)[:200]}",
         )
@@ -5258,6 +8060,7 @@ def _run_publication_method_writer_impl(
         final_text=final_text,
         accepted=accepted,
         plan=plan,
+        current_narrative_plan=active_plan,
         completeness=completeness,
         readiness=readiness,
         research_requests=research_requests,
@@ -5267,11 +8070,12 @@ def _run_publication_method_writer_impl(
         proposition_alignment_report=proposition_alignment_report,
         section_outputs=tuple(output_by_section.values()),
         excluded_section_ids=candidate_excluded_section_ids,
+        candidate_handoff=candidate_handoff,
         )
     except Exception as exc:  # noqa: BLE001 — bundle fault: republish the durable candidate
         return _publish_checkpoint_fallback(
             out_root=out_root,
-            plan_digest=plan.content_digest,
+            plan_digest=active_plan_digest,
             claim_digest=claims.content_digest,
             failure=f"bundle:{type(exc).__name__}:{str(exc)[:200]}",
         )
@@ -5398,7 +8202,7 @@ def _run_publication_method_writer_impl(
         same_binding = _same_binding_verified_view(
             out_root=out_root,
             final_text=final_text,
-            plan_digest=plan.content_digest,
+            plan_digest=active_plan_digest,
             claim_digest=claims.content_digest,
         )
         if same_binding is not None:
@@ -5437,11 +8241,6 @@ def _run_publication_method_writer_impl(
             ),
         )
 
-    active_plan = (
-        unified_narrative_plan
-        if effective_mode == "unified" and unified_narrative_plan is not None
-        else plan
-    )
     # Binder is a separate V2 role and must finish before publication status is
     # computed.  It consumes the final accepted Writer paragraphs, so a missing
     # or failed Binder receipt cannot be hidden by a successful Writer receipt.
@@ -5577,7 +8376,7 @@ def _run_publication_method_writer_impl(
             final_text=candidate_markdown,
             accepted=accepted,
             rendered_text=final_text,
-            plan_digest=plan.content_digest,
+            plan_digest=active_plan_digest,
             claim_digest=claims.content_digest,
             proposition_set_digest=(propositions.content_digest if propositions is not None else ""),
             verified_markdown=(
@@ -5586,7 +8385,7 @@ def _run_publication_method_writer_impl(
             reason="final_publication",
             last_committed_attempt_id=_publication_attempt_id(
                 out_root=out_root,
-                plan_digest=plan.content_digest,
+                plan_digest=active_plan_digest,
                 claim_digest=claims.content_digest,
                 resumed_section_ids=effective_resume_section_ids,
             ),
@@ -5595,7 +8394,7 @@ def _run_publication_method_writer_impl(
         failures.append("incumbent_commit_rolled_back_empty_attempt")
         return _publish_checkpoint_fallback(
             out_root=out_root,
-            plan_digest=plan.content_digest,
+            plan_digest=active_plan_digest,
             claim_digest=claims.content_digest,
             failure="empty_candidate_attempt_rolled_back_to_incumbent",
         )
@@ -5634,7 +8433,7 @@ def _run_publication_method_writer_impl(
     except Exception as exc:  # noqa: BLE001 — output publish fault: republish the durable candidate
         return _publish_checkpoint_fallback(
             out_root=out_root,
-            plan_digest=plan.content_digest,
+            plan_digest=active_plan_digest,
             claim_digest=claims.content_digest,
             failure=f"outputs:{type(exc).__name__}:{str(exc)[:200]}",
         )
@@ -5691,6 +8490,9 @@ def _run_publication_method_writer_impl(
                 )
                 for ctx in unified_contexts.contexts
             }
+            expected_operation_ids, expected_operation_source = (
+                _load_expected_operation_population(artifact_paths)
+            )
             trace_v2 = write_method_content_trace_v2(
                 trace_v2_path,
                 contexts=unified_contexts,
@@ -5705,6 +8507,8 @@ def _run_publication_method_writer_impl(
                 writer_outputs=output_by_section,
                 research_discovered_operation_ids=discovered_operation_ids,
                 callback_artifacts=trace_callback_artifacts,
+                expected_operation_ids=expected_operation_ids,
+                expected_operation_source=expected_operation_source,
             )
             paths["method_content_trace_v2"] = str(trace_v2_path)
             funnel_path = method_output(Path(out_root), "mechanism_information_funnel_v1")
@@ -5794,7 +8598,7 @@ def _run_publication_method_writer_impl(
     annotation_payload, annotated_candidate = _build_candidate_annotation_payload(
         candidate_markdown=candidate_markdown,
         verified_markdown=verified_markdown,
-        plan=plan,
+        plan=active_plan,
         output_by_section=output_by_section,
         transaction_assessment_path=transaction_assessment_path,
         candidates=publication_field_candidates,
@@ -5827,6 +8631,7 @@ def _run_publication_method_writer_impl(
             section_formula_results=section_formula_results,
             transaction_assessment_path=transaction_assessment_path,
             candidate_authority=candidate_authority,
+            quality=quality,
             review_items=review_items,
             failures=failures,
             research_derived_failure=research_derived_failure,
@@ -11668,6 +14473,268 @@ def _mechanism_packet_from_prompt_payload(
     return packet if isinstance(packet, Mapping) else None
 
 
+def _compact_rewrite_claim(value: Any) -> dict[str, Any]:
+    """Keep only claim authority fields needed by a local style rewrite.
+
+    The full AtomicClaim row contains repository/evidence graph ids and
+    repeated source metadata.  Rewrite is not an evidence owner and only
+    needs the authorized wording boundary and qualifier context.  Keeping
+    this projection separate prevents a page-sized evidence payload from
+    being copied into every auxiliary Rewrite request.
+    """
+
+    if hasattr(value, "model_dump"):
+        value = value.model_dump(mode="json")
+    if not isinstance(value, Mapping):
+        return {}
+    compact: dict[str, Any] = {}
+    for key in (
+        "claim_id",
+        "canonical_text",
+        "claim_kind",
+        "required_qualifiers",
+        "allowed_wording_boundary",
+        "status",
+        "inference_level",
+        "math_op_kind",
+    ):
+        if key not in value:
+            continue
+        item = value[key]
+        if isinstance(item, str) and len(item) > 800:
+            item = item[:800].rsplit(" ", 1)[0].rstrip() + "…"
+        elif isinstance(item, (list, tuple)):
+            item = [str(entry)[:240] for entry in item if str(entry).strip()]
+        compact[key] = item
+    return compact
+
+
+def _compact_rewrite_authority_context(
+    writer_input: WriterSectionInput,
+) -> dict[str, Any]:
+    """Build the bounded Writer authority surface for local Rewrite.
+
+    Unified V2 ``WriterSectionInput`` deliberately retains complete immutable
+    page bytes for post-call binding.  Those bytes are not Rewrite context:
+    the incumbent text and typed issue spans are already supplied, while the
+    page payload can contain millions of tokenized source characters.  This
+    projection carries only organization/binding metadata and compact
+    authority hints; it never mutates the private Writer input used by the
+    deterministic validators.
+    """
+
+    from code2paper.llm.section_writer import (
+        _compact_authoring_packets_v2_for_llm,
+        _compact_authoring_packet_for_llm,
+        _compact_formula_packages_for_llm,
+        _compact_writer_binding_contract_for_llm,
+        _compact_writer_narrative_plan_for_llm,
+        _compact_writer_view_for_llm,
+    )
+
+    payload = dict(writer_input.prompt_payload or {})
+    context: dict[str, Any] = {
+        "section_id": str(payload.get("section_id") or writer_input.section_id),
+        "heading": str(payload.get("heading") or writer_input.heading),
+    }
+    is_unified_v2_surface = bool(
+        payload.get("unified_v2_full_narrative_plan")
+        or any(
+            isinstance(item, Mapping)
+            and str(item.get("v2_page_id") or "").strip()
+            for item in (payload.get("shared_context_metadata") or ())
+        )
+    )
+
+    narrative = (
+        payload.get("unified_v2_full_narrative_plan")
+        or payload.get("narrative_plan")
+    )
+    if narrative:
+        compact_narrative = _compact_writer_narrative_plan_for_llm(
+            narrative,
+            include_witness_contract=not is_unified_v2_surface,
+        )
+        if isinstance(compact_narrative, Mapping) and is_unified_v2_surface:
+            # Rewrite is section-local.  A full-document Narrative plan is an
+            # organization authority, not evidence, so retain only identity
+            # and rows that explicitly belong to the current section.
+            compact_narrative = dict(compact_narrative)
+            for rows_key in ("sections", "narrative_units", "paragraphs"):
+                rows = compact_narrative.get(rows_key)
+                if isinstance(rows, list):
+                    compact_narrative[rows_key] = [
+                        row for row in rows
+                        if isinstance(row, Mapping)
+                        and str(row.get("section_id") or context["section_id"])
+                        == context["section_id"]
+                    ]
+        context["narrative_plan"] = compact_narrative
+    writer_view = payload.get("writer_view")
+    if isinstance(writer_view, Mapping) and not is_unified_v2_surface:
+        context["writer_view"] = _compact_writer_view_for_llm(writer_view)
+    packets = payload.get("authoring_packets_v2")
+    if packets and not is_unified_v2_surface:
+        context["authoring_packets_v2"] = _compact_authoring_packets_v2_for_llm(
+            packets
+        )
+
+    packet = _mechanism_packet_from_prompt_payload(payload)
+    if isinstance(packet, Mapping) and not is_unified_v2_surface:
+        context["mechanism_authoring_packet"] = _compact_authoring_packet_for_llm(
+            packet
+        )
+
+    # Keep the small, pre-V2 authority surface for legacy Writer callers.
+    # These fields are already a projected contract (unlike unified V2 page
+    # bytes), and a few compatibility integrations use them to route style
+    # issues.  Claim rows are still reduced to the Rewrite-only fields above.
+    is_legacy_surface = not any(
+        payload.get(key)
+        for key in (
+            "shared_contexts",
+            "unified_v2_full_narrative_plan",
+            "narrative_plan",
+        )
+    )
+    if is_legacy_surface:
+        legacy_reader_claims = payload.get("reader_facing_claims")
+        if legacy_reader_claims:
+            context["reader_facing_claims"] = [
+                _compact_rewrite_claim(item)
+                if isinstance(item, Mapping) or hasattr(item, "model_dump")
+                else str(item)[:800]
+                for item in legacy_reader_claims
+            ]
+        legacy_constraints = payload.get("validation_constraints")
+        if isinstance(legacy_constraints, Mapping):
+            compact_constraints = dict(legacy_constraints)
+            if isinstance(compact_constraints.get("claims"), (list, tuple)):
+                compact_constraints["claims"] = [
+                    _compact_rewrite_claim(item)
+                    if isinstance(item, Mapping) or hasattr(item, "model_dump")
+                    else str(item)[:800]
+                    for item in compact_constraints["claims"]
+                ]
+            context["validation_constraints"] = compact_constraints
+
+    formula_packages = payload.get("formula_packages") or ()
+    if formula_packages:
+        if is_unified_v2_surface:
+            # The incumbent already contains the exact formula block.  For a
+            # paper-language repair the auxiliary model only needs the closed
+            # package identity and consumer paragraph; symbol inventories and
+            # explanations duplicate the immutable page and can exceed the
+            # auxiliary role's 60k-token request cap.
+            context["formula_packages"] = [
+                {
+                    key: item[key]
+                    for key in (
+                        "package_id",
+                        "consumer_paragraph_id",
+                        "formula_lane",
+                        "semantic_formula_digest",
+                    )
+                    if isinstance(item, Mapping) and key in item
+                }
+                | {
+                    "placeholder": f"[[FORMULA:{item.get('package_id')}]]"
+                }
+                for item in formula_packages
+                if isinstance(item, Mapping) and str(item.get("package_id") or "").strip()
+            ]
+        else:
+            context["formula_packages"] = _compact_formula_packages_for_llm(
+                formula_packages
+            )
+    formula_obligations = []
+    for raw in payload.get("formula_obligations") or ():
+        if hasattr(raw, "model_dump"):
+            raw = raw.model_dump(mode="json")
+        if not isinstance(raw, Mapping):
+            continue
+        row = {
+            key: raw[key]
+            for key in (
+                "obligation_id",
+                "package_id",
+                "consumer_paragraph_id",
+                "formula_role",
+                "expectation",
+                "required",
+                "source_detail_ids",
+            )
+            if key in raw
+        }
+        if is_unified_v2_surface and "source_detail_ids" in row:
+            row["source_detail_ids"] = list(row["source_detail_ids"] or ())[:16]
+        if row:
+            formula_obligations.append(row)
+    if formula_obligations:
+        context["formula_obligations"] = formula_obligations
+
+    binding_contract = payload.get("binding_contract")
+    if isinstance(binding_contract, Mapping):
+        context["binding_contract"] = _compact_writer_binding_contract_for_llm(
+            binding_contract
+        )
+    for key in (
+        "formula_generation_policy",
+        "formula_placeholders_required",
+        "paragraph_transaction_required",
+        "shared_context_metadata",
+        "writer_binding_metadata",
+    ):
+        value = payload.get(key)
+        if value not in (None, "", [], (), {}):
+            if key == "shared_context_metadata" and is_unified_v2_surface:
+                value = [
+                    {
+                        field: item[field]
+                        for field in (
+                            "section_id",
+                            "mechanism_id",
+                            "page_id",
+                            "v2_page_id",
+                            "page_index",
+                            "page_digest",
+                            "page_bytes_digest",
+                            "technical_bytes_digest",
+                            "archive_digest",
+                        )
+                        if isinstance(item, Mapping) and field in item
+                    }
+                    for item in value
+                    if isinstance(item, Mapping)
+                ]
+            context[key] = value
+    encoded_size = len(json.dumps(
+        context, ensure_ascii=False, sort_keys=True, separators=(",", ":")
+    ).encode("utf-8"))
+    if is_unified_v2_surface and encoded_size > 180_000:
+        # The auxiliary role has a 60k-token request cap.  Even with unusual
+        # Unicode/tokenization, a 180 kB authority projection leaves ample
+        # room for the incumbent section, issue spans, schema and response.
+        # Fail before provider dispatch instead of submitting a request that
+        # is guaranteed to be rejected or silently truncated.
+        raise ValueError(
+            f"rewrite_authority_context_exceeds_budget:{encoded_size}:180000"
+        )
+    return context
+
+
+def _is_unified_v2_writer_input(writer_input: WriterSectionInput) -> bool:
+    """Identify page-scoped Writer inputs that require strict owner routing."""
+
+    payload = writer_input.prompt_payload or {}
+    if payload.get("unified_v2_full_narrative_plan"):
+        return True
+    return any(
+        isinstance(item, Mapping) and str(item.get("v2_page_id") or "").strip()
+        for item in (payload.get("shared_context_metadata") or ())
+    )
+
+
 def _writer_facet_coverage(
     output: PublicationMethodSectionOutputV1 | None,
     writer_input: WriterSectionInput | None,
@@ -11775,6 +14842,24 @@ def _formula_rendering_issues_by_section(
     guidance in the reader-facing repair field.
     """
 
+    def _symbol_definition_text(item: Any) -> str:
+        """Render both model tuples and their JSON list representation.
+
+        Unified formula packages cross a JSON boundary before the Rewrite
+        audit.  Pydantic serializes the typed ``tuple[str, str]`` rows as
+        two-item lists, while in-memory package projections may use mapping
+        rows.  This is representation-only normalization: malformed rows are
+        ignored and never become new authority.
+        """
+
+        if isinstance(item, Mapping):
+            symbol = item.get("symbol", "")
+            meaning = item.get("meaning", "")
+            return f"{symbol}={meaning}"
+        if isinstance(item, (list, tuple)) and len(item) >= 2:
+            return f"{item[0]}={item[1]}"
+        return ""
+
     issues: dict[str, list[TextRepairIssueV1]] = {}
     for section_id, output in output_by_section.items():
         writer_input = writer_inputs.get(str(section_id))
@@ -11790,8 +14875,9 @@ def _formula_rendering_issues_by_section(
             if _formula_package_rendered(text, package):
                 continue
             symbols = " ".join(
-                f"{item.get('symbol', '')}={item.get('meaning', '')}"
+                rendered
                 for item in (package.get("symbol_definitions") or ())
+                if (rendered := _symbol_definition_text(item))
             )
             issues.setdefault(str(section_id), []).append(TextRepairIssueV1(
                 sentence_id=f"formula:{section_id}:{index}",
@@ -12070,6 +15156,7 @@ def _candidate_completion_state(
     section_formula_results: Iterable[Any],
     transaction_assessment_path: str | Path,
     candidate_authority: Any | None = None,
+    quality: Any | None = None,
     review_items: Iterable[Any] = (),
     failures: Iterable[str] = (),
     research_derived_failure: str = "",
@@ -12229,6 +15316,46 @@ def _candidate_completion_state(
             add(f"required_formula_disposition_not_consumed:{package_id}")
         else:
             add(f"accepted_formula_package_unconsumed:{package_id}")
+    for package_id, package in sorted(accepted_packages.items()):
+        latex = str(_mapping_value(package, "latex", "") or "").strip()
+        markdown_block = str(
+            _mapping_value(package, "markdown_block", "") or ""
+        ).strip()
+        if package_id in consumed_packages and latex and (
+            latex not in candidate_markdown
+            and (not markdown_block or markdown_block not in candidate_markdown)
+        ):
+            add(f"consumed_formula_package_not_rendered:{package_id}")
+
+    adapter_payload = _read_json_mapping(
+        method_output(Path(out_root), "method_section_plan_adapter_v1")
+    )
+    for unit_id in adapter_payload.get("unassigned_source_argument_unit_ids") or ():
+        add(f"plan_adapter_unassigned_argument_unit:{unit_id}")
+    for unit_id in (
+        adapter_payload.get("ambiguous_source_argument_unit_sections") or {}
+    ):
+        add(f"plan_adapter_ambiguous_argument_unit:{unit_id}")
+    for obligation_id in adapter_payload.get("unassigned_source_obligation_ids") or ():
+        add(f"plan_adapter_unassigned_obligation:{obligation_id}")
+
+    if quality is not None:
+        if not bool(_mapping_value(quality, "plan_gate_passed", False)):
+            add("candidate_plan_gate_failed")
+        safety = _mapping_value(quality, "safety", {}) or {}
+        if not bool(_mapping_value(safety, "hard_gate_passed", False)):
+            add("candidate_epistemic_safety_gate_failed")
+        if int(_mapping_value(safety, "unsupported_positive_claims", 0) or 0) > 0:
+            add("candidate_contains_unsupported_positive_claims")
+        chain = _mapping_value(quality, "content_chain", {}) or {}
+        units = _mapping_value(chain, "content_units", {}) or {}
+        planned_units = int(_mapping_value(units, "planned", 0) or 0)
+        rendered_units = int(_mapping_value(units, "rendered", 0) or 0)
+        if planned_units and rendered_units < planned_units:
+            add(
+                "candidate_argument_units_unrendered:"
+                f"{rendered_units}/{planned_units}"
+            )
 
     authority_status = str(_mapping_value(candidate_authority, "status", "") or "")
     if authority_status == "error":
@@ -12527,6 +15654,203 @@ def _transaction_formula_missing_count(
     return missing
 
 
+def _load_rewrite_narrative_plan(artifact_paths: Mapping[str, str]) -> Any | None:
+    value = str((artifact_paths or {}).get("narrative_plan_v3", "") or "")
+    if not value or not Path(value).is_file():
+        return None
+    try:
+        from code2paper.agentic.method_architect import NarrativePlanV3
+
+        return NarrativePlanV3.model_validate_json(
+            Path(value).read_text(encoding="utf-8")
+        )
+    except (OSError, TypeError, ValueError):
+        return None
+
+
+def _rewrite_target_contract_map(
+    rows: Any,
+) -> dict[str, dict[str, Any]]:
+    """Return one canonical contract per ``kind:id`` target."""
+
+    contracts: dict[str, dict[str, Any]] = {}
+    for row in rows or ():
+        if not isinstance(row, Mapping):
+            continue
+        kind = str(row.get("target_kind") or "").strip()
+        target_id = str(row.get("target_id") or "").strip()
+        if not kind or not target_id:
+            continue
+        contract = {
+            key: value
+            for key, value in row.items()
+            if key not in {"argument_unit_id", "section_id", "paragraph_id"}
+        }
+        key = f"{kind}:{target_id}"
+        existing = contracts.get(key)
+        if existing is None:
+            contracts[key] = contract
+        elif existing != contract:
+            # Two owners disagree about the same target's contract; keep both
+            # by folding the differing fields into a sorted union so the
+            # comparison can never silently pick one.
+            merged = dict(existing)
+            for field, value in contract.items():
+                if merged.get(field) == value:
+                    continue
+                merged[field] = tuple(sorted({
+                    str(item) for item in (
+                        *(merged.get(field) or ()),
+                        *(value or ()),
+                    )
+                }))
+            contracts[key] = merged
+    return contracts
+
+
+#: Target-bearing fields of one argument unit.  The set is the comparison
+#: denominator for a rewrite transaction; headings, section order, wording and
+#: generation time are deliberately absent.
+_REWRITE_TARGET_FIELDS: tuple[tuple[str, str], ...] = (
+    ("proposition", "proposition_ids"),
+    ("concept_card", "concept_card_ids"),
+    ("brief", "brief_ids"),
+    ("claim", "claim_ids"),
+    ("equation", "equation_ids"),
+    ("configuration", "configuration_ids"),
+    ("author_rationale", "author_rationale_ids"),
+    ("empirical", "empirical_ids"),
+    ("literature", "literature_ids"),
+    ("behavior_relation", "behavior_relation_ids"),
+    ("source_artifact", "source_artifact_ids"),
+)
+
+
+def _rewrite_required_target_rows(
+    *,
+    plan: MethodSectionPlanV2,
+    claims: AtomicClaimSetV3 | None = None,
+    propositions: MethodPropositionSetV1 | None = None,
+    narrative_plan: Any | None = None,
+) -> tuple[dict[str, Any], ...]:
+    """Project the canonical required target set of one plan.
+
+    Only stable IDs, the owning unit's authority lane, and the target's own
+    required qualifiers/polarity enter the projection.  Heading text, section
+    order, reader wording and generation time are never part of it.
+    """
+
+    claim_by_id = {
+        str(item.claim_id): item for item in (getattr(claims, "claims", ()) or ())
+    }
+    proposition_by_id = {
+        str(item.proposition_id): item
+        for item in (getattr(propositions, "propositions", ()) or ())
+    }
+    rows: list[dict[str, Any]] = []
+    for unit in (getattr(plan, "argument_units", ()) or ()):
+        unit_id = str(getattr(unit, "argument_unit_id", "") or "")
+        authority_lanes = tuple(sorted(
+            str(value)
+            for value in (getattr(unit, "authority_lanes", ()) or ())
+            if str(value).strip()
+        ))
+        for kind, field_name in _REWRITE_TARGET_FIELDS:
+            values = getattr(unit, field_name, ()) or ()
+            for value in values:
+                target_id = str(value or "").strip()
+                if not target_id:
+                    continue
+                row: dict[str, Any] = {
+                    "target_kind": kind,
+                    "target_id": target_id,
+                    "argument_unit_id": unit_id,
+                    "authority_lanes": authority_lanes,
+                }
+                source = (
+                    proposition_by_id.get(target_id)
+                    if kind == "proposition"
+                    else claim_by_id.get(target_id)
+                    if kind == "claim"
+                    else None
+                )
+                if source is not None:
+                    qualifiers = getattr(source, "required_qualifiers", ()) or ()
+                    row["required_qualifiers"] = tuple(sorted(
+                        str(value) for value in qualifiers if str(value).strip()
+                    ))
+                    for field in ("polarity", "claim_kind", "math_op_kind"):
+                        attribute = getattr(source, field, "")
+                        if str(attribute or "").strip():
+                            row[field] = str(attribute)
+                rows.append(row)
+    # Section-level formula obligations are part of the same denominator: a
+    # candidate that silently drops one is not a quality gain.
+    for section in (getattr(plan, "sections", ()) or ()):
+        section_id = str(getattr(section, "section_id", "") or "")
+        for obligation_id in (
+            getattr(section, "formula_obligation_ids", ()) or ()
+        ):
+            key = str(obligation_id or "").strip()
+            if key:
+                rows.append({
+                    "target_kind": "formula_obligation",
+                    "target_id": key,
+                    "argument_unit_id": "",
+                    "section_id": section_id,
+                    "authority_lanes": ("executable_hard",),
+                })
+    # Paragraph-owned formula obligations come from the narrative plan, which
+    # is the only artifact that binds an obligation to one consumer paragraph.
+    for section in (getattr(narrative_plan, "sections", ()) or ()):
+        section_id = str(getattr(section, "section_id", "") or "")
+        for paragraph in (getattr(section, "paragraphs", ()) or ()):
+            paragraph_id = str(getattr(paragraph, "paragraph_id", "") or "")
+            for obligation_id in (
+                getattr(paragraph, "formula_obligation_ids", ()) or ()
+            ):
+                key = str(obligation_id or "").strip()
+                if key:
+                    rows.append({
+                        "target_kind": "formula_obligation",
+                        "target_id": key,
+                        "argument_unit_id": "",
+                        "section_id": section_id,
+                        "paragraph_id": paragraph_id,
+                        "authority_lanes": ("executable_hard",),
+                    })
+    rows.sort(key=lambda item: (
+        str(item["target_kind"]),
+        str(item["target_id"]),
+        str(item.get("argument_unit_id", "")),
+    ))
+    return tuple(rows)
+
+
+def _rewrite_required_target_set(
+    rows: Sequence[Mapping[str, Any]],
+) -> tuple[str, tuple[str, ...], tuple[dict[str, Any], ...]]:
+    """Return (canonical digest, canonical IDs, canonical rows)."""
+
+    from code2paper.agentic.mechanism_context_models import (
+        canonical_json_bytes,
+        sha256_digest,
+    )
+
+    canonical_rows = tuple(dict(row) for row in rows)
+    digest = sha256_digest(canonical_json_bytes({
+        "schema_version": "rewrite-required-target-set-v1",
+        "targets": list(canonical_rows),
+    }))
+    ids = tuple(
+        sorted(
+            f"{row['target_kind']}:{row['target_id']}"
+            for row in canonical_rows
+        )
+    )
+    return digest, ids, canonical_rows
+
+
 def _rewrite_transaction_metrics(
     *,
     accepted: list[tuple[str, str, str]],
@@ -12725,7 +16049,33 @@ def _rewrite_transaction_metrics(
         missing_count = len(set(missing_facets) | set(overlap_facets))
         if missing_count:
             facet_missing_by_section[str(section_id)] = missing_count
+    # R8: the comparison denominator is computed and persisted separately
+    # from the plan digest, so a heading or ordering change cannot silently
+    # move the baseline and a removed target cannot shrink it.
+    target_digest, target_ids, target_rows = _rewrite_required_target_set(
+        _rewrite_required_target_rows(
+            plan=plan,
+            claims=claims,
+            propositions=propositions,
+            narrative_plan=_load_rewrite_narrative_plan(artifact_paths),
+        )
+    )
+    target_failures: dict[str, int] = {}
+    for section_id, entries in unsupported_by_section.items():
+        del section_id
+        for entry in entries:
+            target_key = f"claim:{entry.get('atomic_claim_id', '')}"
+            target_failures[target_key] = target_failures.get(target_key, 0) + 1
+    for row in alignment.get("sections") or ():
+        for proposition_id in row.get("missing_proposition_ids") or ():
+            target_key = f"proposition:{proposition_id}"
+            target_failures[target_key] = target_failures.get(target_key, 0) + 1
     return {
+        "required_target_set_digest": target_digest,
+        "required_target_ids": target_ids,
+        "required_target_count": len(target_ids),
+        "required_target_rows": target_rows,
+        "target_failures": target_failures,
         "validation_status": validation_status,
         "validation_counts": validation_counts,
         "validation_detail": validation_detail,
@@ -12755,7 +16105,62 @@ def _rewrite_transaction_has_cluster_gain(
     *,
     cluster_name: str,
 ) -> tuple[bool, str]:
-    """Require non-regression everywhere and gain in the assigned cluster."""
+    """Require non-regression everywhere and gain in the assigned cluster.
+
+    R8: the required target set is the comparison denominator.  Deleting an
+    old required target is never a gain, and every target present on both
+    sides must stay non-regressing; legal additions form a new baseline while
+    the intersection keeps its non-regression check.
+    """
+
+    incumbent_targets = set(incumbent.get("required_target_ids") or ())
+    candidate_targets = set(candidate.get("required_target_ids") or ())
+    if incumbent_targets:
+        removed = sorted(incumbent_targets - candidate_targets)
+        if removed:
+            return False, "required_target_removed:" + ",".join(removed[:5])
+        # R8 correction: compare the full target contract, not only its ID.
+        # Dropping a required qualifier, flipping polarity or weakening the
+        # authority requirement of the same target is not a quality gain.
+        incumbent_contracts = _rewrite_target_contract_map(
+            incumbent.get("required_target_rows") or ()
+        )
+        candidate_contracts = _rewrite_target_contract_map(
+            candidate.get("required_target_rows") or ()
+        )
+        for target_key in sorted(incumbent_targets & candidate_targets):
+            incumbent_contract = incumbent_contracts.get(target_key)
+            candidate_contract = candidate_contracts.get(target_key)
+            if incumbent_contract is None or candidate_contract is None:
+                continue
+            if incumbent_contract != candidate_contract:
+                changed = sorted({
+                    *(
+                        field
+                        for field in incumbent_contract
+                        if incumbent_contract.get(field)
+                        != candidate_contract.get(field)
+                    ),
+                    *(
+                        field
+                        for field in candidate_contract
+                        if incumbent_contract.get(field)
+                        != candidate_contract.get(field)
+                    ),
+                })
+                return False, (
+                    "required_target_contract_changed:"
+                    + target_key
+                    + ":"
+                    + ",".join(changed[:5])
+                )
+        incumbent_failures = incumbent.get("target_failures") or {}
+        candidate_failures = candidate.get("target_failures") or {}
+        for target_key in sorted(incumbent_targets & candidate_targets):
+            if int(candidate_failures.get(target_key, 0)) > int(
+                incumbent_failures.get(target_key, 0)
+            ):
+                return False, f"required_target_regressed:{target_key}"
 
     if (
         incumbent.get("validation_status") == "passed"
@@ -13234,7 +16639,17 @@ def _apply_local_rewrite_repairs(
         packet = _mechanism_packet_from_prompt_payload(
             writer_input.prompt_payload if writer_input is not None else None
         )
-        if isinstance(packet, Mapping) and packet.get("facets"):
+        strict_owner_scope = bool(
+            writer_input is not None
+            and (
+                _is_unified_v2_writer_input(writer_input)
+                or (
+                    isinstance(packet, Mapping)
+                    and packet.get("facets")
+                )
+            )
+        )
+        if strict_owner_scope:
             from code2paper.agentic.publication_issue_owner_router import (
                 route_publication_issue,
             )
@@ -13271,7 +16686,7 @@ def _apply_local_rewrite_repairs(
                 item.get("claim_id") for item in section_context["authorized_claims"]
             }:
                 section_context["authorized_claims"].append(
-                    claim.model_dump(mode="json")
+                    _compact_rewrite_claim(claim)
                 )
     known_section_ids = {section_id for section_id, _text, _ref in accepted}
     for section_id, section_issues in additional_issues_by_section.items():
@@ -13282,7 +16697,17 @@ def _apply_local_rewrite_repairs(
         packet = _mechanism_packet_from_prompt_payload(
             writer_input.prompt_payload if writer_input is not None else None
         )
-        if isinstance(packet, Mapping) and packet.get("facets"):
+        strict_owner_scope = bool(
+            writer_input is not None
+            and (
+                _is_unified_v2_writer_input(writer_input)
+                or (
+                    isinstance(packet, Mapping)
+                    and packet.get("facets")
+                )
+            )
+        )
+        if strict_owner_scope:
             from code2paper.agentic.publication_issue_owner_router import (
                 rewrite_owned_issues,
             )
@@ -13314,7 +16739,7 @@ def _apply_local_rewrite_repairs(
                 item.get("claim_id") for item in section_context["authorized_claims"]
             }:
                 section_context["authorized_claims"].append(
-                    claim.model_dump(mode="json")
+                    _compact_rewrite_claim(claim)
                 )
     for section_id, writer_input in writer_context_by_section.items():
         if section_id not in known_section_ids:
@@ -13329,14 +16754,15 @@ def _apply_local_rewrite_repairs(
         # authorized semantics while repairing paper language.  Authority,
         # evidence, formula, and missing-content decisions stay on their
         # owning routes.
-        section_context["writer_authority_context"] = dict(
-            writer_input.prompt_payload
+        section_context["writer_authority_context"] = (
+            _compact_rewrite_authority_context(writer_input)
         )
         packet = _mechanism_packet_from_prompt_payload(
             writer_input.prompt_payload
         )
         section_context["strict_owner_routing"] = bool(
-            isinstance(packet, Mapping) and packet.get("facets")
+            _is_unified_v2_writer_input(writer_input)
+            or (isinstance(packet, Mapping) and packet.get("facets"))
         )
         section_context["writer_heading"] = str(
             section_context.get("authorized_heading")
@@ -14671,6 +18097,76 @@ def _normalize_section_heading_breaks(markdown: str, *, expected_heading: str = 
     return "\n".join(normalized)
 
 
+def _behavior_graph_summary(graph: Any | None) -> dict[str, Any]:
+    """Return a compact identity/count summary for graph provenance."""
+
+    if graph is None:
+        return {"present": False, "node_count": 0, "relation_count": 0}
+    nodes = tuple(getattr(graph, "nodes", ()) or ())
+    relations = tuple(getattr(graph, "relations", ()) or ())
+    return {
+        "present": True,
+        "repo_snapshot_id": str(getattr(graph, "repo_snapshot_id", "") or ""),
+        "project_tree_hash": str(getattr(graph, "project_tree_hash", "") or ""),
+        "content_digest": str(getattr(graph, "content_digest", "") or ""),
+        "node_count": len(nodes),
+        "relation_count": len(relations),
+        "unresolved_relation_count": len(
+            tuple(getattr(graph, "unresolved_relations", ()) or ())
+        ),
+    }
+
+
+def _behavior_graph_rebuild_report(
+    historical: Any | None,
+    current: Any | None,
+    *,
+    entry_symbol_ids: Sequence[str],
+    snapshot_id: str,
+    project_tree_hash: str,
+    historical_load_failure: str = "",
+) -> dict[str, Any]:
+    """Describe the historical observation and the current derived graph."""
+
+    historical_node_ids = {
+        str(getattr(item, "node_id", "") or "")
+        for item in (getattr(historical, "nodes", ()) or ())
+        if str(getattr(item, "node_id", "") or "")
+    }
+    current_node_ids = {
+        str(getattr(item, "node_id", "") or "")
+        for item in (getattr(current, "nodes", ()) or ())
+        if str(getattr(item, "node_id", "") or "")
+    }
+    historical_relation_ids = {
+        str(getattr(item, "relation_id", "") or "")
+        for item in (getattr(historical, "relations", ()) or ())
+        if str(getattr(item, "relation_id", "") or "")
+    }
+    current_relation_ids = {
+        str(getattr(item, "relation_id", "") or "")
+        for item in (getattr(current, "relations", ()) or ())
+        if str(getattr(item, "relation_id", "") or "")
+    }
+    payload: dict[str, Any] = {
+        "schema_version": "1.0",
+        "source": "current_verified_repository_source",
+        "entry_symbol_ids": list(dict.fromkeys(str(item) for item in entry_symbol_ids if str(item))),
+        "repo_snapshot_id": snapshot_id,
+        "project_tree_hash": project_tree_hash,
+        "historical_graph": _behavior_graph_summary(historical),
+        "current_graph": _behavior_graph_summary(current),
+        "node_ids_added_count": len(current_node_ids - historical_node_ids),
+        "node_ids_removed_count": len(historical_node_ids - current_node_ids),
+        "relation_ids_added_count": len(current_relation_ids - historical_relation_ids),
+        "relation_ids_removed_count": len(historical_relation_ids - current_relation_ids),
+    }
+    if historical_load_failure:
+        payload["historical_load_failure"] = historical_load_failure
+    payload["content_digest"] = _digest_json(payload)
+    return payload
+
+
 def _load_repository_authoring_context(
     artifact_paths: Mapping[str, str],
 ) -> dict[str, Any]:
@@ -14707,8 +18203,11 @@ def _load_repository_authoring_context(
             load_failures.append(code)
 
     behavior_graph = None
+    historical_behavior_graph = None
+    historical_graph_load_failure = ""
     graph_value = (
-        artifact_paths.get("behavior_graph_v1", "")
+        artifact_paths.get("behavior_graph_historical_v1", "")
+        or artifact_paths.get("behavior_graph_v1", "")
         or artifact_paths.get("code_graph", "")
     )
     if graph_value and Path(graph_value).is_file():
@@ -14716,10 +18215,11 @@ def _load_repository_authoring_context(
             graph_payload = json.loads(Path(graph_value).read_text(encoding="utf-8"))
             if isinstance(graph_payload, Mapping):
                 graph_payload = graph_payload.get("behavior_graph") or graph_payload.get("graph") or graph_payload
-                behavior_graph = CodeBehaviorGraphV1.model_validate(graph_payload)
-        except Exception:
+                historical_behavior_graph = CodeBehaviorGraphV1.model_validate(graph_payload)
+        except Exception as exc:
+            historical_graph_load_failure = f"{exc.__class__.__name__}:{str(exc)[:160]}"
             _record_failure("unified_behavior_graph_invalid")
-            behavior_graph = None
+            historical_behavior_graph = None
 
     repo_snapshot = None
     snapshot_value = (
@@ -14950,13 +18450,67 @@ def _load_repository_authoring_context(
         except Exception:
             evidence_packets = None
 
+    # R2: the resolver consumes digest-verified, revision-frozen source bytes
+    # instead of reading the working tree on every span lookup.  The same
+    # manifest/snapshot pair that authenticated the closure decides which
+    # paths may be returned as source text.
+    source_provider: Any = repo_snapshot
+    if repo_snapshot is not None:
+        project_root = str(getattr(repo_snapshot, "project_root", "") or "")
+        if project_root:
+            from code2paper.agentic.repo_snapshot import read_verified_snapshot_sources
+
+            source_provider = read_verified_snapshot_sources(
+                project_root=project_root,
+                source_manifest=source_manifest,
+                repo_snapshot=repo_snapshot,
+            )
+
+    # A persisted behavior graph is a historical observation.  Once the
+    # source closure is available, rebuild the graph from the current
+    # verified bytes and the frozen entry roots.  The historical graph is
+    # retained only for the provenance report and is never supplied to a
+    # unified consumer, which closes the replay/offline source-of-truth gap.
+    graph_rebuild_report: dict[str, Any] | None = None
+    if (
+        repo_snapshot is not None
+        and source_manifest is not None
+        and symbol_index is not None
+        and implementation_scope is not None
+    ):
+        from code2paper.agentic.mechanism_context_compiler import (
+            build_current_behavior_graph,
+        )
+
+        entry_symbol_ids = tuple(
+            str(item).strip()
+            for item in (getattr(implementation_scope, "target_entry_symbol_ids", ()) or ())
+            if str(item).strip()
+        )
+        behavior_graph = build_current_behavior_graph(
+            symbol_index=symbol_index,
+            source_provider=source_provider,
+            entry_symbol_ids=entry_symbol_ids,
+        )
+        graph_rebuild_report = _behavior_graph_rebuild_report(
+            historical_behavior_graph,
+            behavior_graph,
+            entry_symbol_ids=entry_symbol_ids,
+            snapshot_id=str(getattr(repo_snapshot, "snapshot_id", "") or ""),
+            project_tree_hash=str(getattr(repo_snapshot, "project_tree_hash", "") or ""),
+            historical_load_failure=historical_graph_load_failure,
+        )
+        if historical_behavior_graph is not None and behavior_graph is None:
+            _record_failure("unified_behavior_graph_rebuild_missing")
+
     return {
-       "behavior_graph": behavior_graph,
+        "behavior_graph": behavior_graph,
+        "behavior_graph_rebuild": graph_rebuild_report,
         "implementation_scope": implementation_scope,
         "source_manifest": source_manifest,
         "repo_snapshot": repo_snapshot,
         "symbol_index": symbol_index,
-        "source_provider": repo_snapshot,
+        "source_provider": source_provider,
         "argument_briefs": briefs,
         "argument_facets": tuple(facets),
         "facet_alignments": tuple(alignments),
@@ -15232,6 +18786,7 @@ def _run_unified_v2_formalizer_phase(
     intent_graph: Any | None = None,
     research_failures: Sequence[str] = (),
     source_failures: Sequence[str] = (),
+    tokenizer: Any | None = None,
 ) -> dict[str, Any]:
     """Run the formalizer phase through the V2 three-layer contract.
 
@@ -15250,6 +18805,7 @@ def _run_unified_v2_formalizer_phase(
         bind_formula_obligation_page_owners,
         collect_archive_structural_diagnostics,
         evaluate_unified_live_admission_v1,
+        read_unified_budget_profile,
     )
     from code2paper.agentic.unified_context_models import (
         UNIFIED_INVOCATION_BUDGET_MISSING,
@@ -15363,40 +18919,47 @@ def _run_unified_v2_formalizer_phase(
             ),
         })
 
-        profile_budget = {
-            "max_page_input_tokens": int(
-                os.environ.get("CODE2PAPER_UNIFIED_MAX_PAGE_INPUT_TOKENS", "0") or 0
-            ),
-            "max_total_input_tokens": int(
-                os.environ.get("CODE2PAPER_UNIFIED_MAX_TOTAL_INPUT_TOKENS", "0") or 0
-            ),
-            "max_formalizer_calls": int(
-                os.environ.get("CODE2PAPER_UNIFIED_MAX_FORMALIZER_CALLS", "0") or 0
-            ),
-            "max_writer_calls": int(
-                os.environ.get("CODE2PAPER_UNIFIED_MAX_WRITER_CALLS", "0") or 0
-            ),
-            "max_realizer_calls": int(
-                os.environ.get("CODE2PAPER_UNIFIED_MAX_REALIZER_CALLS", "0") or 0
-            ),
-            "max_obligations_per_page": int(
-                os.environ.get("CODE2PAPER_UNIFIED_MAX_OBLIGATIONS_PER_PAGE", "0") or 0
-            ),
-            "max_formula_repair_calls": int(
-                os.environ.get("CODE2PAPER_UNIFIED_MAX_FORMULA_REPAIR_CALLS", "0") or 0
-            ),
-        }
+        # R6: one declared profile contract, read through the shared reader.
+        # A missing field stays missing and fails the envelope closed instead
+        # of turning into a zero or a code default.
+        profile_budget = read_unified_budget_profile(os.environ)
+        # Optional, explicitly budgeted extra roles (for example the
+        # organization-proposal caller).  Nothing is merged when the profile
+        # declares none, so the default four-role envelope is unchanged.
+        from code2paper.agentic.unified_context_compiler import (
+            read_unified_extra_roles,
+        )
+
+        profile_budget.update(read_unified_extra_roles(os.environ))
         model_capabilities = {
             "context_tokens": model_context_tokens,
         }
+        model_identity_payload: Any = {
+            "model": str(getattr(llm_config, "model", "unknown") or "unknown"),
+        }
+        token_meter = None
+        if tokenizer is not None:
+            tokenizer_identity = str(getattr(tokenizer, "identity", "") or "").strip()
+            if not tokenizer_identity:
+                raise UnifiedCompilerError(
+                    UNIFIED_INVOCATION_BUDGET_MISSING,
+                    "unified page tokenizer has no stable identity",
+                )
+            from code2paper.agentic.unified_context_models import (
+                model_chat_template_tokenizer_meter,
+            )
+
+            token_meter = model_chat_template_tokenizer_meter(tokenizer_identity)
+            model_identity_payload["tokenizer_identity"] = tokenizer_identity
         envelope = build_run_invocation_budget_envelope_v1(
             profile_budget=profile_budget,
             model_capabilities=model_capabilities,
             run_digest=archive.content_digest,
             profile_digest=_sha(canonical_json_bytes(profile_budget)),
             model_identity_digest=_sha(
-                str(getattr(llm_config, "model", "unknown")).encode("utf-8")
+                canonical_json_bytes(model_identity_payload)
             ),
+            token_meter=token_meter,
         )
         _persist(
             "run_invocation_budget_envelope_v1",
@@ -15445,6 +19008,7 @@ def _run_unified_v2_formalizer_phase(
             profile_digest=envelope.profile_digest,
             model_identity_digest=envelope.model_identity_digest,
             model_context_tokens=model_context_tokens,
+            tokenizer=tokenizer,
         )
         _persist(
             "consumer_invocation_plan_v1.1",
@@ -15516,6 +19080,8 @@ def _run_unified_v2_formalizer_phase(
             ledger_root=ledger_root,
             model_identity_digest=envelope.model_identity_digest,
             run_digest=archive.content_digest,
+            budget_envelope=envelope,
+            tokenizer=tokenizer,
         )
         execution_path = _persist(
             "formalizer_plan_execution_v2",
@@ -15542,6 +19108,15 @@ def _run_unified_v2_formalizer_phase(
             "planned_main_invocations": execution.planned_main_invocations,
             "assertion_failures": list(execution.assertion_failures),
         })
+        phase_reservation = _formalizer_phase_reservation(
+            plan=plan,
+            ledger_root=ledger_root,
+            completed_receipts=execution.receipts,
+        )
+        reservation_path = _persist(
+            "formalizer_phase_reservation_v1", phase_reservation
+        )
+        del reservation_path
         if execution.assertion_failures:
             return {
                 "packages": list(execution.accepted_packages),
@@ -15552,6 +19127,7 @@ def _run_unified_v2_formalizer_phase(
                 "plan": plan,
                 "traces": traces,
                 "paths": paths,
+                "phase_reservation": phase_reservation,
                 "blocked": (
                     "unified_formalizer_plan_assertion_failed:"
                     + ",".join(sorted(execution.assertion_failures))
@@ -15566,6 +19142,7 @@ def _run_unified_v2_formalizer_phase(
             "plan": plan,
             "traces": traces,
             "paths": paths,
+            "phase_reservation": phase_reservation,
             "blocked": "",
         }
     except UnifiedCompilerError as exc:
@@ -15581,6 +19158,668 @@ def _run_unified_v2_formalizer_phase(
             "paths": paths,
             "blocked": f"{exc.failure_code}:{exc.message[:180]}",
         }
+
+
+def _formalizer_phase_reservation(
+    *,
+    plan: Any,
+    ledger_root: Path,
+    completed_receipts: Sequence[Any] = (),
+) -> dict[str, Any]:
+    """Project a Formalizer phase into the run's active reservation.
+
+    ``ConsumerInvocationPlanV1`` declares every bounded repair slot so the
+    phase is structurally auditable.  Those conditional slots are not a
+    downstream spend reservation until a receipt or an unsettled start proves
+    that the slot was activated.  The original plan remains immutable; this
+    projection is only consumed when a child Writer/Realizer plan inherits
+    the run budget.
+    """
+
+    from code2paper.agentic.unified_invocation_ledger import (
+        read_all_completed_receipts,
+        unsettled_started_attempt_records,
+    )
+
+    phase_plan_digest = str(getattr(plan, "content_digest", "") or "")
+    plan_invocations = {
+        str(invocation.invocation_id): invocation
+        for invocation in (getattr(plan, "invocations", ()) or ())
+    }
+    if not phase_plan_digest or not plan_invocations:
+        raise ValueError("formalizer_phase_reservation_plan_invalid")
+    durable_receipts = read_all_completed_receipts(
+        Path(ledger_root), strict=True
+    )
+    # A resumed execution result may contain only the attempts handled by
+    # this pass.  The reservation is run-lineage scoped, so include durable
+    # receipts from earlier passes as well as the in-memory result.
+    receipts = tuple(durable_receipts) + tuple(completed_receipts)
+
+    def _field(item: Any, name: str, default: Any = "") -> Any:
+        if isinstance(item, Mapping):
+            return item.get(name, default)
+        return getattr(item, name, default)
+
+    active_ids: set[str] = set()
+    for receipt in receipts:
+        invocation_id = str(_field(receipt, "invocation_id", "") or "")
+        if invocation_id not in plan_invocations:
+            continue
+        if str(_field(receipt, "consumer_role", "") or "") != "formalizer":
+            continue
+        if str(_field(receipt, "phase", "") or "") != "formalizer":
+            continue
+        if str(_field(receipt, "upstream_plan_digest", "") or "") != phase_plan_digest:
+            continue
+        if bool(_field(receipt, "sent_to_caller", True)):
+            active_ids.add(invocation_id)
+
+    unsettled = unsettled_started_attempt_records(Path(ledger_root), plan)
+    unknown_unsettled = [
+        record for record in unsettled
+        if record.plan_source == "unknown"
+    ]
+    if unknown_unsettled:
+        raise ValueError(
+            "formalizer_phase_reservation_unmetered_unsettled:"
+            + ",".join(
+                f"{record.invocation_id}:{record.attempt}"
+                for record in unknown_unsettled[:8]
+            )
+        )
+    active_ids.update(
+        str(record.invocation_id)
+        for record in unsettled
+        if str(record.invocation_id) in plan_invocations
+        and str(record.consumer_role or "") == "formalizer"
+    )
+
+    active_calls: dict[str, int] = {}
+    active_tokens: dict[str, int] = {}
+    all_tokens: dict[str, int] = {}
+    for invocation in plan_invocations.values():
+        role = str(invocation.role)
+        all_tokens[role] = all_tokens.get(role, 0) + int(
+            invocation.max_input_tokens
+        )
+        if str(invocation.invocation_id) not in active_ids:
+            continue
+        active_calls[role] = active_calls.get(role, 0) + 1
+        active_tokens[role] = active_tokens.get(role, 0) + int(
+            invocation.max_input_tokens
+        )
+
+    reserved_tokens = {
+        str(role): int(value)
+        for role, value in (
+            getattr(plan, "reserved_input_tokens_by_role", {}) or {}
+        ).items()
+    }
+    # Keep explicit non-invocation headroom (currently Writer/Realizer retry
+    # reserves) while replacing the parent invocation portion with activated
+    # slots only.
+    for role, reserved in reserved_tokens.items():
+        reserved_tokens[role] = int(active_tokens.get(role, 0)) + max(
+            0,
+            int(reserved) - int(all_tokens.get(role, 0)),
+        )
+    for role, value in active_tokens.items():
+        reserved_tokens.setdefault(role, int(value))
+
+    inactive_conditional_ids = sorted(
+        str(invocation.invocation_id)
+        for invocation in plan_invocations.values()
+        if bool(getattr(invocation, "is_repair", False))
+        and str(invocation.invocation_id) not in active_ids
+    )
+    payload = {
+        "schema_version": "1.0",
+        "phase": "formalizer",
+        "plan_digest": phase_plan_digest,
+        "active_invocation_ids": sorted(active_ids),
+        "active_calls_by_role": active_calls,
+        "active_input_tokens_by_role": active_tokens,
+        "reserved_input_tokens_by_role": reserved_tokens,
+        "inactive_conditional_invocation_ids": inactive_conditional_ids,
+        "unsettled_invocation_ids": sorted({
+            str(record.invocation_id) for record in unsettled
+        }),
+    }
+    payload["content_digest"] = _digest_json(payload)
+    return payload
+
+
+def _load_completed_unified_formalizer_phase(
+    *,
+    checkpoint_root: Path,
+    out_root: Path,
+    contexts: Any,
+    formula_obs: Mapping[str, Any],
+    equations: Any,
+    claims: Any | None,
+    facts: Any | None,
+    llm_config: Any,
+    completeness_by_mechanism: Mapping[str, list[str]],
+    model_context_tokens: int,
+    source_manifest: Any,
+    repo_snapshot: Any,
+    intent_graph: Any | None,
+    research_failures: Sequence[str] = (),
+    source_failures: Sequence[str] = (),
+    tokenizer: Any | None = None,
+) -> dict[str, Any]:
+    """Load a completed Formalizer phase without re-entering the model.
+
+    This is deliberately a finite, typed loader rather than a generic cache:
+    the persisted archive/workset/envelope/plan and every accepted package are
+    revalidated against the current source closure and current tokenizer
+    identity, while preferred formula failures remain visible diagnostics.
+    """
+
+    from code2paper.agentic.formalization_agent import (
+        MechanismFormulaPackageV2,
+        load_mechanism_formula_obligations_v1_payload,
+        validate_mechanism_formula_package,
+        build_mechanism_view_digest,
+    )
+    from code2paper.agentic.unified_context_compiler import (
+        bind_formula_obligation_page_owners,
+        build_consumer_invocation_plan_v1,
+        build_consumer_workset_manifest_v2,
+        build_unified_context_archive_v2,
+    )
+    from code2paper.agentic.unified_context_models import (
+        ConsumerInvocationPlanV1,
+        ConsumerWorksetManifestV2,
+        RunInvocationBudgetEnvelopeV1,
+        UnifiedContextArchiveV2,
+    )
+    from code2paper.agentic.repo_snapshot import repo_snapshot_identity_digest
+    from code2paper.agentic.source_inventory import source_manifest_snapshot_failures
+    from code2paper.agentic.mechanism_context_models import (
+        canonical_json_bytes,
+        sha256_digest,
+    )
+    from code2paper.agentic.unified_invocation_ledger import (
+        read_all_completed_receipts,
+        rebuild_aggregate_fragments,
+    )
+
+    root = Path(checkpoint_root)
+
+    def _optional_path(base: Path, name: str) -> Path | None:
+        candidates = (
+            base / "artifacts" / "06_authoring" / f"{name}.json",
+            base / "artifacts" / f"{name}.json",
+            base / f"{name}.json",
+        )
+        return next((candidate for candidate in candidates if candidate.is_file()), None)
+
+    def _path(name: str) -> Path:
+        candidate = _optional_path(root, name)
+        if candidate is not None:
+            return candidate
+        raise ValueError(f"formalizer_phase_checkpoint_missing:{name}")
+
+    def _json(name: str) -> dict[str, Any]:
+        payload = json.loads(_path(name).read_text(encoding="utf-8"))
+        if not isinstance(payload, Mapping):
+            raise ValueError(f"formalizer_phase_checkpoint_invalid:{name}")
+        return dict(payload)
+
+    archive = UnifiedContextArchiveV2.model_validate(_json("unified_context_archive_v2"))
+    persisted_manifest = ConsumerWorksetManifestV2.model_validate(
+        _json("consumer_workset_manifest_v2")
+    )
+    # The frozen Formalizer phase and the downstream authoring continuation
+    # have distinct envelope identities when a continuation-only profile
+    # change adds Writer/Realizer retry headroom.  Keep the original envelope
+    # for exact phase/receipt validation; the continuation envelope is rebuilt
+    # from the current profile below and is never used to rewrite the old
+    # Formalizer plan or receipts.
+    phase_envelope_path = _optional_path(
+        root, "formalizer_phase_budget_envelope_v1"
+    )
+    envelope = RunInvocationBudgetEnvelopeV1.model_validate(
+        json.loads(
+            (
+                phase_envelope_path
+                if phase_envelope_path is not None
+                else _path("run_invocation_budget_envelope_v1")
+            ).read_text(encoding="utf-8")
+        )
+    )
+    plan = ConsumerInvocationPlanV1.model_validate(
+        _json("consumer_invocation_plan_v1.1")
+    )
+    package_payload = _json("mechanism_formula_packages_v2")
+    raw_packages = package_payload.get("packages")
+    if not isinstance(raw_packages, list):
+        raise ValueError("formalizer_phase_checkpoint_packages_invalid")
+    packages = tuple(
+        MechanismFormulaPackageV2.model_validate(item) for item in raw_packages
+    )
+    execution = _json("formalizer_plan_execution_v2")
+    persisted_obligations, migrated = load_mechanism_formula_obligations_v1_payload(
+        _json("mechanism_formula_obligations_v1")
+    )
+    loaded_formula_obs = {
+        str(mid): tuple(items)
+        for mid, items in persisted_obligations.items()
+    }
+
+    if plan.phase != "formalizer" or int(plan.plan_revision) != 1:
+        raise ValueError("formalizer_phase_checkpoint_plan_phase_invalid")
+    if str(execution.get("plan_digest") or "") != plan.content_digest:
+        raise ValueError("formalizer_phase_checkpoint_execution_plan_mismatch")
+    if tuple(execution.get("assertion_failures") or ()):
+        raise ValueError("formalizer_phase_checkpoint_assertions_failed")
+    if str(archive.content_digest) != str(persisted_manifest.archive_digest):
+        raise ValueError("formalizer_phase_checkpoint_archive_manifest_mismatch")
+    if str(archive.content_digest) != str(plan.archive_digest):
+        raise ValueError("formalizer_phase_checkpoint_archive_plan_mismatch")
+    if str(persisted_manifest.content_digest) != str(plan.workset_manifest_digest):
+        raise ValueError("formalizer_phase_checkpoint_manifest_plan_mismatch")
+    if str(envelope.content_digest) != str(plan.envelope_digest):
+        raise ValueError("formalizer_phase_checkpoint_envelope_plan_mismatch")
+    if int(envelope.model_context_tokens) != int(model_context_tokens):
+        raise ValueError("formalizer_phase_checkpoint_context_window_mismatch")
+    configured_model = str(getattr(llm_config, "model", "") or "")
+    expected_identity_payload: dict[str, Any] = {"model": configured_model}
+    tokenizer_identity = str(getattr(tokenizer, "identity", "") or "").strip()
+    declared_tokenizer_identity = str(
+        getattr(envelope.token_meter, "tokenizer_identity", "") or ""
+    ).strip()
+    if envelope.token_meter.method == "model_tokenizer":
+        if not tokenizer_identity:
+            raise ValueError("formalizer_phase_checkpoint_model_tokenizer_missing")
+        if tokenizer_identity != declared_tokenizer_identity:
+            raise ValueError("formalizer_phase_checkpoint_tokenizer_identity_mismatch")
+        expected_identity_payload["tokenizer_identity"] = tokenizer_identity
+    expected_model_identity = sha256_digest(
+        canonical_json_bytes(expected_identity_payload)
+    )
+    if expected_model_identity != str(envelope.model_identity_digest):
+        raise ValueError("formalizer_phase_checkpoint_model_identity_mismatch")
+
+    current_snapshot_failures = source_manifest_snapshot_failures(
+        source_manifest, repo_snapshot
+    )
+    if current_snapshot_failures:
+        raise ValueError(
+            "formalizer_phase_checkpoint_source_snapshot_invalid:"
+            + ";".join(current_snapshot_failures)
+        )
+    if archive.context_set_digest != str(getattr(contexts, "content_digest", "")):
+        raise ValueError("formalizer_phase_checkpoint_context_digest_mismatch")
+    if archive.project_tree_hash != str(getattr(repo_snapshot, "project_tree_hash", "")):
+        raise ValueError("formalizer_phase_checkpoint_tree_hash_mismatch")
+    if archive.source_manifest_digest != str(getattr(source_manifest, "content_digest", "")):
+        raise ValueError("formalizer_phase_checkpoint_source_manifest_mismatch")
+    expected_archive = build_unified_context_archive_v2(
+        contexts,
+        source_manifest_digest=str(source_manifest.content_digest),
+        source_manifest=source_manifest,
+        repo_snapshot_digest=repo_snapshot_identity_digest(repo_snapshot),
+        equations=equations,
+        claims=claims,
+        facts=facts,
+        intent_graph=intent_graph,
+    )
+    if expected_archive.content_digest != archive.content_digest:
+        raise ValueError("formalizer_phase_checkpoint_archive_rebuild_mismatch")
+
+    # The current compiler reconstructs the unbound obligations from the same
+    # frozen context.  Bind them to pages and require the exact persisted
+    # projection; this catches a changed page cap, stale source closure, or a
+    # checkpoint from another code revision.
+    expected_manifest = build_consumer_workset_manifest_v2(
+        archive,
+        formula_obligations_by_mechanism=dict(formula_obs),
+        max_page_input_tokens=int(envelope.max_page_input_tokens),
+        max_obligations_per_page=int(envelope.max_obligations_per_page),
+    )
+    expected_bound_obs = bind_formula_obligation_page_owners(
+        formula_obs, expected_manifest
+    )
+    if expected_manifest.content_digest != persisted_manifest.content_digest:
+        raise ValueError("formalizer_phase_checkpoint_manifest_rebuild_mismatch")
+    expected_obligation_ids = {
+        str(item.obligation_id)
+        for items in expected_bound_obs.values()
+        for item in (items or ())
+    }
+    loaded_obligation_ids = {
+        str(item.obligation_id)
+        for items in loaded_formula_obs.values()
+        for item in (items or ())
+    }
+    if expected_obligation_ids != loaded_obligation_ids:
+        raise ValueError("formalizer_phase_checkpoint_obligation_set_mismatch")
+
+    expected_plan = build_consumer_invocation_plan_v1(
+        persisted_manifest,
+        envelope,
+        phase="formalizer",
+        plan_revision=1,
+        profile_digest=envelope.profile_digest,
+        model_identity_digest=envelope.model_identity_digest,
+        model_context_tokens=model_context_tokens,
+        tokenizer=tokenizer,
+    )
+    if expected_plan.content_digest != plan.content_digest:
+        raise ValueError("formalizer_phase_checkpoint_plan_rebuild_mismatch")
+
+    ledger_root = root / "artifacts" / "06_authoring" / "invocations"
+    all_receipts = read_all_completed_receipts(ledger_root, strict=True)
+    formalizer_receipts = tuple(
+        receipt for receipt in all_receipts
+        if str(receipt.consumer_role) == "formalizer"
+        and str(receipt.phase) == "formalizer"
+        and str(receipt.upstream_plan_digest) == str(plan.content_digest)
+    )
+    expected_receipt_count = int(execution.get("receipt_count", -1))
+    if expected_receipt_count < 0 or len(formalizer_receipts) != expected_receipt_count:
+        raise ValueError("formalizer_phase_checkpoint_receipt_count_mismatch")
+    if int(execution.get("accepted_package_count", -1)) != len(packages):
+        raise ValueError("formalizer_phase_checkpoint_package_count_mismatch")
+    phase_reservation = _formalizer_phase_reservation(
+        plan=plan,
+        ledger_root=ledger_root,
+        completed_receipts=formalizer_receipts,
+    )
+    fragments = rebuild_aggregate_fragments(
+        ledger_root, plan, role="formalizer"
+    )
+    fragment_packages: dict[str, MechanismFormulaPackageV2] = {}
+    for item in fragments:
+        raw_fragment = item.get("fragment") or {}
+        if not isinstance(raw_fragment, Mapping):
+            continue
+        try:
+            package = MechanismFormulaPackageV2.model_validate(raw_fragment)
+        except (TypeError, ValueError) as exc:
+            raise ValueError(
+                "formalizer_phase_checkpoint_fragment_invalid"
+            ) from exc
+        fragment_packages[package.package_id] = package
+    package_ids = {item.package_id for item in packages}
+    if set(fragment_packages) != package_ids:
+        raise ValueError("formalizer_phase_checkpoint_fragment_package_set_mismatch")
+
+    contexts_by_id = {
+        str(context.mechanism_id): context
+        for context in (getattr(contexts, "contexts", ()) or ())
+    }
+    obligations_by_id = {
+        str(item.obligation_id): item
+        for items in loaded_formula_obs.values()
+        for item in (items or ())
+    }
+    package_failures: list[str] = []
+    for package in packages:
+        context = contexts_by_id.get(str(package.mechanism_id))
+        if context is None:
+            package_failures.append(f"unknown_mechanism:{package.package_id}")
+            continue
+        page_id = str(package.slice_digests[0]) if package.slice_digests else ""
+        page = persisted_manifest.page_by_id(page_id)
+        if page is None:
+            package_failures.append(f"package_page_missing:{package.package_id}")
+            continue
+        expected_page_digest = sha256_digest(
+            canonical_json_bytes(dict(page.technical_payload))
+        )
+        obligation = next(
+            (
+                obligations_by_id.get(str(obligation_id))
+                for obligation_id in package.satisfied_obligation_ids
+                if str(obligation_id) in obligations_by_id
+            ),
+            None,
+        )
+        if obligation is None:
+            package_failures.append(f"package_obligation_missing:{package.package_id}")
+            continue
+        package_failures.extend(
+            f"{package.package_id}:{failure}"
+            for failure in validate_mechanism_formula_package(
+                package,
+                context=context,
+                obligation=obligation,
+                shared_payload_digest=expected_page_digest,
+                view_digest=build_mechanism_view_digest(context),
+                slice_digests=tuple(package.slice_digests),
+                equations=equations,
+            )
+        )
+    if package_failures:
+        raise ValueError(
+            "formalizer_phase_checkpoint_package_validation_failed:"
+            + ";".join(package_failures[:16])
+        )
+
+    # A prepared continuation may widen only downstream authoring headroom
+    # (for example the Realizer bounded-repair reserve) without invalidating
+    # the already completed Formalizer phase.  Rebuild that continuation
+    # envelope from the current profile, while requiring all Formalizer-
+    # shaping fields to remain byte-equivalent in meaning.  This keeps the
+    # phase plan/receipts under their original envelope and gives Writer /
+    # Realizer the current, explicitly declared run budget.
+    from code2paper.agentic.unified_context_compiler import (
+        build_run_invocation_budget_envelope_v1,
+        read_unified_budget_profile,
+        read_unified_extra_roles,
+    )
+    from code2paper.agentic.unified_context_models import (
+        model_chat_template_tokenizer_meter,
+    )
+
+    profile_budget = read_unified_budget_profile(os.environ)
+    profile_budget.update(read_unified_extra_roles(os.environ))
+    continuation_identity_payload: dict[str, Any] = {
+        "model": str(getattr(llm_config, "model", "unknown") or "unknown"),
+    }
+    continuation_meter = None
+    tokenizer_identity = str(getattr(tokenizer, "identity", "") or "").strip()
+    if tokenizer is not None:
+        if not tokenizer_identity:
+            raise ValueError(
+                "formalizer_phase_checkpoint_continuation_tokenizer_missing"
+            )
+        continuation_meter = model_chat_template_tokenizer_meter(
+            tokenizer_identity
+        )
+        continuation_identity_payload["tokenizer_identity"] = tokenizer_identity
+    continuation_profile_digest = sha256_digest(
+        canonical_json_bytes(profile_budget)
+    )
+    continuation_model_identity_digest = sha256_digest(
+        canonical_json_bytes(continuation_identity_payload)
+    )
+    continuation_envelope = build_run_invocation_budget_envelope_v1(
+        profile_budget=profile_budget,
+        model_capabilities={"context_tokens": int(model_context_tokens)},
+        run_digest=str(archive.content_digest),
+        profile_digest=continuation_profile_digest,
+        model_identity_digest=continuation_model_identity_digest,
+        token_meter=continuation_meter,
+    )
+
+    def _envelope_role_dump(value: Any, role: str) -> Any:
+        role_value = (value or {}).get(role)
+        return (
+            role_value.model_dump(mode="json")
+            if isinstance(role_value, BaseModel)
+            else role_value
+        )
+
+    phase_budget_fields = (
+        (
+            "max_page_input_tokens",
+            int(envelope.max_page_input_tokens),
+            int(continuation_envelope.max_page_input_tokens),
+        ),
+        (
+            "max_obligations_per_page",
+            int(envelope.max_obligations_per_page),
+            int(continuation_envelope.max_obligations_per_page),
+        ),
+        (
+            "max_formula_repair_calls",
+            int(envelope.max_formula_repair_calls),
+            int(continuation_envelope.max_formula_repair_calls),
+        ),
+        (
+            "max_formalizer_calls",
+            int((envelope.max_calls_by_role or {}).get("formalizer", -1)),
+            int((continuation_envelope.max_calls_by_role or {}).get("formalizer", -1)),
+        ),
+        (
+            "max_request_input_tokens_formalizer",
+            int((envelope.max_request_input_tokens_by_role or {}).get("formalizer", -1)),
+            int((continuation_envelope.max_request_input_tokens_by_role or {}).get("formalizer", -1)),
+        ),
+        (
+            "request_budget_formalizer",
+            _envelope_role_dump(envelope.request_budget_by_role, "formalizer"),
+            _envelope_role_dump(
+                continuation_envelope.request_budget_by_role, "formalizer"
+            ),
+        ),
+        (
+            "model_context_tokens",
+            int(envelope.model_context_tokens),
+            int(continuation_envelope.model_context_tokens),
+        ),
+        (
+            "model_identity_digest",
+            str(envelope.model_identity_digest),
+            str(continuation_envelope.model_identity_digest),
+        ),
+        (
+            "token_meter",
+            envelope.token_meter.model_dump(mode="json"),
+            continuation_envelope.token_meter.model_dump(mode="json"),
+        ),
+    )
+    incompatible = next(
+        (
+            name
+            for name, phase_value, continuation_value in phase_budget_fields
+            if phase_value != continuation_value
+        ),
+        "",
+    )
+    if incompatible:
+        raise ValueError(
+            "formalizer_phase_checkpoint_budget_incompatible:" + incompatible
+        )
+
+    continuation_path = _optional_path(
+        Path(out_root), "run_invocation_budget_envelope_v1"
+    )
+    if phase_envelope_path is not None:
+        if continuation_path is None:
+            raise ValueError(
+                "formalizer_phase_checkpoint_continuation_envelope_missing"
+            )
+        persisted_continuation = RunInvocationBudgetEnvelopeV1.model_validate(
+            json.loads(continuation_path.read_text(encoding="utf-8"))
+        )
+        if str(persisted_continuation.content_digest) != str(
+            continuation_envelope.content_digest
+        ):
+            raise ValueError(
+                "formalizer_phase_checkpoint_continuation_envelope_mismatch"
+            )
+        continuation_envelope = persisted_continuation
+
+    paths: dict[str, str] = {}
+
+    def _persist_model(name: str, value: Any) -> None:
+        target = method_output(out_root, name)
+        _atomic_write_text(target, value.model_dump_json(indent=2) + "\n")
+        paths[name] = str(target)
+
+    _persist_model("unified_context_archive_v2", archive)
+    _persist_model("consumer_workset_manifest_v2", persisted_manifest)
+    _persist_model("formalizer_phase_budget_envelope_v1", envelope)
+    _persist_model("run_invocation_budget_envelope_v1", continuation_envelope)
+    _persist_model("consumer_invocation_plan_v1.1", plan)
+    _atomic_write_text(
+        method_output(out_root, "mechanism_formula_obligations_v1"),
+        json.dumps({
+            "schema_version": "1.0",
+            "by_mechanism": {
+                str(mid): [item.model_dump(mode="json") for item in items]
+                for mid, items in sorted(loaded_formula_obs.items())
+            },
+            "binding": {"kind": "reused_completed_formalizer_phase"},
+        }, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
+    )
+    paths["mechanism_formula_obligations_v1"] = str(
+        method_output(out_root, "mechanism_formula_obligations_v1")
+    )
+    package_target = method_output(out_root, "mechanism_formula_packages_v2")
+    package_body = {
+        "schema_version": "1.0",
+        "packages": [item.model_dump(mode="json") for item in packages],
+        "formalizer_traces": package_payload.get("formalizer_traces", []),
+        "phase_reused": True,
+    }
+    package_body["content_digest"] = _digest_json(package_body)
+    _atomic_write_text(
+        package_target,
+        json.dumps(package_body, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
+    )
+    paths["mechanism_formula_packages_v2"] = str(package_target)
+    execution_target = method_output(out_root, "formalizer_plan_execution_v2")
+    execution_copy = dict(execution)
+    execution_copy["phase_reused"] = True
+    _atomic_write_text(
+        execution_target,
+        json.dumps(execution_copy, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
+    )
+    paths["formalizer_plan_execution_v2"] = str(execution_target)
+    reservation_target = method_output(
+        out_root, "formalizer_phase_reservation_v1"
+    )
+    _atomic_write_text(
+        reservation_target,
+        json.dumps(phase_reservation, ensure_ascii=False, indent=2, sort_keys=True)
+        + "\n",
+    )
+    paths["formalizer_phase_reservation_v1"] = str(reservation_target)
+    traces = [{
+        "phase": "formalizer",
+        "v2": True,
+        "phase_reused": True,
+        "admission_status": "pass",
+        "actual_main_calls": 0,
+        "actual_repair_calls": 0,
+        "reused_main_calls": int(execution.get("actual_main_calls", 0) or 0),
+        "reused_repair_calls": int(execution.get("actual_repair_calls", 0) or 0),
+        "planned_main_invocations": int(execution.get("planned_main_invocations", 0) or 0),
+        "assertion_failures": [],
+        "task_failures": list(execution.get("task_failures") or ()),
+        "migrated_obligations": bool(migrated),
+    }]
+    return {
+        "packages": list(packages),
+        "formula_obligations": loaded_formula_obs,
+        "archive": archive,
+        "manifest": persisted_manifest,
+        "envelope": continuation_envelope,
+        "phase_envelope": envelope,
+        "plan": plan,
+        "traces": traces,
+        "paths": paths,
+        "blocked": "",
+        "phase_reused": True,
+        "phase_reservation": phase_reservation,
+    }
 
 
 def _run_unified_v2_realizer_phase(
@@ -15599,20 +19838,26 @@ def _run_unified_v2_realizer_phase(
     completeness_by_mechanism: Mapping[str, Sequence[str]],
     research_failures: Sequence[str] = (),
     source_failures: Sequence[str] = (),
+    tokenizer: Any | None = None,
 ) -> dict[str, Any]:
     """Execute the independent V2 Realizer phase, one immutable page at a time."""
 
     from code2paper.agentic.unified_context_compiler import (
+        account_unified_request_tokens,
         build_consumer_invocation_plan_v1,
         build_consumer_request_payload,
         consumer_request_envelope_digest,
         consumer_response_json_schema,
         evaluate_unified_live_admission_v1,
+        remaining_run_input_tokens,
         render_consumer_page_prompt,
+        spend_input_tokens_by_role,
     )
     from code2paper.agentic.unified_context_models import (
         ActualRequestReceiptV2,
         InvocationAttemptStartedV1,
+        UNIFIED_INVOCATION_BUDGET_EXCEEDED,
+        UNIFIED_INVOCATION_BUDGET_MISSING,
     )
     from code2paper.agentic.unified_invocation_ledger import (
         build_resume_plan,
@@ -15620,8 +19865,12 @@ def _run_unified_v2_realizer_phase(
         publish_attempt_completed,
         publish_attempt_started,
         publish_output_fragment,
+        read_all_completed_receipts,
+        check_run_budget_before_send,
         read_completed_receipts,
         rebuild_aggregate_fragments,
+        register_invocation_plan,
+        unsettled_started_attempt_records,
     )
     from code2paper.agentic.mechanism_context_models import (
         canonical_json_bytes,
@@ -15646,6 +19895,7 @@ def _run_unified_v2_realizer_phase(
         profile_digest=envelope.profile_digest,
         model_identity_digest=envelope.model_identity_digest,
         model_context_tokens=model_context_tokens,
+        tokenizer=tokenizer,
     )
     realizer_plan_path = method_output(out_root, "consumer_invocation_plan_v1.3")
     _atomic_write_text(realizer_plan_path, realizer_plan.model_dump_json(indent=2) + "\n")
@@ -15698,14 +19948,12 @@ def _run_unified_v2_realizer_phase(
     }
     section_by_id: dict[str, Any] = {}
     section_detail_ids: dict[str, set[str]] = {}
-    section_package_ids: dict[str, set[str]] = {}
     for section in (getattr(narrative_plan, "sections", ()) or ()):
         section_id = str(getattr(section, "section_id", ""))
         if not section_id:
             continue
         section_by_id[section_id] = section
         detail_ids: set[str] = set()
-        package_ids: set[str] = set()
         for paragraph in (getattr(section, "paragraphs", ()) or ()):
             for field_name in ("required_detail_ids", "optional_detail_ids", "detail_ids"):
                 detail_ids.update(
@@ -15713,13 +19961,7 @@ def _run_unified_v2_realizer_phase(
                     for value in (getattr(paragraph, field_name, ()) or ())
                     if str(value).strip()
                 )
-            package_ids.update(
-                str(value).strip()
-                for value in (getattr(paragraph, "formula_package_ids", ()) or ())
-                if str(value).strip()
-            )
         section_detail_ids[section_id] = detail_ids
-        section_package_ids[section_id] = package_ids
 
     package_by_id = {
         str(getattr(package, "package_id", "")): package
@@ -15764,6 +20006,85 @@ def _run_unified_v2_realizer_phase(
         # evidence of the failed attempt but cannot satisfy the Realizer gate.
         decision = resume_plan.decisions.get(invocation.invocation_id)
         reused = False
+        resumed_format_repair_feedback: tuple[dict[str, Any], ...] = ()
+        if decision is not None and decision.decision == "execute":
+            # A prior provider response may have crossed the transport
+            # boundary but failed only because its structured JSON was
+            # truncated/malformed.  On resume, spend the next attempt on the
+            # explicit response-format repair directly; sending a fresh
+            # primary first would consume the invocation's bounded retry slot
+            # and make the already durable representation failure
+            # unrecoverable.
+            prior_receipts = read_completed_receipts(
+                ledger_root, invocation.invocation_id
+            )
+            prior_format_failure = ""
+            for prior_receipt in reversed(prior_receipts):
+                for failure in (getattr(prior_receipt, "task_failures", ()) or ()):
+                    code = (
+                        str(failure.get("code") or "")
+                        if isinstance(failure, Mapping)
+                        else str(failure)
+                    )
+                    if code in {
+                        "realizer_response_not_json",
+                        "realizer_response_not_object",
+                    }:
+                        prior_format_failure = code
+                        break
+                if prior_format_failure:
+                    break
+            latest_repair_feedback: tuple[dict[str, Any], ...] = ()
+            latest_repair_attempt = -1
+            for fragment in rebuild_aggregate_fragments(
+                ledger_root, realizer_plan, role="realizer"
+            ):
+                if str(fragment.get("invocation_id") or "") != str(
+                    invocation.invocation_id
+                ):
+                    continue
+                try:
+                    fragment_attempt = int(fragment.get("attempt", -1))
+                except (TypeError, ValueError):
+                    continue
+                raw_fragment = fragment.get("fragment") or {}
+                raw_draft = (
+                    raw_fragment.get("draft")
+                    if isinstance(raw_fragment, Mapping)
+                    else None
+                )
+                feedback = (
+                    tuple(
+                        dict(item)
+                        for item in (raw_draft.get("repair_feedback") or ())
+                        if isinstance(item, Mapping)
+                    )
+                    if isinstance(raw_draft, Mapping)
+                    else ()
+                )
+                if feedback and fragment_attempt > latest_repair_attempt:
+                    latest_repair_attempt = fragment_attempt
+                    latest_repair_feedback = feedback
+            if latest_repair_feedback and any(
+                str(item.get("failure_code") or "") in {
+                    "realizer_witness_text_missing",
+                    "realizer_required_witness_missing",
+                }
+                for item in latest_repair_feedback
+            ) and prior_format_failure:
+                # The previous response-format repair parsed, but its draft
+                # exposed a witness omission. Resume from that durable
+                # target-local feedback so the next request is the explicit
+                # content repair, not another primary or format request.
+                resumed_format_repair_feedback = latest_repair_feedback
+            elif prior_format_failure:
+                resumed_format_repair_feedback = ({
+                    "failure_code": prior_format_failure,
+                    "witness_kind": "",
+                    "target_id": "",
+                    "source_exact_excerpts": (),
+                    "previous_draft_markdown": "",
+                },)
         if decision is not None and decision.decision == "reuse":
             prior_receipts = read_completed_receipts(
                 ledger_root, invocation.invocation_id
@@ -15839,38 +20160,71 @@ def _run_unified_v2_realizer_phase(
             })
             continue
 
-        page_atoms = page.technical_payload.get("atoms", ())
-        page_detail_ids = {
-            str(value).strip().removeprefix("detail:")
-            for value in (page.technical_payload.get("detail_ids", ()) or ())
+        scoped_detail_ids, detail_pool = _realizer_detail_scope(
+            page=page,
+            source_contexts=(
+                source_contexts or ([context] if context is not None else [])
+            ),
+            section_detail_ids=section_detail_ids.get(section_id, ()),
+        )
+        page_payload = page.technical_payload
+        page_formula_package_ids = {
+            str(value).strip()
+            for value in (
+                page_payload.get("formula_package_ids", ())
+                if isinstance(page_payload, Mapping)
+                else ()
+            )
             if str(value).strip()
         }
-        page_detail_ids.update(
-            str(raw.get("detail_id") or raw.get("_atom_id", "")).strip()
-            .removeprefix("detail:")
-            for raw in page_atoms
-            if isinstance(raw, Mapping)
-            and (
-                str(raw.get("_atom_id", "")).startswith("detail:")
-                or str(raw.get("_atom_kind", "")) == "detail"
+        page_formula_obligation_ids = {
+            str(value).strip()
+            for value in (
+                page_payload.get("formula_obligation_ids", ())
+                if isinstance(page_payload, Mapping)
+                else ()
             )
-        )
-        detail_pool: dict[str, Any] = {}
-        for source_context in source_contexts or ([context] if context is not None else []):
-            for detail in (getattr(source_context, "details", ()) or ()):
-                detail_pool.setdefault(str(detail.detail_id), detail)
-        scoped_detail_ids = page_detail_ids.intersection(set(detail_pool))
-        if section_detail_ids.get(section_id):
-            scoped_detail_ids &= section_detail_ids[section_id]
+            if str(value).strip()
+        }
+        if page_formula_package_ids:
+            # Production pages carry the exact paragraph-local package set;
+            # never widen it back to every package in the section.
+            requested_package_ids = page_formula_package_ids
+        else:
+            # Legacy/test pages may predate the page-local field.  Their
+            # obligation-to-package binding is still sufficient to derive a
+            # closed fallback without reintroducing section-wide scope.
+            requested_package_ids = {
+                package_id
+                for package_id, package in package_by_id.items()
+                if page_formula_obligation_ids.intersection(
+                    str(value).strip()
+                    for value in (
+                        getattr(package, "satisfied_obligation_ids", ()) or ()
+                    )
+                )
+            }
+        missing_package_ids = requested_package_ids - set(package_by_id)
+        disallowed_package_ids = {
+            package_id
+            for package_id in requested_package_ids.intersection(package_by_id)
+            if header_mechanism_ids
+            and str(getattr(package_by_id[package_id], "mechanism_id", ""))
+            not in header_mechanism_ids
+        }
+        if missing_package_ids or disallowed_package_ids:
+            traces.append({
+                "invocation_id": invocation.invocation_id,
+                "page_id": page.page_id,
+                "status": "blocked",
+                "failure": "realizer_formula_package_scope_invalid",
+                "missing_package_ids": sorted(missing_package_ids),
+                "disallowed_package_ids": sorted(disallowed_package_ids),
+            })
+            continue
         scoped_packages = tuple(
             package_by_id[package_id]
-            for package_id in sorted(section_package_ids.get(section_id, set()))
-            if package_id in package_by_id
-            and (
-                not header_mechanism_ids
-                or str(getattr(package_by_id[package_id], "mechanism_id", ""))
-                in header_mechanism_ids
-            )
+            for package_id in sorted(requested_package_ids)
         )
 
         # Join pages deliberately use one synthetic context assembled from
@@ -15888,22 +20242,84 @@ def _run_unified_v2_realizer_phase(
                 details=tuple(detail_pool.values()),
             )
 
-        observed: dict[str, Any] = {}
+        observed_attempts: list[dict[str, Any]] = []
+        chained_content_repair_used = False
+        chained_pre_send_attempts = 0
+        if resumed_format_repair_feedback:
+            for prior_receipt in read_completed_receipts(
+                ledger_root, invocation.invocation_id
+            ):
+                if bool(getattr(prior_receipt, "sent_to_caller", True)):
+                    continue
+                failure_codes = {
+                    str(item.get("code") or "")
+                    for item in (getattr(prior_receipt, "task_failures", ()) or ())
+                    if isinstance(item, Mapping)
+                }
+                if any(
+                    "planned_request_input_tokens" in code
+                    or "attempt_limit_exhausted" in code
+                    for code in failure_codes
+                ):
+                    chained_pre_send_attempts += 1
+
+        def _is_chained_content_repair_feedback(
+            feedback: Sequence[Mapping[str, Any]] | None,
+        ) -> bool:
+            return bool(resumed_format_repair_feedback) and any(
+                str(item.get("failure_code") or "") in {
+                    "realizer_witness_text_missing",
+                    "realizer_required_witness_missing",
+                }
+                for item in (feedback or ())
+                if isinstance(item, Mapping)
+            )
 
         def _capturing_realizer_caller(config: Any, request: Any) -> Any:
+            nonlocal chained_content_repair_used
+            actual_payload = getattr(request, "input_payload", None)
+            repair_contract = (
+                actual_payload.get("response_contract", {}).get(
+                    "bounded_content_repair", {}
+                )
+                if isinstance(actual_payload, Mapping)
+                and isinstance(actual_payload.get("response_contract"), Mapping)
+                else {}
+            )
+            repair_feedback = tuple(
+                {
+                    **dict(item),
+                    # The incumbent is carried once on the bounded repair
+                    # contract to keep the item list target-local.  Reattach
+                    # it here before rebuilding the canonical expected
+                    # payload/envelope so the actual-boundary check hashes
+                    # exactly the request that Realizer constructed.
+                    "previous_draft_markdown": str(
+                        repair_contract.get("incumbent_draft_markdown") or ""
+                    ),
+                }
+                for item in (
+                    repair_contract.get("items", ())
+                    if isinstance(repair_contract, Mapping)
+                    else ()
+                )
+                if isinstance(item, Mapping)
+            )
+            is_content_repair = bool(repair_feedback)
             expected_payload = build_consumer_request_payload(
                 page=page,
                 role="realizer",
                 task_ids=invocation.task_ids,
                 section_id=invocation.section_id,
+                repair_feedback=repair_feedback,
             )
             expected_prompt = render_consumer_page_prompt(
                 page=page,
                 role="realizer",
                 task_ids=invocation.task_ids,
                 section_id=invocation.section_id,
+                repair_feedback=repair_feedback,
             )
-            actual_payload = getattr(request, "input_payload", None)
             actual_technical_payload = (
                 actual_payload.get("technical_payload")
                 if isinstance(actual_payload, Mapping)
@@ -15935,6 +20351,7 @@ def _run_unified_v2_realizer_phase(
                     role="realizer",
                     task_ids=invocation.task_ids,
                     section_id=invocation.section_id,
+                    repair_feedback=repair_feedback,
                 )
             else:
                 actual_envelope_digest = sha256_digest(canonical_json_bytes({
@@ -15942,11 +20359,38 @@ def _run_unified_v2_realizer_phase(
                     "technical_bytes_digest": actual_bytes_digest,
                     "failures": sorted(set(request_failures)),
                 }))
-            if actual_envelope_digest != invocation.expected_request_envelope_digest:
+            expected_invocation_envelope_digest = (
+                invocation.expected_request_envelope_digest
+                if not is_content_repair
+                else actual_envelope_digest
+            )
+            if actual_envelope_digest != expected_invocation_envelope_digest:
                 request_failures.append("unified_actual_request_envelope_mismatch")
 
-            started_at = time.time()
             attempt = last_started_attempt(ledger_root, invocation.invocation_id) + 1
+            chained_content_repair = (
+                _is_chained_content_repair_feedback(repair_feedback)
+                and not chained_content_repair_used
+                and attempt == (
+                    int(getattr(invocation, "max_attempts", 0) or 0)
+                    + 1
+                    + chained_pre_send_attempts
+                )
+            )
+            if chained_content_repair:
+                # A response-format repair can parse successfully and then
+                # expose a witness omission. Allow exactly one follow-up
+                # content repair under the same invocation/plan identity;
+                # the run-wide retry reserve remains the budget authority.
+                chained_content_repair_used = True
+            if attempt > int(getattr(invocation, "max_attempts", 0) or 0) and not chained_content_repair:
+                request_failures.append(
+                    f"attempt_limit_exhausted:{invocation.invocation_id}:{attempt}>"
+                    f"{int(getattr(invocation, 'max_attempts', 0) or 0)}"
+                )
+
+            started_at = time.time()
+            register_invocation_plan(ledger_root, realizer_plan)
             publish_attempt_started(
                 ledger_root,
                 InvocationAttemptStartedV1(
@@ -15955,11 +20399,135 @@ def _run_unified_v2_realizer_phase(
                     plan_digest=realizer_plan.content_digest,
                     page_id=page.page_id,
                     expected_technical_bytes_digest=page.technical_bytes_digest,
-                    expected_request_envelope_digest=invocation.expected_request_envelope_digest,
+                    expected_request_envelope_digest=actual_envelope_digest,
                     model_identity_digest=envelope.model_identity_digest,
                     started_at_unix=started_at,
+                    content_repair_attempt=is_content_repair,
                 ),
             )
+            # R6: measure the actual request with the frozen envelope meter
+            # before it can be sent.  An over-budget request is rejected at
+            # this boundary and still receives a durable receipt.
+            token_accounting = None
+            if envelope is not None:
+                role_budget = envelope.request_budget_by_role.get("realizer")
+                if role_budget is None:
+                    request_failures.append(
+                        f"{UNIFIED_INVOCATION_BUDGET_MISSING}:role_budget:"
+                        f"{invocation.invocation_id}"
+                    )
+                else:
+                    token_accounting = account_unified_request_tokens(
+                        consumer_role="realizer",
+                        rendered_prompt=str(getattr(request, "prompt", "")),
+                        input_payload=getattr(request, "input_payload", None),
+                        response_schema=(
+                            getattr(request, "response_json_schema", None) or {}
+                        ),
+                        request_budget=role_budget,
+                        # See the writer boundary: the declared per-request cap
+                        # bounds the actual role-scaffolded request.
+                        max_input_tokens=int(
+                            envelope.max_request_input_tokens_by_role["realizer"]
+                        ),
+                        model_context_tokens=int(
+                            envelope.model_context_tokens
+                        ),
+                        safety_margin_tokens=int(
+                            envelope.safety_margin_tokens
+                        ),
+                        meter=envelope.token_meter,
+                        tokenizer=tokenizer,
+                        invocation_id=invocation.invocation_id,
+                        page_id=page.page_id,
+                        scaffolding_reserve_tokens=0,
+                    )
+                    if not token_accounting.fits:
+                        request_failures.append(
+                            f"{UNIFIED_INVOCATION_BUDGET_EXCEEDED}:"
+                            f"actual_request_input_tokens:{invocation.invocation_id}:"
+                            f"{token_accounting.input_tokens}>"
+                            f"{token_accounting.max_input_tokens}"
+                        )
+                    elif (
+                        not is_content_repair
+                        and token_accounting.input_tokens > int(
+                            invocation.max_input_tokens
+                        )
+                    ):
+                        request_failures.append(
+                            f"{UNIFIED_INVOCATION_BUDGET_EXCEEDED}:"
+                            f"planned_request_input_tokens:"
+                            f"{invocation.invocation_id}:"
+                            f"{token_accounting.input_tokens}>"
+                            f"{int(invocation.max_input_tokens)}"
+                        )
+                    else:
+                        # R6 correction: run-wide, revision-lineage-wide debit.
+                        register_invocation_plan(ledger_root, realizer_plan)
+                        spent_by_role = spend_input_tokens_by_role(
+                            read_all_completed_receipts(ledger_root, strict=True),
+                        )
+                        unsettled_records = unsettled_started_attempt_records(
+                            ledger_root,
+                            realizer_plan,
+                            exclude=(
+                                str(invocation.invocation_id),
+                                int(attempt),
+                            ),
+                        )
+                        unmetered = [
+                            record for record in unsettled_records
+                            if record.plan_source == "unknown"
+                        ]
+                        if unmetered:
+                            request_failures.append(
+                                f"{UNIFIED_INVOCATION_BUDGET_MISSING}:"
+                                "run_reservation_unsettled_unmetered:"
+                                + ",".join(
+                                    f"{record.invocation_id}:{record.attempt}"
+                                    for record in unmetered[:5]
+                                )
+                            )
+                        spent_by_role["realizer"] = (
+                            int(spent_by_role.get("realizer", 0))
+                            + sum(
+                                record.planned_input_tokens
+                                for record in unsettled_records
+                            )
+                        )
+                        remaining = remaining_run_input_tokens(
+                            reserved_input_tokens_by_role=(
+                                realizer_plan.reserved_input_tokens_by_role
+                            ),
+                            spent_input_tokens_by_role=spent_by_role,
+                            role="realizer",
+                        )
+                        if token_accounting.input_tokens > remaining:
+                            request_failures.append(
+                                f"{UNIFIED_INVOCATION_BUDGET_EXCEEDED}:"
+                                f"run_reservation:{invocation.invocation_id}:"
+                                f"{token_accounting.input_tokens}>{remaining}"
+                            )
+                        if not request_failures:
+                            request_failures.extend(
+                                check_run_budget_before_send(
+                                    ledger_root,
+                                    envelope,
+                                    role="realizer",
+                                    invocation_id=invocation.invocation_id,
+                                    is_content_repair=is_content_repair,
+                                    request_input_tokens=int(
+                                        token_accounting.input_tokens
+                                    ),
+                                    current_reserved_input_tokens=int(
+                                        invocation.max_input_tokens
+                                    ),
+                                    current_attempt_recorded=True,
+                                )
+                            )
+
+            sent_to_caller = False
             if request_failures:
                 from code2paper.export.run_manifest import hash_text
                 response = LLMResponse(
@@ -15971,6 +20539,8 @@ def _run_unified_v2_realizer_phase(
                     ),
                 )
             else:
+                publish_provider_request(ledger_root, invocation.invocation_id, attempt, request, config)
+                sent_to_caller = True
                 try:
                     response = caller(config, request)
                 except Exception as exc:  # noqa: BLE001 - persist the failed actual call
@@ -15988,16 +20558,133 @@ def _run_unified_v2_realizer_phase(
                     blocked_reason="realizer_call_returned_none",
                 )
             response_text = str(getattr(response, "text", "") or "")
-            observed.update({
+            observed_attempts.append({
                 "attempt": attempt,
                 "started_at": started_at,
+                "token_accounting": token_accounting,
                 "actual_bytes_digest": actual_bytes_digest,
                 "actual_envelope_digest": actual_envelope_digest,
                 "request_failures": tuple(dict.fromkeys(request_failures)),
+                "sent_to_caller": sent_to_caller,
+                "provider_diagnostics_digest": (publish_provider_response(
+                    ledger_root, invocation.invocation_id, attempt, response,
+                ) if sent_to_caller else ""),
                 "response": response,
                 "response_digest": _digest_text(response_text),
+                "content_repair_attempt": is_content_repair,
+                "chained_content_repair": chained_content_repair,
+                "repair_feedback": repair_feedback,
             })
             return response
+
+        def _persist_realizer_attempt(
+            draft_value: MechanismDraftV1,
+            observation: Mapping[str, Any],
+        ) -> Any:
+            observed_response = observation.get("response")
+            response_text = str(getattr(observed_response, "text", "") or "")
+            fragment_digest = publish_output_fragment(
+                ledger_root,
+                invocation_id=invocation.invocation_id,
+                attempt=int(observation["attempt"]),
+                fragment={
+                    "consumer_role": "realizer",
+                    "section_id": section_id,
+                    "page_id": page.page_id,
+                    "draft": draft_value.model_dump(mode="json"),
+                    "response_text": response_text,
+                    "response_hash": str(
+                        getattr(observed_response, "response_hash", "")
+                    ),
+                    "content_repair_attempt": bool(
+                        observation.get("content_repair_attempt", False)
+                    ),
+                    "repair_feedback": list(
+                        observation.get("repair_feedback") or ()
+                    ),
+                },
+            )
+            request_failures = tuple(observation.get("request_failures", ()))
+            delivery_status = "accepted" if not request_failures else "rejected"
+            task_status = "complete" if draft_value.status == "accepted" else "failed"
+            failure_values = (
+                *request_failures,
+                *(
+                    (draft_value.blocked_reason,)
+                    if draft_value.blocked_reason
+                    else ()
+                ),
+            )
+            receipt = ActualRequestReceiptV2(
+                invocation_id=invocation.invocation_id,
+                attempt=int(observation["attempt"]),
+                consumer_role="realizer",
+                phase="realizer",
+                workset_id=invocation.workset_id,
+                task_ids=tuple(invocation.task_ids),
+                mechanism_id=invocation.mechanism_id,
+                section_id=invocation.section_id,
+                page_id=page.page_id,
+                actual_technical_bytes_digest=str(
+                    observation["actual_bytes_digest"]
+                ),
+                actual_request_envelope_digest=str(
+                    observation["actual_envelope_digest"]
+                ),
+                response_digest=str(observation["response_digest"]),
+                fragment_digests=(fragment_digest,),
+                model_identity_digest=envelope.model_identity_digest,
+                provider_usage=getattr(observed_response, "token_usage", None),
+                provider_diagnostics_digest=str(observation.get("provider_diagnostics_digest", "")),
+                reserved_input_tokens=int(invocation.max_input_tokens),
+                token_accounting=observation.get("token_accounting"),
+                started_at_unix=float(observation["started_at"]),
+                finished_at_unix=time.time(),
+                delivery_status=delivery_status,  # type: ignore[arg-type]
+                delivery_rejection_code=(
+                    request_failures[0] if request_failures else ""
+                ),
+                sent_to_caller=bool(observation.get("sent_to_caller", True)),
+                task_status=task_status,  # type: ignore[arg-type]
+                succeeded_task_ids=(
+                    tuple(invocation.task_ids) if task_status == "complete" else ()
+                ),
+                failed_task_ids=(
+                    tuple(invocation.task_ids) if task_status != "complete" else ()
+                ),
+                task_failures=tuple(
+                    {"code": str(item)} for item in failure_values
+                ),
+                content_repair_attempt=bool(
+                    observation.get("content_repair_attempt", False)
+                ),
+                upstream_archive_digest=archive.content_digest,
+                upstream_workset_manifest_digest=manifest.content_digest,
+                upstream_plan_digest=realizer_plan.content_digest,
+            )
+            publish_attempt_completed(ledger_root, receipt)
+            receipts.append(receipt)
+            traces.append({
+                "invocation_id": invocation.invocation_id,
+                "page_id": page.page_id,
+                "attempt": int(observation["attempt"]),
+                "content_repair_attempt": bool(
+                    observation.get("content_repair_attempt", False)
+                ),
+                "chained_content_repair": bool(
+                    observation.get("chained_content_repair", False)
+                ),
+                "delivery_status": delivery_status,
+                "task_status": task_status,
+                "blocked_reason": draft_value.blocked_reason,
+                "actual_technical_bytes_digest": observation[
+                    "actual_bytes_digest"
+                ],
+                "actual_request_envelope_digest": observation[
+                    "actual_envelope_digest"
+                ],
+            })
+            return receipt
 
         draft = realizer.realize_draft(
             context=context,
@@ -16008,91 +20695,128 @@ def _run_unified_v2_realizer_phase(
             consumer_invocation=invocation,
             required_detail_ids=tuple(sorted(scoped_detail_ids)),
             section_id=section_id,
+            repair_feedback=resumed_format_repair_feedback,
         )
-        drafts.append(draft)
-        if not observed:
+        if not observed_attempts:
+            # The Realizer can fail closed before constructing/sending its
+            # request (for example when a page contains an unresolved
+            # repository detail).  Keep that planned invocation auditable as
+            # an explicit no-send rejection instead of silently dropping it
+            # and later misreporting a missing receipt.  ``sent_to_caller``
+            # remains false, so the unified run ledger does not charge model
+            # spend for this deterministic refusal.
+            from code2paper.export.run_manifest import hash_text
+
+            attempt = last_started_attempt(ledger_root, invocation.invocation_id) + 1
+            now = time.time()
+            fragment_digest = publish_output_fragment(
+                ledger_root,
+                invocation_id=invocation.invocation_id,
+                attempt=attempt,
+                fragment={
+                    "consumer_role": "realizer",
+                    "section_id": section_id,
+                    "page_id": page.page_id,
+                    "draft": draft.model_dump(mode="json"),
+                    "response_text": "",
+                    "response_hash": hash_text(""),
+                    "sent_to_caller": False,
+                },
+            )
+            blocked_reason = str(
+                draft.blocked_reason or "realizer_actual_request_not_observed"
+            )
+            receipt = ActualRequestReceiptV2(
+                invocation_id=invocation.invocation_id,
+                attempt=attempt,
+                consumer_role="realizer",
+                phase="realizer",
+                workset_id=invocation.workset_id,
+                task_ids=tuple(invocation.task_ids),
+                mechanism_id=invocation.mechanism_id,
+                section_id=invocation.section_id,
+                page_id=page.page_id,
+                actual_technical_bytes_digest=page.technical_bytes_digest,
+                actual_request_envelope_digest=invocation.expected_request_envelope_digest,
+                response_digest=hash_text(""),
+                fragment_digests=(fragment_digest,),
+                model_identity_digest=envelope.model_identity_digest,
+                started_at_unix=now,
+                finished_at_unix=now,
+                delivery_status="rejected",
+                delivery_rejection_code=blocked_reason,
+                sent_to_caller=False,
+                task_status="failed",
+                failed_task_ids=tuple(invocation.task_ids),
+                task_failures=({"code": blocked_reason},),
+                upstream_archive_digest=archive.content_digest,
+                upstream_workset_manifest_digest=manifest.content_digest,
+                upstream_plan_digest=realizer_plan.content_digest,
+                token_accounting=None,
+            )
+            publish_attempt_completed(ledger_root, receipt)
+            receipts.append(receipt)
             traces.append({
                 "invocation_id": invocation.invocation_id,
+                "page_id": page.page_id,
                 "status": "blocked",
                 "failure": "realizer_actual_request_not_observed",
                 "draft_status": draft.status,
                 "draft_blocked_reason": draft.blocked_reason,
+                "delivery_status": "rejected",
+                "sent_to_caller": False,
             })
+            drafts.append(draft)
             continue
+        _persist_realizer_attempt(draft, observed_attempts[-1])
 
-        observed_response = observed.get("response")
-        response_text = str(getattr(observed_response, "text", "") or "")
-        fragment_digest = publish_output_fragment(
-            ledger_root,
-            invocation_id=invocation.invocation_id,
-            attempt=int(observed["attempt"]),
-            fragment={
-                "consumer_role": "realizer",
-                "section_id": section_id,
-                "page_id": page.page_id,
-                "draft": draft.model_dump(mode="json"),
-                "response_text": response_text,
-                "response_hash": str(getattr(observed_response, "response_hash", "")),
-            },
-        )
-        request_failures = tuple(observed.get("request_failures", ()))
-        delivery_status = "accepted" if not request_failures else "rejected"
-        task_status = "complete" if draft.status == "accepted" else "failed"
-        receipt = ActualRequestReceiptV2(
-            invocation_id=invocation.invocation_id,
-            attempt=int(observed["attempt"]),
-            consumer_role="realizer",
-            phase="realizer",
-            workset_id=invocation.workset_id,
-            task_ids=tuple(invocation.task_ids),
-            mechanism_id=invocation.mechanism_id,
-            section_id=invocation.section_id,
-            page_id=page.page_id,
-            actual_technical_bytes_digest=str(observed["actual_bytes_digest"]),
-            actual_request_envelope_digest=str(observed["actual_envelope_digest"]),
-            response_digest=str(observed["response_digest"]),
-            fragment_digests=(fragment_digest,),
-            model_identity_digest=envelope.model_identity_digest,
-            started_at_unix=float(observed["started_at"]),
-            finished_at_unix=time.time(),
-            delivery_status=delivery_status,  # type: ignore[arg-type]
-            delivery_rejection_code=(request_failures[0] if request_failures else ""),
-            task_status=task_status,  # type: ignore[arg-type]
-            succeeded_task_ids=(tuple(invocation.task_ids) if task_status == "complete" else ()),
-            failed_task_ids=(tuple(invocation.task_ids) if task_status != "complete" else ()),
-            task_failures=tuple(
-                {"code": str(item)}
-                for item in (
-                    *request_failures,
-                    *(
-                        (draft.blocked_reason,)
-                        if draft.blocked_reason
-                        else ()
-                    ),
+        # Content/evidence failures belong to the Realizer.  Give it one
+        # bounded repair request carrying only the failed target and frozen
+        # source excerpts; transport, authority, and scope failures do not
+        # receive a retry.  The first receipt stays durable evidence.
+        if (
+            draft.status != "accepted"
+            and draft.repair_feedback
+            and bool(observed_attempts[-1].get("sent_to_caller"))
+            and (
+                int(observed_attempts[-1].get("attempt", 0) or 0)
+                < int(getattr(invocation, "max_attempts", 0) or 0)
+                or (
+                    _is_chained_content_repair_feedback(draft.repair_feedback)
+                    and not chained_content_repair_used
+                    and int(observed_attempts[-1].get("attempt", 0) or 0)
+                    == int(getattr(invocation, "max_attempts", 0) or 0)
                 )
-            ),
-            upstream_archive_digest=archive.content_digest,
-            upstream_workset_manifest_digest=manifest.content_digest,
-            upstream_plan_digest=realizer_plan.content_digest,
-        )
-        publish_attempt_completed(ledger_root, receipt)
-        receipts.append(receipt)
-        traces.append({
-            "invocation_id": invocation.invocation_id,
-            "page_id": page.page_id,
-            "delivery_status": delivery_status,
-            "task_status": task_status,
-            "actual_technical_bytes_digest": observed["actual_bytes_digest"],
-            "actual_request_envelope_digest": observed["actual_envelope_digest"],
-        })
+            )
+        ):
+            repaired_draft = realizer.realize_draft(
+                context=context,
+                page_index=list(manifest.pages).index(page),
+                formula_packages=scoped_packages,
+                caller=_capturing_realizer_caller,
+                consumer_page=page,
+                consumer_invocation=invocation,
+                required_detail_ids=tuple(sorted(scoped_detail_ids)),
+                section_id=section_id,
+                repair_feedback=draft.repair_feedback,
+            )
+            draft = repaired_draft
+            if observed_attempts:
+                _persist_realizer_attempt(draft, observed_attempts[-1])
+        drafts.append(draft)
 
     execution_payload = {
         "schema_version": "2.0",
         "phase": "realizer",
         "plan_digest": realizer_plan.content_digest,
         "planned_invocations": len(realizer_plan.invocations),
-        "actual_invocations": len(receipts),
-        "complete_tasks": sum(1 for receipt in receipts if receipt.task_status == "complete"),
+        "actual_invocations": len({receipt.invocation_id for receipt in receipts}),
+        "attempt_receipts": len(receipts),
+        "complete_tasks": sum(
+            1
+            for receipt in receipts
+            if receipt.task_status == "complete"
+        ),
         "traces": traces,
     }
     execution_path = method_output(out_root, "realizer_plan_execution_v2")
@@ -16119,7 +20843,9 @@ def _run_unified_v2_realizer_phase(
     )
     paths["realizer_receipts_v2"] = str(receipts_path)
     blocked = ""
-    if len(receipts) != len(realizer_plan.invocations):
+    if len({receipt.invocation_id for receipt in receipts}) != len(
+        realizer_plan.invocations
+    ):
         blocked = "unified_realizer_receipt_missing"
     return {
         "blocked": blocked,
@@ -16324,6 +21050,8 @@ def _build_narrative_plan_v3(
     prior_plan: Any | None = None,
     proposal_caller: Callable[[Any, Any], Any] | None = None,
     llm_config: Any | None = None,
+    proposal_llm_caller: Callable[..., Any] | None = None,
+    proposal_call_meter: Any | None = None,
 ) -> tuple[Any, dict[str, Any]]:
     from code2paper.agentic.method_architect import build_narrative_plan_v3
     return build_narrative_plan_v3(
@@ -16333,6 +21061,11 @@ def _build_narrative_plan_v3(
         prior_plan=prior_plan,
         proposal_caller=proposal_caller,
         llm_config=llm_config,
+        proposal_call_meter=proposal_call_meter,
+        # R7 default wiring: the product entry passes no architect caller, so
+        # the builder constructs the bounded proposal caller from llm_config.
+        # ``proposal_llm_caller`` is the transport override used by tests.
+        proposal_llm_caller=proposal_llm_caller,
     )
 
 
@@ -16344,6 +21077,7 @@ def _writer_section_inputs_v2(
     consumer_workset_manifest: Any,
     consumer_invocation_plan: Any,
     system_prompt: str = "",
+    candidate_partial_handoff: Sequence[Mapping[str, Any]] = (),
 ) -> list[Any]:
     """Build exactly one private Writer input for every V2 page invocation.
 
@@ -16420,6 +21154,7 @@ def _writer_section_inputs_v2(
     def _binding_contract(rows: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
         all_detail_ids: list[str] = []
         required_detail_ids: list[str] = []
+        allowed_paragraph_ids: list[str] = []
         detail_witness_contracts: dict[str, list[dict[str, Any]]] = {}
         allowed_atom_ids: list[str] = []
         required_atom_ids: list[str] = []
@@ -16427,6 +21162,9 @@ def _writer_section_inputs_v2(
         formula_obligation_ids: list[str] = []
         formula_package_ids: list[str] = []
         for row in rows:
+            paragraph_id = _text_id(row.get("paragraph_id"))
+            if paragraph_id and paragraph_id not in allowed_paragraph_ids:
+                allowed_paragraph_ids.append(paragraph_id)
             for value in (
                 *(row.get("required_detail_ids") or ()),
                 *(row.get("optional_detail_ids") or ()),
@@ -16470,6 +21208,8 @@ def _writer_section_inputs_v2(
                     if detail_id:
                         atom_contracts_by_detail.setdefault(detail_id, []).append(target)
         return {
+            "allowed_paragraph_ids": allowed_paragraph_ids,
+            "required_paragraph_ids": list(allowed_paragraph_ids),
             "allowed_detail_ids": all_detail_ids,
             "required_detail_ids": required_detail_ids,
             "allowed_atom_ids": allowed_atom_ids,
@@ -16532,6 +21272,20 @@ def _writer_section_inputs_v2(
             ]
             raise ValueError(f"unified_writer_page_missing:{section_id}:{','.join(missing)}")
         pages = [page for page in pages if page is not None]
+        explicit_page_formula_scope = any(
+            "formula_package_ids" in (getattr(page, "technical_payload", {}) or {})
+            for page in pages
+        )
+        page_formula_scope_ids = {
+            _text_id(value)
+            for page in pages
+            for value in (
+                (getattr(page, "technical_payload", {}) or {}).get(
+                    "formula_package_ids", ()
+                ) or ()
+            )
+            if _text_id(value)
+        }
         page_details = {_text_id(page.page_id): _page_detail_ids(page) for page in pages}
         page_atoms = {_text_id(page.page_id): _page_atom_ids(page) for page in pages}
         page_formula_ids = {
@@ -16612,11 +21366,117 @@ def _writer_section_inputs_v2(
             if not section_mechanism_ids
             or _text_id(item.get("mechanism_id")) in section_mechanism_ids
         ]
+        # Candidate-page budget probes intentionally expose only one page of a
+        # section.  When that page declares its package closed set, do not
+        # route unrelated packages from sibling pages through the temporary
+        # candidate NarrativePlan; they are not part of this request.
+        if explicit_page_formula_scope:
+            section_packages = [
+                item for item in section_packages
+                if _text_id(item.get("package_id")) in page_formula_scope_ids
+            ]
         section_obligations = [
             item for item in obligations
             if not section_mechanism_ids
             or _text_id(item.get("mechanism_id")) in section_mechanism_ids
         ]
+        # Formalizer packages are mechanism-scoped and intentionally do not
+        # acquire a paragraph owner until the frozen NarrativePlan places
+        # them.  The low-level Writer placeholder contract is stricter: every
+        # package must carry the exact paragraph that may consume it.  Resolve
+        # that route here, before any request material is measured/frozen;
+        # never let the transport layer guess an owner from page-local bytes.
+        paragraphs_by_package_id: dict[str, set[str]] = {}
+        paragraphs_by_obligation_id: dict[str, set[str]] = {}
+        paragraph_ids = {
+            _text_id(row.get("paragraph_id"))
+            for row in paragraph_rows
+            if _text_id(row.get("paragraph_id"))
+        }
+        for row in paragraph_rows:
+            paragraph_id = _text_id(row.get("paragraph_id"))
+            if not paragraph_id:
+                continue
+            row_package_ids = {
+                _text_id(value)
+                for value in (row.get("formula_package_ids") or ())
+                if _text_id(value)
+            }
+            for package_id in row_package_ids:
+                paragraphs_by_package_id.setdefault(package_id, set()).add(
+                    paragraph_id
+                )
+            for obligation_id in (
+                _text_id(value)
+                for value in (row.get("formula_obligation_ids") or ())
+                if _text_id(value)
+            ):
+                paragraphs_by_obligation_id.setdefault(obligation_id, set()).add(
+                    paragraph_id
+                )
+
+        routed_section_packages: list[dict[str, Any]] = []
+        for package in section_packages:
+            package_id = _text_id(package.get("package_id"))
+            if not package_id:
+                raise ValueError(f"unified_writer_formula_package_id_missing:{section_id}")
+            declared_consumer = _text_id(package.get("consumer_paragraph_id"))
+            package_paragraphs = set(paragraphs_by_package_id.get(package_id, ()))
+            package_obligation_ids = {
+                _text_id(value)
+                for value in (
+                    package.get("satisfied_obligation_ids") or
+                    ((package.get("obligation_id"),)
+                     if package.get("obligation_id") else ())
+                )
+                if _text_id(value)
+            }
+            obligation_paragraphs = {
+                paragraph_id
+                for obligation_id in package_obligation_ids
+                for paragraph_id in paragraphs_by_obligation_id.get(
+                    obligation_id, ()
+                )
+            }
+            if declared_consumer:
+                if declared_consumer not in paragraph_ids:
+                    raise ValueError(
+                        f"unified_writer_formula_package_consumer_unknown:{section_id}:"
+                        f"{package_id}:{declared_consumer}"
+                    )
+                if package_paragraphs and declared_consumer not in package_paragraphs:
+                    raise ValueError(
+                        f"unified_writer_formula_package_route_mismatch:{section_id}:"
+                        f"{package_id}:{declared_consumer}"
+                    )
+                if obligation_paragraphs and declared_consumer not in obligation_paragraphs:
+                    raise ValueError(
+                        f"unified_writer_formula_obligation_route_mismatch:{section_id}:"
+                        f"{package_id}:{declared_consumer}"
+                    )
+                consumer_id = declared_consumer
+            else:
+                candidates = package_paragraphs or obligation_paragraphs
+                if len(candidates) != 1:
+                    raise ValueError(
+                        f"unified_writer_formula_package_consumer_ambiguous:{section_id}:"
+                        f"{package_id}:{','.join(sorted(candidates))}"
+                    )
+                consumer_id = next(iter(candidates))
+                if (
+                    package_paragraphs
+                    and obligation_paragraphs
+                    and obligation_paragraphs != package_paragraphs
+                ):
+                    raise ValueError(
+                        f"unified_writer_formula_package_route_mismatch:{section_id}:"
+                        f"{package_id}"
+                    )
+            routed_package = dict(package)
+            routed_package["consumer_paragraph_id"] = consumer_id
+            routed_section_packages.append(routed_package)
+        section_packages = routed_section_packages
+
         for page in pages:
             page_id = _text_id(page.page_id)
             page_paragraph_id_set = page_paragraph_ids[page_id] | {
@@ -16625,6 +21485,13 @@ def _writer_section_inputs_v2(
             }
             page_detail_set = page_details[page_id]
             page_obligation_set = set(page_formula_ids[page_id])
+            page_payload = getattr(page, "technical_payload", {}) or {}
+            page_formula_package_ids = {
+                _text_id(value)
+                for value in (page_payload.get("formula_package_ids") or ())
+                if _text_id(value)
+            }
+            has_explicit_page_formula_scope = "formula_package_ids" in page_payload
             page_obligations: list[dict[str, Any]] = []
             for obligation in section_obligations:
                 obligation_id = _text_id(obligation.get("obligation_id"))
@@ -16662,11 +21529,16 @@ def _writer_section_inputs_v2(
                     for value in (package.get("source_detail_ids") or ())
                     if _detail_id(value)
                 }
-                if (
-                    (consumer_id and consumer_id in page_paragraph_id_set)
-                    or satisfied & page_obligation_set
-                    or source_details & page_detail_set
-                ):
+                include = (
+                    package_id in page_formula_package_ids
+                    if has_explicit_page_formula_scope
+                    else (
+                        (consumer_id and consumer_id in page_paragraph_id_set)
+                        or satisfied & page_obligation_set
+                        or source_details & page_detail_set
+                    )
+                )
+                if include:
                     page_packages.append(package)
 
             page_rows = [
@@ -16742,7 +21614,13 @@ def _writer_section_inputs_v2(
                             "paragraphs": paragraph_rows,
                         },
                         "narrative_plan": page_narrative,
-                        "shared_contexts": [page_bytes.decode("utf-8")],
+                        # Keep the immutable page structured in the private
+                        # Writer input.  Passing the canonical page as a JSON
+                        # string causes the provider envelope to escape every
+                        # byte a second time; the LLM-visible projection keeps
+                        # the full object while compacting only duplicated
+                        # narrative/binding metadata.
+                        "shared_contexts": [json.loads(page_bytes.decode("utf-8"))],
                         "shared_context_metadata": [metadata],
                         "formula_packages": page_packages,
                         "formula_obligations": page_obligations,
@@ -16750,6 +21628,9 @@ def _writer_section_inputs_v2(
                         "paragraph_transaction_required": True,
                         "formula_placeholders_required": bool(page_packages),
                         "formula_generation_policy": "consume_only",
+                        "candidate_partial_handoff": [
+                            dict(item) for item in candidate_partial_handoff
+                        ],
                         "binding_contract": contract,
                     },
                     system_prompt=prompt,
@@ -16818,7 +21699,16 @@ def _canonical_unified_writer_input_by_section(
             context_values,
             payload.get("shared_contexts") or (),
             lambda value: _digest_text(
-                value.decode("utf-8") if isinstance(value, bytes) else str(value)
+                value.decode("utf-8")
+                if isinstance(value, bytes)
+                else json.dumps(
+                    value,
+                    ensure_ascii=False,
+                    sort_keys=True,
+                    separators=(",", ":"),
+                )
+                if isinstance(value, Mapping)
+                else str(value)
             ),
         )
         metadata_values = list(current_payload.get("shared_context_metadata") or ())
@@ -16890,6 +21780,7 @@ def _writer_section_inputs_v3(
     consumer_workset_manifest: Any | None = None,
     consumer_invocation_plan: Any | None = None,
     system_prompt: str = "",
+    candidate_partial_handoff: Sequence[Mapping[str, Any]] = (),
 ) -> list[Any]:
     """Build the Writer-facing projection for each planned section in unified mode."""
     from code2paper.llm.section_writer import WriterSectionInput
@@ -16908,6 +21799,7 @@ def _writer_section_inputs_v3(
             consumer_workset_manifest=consumer_workset_manifest,
             consumer_invocation_plan=consumer_invocation_plan,
             system_prompt=system_prompt,
+            candidate_partial_handoff=candidate_partial_handoff,
         )
 
     inputs: list[WriterSectionInput] = []
@@ -16931,7 +21823,7 @@ def _writer_section_inputs_v3(
         heading = str(getattr(section, "heading", ""))
         sec_plan_dict = section.model_dump(mode="json") if hasattr(section, "model_dump") else dict(section)
 
-        sec_slices: list[str] = []
+        sec_slices: list[Any] = []
         sec_formula_pkgs: list[dict[str, Any]] = []
         sec_formula_obs: list[dict[str, Any]] = []
         sec_slice_metadata: list[dict[str, Any]] = []
@@ -16950,7 +21842,7 @@ def _writer_section_inputs_v3(
                         page_items = tuple(getattr(manifest, "pages", ()) or ())
                         for page in page_items:
                             page_bytes = page.serialized_bytes
-                            sec_slices.append(page_bytes.decode("utf-8"))
+                            sec_slices.append(json.loads(page_bytes.decode("utf-8")))
                             sec_slice_metadata.append({
                                 "mechanism_id": mid_str,
                                 "page_index": int(page.page_index),
@@ -17030,7 +21922,7 @@ def _writer_section_inputs_v3(
                         f"unified_writer_page_owner_missing:{sec_id}:{page_id}"
                     )
                 page_bytes = canonical_json_bytes(dict(page.technical_payload))
-                sec_slices.append(page_bytes.decode("utf-8"))
+                sec_slices.append(json.loads(page_bytes.decode("utf-8")))
                 sec_slice_metadata.append({
                     "section_id": sec_id,
                     "mechanism_id": str(page.mechanism_id),
@@ -17141,6 +22033,9 @@ def _writer_section_inputs_v3(
             "paragraph_transaction_required": True,
             "formula_placeholders_required": bool(sec_formula_pkgs),
             "formula_generation_policy": "consume_only",
+            "candidate_partial_handoff": [
+                dict(item) for item in candidate_partial_handoff
+            ],
             "binding_contract": {
                 "allowed_detail_ids": all_detail_ids,
                 "required_detail_ids": required_detail_ids,
@@ -17172,6 +22067,70 @@ def _writer_section_inputs_v3(
         )
 
     return inputs
+
+
+def _load_unified_writer_resume_state(
+    *,
+    ledger_root: Path,
+    invocation_plan: Any,
+    archive_digest: str,
+    workset_manifest_digest: str,
+    model_identity_digest: str,
+) -> tuple[Any | None, dict[tuple[str, str], Mapping[str, Any]]]:
+    """Load exact completed Writer page responses for a durable resume.
+
+    The V2 Writer caller normally records a new page-delivery observation on
+    every invocation of ``run_publication_method_writer``.  A resumed run must
+    not spend the same page budget again merely to reconstruct the in-memory
+    section output, though.  Reuse is therefore allowed only through the
+    ledger's existing digest-bound ``build_resume_plan`` decision and its
+    matching output fragment; no response text is reconstructed or edited.
+    """
+
+    from code2paper.agentic.unified_invocation_ledger import (
+        build_resume_plan,
+        rebuild_aggregate_fragments,
+    )
+
+    try:
+        resume_plan = build_resume_plan(
+            ledger_root,
+            invocation_plan,
+            archive_digest=archive_digest,
+            workset_manifest_digest=workset_manifest_digest,
+            model_identity_digest=model_identity_digest,
+        )
+        fragments = {
+            (
+                str(item.get("invocation_id") or ""),
+                str(item.get("receipt_digest") or ""),
+            ): item
+            for item in rebuild_aggregate_fragments(
+                ledger_root,
+                invocation_plan,
+                role="writer",
+            )
+            if str(item.get("invocation_id") or "").strip()
+            and str(item.get("receipt_digest") or "").strip()
+        }
+        from code2paper.agentic.unified_invocation_ledger import read_all_completed_receipts
+        for receipt in read_all_completed_receipts(ledger_root, strict=True):
+            if receipt.consumer_role != "writer":
+                continue
+            content = read_writer_content_acceptance(ledger_root, receipt)
+            key = (receipt.invocation_id, receipt.content_digest)
+            if content and content.get("accepted") and key in fragments:
+                item = dict(fragments[key])
+                payload = dict(item.get("fragment") or {})
+                payload["response_text"] = content["response_text"]
+                payload["response_hash"] = _digest_text(content["response_text"])
+                item["fragment"] = payload
+                fragments[key] = item
+        return resume_plan, fragments
+    except Exception:
+        # A corrupt or mismatched ledger is not resume authority.  The normal
+        # Writer caller below will fail closed at its send/accounting gate.
+        return None, {}
 
 
 def _assert_unified_v2_writer_page_delivery(
@@ -17216,57 +22175,119 @@ def _assert_unified_v2_writer_page_delivery(
                 f"writer_v2_page_unknown:{invocation.invocation_id}:{invocation.page_id}"
             )
         accepted_records = [
-            record for record in records if bool(record.get("accepted"))
+            record for record in records
+            if bool(record.get("accepted"))
+            and not bool(record.get("content_repair_attempt"))
+        ]
+        accepted_repair_records = [
+            record for record in records
+            if bool(record.get("accepted"))
+            and bool(record.get("content_repair_attempt"))
         ]
         if len(accepted_records) != 1:
             raise ValueError(
                 f"writer_v2_invocation_acceptance_count:{invocation.invocation_id}:"
                 f"{len(accepted_records)}"
             )
-        # A representation-only retry may cross the caller boundary more than
-        # once.  Rejected attempts are retained as evidence, but only one
-        # accepted delivery may satisfy the immutable invocation.  Content
-        # repairs remain owned by the Writer task and cannot create a second
-        # accepted page delivery for the same invocation.
+        # A bounded content retry may cross the caller boundary after the
+        # primary page delivery.  It is independently checked below, but it
+        # is not a second immutable page delivery.  Rejected attempts remain
+        # evidence and do not count toward either category.
+        def _validate_accepted_record(
+            record: Mapping[str, Any],
+            *,
+            require_nonempty_response: bool = True,
+            require_primary_envelope: bool = True,
+        ) -> None:
+            if str(record.get("page_id") or "") != page.page_id:
+                raise ValueError(
+                    f"writer_v2_page_id_mismatch:{invocation.invocation_id}"
+                )
+            if str(record.get("actual_technical_bytes_digest") or "") != (
+                page.technical_bytes_digest
+            ):
+                raise ValueError(
+                    f"{UNIFIED_ACTUAL_PAGE_BYTES_MISMATCH}:{invocation.invocation_id}"
+                )
+            if not bool(record.get("accepted")):
+                raise ValueError(
+                    f"writer_v2_page_delivery_rejected:{invocation.invocation_id}"
+                )
+            if require_primary_envelope and str(
+                record.get("actual_request_envelope_digest") or ""
+            ) != invocation.expected_request_envelope_digest:
+                raise ValueError(
+                    f"unified_request_envelope_digest_mismatch:{invocation.invocation_id}"
+                )
+            if not str(record.get("actual_request_envelope_digest") or ""):
+                raise ValueError(
+                    f"unified_request_envelope_digest_missing:{invocation.invocation_id}"
+                )
+            transport_response_status = record.get("transport_response_status")
+            if transport_response_status is not None:
+                transport_complete = transport_response_status == "nonempty"
+            else:
+                # Compatibility for records emitted before the explicit
+                # transport/content split.
+                transport_complete = str(record.get("task_status") or "") == "complete"
+            if not transport_complete and require_nonempty_response:
+                raise ValueError(
+                    f"unified_consumer_task_incomplete:{invocation.invocation_id}"
+                )
+            if require_nonempty_response and not bool(record.get("response_nonempty")):
+                raise ValueError(
+                    f"unified_consumer_task_incomplete:{invocation.invocation_id}"
+                )
+
         record = accepted_records[0]
-        if str(record.get("page_id") or "") != page.page_id:
-            raise ValueError(
-                f"writer_v2_page_id_mismatch:{invocation.invocation_id}"
+        # An empty/partial provider response is retained as transport
+        # evidence, but one bounded content repair may recover that same
+        # immutable page.  The repair must itself carry a non-empty response;
+        # without it the page remains fail-closed.  This is the only exception
+        # to the primary non-empty rule and does not make the empty attempt
+        # reusable.
+        _validate_accepted_record(
+            record,
+            require_nonempty_response=bool(record.get("response_nonempty")),
+        )
+        for repair_record in accepted_repair_records:
+            # Repair envelopes are intentionally different from the primary
+            # envelope.  The capture boundary has already checked page bytes,
+            # task set, prompt, schema, and the bounded repair packet; the
+            # receipt/started-marker pair binds this exact repair digest for
+            # resume.  Do not mistake that legitimate envelope delta for a
+            # second primary delivery.
+            _validate_accepted_record(
+                repair_record,
+                require_primary_envelope=False,
             )
-        if str(record.get("actual_technical_bytes_digest") or "") != (
-            page.technical_bytes_digest
-        ):
-            raise ValueError(
-                f"{UNIFIED_ACTUAL_PAGE_BYTES_MISMATCH}:{invocation.invocation_id}"
-            )
-        if not bool(record.get("accepted")):
-            raise ValueError(
-                f"writer_v2_page_delivery_rejected:{invocation.invocation_id}"
-            )
-        if str(record.get("actual_request_envelope_digest") or "") != (
-            invocation.expected_request_envelope_digest
-        ):
-            raise ValueError(
-                f"unified_request_envelope_digest_mismatch:{invocation.invocation_id}"
-            )
-        if not bool(record.get("response_nonempty")) or str(
-            record.get("task_status") or ""
-        ) != "complete":
-            raise ValueError(
-                f"unified_consumer_task_incomplete:{invocation.invocation_id}"
+        effective_record = record
+        if not bool(record.get("response_nonempty")):
+            recovered = [
+                item for item in accepted_repair_records
+                if bool(item.get("response_nonempty"))
+            ]
+            if not recovered:
+                raise ValueError(
+                    f"unified_consumer_task_incomplete:{invocation.invocation_id}"
+                )
+            effective_record = max(
+                recovered,
+                key=lambda item: int(item.get("attempt") or 0),
             )
         traces.append({
             "invocation_id": invocation.invocation_id,
             "section_id": invocation.section_id,
             "page_id": page.page_id,
             "technical_bytes_digest": page.technical_bytes_digest,
-            "actual_technical_bytes_digest": record.get(
+            "actual_technical_bytes_digest": effective_record.get(
                 "actual_technical_bytes_digest", ""
             ),
             "accepted": True,
-            "response_nonempty": bool(record.get("response_nonempty")),
-            "receipt_digest": str(record.get("receipt_digest") or ""),
-            "attempt": int(record.get("attempt") or 0),
+            "response_nonempty": bool(effective_record.get("response_nonempty")),
+            "receipt_digest": str(effective_record.get("receipt_digest") or ""),
+            "attempt": int(effective_record.get("attempt") or 0),
+            "transport_recovered_by_content_repair": effective_record is not record,
         })
     return traces
 
@@ -17309,11 +22330,51 @@ def _assert_unified_v2_realizer_delivery(
                 else getattr(row, "delivery_status", "")
             ) == "accepted"
         ]
-        if len(accepted) != 1:
-            raise ValueError(
-                f"unified_consumer_receipt_missing:realizer:{invocation_id}:accepted={len(accepted)}"
+        complete = [
+            row for row in accepted
+            if str(
+                row.get("task_status") if isinstance(row, Mapping)
+                else getattr(row, "task_status", "")
+            ) == "complete"
+        ]
+        if len(complete) == 0 and rows:
+            # A bounded repair can fail for a different reason from its
+            # primary. Report the latest attempt, independent of receipt
+            # iteration order; older failures remain in the durable ledger.
+            rejected = max(
+                rows,
+                key=lambda row: int(
+                    (row.get("attempt") if isinstance(row, Mapping)
+                     else getattr(row, "attempt", 0)) or 0
+                ),
             )
-        receipt = accepted[0]
+            rejection_code = str(
+                rejected.get("delivery_rejection_code")
+                if isinstance(rejected, Mapping)
+                else getattr(rejected, "delivery_rejection_code", "")
+            )
+            task_failures = (
+                rejected.get("task_failures")
+                if isinstance(rejected, Mapping)
+                else getattr(rejected, "task_failures", ())
+            ) or ()
+            failure_code = (
+                str(task_failures[0].get("code"))
+                if task_failures
+                and isinstance(task_failures[0], Mapping)
+                and str(task_failures[0].get("code") or "").strip()
+                else ""
+            )
+            raise ValueError(
+                f"unified_consumer_request_rejected:realizer:{invocation_id}:"
+                f"{failure_code or rejection_code or 'unknown'}"
+            )
+        if len(complete) != 1:
+            raise ValueError(
+                f"unified_consumer_receipt_missing:realizer:{invocation_id}:"
+                f"complete={len(complete)}"
+            )
+        receipt = complete[0]
         value = (
             receipt.get("page_id") if isinstance(receipt, Mapping)
             else getattr(receipt, "page_id", "")
@@ -17337,9 +22398,21 @@ def _assert_unified_v2_realizer_delivery(
             raise ValueError(
                 f"unified_actual_page_bytes_mismatch:realizer:{invocation_id}"
             )
-        if actual_envelope_digest != invocation.expected_request_envelope_digest:
+        content_repair_attempt = bool(
+            receipt.get("content_repair_attempt")
+            if isinstance(receipt, Mapping)
+            else getattr(receipt, "content_repair_attempt", False)
+        )
+        if (
+            actual_envelope_digest != invocation.expected_request_envelope_digest
+            and not content_repair_attempt
+        ):
             raise ValueError(
                 f"unified_request_envelope_digest_mismatch:realizer:{invocation_id}"
+            )
+        if content_repair_attempt and not actual_envelope_digest:
+            raise ValueError(
+                f"unified_request_envelope_digest_missing:realizer:{invocation_id}"
             )
         task_status = str(
             receipt.get("task_status") if isinstance(receipt, Mapping)
@@ -17355,6 +22428,7 @@ def _assert_unified_v2_realizer_delivery(
             "page_id": page.page_id,
             "actual_technical_bytes_digest": actual_bytes_digest,
             "actual_request_envelope_digest": actual_envelope_digest,
+            "content_repair_attempt": content_repair_attempt,
             "receipt_digest": str(
                 receipt.get("content_digest") if isinstance(receipt, Mapping)
                 else getattr(receipt, "content_digest", "")
@@ -17628,12 +22702,19 @@ def _assert_shared_payload_delivery(
             if page_rows:
                 page_rows = tuple(sorted(page_rows, key=lambda item: int(item[1].get("page_index", 0))))
                 try:
+                    page_values: list[Any] = []
+                    for index, _ in page_rows:
+                        raw_page = shared_contexts[index]
+                        if isinstance(raw_page, bytes):
+                            page_values.append(json.loads(raw_page.decode("utf-8")))
+                        elif isinstance(raw_page, str):
+                            page_values.append(json.loads(raw_page))
+                        elif isinstance(raw_page, Mapping):
+                            page_values.append(dict(raw_page))
+                        else:
+                            raise TypeError(type(raw_page).__name__)
                     writer_payload_bytes = json.dumps(
-                        [json.loads(
-                            (shared_contexts[index].decode("utf-8")
-                             if isinstance(shared_contexts[index], bytes)
-                             else str(shared_contexts[index]))
-                        ) for index, _ in page_rows],
+                        page_values,
                         ensure_ascii=False,
                         sort_keys=True,
                         separators=(",", ":"),
@@ -20893,10 +25974,92 @@ def _audit_proposition_alignment(
     }
 
 
+def _complete_paragraph_transaction_markdown(
+    *,
+    section: Any | None,
+    output: PublicationMethodSectionOutputV1 | None,
+) -> str:
+    """Compose one section from its complete, ordered Writer transactions.
+
+    The section-level response is a useful compatibility representation, but
+    the paragraph records are the immutable content transactions used by the
+    unified path.  Composition is allowed only when the output contains each
+    planned paragraph exactly once and every transaction has non-empty model
+    text.  Incomplete/ambiguous output returns an empty string so the caller
+    keeps the ordinary section fallback and the existing fail-closed gates can
+    report the missing transaction.
+    """
+
+    if section is None or output is None:
+        return ""
+    planned = tuple(getattr(section, "paragraphs", ()) or ())
+    if not planned:
+        return ""
+    planned_ids = tuple(
+        str(getattr(item, "paragraph_id", "") or "").strip()
+        for item in planned
+    )
+    if not all(planned_ids) or len(planned_ids) != len(set(planned_ids)):
+        return ""
+    transactions = tuple(getattr(output, "paragraphs", ()) or ())
+    transaction_by_id: dict[str, Any] = {}
+    for transaction in transactions:
+        paragraph_id = str(getattr(transaction, "paragraph_id", "") or "").strip()
+        if not paragraph_id or paragraph_id in transaction_by_id:
+            return ""
+        transaction_by_id[paragraph_id] = transaction
+    if set(transaction_by_id) != set(planned_ids):
+        return ""
+    paragraph_texts: list[str] = []
+    for paragraph_id in planned_ids:
+        text = str(
+            getattr(transaction_by_id[paragraph_id], "paragraph_markdown", "")
+            or ""
+        ).strip()
+        if not text:
+            return ""
+        paragraph_texts.append(text)
+    heading = str(getattr(section, "heading", "") or "").strip()
+    parts = [f"## {heading}" if heading else "", *paragraph_texts]
+    return "\n\n".join(part for part in parts if part)
+
+
+def _reconcile_complete_paragraph_sections(
+    *,
+    plan: Any,
+    output_by_section: Mapping[str, PublicationMethodSectionOutputV1],
+) -> dict[str, PublicationMethodSectionOutputV1]:
+    """Project complete paragraph transactions onto section output text.
+
+    This helper only changes the in-memory/serialized section representation;
+    all prose bytes come from the corresponding Writer paragraph response.
+    Sections with incomplete transactions are left untouched and therefore
+    remain subject to the normal transaction and structural gates.
+    """
+
+    sections_by_id = {
+        str(getattr(section, "section_id", "") or ""): section
+        for section in (getattr(plan, "sections", ()) or ())
+        if str(getattr(section, "section_id", "") or "").strip()
+    }
+    reconciled = dict(output_by_section)
+    for section_id, output in tuple(output_by_section.items()):
+        section = sections_by_id.get(str(section_id))
+        rendered = _complete_paragraph_transaction_markdown(
+            section=section,
+            output=output,
+        )
+        if rendered:
+            reconciled[str(section_id)] = output.model_copy(
+                update={"section_markdown": rendered}
+            )
+    return reconciled
+
+
 def _compose_candidate_markdown(
     *,
     accepted: list[tuple[str, str, str]],
-    plan: MethodSectionPlanV2,
+    plan: Any,
     section_outputs: Mapping[str, PublicationMethodSectionOutputV1],
     excluded_section_ids: Iterable[str] = (),
 ) -> str:
@@ -20926,13 +26089,27 @@ def _compose_candidate_markdown(
     ordered_ids.extend(
         section_id for section_id in output_by_id if section_id not in ordered_ids
     )
+    plan_sections_by_id = {
+        str(getattr(section, "section_id", "") or ""): section
+        for section in (getattr(plan, "sections", ()) or ())
+        if str(getattr(section, "section_id", "") or "").strip()
+    }
     sections: list[str] = []
     for section_id in ordered_ids:
         if section_id in excluded:
             continue
         text = accepted_by_id.get(section_id, "")
+        output = output_by_id.get(section_id)
+        paragraph_text = _complete_paragraph_transaction_markdown(
+            section=plan_sections_by_id.get(section_id),
+            output=output,
+        )
+        if paragraph_text and (
+            not text
+            or text == str(getattr(output, "section_markdown", "") or "").strip()
+        ):
+            text = paragraph_text
         if not text:
-            output = output_by_id.get(section_id)
             text = str(getattr(output, "section_markdown", "") or "").strip()
         if text:
             sections.append(text)
@@ -20944,6 +26121,7 @@ def _build_product_bundle(
     final_text: str,
     accepted: list[tuple[str, str, str]],
     plan: MethodSectionPlanV2,
+    current_narrative_plan: Any | None = None,
     completeness: MethodCompletenessMatrixV1,
     readiness: MethodPlanProductReadinessV1,
     research_requests: list[WritingResearchRequestV1],
@@ -20953,6 +26131,7 @@ def _build_product_bundle(
     proposition_alignment_report: dict[str, Any] | None = None,
     section_outputs: tuple[PublicationMethodSectionOutputV1, ...] = (),
     excluded_section_ids: Iterable[str] = (),
+    candidate_handoff: CandidateHandoffV1 | None = None,
 ) -> tuple[
     str,
     str,
@@ -20981,7 +26160,7 @@ def _build_product_bundle(
     # can inspect and repair the exact prose instead of losing it.
     candidate_markdown = _compose_candidate_markdown(
         accepted=accepted,
-        plan=plan,
+        plan=current_narrative_plan or plan,
         section_outputs={
             str(output.section_id): output
             for output in section_outputs
@@ -21001,7 +26180,10 @@ def _build_product_bundle(
             validation_report=validation_report,
             projection=projection,
             include_partial="repository_partial" in policy.verified_positive_lanes,
-            expected_headings={section.heading for section in plan.sections},
+            expected_headings={
+                section.heading
+                for section in (current_narrative_plan or plan).sections
+            },
         )
     else:
         # Unit-granular fallback: keep only sections whose units are all
@@ -21030,6 +26212,62 @@ def _build_product_bundle(
         if item.candidate_id not in seen_ids:
             seen_ids.add(item.candidate_id)
             review_items.append(item)
+
+    # A partial Research handoff is an explicit Writer/review input.  The
+    # proposed body is deliberately a non-assertive author-facing statement;
+    # only the promoted portion may be rendered as a repository fact, while
+    # the missing fields remain unresolved and keep Verified closed.
+    if candidate_handoff is not None and candidate_handoff.eligible:
+        for partial in candidate_handoff.partial_obligations:
+            candidate_id = f"review-research-partial:{partial.obligation_id}"
+            if candidate_id in seen_ids:
+                continue
+            missing_fields = tuple(partial.missing_fields) or (
+                "the unresolved fields recorded by Research",
+            )
+            review_items.append(MethodReviewCandidateV1(
+                candidate_id=candidate_id,
+                source_obligation_id=partial.obligation_id,
+                lane="repository_partial",
+                status="candidate_partial_unresolved",
+                proposed_body=(
+                    "The repository evidence supports only the resolved portion "
+                    f"of obligation {partial.obligation_id}; the remaining fields "
+                    "are unresolved and must not be stated as repository-verified "
+                    "implementation facts: " + ", ".join(missing_fields)
+                    + (
+                        " Qualifier: " + partial.qualifier
+                        if partial.qualifier
+                        else ""
+                    )
+                    + (
+                        " Allowed wording boundary: "
+                        + partial.allowed_wording_boundary
+                        if partial.allowed_wording_boundary
+                        else ""
+                    )
+                ),
+                confirmation_question=(
+                    f"Which evidence or explicit qualifier should resolve the "
+                    f"remaining fields for obligation {partial.obligation_id}?"
+                ),
+                needed_evidence=tuple(dict.fromkeys((
+                    *missing_fields,
+                    *(
+                        (f"qualifier:{partial.qualifier}",)
+                        if partial.qualifier else ()
+                    ),
+                    *(
+                        (f"allowed_wording_boundary:{partial.allowed_wording_boundary}",)
+                        if partial.allowed_wording_boundary else ()
+                    ),
+                ))),
+                suggested_action="resolve_partial_research_fields_or_keep_qualified",
+                blocks_verified=True,
+                blocks_candidate=False,
+                trace_refs=(partial.obligation_id, candidate_handoff.handoff_id),
+            ))
+            seen_ids.add(candidate_id)
 
     # Required propositions must never disappear between planning and the
     # three products. A proposition that is neither evidence-validated nor a
@@ -22512,10 +27750,21 @@ def run_publication_method_writer(
     rewrite_caller: Callable[[LLMConfig, LLMRequest], LLMResponse] | None = None,
     formalization_caller: Callable[[LLMConfig, LLMRequest], LLMResponse] | None = None,
     architect_proposal_caller: Callable[..., str | None] | None = None,
+    proposal_llm_caller: Callable[..., Any] | None = None,
+    # The served model's own tokenizer, when the run has one: proposal calls
+    # are then measured by the same rule the unified pipeline uses.
+    proposal_tokenizer: Any | None = None,
+    # The served model tokenizer for unified page requests.  The plan and every
+    # pre-send boundary must receive the same object; a live unified replay
+    # supplies this from the runtime's /tokenize endpoint.
+    unified_tokenizer: Any | None = None,
     rebuild_architect_plan: bool = False,
     concept_audit_override_keys: tuple[str, ...] = (),
     authoring_context_mode: AuthoringContextMode | str | None = None,
     authoring_context_mode_source: str | None = None,
+    formalizer_phase_checkpoint: str | Path | None = None,
+    authoring_stage: Literal["full", "prepare", "execute-prepared"] = "full",
+    authoring_execution_manifest_digest: str = "",
 ) -> tuple[PublicationWriterRunResultV1, dict[str, str]]:
     """Run the Writer and persist one auditable mode/identity contract.
 
@@ -22604,9 +27853,15 @@ def run_publication_method_writer(
             rewrite_caller=rewrite_caller,
             formalization_caller=formalization_caller,
             architect_proposal_caller=architect_proposal_caller,
+            proposal_llm_caller=proposal_llm_caller,
+            proposal_tokenizer=proposal_tokenizer,
+            unified_tokenizer=unified_tokenizer,
             rebuild_architect_plan=rebuild_architect_plan,
             concept_audit_override_keys=concept_audit_override_keys,
             authoring_context_mode=mode,
+            formalizer_phase_checkpoint=formalizer_phase_checkpoint,
+            authoring_stage=authoring_stage,
+            authoring_execution_manifest_digest=authoring_execution_manifest_digest,
         )
     except BaseException as exc:  # noqa: BLE001 - terminal state must survive interrupts
         try:
@@ -22627,11 +27882,21 @@ def run_publication_method_writer(
             pass
         raise
 
+    contract_artifacts = {**artifact_paths, **paths}
+    candidate_for_contract, _candidate_contract_failures = (
+        _load_authenticated_candidate_handoff(contract_artifacts)
+        if contract_artifacts.get("candidate_handoff_v1")
+        else (None, ())
+    )
+    candidate_lane_for_contract = bool(
+        candidate_for_contract is not None and candidate_for_contract.eligible
+    )
     mode_digest = _digest_json({
         "mode": mode,
         "source": source,
         "run_id": effective_run_id,
         "resume_section_ids": list(resume_section_ids),
+        "candidate_lane": candidate_lane_for_contract,
     })
     try:
         from code2paper.agentic.unified_invocation_ledger import (
@@ -22673,9 +27938,11 @@ def run_publication_method_writer(
         run_identity=run_identity,
         initial_mode_digest=mode_digest,
         resume_mode_digest=(mode_digest if resume_section_ids else ""),
+        candidate_lane=candidate_lane_for_contract,
     )
     if (
         mode in ("unified", "shadow_unified")
+        and authoring_stage == "full"
         and result.status != "blocked"
         and not contract.contract_satisfied
     ):
@@ -23710,6 +28977,7 @@ def _callback_artifact_prompt_payload(
             "semantic_delta_digest",
             "new_source_operation_ids",
             "new_detail_ids",
+            "artifact_path",
         ):
             value = payload.get(field_name)
             if value in ("", (), [], None):

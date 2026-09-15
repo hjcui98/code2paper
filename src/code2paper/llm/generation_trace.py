@@ -74,6 +74,7 @@ class GenerationCallTrace(BaseModel):
     endpoint_origin: str = ""
     effective_config: EffectiveSamplingConfig
     finish_reason: str = ""
+    provider_finish_reason: str = ""
     token_usage: dict[str, int] = Field(default_factory=dict)
     blocked_reason: str = ""
     cached: bool = False
@@ -149,6 +150,7 @@ def build_generation_call_trace(
         endpoint_origin=endpoint_origin_for_config(config),
         effective_config=build_effective_sampling_config(config),
         finish_reason=response.finish_reason,
+        provider_finish_reason=getattr(response, "provider_finish_reason", ""),
         token_usage=usage,
         blocked_reason=response.blocked_reason,
         cached=response.cached,
@@ -159,7 +161,7 @@ def build_generation_call_trace(
         prompt_chars=len(request.prompt or ""),
         input_payload_chars=len(payload_text),
         schema_chars=len(schema_text),
-        thinking_chars=int(usage.get("thinking_chars") or 0),
+        thinking_chars=int(getattr(response, "thinking_chars", 0) or usage.get("thinking_chars") or 0),
         extended_budget_used=extended_budget_used,
         cumulative_budget_consumed=cumulative_budget_consumed,
     )

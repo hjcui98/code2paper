@@ -33,7 +33,11 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
+import signal
+import threading
 import time
+from copy import deepcopy
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Literal, Mapping
@@ -78,6 +82,10 @@ from code2paper.agentic.intent_compiler_v2 import (
     compile_intent_obligation_graph_v2,
 )
 from code2paper.agentic.intent_target_proposer import enrich_intent_graph_with_llm
+from code2paper.agentic.research_revision_contract import (
+    AuthorConstraintSetV1,
+    build_author_constraint_set,
+)
 from code2paper.agentic.method_argument_models import (
     MethodCompletenessMatrixV1,
     build_completeness_matrix,
@@ -129,14 +137,24 @@ from code2paper.agentic.research_graph import (
 )
 from code2paper.agentic.implementation_scope import scope_role_for_candidate
 from code2paper.agentic.research_models import (
+    CandidateAcquisitionLedgerV1,
     ResearchDecisionV1,
     ResearchAgendaItemV1,
     ResearchAgendaV1,
     ResearchObservationV1,
 )
+from code2paper.agentic.research_promotion import ObservationPromotionLedgerV1
 from code2paper.agentic.research_policy import PolicyMergeResult
 from code2paper.agentic.research_nodes import ResearchGraphRuntime
+from code2paper.agentic.research_promotion import (
+    promotion_record_blocks_strict_research,
+    remap_promotion_ledger_claim_ids,
+)
 from code2paper.agentic.research_terminal import (
+    CandidateHandoffV1,
+    CandidateRetryLedgerV1,
+    build_candidate_handoff,
+    build_candidate_retry_ledger,
     build_research_closure_admission,
     evaluate_obligation_terminal_proof,
 )
@@ -166,6 +184,7 @@ PRODUCT_RESEARCH_READY_TOOLS: tuple[str, ...] = (
     "trace_data_flow",
     "inspect_control_flow",
     "inspect_configuration",
+    "propose_target_revision",
 )
 
 PRODUCT_RESEARCH_HARD_RULES: tuple[str, ...] = (
@@ -177,6 +196,7 @@ PRODUCT_RESEARCH_HARD_RULES: tuple[str, ...] = (
     "obligation_must_exist",
     "budgets_must_be_available",
     "fallback_must_be_safe",
+    "revision_proposal_is_not_acceptance",
 )
 
 CLAIM_PRIORITY_VALUES = ("must_cover", "should_cover", "preference")
@@ -415,6 +435,7 @@ def build_product_research_runtime(
     hard_rules: tuple[str, ...] = PRODUCT_RESEARCH_HARD_RULES,
     intent_graph_override: IntentObligationGraphV2 | None = None,
     agenda_override: ResearchAgendaV1 | None = None,
+    author_constraints_override: Any | None = None,
 ) -> ResearchGraphRuntime:
     """Build the research runtime directly from repo + intent + claims.
 
@@ -436,6 +457,13 @@ def build_product_research_runtime(
         proposal_report_payload: dict[str, Any] = {
             "status": "resumed_from_research_stage_checkpoint",
         }
+        # A resumed graph is already enriched: without the checkpoint's frozen
+        # set there is no author authority to restore, and inventing one from
+        # the enriched graph would be a false claim.
+        author_constraints = (
+            author_constraints_override
+            or build_author_constraint_set(intent_graph)
+        )
     else:
         intent_summary = None
         if author_intent_path:
@@ -450,6 +478,14 @@ def build_product_research_runtime(
                 claims,
                 project_root=resolved_root,
             )
+        # R10 §15.1: freeze the author boundary *before* enrichment replaces the
+        # deterministic targets.  Everything downstream (revision assessment,
+        # coverage denominator, checkpoint/resume) reads this frozen set instead
+        # of rebuilding author authority from the mutable graph.
+        author_constraints = (
+            author_constraints_override
+            or build_author_constraint_set(intent_graph)
+        )
         intent_graph, proposal_report = enrich_intent_graph_with_llm(
             intent_graph,
             effective_llm,
@@ -482,6 +518,9 @@ def build_product_research_runtime(
         repo_snapshot=repo_snapshot,
         agenda=agenda,
         intent_graph=intent_graph,
+        author_constraints=(
+            author_constraints if author_constraints.obligations else None
+        ),
         intent_target_proposal_report=proposal_report_payload,
         supervisor_backend=supervisor_backend,
         artifact_root=(
@@ -496,6 +535,7 @@ def run_product_research_phase(
     runtime: ResearchGraphRuntime,
     *,
     max_turns: int = 30,
+    max_wall_clock_seconds: float | None = None,
 ) -> ResearchLoopResult:
     """Run the research subgraph to termination (direct product path)."""
 
@@ -506,7 +546,11 @@ def run_product_research_phase(
         repo_snapshot_id=runtime.repo_snapshot.snapshot_id,
         project_tree_hash=runtime.repo_snapshot.project_tree_hash,
     )
-    subgraph = build_research_subgraph(runtime, max_turns=max_turns)
+    subgraph = build_research_subgraph(
+        runtime,
+        max_turns=max_turns,
+        max_wall_clock_seconds=max_wall_clock_seconds,
+    )
     subgraph.invoke(initial.to_state_dict(), config=None)
     result = subgraph.last_result
     if result is None:
@@ -569,6 +613,160 @@ def _research_run_state(
     }
 
 
+def _candidate_handoff_from_loop(
+    loop_result: ResearchLoopResult,
+) -> CandidateHandoffV1 | None:
+    """Load the scheduler's authenticated Candidate handoff, if eligible."""
+
+    payload = (
+        loop_result.loop_state.intent_schedule.get("candidate_handoff")
+        if isinstance(loop_result.loop_state.intent_schedule, dict)
+        else None
+    )
+    if not isinstance(payload, dict):
+        return None
+    try:
+        handoff = CandidateHandoffV1.model_validate(payload)
+    except (TypeError, ValueError):
+        return None
+    return handoff
+
+
+def _proposal_accounting_summary(paths: Mapping[str, Any]) -> dict[str, Any]:
+    """Return the run-summary keys for a measured proposal-call tally.
+
+    No measured tally means no keys: a run must not claim metering it never
+    performed, and a missing/corrupt artifact is not a reason to fail a run.
+    """
+
+    path_value = str(paths.get("proposal_call_accounting_v1") or "")
+    if not path_value:
+        return {}
+    try:
+        from code2paper.agentic.proposal_call_accounting import (
+            load_proposal_call_accounting,
+        )
+
+        accounting = load_proposal_call_accounting(path_value)
+    except Exception:  # noqa: BLE001 - accounting is evidence, not a gate
+        return {}
+    return {
+        "proposal_call_accounting": accounting.totals(),
+        "proposal_call_accounting_digest": accounting.content_digest,
+    }
+
+
+def _run_revision_state(
+    loop_result: ResearchLoopResult,
+    runtime: ResearchGraphRuntime,
+    *,
+    previous: Any | None = None,
+) -> tuple[Any, Any]:
+    """Return this run's applied-revision journal and its checkpoint binding.
+
+    §15.6: the journal is the authority for which targets the run's evidence
+    was produced under.  A run that applied no revision keeps an empty journal
+    and no binding, which is exactly the pre-R10 state.
+    """
+
+    from code2paper.agentic.research_revision_contract import (
+        RevisionJournalV1,
+        bind_research_revision,
+    )
+
+    journal = getattr(loop_result, "revision_journal", None)
+    if journal is None or not getattr(journal, "entries", ()):
+        journal = previous if previous is not None else RevisionJournalV1()
+    if not getattr(journal, "entries", ()):
+        return journal, None
+    binding = bind_research_revision(
+        journal=journal,
+        graph=getattr(runtime, "intent_graph", None),
+        agenda=getattr(runtime, "agenda", None),
+        coverage_denominator_ids=journal.entries[-1].coverage_denominator_ids,
+    )
+    return journal, binding
+
+
+def _candidate_retry_ledger_for_run(
+    loop_result: ResearchLoopResult,
+    runtime: ResearchGraphRuntime,
+) -> CandidateRetryLedgerV1:
+    """Build the frozen retry ledger once for both handoff and persistence."""
+
+    loop = loop_result.loop_state
+    retry_gain_by_obligation: dict[str, bool | None] = {}
+    for event in loop.intent_compile_events or ():
+        obligation_id = str(event.get("obligation_id") or "").strip()
+        if not obligation_id:
+            continue
+        if int((loop.post_partial_retry_counts or {}).get(obligation_id, 0) or 0) < 1:
+            continue
+        retry_gain_by_obligation[obligation_id] = bool(
+            event.get("has_coverage_gain", False)
+        )
+    return build_candidate_retry_ledger(
+        run_id=runtime.run_id,
+        repo_snapshot_id=runtime.repo_snapshot.snapshot_id,
+        project_tree_hash=runtime.repo_snapshot.project_tree_hash,
+        post_partial_retry_counts=loop.post_partial_retry_counts,
+        semantic_gain_by_obligation=retry_gain_by_obligation,
+    )
+
+
+def _rebuild_candidate_handoff_from_product_claims(
+    *,
+    loop_result: ResearchLoopResult,
+    runtime: ResearchGraphRuntime,
+    claim_id_map: dict[str, str],
+    claim_set: AtomicClaimSetV3 | None,
+    previous: CandidateHandoffV1 | None,
+    retry_ledger: CandidateRetryLedgerV1,
+    revision_id: str = "",
+) -> CandidateHandoffV1 | None:
+    """Freeze the Candidate lane against the merged product claim identities.
+
+    The loop's handoff is built from per-obligation compiled claims.  Product
+    evidence merges duplicate claims and remaps claim ids, so persisting the
+    loop handoff unchanged makes the Writer's independent revalidation fail
+    with an identity mismatch even when the Candidate evidence is intact.
+    Re-key the promotion lineage first and rebuild the handoff from the
+    merged claim set; the rebuilt handoff is what gets persisted and
+    revalidated, so the Candidate lane stays reproducible rather than
+    accidentally open.
+    """
+
+    if previous is None or claim_set is None:
+        return previous
+    loop = loop_result.loop_state
+    ledger = getattr(loop, "observation_promotion_ledger", None)
+    if ledger is not None:
+        ledger = remap_promotion_ledger_claim_ids(ledger, claim_id_map)
+        loop.observation_promotion_ledger = ledger
+    claims_by_obligation: dict[str, tuple[Any, ...]] = {}
+    for claim in claim_set.claims:
+        for obligation_id in claim.covers_obligation_ids or ():
+            key = str(obligation_id)
+            claims_by_obligation[key] = (*claims_by_obligation.get(key, ()), claim)
+    return build_candidate_handoff(
+        run_id=runtime.run_id,
+        repo_snapshot_id=runtime.repo_snapshot.snapshot_id,
+        project_tree_hash=runtime.repo_snapshot.project_tree_hash,
+        agenda_items=tuple(runtime.agenda.items),
+        promotion_records=tuple(getattr(ledger, "records", ()) or ()),
+        compiled_claims_by_obligation=claims_by_obligation,
+        post_partial_retry_counts=loop.post_partial_retry_counts,
+        retry_gain_by_obligation=retry_ledger.semantic_gain_by_obligation,
+        structural_failure_codes=previous.structural_failure_codes,
+        agenda_digest=runtime.agenda.refresh_content_digest(),
+        promotion_ledger_digest=str(getattr(ledger, "content_digest", "") or ""),
+        retry_ledger_digest=retry_ledger.content_digest,
+        # R10 §15.6: a handoff built under a previous revision must not be
+        # reusable once the run revised its targets.
+        revision_id=revision_id,
+    )
+
+
 def _research_closure_failure_codes(
     *,
     loop_result: ResearchLoopResult,
@@ -607,19 +805,21 @@ def _research_closure_failure_codes(
             )
             if str(getattr(claim, "claim_id", "") or "")
         )
+        item_records = tuple(
+            record
+            for record in promotion_records
+            if str(getattr(record, "obligation_id", "") or "")
+            == str(item.obligation_id)
+        )
         proof = evaluate_obligation_terminal_proof(
             item,
-            promotion_records=tuple(
-                record
-                for record in promotion_records
-                if str(getattr(record, "obligation_id", "") or "")
-                == str(item.obligation_id)
-            ),
+            promotion_records=item_records,
             promoted_claim_ids=promoted_claim_ids,
         )
         if proof.terminal:
             continue
-        if item.status in {"pending", "in_progress"}:
+        attempted = bool(item.attempted_actions or item_records)
+        if not attempted:
             failures.append(f"unified_core_intent_unsearched:{item.obligation_id}")
         else:
             failures.append(
@@ -628,12 +828,7 @@ def _research_closure_failure_codes(
             )
 
     for record in promotion_records:
-        if str(getattr(record, "status", "") or "") not in {
-            "observed_unpromoted",
-            "behavior_built",
-            "packet_promoted",
-            "fact_promoted",
-        }:
+        if not promotion_record_blocks_strict_research(record):
             continue
         failures.append(
             "unified_observation_promotion_incomplete:"
@@ -655,12 +850,17 @@ def _research_closure_failure_codes(
 def merge_product_evidence(
     result: ResearchLoopResult,
     runtime: ResearchGraphRuntime,
+    *,
+    claim_id_map: dict[str, str] | None = None,
 ) -> tuple[EvidencePacketSetV3 | None, CodeFactSetV1 | None, AtomicClaimSetV3 | None]:
     """Aggregate the loop's per-obligation compiled evidence.
 
     ``merge_compiled_evidence`` is a pure aggregation adapter (dedupe by
     canonical identity, remap stage groups); no synthetic gaps are added.
-    Claims are then bound to typed obligations through their fact IDs.
+    Claims are then bound to typed obligations through their fact IDs.  When
+    ``claim_id_map`` is supplied it receives the per-input-claim to canonical
+    id mapping so the Candidate handoff can freeze the same identities the
+    product persists.
     """
 
     compiled = getattr(result.loop_state, "compiled_evidence", {})
@@ -670,6 +870,7 @@ def merge_product_evidence(
         compiled,
         repo_snapshot_id=runtime.repo_snapshot.snapshot_id,
         project_tree_hash=runtime.repo_snapshot.project_tree_hash,
+        claim_id_map=claim_id_map,
     )
     if (
         fact_set is not None
@@ -693,6 +894,9 @@ def persist_research_stage_checkpoint(
     packet_set: EvidencePacketSetV3 | None,
     fact_set: CodeFactSetV1 | None,
     claim_set: AtomicClaimSetV3 | None,
+    revision_binding: Any | None = None,
+    revision_journal: Any | None = None,
+    candidate_handoff: CandidateHandoffV1 | None = None,
 ) -> str:
     """Commit completed repository research before any planning model call.
 
@@ -704,6 +908,28 @@ def persist_research_stage_checkpoint(
 
     root = Path(out_root).expanduser().resolve()
     path = root / "artifacts" / "research_product" / "research_stage_checkpoint_v1.json"
+    final_schedule = dict(loop_result.loop_state.intent_schedule or {})
+    loop_state = loop_result.loop_state
+    source_authoring_identity = None
+    if all(
+        getattr(loop_state, field_name, None) is not None
+        for field_name in (
+            "symbol_index",
+            "source_manifest",
+            "implementation_scope",
+            "behavior_graph",
+        )
+    ):
+        from code2paper.agentic.repository_authoring_artifacts import (
+            repository_authoring_identity_payload,
+        )
+
+        source_authoring_identity = repository_authoring_identity_payload(
+            snapshot=runtime.repo_snapshot,
+            symbol_index=loop_state.symbol_index,
+            implementation_scope=loop_state.implementation_scope,
+            source_manifest=loop_state.source_manifest,
+        )
     payload = {
         "schema_version": "1.0",
         "run_id": runtime.run_id,
@@ -718,6 +944,16 @@ def persist_research_stage_checkpoint(
             "termination_reason": loop_result.termination_reason,
             "final_status": str(loop_result.final_state.get("status") or "incomplete"),
         },
+        # Keep the scheduler's legal-action verdict at the checkpoint top
+        # level so a resumed run cannot read a stale ``can_continue`` while
+        # every per-obligation budget is exhausted.
+        "can_continue": bool(final_schedule.get("can_continue", False))
+        and not bool(loop_result.terminated),
+        "can_terminate": bool(final_schedule.get("can_terminate", False)),
+        "budget_constrained": bool(final_schedule.get("budget_constrained", False)),
+        "legal_action_available": bool(
+            final_schedule.get("legal_action_available", True)
+        ),
         "decision_trace": [
             item.model_dump(mode="json") for item in loop_result.decision_trace
         ],
@@ -737,7 +973,107 @@ def persist_research_stage_checkpoint(
         "atomic_claims": (
             claim_set.model_dump(mode="json") if claim_set is not None else None
         ),
+        # The source-authority closure is part of the Research stage boundary,
+        # not a best-effort Writer sidecar.  Persist it inline so a checkpoint
+        # can be resumed in a different output root without rebuilding source
+        # partitions from an already-enriched graph.  Older checkpoints are
+        # handled by the sibling-artifact compatibility path in the loader.
+        "behavior_graph": (
+            loop_state.behavior_graph.model_dump(mode="json")
+            if getattr(loop_state, "behavior_graph", None) is not None
+            else None
+        ),
+        "symbol_index": (
+            loop_state.symbol_index.model_dump(mode="json")
+            if getattr(loop_state, "symbol_index", None) is not None
+            else None
+        ),
+        "source_manifest": (
+            loop_state.source_manifest.model_dump(mode="json")
+            if getattr(loop_state, "source_manifest", None) is not None
+            else None
+        ),
+        "implementation_scope": (
+            loop_state.implementation_scope.model_dump(mode="json")
+            if getattr(loop_state, "implementation_scope", None) is not None
+            else None
+        ),
+        "repository_authoring_artifacts_v1": source_authoring_identity,
         "research_state": _research_run_state(loop_result, runtime),
+        "intent_schedule": final_schedule,
+        "post_partial_retry_counts": dict(
+            loop_result.loop_state.post_partial_retry_counts or {}
+        ),
+        # The Candidate handoff is authenticated against the promotion
+        # lineage.  Keep both ledgers at the Research checkpoint boundary so
+        # a normal-entry resume can rebuild the handoff without treating a
+        # missing ledger as an empty one.
+        "candidate_acquisition_ledger": (
+            loop_result.loop_state.candidate_acquisition_ledger.model_dump(
+                mode="json"
+            )
+            if getattr(loop_result.loop_state, "candidate_acquisition_ledger", None)
+            is not None
+            and hasattr(
+                loop_result.loop_state.candidate_acquisition_ledger,
+                "model_dump",
+            )
+            else None
+        ),
+        "observation_promotion_ledger": (
+            loop_result.loop_state.observation_promotion_ledger.model_dump(
+                mode="json"
+            )
+            if getattr(loop_result.loop_state, "observation_promotion_ledger", None)
+            is not None
+            and hasattr(
+                loop_result.loop_state.observation_promotion_ledger,
+                "model_dump",
+            )
+            else None
+        ),
+        "candidate_handoff": (
+            candidate_handoff.model_dump(mode="json")
+            if candidate_handoff is not None
+            else (
+                loop_result.loop_state.intent_schedule.get("candidate_handoff")
+                if isinstance(loop_result.loop_state.intent_schedule, dict)
+                else None
+            )
+        ),
+        # R10 §15.6: the revision identity a resume must agree with.  Absent
+        # for a run that never revised its targets.
+        "research_revision_binding_v1": (
+            revision_binding.model_dump(mode="json")
+            if revision_binding is not None else None
+        ),
+        "revision_journal": (
+            revision_journal.model_dump(mode="json")
+            if revision_journal is not None and revision_journal.entries
+            else None
+        ),
+        "revision_ingest_outcomes": list(
+            getattr(loop_result, "revision_ingest_outcomes", ()) or ()
+        ),
+        "revision_ingest_failures": list(
+            getattr(loop_result, "revision_ingest_failures", ()) or ()
+        ),
+        # §15.1: the author boundary is frozen before enrichment and travels
+        # with the run; a resume must restore the same boundary, not re-derive
+        # one from the already-enriched graph.
+        "author_constraints_v1": (
+            runtime.author_constraints.model_dump(mode="json")
+            if getattr(runtime, "author_constraints", None) is not None
+            else None
+        ),
+        "author_constraints_digest": str(
+            getattr(
+                getattr(runtime, "author_constraints", None),
+                "content_digest",
+                "",
+            )
+            or ""
+        ),
     }
     _atomic_write_text(path, _json_text(payload))
     return str(path)
@@ -747,6 +1083,7 @@ def load_research_stage_checkpoint(
     *,
     path: str | Path,
     runtime: ResearchGraphRuntime,
+    revision_journal: Any | None = None,
 ) -> tuple[
     ResearchLoopResult,
     EvidencePacketSetV3 | None,
@@ -756,6 +1093,8 @@ def load_research_stage_checkpoint(
 ]:
     """Authenticate and restore the product research-stage boundary."""
 
+    from code2paper.agentic.research_revision_contract import RevisionJournalV1
+
     payload = json.loads(Path(path).read_text(encoding="utf-8"))
     if str(payload.get("run_id") or "") != runtime.run_id:
         raise ValueError("research_stage_checkpoint_run_id_mismatch")
@@ -764,9 +1103,70 @@ def load_research_stage_checkpoint(
     if str(payload.get("project_tree_hash") or "") != runtime.repo_snapshot.project_tree_hash:
         raise ValueError("research_stage_checkpoint_tree_hash_mismatch")
     checkpoint_intent = payload.get("intent_graph") or {}
-    if checkpoint_intent != runtime.intent_graph.model_dump(mode="json"):
+    # R10 added target provenance and the graph-level target identity digest.
+    # These are deterministic schema-derived fields: old checkpoints do not
+    # contain them, while the current Pydantic model materializes them on
+    # load.  Compare after this narrow, in-memory migration so a valid legacy
+    # checkpoint remains reusable without rewriting its bytes or accepting
+    # changes to any persisted field that carries research meaning.
+    checkpoint_intent_model = IntentObligationGraphV2.model_validate(
+        checkpoint_intent
+    )
+    comparable_checkpoint_intent = deepcopy(checkpoint_intent)
+    comparable_checkpoint_intent.setdefault(
+        "target_identity_digest",
+        checkpoint_intent_model.target_identity_digest,
+    )
+    for raw_obligation, normalized_obligation in zip(
+        comparable_checkpoint_intent.get("obligations") or (),
+        checkpoint_intent_model.obligations,
+    ):
+        for raw_target, normalized_target in zip(
+            raw_obligation.get("typed_behavior_targets") or (),
+            normalized_obligation.typed_behavior_targets,
+        ):
+            if "provenance" not in raw_target:
+                raw_target["provenance"] = normalized_target.provenance
+    if comparable_checkpoint_intent != runtime.intent_graph.model_dump(mode="json"):
         raise ValueError("research_stage_checkpoint_intent_mismatch")
     checkpoint_agenda = ResearchAgendaV1.model_validate(payload.get("agenda") or {})
+    checkpoint_constraints = payload.get("author_constraints_v1")
+    runtime_constraints = getattr(runtime, "author_constraints", None)
+    if checkpoint_constraints and runtime_constraints is not None:
+        from code2paper.agentic.research_revision_contract import (
+            AuthorConstraintSetV1,
+        )
+
+        restored_constraints = AuthorConstraintSetV1.model_validate(
+            checkpoint_constraints
+        )
+        if restored_constraints.content_digest != runtime_constraints.content_digest:
+            raise ValueError(
+                "research_stage_checkpoint_author_constraints_mismatch"
+            )
+    binding_payload = payload.get("research_revision_binding_v1")
+    if binding_payload and revision_journal is not None:
+        # R10 §15.6: a checkpoint bound to another revision (or whose journal
+        # already holds the revision it wants to apply) must not resume.  The
+        # binding is checked against the *checkpoint's* objects, which are what
+        # this call is about to install.
+        from code2paper.agentic.research_revision_contract import (
+            ResearchRevisionBindingV1,
+            revision_resume_failures,
+        )
+
+        binding = ResearchRevisionBindingV1.model_validate(binding_payload)
+        failures = revision_resume_failures(
+            binding=binding,
+            journal=revision_journal,
+            graph=runtime.intent_graph,
+            agenda=checkpoint_agenda,
+        )
+        if failures:
+            raise ValueError(
+                "research_stage_checkpoint_revision_stale:"
+                + ";".join(failures)
+            )
     runtime.agenda.items[:] = checkpoint_agenda.items
     packet_set = (
         EvidencePacketSetV3.model_validate(payload["evidence_packets"])
@@ -808,12 +1208,281 @@ def load_research_stage_checkpoint(
     loop.turn_index = int(terminal.get("turns_executed") or 0)
     loop.terminated = bool(terminal.get("terminated"))
     loop.termination_reason = str(terminal.get("termination_reason") or "")
+    loop.intent_schedule = dict(payload.get("intent_schedule") or {})
+    loop.post_partial_retry_counts = {
+        str(key): max(0, int(value or 0))
+        for key, value in (payload.get("post_partial_retry_counts") or {}).items()
+        if str(key).strip()
+    }
+
+    def _checkpoint_ledger_payload(
+        key: str,
+        filename: str,
+    ) -> Any | None:
+        """Read a ledger embedded in the checkpoint or its legacy sibling."""
+
+        embedded = payload.get(key)
+        if embedded is not None:
+            return embedded
+        checkpoint_file = Path(path).expanduser().resolve()
+        candidates = (
+            checkpoint_file.parent / filename,
+            checkpoint_file.parent.parent / filename,
+            checkpoint_file.parent.parent / "artifacts" / filename,
+            checkpoint_file.parent.parent.parent / "artifacts" / filename,
+        )
+        for candidate in candidates:
+            if candidate.is_file():
+                try:
+                    loaded = json.loads(candidate.read_text(encoding="utf-8"))
+                except (OSError, TypeError, ValueError, json.JSONDecodeError) as exc:
+                    raise ValueError(
+                        f"research_stage_checkpoint_{key}_invalid"
+                    ) from exc
+                return loaded
+        return None
+
+    def _checkpoint_sibling_payload(filename: str) -> Any | None:
+        """Read a same-run sibling artifact for legacy checkpoint repair."""
+
+        checkpoint_file = Path(path).expanduser().resolve()
+        candidates = (
+            checkpoint_file.parent / filename,
+            checkpoint_file.parent.parent / filename,
+            checkpoint_file.parent.parent / "artifacts" / filename,
+            checkpoint_file.parent.parent.parent / "artifacts" / filename,
+        )
+        for candidate in candidates:
+            if not candidate.is_file():
+                continue
+            try:
+                loaded = json.loads(candidate.read_text(encoding="utf-8"))
+            except (OSError, TypeError, ValueError, json.JSONDecodeError) as exc:
+                raise ValueError(
+                    f"research_stage_checkpoint_sibling_invalid:{filename}"
+                ) from exc
+            return loaded
+        return None
+
+    def _checkpoint_source_payload(key: str, filename: str) -> Any | None:
+        """Load an inline source artifact, or its legacy same-run sibling."""
+
+        embedded = payload.get(key)
+        if embedded is not None:
+            return embedded
+        return _checkpoint_sibling_payload(filename)
+
+    # Source authority is a four-artifact closure.  New checkpoints carry the
+    # closure inline; pre-inline checkpoints may reuse only the exact sibling
+    # artifacts emitted by the same run, after validating their common
+    # identity and every snapshot/tree binding.  A partial closure is never
+    # completed by rebuilding one member from the live repository.
+    raw_source_artifacts = {
+        "behavior_graph": _checkpoint_source_payload(
+            "behavior_graph", "behavior_graph_v1.json"
+        ),
+        "symbol_index": _checkpoint_source_payload(
+            "symbol_index", "symbol_index_v2.json"
+        ),
+        "source_manifest": _checkpoint_source_payload(
+            "source_manifest", "repository_source_manifest_v1.json"
+        ),
+        "implementation_scope": _checkpoint_source_payload(
+            "implementation_scope", "implementation_scope_v1.json"
+        ),
+        "repository_authoring_artifacts_v1": _checkpoint_source_payload(
+            "repository_authoring_artifacts_v1",
+            "repository_authoring_artifacts_v1.json",
+        ),
+    }
+    source_present = any(
+        value is not None for value in raw_source_artifacts.values()
+    )
+    if source_present:
+        missing_source_keys = tuple(
+            key
+            for key, value in raw_source_artifacts.items()
+            if value is None
+        )
+        if missing_source_keys:
+            raise ValueError(
+                "research_stage_checkpoint_source_artifacts_incomplete:"
+                + ",".join(missing_source_keys)
+            )
+        try:
+            from code2paper.agentic.behavior_graph import (
+                CodeBehaviorGraphV1,
+                SymbolIndexV2,
+            )
+            from code2paper.agentic.implementation_scope import (
+                ImplementationScopeV1,
+            )
+            from code2paper.agentic.repository_authoring_artifacts import (
+                repository_authoring_identity_payload,
+            )
+            from code2paper.agentic.source_inventory import (
+                RepositorySourceManifestV1,
+                source_manifest_snapshot_failures,
+            )
+
+            restored_behavior_graph = CodeBehaviorGraphV1.model_validate(
+                raw_source_artifacts["behavior_graph"]
+            )
+            restored_symbol_index = SymbolIndexV2.model_validate(
+                raw_source_artifacts["symbol_index"]
+            )
+            restored_source_manifest = RepositorySourceManifestV1.model_validate(
+                raw_source_artifacts["source_manifest"]
+            )
+            restored_scope = ImplementationScopeV1.model_validate(
+                raw_source_artifacts["implementation_scope"]
+            )
+            identity_payload = raw_source_artifacts[
+                "repository_authoring_artifacts_v1"
+            ]
+            if not isinstance(identity_payload, Mapping):
+                raise ValueError("repository authoring identity must be a mapping")
+            if (
+                restored_behavior_graph.repo_snapshot_id
+                != runtime.repo_snapshot.snapshot_id
+                or restored_behavior_graph.project_tree_hash
+                != runtime.repo_snapshot.project_tree_hash
+                or restored_symbol_index.repo_snapshot_id
+                != runtime.repo_snapshot.snapshot_id
+                or restored_symbol_index.project_tree_hash
+                != runtime.repo_snapshot.project_tree_hash
+            ):
+                raise ValueError("source graph/index snapshot identity mismatch")
+            manifest_failures = source_manifest_snapshot_failures(
+                restored_source_manifest,
+                runtime.repo_snapshot,
+            )
+            if manifest_failures:
+                raise ValueError(
+                    "source manifest snapshot identity mismatch:"
+                    + ";".join(manifest_failures)
+                )
+            expected_identity = repository_authoring_identity_payload(
+                snapshot=runtime.repo_snapshot,
+                symbol_index=restored_symbol_index,
+                implementation_scope=restored_scope,
+                source_manifest=restored_source_manifest,
+            )
+            if dict(identity_payload) != expected_identity:
+                raise ValueError("repository authoring identity mismatch")
+        except (TypeError, ValueError) as exc:
+            raise ValueError(
+                "research_stage_checkpoint_source_artifacts_invalid"
+            ) from exc
+        loop.behavior_graph = restored_behavior_graph
+        loop.symbol_index = restored_symbol_index
+        loop.source_manifest = restored_source_manifest
+        loop.implementation_scope = restored_scope
+
+    raw_candidate_ledger = _checkpoint_ledger_payload(
+        "candidate_acquisition_ledger",
+        "candidate_acquisition_ledger_v1.json",
+    )
+    if raw_candidate_ledger is not None:
+        try:
+            loop.candidate_acquisition_ledger = (
+                CandidateAcquisitionLedgerV1.model_validate(raw_candidate_ledger)
+            )
+        except (TypeError, ValueError) as exc:
+            raise ValueError(
+                "research_stage_checkpoint_candidate_acquisition_ledger_invalid"
+            ) from exc
+        if (
+            loop.candidate_acquisition_ledger.repo_snapshot_id
+            != runtime.repo_snapshot.snapshot_id
+            or loop.candidate_acquisition_ledger.project_tree_hash
+            != runtime.repo_snapshot.project_tree_hash
+        ):
+            raise ValueError(
+                "research_stage_checkpoint_candidate_acquisition_ledger_identity_mismatch"
+            )
+
+    raw_promotion_ledger = _checkpoint_ledger_payload(
+        "observation_promotion_ledger",
+        "observation_promotion_ledger_v1.json",
+    )
+    if raw_promotion_ledger is not None:
+        try:
+            loop.observation_promotion_ledger = (
+                ObservationPromotionLedgerV1.model_validate(raw_promotion_ledger)
+            )
+        except (TypeError, ValueError) as exc:
+            raise ValueError(
+                "research_stage_checkpoint_observation_promotion_ledger_invalid"
+            ) from exc
+        if (
+            loop.observation_promotion_ledger.repo_snapshot_id
+            != runtime.repo_snapshot.snapshot_id
+            or loop.observation_promotion_ledger.project_tree_hash
+            != runtime.repo_snapshot.project_tree_hash
+        ):
+            raise ValueError(
+                "research_stage_checkpoint_observation_promotion_ledger_identity_mismatch"
+            )
+    checkpoint_handoff = payload.get("candidate_handoff")
+    if not isinstance(checkpoint_handoff, dict):
+        checkpoint_handoff = loop.intent_schedule.get("candidate_handoff")
+    expected_promotion_digest = str(
+        (checkpoint_handoff or {}).get("promotion_ledger_digest") or ""
+    ) if isinstance(checkpoint_handoff, dict) else ""
+    actual_promotion_digest = str(
+        getattr(loop.observation_promotion_ledger, "content_digest", "") or ""
+    )
+    if expected_promotion_digest and not actual_promotion_digest:
+        raise ValueError(
+            "research_stage_checkpoint_observation_promotion_ledger_missing"
+        )
+    if (
+        expected_promotion_digest
+        and actual_promotion_digest != expected_promotion_digest
+    ):
+        # Pre-fix checkpoints persisted the pre-merge handoff from the
+        # scheduler in their top-level field, while the canonical merged
+        # handoff was written to ``artifacts/candidate_handoff_v1.json``.
+        # Accept that narrowly identifiable legacy shape only when the
+        # sibling handoff is independently valid, belongs to this run/tree,
+        # and binds to the restored promotion ledger.  A mismatched or
+        # missing sibling remains a hard failure.
+        sibling_payload = _checkpoint_sibling_payload("candidate_handoff_v1.json")
+        try:
+            sibling_handoff = (
+                CandidateHandoffV1.model_validate(sibling_payload)
+                if sibling_payload is not None
+                else None
+            )
+        except (TypeError, ValueError) as exc:
+            raise ValueError(
+                "research_stage_checkpoint_candidate_handoff_sibling_invalid"
+            ) from exc
+        if (
+            sibling_handoff is None
+            or sibling_handoff.run_id != runtime.run_id
+            or sibling_handoff.repo_snapshot_id != runtime.repo_snapshot.snapshot_id
+            or sibling_handoff.project_tree_hash
+            != runtime.repo_snapshot.project_tree_hash
+            or sibling_handoff.promotion_ledger_digest != actual_promotion_digest
+        ):
+            raise ValueError(
+                "research_stage_checkpoint_observation_promotion_ledger_digest_mismatch"
+            )
+        checkpoint_handoff = sibling_handoff.model_dump(mode="json")
+        loop.intent_schedule["candidate_handoff"] = checkpoint_handoff
     final_state = empty_agent_state_v3(
         run_id=runtime.run_id,
         repo_snapshot_id=runtime.repo_snapshot.snapshot_id,
         project_tree_hash=runtime.repo_snapshot.project_tree_hash,
     ).to_state_dict()
     final_state["status"] = str(terminal.get("final_status") or "incomplete")
+    restored_journal = revision_journal
+    if restored_journal is None:
+        journal_payload = payload.get("revision_journal")
+        if journal_payload:
+            restored_journal = RevisionJournalV1.model_validate(journal_payload)
     return (
         ResearchLoopResult(
             loop_state=loop,
@@ -824,6 +1493,17 @@ def load_research_stage_checkpoint(
             decision_trace=loop.decision_trace,
             policy_merge_trace=loop.policy_merge_trace,
             evidence_critic_routes=[],
+            revision_journal=(
+                restored_journal
+                if restored_journal is not None
+                else RevisionJournalV1()
+            ),
+            revision_ingest_outcomes=list(
+                payload.get("revision_ingest_outcomes") or ()
+            ),
+            revision_ingest_failures=list(
+                payload.get("revision_ingest_failures") or ()
+            ),
         ),
         packet_set,
         fact_set,
@@ -848,6 +1528,31 @@ def build_typed_gaps(
     """
 
     agenda = runtime.agenda
+    loop_state = getattr(result, "loop_state", None)
+    observation_history = tuple(
+        getattr(loop_state, "observation_history", ()) or ()
+    )
+
+    def _attempted_tools_for(item: Any) -> tuple[str, ...]:
+        """Use agenda actions first, then observed tool names as fallback."""
+
+        actions = tuple(
+            dict.fromkeys(
+                str(value).strip()
+                for value in getattr(item, "attempted_actions", ()) or ()
+                if str(value).strip()
+            )
+        )
+        if actions:
+            return actions
+        return tuple(dict.fromkeys(
+            str(getattr(observation, "tool_name", "") or "")
+            for observation in observation_history
+            if str(getattr(observation, "obligation_id", "") or "")
+            == str(getattr(item, "obligation_id", "") or "")
+            and str(getattr(observation, "tool_name", "") or "")
+        ))
+
     gaps: list[TypedResearchGapV1] = []
     for item in agenda.items:
         if item.status == "explicit_gap":
@@ -880,8 +1585,25 @@ def build_typed_gaps(
                 stopping_reason="gap_finalizer_accepted",
                 trace_refs=(f"agenda:{item.obligation_id}",),
             ))
+        elif item.status == "partial" and item.missing_information:
+            attempted = _attempted_tools_for(item)
+            gaps.append(TypedResearchGapV1(
+                gap_id=f"gap-partial:{item.obligation_id}",
+                obligation_id=item.obligation_id,
+                status="unresolved",
+                reason=(
+                    f"Obligation {item.obligation_id} produced promoted partial evidence; "
+                    "the following fields remain unresolved for Candidate review: "
+                    + ", ".join(str(value) for value in item.missing_information)
+                ),
+                attempted_tools=attempted,
+                search_scope=tuple(dict.fromkeys(item.candidate_symbol_ids)),
+                missing_relations=tuple(dict.fromkeys(item.missing_information)),
+                stopping_reason="candidate_partial_unresolved",
+                trace_refs=(f"agenda:{item.obligation_id}",),
+            ))
         elif item.status in {"pending", "in_progress"}:
-            attempted = tuple(dict.fromkeys(item.attempted_actions))
+            attempted = _attempted_tools_for(item)
             stopping_reason = str(result.termination_reason or "").strip()
             if not attempted:
                 stopping_reason = "never_attempted"
@@ -912,7 +1634,7 @@ def build_typed_gaps(
                 trace_refs=(f"agenda:{item.obligation_id}",),
             ))
         elif item.status == "blocked":
-            attempted = tuple(dict.fromkeys(item.attempted_actions))
+            attempted = _attempted_tools_for(item)
             stopping_reason = str(result.termination_reason or "").strip()
             if not attempted:
                 stopping_reason = "never_attempted"
@@ -1314,16 +2036,27 @@ def _load_terminal_gap_artifacts(
 ) -> tuple[list[Any], dict[str, list[str]]]:
     """Load the gap finalizer's real terminal-gap artifacts from the data plane.
 
-    The research loop persists one idempotent terminal-gap payload per
-    accepted ``explicit_gap`` obligation (``record_explicit_code_gap``).
-    These are converted into the coverage-report representation with exact
-    ``{gap_id: [obligation_id]}`` bindings so the completeness matrix can
-    mark the obligation ``explicit_code_gap`` — no gap is ever fabricated.
+    The research loop persists one idempotent terminal-gap payload per accepted
+    obligation (``record_explicit_code_gap``).  R9: only a payload whose typed
+    outcome is a ledger-authenticated ``unsupported_with_scoped_evidence``
+    conclusion becomes a coverage ``ExplicitCodeGapV1``.  A bounded stop
+    (``search_inconclusive`` / ``budget_exhausted``) keeps its honest
+    ``unresolved`` coverage instead of being promoted into a code gap.
     """
 
     from code2paper.agentic.evidence_compiler_v3 import ExplicitCodeGapV1
+    from code2paper.agentic.research_execution_ledger import (
+        ExecutionLedgerError,
+        build_context_ledger_reader,
+        verify_receipt_authentication,
+    )
 
-    gap_root = runtime.tool_context().artifact_root / "research_tool_artifacts" / "terminal_gaps"
+    tool_context = runtime.tool_context()
+    try:
+        ledger_reader = build_context_ledger_reader(tool_context)
+    except Exception:  # pragma: no cover - defensive: no reader, no gap
+        ledger_reader = None
+    gap_root = tool_context.artifact_root / "research_tool_artifacts" / "terminal_gaps"
     gaps: list[Any] = []
     bindings: dict[str, list[str]] = {}
     if not gap_root.is_dir():
@@ -1336,6 +2069,23 @@ def _load_terminal_gap_artifacts(
         obligation_id = str(payload.get("obligation_id") or "").strip()
         gap_id = str(payload.get("gap_id") or "").strip()
         if not obligation_id or not gap_id:
+            continue
+        if str(payload.get("terminal_outcome") or "") != (
+            "unsupported_with_scoped_evidence"
+        ) or not bool(payload.get("negative_evidence_authorized", False)):
+            continue
+        try:
+            authorized, _failures = verify_receipt_authentication(
+                payload.get("search_receipt"),
+                obligation_id=obligation_id,
+                # R9: re-derive from the current revision's execution ledger.
+                # A stored ``ledger_verified`` marker is not enough once the
+                # records behind it can be damaged, deleted or stale.
+                ledger_reader=ledger_reader,
+            )
+        except ExecutionLedgerError:
+            authorized = False
+        if not authorized:
             continue
         gaps.append(ExplicitCodeGapV1(
             gap_id=gap_id,
@@ -1401,6 +2151,9 @@ def persist_product_artifacts(
     planning: dict[str, Any],
     agent_trace: list[dict[str, Any]],
     summary: dict[str, Any],
+    candidate_handoff: CandidateHandoffV1 | None = None,
+    candidate_retry_ledger: CandidateRetryLedgerV1 | None = None,
+    revision_journal: Any | None = None,
 ) -> dict[str, str]:
     """Persist every product artifact and return the path map.
 
@@ -1502,6 +2255,45 @@ def persist_product_artifacts(
     )
     paths["research_trace"] = _write("research_trace", _build_research_trace(loop_result))
     paths["typed_gaps"] = _write("typed_gaps", [gap.model_dump(mode="json") for gap in typed_gaps])
+    if candidate_handoff is not None:
+        # Candidate receives this independent handoff plus the ordinary
+        # evidence artifacts.  It is never used as a Verified terminal proof.
+        paths["candidate_handoff_v1"] = _write(
+            "candidate_handoff_v1",
+            candidate_handoff.model_dump(mode="json"),
+            product=False,
+        )
+    retry_gain_by_obligation: dict[str, bool | None] = {}
+    for event in loop_result.loop_state.intent_compile_events or ():
+        obligation_id = str(event.get("obligation_id") or "").strip()
+        if not obligation_id:
+            continue
+        if int(
+            (loop_result.loop_state.post_partial_retry_counts or {}).get(
+                obligation_id,
+                0,
+            )
+            or 0
+        ) >= 1:
+            retry_gain_by_obligation[obligation_id] = bool(
+                event.get("has_coverage_gain", False)
+            )
+    retry_ledger = (
+        candidate_retry_ledger
+        if candidate_retry_ledger is not None
+        else build_candidate_retry_ledger(
+            run_id=runtime.run_id,
+            repo_snapshot_id=runtime.repo_snapshot.snapshot_id,
+            project_tree_hash=runtime.repo_snapshot.project_tree_hash,
+            post_partial_retry_counts=loop_result.loop_state.post_partial_retry_counts,
+            semantic_gain_by_obligation=retry_gain_by_obligation,
+        )
+    )
+    paths["candidate_retry_ledger_v1"] = _write(
+        "candidate_retry_ledger_v1",
+        retry_ledger.model_dump(mode="json"),
+        product=False,
+    )
 
     # Research closure sidecars.  These are diagnostic provenance artifacts,
     # not a second authority path: positive claims still come only from the
@@ -1802,6 +2594,15 @@ def persist_product_artifacts(
     )
     paths["agent_trace"] = _write("agent_trace", agent_trace)
     paths["run_summary"] = _write("run_summary", summary)
+    if revision_journal is not None:
+        # R10 §15.6: the revision journal travels with the same artifact map as
+        # the handoff/checkpoint so resume can check which revision is current.
+        from code2paper.agentic.research_revision_contract import (
+            write_revision_journal,
+        )
+
+        journal_path = write_revision_journal(out_root, revision_journal)
+        paths["research_revision_journal_v1"] = str(journal_path)
     return paths
 
 
@@ -2117,7 +2918,7 @@ def _verified_validation_state(out_root: str | Path) -> dict[str, Any]:
     }
 
 
-def run_autonomous_method_agent(
+def _run_autonomous_method_agent_impl(
     *,
     repo_path: str | Path,
     author_intent_path: str | Path | None = None,
@@ -2125,12 +2926,14 @@ def run_autonomous_method_agent(
     out_root: str | Path,
     llm_config: LLMConfig | None = None,
     max_research_turns: int = 30,
+    max_wall_clock_seconds: float | None = None,
     max_callback_rounds: int = 3,
     max_callback_tool_turns_per_request: int = 8,
     method_name: str = "",
     run_id: str = "",
     write_method_text: bool | None = None,
     research_stage_checkpoint: str | Path | None = None,
+    authoring_phase_checkpoint: str | Path | None = None,
     concept_cards: Any | None = None,
     compile_concept_cards: bool = False,
     compile_argument_briefs: bool = True,
@@ -2217,6 +3020,14 @@ def run_autonomous_method_agent(
             ResearchAgendaV1.model_validate(checkpoint_payload["agenda"])
             if checkpoint_payload is not None else None
         ),
+        author_constraints_override=(
+            AuthorConstraintSetV1.model_validate(
+                checkpoint_payload["author_constraints_v1"]
+            )
+            if checkpoint_payload is not None
+            and checkpoint_payload.get("author_constraints_v1")
+            else None
+        ),
     )
     _phase(
         "input_resolution",
@@ -2230,6 +3041,33 @@ def run_autonomous_method_agent(
         },
     )
 
+    candidate_claim_id_map: dict[str, str] = {}
+    resumed_revision_journal = None
+    if checkpoint_payload is not None:
+        from code2paper.agentic.research_revision_contract import (
+            RevisionJournalV1 as _RevisionJournalV1,
+            load_revision_journal as _load_revision_journal,
+        )
+
+        journal_payload = checkpoint_payload.get("revision_journal")
+        if journal_payload:
+            resumed_revision_journal = _RevisionJournalV1.model_validate(
+                journal_payload
+            )
+        elif checkpoint_payload.get("research_revision_binding_v1"):
+            # §15.6: a checkpoint bound to a revision may not resume without
+            # that revision's journal.  Resuming with an empty journal would
+            # let the same proposal be applied a second time.
+            from code2paper.core.output_names import method_output as _method_output
+
+            journal_path = _method_output(
+                resolved_out, "research_revision_journal_v1"
+            )
+            if not Path(journal_path).is_file():
+                raise ValueError(
+                    "research_stage_checkpoint_revision_journal_missing"
+                )
+            resumed_revision_journal = _load_revision_journal(journal_path)
     if research_stage_checkpoint:
         (
             loop_result,
@@ -2240,14 +3078,44 @@ def run_autonomous_method_agent(
         ) = load_research_stage_checkpoint(
             path=research_stage_checkpoint,
             runtime=runtime,
+            revision_journal=resumed_revision_journal,
         )
     else:
         loop_result = run_product_research_phase(
             runtime,
             max_turns=int(max_research_turns),
+            max_wall_clock_seconds=max_wall_clock_seconds,
         )
-        packet_set, fact_set, claim_set = merge_product_evidence(loop_result, runtime)
+        packet_set, fact_set, claim_set = merge_product_evidence(
+            loop_result,
+            runtime,
+            claim_id_map=candidate_claim_id_map,
+        )
     research_run_state = _research_run_state(loop_result, runtime)
+    revision_journal, revision_binding = _run_revision_state(
+        loop_result,
+        runtime,
+        previous=resumed_revision_journal,
+    )
+    candidate_handoff = _candidate_handoff_from_loop(loop_result)
+    candidate_retry_ledger = _candidate_retry_ledger_for_run(loop_result, runtime)
+    candidate_handoff = _rebuild_candidate_handoff_from_product_claims(
+        loop_result=loop_result,
+        runtime=runtime,
+        claim_id_map=candidate_claim_id_map,
+        claim_set=claim_set,
+        previous=candidate_handoff,
+        retry_ledger=candidate_retry_ledger,
+        revision_id=revision_journal.current_revision_id(),
+    )
+    if candidate_handoff is not None:
+        # Keep the mutable scheduler snapshot and the explicit checkpoint
+        # handoff on the same post-merge identity.  Older runs wrote the
+        # scheduler's pre-merge handoff here and the canonical artifact later,
+        # which made a valid resume appear to have a missing promotion ledger.
+        loop_result.loop_state.intent_schedule["candidate_handoff"] = (
+            candidate_handoff.model_dump(mode="json")
+        )
     _phase(
         "research_loop",
         "ok" if research_run_state["status"] == "trusted" else research_run_state["status"],
@@ -2261,6 +3129,9 @@ def run_autonomous_method_agent(
                 "deterministic_fallback_decisions"
             ],
             "resumed_from_stage_checkpoint": bool(research_stage_checkpoint),
+            "candidate_handoff_ready": bool(
+                candidate_handoff is not None and candidate_handoff.eligible
+            ),
         },
     )
     _phase(
@@ -2282,6 +3153,9 @@ def run_autonomous_method_agent(
         packet_set=packet_set,
         fact_set=fact_set,
         claim_set=claim_set,
+        revision_binding=revision_binding,
+        revision_journal=revision_journal,
+        candidate_handoff=candidate_handoff,
     )
 
     research_failure_codes = _research_closure_failure_codes(
@@ -2314,6 +3188,11 @@ def run_autonomous_method_agent(
             "entrypoint": "run_autonomous_method_agent",
             "authoring_context_mode": effective_context_mode,
             "max_research_turns": int(max_research_turns),
+            "max_wall_clock_seconds": (
+                float(max_wall_clock_seconds)
+                if max_wall_clock_seconds is not None
+                else 0.0
+            ),
             "max_callback_rounds": int(max_callback_rounds),
         },
         profile_payload={
@@ -2327,7 +3206,10 @@ def run_autonomous_method_agent(
     )
     run_identity_path = write_run_identity(resolved_out, run_identity)
     downstream_phases = ("planning",)
-    if not research_failure_codes and write_method_text:
+    candidate_handoff_allowed = bool(
+        candidate_handoff is not None and candidate_handoff.eligible
+    )
+    if write_method_text and (not research_failure_codes or candidate_handoff_allowed):
         downstream_phases = ("planning", "formalizer", "writer")
     research_admission = build_research_closure_admission(
         run_id=effective_run_id,
@@ -2336,6 +3218,13 @@ def run_autonomous_method_agent(
         research_status=str(research_run_state.get("status") or "incomplete"),
         failure_codes=research_failure_codes,
         downstream_phases_planned=downstream_phases,
+        candidate_handoff_allowed=candidate_handoff_allowed,
+        candidate_handoff_id=(
+            candidate_handoff.handoff_id if candidate_handoff is not None else ""
+        ),
+        candidate_warning_codes=(
+            candidate_handoff.warning_codes if candidate_handoff is not None else ()
+        ),
     )
     research_admission_path = method_output(
         resolved_out,
@@ -2364,6 +3253,7 @@ def run_autonomous_method_agent(
             and not (
                 effective_context_mode in {"unified", "shadow_unified"}
                 and research_failure_codes
+                and not candidate_handoff_allowed
             )
             else None
         ),
@@ -2406,7 +3296,9 @@ def run_autonomous_method_agent(
     )
     if readiness is not None:
         plan_readiness = (
-            "blocked_by_research"
+            "candidate_ready_with_review"
+            if effective_context_mode == "unified" and candidate_handoff_allowed
+            else "blocked_by_research"
             if effective_context_mode == "unified" and research_failure_codes
             else readiness.readiness
         )
@@ -2418,7 +3310,9 @@ def run_autonomous_method_agent(
         )
     else:
         plan_readiness = (
-            "blocked_by_research"
+            "candidate_ready_with_review"
+            if effective_context_mode == "unified" and candidate_handoff_allowed
+            else "blocked_by_research"
             if effective_context_mode == "unified" and research_failure_codes
             else "not_built"
         )
@@ -2458,6 +3352,11 @@ def run_autonomous_method_agent(
             "path": run_identity_path,
         },
         "research_admission": research_admission.model_dump(mode="json"),
+        "candidate_handoff": (
+            candidate_handoff.model_dump(mode="json")
+            if candidate_handoff is not None
+            else {"eligible": False, "status": "unavailable"}
+        ),
         "evidence": {
             "evidence_packets": len(packet_set.packets) if packet_set is not None else 0,
             "code_facts": len(fact_set.facts) if fact_set is not None else 0,
@@ -2518,6 +3417,11 @@ def run_autonomous_method_agent(
         planning=planning,
         agent_trace=agent_trace,
         summary=summary,
+        candidate_handoff=candidate_handoff,
+        candidate_retry_ledger=candidate_retry_ledger,
+        revision_journal=(
+            revision_journal if revision_journal.entries else None
+        ),
     )
     paths["research_stage_checkpoint_v1"] = research_checkpoint_path
     paths["run_identity_v1"] = run_identity_path
@@ -2526,12 +3430,22 @@ def run_autonomous_method_agent(
     writer_status = "skipped_no_live_llm"
     writer_blocked_reason = ""
     writer_paths: dict[str, str] = {}
-    writer_artifact_paths = _writer_artifact_paths(resolved_out)
+    writer_artifact_paths = _writer_artifact_paths(resolved_out, persisted_paths=paths)
     writer_artifact_paths.update({
         "run_identity_v1": run_identity_path,
         "research_closure_admission_v1": str(research_admission_path),
     })
-    if effective_context_mode == "unified" and research_failure_codes:
+    if paths.get("candidate_handoff_v1"):
+        writer_artifact_paths["candidate_handoff_v1"] = paths["candidate_handoff_v1"]
+    if paths.get("candidate_retry_ledger_v1"):
+        writer_artifact_paths["candidate_retry_ledger_v1"] = paths[
+            "candidate_retry_ledger_v1"
+        ]
+    if (
+        effective_context_mode == "unified"
+        and research_failure_codes
+        and not candidate_handoff_allowed
+    ):
         # Research closure is a terminal upstream boundary.  Persist one
         # explicit run event and a staged contract here even when the Writer
         # is not requested; downstream phase artifacts are N/A, not missing.
@@ -2567,6 +3481,7 @@ def run_autonomous_method_agent(
             "method_completeness_matrix_v1",
             "intent_obligation_graph_v2",
             "research_agenda_v1",
+            "candidate_handoff_v1",
         }
         contract = build_authoring_run_contract(
             requested_mode=effective_context_mode,
@@ -2588,7 +3503,12 @@ def run_autonomous_method_agent(
         contract_path = write_authoring_run_contract(resolved_out, contract)
         paths["authoring_run_contract_v1"] = contract_path
         writer_artifact_paths["authoring_run_contract_v1"] = contract_path
-    if write_method_text and effective_context_mode == "unified" and research_failure_codes:
+    if (
+        write_method_text
+        and effective_context_mode == "unified"
+        and research_failure_codes
+        and not candidate_handoff_allowed
+    ):
         # Research closure is a hard pre-admission boundary.  Do not invoke
         # the Writer (or create Formalizer/Writer phase admissions) when the
         # repository evidence is still unresolved.
@@ -2604,6 +3524,7 @@ def run_autonomous_method_agent(
             llm_config=effective_llm,
             run_id=effective_run_id,
             authoring_context_mode=requested_authoring_context_mode,
+            authoring_phase_checkpoint=authoring_phase_checkpoint,
         )
     else:
         writer_blocked_reason = (
@@ -2949,12 +3870,39 @@ def run_autonomous_method_agent(
     summary["unsupported_positive_claims_in_verified"] = (
         verified_validation["unsupported_positive_claims"]
     )
+    # Route-2 visibility (see `.agent/implementation.md`): a run whose
+    # proposal calls were measured records the tally in its summary and names
+    # the accounting it belongs to, so "proposal calls are metered" can never
+    # be read as "they are part of the run's planned/reserved accounting".
+    # Runs without measured proposal calls add nothing.
+    summary.update(_proposal_accounting_summary(paths))
     summary["artifacts"] = dict(sorted(paths.items()))
     summary["authoring_context"] = {
         "requested_mode": requested_authoring_context_mode or "",
         "writer_mode": str(writer_summary.get("effective_authoring_context_mode") or ""),
         "run_contract_path": str(paths.get("authoring_run_contract_v1") or ""),
     }
+
+    if not paths.get("run_terminal_event"):
+        try:
+            from code2paper.agentic.unified_invocation_ledger import write_run_terminal_event
+
+            terminal_path = write_run_terminal_event(
+                resolved_out / "artifacts" / "06_authoring" / "invocations",
+                run_digest=run_identity.content_digest,
+                terminal_reason=loop_result.termination_reason,
+                terminal_stage="writer" if write_method_text else "research",
+                extra={
+                    "run_id": effective_run_id,
+                    "research_status": research_run_state.get("status", ""),
+                    "candidate_handoff_allowed": candidate_handoff_allowed,
+                    "writer_status": writer_status,
+                },
+            )
+            paths["run_terminal_event"] = str(terminal_path)
+        except (OSError, TypeError, ValueError):
+            pass
+    summary["artifacts"] = dict(sorted(paths.items()))
 
     agent_trace.append({
         "phase": "finalize",
@@ -2985,7 +3933,263 @@ def run_autonomous_method_agent(
     )
 
 
-def _writer_artifact_paths(out_root: Path) -> dict[str, str]:
+class MethodAgentSignal(RuntimeError):
+    """Internal signal exception used to durable-close the product run."""
+
+    def __init__(self, signum: int) -> None:
+        self.signum = int(signum)
+        super().__init__(f"method agent interrupted by signal {self.signum}")
+
+
+def _effective_method_run_id(out_root: str | Path, run_id: str) -> str:
+    resolved_out = Path(out_root).expanduser().resolve()
+    return (run_id or "").strip() or (
+        "method-agent-"
+        + datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%S")
+        + "-"
+        + hashlib.sha256(str(resolved_out).encode("utf-8")).hexdigest()[:8]
+    )
+
+
+def _latest_research_checkpoint(out_root: Path) -> dict[str, Any]:
+    """Read the newest immutable checkpoint without trusting its contents."""
+
+    checkpoint_root = out_root / "artifacts" / "research_tool_data" / "immutable_checkpoints"
+    candidates: list[Path] = []
+    if checkpoint_root.is_dir():
+        try:
+            candidates = [
+                path for path in checkpoint_root.glob("*.json") if path.is_file()
+            ]
+        except OSError:
+            candidates = []
+
+    def _mtime_key(path: Path) -> tuple[int, str]:
+        try:
+            return path.stat().st_mtime_ns, path.name
+        except OSError:
+            return 0, path.name
+
+    candidates.sort(key=_mtime_key)
+    if not candidates:
+        return {}
+    path = candidates[-1]
+    try:
+        encoded = path.read_bytes()
+        payload = json.loads(encoded)
+    except (OSError, UnicodeError, ValueError, json.JSONDecodeError):
+        return {"path": str(path), "readable": False}
+    if not isinstance(payload, dict):
+        payload = {}
+    agenda = payload.get("agenda_items") or ()
+    checkpoint_digest = (
+        "sha256:" + path.stem
+        if len(path.stem) == 64
+        else "sha256:" + hashlib.sha256(encoded.rstrip(b"\n")).hexdigest()
+    )
+    return {
+        "path": str(path),
+        "digest": checkpoint_digest,
+        "file_digest": "sha256:" + hashlib.sha256(encoded).hexdigest(),
+        "readable": True,
+        "turn_index": int(payload.get("turn_index") or 0),
+        "agenda_statuses": {
+            str(item.get("obligation_id") or ""): str(item.get("status") or "")
+            for item in agenda
+            if isinstance(item, dict) and str(item.get("obligation_id") or "").strip()
+        },
+        "post_partial_retry_counts": dict(payload.get("post_partial_retry_counts") or {}),
+        "intent_schedule": dict(payload.get("intent_schedule") or {}),
+    }
+
+
+def _persist_partial_method_run(
+    *,
+    out_root: Path,
+    run_id: str,
+    exc: BaseException,
+) -> dict[str, str]:
+    """Persist failure evidence even when the synchronous graph never returns."""
+
+    checkpoint = _latest_research_checkpoint(out_root)
+    attempt_id = str(
+        os.environ.get("CODE2PAPER_METHOD_AGENT_ATTEMPT_ID", "") or ""
+    ).strip()
+    if isinstance(exc, MethodAgentSignal):
+        terminal_reason = f"signal_{exc.signum}"
+        exit_type = "signal"
+    elif isinstance(exc, KeyboardInterrupt):
+        terminal_reason = "keyboard_interrupt"
+        exit_type = "keyboard_interrupt"
+    elif isinstance(exc, SystemExit):
+        terminal_reason = "system_exit"
+        exit_type = "system_exit"
+    else:
+        terminal_reason = "exception"
+        exit_type = "exception"
+    partial_path = out_root / "artifacts" / "research_product" / "run_summary.partial.json"
+    payload = {
+        "schema_version": "1.0",
+        "run_id": run_id,
+        "attempt_id": attempt_id,
+        "out_root": str(out_root),
+        "status": "interrupted",
+        "terminal_reason": terminal_reason,
+        "exit_type": exit_type,
+        "exception_type": type(exc).__name__,
+        "exception_message": str(exc)[:1000],
+        "research": {
+            "status": "incomplete",
+            "termination_reason": terminal_reason,
+            "turn_index": checkpoint.get("turn_index", 0),
+            "agenda_statuses": checkpoint.get("agenda_statuses", {}),
+        },
+        "checkpoint": checkpoint,
+        "artifacts": {
+            "latest_checkpoint": checkpoint.get("path", ""),
+            "latest_checkpoint_digest": checkpoint.get("digest", ""),
+        },
+    }
+    try:
+        _atomic_write_text(partial_path, _json_text(payload))
+    except OSError:
+        pass
+
+    terminal_filename = (
+        f"run_terminal_event.{attempt_id}.json"
+        if attempt_id
+        else "run_terminal_event.json"
+    )
+    terminal_path = (
+        out_root
+        / "artifacts"
+        / "06_authoring"
+        / "invocations"
+        / terminal_filename
+    )
+    try:
+        from code2paper.agentic.unified_invocation_ledger import write_run_terminal_event
+
+        terminal_path = write_run_terminal_event(
+            terminal_path.parent,
+            run_digest=checkpoint.get("digest", "") or run_id,
+            terminal_reason=terminal_reason,
+            terminal_stage="method_agent",
+            extra={
+                "run_id": run_id,
+                "attempt_id": attempt_id,
+                "exit_type": exit_type,
+                "exception_type": type(exc).__name__,
+                "exception_message": str(exc)[:1000],
+                "checkpoint_path": checkpoint.get("path", ""),
+                "checkpoint_digest": checkpoint.get("digest", ""),
+                "turn_index": checkpoint.get("turn_index", 0),
+            },
+            filename=terminal_filename,
+        )
+    except (OSError, TypeError, ValueError):
+        pass
+    return {
+        "run_summary_partial": str(partial_path),
+        "run_terminal_event": str(terminal_path),
+    }
+
+
+def run_autonomous_method_agent(
+    *,
+    repo_path: str | Path,
+    author_intent_path: str | Path | None = None,
+    claims_path: str | Path | None = None,
+    out_root: str | Path,
+    llm_config: LLMConfig | None = None,
+    max_research_turns: int = 30,
+    max_wall_clock_seconds: float | None = None,
+    max_callback_rounds: int = 3,
+    max_callback_tool_turns_per_request: int = 8,
+    method_name: str = "",
+    run_id: str = "",
+    write_method_text: bool | None = None,
+    research_stage_checkpoint: str | Path | None = None,
+    authoring_phase_checkpoint: str | Path | None = None,
+    concept_cards: Any | None = None,
+    compile_concept_cards: bool = False,
+    compile_argument_briefs: bool = True,
+    authoring_context_mode: str | None = None,
+) -> MethodAgentRunResultV1:
+    """Run the product path with durable closure for exceptions/signals."""
+
+    resolved_out = Path(out_root).expanduser().resolve()
+    resolved_out.mkdir(parents=True, exist_ok=True)
+    effective_run_id = _effective_method_run_id(resolved_out, run_id)
+    old_handlers: dict[int, Any] = {}
+    can_install_handlers = threading.current_thread() is threading.main_thread()
+    if can_install_handlers:
+        def _raise_on_signal(received: int, _frame: Any) -> None:
+            raise MethodAgentSignal(received)
+
+        for signum in (
+            getattr(signal, "SIGTERM", None),
+            getattr(signal, "SIGHUP", None),
+            getattr(signal, "SIGINT", None),
+        ):
+            if signum is None:
+                continue
+            old_handlers[int(signum)] = signal.getsignal(signum)
+            signal.signal(signum, _raise_on_signal)
+    try:
+        return _run_autonomous_method_agent_impl(
+            repo_path=repo_path,
+            author_intent_path=author_intent_path,
+            claims_path=claims_path,
+            out_root=resolved_out,
+            llm_config=llm_config,
+            max_research_turns=max_research_turns,
+            max_wall_clock_seconds=max_wall_clock_seconds,
+            max_callback_rounds=max_callback_rounds,
+            max_callback_tool_turns_per_request=max_callback_tool_turns_per_request,
+            method_name=method_name,
+            run_id=effective_run_id,
+            write_method_text=write_method_text,
+            research_stage_checkpoint=research_stage_checkpoint,
+            authoring_phase_checkpoint=authoring_phase_checkpoint,
+            concept_cards=concept_cards,
+            compile_concept_cards=compile_concept_cards,
+            compile_argument_briefs=compile_argument_briefs,
+            authoring_context_mode=authoring_context_mode,
+        )
+    except BaseException as exc:
+        _persist_partial_method_run(
+            out_root=resolved_out,
+            run_id=effective_run_id,
+            exc=exc,
+        )
+        raise
+    finally:
+        if can_install_handlers:
+            for signum, handler in old_handlers.items():
+                signal.signal(signum, handler)
+
+
+def _writer_artifact_paths(
+    out_root: Path,
+    *,
+    persisted_paths: Mapping[str, str] | None = None,
+    allow_legacy_discovery: bool = False,
+) -> dict[str, str]:
+    """Resolve the Writer's artifact inputs for one revision.
+
+    The product mainline passes ``persisted_paths`` -- the map returned by
+    :func:`persist_product_artifacts` for *this* revision -- and only those
+    files may become Writer inputs.  A stale file that happens to share a
+    name inside ``out_root/artifacts`` must never be promoted into a current
+    revision.
+
+    Directory discovery by file name remains available for explicitly marked
+    legacy/replay entry points: a caller that supplies no manifest must also
+    pass ``allow_legacy_discovery=True``.  Anything else is refused instead of
+    silently guessing which files belong to the run.
+    """
+
     names = (
         "repo_snapshot_v2",
         "repository_authoring_artifacts_v1",
@@ -3019,12 +4223,29 @@ def _writer_artifact_paths(out_root: Path) -> dict[str, str]:
         "behavior_graph_v1",
         "candidate_acquisition_ledger_v1",
         "observation_promotion_ledger_v1",
+        "candidate_handoff_v1",
+        "candidate_retry_ledger_v1",
         "method_authoring_closure_metrics_v1",
         "method_argument_briefs_v1",
         "author_story_spine_v1",
         "story_spine",
         "method_story_nodes_v1",
     )
+    if persisted_paths is not None:
+        resolved: dict[str, str] = {}
+        for name in names:
+            raw = str(persisted_paths.get(name) or "").strip()
+            if not raw:
+                continue
+            candidate = Path(raw)
+            if candidate.is_file():
+                resolved[name] = str(candidate)
+        return resolved
+    if not allow_legacy_discovery:
+        raise ValueError(
+            "writer_artifact_manifest_required: pass this revision's persisted "
+            "path map, or mark a legacy entry point with allow_legacy_discovery"
+        )
     return {
         name: str(out_root / "artifacts" / f"{name}.json")
         for name in names
@@ -3039,6 +4260,7 @@ def _run_writer_surface(
     llm_config: LLMConfig,
     run_id: str,
     authoring_context_mode: str | None = None,
+    authoring_phase_checkpoint: str | Path | None = None,
 ) -> tuple[dict[str, str], str, str]:
     """Call the shared Writer surface and map its status onto the product run.
 
@@ -3051,6 +4273,26 @@ def _run_writer_surface(
         run_publication_method_writer,
     )
 
+    unified_tokenizer = None
+    resolved_mode = str(authoring_context_mode or "").strip().casefold()
+    env_mode = str(
+        os.environ.get("CODE2PAPER_AUTHORING_CONTEXT_MODE", "") or ""
+    ).strip().casefold()
+    if resolved_mode == "unified" or (not resolved_mode and env_mode == "unified"):
+        try:
+            from code2paper.llm.tokenizer import prepare_vllm_openai_chat_tokenizer
+
+            unified_tokenizer = prepare_vllm_openai_chat_tokenizer(
+                llm_config=llm_config,
+                out_root=out_root,
+                require_loopback_8006=True,
+            )
+        except Exception as exc:  # noqa: BLE001 - product admission is fail-closed
+            return {}, "blocked", (
+                "writer_tokenizer_admission_failed:"
+                f"{type(exc).__name__}:{str(exc)[:200]}"
+            )
+
     try:
         result, paths = run_publication_method_writer(
             out_root=out_root,
@@ -3061,8 +4303,15 @@ def _run_writer_surface(
             editor_caller=None,
             rewrite_caller=None,
             formalization_caller=None,
+            # R7 default wiring: ``None`` means "build the bounded proposal
+            # caller from ``llm_config``" inside the narrative builder; it is
+            # not a request to skip proposals.  The caller stays unused when
+            # the config has no usable provider.
             architect_proposal_caller=None,
             authoring_context_mode=authoring_context_mode,
+            unified_tokenizer=unified_tokenizer,
+            proposal_tokenizer=unified_tokenizer,
+            formalizer_phase_checkpoint=authoring_phase_checkpoint,
         )
     except Exception as exc:  # noqa: BLE001 — the product run must not crash on writer faults
         return {}, "blocked", f"writer_surface_fault:{type(exc).__name__}:{str(exc)[:200]}"
@@ -3078,6 +4327,7 @@ def _run_writer_surface(
 __all__ = [
     "CLAIM_PRIORITY_VALUES",
     "MethodAgentRunResultV1",
+    "MethodAgentSignal",
     "PRODUCT_RESEARCH_HARD_RULES",
     "PRODUCT_RESEARCH_READY_TOOLS",
     "TypedResearchGapV1",

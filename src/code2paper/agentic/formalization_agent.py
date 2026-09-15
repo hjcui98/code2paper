@@ -365,6 +365,10 @@ class SectionFormulaPackageV1(BaseModel):
 
     model_config = ConfigDict(extra="forbid", frozen=True)
 
+    # R5: current packages declare 2.0.  A package without the marker (or with
+    # 1.0) is a historical artifact and is the only kind allowed to fall back
+    # to the pre-V2 "accepted" compatibility branch downstream.
+    schema_version: str = "1.0"
     package_id: str
     section_id: str
     # New consumer-first route.  Historical packages may omit these fields;
@@ -553,6 +557,13 @@ class MechanismFormulaObligationV1(BaseModel):
     required_branch_conditions: tuple[str, ...] = Field(default_factory=tuple)
     required_symbol_bindings: tuple[dict[str, Any], ...] = Field(default_factory=tuple)
 
+    # Explicit consumer ownership.  These are filled by the deterministic
+    # archive→workset compiler after pages exist; an unbound obligation must
+    # never reach a model caller.
+    primary_detail_id: str = ""
+    primary_page_id: str = ""
+    join_page_id: str = ""
+
     source_context_digest: str = ""
     content_digest: str = ""
 
@@ -567,6 +578,94 @@ class MechanismFormulaObligationV1(BaseModel):
             )
         object.__setattr__(self, "content_digest", expected)
         return self
+
+
+def load_mechanism_formula_obligations_v1_payload(
+    payload: Mapping[str, Any],
+    *,
+    allow_legacy_digest_recompute: bool = True,
+) -> tuple[dict[str, tuple[MechanismFormulaObligationV1, ...]], bool]:
+    """Load formula obligations with an authenticated V1 digest migration.
+
+    Current V1 obligations gained explicit page-owner fields.  Historical
+    obligation rows therefore fail the current derived ``content_digest``
+    check even when their semantic fields are unchanged.  The compatibility
+    path verifies the historical container digest and every historical row
+    digest before removing only row ``content_digest`` values for current
+    model validation.  It never repairs a changed semantic row or an unknown
+    schema.
+    """
+
+    if not isinstance(payload, Mapping):
+        raise TypeError("mechanism formula obligations payload must be a mapping")
+
+    def _rows_by_mechanism(value: Mapping[str, Any]) -> Mapping[str, Any]:
+        rows = value.get("by_mechanism", value)
+        if not isinstance(rows, Mapping):
+            raise ValueError("formula obligations by_mechanism must be a mapping")
+        return rows
+
+    def _validate_rows(value: Mapping[str, Any]) -> dict[str, tuple[MechanismFormulaObligationV1, ...]]:
+        rows = _rows_by_mechanism(value)
+        return {
+            str(mechanism_id): tuple(
+                MechanismFormulaObligationV1.model_validate(row)
+                for row in (items or ())
+            )
+            for mechanism_id, items in rows.items()
+        }
+
+    try:
+        return _validate_rows(payload), False
+    except Exception as strict_error:
+        if (
+            not allow_legacy_digest_recompute
+            or str(payload.get("schema_version") or "") != "1.0"
+            or "by_mechanism" not in payload
+            or not isinstance(payload.get("by_mechanism"), Mapping)
+            or "binding" in payload
+        ):
+            raise strict_error
+
+        raw_rows = payload["by_mechanism"]
+        legacy_container = dict(payload)
+        declared_container_digest = legacy_container.pop("content_digest", None)
+        if not isinstance(declared_container_digest, str):
+            raise strict_error
+        if _digest_json(legacy_container) != declared_container_digest:
+            raise strict_error
+
+        migrated_rows: dict[str, tuple[MechanismFormulaObligationV1, ...]] = {}
+        try:
+            for mechanism_id, items in raw_rows.items():
+                if not isinstance(items, (list, tuple)):
+                    raise ValueError("formula obligation rows must be a sequence")
+                migrated_items: list[MechanismFormulaObligationV1] = []
+                for row in items:
+                    if not isinstance(row, Mapping):
+                        raise ValueError("formula obligation row must be a mapping")
+                    if any(
+                        field in row
+                        for field in ("primary_detail_id", "primary_page_id", "join_page_id")
+                    ):
+                        raise ValueError("current formula owner fields are not legacy V1")
+                    declared_row_digest = row.get("content_digest")
+                    if not isinstance(declared_row_digest, str):
+                        raise ValueError("legacy formula obligation digest is missing")
+                    legacy_row = {
+                        key: value
+                        for key, value in row.items()
+                        if key != "content_digest"
+                    }
+                    if _digest_json(legacy_row) != declared_row_digest:
+                        raise ValueError("legacy formula obligation digest mismatch")
+                    migrated_items.append(
+                        MechanismFormulaObligationV1.model_validate(legacy_row)
+                    )
+                migrated_rows[str(mechanism_id)] = tuple(migrated_items)
+        except Exception:
+            raise strict_error
+        return migrated_rows, True
 
 
 class MechanismFormulaPackageV2(BaseModel):
@@ -845,6 +944,7 @@ def compile_mechanism_formula_obligations(
             obligation_id=obligation_id,
             mechanism_id=mid,
             source_detail_ids=target_dids,
+            primary_detail_id=target_dids[0] if target_dids else "",
             expectation="required" if author_formula_expectations else "preferred",
             mathematical_goal=(
                 f"Formalize {' and '.join(predicates[:3]) or mid} "
@@ -1059,6 +1159,43 @@ def validate_mechanism_formula_package(
 ) -> list[str]:
     """Validate MechanismFormulaPackageV2 against context, obligation, and guard constraints."""
     failures: list[str] = []
+    if any(
+        ord(character) < 32 and character not in {"\n", "\r"}
+        for character in package.latex
+    ):
+        # JSON decoding can silently turn a model's malformed ``\text`` into
+        # a tab followed by ``ext``.  That is content corruption, not a
+        # representation defect the harness may guess how to repair.
+        failures.append("latex_contains_control_character")
+
+    def _latex_contains_ordered_operator_chain(
+        latex_text: str,
+        predicate: str,
+    ) -> bool:
+        """Accept rendered notation for a source compound operator chain.
+
+        Providers commonly render ``A -> B`` as ``A \\xrightarrow{} B`` or
+        ``A → B`` in LaTeX.  The content gate still requires every source
+        operator, in source order, but must not reject an equivalent display
+        solely because the arrow glyph was typeset differently.
+        """
+
+        components = re.split(r"\s*(?:->|=>|→|⟶)\s*", predicate)
+        if len(components) <= 1:
+            return False
+        folded_latex = str(latex_text).casefold()
+        cursor = 0
+        for component in components:
+            tokens = re.findall(r"[a-z0-9_]+", str(component).casefold())
+            for token in tokens:
+                match = re.search(
+                    r"(?<![a-z0-9_])" + re.escape(token) + r"(?![a-z0-9_])",
+                    folded_latex[cursor:],
+                )
+                if match is None:
+                    return False
+                cursor += match.end()
+        return True
 
     # 1. Digest closures
     ctx_digest = getattr(context, "source_context_digest", "") or getattr(context, "content_digest", "")
@@ -1232,6 +1369,8 @@ def validate_mechanism_formula_package(
                 continue
             pred = str(sig.get("predicate") or "").strip().lower()
             if pred and pred not in latex.lower():
+                if _latex_contains_ordered_operator_chain(latex, pred):
+                    continue
                 normalized_pred = re.sub(r"^(run|compute|calc)_", "", pred)
                 if normalized_pred and normalized_pred not in latex.lower():
                     operator_equivs = {
@@ -1558,8 +1697,39 @@ def adapt_mechanism_formula_package_to_legacy(
     section_id: str,
     consumer_paragraph_id: str = "",
 ) -> SectionFormulaPackageV1:
-    """Legacy-compatible sidecar adapter converting MechanismFormulaPackageV2 to SectionFormulaPackageV1."""
+    """Legacy-compatible sidecar adapter converting MechanismFormulaPackageV2 to SectionFormulaPackageV1.
+
+    R5: repository implementation authority requires every condition at once --
+    repository-verified evidence, the repository-derived lane, an accepted
+    review status, and exact source bindings.  An author-intent or
+    review-required package never becomes ``code_verified`` merely because it
+    carries a fact/equation id.
+    """
+    has_exact_binding = bool(
+        package.bound_fact_ids
+        or package.bound_equation_ids
+        or package.bound_operation_ids
+    )
+    repository_authorized = bool(
+        package.evidence_authority == "repository_verified"
+        and package.formula_lane == "repository_derived"
+        and package.review_status == "accepted"
+        and has_exact_binding
+    )
+    if repository_authorized:
+        authority_status = "code_verified"
+        formula_lane = "repository_derived"
+        review_status = "accepted"
+    elif package.formula_lane == "author_intent_academic":
+        authority_status = "author_intent"
+        formula_lane = "author_intent_academic"
+        review_status = "review_required"
+    else:
+        authority_status = "partial"
+        formula_lane = "hybrid_partial"
+        review_status = "review_required"
     return SectionFormulaPackageV1(
+        schema_version="2.0",
         package_id=package.package_id,
         section_id=section_id,
         consumer_paragraph_id=consumer_paragraph_id,
@@ -1572,13 +1742,9 @@ def adapt_mechanism_formula_package_to_legacy(
         symbol_definitions=package.symbol_definitions,
         material_conditions=package.material_conditions,
         assumptions=package.assumptions,
-        authority_status="code_verified" if package.evidence_authority == "repository_verified" and (package.bound_fact_ids or package.bound_equation_ids or package.bound_operation_ids) else "partial",
-        formula_lane=(
-            "repository_derived"
-            if package.formula_lane == "repository_derived" and (package.bound_fact_ids or package.bound_equation_ids or package.bound_operation_ids)
-            else "hybrid_partial"
-        ),
-        review_status="accepted" if package.review_status == "accepted" else "review_required",
+        authority_status=authority_status,
+        formula_lane=formula_lane,
+        review_status=review_status,
         bound_fact_ids=package.bound_fact_ids,
         bound_equation_ids=package.bound_equation_ids,
         bound_operation_ids=package.bound_operation_ids,
@@ -1613,6 +1779,14 @@ def _run_mechanism_formalizer_legacy(
         "llm_page_calls": 0,
         "rejected_packages": 0,
         "failures": [],
+        # R5: normal no-package, missing-binding, rejected and not-applicable
+        # obligations are separate machine-readable outcomes; an interface
+        # failure is never allowed to look like a deterministic no-op.
+        "deterministic_obligation_ids": [],
+        "missing_binding_obligations": [],
+        "rejected_obligations": [],
+        "not_applicable_obligations": [],
+        "interface_failures": [],
     }
 
     deterministic_pkgs = build_deterministic_mechanism_formula_packages(
@@ -1629,12 +1803,19 @@ def _run_mechanism_formalizer_legacy(
         for pkg in deterministic_pkgs
         for ob_id in pkg.satisfied_obligation_ids
     }
+    call_trace["deterministic_obligation_ids"] = sorted(satisfied_ob_ids)
 
     remaining_obligations = [
         ob for ob in obligations
         if ob.obligation_id not in satisfied_ob_ids
         and ob.expectation in ("required", "preferred")
     ]
+    call_trace["not_applicable_obligations"] = sorted(
+        ob.obligation_id
+        for ob in obligations
+        if ob.obligation_id not in satisfied_ob_ids
+        and ob.expectation not in ("required", "preferred")
+    )
 
     accepted_packages = list(deterministic_pkgs)
 
@@ -1647,6 +1828,7 @@ def _run_mechanism_formalizer_legacy(
                 bound_operation_ids or bound_fact_ids or bound_equation_ids
             ):
                 call_trace["rejected_packages"] += 1
+                call_trace["missing_binding_obligations"].append(ob.obligation_id)
                 call_trace["failures"].append(
                     f"formula_source_binding_missing:{ob.obligation_id}"
                 )
@@ -1690,9 +1872,38 @@ def _run_mechanism_formalizer_legacy(
                     )
                     call_trace["llm_call_made"] = True
                     call_trace["llm_page_calls"] += 1
-                    parsed = _loads_json_or_extract_object(response.content if hasattr(response, "content") else str(response))
+                    # R5: a real LLMResponse exposes ``text``; a blocked
+                    # response is an interface outcome, not an invalid formula.
+                    blocked_reason = str(getattr(response, "blocked_reason", "") or "")
+                    if blocked_reason:
+                        call_trace["failures"].append(
+                            f"llm_blocked:page:{page_index}:{blocked_reason}"
+                        )
+                        call_trace["interface_failures"].append({
+                            "kind": "llm_blocked",
+                            "obligation_id": ob.obligation_id,
+                            "page_index": page_index,
+                            "reason": blocked_reason,
+                        })
+                        continue
+                    response_text = str(getattr(response, "text", "") or "")
+                    if not response_text:
+                        response_text = str(getattr(response, "content", "") or "")
+                    if not response_text:
+                        call_trace["failures"].append(
+                            f"llm_empty_response:page:{page_index}"
+                        )
+                        call_trace["interface_failures"].append({
+                            "kind": "llm_empty_response",
+                            "obligation_id": ob.obligation_id,
+                            "page_index": page_index,
+                            "reason": "",
+                        })
+                        continue
+                    parsed = _loads_json_or_extract_object(response_text)
                     if not isinstance(parsed, dict) or "latex" not in parsed:
                         call_trace["rejected_packages"] += 1
+                        call_trace["rejected_obligations"].append(ob.obligation_id)
                         call_trace["failures"].append(
                             f"llm_invalid_response:{ob.obligation_id}:page:{page_index}"
                         )
@@ -1730,6 +1941,7 @@ def _run_mechanism_formalizer_legacy(
                         # that no page was silently omitted.
                         continue
                     call_trace["rejected_packages"] += 1
+                    call_trace["rejected_obligations"].append(ob.obligation_id)
                     call_trace["failures"].extend(
                         f"{failure}:page:{page_index}" for failure in failures
                     )
@@ -1737,6 +1949,12 @@ def _run_mechanism_formalizer_legacy(
                     call_trace["failures"].append(
                         f"llm_error:page:{page_index}:{str(exc)}"
                     )
+                    call_trace["interface_failures"].append({
+                        "kind": "llm_error",
+                        "obligation_id": ob.obligation_id,
+                        "page_index": page_index,
+                        "reason": str(exc),
+                    })
             if selected_package is not None:
                 accepted_packages.append(selected_package)
 
@@ -1861,7 +2079,18 @@ def run_mechanism_formalizer(
                 )
                 trace["llm_call_made"] = True
                 trace["llm_page_calls"] += 1
-                raw = response.content if hasattr(response, "content") else str(response)
+                blocked_reason = str(getattr(response, "blocked_reason", "") or "")
+                if blocked_reason:
+                    trace["failures"].append(
+                        f"llm_blocked:page:{page_index}:{blocked_reason}"
+                    )
+                    continue
+                raw = str(getattr(response, "text", "") or "")
+                if not raw:
+                    raw = str(getattr(response, "content", "") or "")
+                if not raw:
+                    trace["failures"].append(f"llm_empty_response:page:{page_index}")
+                    continue
                 parsed = _loads_json_or_extract_object(raw)
                 if not isinstance(parsed, dict) or not str(parsed.get("latex", "")).strip():
                     trace["rejected_packages"] += 1
@@ -1945,6 +2174,1100 @@ def run_mechanism_formalizer(
         else:
             trace["failures"].append(f"no_accepted_formula_package:{obligation.obligation_id}")
     return tuple(accepted), trace
+
+
+class FormalizerPlanExecutionResultV1(BaseModel):
+    """Outcome of one page-centric formalizer invocation plan execution."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    schema_version: str = "2.0"
+    plan_digest: str
+    accepted_packages: tuple[Any, ...] = ()
+    receipts: tuple[dict[str, Any], ...] = ()
+    actual_main_calls: int = Field(ge=0)
+    actual_repair_calls: int = Field(ge=0)
+    planned_main_invocations: int = Field(ge=0)
+    repair_call_limit: int = Field(ge=0)
+    assertion_failures: tuple[str, ...] = ()
+    task_failures: tuple[str, ...] = ()
+    trace: dict[str, Any] = Field(default_factory=dict)
+
+    @property
+    def assertions_passed(self) -> bool:
+        return not self.assertion_failures
+
+
+def execute_formalizer_invocation_plan(
+    *,
+    plan: Any,
+    workset_manifest: Any,
+    archive: Any,
+    obligations_by_id: Mapping[str, MechanismFormulaObligationV1],
+    llm_config: Any | None = None,
+    caller: Any | None = None,
+    equations: Any | None = None,
+    ledger_root: Path | str | None = None,
+    model_identity_digest: str = "",
+    run_digest: str = "",
+    max_attempts: int = 2,
+    budget_envelope: Any | None = None,
+    tokenizer: Any | None = None,
+    prompt_renderer: Callable[[str, str, Sequence[str]], str] | None = None,
+    response_parser: Callable[[str], Any] | None = None,
+) -> FormalizerPlanExecutionResultV1:
+    """Execute the frozen formalizer plan: one page per call, batched obligations.
+
+    Replaces the obligation-outer/page-inner cartesian loop.  The main phase
+    issues exactly one actual request per planned main invocation; each call
+    carries one page's canonical technical bytes and that page's pending
+    obligations as a structured batch.  Failed obligations receive at most one
+    bounded declared repair call each.  Every real request appends one
+    durable receipt immediately; accepted package fragments are published
+    atomically before the completed receipt, so an interruption can never
+    lose an accepted formula while replaying a delivered request.
+    """
+
+    if int(max_attempts) <= 0:
+        raise ValueError("formalizer max_attempts must be positive")
+
+    from code2paper.agentic.mechanism_context_models import MechanismContextV1
+    from code2paper.agentic.unified_context_models import (
+        ActualRequestReceiptV2,
+        InvocationAttemptStartedV1,
+        UNIFIED_RESUME_DIGEST_MISMATCH,
+    )
+    from code2paper.agentic.unified_context_compiler import (
+        account_unified_request_tokens,
+        bound_consumer_llm_config,
+        build_consumer_request_payload,
+        consumer_request_envelope_digest,
+        remaining_run_input_tokens,
+        render_consumer_page_prompt,
+        spend_input_tokens_by_role,
+    )
+    from code2paper.agentic.unified_context_models import (
+        UNIFIED_INVOCATION_BUDGET_EXCEEDED,
+        UNIFIED_INVOCATION_BUDGET_MISSING,
+    )
+    from code2paper.agentic.mechanism_context_models import (
+        canonical_json_bytes,
+        sha256_digest,
+    )
+    from code2paper.agentic.unified_invocation_ledger import (
+        build_resume_plan,
+        publish_attempt_completed,
+        publish_provider_request,
+        publish_provider_response,
+        publish_attempt_started,
+        publish_package_fragment,
+        read_all_completed_receipts,
+        read_completed_receipts,
+        rebuild_aggregate_fragments,
+        check_run_budget_before_send,
+        register_invocation_plan,
+        unsettled_started_attempt_records,
+    )
+
+    accepted_packages: list[Any] = []
+    receipts: list[dict[str, Any]] = []
+    task_failures: list[str] = []
+    trace: dict[str, Any] = {
+        "plan_digest": plan.content_digest,
+        "mechanisms": {},
+    }
+    if ledger_root is not None:
+        ledger_root = Path(ledger_root)
+
+    page_index = {page.page_id: page for page in workset_manifest.pages}
+    mechanism_contexts: dict[str, MechanismContextV1] = {}
+    for atom in archive.mechanism_atoms:
+        try:
+            mechanism_contexts[str(atom.payload.get("mechanism_id", ""))] = (
+                MechanismContextV1.model_validate(dict(atom.payload))
+            )
+        except Exception as exc:  # pragma: no cover - malformed archive
+            task_failures.append(f"archive_mechanism_payload_invalid:{atom.atom_id}:{exc}")
+
+    def _payload_digest_of(page: Any) -> str:
+        from code2paper.agentic.mechanism_context_models import (
+            canonical_json_bytes,
+            sha256_digest,
+        )
+
+        return sha256_digest(canonical_json_bytes(dict(page.technical_payload)))
+
+    def _request_payload(page: Any, obligation_ids: Sequence[str], is_repair: bool) -> dict[str, Any]:
+        return build_consumer_request_payload(
+            page=page,
+            role="formalizer",
+            task_ids=obligation_ids,
+            is_repair=is_repair,
+        )
+
+    def _render_prompt(page: Any, obligation_ids: Sequence[str], is_repair: bool) -> str:
+        if prompt_renderer is not None:
+            return prompt_renderer(
+                _page_bytes_string(page), str(page.mechanism_id), obligation_ids
+            )
+        return render_consumer_page_prompt(
+            page=page,
+            role="formalizer",
+            task_ids=obligation_ids,
+            is_repair=is_repair,
+        )
+
+    def _page_bytes_string(page: Any) -> str:
+        from code2paper.agentic.mechanism_context_models import canonical_json_bytes
+
+        return canonical_json_bytes(dict(page.technical_payload)).decode("utf-8")
+
+    def _parse_response(raw: Any) -> Any:
+        if response_parser is not None:
+            response_text = raw if isinstance(raw, str) else getattr(raw, "text", None)
+            if response_text is None:
+                response_text = getattr(raw, "content", None)
+            if response_text is None:
+                response_text = str(raw)
+            return response_parser(str(response_text))
+        from code2paper.llm.response_schemas import _loads_json_or_extract_object
+        from code2paper.llm.response_schemas import UnifiedFormalizerResponseV2
+
+        content = getattr(raw, "text", None)
+        if content is None:
+            content = raw.content if hasattr(raw, "content") else str(raw)
+        payload = _loads_json_or_extract_object(content)
+        # The provider schema is the request contract; validate the outer
+        # object again at the consumer boundary so an adapter cannot silently
+        # discard unknown fields or accept a partial batch. Row validation
+        # below remains responsible for authority/package binding.
+        return UnifiedFormalizerResponseV2.model_validate(payload).model_dump(
+            mode="json"
+        )
+
+    def _envelope_digest_for(
+        page: Any,
+        role: str,
+        obligation_ids: Sequence[str],
+        prompt: str,
+        is_repair: bool,
+    ) -> str:
+        expected_prompt = render_consumer_page_prompt(
+            page=page,
+            role=role,
+            task_ids=obligation_ids,
+            is_repair=is_repair,
+        )
+        if prompt == expected_prompt:
+            return consumer_request_envelope_digest(
+                page=page,
+                role=role,
+                task_ids=obligation_ids,
+                is_repair=is_repair,
+            )
+        from code2paper.agentic.unified_context_models import compute_request_envelope_digest
+        from code2paper.agentic.unified_context_compiler import _request_schema_digest
+        from code2paper.agentic.mechanism_context_models import sha256_digest
+
+        return compute_request_envelope_digest(
+            prompt_template_id=f"unified_{role}_page_v2",
+            consumer_role=role,
+            task_ids=obligation_ids,
+            page_id=page.page_id,
+            technical_bytes_digest=page.technical_bytes_digest,
+            system_prompt_digest=sha256_digest(f"unified:{role}:system:v2".encode("utf-8")),
+            rendered_prompt_digest=sha256_digest(prompt.encode("utf-8")),
+            canonical_input_payload_digest=sha256_digest(
+                canonical_json_bytes(_request_payload(page, obligation_ids, is_repair))
+            ),
+            response_schema_digest=_request_schema_digest(role),
+        )
+
+    def _inspect_actual_request(
+        request: Any,
+        *,
+        invocation_id: str,
+        page: Any,
+        expected_payload: Mapping[str, Any],
+        expected_prompt: str,
+        expected_response_schema: Mapping[str, Any],
+        invocation: Any | None = None,
+        role_budget: Any | None = None,
+    ) -> tuple[str, str, tuple[str, ...], Any]:
+        """Recompute request identity from the mutable object seen by caller.
+
+        ``LLMRequest`` is a frozen dataclass, but its payload and JSON schema
+        are mappings.  A provider adapter can therefore mutate nested values
+        after the orchestrator constructed the request.  Receipts must bind
+        what actually crossed the caller boundary, not the values that were
+        intended before that call.
+        """
+
+        from code2paper.agentic.unified_context_models import (
+            UNIFIED_ACTUAL_PAGE_BYTES_MISMATCH,
+            compute_request_envelope_digest,
+        )
+        from code2paper.agentic.unified_context_compiler import _request_schema_digest
+        from code2paper.agentic.mechanism_context_models import sha256_digest
+
+        actual_payload = getattr(request, "input_payload", None)
+        payload_mapping = actual_payload if isinstance(actual_payload, Mapping) else {}
+        technical_payload = payload_mapping.get("technical_payload")
+        if isinstance(technical_payload, Mapping):
+            actual_technical_bytes_digest = sha256_digest(
+                canonical_json_bytes(dict(technical_payload))
+            )
+        else:
+            actual_technical_bytes_digest = ""
+        actual_role = str(payload_mapping.get("consumer_role", ""))
+        actual_task_ids = payload_mapping.get("task_ids", ()) or ()
+        actual_page_id = str(payload_mapping.get("page_id", ""))
+        actual_envelope_digest = compute_request_envelope_digest(
+            prompt_template_id=str(getattr(request, "prompt_template_id", "")),
+            consumer_role=actual_role,
+            task_ids=actual_task_ids,
+            page_id=actual_page_id,
+            technical_bytes_digest=actual_technical_bytes_digest,
+            system_prompt_digest=sha256_digest(
+                b"unified:formalizer:system:v2"
+            ),
+            rendered_prompt_digest=sha256_digest(
+                str(getattr(request, "prompt", "")).encode("utf-8")
+            ),
+            canonical_input_payload_digest=sha256_digest(
+                canonical_json_bytes(actual_payload)
+            ),
+            response_schema_digest=(
+                _request_schema_digest("formalizer")
+                if getattr(request, "response_json_schema", None)
+                == dict(expected_response_schema)
+                else sha256_digest(canonical_json_bytes(
+                    getattr(request, "response_json_schema", None) or {}
+                ))
+            ),
+        )
+        failures: list[str] = []
+        if actual_technical_bytes_digest != page.technical_bytes_digest:
+            failures.append(
+                f"{UNIFIED_ACTUAL_PAGE_BYTES_MISMATCH}:{invocation_id}"
+            )
+        if str(getattr(request, "prompt_template_id", "")) != (
+            "unified_formalizer_page_v2"
+        ):
+            failures.append("unified_actual_request_template_mismatch")
+        if str(getattr(request, "schema_name", "")) != (
+            "unified_consumer_response_v2"
+        ):
+            failures.append("unified_actual_request_schema_mismatch")
+        if str(getattr(request, "prompt", "")) != expected_prompt:
+            failures.append("unified_actual_request_prompt_mismatch")
+        if canonical_json_bytes(actual_payload) != canonical_json_bytes(expected_payload):
+            failures.append("unified_actual_request_payload_mismatch")
+        if getattr(request, "response_json_schema", None) != dict(expected_response_schema):
+            failures.append("unified_actual_request_response_schema_mismatch")
+        if actual_page_id != page.page_id:
+            failures.append("unified_actual_request_page_id_mismatch")
+        if actual_role != "formalizer":
+            failures.append("unified_actual_request_role_mismatch")
+        if tuple(str(item) for item in actual_task_ids) != tuple(
+            str(item) for item in expected_payload.get("task_ids", ())
+        ):
+            failures.append("unified_actual_request_task_set_mismatch")
+        # R6: measure what this request actually costs with the envelope meter
+        # before it can reach the provider.  The plan admitted a per-request
+        # input budget; an over-budget request is rejected here, not sent.
+        token_accounting = None
+        if budget_envelope is not None and invocation is not None:
+            if role_budget is None:
+                failures.append(
+                    f"{UNIFIED_INVOCATION_BUDGET_MISSING}:role_budget:"
+                    f"{invocation.invocation_id}"
+                )
+            else:
+                token_accounting = account_unified_request_tokens(
+                    consumer_role=str(invocation.role),
+                    rendered_prompt=str(getattr(request, "prompt", "")),
+                    input_payload=actual_payload,
+                    response_schema=getattr(request, "response_json_schema", None) or {},
+                    request_budget=role_budget,
+                    max_input_tokens=int(
+                        budget_envelope.max_request_input_tokens_by_role[
+                            str(invocation.role)
+                        ]
+                    ),
+                    model_context_tokens=int(budget_envelope.model_context_tokens),
+                    safety_margin_tokens=int(budget_envelope.safety_margin_tokens),
+                    meter=budget_envelope.token_meter,
+                    tokenizer=tokenizer,
+                    invocation_id=str(invocation.invocation_id),
+                    page_id=str(actual_page_id),
+                    scaffolding_reserve_tokens=0,
+                )
+                if not token_accounting.fits:
+                    failures.append(
+                        f"{UNIFIED_INVOCATION_BUDGET_EXCEEDED}:"
+                        f"actual_request_input_tokens:{invocation.invocation_id}:"
+                        f"{token_accounting.input_tokens}>"
+                        f"{token_accounting.max_input_tokens}"
+                    )
+                elif token_accounting.input_tokens != int(invocation.max_input_tokens):
+                    # The formalizer request IS the admitted consumer envelope,
+                    # so plan and send must agree exactly.
+                    failures.append(
+                        f"{UNIFIED_INVOCATION_BUDGET_EXCEEDED}:"
+                        f"actual_request_input_tokens_mismatch:"
+                        f"{invocation.invocation_id}:"
+                        f"{token_accounting.input_tokens}!="
+                        f"{int(invocation.max_input_tokens)}"
+                    )
+                elif ledger_root is not None:
+                    # R6 correction: retries, resumed attempts and earlier
+                    # revisions debit the same run reservation; the bound comes
+                    # from every durable receipt plus the conservative reserve
+                    # of each unsettled attempt read from its own plan record.
+                    register_invocation_plan(ledger_root, plan)
+                    spent_by_role = spend_input_tokens_by_role(
+                        read_all_completed_receipts(ledger_root, strict=True),
+                    )
+                    unsettled_records = unsettled_started_attempt_records(
+                        ledger_root,
+                        plan,
+                        exclude=(
+                            str(invocation.invocation_id),
+                            int(attempt),
+                        ),
+                    )
+                    unmetered = [
+                        record for record in unsettled_records
+                        if record.plan_source == "unknown"
+                    ]
+                    if unmetered:
+                        failures.append(
+                            f"{UNIFIED_INVOCATION_BUDGET_MISSING}:"
+                            "run_reservation_unsettled_unmetered:"
+                            + ",".join(
+                                f"{record.invocation_id}:{record.attempt}"
+                                for record in unmetered[:5]
+                            )
+                        )
+                    spent_by_role[str(invocation.role)] = (
+                        int(spent_by_role.get(str(invocation.role), 0))
+                        + sum(
+                            record.planned_input_tokens
+                            for record in unsettled_records
+                        )
+                    )
+                    remaining = remaining_run_input_tokens(
+                        reserved_input_tokens_by_role=(
+                            plan.reserved_input_tokens_by_role
+                        ),
+                        spent_input_tokens_by_role=spent_by_role,
+                        role=str(invocation.role),
+                    )
+                    if token_accounting.input_tokens > remaining:
+                        failures.append(
+                            f"{UNIFIED_INVOCATION_BUDGET_EXCEEDED}:"
+                            f"run_reservation:{invocation.invocation_id}:"
+                            f"{token_accounting.input_tokens}>{remaining}"
+                        )
+                    if ledger_root is not None:
+                        failures.extend(
+                            check_run_budget_before_send(
+                                ledger_root,
+                                budget_envelope,
+                                role=str(invocation.role),
+                                invocation_id=invocation_id,
+                                request_input_tokens=int(
+                                    token_accounting.input_tokens
+                                ),
+                                current_reserved_input_tokens=int(
+                                    invocation.max_input_tokens
+                                ),
+                                current_attempt_recorded=True,
+                            )
+                        )
+        return (
+            actual_technical_bytes_digest,
+            actual_envelope_digest,
+            tuple(dict.fromkeys(failures)),
+            token_accounting,
+        )
+
+    def _build_package(
+        obligation: MechanismFormulaObligationV1,
+        parsed: Mapping[str, Any],
+        page: Any,
+        consumer_request_digest: str,
+    ) -> tuple[Any | None, list[str]]:
+        context = mechanism_contexts.get(str(page.mechanism_id))
+        if context is None:
+            return None, [f"mechanism_context_missing:{page.mechanism_id}"]
+        bound_detail_ids, bound_operation_ids, bound_fact_ids, bound_equation_ids = (
+            _resolved_formula_bindings(context, obligation)
+        )
+        if not bound_detail_ids or not (
+            bound_operation_ids or bound_fact_ids or bound_equation_ids
+        ):
+            return None, [f"formula_source_binding_missing:{obligation.obligation_id}"]
+        details_by_id = {
+            str(getattr(detail, "detail_id", "")): detail
+            for detail in (getattr(context, "details", ()) or ())
+        }
+        unresolved_details = sorted(
+            detail_id
+            for detail_id in bound_detail_ids
+            if str(getattr(details_by_id.get(detail_id), "evidence_authority", ""))
+            != "repository_verified"
+            or str(getattr(details_by_id.get(detail_id), "source_kind", ""))
+            != "first_party_executable"
+        )
+        if unresolved_details:
+            return None, [
+                "formula_source_authority_unresolved:"
+                + ",".join(unresolved_details)
+            ]
+        operations_by_id = {
+            str(getattr(operation, "operation_id", "")): operation
+            for operation in (
+                getattr(getattr(context, "evidence_closure", None), "operation_nodes", ())
+                or ()
+            )
+        }
+        unresolved_operations = sorted(
+            operation_id
+            for operation_id in bound_operation_ids
+            if str(getattr(operations_by_id.get(operation_id), "source_kind", ""))
+            != "first_party_executable"
+        )
+        if unresolved_operations:
+            return None, [
+                "formula_source_authority_unresolved:operations:"
+                + ",".join(unresolved_operations)
+            ]
+        symbol_definitions: list[tuple[str, str]] = []
+        for item in parsed.get("symbol_definitions", ()) or ():
+            if isinstance(item, (list, tuple)) and len(item) == 2:
+                symbol_definitions.append((str(item[0]), str(item[1])))
+        package = MechanismFormulaPackageV2(
+            package_id=f"pkg:formula:llm:{page.mechanism_id}:{obligation.obligation_id}",
+            mechanism_id=str(page.mechanism_id),
+            source_detail_ids=bound_detail_ids,
+            satisfied_obligation_ids=(obligation.obligation_id,),
+            latex=str(parsed.get("latex", "")),
+            prose_explanation=str(parsed.get("prose_explanation", "")),
+            symbol_definitions=tuple(symbol_definitions),
+            material_conditions=tuple(
+                str(item) for item in parsed.get("material_conditions", ()) or ()
+            ),
+            assumptions=tuple(str(item) for item in parsed.get("assumptions", ()) or ()),
+            evidence_authority="repository_verified",
+            formula_lane="repository_derived",
+            review_status="accepted",
+            bound_operation_ids=bound_operation_ids,
+            bound_fact_ids=bound_fact_ids,
+            bound_equation_ids=bound_equation_ids,
+            source_context_digest=(
+                getattr(context, "source_context_digest", "")
+                or getattr(context, "content_digest", "")
+            ),
+            shared_payload_digest=_payload_digest_of(page),
+            view_digest=build_mechanism_view_digest(context),
+            slice_digests=(page.page_id,),
+            consumer_request_digest=consumer_request_digest,
+        )
+        failures = validate_mechanism_formula_package(
+            package,
+            context=context,
+            obligation=obligation,
+            shared_payload_digest=_payload_digest_of(page),
+            view_digest=build_mechanism_view_digest(context),
+            slice_digests=(page.page_id,),
+            equations=equations,
+        )
+        return package, failures
+
+    def _run_one(
+        invocation: Any,
+        obligation_ids: list[str],
+        attempt: int,
+        is_repair: bool,
+    ) -> tuple[list[str], dict[str, Any], bool]:
+        """Run one planned request; return failures, receipt, and call flag."""
+
+        page = page_index.get(invocation.page_id)
+        if page is None:
+            task_failures.append(f"plan_page_missing:{invocation.invocation_id}")
+            return list(obligation_ids), {}, False
+        pending = [
+            obligation_id for obligation_id in obligation_ids
+            if obligation_id in obligations_by_id
+        ]
+        unknown = [
+            obligation_id for obligation_id in obligation_ids
+            if obligation_id not in obligations_by_id
+        ]
+        for obligation_id in unknown:
+            task_failures.append(
+                f"plan_obligation_unknown:{invocation.invocation_id}:{obligation_id}"
+            )
+        if not pending:
+            return [], {}, False
+        if is_repair and tuple(pending) != (invocation.repair_obligation_id,):
+            task_failures.append(f"repair_closed_set_mismatch:{invocation.invocation_id}")
+            return pending, {}, False
+        attempt_limit = min(int(invocation.max_attempts), int(max_attempts))
+        if attempt > attempt_limit:
+            task_failures.append(
+                f"attempt_limit_exhausted:{invocation.invocation_id}:{attempt}>{attempt_limit}"
+            )
+            return pending, {}, False
+
+        import time
+
+        started_at = time.time()
+        request_payload = _request_payload(page, pending, is_repair)
+        prompt = _render_prompt(page, pending, is_repair)
+        envelope_digest = _envelope_digest_for(
+            page, "formalizer", pending, prompt, is_repair
+        )
+        if envelope_digest != invocation.expected_request_envelope_digest:
+            task_failures.append(
+                f"{UNIFIED_RESUME_DIGEST_MISMATCH}:request_envelope:{invocation.invocation_id}"
+            )
+            return pending, {}, False
+        model_digest = model_identity_digest or "unknown-model"
+        started_marker = InvocationAttemptStartedV1(
+            invocation_id=invocation.invocation_id,
+            attempt=attempt,
+            plan_digest=plan.content_digest,
+            page_id=page.page_id,
+            expected_technical_bytes_digest=page.technical_bytes_digest,
+            expected_request_envelope_digest=invocation.expected_request_envelope_digest,
+            model_identity_digest=model_digest,
+            started_at_unix=started_at,
+        )
+        if ledger_root is not None:
+            # The plan record is required to meter this started attempt before
+            # the request reaches the caller, including after a revision.
+            register_invocation_plan(ledger_root, plan)
+            publish_attempt_started(ledger_root, started_marker)
+
+        failed_ids: list[str] = []
+        succeeded_ids: list[str] = []
+        fragment_digests: list[str] = []
+        delivery_rejection = ""
+        response_digest = ""
+        response_text = ""
+        response_task_issue = False
+        actual_technical_bytes_digest = page.technical_bytes_digest
+        actual_request_envelope_digest = envelope_digest
+        request_failures: tuple[str, ...] = ()
+        token_accounting = None
+        sent_to_caller = False
+        role_budget = (
+            budget_envelope.request_budget_by_role.get(str(invocation.role))
+            if budget_envelope is not None
+            else None
+        )
+        task_failure_start = len(task_failures)
+        from code2paper.agentic.unified_context_compiler import consumer_response_json_schema
+        response_schema = consumer_response_json_schema("formalizer")
+        request = None
+        response = None
+        try:
+            if caller is None or llm_config is None:
+                raise RuntimeError("formalizer caller unavailable")
+            from code2paper.llm.client import LLMRequest
+
+            request = LLMRequest(
+                prompt_template_id="unified_formalizer_page_v2",
+                prompt=prompt,
+                input_payload=request_payload,
+                schema_name="unified_consumer_response_v2",
+                response_json_schema=response_schema,
+            )
+            precheck = _inspect_actual_request(
+                request,
+                invocation_id=str(invocation.invocation_id),
+                page=page,
+                expected_payload=request_payload,
+                expected_prompt=prompt,
+                expected_response_schema=response_schema,
+                invocation=invocation,
+                role_budget=role_budget,
+            )
+            if precheck[2]:
+                raise RuntimeError(
+                    "formalizer_pre_send_rejected:" + ";".join(precheck[2])
+                )
+            from code2paper.llm.role_config import (
+                METHOD_SECTION_FORMALIZER,
+                apply_role_config,
+            )
+
+            consumer_config = apply_role_config(
+                llm_config,
+                METHOD_SECTION_FORMALIZER,
+            )
+            consumer_config = bound_consumer_llm_config(
+                consumer_config,
+                invocation,
+            )
+            if ledger_root is not None:
+                publish_provider_request(ledger_root, invocation.invocation_id, attempt, request, consumer_config)
+            sent_to_caller = True
+            response = caller(consumer_config, request)
+            blocked_reason = str(getattr(response, "blocked_reason", "") or "")
+            if blocked_reason:
+                raise RuntimeError(f"provider_blocked:{blocked_reason}")
+            if isinstance(response, str):
+                response_text = response
+            else:
+                response_text = getattr(response, "text", None)
+                if response_text is None:
+                    response_text = getattr(response, "content", None)
+                if response_text is None and isinstance(response, (Mapping, list, tuple)):
+                    response_text = json.dumps(response, ensure_ascii=False, sort_keys=True)
+                if response_text is None:
+                    response_text = str(response)
+            response_text = str(response_text)
+            if not response_text.strip():
+                raise RuntimeError(
+                    blocked_reason or "empty_formalizer_response"
+                )
+            response_digest = sha256_digest(
+                response_text.encode("utf-8")
+            )
+        except Exception as exc:
+            # A fail-on-timeout/runtime provider may raise before returning an
+            # LLMResponse. Preserve its partial bytes and late stream
+            # diagnostics in the durable provider-response sidecar instead of
+            # replacing the failure with an undiagnosed empty response.
+            if response is None and sent_to_caller:
+                from code2paper.export.run_manifest import hash_text
+                from code2paper.llm.client import LLMResponse
+
+                partial_text = str(getattr(exc, "partial_text", "") or "")
+                response = LLMResponse(
+                    text=partial_text,
+                    response_hash=hash_text(partial_text),
+                    blocked_reason=str(exc),
+                    finish_reason=str(getattr(exc, "finish_reason", "") or ""),
+                    provider_finish_reason=str(
+                        getattr(exc, "provider_finish_reason", "") or ""
+                    ),
+                    token_usage=getattr(exc, "token_usage", None),
+                    provider_diagnostics=getattr(exc, "diagnostics", None),
+                )
+                response_text = partial_text
+            if request is not None:
+                (
+                    actual_technical_bytes_digest,
+                    actual_request_envelope_digest,
+                    request_failures,
+                    token_accounting,
+                ) = _inspect_actual_request(
+                    request,
+                    invocation_id=str(invocation.invocation_id),
+                    page=page,
+                    expected_payload=request_payload,
+                    expected_prompt=prompt,
+                    expected_response_schema=response_schema,
+                    invocation=invocation,
+                    role_budget=role_budget,
+                )
+            failed_ids = list(pending)
+            for obligation_id in pending:
+                task_failures.append(
+                    f"formalizer_request_error:{invocation.invocation_id}:{obligation_id}:"
+                    f"{type(exc).__name__}:{str(exc)[:160]}"
+                )
+            if response is not None:
+                task_failures.append(
+                    "formalizer_response_diagnostics:"
+                    f"blocked={str(getattr(response, 'blocked_reason', '') or '')[:160]}:"
+                    f"finish={str(getattr(response, 'finish_reason', '') or '')[:80]}:"
+                    f"provider_finish={str(getattr(response, 'provider_finish_reason', '') or '')[:80]}:"
+                    f"usage={'present' if getattr(response, 'token_usage', None) is not None else 'missing'}:"
+                    f"partial_chars={len(str(getattr(response, 'text', '') or ''))}"
+                )
+            for failure in request_failures:
+                task_failures.append(
+                    f"{failure}:{invocation.invocation_id}"
+                )
+            delivery_rejection = f"request_error:{type(exc).__name__}"
+        else:
+            (
+                actual_technical_bytes_digest,
+                actual_request_envelope_digest,
+                request_failures,
+                token_accounting,
+            ) = _inspect_actual_request(
+                request,
+                invocation_id=str(invocation.invocation_id),
+                page=page,
+                expected_payload=request_payload,
+                expected_prompt=prompt,
+                expected_response_schema=response_schema,
+                invocation=invocation,
+                role_budget=role_budget,
+            )
+            if request_failures:
+                failed_ids = list(pending)
+                response_task_issue = True
+                delivery_rejection = request_failures[0]
+                for failure in request_failures:
+                    task_failures.append(
+                        f"{failure}:{invocation.invocation_id}"
+                    )
+                parsed = {}
+            else:
+                try:
+                    parsed = _parse_response(response)
+                except Exception as exc:
+                    parsed = {}
+                    response_task_issue = True
+                    task_failures.append(
+                        f"llm_response_parse_error:{invocation.invocation_id}:{type(exc).__name__}"
+                    )
+            results = () if request_failures else (
+                parsed.get("results", ()) if isinstance(parsed, Mapping) else ()
+            )
+            if not isinstance(results, (list, tuple)) or not results:
+                failed_ids = list(pending)
+                response_task_issue = True
+                for obligation_id in pending:
+                    task_failures.append(
+                        f"llm_invalid_batch_response:{invocation.invocation_id}:{obligation_id}"
+                    )
+            else:
+                result_by_id: dict[str, Mapping[str, Any]] = {}
+                duplicate_results: set[str] = set()
+                seen_ids: set[str] = set()
+                for row in results:
+                    if not isinstance(row, Mapping):
+                        response_task_issue = True
+                        task_failures.append(
+                            f"llm_result_not_mapping:{invocation.invocation_id}"
+                        )
+                        continue
+                    obligation_id = str(row.get("obligation_id", ""))
+                    if not obligation_id:
+                        response_task_issue = True
+                        task_failures.append(
+                            f"llm_result_id_missing:{invocation.invocation_id}"
+                        )
+                        continue
+                    if obligation_id in seen_ids:
+                        duplicate_results.add(obligation_id)
+                        continue
+                    seen_ids.add(obligation_id)
+                    result_by_id[obligation_id] = row
+                for obligation_id in duplicate_results:
+                    response_task_issue = True
+                    task_failures.append(
+                        f"llm_duplicate_result:{invocation.invocation_id}:{obligation_id}"
+                    )
+                for obligation_id in result_by_id:
+                    if obligation_id not in pending:
+                        response_task_issue = True
+                        task_failures.append(
+                            f"llm_unplanned_obligation_result:{invocation.invocation_id}:{obligation_id}"
+                        )
+                for obligation_id in pending:
+                    if obligation_id in duplicate_results:
+                        failed_ids.append(obligation_id)
+                        continue
+                    row = result_by_id.get(obligation_id)
+                    if row is None:
+                        failed_ids.append(obligation_id)
+                        task_failures.append(
+                            f"llm_result_missing:{invocation.invocation_id}:{obligation_id}"
+                        )
+                        continue
+                    from code2paper.llm.response_schemas import UnifiedFormalizerResultV2
+                    try:
+                        row = UnifiedFormalizerResultV2.model_validate(dict(row)).model_dump(mode="json")
+                    except ValueError:
+                        failed_ids.append(obligation_id)
+                        task_failures.append(f"llm_result_schema_invalid:{invocation.invocation_id}:{obligation_id}")
+                        continue
+                    obligation = obligations_by_id[obligation_id]
+                    if not str(row.get("latex", "")).strip():
+                        failed_ids.append(obligation_id)
+                        task_failures.append(
+                            f"llm_empty_latex:{invocation.invocation_id}:{obligation_id}"
+                        )
+                        continue
+                    try:
+                        package, failures = _build_package(
+                            obligation, row, page, envelope_digest
+                        )
+                    except Exception as exc:
+                        package, failures = None, [
+                            f"package_exception:{type(exc).__name__}"
+                        ]
+                    if package is None or failures:
+                        failed_ids.append(obligation_id)
+                        task_failures.extend(
+                            f"{failure}:{invocation.invocation_id}:{obligation_id}"
+                            for failure in (failures or ["package_build_failed"])
+                        )
+                        continue
+                    accepted_packages.append(package)
+                    succeeded_ids.append(obligation_id)
+                    if ledger_root is not None:
+                        fragment_digests.append(publish_package_fragment(
+                            ledger_root,
+                            invocation_id=invocation.invocation_id,
+                            attempt=attempt,
+                            fragment=package.model_dump(mode="json"),
+                        ))
+
+        finished_at = time.time()
+        if failed_ids and succeeded_ids:
+            task_status = "partial"
+        elif failed_ids:
+            task_status = "failed"
+        elif response_task_issue:
+            task_status = "partial"
+        else:
+            task_status = "complete"
+        delivery_status = "rejected" if (
+            delivery_rejection or not response_digest
+        ) else "accepted"
+        receipt = ActualRequestReceiptV2(
+            invocation_id=invocation.invocation_id,
+            attempt=attempt,
+            consumer_role="formalizer",
+            phase="formalizer",
+            workset_id=invocation.workset_id,
+            task_ids=tuple(pending),
+            mechanism_id=invocation.mechanism_id,
+            page_id=page.page_id if page is not None else invocation.page_id,
+            actual_technical_bytes_digest=actual_technical_bytes_digest,
+            actual_request_envelope_digest=actual_request_envelope_digest,
+            response_digest=response_digest,
+            fragment_digests=tuple(fragment_digests),
+            model_identity_digest=model_digest,
+            provider_usage=getattr(response, "token_usage", None),
+            provider_diagnostics_digest=(publish_provider_response(
+                ledger_root, invocation.invocation_id, attempt, response,
+            ) if ledger_root is not None and sent_to_caller else ""),
+            reserved_input_tokens=int(invocation.max_input_tokens),
+            token_accounting=token_accounting,
+            started_at_unix=started_at,
+            finished_at_unix=finished_at,
+            delivery_status=delivery_status,  # type: ignore[arg-type]
+            delivery_rejection_code=delivery_rejection,
+            sent_to_caller=sent_to_caller,
+            task_status=task_status,  # type: ignore[arg-type]
+            succeeded_task_ids=tuple(succeeded_ids),
+            failed_task_ids=tuple(failed_ids),
+            task_failures=tuple(
+                {"code": str(item)} for item in task_failures[task_failure_start:]
+            ),
+            is_repair=is_repair,
+            upstream_archive_digest=archive.content_digest,
+            upstream_workset_manifest_digest=workset_manifest.content_digest,
+            upstream_plan_digest=plan.content_digest,
+        )
+        if ledger_root is not None:
+            publish_attempt_completed(ledger_root, receipt)
+        receipts.append(receipt.model_dump(mode="json"))
+        mechanism_trace = trace["mechanisms"].setdefault(str(invocation.mechanism_id), {
+            "main_calls": 0,
+            "repair_calls": 0,
+            "accepted_packages": 0,
+        })
+        if is_repair:
+            mechanism_trace["repair_calls"] += 1
+        else:
+            mechanism_trace["main_calls"] += 1
+        mechanism_trace["accepted_packages"] += len(succeeded_ids)
+        return failed_ids, receipt.model_dump(mode="json"), True
+
+    resume_plan = None
+    if ledger_root is not None:
+        resume_plan = build_resume_plan(
+            ledger_root,
+            plan,
+            archive_digest=archive.content_digest,
+            workset_manifest_digest=workset_manifest.content_digest,
+            model_identity_digest=model_identity_digest or "unknown-model",
+        )
+
+    failed_after_main: dict[str, list[str]] = {}
+    terminal_failed_ids: set[str] = set()
+    accepted_package_ids: set[str] = set()
+    main_invocations = [
+        invocation for invocation in plan.invocations
+        if invocation.role == "formalizer" and not invocation.is_repair
+    ]
+    repair_invocations_by_obligation = {
+        invocation.repair_obligation_id: invocation
+        for invocation in plan.invocations
+        if invocation.role == "formalizer" and invocation.is_repair
+    }
+    actual_main_calls = 0
+    actual_repair_calls = 0
+    expected_main_calls = 0
+
+    def _reuse_invocation(invocation: Any, decision: Any) -> list[str]:
+        """Restore a matching receipt and its fragments without replaying it."""
+
+        prior_receipts = read_completed_receipts(
+            ledger_root, invocation.invocation_id
+        ) if ledger_root is not None else ()
+        prior = next(
+            (
+                receipt for receipt in prior_receipts
+                if not decision.reuse_receipt_digest
+                or receipt.content_digest == decision.reuse_receipt_digest
+            ),
+            None,
+        )
+        if prior is None:
+            task_failures.append(
+                f"resume_receipt_missing:{invocation.invocation_id}"
+            )
+            return list(invocation.task_ids)
+        prior_row = prior.model_dump(mode="json")
+        if prior_row not in receipts:
+            receipts.append(prior_row)
+        restored = 0
+        for record in rebuild_aggregate_fragments(
+            ledger_root, plan
+        ) if ledger_root is not None else ():
+            if record.get("invocation_id") != invocation.invocation_id:
+                continue
+            try:
+                package = MechanismFormulaPackageV2.model_validate(record["fragment"])
+            except Exception as exc:
+                task_failures.append(
+                    f"resume_fragment_invalid:{invocation.invocation_id}:{exc}"
+                )
+                continue
+            if package.package_id in accepted_package_ids:
+                continue
+            accepted_packages.append(package)
+            accepted_package_ids.add(package.package_id)
+            restored += 1
+        trace.setdefault("reused_invocation_ids", []).append(invocation.invocation_id)
+        trace["reused_packages"] = trace.get("reused_packages", 0) + restored
+        return list(prior.failed_task_ids)
+
+    for invocation in main_invocations:
+        page_task_ids = sorted(invocation.task_ids)
+        decision = (
+            resume_plan.decisions.get(invocation.invocation_id) if resume_plan else None
+        )
+        if decision is not None and decision.decision == "reuse":
+            failed_ids = _reuse_invocation(invocation, decision)
+            if failed_ids:
+                failed_after_main[invocation.mechanism_id] = list(dict.fromkeys(
+                    failed_after_main.get(invocation.mechanism_id, []) + failed_ids
+                ))
+            continue
+        expected_main_calls += 1
+        attempt = decision.next_attempt if decision is not None else 1
+        failed_ids, _receipt_row, did_call = _run_one(
+            invocation, page_task_ids, attempt=attempt, is_repair=False
+        )
+        actual_main_calls += int(did_call)
+        if failed_ids:
+            failed_after_main[invocation.mechanism_id] = list(dict.fromkeys(
+                failed_after_main.get(invocation.mechanism_id, []) + failed_ids
+            ))
+
+    # Bounded declared repairs: one call per still-failed obligation, capped
+    # by the plan's repair limit.
+    for mechanism_id in sorted(failed_after_main):
+        for obligation_id in failed_after_main[mechanism_id]:
+            if actual_repair_calls >= plan.formalizer_repair_call_limit:
+                task_failures.append(
+                    f"repair_budget_exhausted:{mechanism_id}:{obligation_id}"
+                )
+                continue
+            invocation = repair_invocations_by_obligation.get(obligation_id)
+            if invocation is None:
+                task_failures.append(
+                    f"repair_slot_undeclared:{mechanism_id}:{obligation_id}"
+                )
+                continue
+            decision = (
+                resume_plan.decisions.get(invocation.invocation_id) if resume_plan else None
+            )
+            if decision is not None and decision.decision == "reuse":
+                failed_ids = _reuse_invocation(invocation, decision)
+                terminal_failed_ids.update(failed_ids)
+                continue
+            attempt = decision.next_attempt if decision is not None else 1
+            failed_ids, _receipt_row, did_call = _run_one(
+                invocation,
+                [obligation_id],
+                attempt=attempt,
+                is_repair=True,
+            )
+            actual_repair_calls += int(did_call)
+            terminal_failed_ids.update(failed_ids)
+
+    for obligation_id in sorted(terminal_failed_ids):
+        task_failures.append(f"formalizer_task_incomplete:{obligation_id}")
+
+    # Final bounded assertions (section 9.6).
+    assertion_failures: list[str] = []
+    if actual_main_calls != expected_main_calls:
+        assertion_failures.append(
+            f"actual_main_calls_mismatch:{actual_main_calls}!={expected_main_calls}"
+        )
+    unplanned_receipts = [
+        row for row in receipts
+        if row.get("invocation_id") not in {item.invocation_id for item in plan.invocations}
+    ]
+    if unplanned_receipts:
+        assertion_failures.append("unplanned_actual_request_observed")
+    for row in receipts:
+        invocation = next(
+            (item for item in plan.invocations if item.invocation_id == row.get("invocation_id")),
+            None,
+        )
+        if invocation is None:
+            continue
+        if row.get("page_id") != invocation.page_id:
+            assertion_failures.append(
+                f"actual_page_mismatch:{row.get('invocation_id')}"
+            )
+        if row.get("actual_technical_bytes_digest") != invocation.expected_technical_bytes_digest:
+            assertion_failures.append(
+                f"actual_page_bytes_mismatch:{row.get('invocation_id')}"
+            )
+    if actual_repair_calls > plan.formalizer_repair_call_limit:
+        assertion_failures.append("repair_calls_exceed_limit")
+
+    return FormalizerPlanExecutionResultV1(
+        plan_digest=plan.content_digest,
+        accepted_packages=tuple(accepted_packages),
+        receipts=tuple(receipts),
+        actual_main_calls=actual_main_calls,
+        actual_repair_calls=actual_repair_calls,
+        planned_main_invocations=len(main_invocations),
+        repair_call_limit=plan.formalizer_repair_call_limit,
+        assertion_failures=tuple(dict.fromkeys(assertion_failures)),
+        task_failures=tuple(dict.fromkeys(task_failures)),
+        trace=trace,
+    )
+
+
+def build_mechanism_view_digest(context: Any) -> str:
+    """Compute the reader-view digest for a mechanism context (V2 pages)."""
+
+    from code2paper.agentic.mechanism_context_projection import (
+        build_mechanism_context_view,
+    )
+
+    return build_mechanism_context_view(context).view_digest
+
 
 class SectionFormulaDispositionV1(BaseModel):
     """Typed disposition when a section receives no accepted formula package.
@@ -2970,6 +4293,7 @@ def build_deterministic_operation_formula_packages(
         ).strip()
         obligation_id = str(obligation.obligation_id).strip()
         package = SectionFormulaPackageV1(
+            schema_version="2.0",
             package_id=f"opfp:{section_id}:{package_namespace}{obligation_index}",
             section_id=section_id,
             obligation_id=obligation_id,
@@ -3773,6 +5097,14 @@ def validate_section_formula_package(
     """
 
     failures: list[str] = []
+    if any(
+        ord(character) < 32 and character not in {"\n", "\r"}
+        for character in package.latex
+    ):
+        # JSON decoding can silently turn a model's malformed ``\text`` into
+        # a tab followed by ``ext``.  That is content corruption, not a
+        # representation defect the harness may guess how to repair.
+        failures.append("latex_contains_control_character")
     if package.latex.count("{") != package.latex.count("}"):
         failures.append("latex_unbalanced_braces")
     if not package.latex.strip():
@@ -4109,6 +5441,10 @@ def _equation_content_tokens(equation: Any) -> set[str]:
 
 
 _FORMULA_CODE_TRACE_PATTERNS: tuple[tuple[str, re.Pattern[str]], ...] = (
+    ("operation_opcode", re.compile(
+        r"\b(?:LOAD|WRITE|RESHAPE|CALL|READ|COMPARE|RETURN|CONSTRUCT|SELECT|"
+        r"FILTER|SORT|REDUCE|CONCAT|NORMALIZE)\s*\(",
+    )),
     ("python_qualified_name", re.compile(
         r"\b(?:self|torch|numpy|np|tensorflow|tf|nn)\s*\.",
         flags=re.IGNORECASE,
@@ -4869,6 +6205,7 @@ def build_deterministic_formula_packages(
             if str(getattr(binding, "symbol", "") or "").strip()
         )
         packages.append(SectionFormulaPackageV1(
+            schema_version="2.0",
             package_id=f"fp:{section_id}:{package_namespace}{index}",
             section_id=section_id,
             obligation_id=obligation_id,
@@ -5335,6 +6672,7 @@ __all__ = [
     "FormulaReviewStatusV1",
     "MethodFormulaObligationV2",
     "MechanismFormulaObligationV1",
+    "load_mechanism_formula_obligations_v1_payload",
     "MechanismFormulaPackageV2",
     "FormulaPlacementV1",
     "compile_mechanism_formula_obligations",

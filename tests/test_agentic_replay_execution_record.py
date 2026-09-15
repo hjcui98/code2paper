@@ -124,6 +124,265 @@ def test_code_state_digest_is_deterministic_and_read_only(tmp_path: Path) -> Non
     assert len(first) == len("sha256:") + 64
 
 
+def test_prepared_continuation_is_narrow_and_single_use(tmp_path: Path) -> None:
+    module = _load_script()
+    fresh = tmp_path / "prepared-root"
+    authoring = fresh / "artifacts" / "06_authoring"
+    authoring.mkdir(parents=True)
+    prepare_body = {
+        "schema_version": "1.0",
+        "stage": "prepare",
+        "execution_manifest_digest": "sha256:parent",
+        "model_calls": 0,
+    }
+    prepare_body["content_digest"] = module._digest_text(
+        json.dumps(prepare_body, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+    )
+    (authoring / "authoring_prepare_result_v1.json").write_text(
+        json.dumps(prepare_body), encoding="utf-8"
+    )
+    (fresh / "execution_record.json").write_text(
+        json.dumps({
+            "authoring_stage": "execute-prepared",
+            "exit_code": 2,
+            "code_state_digest": "sha256:old-code",
+        }),
+        encoding="utf-8",
+    )
+    (authoring / "authoring_failure_v1.json").write_text(
+        json.dumps({"terminal_reason": "realizer_response_not_json"}),
+        encoding="utf-8",
+    )
+
+    telemetry: dict = {}
+    admitted = module._prepared_continuation_execution_digest(
+        fresh=fresh,
+        current_execution_digest="sha256:current",
+        telemetry=telemetry,
+    )
+    assert admitted == "sha256:parent"
+    continuation_path = authoring / "authoring_prepare_continuation_v1.json"
+    assert continuation_path.is_file()
+    continuation = json.loads(continuation_path.read_text(encoding="utf-8"))
+    assert continuation["failure_codes"] == ["realizer_response_not_json"]
+    assert telemetry["authoring_prepare_continuation"]["status"] == "admitted"
+
+    # A second continuation is refused even if the caller still presents a
+    # changed execution digest; the original prepare root remains bounded.
+    second = module._prepared_continuation_execution_digest(
+        fresh=fresh,
+        current_execution_digest="sha256:another-current",
+        telemetry={},
+    )
+    assert second == "sha256:another-current"
+
+
+def test_prepared_continuation_allows_only_zero_call_manifest_code_repair(
+    tmp_path: Path,
+) -> None:
+    module = _load_script()
+    fresh = tmp_path / "prepared-root"
+    authoring = fresh / "artifacts" / "06_authoring"
+    authoring.mkdir(parents=True)
+    prepare_body = {
+        "schema_version": "1.0",
+        "stage": "prepare",
+        "execution_manifest_digest": "sha256:parent",
+        "model_calls": 0,
+    }
+    prepare_body["content_digest"] = module._digest_text(
+        json.dumps(prepare_body, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+    )
+    (authoring / "authoring_prepare_result_v1.json").write_text(
+        json.dumps(prepare_body), encoding="utf-8"
+    )
+    (fresh / "execution_record.json").write_text(
+        json.dumps({
+            "authoring_stage": "execute-prepared",
+            "exit_code": 2,
+            "terminal_reason": (
+                "unified_pipeline_failed:ValueError:"
+                "authoring_prepare_result_binding_mismatch:execution_manifest_digest"
+            ),
+            "code_state_digest": "sha256:repaired-code",
+        }),
+        encoding="utf-8",
+    )
+    (authoring / "token_usage_summary_v1.json").write_text(
+        json.dumps({"status": "no_calls", "calls": 0, "total_tokens": 0}),
+        encoding="utf-8",
+    )
+    telemetry: dict = {}
+    admitted = module._prepared_continuation_execution_digest(
+        fresh=fresh,
+        current_execution_digest="sha256:current-after-repair",
+        telemetry=telemetry,
+    )
+    assert admitted == "sha256:parent"
+    continuation = json.loads(
+        (authoring / "authoring_prepare_continuation_v1.json").read_text()
+    )
+    assert continuation["failure_codes"] == [
+        "prepared_execution_manifest_code_repair"
+    ]
+
+
+def test_prepared_continuation_allows_one_completed_projection_repair(
+    tmp_path: Path,
+) -> None:
+    module = _load_script()
+    fresh = tmp_path / "prepared-root"
+    authoring = fresh / "artifacts" / "06_authoring"
+    authoring.mkdir(parents=True)
+    prepare_body = {
+        "schema_version": "1.0",
+        "stage": "prepare",
+        "execution_manifest_digest": "sha256:parent",
+        "model_calls": 0,
+    }
+    prepare_body["content_digest"] = module._digest_text(
+        json.dumps(prepare_body, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+    )
+    (authoring / "authoring_prepare_result_v1.json").write_text(
+        json.dumps(prepare_body), encoding="utf-8"
+    )
+    (fresh / "execution_record.json").write_text(
+        json.dumps({
+            "authoring_stage": "execute-prepared",
+            "exit_code": 0,
+            "terminal_stage": "complete",
+            "terminal_reason": "",
+            "writer_status": "success",
+            "writer_transaction_status": "success",
+            "first_failed_reason": "",
+            "structural_exit": {"eligible": True},
+        }),
+        encoding="utf-8",
+    )
+    continuation = {
+        "schema_version": "1.0",
+        "kind": "bounded_code_repair_continuation",
+        "stage": "execute-prepared",
+        "content_digest": "",
+    }
+    continuation["content_digest"] = module._digest_text(
+        json.dumps(
+            {key: value for key, value in continuation.items() if key != "content_digest"},
+            ensure_ascii=False,
+            sort_keys=True,
+            separators=(",", ":"),
+        )
+    )
+    (authoring / "authoring_prepare_continuation_v1.json").write_text(
+        json.dumps(continuation), encoding="utf-8"
+    )
+    telemetry: dict = {}
+    admitted = module._prepared_continuation_execution_digest(
+        fresh=fresh,
+        current_execution_digest="sha256:current-after-projection-repair",
+        telemetry=telemetry,
+    )
+    assert admitted == "sha256:parent"
+    chained = json.loads(
+        (authoring / "authoring_prepare_continuation_v2.json").read_text()
+    )
+    assert chained["failure_codes"] == ["deterministic_projection_code_repair"]
+
+
+def test_prepared_continuation_allows_rewrite_context_cap_repair(
+    tmp_path: Path,
+) -> None:
+    module = _load_script()
+    fresh = tmp_path / "prepared-root"
+    authoring = fresh / "artifacts" / "06_authoring"
+    validation = fresh / "artifacts" / "07_validation"
+    authoring.mkdir(parents=True)
+    validation.mkdir(parents=True)
+    prepare_body = {
+        "schema_version": "1.0",
+        "stage": "prepare",
+        "execution_manifest_digest": "sha256:parent",
+        "model_calls": 0,
+    }
+    prepare_body["content_digest"] = module._digest_text(
+        json.dumps(prepare_body, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+    )
+    (authoring / "authoring_prepare_result_v1.json").write_text(
+        json.dumps(prepare_body), encoding="utf-8"
+    )
+    (fresh / "execution_record.json").write_text(
+        json.dumps({
+            "authoring_stage": "execute-prepared",
+            "exit_code": 0,
+            "terminal_stage": "complete",
+            "terminal_reason": "",
+            "writer_status": "success",
+            "writer_transaction_status": "success",
+            "first_failed_reason": "",
+            "structural_exit": {"eligible": True},
+        }),
+        encoding="utf-8",
+    )
+    continuation = {
+        "schema_version": "1.0",
+        "kind": "bounded_code_repair_continuation",
+        "stage": "execute-prepared",
+        "failure_codes": ["deterministic_projection_code_repair"],
+    }
+    continuation["content_digest"] = module._digest_text(
+        json.dumps(
+            continuation,
+            ensure_ascii=False,
+            sort_keys=True,
+            separators=(",", ":"),
+        )
+    )
+    (authoring / "authoring_prepare_continuation_v2.json").write_text(
+        json.dumps(continuation), encoding="utf-8"
+    )
+    (validation / "publication_rewrite_transitions_v1.json").write_text(
+        json.dumps({
+            "failures": [
+                "rewrite:MA-S1:method_language_style:blocked",
+                "rewrite:MA-S2:method_language_style:blocked",
+            ],
+            "transitions": [{
+                "reason": "unified_auxiliary_request_cap_exceeded:100000>60000",
+            }],
+            "results": [{
+                "result": {
+                    "blocked_reason":
+                    "unified_auxiliary_request_cap_exceeded:100000>60000",
+                },
+            }],
+        }),
+        encoding="utf-8",
+    )
+    (authoring / "proposal_call_accounting_local_rewrite.json").write_text(
+        json.dumps({
+            "rows": [
+                {
+                    "sent_to_caller": False,
+                    "error": "unified_auxiliary_request_cap_exceeded:100000>60000",
+                }
+            ]
+        }),
+        encoding="utf-8",
+    )
+
+    telemetry: dict = {}
+    admitted = module._prepared_continuation_execution_digest(
+        fresh=fresh,
+        current_execution_digest="sha256:current-after-context-repair",
+        telemetry=telemetry,
+    )
+    assert admitted == "sha256:parent"
+    repaired = json.loads(
+        (authoring / "authoring_prepare_continuation_v3.json").read_text()
+    )
+    assert repaired["failure_codes"] == ["rewrite_auxiliary_context_compaction"]
+
+
 def test_callback_transaction_rejects_structural_regression() -> None:
     module = _load_script()
     incumbent = {
@@ -200,6 +459,126 @@ def test_replay_fails_closed_on_missing_frozen_artifacts(tmp_path: Path) -> None
     assert not (fresh / "artifacts" / "atomic_claims_v3.json").exists()
 
 
+def test_replay_rehydration_requires_the_frozen_project_tree_hash(
+    tmp_path: Path,
+) -> None:
+    """R2: ``--repo`` may only rebuild the closure at the frozen tree hash."""
+
+    module = _load_script()
+    from code2paper.agentic.repo_snapshot import build_repo_snapshot
+
+    repo = tmp_path / "repo"
+    (repo / "src").mkdir(parents=True)
+    (repo / "src" / "model.py").write_text("value = 1\n", encoding="utf-8")
+    frozen = tmp_path / "frozen"
+    artifacts = frozen / "artifacts"
+    artifacts.mkdir(parents=True)
+    # The frozen run asserts a tree hash that this working tree does not have.
+    (artifacts / "repo_snapshot_v2.json").write_text(
+        json.dumps({"project_tree_hash": "sha256:" + "0" * 64}),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ValueError, match="unified_project_tree_hash_mismatch"):
+        module._rehydrate_repository_source_artifacts(
+            frozen=frozen,
+            fresh=tmp_path / "fresh",
+            artifacts=artifacts,
+            repo=repo,
+        )
+
+    # The same repository rehydrates once the frozen hash matches exactly.
+    exact_hash = build_repo_snapshot(repo).project_tree_hash
+    (artifacts / "repo_snapshot_v2.json").write_text(
+        json.dumps({"project_tree_hash": exact_hash}),
+        encoding="utf-8",
+    )
+    names, entries, failure = module._rehydrate_repository_source_artifacts(
+        frozen=frozen,
+        fresh=tmp_path / "fresh",
+        artifacts=artifacts,
+        repo=repo,
+    )
+    assert failure == ""
+    assert "repository_source_manifest_v1" in names
+    source_entries = [
+        entry
+        for entry in entries
+        if entry["artifact_name"] in names
+    ]
+    assert source_entries
+    assert all(entry["decision"] == "rehydrated_from_repo" for entry in source_entries)
+    assert any(
+        entry["artifact_name"] == "behavior_graph_rebuild_v1"
+        and entry["decision"] == "recorded_current_graph_identity"
+        for entry in entries
+    )
+
+    # Deleting a source file changes the tree hash: the replay refuses to
+    # substitute the new working directory for the frozen evidence.
+    (repo / "src" / "model.py").unlink()
+    with pytest.raises(ValueError, match="unified_project_tree_hash_mismatch"):
+        module._rehydrate_repository_source_artifacts(
+            frozen=frozen,
+            fresh=tmp_path / "fresh-2",
+            artifacts=artifacts,
+            repo=repo,
+        )
+
+
+def test_replay_rehydration_records_symlink_escape_without_following_it(
+    tmp_path: Path,
+) -> None:
+    """A symlink out of the repository is recorded, never followed as source."""
+
+    module = _load_script()
+    from code2paper.agentic.repo_snapshot import build_repo_snapshot
+
+    repo = tmp_path / "repo"
+    (repo / "src").mkdir(parents=True)
+    (repo / "src" / "model.py").write_text("value = 1\n", encoding="utf-8")
+    outside = tmp_path / "outside.py"
+    outside.write_text("secret = 1\n", encoding="utf-8")
+    (repo / "src" / "link.py").symlink_to(outside)
+
+    snapshot = build_repo_snapshot(repo)
+    link_records = [item for item in snapshot.included_files if item.path == "src/link.py"]
+    assert len(link_records) == 1
+    assert link_records[0].kind == "symlink"
+    assert link_records[0].link_target == str(outside)
+
+    frozen = tmp_path / "frozen"
+    artifacts = frozen / "artifacts"
+    artifacts.mkdir(parents=True)
+    (artifacts / "repo_snapshot_v2.json").write_text(
+        json.dumps({"project_tree_hash": snapshot.project_tree_hash}),
+        encoding="utf-8",
+    )
+    names, _entries, failure = module._rehydrate_repository_source_artifacts(
+        frozen=frozen,
+        fresh=tmp_path / "fresh",
+        artifacts=artifacts,
+        repo=repo,
+    )
+    assert failure == ""
+    assert "repository_source_manifest_v1" in names
+
+    # The verified reader refuses to serve the escaping symlink as text.
+    from code2paper.agentic.repo_snapshot import read_verified_snapshot_sources
+    from code2paper.agentic.source_inventory import RepositorySourceManifestV1
+
+    manifest = RepositorySourceManifestV1.model_validate_json(
+        (artifacts / "repository_source_manifest_v1.json").read_text(encoding="utf-8")
+    )
+    reader = read_verified_snapshot_sources(
+        project_root=repo,
+        source_manifest=manifest,
+        repo_snapshot=snapshot,
+    )
+    assert reader.read_file("src/link.py") == ""
+    assert "unified_source_symlink_escape:src/link.py" in reader.failures
+
+
 def test_frozen_artifacts_exclude_derived_authoring_names() -> None:
     module = _load_script()
     derived = set(module.DERIVED_AUTHORING_ARTIFACTS)
@@ -209,6 +588,31 @@ def test_frozen_artifacts_exclude_derived_authoring_names() -> None:
     assert "writing_research_callback_artifacts_v1" in derived
     for name in module.FROZEN_ARTIFACTS:
         assert name not in derived
+
+
+def test_candidate_lane_research_authority_is_carried_into_the_fresh_root() -> None:
+    """The product Writer must see the Candidate handoff it has to authenticate.
+
+    Regression: the replay used to copy only the pre-Candidate research set, so
+    the Writer's Candidate-lane preadmission fell back to the strict terminal
+    proof and blocked with ``unified_core_intent_terminal_proof_missing`` even
+    though the frozen handoff authenticated.
+    """
+
+    module = _load_script()
+    optional = set(module.OPTIONAL_RESEARCH_ARTIFACTS)
+    for name in (
+        "candidate_handoff_v1",
+        "observation_promotion_ledger_v1",
+        "candidate_retry_ledger_v1",
+        "research_revision_journal_v1",
+    ):
+        assert name in optional
+    # They are Research authority, not derived authoring: the copy boundary
+    # must not start treating them as locally rebuildable authoring output.
+    assert optional.isdisjoint(set(module.DERIVED_AUTHORING_ARTIFACTS))
+    # Optional stays optional: a frozen root without them is not a fatal input.
+    assert optional.isdisjoint(set(module.RESEARCH_COPY_ARTIFACTS))
 
 
 def test_replay_does_not_copy_callbacks_without_reuse_flag(tmp_path: Path) -> None:
@@ -375,7 +779,8 @@ def test_callback_one_is_not_authorized_before_research_runtime(
     assert telemetry["callback_fulfillment"]["stopped_reason"] == "callback1_not_authorized"
     # Structural authorization is a downstream gate; it must not rewrite the
     # already-complete Writer transaction into an incomplete Writer state.
-    assert telemetry["writer_status"] == "success"
+    assert telemetry["writer_transaction_status"] == "success"
+    assert telemetry["writer_status"] == "incomplete"
 
 
 def test_callback_one_requires_complete_writer_even_when_structure_is_closed(
@@ -659,6 +1064,98 @@ def test_write_token_usage_summary_persists_sidecar(tmp_path: Path, monkeypatch)
     assert payload["total_tokens"] == 125
     assert payload["models"] == ["qwen36-27b-nvfp4"]
     assert result["path"] == str(path)
+
+
+def test_write_token_usage_summary_prefers_cumulative_durable_receipts(
+    tmp_path: Path, monkeypatch,
+) -> None:
+    from code2paper.agentic.unified_context_models import ActualRequestReceiptV2
+
+    module = _load_script()
+    fresh = tmp_path / "fresh"
+    ledger = fresh / "artifacts" / "06_authoring" / "invocations"
+    digest = "sha256:" + "a" * 64
+    for index, usage in enumerate((
+        {"prompt_tokens": 100, "completion_tokens": 25, "total_tokens": 125},
+        {"prompt_tokens": 50, "completion_tokens": 10, "total_tokens": 60},
+    ), start=1):
+        receipt = ActualRequestReceiptV2(
+            invocation_id=f"inv:writer:{index}",
+            attempt=1,
+            consumer_role="writer",
+            phase="writer",
+            workset_id=f"workset:{index}",
+            task_ids=(f"task:{index}",),
+            mechanism_id="mechanism:test",
+            section_id="section:test",
+            page_id=f"page:{index}",
+            actual_technical_bytes_digest=digest,
+            actual_request_envelope_digest=digest,
+            response_digest=digest,
+            model_identity_digest=digest,
+            started_at_unix=1.0,
+            finished_at_unix=2.0,
+            delivery_status="accepted",
+            task_status="complete",
+            succeeded_task_ids=(f"task:{index}",),
+            upstream_archive_digest=digest,
+            upstream_workset_manifest_digest=digest,
+            upstream_plan_digest=digest,
+            provider_usage=usage,
+        )
+        directory = ledger / f"inv-{index}"
+        directory.mkdir(parents=True)
+        (directory / "attempt-0001.completed.json").write_text(
+            receipt.model_dump_json(indent=2) + "\n", encoding="utf-8"
+        )
+    monkeypatch.setattr(
+        "code2paper.llm.generation_trace.get_run_generation_traces",
+        lambda: [],
+    )
+
+    result = module._write_token_usage_summary(fresh)
+
+    assert result["source"] == "durable_unified_invocation_receipts"
+    assert result["calls"] == 2
+    assert result["total_tokens"] == 185
+
+
+def test_success_execution_record_does_not_reference_stale_failure(
+    tmp_path: Path,
+) -> None:
+    module = _load_script()
+    fresh = tmp_path / "fresh"
+    failure_path = Path(module._write_authoring_failure(
+        fresh=fresh,
+        terminal_stage="writer",
+        terminal_reason="historical_failure",
+        error_code="writer_boundary_failed",
+    ))
+    assert failure_path.is_file()
+    args = argparse.Namespace(
+        run_id="successful-rerun",
+        resume=[],
+        profile="profile.env",
+        frozen_root=str(tmp_path / "frozen"),
+        fresh_root=str(fresh),
+    )
+    module._write_execution_record(
+        frozen=tmp_path / "frozen",
+        fresh=fresh,
+        arguments=args,
+        exit_code=0,
+        runtime_start={},
+        runtime_end={},
+        telemetry={
+            "writer_status": "success",
+            "writer_transaction_status": "success",
+            "candidate_completion_status": "complete",
+            "candidate_complete": True,
+        },
+    )
+    record = json.loads((fresh / "execution_record.json").read_text(encoding="utf-8"))
+    assert record["failure_artifact"] == ""
+    assert record["candidate_complete"] is True
 
 
 def test_resolve_profile_path_respects_custom_configured_env(tmp_path: Path, monkeypatch) -> None:

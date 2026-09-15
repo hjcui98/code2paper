@@ -46,7 +46,7 @@ import time
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Callable, Iterator
+from typing import Any, Callable, Iterator, Mapping, Sequence
 
 from langgraph.graph import END, START, StateGraph
 from pydantic import BaseModel, ConfigDict, Field
@@ -58,12 +58,18 @@ from code2paper.agentic.research_models import (
     GlobalSafetyBudgetV1,
     ImplementationScopeV1,
     PerObligationBudgetV1,
+    ResearchAction,
     ResearchAgendaV1,
     ResearchAgendaItemV1,
     ResearchDecisionV1,
     ResearchIssueV1,
     ResearchObservationV1,
     ResearchToolCallV1,
+    QualityContentDimensionsV1,
+    QualityCostDimensionsV1,
+    QualityMinimalityDimensionsV1,
+    QualitySafetyDimensionsV1,
+    QualityStateV2,
     empty_quality_state,
 )
 from code2paper.agentic.intent_ledger import (
@@ -76,9 +82,19 @@ from code2paper.agentic.implementation_scope import (
     infer_implementation_scope,
     seed_child_candidates_from_parents,
 )
-from code2paper.agentic.research_promotion import build_observation_promotion_ledger
+from code2paper.agentic.research_promotion import (
+    build_observation_promotion_ledger,
+    promotion_record_blocks_strict_research,
+)
+from code2paper.agentic.research_revision_contract import RevisionJournalV1
+from code2paper.agentic.research_revision_ingest import (
+    DEFAULT_REVISION_PROPOSAL_BUDGET,
+    REVISION_PROPOSAL_TOOL_NAME,
+)
 from code2paper.agentic.research_terminal import (
+    CandidateHandoffV1,
     ObligationTerminalProofV1,
+    build_candidate_handoff,
     evaluate_obligation_terminal_proof,
 )
 from code2paper.agentic.research_nodes import (
@@ -198,16 +214,18 @@ def _executed_tool_call_summaries(
 
 
 def _executed_read_signatures(loop: "ResearchLoopState") -> tuple[str, ...]:
-    """Normalized keys of content reads already executed, across obligations.
+    """Obligation-scoped analysis keys of content reads already executed.
 
-    The policy layer rejects an exact re-read of a source span whose bytes
-    were already returned in this snapshot, even when a different
-    obligation is now active.  Building the set here (instead of in the
-    supervisor node) keeps the decision context pure and lets unit tests
-    construct the expected signatures directly.
+    R4: the no-gain rule is per obligation.  The byte identity is still the
+    cache key for reusing snapshot-identical source, but a different
+    obligation may read the same span again for its own graph/claim
+    compilation; only the same obligation re-reading the same span is a
+    duplicate.  Building the set here (instead of in the supervisor node)
+    keeps the decision context pure and lets unit tests construct the
+    expected signatures directly.
     """
 
-    from code2paper.agentic.research_policy import _content_read_signature
+    from code2paper.agentic.research_policy import _obligation_read_signature
 
     signatures: list[str] = []
     seen: set[str] = set()
@@ -215,7 +233,7 @@ def _executed_read_signatures(loop: "ResearchLoopState") -> tuple[str, ...]:
         for call in decision.selected_tool_calls:
             if call.tool_call_id not in loop.recent_tool_call_ids:
                 continue
-            signature = _content_read_signature(call)
+            signature = _obligation_read_signature(call)
             if signature and signature not in seen:
                 seen.add(signature)
                 signatures.append(signature)
@@ -325,6 +343,8 @@ def _record_intent_compile_event(
         loop.intent_compile_events.append({
             "new_spans_count": 0,
             "new_facts_count": 0,
+            "new_claims_count": 0,
+            "new_typed_slots_count": 0,
             "new_operations_count": 0,
             "has_coverage_gain": False,
         })
@@ -341,6 +361,11 @@ def _record_intent_compile_event(
         for packet in (getattr(getattr(current, "packet_set", None), "packets", ()) or ())
         for span in (getattr(packet, "spans", ()) or ())
         if str(getattr(span, "span_id", ""))
+    }
+    old_claim_ids = {
+        str(getattr(claim, "claim_id", ""))
+        for claim in (getattr(getattr(current, "claim_set", None), "claims", ()) or ())
+        if str(getattr(claim, "claim_id", ""))
     }
     fact_ids = {
         str(getattr(item, "fact_id", ""))
@@ -369,14 +394,39 @@ def _record_intent_compile_event(
             for span in (getattr(packet, "spans", ()) or ())
             if str(getattr(span, "span_id", ""))
         }
+    claim_set = payload.get("claim_set")
+    claim_ids = {
+        str(getattr(claim, "claim_id", ""))
+        for claim in (getattr(claim_set, "claims", ()) or ())
+        if str(getattr(claim, "claim_id", ""))
+    }
     new_facts = fact_ids - old_fact_ids
     new_spans = packet_spans - old_span_ids
+    new_claims = claim_ids - old_claim_ids
     loop.intent_compile_events.append({
         "obligation_id": obligation_id,
         "new_spans_count": len(new_spans),
         "new_facts_count": len(new_facts),
+        "new_claims_count": len(new_claims),
+        # Typed publication slots are represented by claims' obligation
+        # bindings at this boundary.  Count newly bound claim/obligation pairs
+        # so a retry can be classified by semantic rather than text gain.
+        "new_typed_slots_count": len({
+            (str(getattr(claim, "claim_id", "")), str(obligation_id))
+            for claim in (getattr(claim_set, "claims", ()) or ())
+            if str(getattr(claim, "claim_id", ""))
+            and str(obligation_id)
+        } - {
+            (str(getattr(claim, "claim_id", "")), str(obligation_id))
+            for claim in (getattr(getattr(current, "claim_set", None), "claims", ()) or ())
+            if str(getattr(claim, "claim_id", ""))
+            and str(obligation_id)
+        }),
         "new_operations_count": 0,
-        "has_coverage_gain": bool(new_facts or new_spans),
+        # Reading another span is acquisition progress, but it is not
+        # terminal-proof progress.  Only promoted facts/claims/typed bindings
+        # may reset the compile-stall counter used by the intent scheduler.
+        "has_coverage_gain": bool(new_facts or new_claims),
     })
 
 
@@ -450,6 +500,7 @@ class LoopStateSnapshot(BaseModel):
     intent_schedule: dict[str, Any] = Field(default_factory=dict)
     intent_compile_events: list[dict[str, Any]] = Field(default_factory=list)
     compile_attempts: list[dict[str, Any]] = Field(default_factory=list)
+    post_partial_retry_counts: dict[str, int] = Field(default_factory=dict)
     # Source identity sidecars are persisted in the immutable payload and
     # echoed here for quick resume validation.  They are checkpoint-safe
     # models, not LangGraph state channels.
@@ -476,6 +527,7 @@ def snapshot_loop_state(loop: "ResearchLoopState") -> dict[str, Any]:
     """
 
     immutable_payload = {
+        "turn_index": loop.turn_index,
         "behavior_graph": loop.behavior_graph.model_dump(mode="json"),
         "agenda_items": [item.model_dump(mode="json") for item in loop.runtime.agenda.items],
         "gain_tracker": loop.gain_tracker.snapshot(),
@@ -508,6 +560,7 @@ def snapshot_loop_state(loop: "ResearchLoopState") -> dict[str, Any]:
             item.model_dump(mode="json")
             for item in (loop.compile_attempts or ())
         ],
+        "post_partial_retry_counts": dict(loop.post_partial_retry_counts or {}),
         "symbol_index": (
             loop.symbol_index.model_dump(mode="json")
             if loop.symbol_index is not None else {}
@@ -843,6 +896,15 @@ def restore_loop_state_from_snapshot(
         )
         if isinstance(payload, dict)
     ]
+    loop.post_partial_retry_counts = {
+        str(key): max(0, int(value or 0))
+        for key, value in (
+            immutable.get("post_partial_retry_counts")
+            or getattr(snapshot, "post_partial_retry_counts", {})
+            or {}
+        ).items()
+        if str(key).strip()
+    }
     return loop
 
 
@@ -897,14 +959,129 @@ class ResearchLoopState:
     intent_schedule: dict[str, Any] = field(default_factory=dict)
     intent_compile_events: list[dict[str, Any]] = field(default_factory=list)
     compile_attempts: list[CompileAttemptResultV1] = field(default_factory=list)
+    # A partial obligation gets one bounded post-partial compile transaction.
+    # This counter is checkpointed so resume cannot buy another retry by
+    # restarting the process.
+    post_partial_retry_counts: dict[str, int] = field(default_factory=dict)
     intent_scheduler: IntentCoverageScheduler = field(
         default_factory=IntentCoverageScheduler
     )
     observation_promotion_ledger: Any = None
+    # R10 revision binding.  The journal is the append-only record of the
+    # revisions this run actually applied; the outcomes/notes/failures keep the
+    # harness ingestion auditable without re-deriving it from disk.
+    revision_journal: RevisionJournalV1 = field(default_factory=RevisionJournalV1)
+    revision_ingest_outcomes: list[dict[str, Any]] = field(default_factory=list)
+    revision_rebind_notes: list[dict[str, Any]] = field(default_factory=list)
+    revision_ingest_failures: list[str] = field(default_factory=list)
     # Frozen input-boundary sidecars used by unified reconstruction.  They are
     # held outside LangGraph channels and re-emitted as ordinary artifacts.
     symbol_index: Any | None = None
     source_manifest: Any | None = None
+
+
+def _compute_live_research_quality(loop: "ResearchLoopState") -> QualityStateV2:
+    """Derive the current Research quality/cost state from live loop data.
+
+    The previous loop carried the zero-valued seed forever.  This projection
+    intentionally uses only already-authorized loop objects: agenda terminal
+    states, compiled claims, executed decisions/calls, and typed missing
+    relations.  It grants no new evidence authority.
+    """
+
+    must_cover = [
+        item for item in loop.runtime.agenda.items
+        if item.priority == "must_cover"
+    ]
+    terminal_statuses = {"supported", "partial", "explicit_gap"}
+    terminal_must_cover = sum(
+        item.status in terminal_statuses for item in must_cover
+    )
+    supported_must_cover = sum(
+        item.status == "supported" for item in must_cover
+    )
+    supported_claim_identities = {
+        str(getattr(claim, "canonical_identity", "") or getattr(claim, "claim_id", ""))
+        for compiled in loop.compiled_evidence.values()
+        for claim in (getattr(compiled.claim_set, "claims", ()) or ())
+        if str(getattr(claim, "status", "supported") or "supported") == "supported"
+        and str(
+            getattr(claim, "canonical_identity", "")
+            or getattr(claim, "claim_id", "")
+        ).strip()
+    }
+    unresolved_relations = sum(
+        str(value).startswith(("typed_relation:", "relation:"))
+        for item in loop.runtime.agenda.items
+        for value in (item.missing_information or ())
+    )
+    model_calls = sum(
+        str(getattr(decision, "produced_by", "") or "") == "llm_proposal"
+        for decision in loop.decision_trace
+    )
+    tool_calls = len(loop.recent_tool_call_ids)
+    repeated_no_gain = int(
+        getattr(loop.intent_implementation_ledger, "no_progress_compile_count", 0)
+        or 0
+    )
+    content = QualityContentDimensionsV1(
+        terminal_must_cover=terminal_must_cover,
+        supported_must_cover=supported_must_cover,
+        unique_supported_claims=len(supported_claim_identities),
+        validated_final_sentences=0,
+        unresolved_high_value_obligations=max(
+            0, len(must_cover) - terminal_must_cover
+        ),
+    )
+    cost = QualityCostDimensionsV1(
+        model_calls=model_calls,
+        tool_calls=tool_calls,
+        repeated_no_gain_calls=repeated_no_gain,
+    )
+    state_payload = {
+        "run_id": loop.runtime.run_id,
+        "content": content.model_dump(mode="json"),
+        "cost": cost.model_dump(mode="json"),
+        "unresolved_relations": unresolved_relations,
+    }
+    state_id = "quality-state-" + hashlib.sha256(
+        json.dumps(
+            state_payload,
+            ensure_ascii=False,
+            sort_keys=True,
+            separators=(",", ":"),
+        ).encode("utf-8")
+    ).hexdigest()[:12]
+    return QualityStateV2(
+        state_id=state_id,
+        run_id=loop.runtime.run_id,
+        repo_snapshot_id=loop.runtime.repo_snapshot.snapshot_id,
+        project_tree_hash=loop.runtime.repo_snapshot.project_tree_hash,
+        safety=QualitySafetyDimensionsV1(source_integrity=True),
+        content=content,
+        minimality=QualityMinimalityDimensionsV1(
+            unresolved_relations=unresolved_relations,
+        ),
+        cost=cost,
+    )
+
+
+def _refresh_loop_quality(
+    loop: "ResearchLoopState",
+    state: AgentStateV3 | dict[str, Any],
+) -> dict[str, Any]:
+    """Recompute current quality and apply the conservative best selector."""
+
+    loop.current_quality_state = _compute_live_research_quality(loop)
+    update = quality_state_selector_node(
+        state,
+        runtime=loop.runtime,
+        current_quality_state=loop.current_quality_state,
+        best_quality_state=loop.best_quality_state,
+    )
+    if "best_quality_state_ref" in update:
+        loop.best_quality_state = loop.current_quality_state
+    return update
 
 
 def _append_observation_history(
@@ -993,6 +1170,7 @@ def _refresh_acquisition_ledger(
         compiled_by_obligation=loop.compiled_evidence,
         symbols=getattr(loop.symbol_index, "symbols", ()) if loop.symbol_index is not None else (),
         source_manifest=loop.source_manifest,
+        repo_snapshot=loop.runtime.repo_snapshot,
         repo_snapshot_id=loop.runtime.repo_snapshot.snapshot_id,
         project_tree_hash=loop.runtime.repo_snapshot.project_tree_hash,
     )
@@ -1006,6 +1184,7 @@ def _refresh_acquisition_ledger(
             if loop.symbol_index is not None
             else ()
         ),
+        agenda_items=tuple(loop.runtime.agenda.items),
         repo_snapshot_id=loop.runtime.repo_snapshot.snapshot_id,
         project_tree_hash=loop.runtime.repo_snapshot.project_tree_hash,
     )
@@ -1077,6 +1256,221 @@ def _compiled_operation_ids_for_obligation(
             or str(getattr(node, "source_span_id", "")).strip() in owned_span_ids
         )
     )
+
+
+POST_PARTIAL_RETRY_LIMIT = 1
+
+
+def _partial_retry_count(loop: "ResearchLoopState", obligation_id: str) -> int:
+    return max(0, int(loop.post_partial_retry_counts.get(str(obligation_id), 0) or 0))
+
+
+def _note_post_partial_retry(
+    loop: "ResearchLoopState",
+    obligation_id: str,
+    *,
+    was_partial: bool,
+) -> None:
+    """Consume the single retry slot after a partial compile.
+
+    The compile node is the atomic boundary for this rule.  Counting here,
+    immediately after it returns, makes the allowance durable even when the
+    process is interrupted before the next supervisor decision.
+    """
+
+    if not was_partial:
+        return
+    key = str(obligation_id or "").strip()
+    if not key:
+        return
+    current = _partial_retry_count(loop, key)
+    if current < POST_PARTIAL_RETRY_LIMIT:
+        loop.post_partial_retry_counts[key] = current + 1
+
+
+def _is_partial_compile_retry(loop: "ResearchLoopState", obligation_id: str) -> bool:
+    """Return whether the upcoming compile is the bounded partial retry."""
+
+    item = next(
+        (
+            candidate for candidate in loop.runtime.agenda.items
+            if str(candidate.obligation_id) == str(obligation_id)
+        ),
+        None,
+    )
+    if item is None or str(item.status) != "partial":
+        return False
+    compiled = loop.compiled_evidence.get(str(obligation_id))
+    return bool(
+        item.supported_claim_ids
+        or tuple(
+            getattr(getattr(compiled, "claim_set", None), "claims", ()) or ()
+        )
+    )
+
+
+def _candidate_structural_failure_codes(loop: "ResearchLoopState") -> tuple[str, ...]:
+    """Extract only structural failures that can contaminate Candidate."""
+
+    values: list[str] = []
+    structural_tokens = (
+        "identity",
+        "snapshot",
+        "lineage",
+        "ownership",
+        "source_manifest",
+        "symbol_index",
+        "candidate_binding",
+        "resume_",
+        "invalid_loop_state",
+    )
+    core_ids = {
+        str(item.obligation_id)
+        for item in loop.runtime.agenda.items
+        if item.priority == "must_cover"
+    }
+
+    def add(value: Any) -> None:
+        text = str(value or "").strip()
+        if text and any(token in text.casefold() for token in structural_tokens):
+            values.append(text)
+
+    add(getattr(loop, "termination_reason", ""))
+    for attempt in loop.compile_attempts or ():
+        if str(getattr(attempt, "obligation_id", "") or "") not in core_ids:
+            continue
+        add(getattr(attempt, "rejection_code", ""))
+    for item in loop.runtime.agenda.items:
+        if item.priority != "must_cover":
+            continue
+        for value in item.missing_information or ():
+            add(value)
+    for record in getattr(loop.observation_promotion_ledger, "records", ()) or ():
+        if str(getattr(record, "obligation_id", "") or "") not in core_ids:
+            continue
+        add(getattr(record, "rejection_code", ""))
+    return tuple(dict.fromkeys(values))
+
+
+def _compiled_claim_ids_by_obligation(
+    loop: "ResearchLoopState",
+) -> dict[str, tuple[str, ...]]:
+    return {
+        str(obligation_id): tuple(dict.fromkeys(
+            str(getattr(claim, "claim_id", "") or "")
+            for claim in (
+                getattr(getattr(compiled, "claim_set", None), "claims", ()) or ()
+            )
+            if str(getattr(claim, "claim_id", "") or "")
+        ))
+        for obligation_id, compiled in (loop.compiled_evidence or {}).items()
+    }
+
+
+def _compiled_claims_by_obligation(
+    loop: "ResearchLoopState",
+) -> dict[str, tuple[Any, ...]]:
+    return {
+        str(obligation_id): tuple(
+            getattr(getattr(compiled, "claim_set", None), "claims", ()) or ()
+        )
+        for obligation_id, compiled in (loop.compiled_evidence or {}).items()
+    }
+
+
+def _build_candidate_handoff(loop: "ResearchLoopState") -> CandidateHandoffV1:
+    """Build the Candidate lane view from the live, frozen research state."""
+
+    retry_gain_by_obligation: dict[str, bool | None] = {}
+    for event in loop.intent_compile_events or ():
+        obligation_id = str(event.get("obligation_id") or "").strip()
+        if not obligation_id or _partial_retry_count(loop, obligation_id) < 1:
+            continue
+        retry_gain_by_obligation[obligation_id] = bool(
+            event.get("has_coverage_gain", False)
+        )
+    agenda_digest = loop.runtime.agenda.refresh_content_digest()
+    promotion_ledger = getattr(loop, "observation_promotion_ledger", None)
+    revision_journal = getattr(loop, "revision_journal", None)
+    return build_candidate_handoff(
+        run_id=loop.runtime.run_id,
+        repo_snapshot_id=loop.runtime.repo_snapshot.snapshot_id,
+        project_tree_hash=loop.runtime.repo_snapshot.project_tree_hash,
+        agenda_items=tuple(loop.runtime.agenda.items),
+        promotion_records=tuple(
+            getattr(promotion_ledger, "records", ()) or ()
+        ),
+        compiled_claim_ids_by_obligation=_compiled_claim_ids_by_obligation(loop),
+        compiled_claims_by_obligation=_compiled_claims_by_obligation(loop),
+        post_partial_retry_counts=loop.post_partial_retry_counts,
+        retry_gain_by_obligation=retry_gain_by_obligation,
+        structural_failure_codes=_candidate_structural_failure_codes(loop),
+        agenda_digest=agenda_digest,
+        promotion_ledger_digest=str(
+            getattr(promotion_ledger, "content_digest", "") or ""
+        ),
+        # R10 §15.6: the handoff names the revision its targets belong to, so a
+        # handoff built before a later revision is detectable as stale.
+        revision_id=(
+            revision_journal.current_revision_id() if revision_journal else ""
+        ),
+    )
+
+
+def _legal_action_available_for_core(
+    loop: "ResearchLoopState",
+    unresolved_core_ids: Sequence[str],
+) -> bool:
+    """Whether any unresolved core obligation still has a legal research move.
+
+    Turn budget alone must not report ``can_continue`` when every remaining
+    tool budget is zero and the only remaining move is the bounded-search
+    proof.  This mirrors the policy merge's budget gate so the checkpoint
+    and the final state describe the same constraint.
+    """
+
+    for obligation_id in unresolved_core_ids:
+        budget = loop.per_obligation_budgets.get(str(obligation_id))
+        if budget is not None:
+            limits = dict(getattr(budget, "limits", {}) or {})
+            if limits and not any(
+                int(budget.remaining(kind)) > 0 for kind in limits
+            ):
+                continue
+        if (
+            loop.gain_tracker.targeted_search_exhausted(str(obligation_id))
+            and loop.gain_tracker.may_record_gap(str(obligation_id))
+        ):
+            # The only remaining route is the bounded-search gap proof,
+            # which is not a research action.
+            continue
+        return True
+    return False
+
+
+def _core_tool_budget_failure_code(loop: "ResearchLoopState") -> str:
+    """Return a typed budget-exhaustion code for the blocked checkpoint."""
+
+    for item in loop.runtime.agenda.items:
+        if item.priority != "must_cover":
+            continue
+        if item.status in {"supported", "partial", "explicit_gap", "blocked"}:
+            continue
+        budget = loop.per_obligation_budgets.get(item.obligation_id)
+        if budget is None:
+            continue
+        limits = dict(getattr(budget, "limits", {}) or {})
+        if not limits:
+            continue
+        exhausted_kinds = sorted(
+            kind for kind in limits if int(budget.remaining(kind)) <= 0
+        )
+        if len(exhausted_kinds) == len(limits):
+            return (
+                "core_tool_budget_exhausted:"
+                f"{item.obligation_id}:{exhausted_kinds[0]}"
+            )
+    return "core_tool_budget_exhausted:unknown:unknown"
 
 
 def _refresh_intent_coverage_scheduler(
@@ -1208,15 +1602,7 @@ def _refresh_intent_coverage_scheduler(
         for record in (
             getattr(loop.observation_promotion_ledger, "records", ()) or ()
         )
-        if record.status in {"observed_unpromoted", "behavior_built", "packet_promoted", "fact_promoted"}
-        and next(
-            (
-                str(item.status)
-                for item in agenda_items
-                if str(item.obligation_id) == str(record.obligation_id)
-            ),
-            "pending",
-        ) not in {"supported", "partial", "explicit_gap", "blocked"}
+        if promotion_record_blocks_strict_research(record)
     )
     unresolved_terminal_proof_ids = tuple(
         obligation_id
@@ -1244,10 +1630,40 @@ def _refresh_intent_coverage_scheduler(
     schedule["unresolved_core_intent_ids"] = tuple(
         dict.fromkeys((*unresolved_core_intents, *unresolved_terminal_proofs))
     )
-    schedule["can_terminate"] = not bool(
+    # The turn-budget scheduler can still answer ``can_continue`` while the
+    # per-obligation tool budgets are already exhausted.  Recompute the
+    # legal-action condition after the policy merge so the persisted
+    # checkpoint and the terminal state agree.
+    unresolved_core_ids = tuple(schedule["unresolved_core_intent_ids"])
+    legal_action_available = _legal_action_available_for_core(
+        loop, unresolved_core_ids
+    )
+    schedule["legal_action_available"] = legal_action_available
+    schedule["budget_constrained"] = bool(
+        unresolved_core_ids and not legal_action_available
+    )
+    schedule["can_continue"] = bool(
+        schedule.get("can_continue", True)
+    ) and legal_action_available
+    # Keep the strict audit result separate from the bounded Candidate lane.
+    # The former still includes every obligation and every promotion record;
+    # the latter deliberately consumes only the must-cover spine after each
+    # partial item has received one post-partial compile transaction.
+    strict_research_complete = not bool(
         schedule.get("unresolved_core_intent_ids")
         or unresolved_promotions
         or unresolved_terminal_proof_ids
+    )
+    candidate_handoff = _build_candidate_handoff(loop)
+    schedule["strict_research_complete"] = strict_research_complete
+    schedule["candidate_handoff_ready"] = candidate_handoff.eligible
+    schedule["candidate_handoff"] = candidate_handoff.model_dump(mode="json")
+    schedule["deferred_obligation_ids"] = candidate_handoff.deferred_obligation_ids
+    schedule["candidate_warning_codes"] = candidate_handoff.warning_codes
+    # ``can_terminate`` is the scheduler's execution stop condition, not a
+    # claim that the full research audit is complete.
+    schedule["can_terminate"] = bool(
+        strict_research_complete or candidate_handoff.eligible
     )
     loop.intent_schedule = schedule
     if state is not None:
@@ -1279,6 +1695,8 @@ def _research_block_root_code(
     route has been taken.
     """
 
+    if bool((loop.intent_schedule or {}).get("budget_constrained", False)):
+        return _core_tool_budget_failure_code(loop)
     for attempt in reversed(loop.compile_attempts or ()):
         if active_obligation_id and attempt.obligation_id != active_obligation_id:
             continue
@@ -1306,14 +1724,32 @@ def _mark_trusted_terminal(
     *,
     reason: str,
 ) -> str:
-    """Apply the intent/promotion gate before declaring Research trusted."""
+    """Apply strict or Candidate handoff gates before ending Research."""
 
-    if _intent_termination_blocked(loop, state):
+    schedule = _refresh_intent_coverage_scheduler(
+        loop,
+        state,
+        remaining_budget_turns=0,
+        current_action_is_novelty=False,
+    )
+    if bool(schedule.get("strict_research_complete", False)):
+        state["status"] = "trusted"
+        return reason
+    if bool(schedule.get("candidate_handoff_ready", False)):
+        # Candidate is an intentionally non-trusted handoff.  The strict
+        # proof remains open and Verified must continue to fail closed.
+        state["status"] = "incomplete"
+        state["blocked_reason"] = "candidate_handoff_partial"
+        # Do not reuse all_obligations_terminal: the top-level terminal event
+        # consumes this return value and must describe the actual lane.
+        return "candidate_handoff_partial"
+    if not bool(schedule.get("can_terminate", False)):
         state["status"] = "blocked"
         state["blocked_reason"] = "intent_coverage_or_promotion_incomplete"
         return "intent_coverage_blocked"
-    state["status"] = "trusted"
-    return reason
+    state["status"] = "blocked"
+    state["blocked_reason"] = "intent_coverage_or_promotion_incomplete"
+    return "intent_coverage_blocked"
 
 
 def initial_loop_state(
@@ -1370,6 +1806,13 @@ class ResearchLoopResult:
     # build_research_subgraph; empty for runs that bypass LangGraph
     # (e.g. direct ResearchLoopDriver calls in unit tests).
     node_trace: list[dict[str, Any]] = field(default_factory=list)
+    # R10: the revision identity this run's evidence was produced under.  The
+    # product path binds it into the research checkpoint, the journal artifact
+    # and the Candidate handoff so no downstream consumer can reuse work that
+    # the revised targets no longer justify.
+    revision_journal: RevisionJournalV1 = field(default_factory=RevisionJournalV1)
+    revision_ingest_outcomes: list[dict[str, Any]] = field(default_factory=list)
+    revision_ingest_failures: list[str] = field(default_factory=list)
 
 
 class ResearchLoopDriver:
@@ -1396,9 +1839,11 @@ class ResearchLoopDriver:
         runtime: ResearchGraphRuntime,
         *,
         max_turns: int = 50,
+        max_wall_clock_seconds: float | None = None,
     ) -> None:
         self._runtime = runtime
         self._max_turns = max_turns
+        self._max_wall_clock_seconds = max_wall_clock_seconds
 
     def run(
         self,
@@ -1444,6 +1889,16 @@ class ResearchLoopDriver:
             )
             loop = restored or initial_loop_state(runtime)
 
+        # Start the deadline before the linear prefix so the public wall-clock
+        # budget covers the whole Research phase.  It is checked only at node
+        # boundaries, after each atomic repository/model/tool transaction has
+        # returned.
+        deadline = (
+            time.monotonic() + float(self._max_wall_clock_seconds)
+            if self._max_wall_clock_seconds and self._max_wall_clock_seconds > 0
+            else None
+        )
+
         # A content-authenticated terminal snapshot is a completed execution,
         # not a hint to rerun the prefix.  Validate identity and return before
         # the Intent/Supervisor backends (and therefore before any model call).
@@ -1458,6 +1913,9 @@ class ResearchLoopDriver:
                 decision_trace=loop.decision_trace,
                 policy_merge_trace=loop.policy_merge_trace,
                 evidence_critic_routes=[],
+                revision_journal=loop.revision_journal,
+                revision_ingest_outcomes=list(loop.revision_ingest_outcomes),
+                revision_ingest_failures=list(loop.revision_ingest_failures),
             )
 
         # --- linear prefix --------------------------------------------------
@@ -1509,6 +1967,11 @@ class ResearchLoopDriver:
         turns_executed = 0
         terminated = False
         termination_reason = ""
+        # R10: the harness owns the run's proposal budget and reviewer hook.
+        revision_budget_remaining = DEFAULT_REVISION_PROPOSAL_BUDGET
+        revision_semantic_verifier = getattr(
+            runtime, "revision_semantic_verifier", None
+        )
 
         while turns_executed < self._max_turns:
             # Recompute the intent ledger at the scheduling boundary.  This
@@ -1520,6 +1983,23 @@ class ResearchLoopDriver:
                 remaining_budget_turns=max(0, self._max_turns - turns_executed),
                 current_action_is_novelty=True,
             )
+            if deadline is not None and time.monotonic() >= deadline:
+                terminated = True
+                if bool(loop.intent_schedule.get("candidate_handoff_ready", False)):
+                    termination_reason = _mark_trusted_terminal(
+                        loop, state, reason="candidate_handoff_partial"
+                    )
+                else:
+                    termination_reason = "wall_clock_deadline"
+                    state["status"] = "incomplete"
+                    state["blocked_reason"] = "wall_clock_deadline"
+                break
+            if bool(loop.intent_schedule.get("candidate_handoff_ready", False)):
+                terminated = True
+                termination_reason = _mark_trusted_terminal(
+                    loop, state, reason="candidate_handoff_partial"
+                )
+                break
             active_obligation_id = state.get("active_obligation_id", "")
             if not active_obligation_id:
                 terminated = True
@@ -1535,6 +2015,7 @@ class ResearchLoopDriver:
                 per_obligation_budgets=loop.per_obligation_budgets,
                 active_issue=loop.active_issue,
                 recent_observations=tuple(loop.recent_observations[-5:]),
+                observation_history=tuple(loop.observation_history),
                 no_progress_counter=loop.gain_tracker.no_progress_counter(active_obligation_id),
                 no_progress_history=loop.gain_tracker.gain_history(active_obligation_id),
                 recent_tool_call_ids=tuple(loop.recent_tool_call_ids),
@@ -1599,6 +2080,9 @@ class ResearchLoopDriver:
                 )
                 break
             if decision.action == "COMPILE_EVIDENCE":
+                partial_retry = _is_partial_compile_retry(
+                    loop, active_obligation_id
+                )
                 compile_update = compile_candidate_node(
                     state,
                     runtime=runtime,
@@ -1619,6 +2103,11 @@ class ResearchLoopDriver:
                     loop,
                     compile_update.pop("_compile_attempt", None),
                 )
+                _note_post_partial_retry(
+                    loop,
+                    active_obligation_id,
+                    was_partial=partial_retry,
+                )
                 state.update(compile_update)
                 _record_intent_compile_event(
                     loop,
@@ -1629,6 +2118,7 @@ class ResearchLoopDriver:
                 if compiled_evidence is not None:
                     _store_evidence_sidecar(loop, compiled_evidence)
                 _refresh_acquisition_ledger(loop, state)
+                state.update(_refresh_loop_quality(loop, state))
                 if state.get("status") == "blocked":
                     terminated = True
                     termination_reason = "evidence_compile_blocked"
@@ -1752,10 +2242,26 @@ class ResearchLoopDriver:
             )
             loop.recent_observations.extend(observations)
             _append_observation_history(loop, observations)
+            for observation in observations:
+                record_executed_research_action(
+                    loop.runtime.agenda,
+                    obligation_id=observation.obligation_id,
+                    action=_action_for_tool(observation.tool_name),
+                    observations=[observation],
+                )
             for call in pending:
                 loop.recent_tool_call_ids.add(call.tool_call_id)
             state["pending_tool_calls"] = []
             state["tool_call_trace_refs"] = list(state.get("tool_call_trace_refs", [])) + trace_refs
+            # R10: same harness ingestion boundary as the LangGraph subgraph.
+            revision_budget_remaining = _ingest_target_revisions(
+                loop,
+                runtime,
+                state,
+                pending,
+                budget_remaining=revision_budget_remaining,
+                semantic_verifier=revision_semantic_verifier,
+            )
 
             # Observation ingest.
             ingest_update = observation_ingest_node(
@@ -1783,15 +2289,8 @@ class ResearchLoopDriver:
             _refresh_acquisition_ledger(loop, state)
 
             # Quality state selector.
-            quality_update = quality_state_selector_node(
-                state,
-                runtime=runtime,
-                current_quality_state=loop.current_quality_state,
-                best_quality_state=loop.best_quality_state,
-            )
+            quality_update = _refresh_loop_quality(loop, state)
             state.update(quality_update)
-            if "best_quality_state_ref" in quality_update:
-                loop.best_quality_state = loop.current_quality_state
 
             # Evidence critic: route the next iteration.
             route, critic_update = evidence_critic_node(
@@ -1847,6 +2346,9 @@ class ResearchLoopDriver:
                 # is marked ``supported`` and the compiled packets/facts/
                 # claims are stashed in the loop state sidecar.  On failure
                 # the node delegates to ``gap_finalizer_node``.
+                partial_retry = _is_partial_compile_retry(
+                    loop, active_obligation_id
+                )
                 compile_update = compile_candidate_node(
                     state,
                     runtime=runtime,
@@ -1866,6 +2368,11 @@ class ResearchLoopDriver:
                 _append_compile_attempt(
                     loop,
                     compile_update.pop("_compile_attempt", None),
+                )
+                _note_post_partial_retry(
+                    loop,
+                    active_obligation_id,
+                    was_partial=partial_retry,
                 )
                 state.update(compile_update)
                 _record_intent_compile_event(
@@ -1888,6 +2395,7 @@ class ResearchLoopDriver:
                     loop.active_issue = None
                     loop.recent_observations.clear()
                     _refresh_acquisition_ledger(loop, state)
+                    state.update(_refresh_loop_quality(loop, state))
                     turns_executed += 1
                     loop.turn_index += 1
                     continue
@@ -1912,6 +2420,7 @@ class ResearchLoopDriver:
                     turns_executed += 1
                     loop.turn_index += 1
                     _refresh_acquisition_ledger(loop, state)
+                    state.update(_refresh_loop_quality(loop, state))
                     continue
                 # No compiled evidence: the node already routed to gap
                 # finalizer.  ``gap_accepted`` is True when the gap was
@@ -1949,6 +2458,12 @@ class ResearchLoopDriver:
         loop.terminated = terminated
         loop.termination_reason = termination_reason
 
+        if loop.revision_ingest_failures and state.get("status") == "trusted":
+            # Same rule as the subgraph terminator: a revision the live state
+            # could not use is never a trusted terminal state.
+            state["status"] = "incomplete"
+            state["blocked_reason"] = "revision_ingest_failed"
+
         return ResearchLoopResult(
             loop_state=loop,
             final_state=state,
@@ -1958,6 +2473,9 @@ class ResearchLoopDriver:
             decision_trace=loop.decision_trace,
             policy_merge_trace=loop.policy_merge_trace,
             evidence_critic_routes=routes,
+            revision_journal=loop.revision_journal,
+            revision_ingest_outcomes=list(loop.revision_ingest_outcomes),
+            revision_ingest_failures=list(loop.revision_ingest_failures),
         )
 
 
@@ -2000,9 +2518,21 @@ class _ResearchGraphContext:
     behavior graph.
     """
 
-    def __init__(self, runtime: ResearchGraphRuntime, *, max_turns: int) -> None:
+    def __init__(
+        self,
+        runtime: ResearchGraphRuntime,
+        *,
+        max_turns: int,
+        max_wall_clock_seconds: float | None = None,
+    ) -> None:
         self.runtime = runtime
         self.max_turns = max_turns
+        self.max_wall_clock_seconds = max_wall_clock_seconds
+        self.deadline = (
+            time.monotonic() + float(max_wall_clock_seconds)
+            if max_wall_clock_seconds and max_wall_clock_seconds > 0
+            else None
+        )
         self.loop_state: ResearchLoopState | None = None
         # Routing decisions read by the conditional edge functions.
         self.supervisor_route: str = "tool_exec"
@@ -2022,6 +2552,12 @@ class _ResearchGraphContext:
         # dict with keys: node, timestamp, duration_ms, turn_index,
         # status, route, error.  Populated by _wrap_with_trace.
         self.node_trace: list[dict[str, Any]] = []
+        # R10: the harness owns the proposal budget and the independent
+        # semantic reviewer hook; the loop may only submit proposals.
+        self.revision_budget_remaining: int = DEFAULT_REVISION_PROPOSAL_BUDGET
+        self.revision_semantic_verifier: Callable[[Any, Any], bool] | None = (
+            getattr(runtime, "revision_semantic_verifier", None)
+        )
 
 
 def _ensure_ctx_loop(
@@ -2130,6 +2666,35 @@ def _ctx_supervisor(
         current_action_is_novelty=True,
     )
 
+    # Check the wall-clock deadline only at a supervisor boundary, after the
+    # prior tool/observation/compile transaction has completed.
+    if ctx.deadline is not None and time.monotonic() >= ctx.deadline:
+        ctx.terminated = True
+        if bool(loop.intent_schedule.get("candidate_handoff_ready", False)):
+            ctx.termination_reason = _mark_trusted_terminal(
+                loop, state, reason="candidate_handoff_partial"
+            )
+        else:
+            ctx.termination_reason = "wall_clock_deadline"
+            state["status"] = "incomplete"
+            state["blocked_reason"] = "wall_clock_deadline"
+        ctx.supervisor_route = "no_tool_calls"
+        return {
+            "status": state.get("status", "incomplete"),
+            "blocked_reason": state.get("blocked_reason", ""),
+        }
+
+    if bool(loop.intent_schedule.get("candidate_handoff_ready", False)):
+        ctx.terminated = True
+        ctx.termination_reason = _mark_trusted_terminal(
+            loop, state, reason="candidate_handoff_partial"
+        )
+        ctx.supervisor_route = "no_tool_calls"
+        return {
+            "status": state.get("status", "incomplete"),
+            "blocked_reason": state.get("blocked_reason", ""),
+        }
+
     active_obligation_id = state.get("active_obligation_id", "")
     if not active_obligation_id:
         ctx.terminated = True
@@ -2152,6 +2717,7 @@ def _ctx_supervisor(
         per_obligation_budgets=loop.per_obligation_budgets,
         active_issue=loop.active_issue,
         recent_observations=tuple(loop.recent_observations[-5:]),
+        observation_history=tuple(loop.observation_history),
         no_progress_counter=loop.gain_tracker.no_progress_counter(active_obligation_id),
         no_progress_history=loop.gain_tracker.gain_history(active_obligation_id),
         recent_tool_call_ids=tuple(loop.recent_tool_call_ids),
@@ -2270,14 +2836,165 @@ def _ctx_tool(
     )
     loop.recent_observations.extend(observations)
     _append_observation_history(loop, observations)
+    for observation in observations:
+        record_executed_research_action(
+            loop.runtime.agenda,
+            obligation_id=observation.obligation_id,
+            action=_action_for_tool(observation.tool_name),
+            observations=[observation],
+        )
     for call in pending:
         loop.recent_tool_call_ids.add(call.tool_call_id)
     ctx._observations = list(observations)
+    # R10: a submitted revision proposal is ingested here, at the harness
+    # boundary, not by the tool that wrote it.  Ingestion authenticates the
+    # cited refs, spends the run's proposal budget and rebinds the loop state
+    # to the revised targets before the next supervisor turn reads them.
+    ctx.revision_budget_remaining = _ingest_target_revisions(
+        loop,
+        runtime,
+        state,
+        pending,
+        budget_remaining=ctx.revision_budget_remaining,
+        semantic_verifier=ctx.revision_semantic_verifier,
+    )
     existing_refs = list(state.get("tool_call_trace_refs", []))
     return {
         "pending_tool_calls": [],
         "tool_call_trace_refs": existing_refs + trace_refs,
     }
+
+
+def _ingest_target_revisions(
+    loop: "ResearchLoopState",
+    runtime: ResearchGraphRuntime,
+    state: AgentStateV3,
+    pending: Sequence[Any],
+    *,
+    budget_remaining: int = DEFAULT_REVISION_PROPOSAL_BUDGET,
+    semantic_verifier: Callable[[Any, Any], bool] | None = None,
+) -> int:
+    """Harness-side ingestion of the revision proposals this turn submitted.
+
+    Returns the run's remaining proposal budget.  Both loop implementations
+    (the LangGraph subgraph and the direct driver) call this at their own tool
+    boundary so a submitted proposal is applied exactly once, by the harness.
+    """
+
+    if not any(
+        str(getattr(call, "tool_name", "") or "") == REVISION_PROPOSAL_TOOL_NAME
+        for call in pending
+    ):
+        return budget_remaining
+    from code2paper.agentic.research_revision_ingest import (
+        ingest_revision_submissions,
+        write_revision_ingest_result,
+    )
+
+    try:
+        tool_ctx = runtime.tool_context(behavior_graph=loop.behavior_graph)
+        artifact_root = getattr(tool_ctx, "artifact_root", None)
+    except Exception:  # pragma: no cover - defensive: keep the loop alive
+        artifact_root = getattr(runtime, "artifact_root", None)
+    try:
+        result = ingest_revision_submissions(
+            runtime=runtime,
+            artifact_root=artifact_root,
+            journal=loop.revision_journal,
+            remaining_budget=budget_remaining,
+            semantic_verifier=semantic_verifier,
+            compiled_by_obligation=loop.compiled_evidence,
+            # The relevance check reads the behavior graph the run actually
+            # built; a proposal may only add predicates the run has extracted.
+            behavior_graph=loop.behavior_graph,
+            symbol_index=loop.symbol_index,
+        )
+    except Exception as exc:  # noqa: BLE001 — ingestion failure must be visible
+        loop.revision_ingest_failures.append(
+            f"revision_ingest_failed:{type(exc).__name__}"
+        )
+        return budget_remaining
+    loop.revision_journal = result.journal
+    loop.revision_ingest_outcomes.extend(
+        outcome.model_dump(mode="json") for outcome in result.outcomes
+    )
+    for failure in result.ledger_failures:
+        if failure not in loop.revision_ingest_failures:
+            loop.revision_ingest_failures.append(failure)
+    for outcome in result.applied_outcomes():
+        _rebind_loop_after_revision(loop, state, outcome)
+    if result.outcomes:
+        try:
+            write_revision_ingest_result(
+                artifact_root,
+                result,
+                ingestion_index=len(loop.revision_ingest_outcomes) - len(result.outcomes),
+            )
+        except Exception:  # pragma: no cover - defensive artifact write
+            pass
+    return result.budget_remaining
+
+
+def _rebind_loop_after_revision(
+    loop: "ResearchLoopState",
+    state: AgentStateV3,
+    outcome: Any,
+) -> None:
+    """Re-bind the loop state to the targets the revision actually left behind.
+
+    §15.6: a revision changes the intent graph *and* everything derived from
+    the old targets.  Two loop-local derivations are re-bound here:
+
+    * the bounded post-partial retry counter was earned against targets that
+      no longer exist, so the revised obligation starts its own retry (the old
+      count stays recorded in the ingestion outcome);
+    * compiled evidence whose targets no longer resolve is dropped, and the
+      observation promotion ledger is re-derived from the revised agenda, so
+      observations promoted under the old targets cannot keep supporting
+      claims the revision removed.
+    """
+
+    obligation_id = str(getattr(outcome, "parent_obligation_id", "") or "")
+    if not obligation_id:
+        return
+    loop.post_partial_retry_counts.pop(obligation_id, None)
+    row = next(
+        (
+            item
+            for item in (getattr(outcome, "revalidation_rows", ()) or ())
+            if str(item.get("obligation_id") or "") == obligation_id
+        ),
+        {},
+    )
+    unresolved = tuple(
+        str(value)
+        for value in (row.get("unresolved_target_ids") or ())
+        if str(value).strip()
+    )
+    must_revalidate = tuple(
+        str(value)
+        for value in (row.get("claim_ids_requiring_revalidation") or ())
+        if str(value).strip()
+    )
+    if unresolved or must_revalidate:
+        # The compilation was produced for the removed/changed targets.
+        loop.compiled_evidence.pop(obligation_id, None)
+    loop.revision_rebind_notes.append({
+        "revision_id": str(getattr(outcome, "revision_id", "") or ""),
+        "obligation_id": obligation_id,
+        "unresolved_target_ids": list(unresolved),
+        "claim_ids_requiring_revalidation": list(must_revalidate),
+        "compiled_evidence_dropped": bool(unresolved or must_revalidate),
+    })
+    try:
+        _refresh_acquisition_ledger(loop, state)
+    except Exception as exc:  # noqa: BLE001 — a stale ledger must not be silent
+        loop.revision_ingest_failures.append(
+            f"revision_promotion_ledger_rebind_failed:{type(exc).__name__}"
+        )
+    agenda_refresh = getattr(loop.runtime.agenda, "refresh_content_digest", None)
+    if callable(agenda_refresh):
+        agenda_refresh()
 
 
 def _ctx_observation(
@@ -2331,15 +3048,8 @@ def _ctx_observation(
 
     _refresh_acquisition_ledger(loop, update)
 
-    quality_update = quality_state_selector_node(
-        state,
-        runtime=runtime,
-        current_quality_state=loop.current_quality_state,
-        best_quality_state=loop.best_quality_state,
-    )
+    quality_update = _refresh_loop_quality(loop, state)
     update.update(quality_update)
-    if "best_quality_state_ref" in quality_update:
-        loop.best_quality_state = loop.current_quality_state
 
     # Phase 4: persist the loop state snapshot so cross-instance
     # checkpoint/resume can rebuild the behavior graph, gain tracker
@@ -2416,6 +3126,7 @@ def _ctx_compile(
     loop = _ensure_ctx_loop(state, ctx)
     active_obligation_id = state.get("active_obligation_id", "")
 
+    partial_retry = _is_partial_compile_retry(loop, active_obligation_id)
     compile_update = compile_candidate_node(
         state,
         runtime=runtime,
@@ -2434,6 +3145,11 @@ def _ctx_compile(
         loop,
         compile_update.pop("_compile_attempt", None),
     )
+    _note_post_partial_retry(
+        loop,
+        active_obligation_id,
+        was_partial=partial_retry,
+    )
 
     _record_intent_compile_event(
         loop,
@@ -2448,12 +3164,14 @@ def _ctx_compile(
         # turns_executed only when a next obligation exists.
         ctx.compile_route = "compiled"
         _refresh_acquisition_ledger(loop, compile_update)
+        compile_update.update(_refresh_loop_quality(loop, compile_update))
         compile_update["loop_state_snapshot"] = snapshot_loop_state(loop)
         return compile_update
     if partial_evidence is not None:
         # The advancer performs the round-robin move and accounting.
         ctx.compile_route = "partial"
         _refresh_acquisition_ledger(loop, compile_update)
+        compile_update.update(_refresh_loop_quality(loop, compile_update))
         compile_update["loop_state_snapshot"] = snapshot_loop_state(loop)
         return compile_update
 
@@ -2465,6 +3183,7 @@ def _ctx_compile(
         ctx.turns_executed += 1
         loop.turn_index += 1
         _refresh_acquisition_ledger(loop, compile_update)
+        compile_update.update(_refresh_loop_quality(loop, compile_update))
         compile_update["loop_state_snapshot"] = snapshot_loop_state(loop)
         return compile_update
 
@@ -2478,6 +3197,7 @@ def _ctx_compile(
     # Gap accepted: route to advancer (same as compiled-success).
     ctx.compile_route = "compiled"
     _refresh_acquisition_ledger(loop, compile_update)
+    compile_update.update(_refresh_loop_quality(loop, compile_update))
     compile_update["loop_state_snapshot"] = snapshot_loop_state(loop)
     return compile_update
 
@@ -2595,13 +3315,28 @@ def _ctx_terminate(
     loop.terminated = ctx.terminated
     loop.termination_reason = ctx.termination_reason
     final_state = dict(state)
-    if ctx.termination_reason == "max_turns_reached":
+    if ctx.termination_reason in (
+        "max_turns_reached",
+        "wall_clock_deadline",
+        "candidate_handoff_partial",
+    ):
         final_state["status"] = "incomplete"
-        final_state["blocked_reason"] = "max_turns_reached"
+        final_state["blocked_reason"] = ctx.termination_reason
     elif ctx.termination_reason in ("no_active_obligation", "all_obligations_terminal", "ready_to_author"):
-        final_state["status"] = "trusted"
+        if state.get("status") == "incomplete" and state.get("blocked_reason") == "candidate_handoff_partial":
+            final_state["status"] = "incomplete"
+            final_state["blocked_reason"] = "candidate_handoff_partial"
+        else:
+            final_state["status"] = "trusted"
     elif ctx.termination_reason in ("stop_blocked", "gap_finalizer_blocked", "evidence_critic_blocked", "no_tool_calls_no_terminal", "intent_coverage_blocked"):
         final_state["status"] = "blocked"
+    if loop.revision_ingest_failures and final_state.get("status") == "trusted":
+        # A revision the journal holds but the live research state could not
+        # use (or a ledger that could not be re-read) leaves the run describing
+        # targets it did not actually research.  That is never a trusted
+        # terminal state.
+        final_state["status"] = "incomplete"
+        final_state["blocked_reason"] = "revision_ingest_failed"
     return ResearchLoopResult(
         loop_state=loop,
         final_state=final_state,
@@ -2612,6 +3347,9 @@ def _ctx_terminate(
         policy_merge_trace=loop.policy_merge_trace,
         evidence_critic_routes=ctx.routes,
         node_trace=list(ctx.node_trace),
+        revision_journal=loop.revision_journal,
+        revision_ingest_outcomes=list(loop.revision_ingest_outcomes),
+        revision_ingest_failures=list(loop.revision_ingest_failures),
     )
 
 
@@ -2624,6 +3362,7 @@ def build_research_subgraph(
     runtime: ResearchGraphRuntime,
     *,
     max_turns: int = 50,
+    max_wall_clock_seconds: float | None = None,
     checkpointer: Any = None,
 ) -> "CompiledResearchSubgraph":
     """Build the LangGraph ``StateGraph`` for the V3 research plane.
@@ -2674,7 +3413,11 @@ def build_research_subgraph(
     ``ResearchLoopResult``).
     """
 
-    ctx = _ResearchGraphContext(runtime, max_turns=max_turns)
+    ctx = _ResearchGraphContext(
+        runtime,
+        max_turns=max_turns,
+        max_wall_clock_seconds=max_wall_clock_seconds,
+    )
     holder = _ResultHolder()
 
     # --- node wrappers --------------------------------------------------
@@ -2976,6 +3719,7 @@ def run_research_loop(
     *,
     initial_state: AgentStateV3 | None = None,
     max_turns: int = 50,
+    max_wall_clock_seconds: float | None = None,
     loop_state: "ResearchLoopState | None" = None,
 ) -> ResearchLoopResult:
     """Run the research loop without going through LangGraph.
@@ -2987,7 +3731,11 @@ def run_research_loop(
         )
     """
 
-    return ResearchLoopDriver(runtime, max_turns=max_turns).run(
+    return ResearchLoopDriver(
+        runtime,
+        max_turns=max_turns,
+        max_wall_clock_seconds=max_wall_clock_seconds,
+    ).run(
         initial_state, loop_state=loop_state
     )
 
@@ -3010,6 +3758,7 @@ def _obligation_is_terminal(
     item: Any,
     *,
     promotion_records: tuple[Any, ...] | None = None,
+    receipt_verifier: Any | None = None,
 ) -> bool:
     """Whether an obligation needs no further research.
 
@@ -3022,6 +3771,11 @@ def _obligation_is_terminal(
     for an unresolved ``call_relation``).
     """
 
+    if _has_terminal_stop(item):
+        # The bounded search stopped.  This is terminal for scheduling and
+        # never authorizes a negative conclusion (that still requires the
+        # receipt-backed proof below).
+        return True
     # ``None`` means a legacy caller has no promotion ledger and may use the
     # agenda's compatibility claim ids.  An explicit empty tuple means the
     # production ledger was consulted and contains no promotion for this
@@ -3035,6 +3789,7 @@ def _obligation_is_terminal(
         item,
         promotion_records=promotion_records or (),
         promoted_claim_ids=promoted_claim_ids,
+        receipt_verifier=receipt_verifier,
     )
     return proof.terminal
 
@@ -3074,6 +3829,7 @@ def _has_unresolved_must_cover(
     agenda: ResearchAgendaV1,
     *,
     promotion_records: tuple[Any, ...] | None = None,
+    receipt_verifier: Any | None = None,
 ) -> bool:
     return any(
         item.priority == "must_cover"
@@ -3082,6 +3838,7 @@ def _has_unresolved_must_cover(
             promotion_records=_records_for_obligation(
                 promotion_records, item.obligation_id
             ),
+            receipt_verifier=receipt_verifier,
         )
         for item in agenda.items
     )
@@ -3092,16 +3849,131 @@ def _obligation_is_researchable_now(
     *,
     defer_organization_preference: bool,
     promotion_records: tuple[Any, ...] | None = None,
+    receipt_verifier: Any | None = None,
 ) -> bool:
     if _obligation_is_terminal(
         item,
         promotion_records=_records_for_obligation(
             promotion_records, str(getattr(item, "obligation_id", "") or "")
         ),
+        receipt_verifier=receipt_verifier,
     ):
         return False
     if defer_organization_preference and _is_organization_preference(item):
         return False
+    return True
+
+
+def _obligation_claim_ids(
+    item: Any,
+    *,
+    promotion_records: tuple[Any, ...] | None,
+) -> tuple[str, ...]:
+    record_claims = ()
+    if promotion_records is not None:
+        record_claims = tuple(
+            str(value).strip()
+            for record in _records_for_obligation(
+                promotion_records,
+                str(getattr(item, "obligation_id", "") or ""),
+            ) or ()
+            for value in (
+                record.get("claim_ids", ())
+                if isinstance(record, dict)
+                else (getattr(record, "claim_ids", ()) or ())
+            )
+            if str(value).strip()
+        )
+    agenda_claims = tuple(
+        str(value).strip()
+        for value in (getattr(item, "supported_claim_ids", ()) or ())
+        if str(value).strip()
+    )
+    return tuple(dict.fromkeys((*record_claims, *agenda_claims)))
+
+
+def _has_terminal_stop(item: Any) -> bool:
+    """Whether the search for this obligation reached a typed bounded stop.
+
+    R9: a stop record ends the *search* without proving absence.  Scheduling
+    must honor it (no infinite churn), while the proof evaluator still refuses
+    to treat it as negative evidence.
+    """
+
+    return any(
+        str(value).startswith("terminal_stop:")
+        for value in (getattr(item, "missing_information", ()) or ())
+        if str(value).strip()
+    )
+
+
+def _obligation_needs_research(
+    item: Any,
+    *,
+    promotion_records: tuple[Any, ...] | None,
+    post_partial_retry_counts: Mapping[str, int] | None,
+    receipt_verifier: Any | None = None,
+) -> bool:
+    """Whether an item still consumes a research scheduling slot."""
+
+    status = str(getattr(item, "status", "") or "")
+    if status == "explicit_gap":
+        # R9: the status marker is not proof.  Only a receipt that still
+        # re-authenticates against the current revision's ledger ends the
+        # search for this obligation; a legacy or damaged gap keeps consuming
+        # a scheduling slot instead of being treated as finished.
+        return not evaluate_obligation_terminal_proof(
+            item, receipt_verifier=receipt_verifier
+        ).explicit_gap_bound
+    if status == "blocked":
+        return False
+    if status in {"pending", "in_progress"}:
+        # A typed stop record means the bounded search for this obligation is
+        # finished; keep partial-retry semantics for ``partial`` items only.
+        return not _has_terminal_stop(item)
+    claim_ids = _obligation_claim_ids(item, promotion_records=promotion_records)
+    if status == "supported":
+        # A status without a promotion is not a safe supported handoff.
+        return not bool(claim_ids)
+    if status == "partial":
+        if not claim_ids:
+            return True
+        count = max(
+            0,
+            int(
+                (post_partial_retry_counts or {}).get(
+                    str(getattr(item, "obligation_id", "") or ""),
+                    0,
+                )
+                or 0
+            ),
+        )
+        return count < POST_PARTIAL_RETRY_LIMIT
+    return True
+
+
+def _core_candidate_shape_ready(
+    agenda: ResearchAgendaV1,
+    *,
+    promotion_records: tuple[Any, ...] | None,
+    post_partial_retry_counts: Mapping[str, int] | None,
+) -> bool:
+    """Cheap scheduling predicate; the full handoff validator runs at refresh."""
+
+    core_items = [item for item in agenda.items if item.priority == "must_cover"]
+    if not core_items:
+        return False
+    for item in core_items:
+        if _obligation_needs_research(
+            item,
+            promotion_records=promotion_records,
+            post_partial_retry_counts=post_partial_retry_counts,
+        ):
+            return False
+        if item.status not in {"supported", "partial"}:
+            return False
+        if not _obligation_claim_ids(item, promotion_records=promotion_records):
+            return False
     return True
 
 
@@ -3110,6 +3982,8 @@ def _next_unresolved_obligation(
     current_id: str,
     *,
     promotion_records: tuple[Any, ...] | None = None,
+    post_partial_retry_counts: Mapping[str, int] | None = None,
+    receipt_verifier: Any | None = None,
 ) -> str | None:
     """Round-robin unresolved obligations instead of starving later sections.
 
@@ -3128,14 +4002,48 @@ def _next_unresolved_obligation(
     """
 
     items = agenda.items
+    core_needs = [
+        item for item in items
+        if item.priority == "must_cover"
+        and _obligation_needs_research(
+            item,
+            promotion_records=promotion_records,
+            post_partial_retry_counts=post_partial_retry_counts,
+            receipt_verifier=receipt_verifier,
+        )
+    ]
+    # Core breadth and the one partial retry always win over non-core story
+    # work.  This is the key distinction from the old all-obligations loop.
+    if core_needs:
+        started = False
+        for item in items:
+            if not started:
+                if item.obligation_id == current_id:
+                    started = True
+                continue
+            if item in core_needs:
+                return item.obligation_id
+        return core_needs[0].obligation_id
+
+    # Once the core shape is ready, the caller can hand off Candidate.  Do
+    # not spend the remaining Research budget on should-cover/preference
+    # items; those are persisted as deferred review work.
+    if _core_candidate_shape_ready(
+        agenda,
+        promotion_records=promotion_records,
+        post_partial_retry_counts=post_partial_retry_counts,
+    ):
+        return None
+
+    # If a structural or qualifier blocker prevents Candidate, keep the old
+    # fail-closed behavior and use remaining non-core items only as useful
+    # work, while organization preferences remain last.
     defer_org = _has_unresolved_must_cover(
         agenda,
         promotion_records=promotion_records,
+        receipt_verifier=receipt_verifier,
     )
     started = False
-    # First move forward in story/agenda order regardless of priority.  The
-    # old must-cover-first second pass let a broad overview starve every
-    # should-cover stage that actually contained the method mechanics.
     for item in items:
         if not started:
             if item.obligation_id == current_id:
@@ -3145,25 +4053,15 @@ def _next_unresolved_obligation(
             item,
             defer_organization_preference=defer_org,
             promotion_records=promotion_records,
+            receipt_verifier=receipt_verifier,
         ):
             return item.obligation_id
-    # Wrap around after every later question has had a breadth pass, with
-    # must-cover items taking precedence on the next cycle.
-    for item in items:
-        if item.priority == "must_cover" and not _obligation_is_terminal(
-            item,
-            promotion_records=_records_for_obligation(
-                promotion_records, item.obligation_id
-            ),
-        ):
-            return item.obligation_id
-    # Fall back to any unresolved obligation, still skipping organization
-    # preference while must-cover search remains open.
     for item in items:
         if _obligation_is_researchable_now(
             item,
             defer_organization_preference=defer_org,
             promotion_records=promotion_records,
+            receipt_verifier=receipt_verifier,
         ):
             return item.obligation_id
     for item in items:
@@ -3172,6 +4070,7 @@ def _next_unresolved_obligation(
             promotion_records=_records_for_obligation(
                 promotion_records, item.obligation_id
             ),
+            receipt_verifier=receipt_verifier,
         ):
             return item.obligation_id
     return None
@@ -3189,7 +4088,25 @@ def _next_loop_obligation(
         promotion_records=tuple(
             getattr(loop.observation_promotion_ledger, "records", ()) or ()
         ),
+        post_partial_retry_counts=loop.post_partial_retry_counts,
+        receipt_verifier=_runtime_receipt_verifier(loop.runtime),
     )
+
+
+def _runtime_receipt_verifier(runtime: Any) -> Any | None:
+    """Build the ledger re-authentication adapter for one runtime."""
+
+    tool_context = getattr(runtime, "tool_context", None)
+    if not callable(tool_context):
+        return None
+    try:
+        from code2paper.agentic.research_execution_ledger import (
+            build_context_ledger_reader,
+        )
+
+        return build_context_ledger_reader(tool_context())
+    except Exception:  # pragma: no cover - defensive: no reader, no proof
+        return None
 
 
 def _reconstruct_decision(
@@ -3268,13 +4185,85 @@ _TOOL_ACTION_MAP: dict[str, str] = {
     "validate_code_facts": "COMPILE_FACTS",
     "decompose_atomic_claims": "DECOMPOSE_CLAIMS",
     "authorize_atomic_claims": "DECOMPOSE_CLAIMS",
+    "close_search_frontier": "RECORD_GAP",
     "record_explicit_code_gap": "RECORD_GAP",
     "check_obligation_coverage": "RECORD_GAP",
+    "propose_target_revision": "PROPOSE_TARGET_REVISION",
 }
 
 
 def _action_for_tool(tool_name: str) -> str:
     return _TOOL_ACTION_MAP.get(tool_name, "SEARCH_SYMBOLS")
+
+
+def record_executed_research_action(
+    agenda: ResearchAgendaV1,
+    *,
+    obligation_id: str,
+    action: ResearchAction | str,
+    observations: Sequence[ResearchObservationV1],
+) -> None:
+    """Record a research action that actually executed.
+
+    The agenda item's ``attempted_actions`` is the durable execution history
+    consumed by gap reporting and Candidate eligibility.  It is updated only
+    after tools ran: policy-rejected proposals never reach this helper, and
+    a lone ``STOP_BLOCKED`` has no observation and therefore is not a
+    research attempt.  ``success_empty`` and ``parse_failed`` observations
+    still count as attempts because the tool did execute.
+
+    Duplicate actions are collapsed while preserving execution order, a
+    ``pending`` item advances to ``in_progress``, and ``no_progress_counter``
+    / ``last_information_gain`` are kept in sync with the observation
+    outcome.  Agenda items are persisted through the loop snapshot, so this
+    ledger survives checkpoint/resume without being re-recorded.
+    """
+
+    if not obligation_id:
+        return
+    item = next(
+        (
+            candidate
+            for candidate in agenda.items
+            if candidate.obligation_id == obligation_id
+        ),
+        None,
+    )
+    if item is None:
+        return
+    relevant = tuple(
+        observation
+        for observation in observations
+        if observation.obligation_id == obligation_id
+    )
+    if not relevant:
+        return
+    action_value = str(action or "").strip()
+    if action_value and action_value not in item.attempted_actions:
+        item.attempted_actions.append(action_value)  # type: ignore[arg-type]
+    if item.status == "pending":
+        item.status = "in_progress"
+    gains = [
+        observation
+        for observation in relevant
+        if observation.status == "success"
+        and (
+            observation.result_refs
+            or observation.exact_span_ids
+            or int(getattr(observation.diagnostics, "candidate_count", 0) or 0) > 0
+        )
+    ]
+    if gains:
+        item.no_progress_counter = 0
+        item.last_information_gain = (
+            f"{gains[-1].tool_name}:{gains[-1].observation_id}"
+        )
+    else:
+        item.no_progress_counter = int(item.no_progress_counter or 0) + len(relevant)
+        if not item.last_information_gain:
+            item.last_information_gain = (
+                f"no_gain:{relevant[-1].tool_name}:{relevant[-1].status}"
+            )
 
 
 def _track_no_progress_calls(
@@ -3318,19 +4307,18 @@ def _active_obligation_partial(
     *,
     promotion_records: tuple[Any, ...] | None = None,
 ) -> bool:
-    """Whether the active obligation has a terminal ``partial`` proof."""
+    """Whether the active obligation has promoted partial claims.
+
+    This is intentionally weaker than ``evaluate_obligation_terminal_proof``:
+    a partial with unresolved fields must not be sent through the explicit-gap
+    finalizer, because that would contradict its already-authorized claims.
+    """
 
     for item in agenda.items:
         if item.obligation_id == active_obligation_id:
-            return evaluate_obligation_terminal_proof(
+            claims = _obligation_claim_ids(
                 item,
-                promotion_records=(
-                    _records_for_obligation(promotion_records, active_obligation_id)
-                    or ()
-                ),
-                promoted_claim_ids=(
-                    tuple(item.supported_claim_ids or ())
-                    if promotion_records is None else ()
-                ),
-            ).terminal
+                promotion_records=promotion_records,
+            )
+            return item.status == "partial" and bool(claims)
     return False

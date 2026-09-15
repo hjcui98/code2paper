@@ -11,7 +11,7 @@ try:
 except ModuleNotFoundError:  # pragma: no cover - Python 3.10 fallback
     tomllib = None
 from pathlib import Path
-from typing import Any
+from typing import Any, Mapping
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -244,41 +244,128 @@ def build_symbol_index(
     max_files: int = 120,
     max_candidates: int = 200,
 ) -> SymbolIndexReport:
-    """Build a deterministic symbol/ranking view for agentic retrieval decisions."""
+    """Build a deterministic symbol/ranking view for agentic retrieval decisions.
+
+    This disk-backed entry point reads the working tree.  Callers that must
+    stay bound to a frozen repository snapshot should collect the file
+    contents from that snapshot and use ``build_symbol_index_from_files``
+    instead; otherwise a search can observe YAML/source that changed after
+    freeze time.
+    """
 
     root = Path(project_root).expanduser().resolve()
     warnings: list[str] = []
-    entries: list[SymbolIndexEntry] = []
-    files = _candidate_indexable_files(root=root, plan=plan, max_files=max_files, warnings=warnings)
-    for rel_path in files:
+    files: dict[str, str] = {}
+    candidate_paths = _candidate_indexable_files(
+        root=root, plan=plan, max_files=max_files, warnings=warnings
+    )
+    for rel_path in candidate_paths:
         full_path = root / rel_path
         try:
-            text = full_path.read_text(encoding="utf-8", errors="ignore")
+            files[rel_path] = full_path.read_text(encoding="utf-8", errors="ignore")
         except OSError as exc:
             warnings.append(f"read_failed:{rel_path}:{exc.__class__.__name__}")
+    return build_symbol_index_from_files(
+        files=files,
+        plan=plan,
+        project_root=str(root),
+        max_files=max_files,
+        max_candidates=max_candidates,
+        warnings=warnings,
+    )
+
+
+def build_symbol_index_from_files(
+    *,
+    files: Mapping[str, str],
+    plan: AgenticRetrievalPlan,
+    project_root: str = "",
+    max_files: int = 120,
+    max_candidates: int = 200,
+    warnings: list[str] | None = None,
+) -> SymbolIndexReport:
+    """Build the symbol/ranking view from in-memory ``{path: text}`` files.
+
+    ``files`` is expected to be snapshot-relative.  Priority and target
+    paths are ordered first, then the remaining indexable files in a stable
+    path order, so repeated calls with the same frozen contents produce the
+    same index regardless of filesystem traversal order.
+    """
+
+    warning_list = warnings if warnings is not None else []
+    ordered: list[str] = []
+    for path in list(plan.priority_files) + [
+        target_path for target in plan.targets for target_path in target.paths
+    ]:
+        rel_path = _normalize_index_path(path, project_root=project_root)
+        if rel_path and rel_path in files and rel_path not in ordered:
+            ordered.append(rel_path)
+    known = set(ordered)
+    ordered.extend(path for path in sorted(files) if path not in known)
+
+    selected_files: list[str] = []
+    entries: list[SymbolIndexEntry] = []
+    for rel_path in ordered:
+        if len(selected_files) >= max_files:
+            break
+        if not _is_indexable_path(rel_path):
             continue
+        if _ignored(rel_path, plan.ignore_files):
+            continue
+        if any(
+            part in {".git", "__pycache__", ".venv", "venv", "node_modules", "build", "dist"}
+            for part in Path(rel_path).parts
+        ):
+            continue
+        selected_files.append(rel_path)
+        text = str(files.get(rel_path, ""))
         if len(text.encode("utf-8", errors="ignore")) > 512 * 1024:
-            warnings.append(f"oversized_file:{rel_path}")
+            warning_list.append(f"oversized_file:{rel_path}")
             continue
         if rel_path.endswith(".py"):
             try:
                 tree = ast.parse(text)
             except SyntaxError as exc:
-                warnings.append(f"syntax_error:{rel_path}:{exc.lineno or 0}")
+                warning_list.append(f"syntax_error:{rel_path}:{exc.lineno or 0}")
                 continue
-            entries.extend(_extract_python_symbol_entries(tree=tree, text=text, rel_path=rel_path, plan=plan))
+            entries.extend(
+                _extract_python_symbol_entries(
+                    tree=tree, text=text, rel_path=rel_path, plan=plan
+                )
+            )
         elif _is_config_path(rel_path):
-            entries.extend(_extract_config_entries(text=text, rel_path=rel_path, plan=plan, warnings=warnings))
+            entries.extend(
+                _extract_config_entries(
+                    text=text, rel_path=rel_path, plan=plan, warnings=warning_list
+                )
+            )
         elif _is_shell_path(rel_path):
             entries.extend(_extract_shell_entries(text=text, rel_path=rel_path, plan=plan))
+    if not selected_files:
+        warning_list.append("no_indexable_files_indexed")
     entries.sort(key=lambda entry: (-entry.score, entry.path, entry.start_line, entry.symbol))
     return SymbolIndexReport(
-        project_root=str(root),
-        indexed_files=len(files),
+        project_root=str(project_root or ""),
+        indexed_files=len(selected_files),
         indexed_symbols=len(entries),
         candidates=entries[:max_candidates],
-        warnings=warnings,
+        warnings=warning_list,
     )
+
+
+def _normalize_index_path(value: Any, *, project_root: str = "") -> str:
+    raw = str(value or "").strip().replace("\\", "/")
+    if not raw:
+        return ""
+    if project_root:
+        root = str(Path(project_root).expanduser().resolve()).replace("\\", "/").rstrip("/")
+        if raw == root:
+            return ""
+        if raw.startswith(root + "/"):
+            raw = raw[len(root) + 1:]
+    while raw.startswith("./"):
+        raw = raw[2:]
+    return raw.strip("/")
 
 
 def enrich_plan_with_orchestrator_targets(
@@ -1069,14 +1156,10 @@ def _extract_config_entries(
     plan: AgenticRetrievalPlan,
     warnings: list[str],
 ) -> list[SymbolIndexEntry]:
-    payload = _parse_config_payload(text=text, rel_path=rel_path, warnings=warnings)
-    key_paths = _flatten_config_keys(payload)
-    if not key_paths:
-        key_paths = _line_config_keys(text)
+    key_paths = config_key_entries(text=text, rel_path=rel_path, warnings=warnings)
     entries: list[SymbolIndexEntry] = []
     lines = text.splitlines()
-    for key_path, value_preview in key_paths[:120]:
-        line_no = _first_key_line(lines, key_path)
+    for key_path, line_no, value_preview in key_paths[:120]:
         snippet = _line_window(lines, line_no, radius=2)
         symbol = key_path or Path(rel_path).stem
         entry = SymbolIndexEntry(
@@ -1199,7 +1282,7 @@ def _is_shell_path(path: str) -> bool:
     }
 
 
-def _parse_config_payload(*, text: str, rel_path: str, warnings: list[str]) -> Any:
+def parse_config_payload(*, text: str, rel_path: str, warnings: list[str]) -> Any:
     lowered = rel_path.lower()
     try:
         if lowered.endswith(".json"):
@@ -1221,7 +1304,7 @@ def _parse_config_payload(*, text: str, rel_path: str, warnings: list[str]) -> A
     return None
 
 
-def _flatten_config_keys(payload: Any, prefix: str = "") -> list[tuple[str, str]]:
+def flatten_config_keys(payload: Any, prefix: str = "") -> list[tuple[str, str]]:
     if isinstance(payload, dict):
         entries: list[tuple[str, str]] = []
         for key, value in payload.items():
@@ -1230,15 +1313,72 @@ def _flatten_config_keys(payload: Any, prefix: str = "") -> list[tuple[str, str]
                 continue
             child_prefix = f"{prefix}.{key_text}" if prefix else key_text
             entries.append((child_prefix, _value_preview(value)))
-            entries.extend(_flatten_config_keys(value, child_prefix))
+            entries.extend(flatten_config_keys(value, child_prefix))
         return entries
     if isinstance(payload, list):
         entries: list[tuple[str, str]] = []
         for index, value in enumerate(payload[:20]):
             child_prefix = f"{prefix}[{index}]" if prefix else f"[{index}]"
-            entries.extend(_flatten_config_keys(value, child_prefix))
+            entries.extend(flatten_config_keys(value, child_prefix))
         return entries
     return []
+
+
+def config_key_entries(
+    *,
+    text: str,
+    rel_path: str,
+    warnings: list[str] | None = None,
+) -> list[tuple[str, int, str]]:
+    """Return ``(dotted_keypath, line, value_preview)`` for one config file.
+
+    Structured YAML/TOML/JSON is parsed once by the shared
+    ``parse_config_payload``/``flatten_config_keys`` pair.  Lexical fallback
+    is used only when the structured payload is empty or unparseable, so a
+    key that the structured parser cannot confirm is never reported as an
+    exact declaration.
+    """
+
+    warning_list = warnings if warnings is not None else []
+    payload = parse_config_payload(text=text, rel_path=rel_path, warnings=warning_list)
+    key_paths = flatten_config_keys(payload)
+    if not key_paths:
+        key_paths = _line_config_keys(text)
+    lines = text.splitlines()
+    return [
+        (key_path, _first_key_line(lines, key_path), value_preview)
+        for key_path, value_preview in key_paths
+    ]
+
+
+def match_config_key(
+    entries: list[tuple[str, int, str]],
+    config_key: str,
+) -> tuple[list[tuple[str, int, str]], bool]:
+    """Match a requested config key against flattened declarations.
+
+    Returns ``(matches, ambiguous)``.  A full dotted keypath match always
+    wins.  A leaf-name match is accepted only when exactly one distinct
+    keypath declares that leaf; several same-named leaves are reported as
+    ambiguous instead of selecting the first declaration.
+    """
+
+    requested = str(config_key or "").strip()
+    if not requested:
+        return list(entries), False
+    exact = [entry for entry in entries if entry[0] == requested]
+    if exact:
+        return exact, False
+    leaf = requested.rsplit(".", 1)[-1]
+    leaf_matches = [
+        entry
+        for entry in entries
+        if entry[0].rsplit(".", 1)[-1].split("[", 1)[0] == leaf
+    ]
+    keypaths = {entry[0] for entry in leaf_matches}
+    if len(keypaths) > 1:
+        return [], True
+    return leaf_matches, False
 
 
 def _line_config_keys(text: str) -> list[tuple[str, str]]:

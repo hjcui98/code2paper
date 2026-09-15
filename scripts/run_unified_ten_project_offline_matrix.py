@@ -41,6 +41,7 @@ from code2paper.agentic.formalization_agent import (  # noqa: E402
     load_mechanism_formula_obligations_v1_payload,
 )
 from code2paper.agentic.mechanism_context_compiler import (  # noqa: E402
+    build_current_behavior_graph,
     compile_mechanism_contexts,
     validate_mechanism_context_completeness,
     validate_mechanism_context_structural_gates,
@@ -54,7 +55,11 @@ from code2paper.agentic.mechanism_context_models import (  # noqa: E402
 from code2paper.agentic.method_architect import build_narrative_plan_v3  # noqa: E402
 from code2paper.agentic.method_argument_models import MethodSectionPlanV2  # noqa: E402
 from code2paper.agentic.method_product_models import AuthorStoryNodeV1  # noqa: E402
-from code2paper.agentic.repo_snapshot import RepoSnapshot  # noqa: E402
+from code2paper.agentic.repo_snapshot import (  # noqa: E402
+    RepoSnapshot,
+    read_verified_snapshot_sources,
+    repo_snapshot_identity_digest,
+)
 from code2paper.agentic.research_models import (  # noqa: E402
     ImplementationScopeV1,
     ResearchAgendaV1,
@@ -70,6 +75,8 @@ from code2paper.agentic.source_inventory import (  # noqa: E402
     source_manifest_snapshot_failures,
 )
 from code2paper.agentic.unified_context_compiler import (  # noqa: E402
+    read_unified_extra_roles,
+    BUDGET_FIELD_BY_ENV,
     UnifiedCompilerError,
     bind_formula_obligation_page_owners,
     build_consumer_invocation_plan_v1,
@@ -78,6 +85,8 @@ from code2paper.agentic.unified_context_compiler import (  # noqa: E402
     build_unified_context_archive_v2,
     evaluate_unified_live_admission_v1,
     extend_writer_worksets_from_narrative_plan,
+    fit_narrative_plan_to_page_budget,
+    read_unified_budget_profile,
 )
 from code2paper.agentic.unified_context_models import (  # noqa: E402
     UNIFIED_INVOCATION_BUDGET_MISSING,
@@ -127,17 +136,6 @@ _CONTEXT_REBUILD_NAMES = {
     "evidence_packets": ("evidence_packets_v3",),
     "behavior_graph": ("behavior_graph_v1",),
 }
-
-_PROFILE_ENV_TO_FIELD = {
-    "CODE2PAPER_UNIFIED_MAX_PAGE_INPUT_TOKENS": "max_page_input_tokens",
-    "CODE2PAPER_UNIFIED_MAX_TOTAL_INPUT_TOKENS": "max_total_input_tokens",
-    "CODE2PAPER_UNIFIED_MAX_FORMALIZER_CALLS": "max_formalizer_calls",
-    "CODE2PAPER_UNIFIED_MAX_WRITER_CALLS": "max_writer_calls",
-    "CODE2PAPER_UNIFIED_MAX_REALIZER_CALLS": "max_realizer_calls",
-    "CODE2PAPER_UNIFIED_MAX_OBLIGATIONS_PER_PAGE": "max_obligations_per_page",
-    "CODE2PAPER_UNIFIED_MAX_FORMULA_REPAIR_CALLS": "max_formula_repair_calls",
-}
-
 
 def _digest_bytes(payload: bytes) -> str:
     return "sha256:" + hashlib.sha256(payload).hexdigest()
@@ -249,21 +247,19 @@ def _profile_values(path: Path | None) -> tuple[dict[str, str], str, str, int]:
 
 
 def _parse_budget(values: Mapping[str, str]) -> tuple[dict[str, int], tuple[str, ...]]:
-    budget: dict[str, int] = {}
-    failures: list[str] = []
-    for env_name, field_name in _PROFILE_ENV_TO_FIELD.items():
-        raw = values.get(env_name)
-        if raw is None or not str(raw).strip():
-            failures.append(f"{UNIFIED_INVOCATION_BUDGET_MISSING}:{env_name}")
-            continue
-        try:
-            budget[field_name] = int(str(raw).strip())
-        except ValueError:
-            failures.append(f"{UNIFIED_INVOCATION_BUDGET_MISSING}:{env_name}")
-    # Binder is deterministic in the current path and has no model-call slot;
-    # retaining an explicit zero keeps the role map closed without inventing
-    # a budget for a consumer that is not invoked by the matrix.
-    budget["max_binder_calls"] = 0
+    """Read the same declared contract the product compiler reads.
+
+    The matrix keeps no second profile map: an undeclared field fails here and
+    in production with the identical failure code.
+    """
+
+    budget = read_unified_budget_profile(values)
+    budget.update(read_unified_extra_roles(values))
+    failures = [
+        f"{UNIFIED_INVOCATION_BUDGET_MISSING}:{env_name}"
+        for env_name, field_name in BUDGET_FIELD_BY_ENV.items()
+        if field_name not in budget
+    ]
     return budget, tuple(dict.fromkeys(failures))
 
 
@@ -410,6 +406,22 @@ def _authoring_scope_hints(
     return tuple(dict.fromkeys(texts)), tuple(dict.fromkeys(owner_ids))
 
 
+def _verified_source_provider(source: Mapping[str, Any]) -> Any:
+    """Return the digest-verified source reader for a rehydrated snapshot."""
+
+    snapshot = source.get("repo_snapshot")
+    if snapshot is None:
+        return None
+    project_root = str(getattr(snapshot, "project_root", "") or "")
+    if not project_root:
+        return snapshot
+    return read_verified_snapshot_sources(
+        project_root=project_root,
+        source_manifest=source.get("source_manifest"),
+        repo_snapshot=snapshot,
+    )
+
+
 def _rebuild_current_context_set(
     root: Path,
     *,
@@ -432,14 +444,15 @@ def _rebuild_current_context_set(
         equations=research.get("equations"),
         configurations=inputs.get("configurations"),
         evidence_packets=inputs.get("evidence_packets"),
-        # A persisted behavior graph is a historical research observation.
-        # When the repository snapshot is available, rebuild the Python AST
-        # graph from the current symbol index so old relation/owner IDs
-        # cannot leak into the new closure.
-        behavior_graph=None,
+        # The graph is rebuilt by the shared current-source preparation path;
+        # a persisted historical graph is never passed into the compiler.
+        behavior_graph=source.get("behavior_graph"),
         implementation_scope=source.get("implementation_scope"),
         symbol_index=source.get("symbol_index"),
-        source_provider=source.get("repo_snapshot"),
+        # R6: pass the same revision-frozen, digest-verified reader production
+        # uses.  A raw snapshot model carries its capture timestamp, which must
+        # not enter the closure/archive identity.
+        source_provider=_verified_source_provider(source),
         source_manifest=source.get("source_manifest"),
     )
     if not context_set.contexts:
@@ -746,82 +759,172 @@ def _rehydrate_source_inputs(
     )
     if source_failures:
         raise ValueError(";".join(dict.fromkeys(source_failures)))
+
+    entry_roots = tuple(
+        str(item).strip()
+        for item in (getattr(rebuilt.implementation_scope, "target_entry_symbol_ids", ()) or ())
+        if str(item).strip()
+    )
+    current_graph = build_current_behavior_graph(
+        symbol_index=rebuilt.symbol_index,
+        source_provider=rebuilt.files,
+        entry_symbol_ids=entry_roots,
+    )
+    historical_graph_path = _artifact_path(root, ("behavior_graph_v1",))
+    historical_summary: dict[str, Any] = {"present": False}
+    historical_node_count = 0
+    historical_relation_count = 0
+    if historical_graph_path is not None:
+        try:
+            payload = _read_json(historical_graph_path)
+            if isinstance(payload, Mapping):
+                payload = payload.get("behavior_graph") or payload.get("graph") or payload
+            nodes = tuple(payload.get("nodes", ()) or ()) if isinstance(payload, Mapping) else ()
+            relations = tuple(payload.get("relations", ()) or ()) if isinstance(payload, Mapping) else ()
+            historical_node_count = len(nodes)
+            historical_relation_count = len(relations)
+            historical_summary = {
+                "present": True,
+                "content_digest": str(payload.get("content_digest", "") or "")
+                if isinstance(payload, Mapping) else "",
+                "node_count": historical_node_count,
+                "relation_count": historical_relation_count,
+                "unresolved_relation_count": len(
+                    tuple(payload.get("unresolved_relations", ()) or ())
+                ) if isinstance(payload, Mapping) else 0,
+            }
+        except Exception as exc:
+            historical_summary = {
+                "present": True,
+                "load_failure": f"{exc.__class__.__name__}:{str(exc)[:160]}",
+            }
+    if historical_graph_path is not None and current_graph is None:
+        raise ValueError("unified_behavior_graph_rebuild_missing")
+    current_summary = {
+        "present": current_graph is not None,
+        "repo_snapshot_id": str(getattr(current_graph, "repo_snapshot_id", "") or "")
+        if current_graph is not None else "",
+        "project_tree_hash": str(getattr(current_graph, "project_tree_hash", "") or "")
+        if current_graph is not None else "",
+        "content_digest": str(getattr(current_graph, "content_digest", "") or "")
+        if current_graph is not None else "",
+        "node_count": len(getattr(current_graph, "nodes", ()) or ())
+        if current_graph is not None else 0,
+        "relation_count": len(getattr(current_graph, "relations", ()) or ())
+        if current_graph is not None else 0,
+        "unresolved_relation_count": len(getattr(current_graph, "unresolved_relations", ()) or ())
+        if current_graph is not None else 0,
+    }
+    graph_rebuild = {
+        "schema_version": "1.0",
+        "source": "current_verified_repository_source",
+        "entry_symbol_ids": list(entry_roots),
+        "repo_snapshot_id": rebuilt.snapshot.snapshot_id,
+        "project_tree_hash": rebuilt.snapshot.project_tree_hash,
+        "historical_graph": historical_summary,
+        "current_graph": current_summary,
+        "node_count_delta": current_summary["node_count"] - historical_node_count,
+        "relation_count_delta": current_summary["relation_count"] - historical_relation_count,
+    }
+    graph_rebuild["content_digest"] = sha256_digest(
+        canonical_json_bytes(graph_rebuild)
+    )
     return (
         {
             "repo_snapshot": rebuilt.snapshot,
             "symbol_index": rebuilt.symbol_index,
             "implementation_scope": rebuilt.implementation_scope,
             "source_manifest": rebuilt.source_manifest,
+            "behavior_graph": current_graph,
+            "behavior_graph_rebuild": graph_rebuild,
         },
         f"rehydrated_from_repo:{hash_source}:{expected_tree_hash}",
     )
 
 
 def _research_gate_failures(inputs: Mapping[str, Any]) -> tuple[str, ...]:
-    failures: list[str] = []
-    intent_graph = inputs.get("intent_graph")
-    agenda = inputs.get("research_agenda")
-    contexts = inputs.get("context_set")
-    if intent_graph is None:
-        failures.append("unified_intent_graph_missing")
-    if agenda is None:
-        failures.append("unified_research_agenda_missing")
-    if intent_graph is not None and agenda is not None:
-        graph_rows = tuple(getattr(intent_graph, "obligations", ()) or ())
-        agenda_rows = tuple(getattr(agenda, "items", ()) or ())
-        graph_ids = [str(getattr(item, "obligation_id", "")).strip() for item in graph_rows]
-        agenda_ids = [str(getattr(item, "obligation_id", "")).strip() for item in agenda_rows]
-        if len(graph_ids) != len(set(graph_ids)):
-            failures.append("unified_research_intent_obligation_duplicate")
-        if len(agenda_ids) != len(set(agenda_ids)):
-            failures.append("unified_research_agenda_obligation_duplicate")
-        graph_id_set = set(graph_ids)
-        agenda_id_set = set(agenda_ids)
-        if graph_id_set != agenda_id_set:
-            failures.append("unified_research_obligation_set_mismatch")
-        agenda_graph_digest = str(getattr(agenda, "intent_graph_digest", "") or "")
-        if not agenda_graph_digest:
-            failures.append("unified_research_intent_digest_missing")
-        elif agenda_graph_digest != str(getattr(intent_graph, "content_digest", "") or ""):
-            failures.append("unified_research_intent_digest_mismatch")
-        graph_by_id = {
-            str(getattr(item, "obligation_id", "")): item for item in graph_rows
-        }
-        for item in agenda_rows:
-            obligation_id = str(getattr(item, "obligation_id", "")).strip()
-            graph_item = graph_by_id.get(obligation_id)
-            if graph_item is not None and str(getattr(graph_item, "priority", "")) != str(
-                getattr(item, "priority", "")
-            ):
-                failures.append(f"unified_research_priority_mismatch:{obligation_id}")
-    if agenda is not None and contexts is not None:
-        if str(getattr(agenda, "repo_snapshot_id", "") or "") != str(
-            getattr(contexts, "repo_snapshot_id", "") or ""
-        ):
-            failures.append("unified_research_snapshot_mismatch")
-        if str(getattr(agenda, "project_tree_hash", "") or "") != str(
-            getattr(contexts, "project_tree_hash", "") or ""
-        ):
-            failures.append("unified_research_tree_hash_mismatch")
-    if agenda is not None:
-        for item in agenda.items:
-            if item.priority != "must_cover":
-                continue
-            if item.status in {"pending", "in_progress"}:
-                failures.append(f"unified_core_intent_unsearched:{item.obligation_id}")
-            if item.status == "partial":
-                terminal_gap = bool(item.gap_requirements) and all(
-                    requirement.terminal == "explicit_gap"
-                    and bool(requirement.attempted_tools)
-                    for requirement in item.gap_requirements
-                )
-                if not item.supported_claim_ids or not terminal_gap:
-                    failures.append(
-                        f"unified_core_intent_partial_without_terminal_gap:{item.obligation_id}"
-                    )
-            if item.status == "blocked":
-                failures.append(f"unified_core_intent_blocked:{item.obligation_id}")
-    return tuple(dict.fromkeys(failures))
+    """Strict Research gate, computed by the product's own function.
+
+    R2: the harness no longer keeps a second, independently drifting copy of
+    the strict gate.  Product and offline therefore agree on every failure
+    code for the same frozen inputs; the only remaining difference is the
+    explicitly selected lane (strict vs Candidate).
+    """
+
+    from code2paper.agentic.publication_method_writer import (
+        _unified_research_gate_failures,
+    )
+
+    return _unified_research_gate_failures(
+        intent_graph=inputs.get("intent_graph"),
+        research_agenda=inputs.get("research_agenda"),
+        contexts=inputs.get("context_set"),
+    )
+
+
+def _research_artifact_paths(root: Path) -> dict[str, str]:
+    """Resolve the frozen paths Candidate revalidation consumes."""
+
+    names = {
+        "candidate_handoff_v1": ("candidate_handoff_v1",),
+        "candidate_retry_ledger_v1": ("candidate_retry_ledger_v1",),
+        "observation_promotion_ledger_v1": ("observation_promotion_ledger_v1",),
+        "research_agenda_v1": ("research_agenda_v1",),
+        "atomic_claims_v3": ("atomic_claims_v3", "atomic_claims_v3_v3"),
+        "code_facts_v1": ("code_facts_v1", "code_facts_v1_v3"),
+        "evidence_packets_v3": ("evidence_packets_v3",),
+    }
+    paths: dict[str, str] = {}
+    for key, candidates in names.items():
+        path = _artifact_path(root, candidates)
+        if path is not None:
+            paths[key] = str(path)
+    return paths
+
+
+def _research_mode_failures(
+    inputs: Mapping[str, Any],
+    *,
+    artifact_paths: Mapping[str, str],
+) -> tuple[tuple[str, ...], tuple[str, ...], dict[str, Any]]:
+    """Return ``(strict, candidate, diagnostics)`` for one frozen project.
+
+    The Candidate projection reuses the product's authenticated-handoff
+    loader and Candidate-lane filter, so a partial handoff can never be
+    silently promoted to a strict pass, and a harness that does not recognise
+    the handoff cannot invent a terminal gap the product would not see.
+    """
+
+    from code2paper.agentic.publication_method_writer import (
+        _candidate_lane_research_failures,
+        _load_authenticated_candidate_handoff,
+    )
+
+    strict = _research_gate_failures(inputs)
+    artifact_map = {str(key): str(value) for key, value in artifact_paths.items()}
+    handoff, handoff_failures = _load_authenticated_candidate_handoff(artifact_map)
+    candidate = _candidate_lane_research_failures(
+        strict,
+        candidate_handoff=handoff,
+    )
+    if handoff is not None and handoff.eligible:
+        handoff_status = "eligible"
+    elif handoff is not None:
+        handoff_status = "ineligible"
+    elif artifact_map.get("candidate_handoff_v1"):
+        handoff_status = "rejected"
+    else:
+        handoff_status = "missing"
+    diagnostics = {
+        "gate_mode": "strict",
+        "strict_failure_codes": list(strict),
+        "candidate_failure_codes": list(candidate),
+        "candidate_gate_pass": not candidate,
+        "candidate_handoff_status": handoff_status,
+        "candidate_handoff_digest": str(getattr(handoff, "content_digest", "") or ""),
+        "candidate_handoff_revalidation_failures": list(handoff_failures),
+    }
+    return strict, candidate, diagnostics
 
 
 def _derive_formula_obligations(
@@ -855,7 +958,12 @@ def _derive_formula_obligations(
     }
 
 
-def _phase_row(plan: Any | None, admission: Any | None, error: str = "") -> dict[str, Any]:
+def _phase_row(
+    plan: Any | None,
+    admission: Any | None,
+    error: str = "",
+    candidate_admission: Any | None = None,
+) -> dict[str, Any]:
     if plan is None:
         return {
             "status": "fail",
@@ -863,9 +971,20 @@ def _phase_row(plan: Any | None, admission: Any | None, error: str = "") -> dict
             "planned_input_tokens": {},
             "max_attempts": 0,
             "admission_failure_codes": [error] if error else [],
+            "candidate_status": "fail",
+            "candidate_admission_failure_codes": [error] if error else [],
         }
     return {
         "status": "pass" if admission is not None and admission.status == "pass" else "fail",
+        "candidate_status": (
+            "pass"
+            if candidate_admission is not None
+            and candidate_admission.status == "pass"
+            else "fail"
+        ),
+        "candidate_admission_failure_codes": list(
+            getattr(candidate_admission, "failure_codes", ()) or ()
+        ),
         "planned_calls": dict(plan.planned_calls_by_role),
         "planned_input_tokens": dict(plan.planned_input_tokens_by_role),
         "reserved_calls": dict(plan.reserved_calls_by_role),
@@ -972,6 +1091,15 @@ def project_unified_offline(
     context_origin = "current_compiler_rebuild"
     context_rebuild_diagnostics: tuple[str, ...] = ()
     current_context_inputs: dict[str, Any] = {}
+    # Strict vs Candidate gate verdicts are always reported, even when the
+    # mechanism reconstruction never started.
+    strict_research_failures, candidate_research_failures, research_gate_modes = (
+        _research_mode_failures(
+            research,
+            artifact_paths=_research_artifact_paths(root),
+        )
+    )
+    research_gate_modes.setdefault("candidate_gate_pass", not candidate_research_failures)
     if snapshot is not None and manifest is not None:
         try:
             (
@@ -993,6 +1121,10 @@ def project_unified_offline(
     envelope = None
     phase_plans: dict[str, Any] = {}
     phase_admissions: dict[str, Any] = {}
+    # R2/round-4 guidance: the same real admission is evaluated in the
+    # Candidate lane with identical inputs, so a phase blocked only by
+    # strict-lane research codes reports its Candidate verdict too.
+    phase_admissions_candidate: dict[str, Any] = {}
     phase_manifests: dict[str, Any] = {}
     if contexts is None or snapshot is None or manifest is None:
         failures.append("unified_context_compilation_inputs_missing")
@@ -1006,9 +1138,9 @@ def project_unified_offline(
                 contexts,
                 source_manifest_digest=manifest.content_digest,
                 source_manifest=manifest,
-                repo_snapshot_digest=sha256_digest(
-                    canonical_json_bytes(snapshot.model_dump(mode="json"))
-                ),
+                # The snapshot identity helper excludes capture-time fields;
+                # dumping the model inline leaked ``created_at`` here.
+                repo_snapshot_digest=repo_snapshot_identity_digest(snapshot),
                 equations=research.get("equations"),
                 claims=research.get("claims"),
                 facts=research.get("facts"),
@@ -1056,7 +1188,13 @@ def project_unified_offline(
             for mechanism_id, items in completeness.items()
             for item in items
         )
-        research_failures = list(_research_gate_failures(research))
+        strict_research_failures, candidate_research_failures, research_gate_modes = (
+            _research_mode_failures(
+                research,
+                artifact_paths=_research_artifact_paths(root),
+            )
+        )
+        research_failures = list(strict_research_failures)
         failures.extend(research_failures)
 
     phase_rows: dict[str, dict[str, Any]] = {}
@@ -1114,6 +1252,23 @@ def project_unified_offline(
                 mechanism_diagnostics=mechanism_diagnostics,
                 source_failures=source_failures,
             )
+            phase_admissions_candidate["formalizer"] = evaluate_unified_live_admission_v1(
+                phase="formalizer",
+                plan=phase_plans["formalizer"],
+                envelope=envelope,
+                archive=archive,
+                manifest=workset_manifest,
+                run_digest=archive.content_digest,
+                model_context_tokens=model_context_tokens,
+                closed_set_failures=tuple(
+                    f"{mid}:{item}"
+                    for mid, items in completeness.items()
+                    for item in items
+                ),
+                research_failures=candidate_research_failures,
+                mechanism_diagnostics=mechanism_diagnostics,
+                source_failures=source_failures,
+            )
             stage = "narrative_plan_compile"
             story_spine = tuple(
                 AuthorStoryNodeV1.model_validate(item)
@@ -1133,6 +1288,18 @@ def project_unified_offline(
                 llm_config=None,
             )
             stage = "writer_workset_extend"
+            narrative_plan, paragraph_revision_failures, revision_diag = (
+                fit_narrative_plan_to_page_budget(
+                    narrative_plan,
+                    archive=archive,
+                    max_page_input_tokens=envelope.max_page_input_tokens,
+                )
+            )
+            if paragraph_revision_failures:
+                raise ValueError(
+                    "narrative_plan_page_budget_unresolved:"
+                    + ";".join(paragraph_revision_failures)
+                )
             writer_manifest = extend_writer_worksets_from_narrative_plan(
                 workset_manifest,
                 narrative_plan,
@@ -1171,6 +1338,23 @@ def project_unified_offline(
                 mechanism_diagnostics=mechanism_diagnostics,
                 source_failures=source_failures,
             )
+            phase_admissions_candidate["writer"] = evaluate_unified_live_admission_v1(
+                phase="writer",
+                plan=phase_plans["writer"],
+                envelope=envelope,
+                archive=archive,
+                manifest=writer_manifest,
+                run_digest=archive.content_digest,
+                model_context_tokens=model_context_tokens,
+                closed_set_failures=tuple(
+                    f"{mid}:{item}"
+                    for mid, items in completeness.items()
+                    for item in items
+                ),
+                research_failures=candidate_research_failures,
+                mechanism_diagnostics=mechanism_diagnostics,
+                source_failures=source_failures,
+            )
             stage = "realizer_plan_compile"
             phase_plans["realizer"] = build_consumer_invocation_plan_v1(
                 writer_manifest,
@@ -1201,6 +1385,23 @@ def project_unified_offline(
                 mechanism_diagnostics=mechanism_diagnostics,
                 source_failures=source_failures,
             )
+            phase_admissions_candidate["realizer"] = evaluate_unified_live_admission_v1(
+                phase="realizer",
+                plan=phase_plans["realizer"],
+                envelope=envelope,
+                archive=archive,
+                manifest=writer_manifest,
+                run_digest=archive.content_digest,
+                model_context_tokens=model_context_tokens,
+                closed_set_failures=tuple(
+                    f"{mid}:{item}"
+                    for mid, items in completeness.items()
+                    for item in items
+                ),
+                research_failures=candidate_research_failures,
+                mechanism_diagnostics=mechanism_diagnostics,
+                source_failures=source_failures,
+            )
         except Exception as exc:
             failures.append(f"unified_{stage}_failed:{_failure_code(exc)}")
             failure_details.append(_failure_detail(stage, exc))
@@ -1210,6 +1411,7 @@ def project_unified_offline(
             phase_plans.get(phase),
             phase_admissions.get(phase),
             error="unified_phase_not_compiled",
+            candidate_admission=phase_admissions_candidate.get(phase),
         )
         failures.extend(phase_rows[phase].get("admission_failure_codes", ()))
 
@@ -1240,6 +1442,7 @@ def project_unified_offline(
             "snapshot_id": str(getattr(snapshot, "snapshot_id", "") or ""),
             "project_tree_hash": str(getattr(snapshot, "project_tree_hash", "") or ""),
             "manifest_digest": str(getattr(manifest, "content_digest", "") or ""),
+            "behavior_graph_rebuild": source.get("behavior_graph_rebuild", {}),
         },
         "research": {
             "status": "pass" if not research_failures else "fail",
@@ -1253,6 +1456,10 @@ def project_unified_offline(
             "completeness_failures": completeness,
             "mechanism_diagnostics": mechanism_diagnostics,
             "deterministic_formula_packages": len(deterministic_formula_packages),
+            # R2: strict and Candidate gate verdicts are reported side by side.
+            # The row status above stays strict; the Candidate projection is an
+            # explicit mode, never a silent relaxation.
+            **research_gate_modes,
         },
         "archive": {
             "status": "pass" if archive is not None else "fail",

@@ -37,6 +37,7 @@ def splice_formula_placeholders(
     required_package_ids: Any = (),
     allowed_package_ids: Any = None,
     require_all: bool = False,
+    witness_sink: list[dict[str, str]] | None = None,
 ) -> tuple[str, tuple[str, ...]]:
     """Replace formula placeholders with the stored display block verbatim.
 
@@ -132,6 +133,39 @@ def splice_formula_placeholders(
     result = str(markdown or "")
     for start, end, block in reversed(replacements):
         result = result[:start] + block + result[end:]
+    if witness_sink is not None:
+        # Distinct, owner-checked placeholders may expand to identical LaTeX.
+        # Preserve their occurrence identity at insertion time. Searching the
+        # rendered formula later cannot recover which package owned which
+        # occurrence. No binding is inferred from repeated formula text alone.
+        rendered_spans: list[tuple[int, int, str, str]] = []
+        offset = 0
+        for (start, end, block), (_, _, package_id) in zip(replacements, spans):
+            rendered_start = start + offset
+            rendered_spans.append((rendered_start, rendered_start + len(block), package_id, block))
+            offset += len(block) - (end - start)
+        for index, (start, end, package_id, block) in enumerate(rendered_spans):
+            if result.count(block) <= 1:
+                # The ordinary Binder already handles unique package blocks.
+                continue
+            lower = rendered_spans[index - 1][1] if index else 0
+            upper = rendered_spans[index + 1][0] if index + 1 < len(rendered_spans) else len(result)
+            # Include only existing Writer context between adjacent inserted
+            # blocks. The selected span contains this complete formula and
+            # cannot cross another placeholder's inserted formula.
+            window = result[lower:upper]
+            exact = window.strip()
+            expected_start = lower + len(window) - len(window.lstrip())
+            if (
+                exact and block in exact
+                and result.find(exact) == expected_start
+                and result.find(exact, expected_start + 1) == -1
+            ):
+                witness_sink.append({
+                    "witness_kind": "formula",
+                    "target_id": package_id,
+                    "exact_text": exact,
+                })
     return result, ()
 
 
@@ -410,6 +444,254 @@ def _semantic_anchor_variants(semantic_atom: Any) -> tuple[str, ...]:
     return tuple(variants)
 
 
+def _humanize_source_identifier(value: Any) -> str:
+    """Project one source identifier into a bounded reader-language label.
+
+    The source excerpt is already part of the closed authority contract.  This
+    helper only changes its representation (``self.passage_id_embedding`` →
+    ``passage ID embedding``); it never adds a new symbol or a new fact.
+    """
+
+    text = str(value or "").strip()
+    text = re.sub(r"\bself\.", "", text)
+    text = re.sub(r"(?<=[a-z0-9])(?=[A-Z])", " ", text)
+    text = re.sub(r"[_\-]+", " ", text)
+    text = re.sub(r"\s+", " ", text).strip()
+    if not text:
+        return ""
+    words = []
+    for word in text.split():
+        if word.casefold() in {"id", "ids"}:
+            words.append("ID" if word.casefold() == "id" else "IDs")
+        else:
+            words.append(word)
+    return " ".join(words)
+
+
+def _source_call_reader_aliases(value: Any) -> tuple[str, ...]:
+    """Return bounded reader labels for a source-level constructor/call.
+
+    These are representation bridges, not new authority.  In particular,
+    ``torch.zeros`` is naturally described as zero initialization and an
+    embedding lookup is naturally described as indexing its embedding table;
+    the source call remains the only origin of these aliases.
+    """
+
+    callee = str(value or "").strip()
+    if not callee:
+        return ()
+    human = _humanize_source_identifier(callee)
+    tail = callee.rsplit(".", 1)[-1].casefold()
+    aliases: list[str] = []
+
+    def add(alias: str) -> None:
+        value = " ".join(str(alias or "").split()).strip()
+        if value and value.casefold() not in {
+            callee.casefold(),
+            human.casefold(),
+        } and value not in aliases:
+            aliases.append(value)
+
+    if tail in {"zeros", "zeros_like"}:
+        add("zero-initialization")
+        add("zero-initialized")
+        add("initialized to zero")
+        add("zero tensor")
+    elif tail in {"ones", "ones_like"}:
+        add("one-initialization")
+        add("one-initialized")
+        add("initialized to one")
+        add("one tensor")
+    if "embedding" in tail and human:
+        add(f"indexing the {human} table")
+        add(f"indexing the {human}")
+        add(f"lookup in the {human} table")
+        identifier_label = re.sub(r"\bID\b", "identifier", human)
+        add(f"used as the index into a {human} table")
+        add(f"{identifier_label} is used as the index into an embedding table")
+        add(f"producing {human}")
+        add(f"{human} is produced")
+    return tuple(aliases)
+
+
+def _source_semantic_anchor_variants(
+    constraints: Mapping[str, Any],
+) -> tuple[str, ...]:
+    """Derive bounded prose anchors from an authorized source excerpt.
+
+    Frozen graph atoms often retain implementation-shaped labels such as
+    ``CALL operation``, ``passage_id.long()`` and ``sym:<id>``.  Those labels
+    are not suitable Writer wording.  The source excerpt is the authority for
+    a representation bridge: call atoms require a call verb plus the callee,
+    output/interface atoms use the assigned symbol, and selected operands use
+    their source expression.  The caller still has to provide a unique body
+    substring and pass all existing condition, polarity, and arithmetic gates.
+    """
+
+    role = str(constraints.get("paper_role") or "").strip().casefold()
+    semantic = str(constraints.get("semantic_atom") or "").strip()
+    exact = _text_values(constraints.get("exact"))
+    if not exact:
+        return ()
+    variants: list[str] = []
+
+    def add(value: Any) -> None:
+        text = " ".join(str(value or "").split()).strip()
+        if text and text.casefold() not in {
+            semantic.casefold(),
+            *(item.casefold() for item in _semantic_anchor_variants(semantic)),
+        } and text not in variants:
+            variants.append(text)
+
+    for raw_source in exact:
+        source = re.sub(r"(?m)#.*$", "", str(raw_source or "")).strip()
+        if not source:
+            continue
+        lhs_names = [
+            match.group(1)
+            for match in re.finditer(
+                r"(?m)^\s*([A-Za-z_][A-Za-z0-9_]*)\s*=", source
+            )
+        ]
+        lhs_labels = tuple(
+            dict.fromkeys(
+                label for name in lhs_names
+                if (label := _humanize_source_identifier(name))
+            )
+        )
+        calls = tuple(
+            dict.fromkeys(
+                match.group(1)
+                for match in re.finditer(
+                    r"(?<![A-Za-z0-9_.])"
+                    r"([A-Za-z_][A-Za-z0-9_]*(?:\.[A-Za-z_][A-Za-z0-9_]*)*)\s*\(",
+                    source,
+                )
+            )
+        )
+
+        if role == "operation":
+            lowered = semantic.casefold()
+            if "call" in lowered:
+                for callee in calls:
+                    human = _humanize_source_identifier(callee)
+                    # Keep the source callee in one anchor and its bounded
+                    # reader label in the other; a call verb is required in
+                    # both so a mere mention of the output cannot bind a CALL.
+                    add(f"calling {callee}")
+                    if human:
+                        add(f"{human} is called")
+                        add(f"calling {human}")
+                    for alias in _source_call_reader_aliases(callee):
+                        add(alias)
+            # Some frozen graph atoms describe a library operation as
+            # ``sorts_by operation``/``concatenates operation`` rather than as
+            # a CALL.  The source excerpt is still the closed authority for
+            # a reader-language bridge.  Recover only the two operation
+            # shapes whose source operands make the bridge distinctive; a
+            # generic ``operation`` alias would let an unrelated sentence
+            # bind merely because it mentioned the same subject.
+            elif calls and any(
+                token in lowered for token in ("sort", "concaten", "concat")
+            ):
+                source_lower = source.casefold()
+                for callee in calls:
+                    tail = callee.rsplit(".", 1)[-1].casefold()
+                    if tail == "sort" and "sort" in lowered:
+                        if "relevance_scores" in source_lower:
+                            add("sorting relevance scores descending")
+                        if "descending=true" in source_lower:
+                            add("sorting by relevance in descending order")
+                    elif tail in {"cat", "concat", "concatenate"} and (
+                        "concaten" in lowered or "concat" in lowered
+                    ):
+                        if "true" in source_lower and "indices" in source_lower:
+                            add("concatenating true indices")
+                        elif (
+                            "query" in source_lower
+                            and "passages" in source_lower
+                            and "dim=1" in source_lower
+                        ):
+                            add("concatenating query passages along dimension one")
+                        elif "indices" in source_lower:
+                            add("concatenating the indices")
+            elif "return" in lowered:
+                for label in lhs_labels:
+                    add(f"returns {label}")
+            elif "branch" in lowered or "loop" in lowered:
+                # Branch/loop prose is primarily authorized by its condition
+                # atom; these labels are only useful when the excerpt itself
+                # contains an explicit reader-visible control verb.
+                add("branch")
+                add("for each")
+        elif role in {"output", "interface"}:
+            for label in lhs_labels:
+                add(label)
+                add(f"{label} output")
+                add(f"producing {label}")
+                add(f"{label} is produced")
+        elif role == "operand":
+            lowered = semantic.casefold()
+            if lowered.startswith("device="):
+                add("model device")
+                add("on the model's device")
+            elif ".long" in lowered:
+                base = lowered.split(".long", 1)[0]
+                base = _humanize_source_identifier(base)
+                if base:
+                    add(f"{base} cast to a long precision integer tensor")
+                    add(f"{base} long precision")
+            elif semantic:
+                # Preserve a source API such as ``torch.zeros`` verbatim and
+                # add only the humanized identifier form for local symbols.
+                add(semantic)
+                human = _humanize_source_identifier(semantic)
+                if human and human.casefold() != semantic.casefold():
+                    add(human)
+                if semantic in calls:
+                    for alias in _source_call_reader_aliases(semantic):
+                        add(alias)
+                    # ``torch.cat`` is commonly described as prepending a
+                    # sentinel to an index/mask vector.  Keep the alias
+                    # source-derived and require the distinctive literal plus
+                    # operand terms before it can be used by Binder.
+                    tail = semantic.rsplit(".", 1)[-1].casefold()
+                    source_lower = source.casefold()
+                    if tail in {"cat", "concat", "concatenate"}:
+                        if "true" in source_lower and "indices" in source_lower:
+                            add("concatenating true indices")
+                        elif (
+                            "query" in source_lower
+                            and "passages" in source_lower
+                            and "dim=1" in source_lower
+                        ):
+                            add("concatenating query passages along dimension one")
+                        elif "indices" in source_lower:
+                            add("concatenating the indices")
+            if "(" in semantic and "+" in semantic:
+                # Shape operands are prose about dimensions, not top-level
+                # arithmetic.  Keep the dimension names/offsets as one
+                # bounded anchor while the arithmetic gate remains structural.
+                shape = re.sub(r"[()]", " ", semantic)
+                shape = re.sub(r"\s+", " ", shape).strip()
+                add(_humanize_source_identifier(shape))
+
+    return tuple(variants)
+
+
+def _constraint_semantic_anchors(
+    constraints: Mapping[str, Any],
+) -> tuple[str, ...]:
+    """Return semantic plus source-derived anchors for one closed target."""
+
+    semantic = str(constraints.get("semantic_atom") or "").strip()
+    values = [semantic]
+    if semantic and semantic.casefold() not in {"formal expression", "formula"}:
+        values.extend(_semantic_anchor_variants(semantic))
+        values.extend(_source_semantic_anchor_variants(constraints))
+    return tuple(dict.fromkeys(value for value in values if value))
+
+
 def _polarity_signature(value: Any) -> tuple[str, str]:
     """Extract a conservative comparison direction and action from text."""
 
@@ -472,6 +754,7 @@ def _witness_constraints_from_plan_row(
         if isinstance(item, Mapping):
             kind = str(item.get("target_kind") or "").strip()
             target_id = str(item.get("target_id") or "").strip()
+            detail_id = str(item.get("detail_id") or "").strip()
             exact = _text_values(
                 item.get("allowed_exact_excerpts")
                 or item.get("exact_excerpts")
@@ -487,6 +770,7 @@ def _witness_constraints_from_plan_row(
         else:
             kind = str(getattr(item, "target_kind", "") or "").strip()
             target_id = str(getattr(item, "target_id", "") or "").strip()
+            detail_id = str(getattr(item, "detail_id", "") or "").strip()
             exact = _text_values(
                 getattr(item, "allowed_exact_excerpts", ())
                 or getattr(item, "exact_excerpts", ())
@@ -504,6 +788,8 @@ def _witness_constraints_from_plan_row(
             paper_role = str(getattr(item, "paper_role", "") or "").strip()
         if not kind or not target_id:
             continue
+        if kind == "detail" and not detail_id:
+            detail_id = target_id
         if isinstance(item, Mapping):
             required = bool(
                 item.get(
@@ -520,6 +806,7 @@ def _witness_constraints_from_plan_row(
             "conditions": conditions,
             "polarity": polarity,
             "paper_role": paper_role,
+            "detail_id": detail_id,
             "required": required,
             "source_anchor_ids": _text_values(
                 (
@@ -614,28 +901,46 @@ def _witness_constraints_from_plan_row(
     return result
 
 
-def _witness_satisfies_constraints(
+# ---------------------------------------------------------------------------
+# R5 correction: structural condition authorization
+# ---------------------------------------------------------------------------
+#
+# R5 originally decided condition equivalence with word sets, clause lists and
+# regular expressions.  That let five counterexamples through: boolean
+# regrouping, a dropped numeric sign, collapsed repeated negation, swapped
+# comparator operands and a widened operand set.  Authorization now parses both
+# sides with one bounded grammar (``condition_structure``) and requires an
+# identical structural tree; reader-facing phrasing is rewritten by a fixed
+# phrase table, and any syntax the grammar cannot consume stays unproven and
+# returns to the owning Agent.
+
+from code2paper.agentic.condition_structure import (  # noqa: E402
+    condition_statement_matches as _condition_statement_matches,
+)
+from code2paper.agentic.condition_structure import (  # noqa: E402
+    normalize_text as _normalized_condition,
+)
+
+
+def _witness_condition_and_polarity_satisfied(
     witness: str,
     constraints: Mapping[str, Any],
 ) -> bool:
-    semantic_atom = str(constraints.get("semantic_atom") or "").strip()
-    semantic_anchors = tuple(dict.fromkeys(
-        (semantic_atom, *_semantic_anchor_variants(semantic_atom))
-    ))
-    if (
-        semantic_atom
-        and semantic_atom.casefold() not in {"formal expression", "formula"}
-        and not _anchor_compatible(witness, "", semantic_anchors)
-    ):
-        return False
+    """Return whether a witness keeps the target's condition and polarity.
+
+    Split from the semantic-anchor check so the assessment of Writer-declared
+    witnesses can apply the same condition authority the Binder response
+    validator applies, without inventing a second anchor rule.
+    """
+
     conditions = _text_values(constraints.get("conditions"))
     exact = _text_values(constraints.get("exact"))
     polarity = str(constraints.get("polarity") or "").strip()
     # Conditions are independent obligations.  A witness that only repeats
-    # the operation but drops its guard must not pass through the operation's
-    # semantic anchor by accident.
+    # the operation but drops, reverses, or widens its guard must not pass
+    # through the operation's semantic anchor by accident.
     if conditions and not all(
-        _anchor_compatible(witness, "", (condition,))
+        _condition_statement_matches(condition, witness)
         for condition in conditions
     ):
         return False
@@ -653,6 +958,221 @@ def _witness_satisfies_constraints(
     if expected_actions and observed_action and observed_action not in expected_actions:
         return False
     return True
+
+
+def _top_level_addition_terms(expression: Any) -> tuple[str, ...]:
+    """Return terms for a real top-level ``+`` expression.
+
+    Source excerpts frequently contain additions inside a call argument, for
+    example ``torch.zeros((batch_size, num_passages + 1, ...))``.  Those
+    additions describe a dimension, not the operation performed by the
+    target.  A small delimiter/string-aware scanner is sufficient here and
+    keeps the arithmetic gate structural without introducing a Python parser
+    for arbitrary source text.
+    """
+
+    text = str(expression or "")
+    if not text:
+        return ()
+    # Prefer the right-hand side of a top-level assignment.  Nested keyword
+    # arguments such as ``device=self.device`` never become an assignment
+    # boundary because their ``=`` is inside a call delimiter.
+    depth = 0
+    quote = ""
+    escape = False
+    assignment_index: int | None = None
+    for index, char in enumerate(text):
+        if quote:
+            if escape:
+                escape = False
+            elif char == "\\":
+                escape = True
+            elif char == quote:
+                quote = ""
+            continue
+        if char in {"'", '"'}:
+            quote = char
+            continue
+        if char in "([{":
+            depth += 1
+        elif char in ")]}":
+            depth = max(0, depth - 1)
+        elif char == "=" and depth == 0:
+            previous = text[index - 1] if index else ""
+            following = text[index + 1] if index + 1 < len(text) else ""
+            if previous not in "=<>!" and following != "=":
+                assignment_index = index
+    candidate = text[assignment_index + 1:] if assignment_index is not None else text
+
+    terms: list[str] = []
+    start = 0
+    depth = 0
+    quote = ""
+    escape = False
+    for index, char in enumerate(candidate):
+        if quote:
+            if escape:
+                escape = False
+            elif char == "\\":
+                escape = True
+            elif char == quote:
+                quote = ""
+            continue
+        if char in {"'", '"'}:
+            quote = char
+            continue
+        if char in "([{":
+            depth += 1
+            continue
+        if char in ")]}":
+            depth = max(0, depth - 1)
+            continue
+        if char != "+" or depth != 0:
+            continue
+        previous = candidate[index - 1] if index else ""
+        following = candidate[index + 1] if index + 1 < len(candidate) else ""
+        # ``++`` and ``+=`` are not the binary addition relation this gate
+        # checks.  A leading ``+`` is unary and likewise not a split point.
+        if previous in {"+", "="} or following in {"+", "="}:
+            continue
+        term = candidate[start:index].strip()
+        if not term:
+            return ()
+        terms.append(term)
+        start = index + 1
+    if not terms:
+        return ()
+    tail = candidate[start:].strip()
+    if not tail:
+        return ()
+    terms.append(tail)
+    return tuple(terms) if len(terms) >= 2 else ()
+
+
+def _arithmetic_relation_source(
+    constraints: Mapping[str, Any],
+) -> tuple[str, tuple[str, ...]]:
+    """Choose the first authorized expression with a top-level addition."""
+
+    exact = _text_values(constraints.get("exact"))
+    for expression in exact:
+        terms = _top_level_addition_terms(expression)
+        if terms:
+            return expression, terms
+    semantic = str(constraints.get("semantic_atom") or "")
+    terms = _top_level_addition_terms(semantic)
+    return (semantic, terms) if terms else ("", ())
+
+
+def _source_term_pattern(term: Any) -> str:
+    """Match one source term verbatim or in its bounded reader form.
+
+    Frozen additive expressions commonly contain identifiers such as
+    ``document_id_embeddings``.  Writer prose may retain that identifier or
+    render it as ``document ID embeddings``; accepting either is a
+    representation bridge, while the complete term remains mandatory.
+    """
+
+    raw = str(term or "").strip()
+    words = re.findall(r"[A-Za-z][A-Za-z0-9]*", raw.replace("_", " "))
+    if not words:
+        return ""
+    raw_pattern = re.escape(raw).replace(r"\ ", r"\s+")
+    word_pattern = r"\s+".join(
+        re.escape(word.rstrip("s")) + r"s?" for word in words
+    )
+    return (
+        r"(?<![A-Za-z0-9_])(?:"
+        + raw_pattern
+        + "|"
+        + word_pattern
+        + r")(?![A-Za-z0-9_])"
+    )
+
+
+def _arithmetic_relation_satisfied(
+    witness: str, constraints: Mapping[str, Any],
+) -> bool:
+    """Do not turn shared operand words into authority for a different operation.
+
+    This is deliberately a small, fail-closed check for additive source
+    expressions. Other expression forms still need their semantic anchor or an
+    exact rendering; lexical similarity to source code is never sufficient.
+    """
+
+    semantic = str(constraints.get("semantic_atom") or "")
+    expression, terms = _arithmetic_relation_source(constraints)
+    additive = bool(terms)
+    if not additive:
+        return True
+    if (
+        str(constraints.get("paper_role") or "").casefold() in {"", "condition"}
+        and semantic in _text_values(constraints.get("conditions"))
+        and not _top_level_addition_terms(semantic)
+    ):
+        # A guard atom proves its own condition; it is not an operation atom
+        # merely because its source excerpt also contains an addition.
+        return True
+    if re.search(r"\b(?:multiply|multiplied|multiplying|product|times)\b|(?<!\*)\*(?!\*)", witness, re.I):
+        return False
+    if re.search(r"\b(?:not|never|without)\s+(?:being\s+)?(?:add|added|adding|summed|summing)\b", witness, re.I):
+        return False
+    role = str(constraints.get("paper_role") or "").casefold()
+    requires_relation = role != "operand" or bool(_top_level_addition_terms(semantic))
+    if not requires_relation:
+        pattern = _source_term_pattern(semantic)
+        if not pattern:
+            return False
+        return bool(re.search(pattern, witness, re.I))
+    if not re.search(r"\b(?:add|adds|added|adding|addition|additive|sum|sums|summed|summing|summation)\b|(?<!\+)\+(?!\+)", witness, re.I):
+        return False
+    # ``terms`` was produced by the delimiter-aware scanner above.  Keeping
+    # the original expression only for diagnostics makes it explicit that a
+    # nested call/shape ``+`` can never enter this branch.
+    if not expression or not terms:
+        return False
+    for term in terms:
+        pattern = _source_term_pattern(term)
+        if not pattern:
+            return False
+        # Singular/plural spelling is a representation difference. The words
+        # must remain adjacent and in order, so "passage embeddings" cannot
+        # stand in for "passage ID embeddings".
+        if not re.search(pattern, witness, re.I):
+            return False
+    return True
+
+
+def _exact_excerpt_semantic_match(
+    witness: str, constraints: Mapping[str, Any],
+) -> bool:
+    exact = _text_values(constraints.get("exact"))
+    if any(value in witness for value in exact):
+        return True
+    if not exact or not any(_top_level_addition_terms(value) for value in exact):
+        return False
+    return _arithmetic_relation_satisfied(witness, constraints)
+
+
+def _witness_satisfies_constraints(
+    witness: str,
+    constraints: Mapping[str, Any],
+) -> bool:
+    if not _arithmetic_relation_satisfied(witness, constraints):
+        return False
+    semantic_atom = str(constraints.get("semantic_atom") or "").strip()
+    semantic_anchors = _constraint_semantic_anchors(constraints)
+    if (
+        semantic_atom
+        and semantic_atom.casefold() not in {"formal expression", "formula"}
+        and not _anchor_compatible(witness, "", semantic_anchors)
+    ):
+        # The source excerpt can authorize an exact rendering or a checked
+        # arithmetic paraphrase. Operand overlap alone is a locator, not
+        # evidence that the same operation was stated.
+        if not _exact_excerpt_semantic_match(witness, constraints):
+            return False
+    return _witness_condition_and_polarity_satisfied(witness, constraints)
 
 
 _TRANSACTION_DECLARATION_FIELDS: tuple[tuple[str, str], ...] = (
@@ -730,6 +1250,7 @@ def _formula_package_terminal_disposition(package: Mapping[str, Any]) -> str:
     review_status = str(package.get("review_status") or "").strip()
     authority_status = str(package.get("authority_status") or "").strip()
     formula_lane = str(package.get("formula_lane") or "").strip()
+    schema_version = str(package.get("schema_version") or "").strip()
     if review_status == "rejected":
         return "failed"
     if review_status == "accepted" and (
@@ -737,12 +1258,17 @@ def _formula_package_terminal_disposition(package: Mapping[str, Any]) -> str:
         and formula_lane == "repository_derived"
     ):
         return "accepted"
-    if not review_status and authority_status in {"", "code_verified"} and formula_lane in {
-        "", "repository_derived"
-    }:
-        # Pre-V2 frozen artifacts did not persist all three disposition
-        # fields.  Preserve their accepted-package compatibility without
-        # weakening the explicit current-state rules above.
+    # R5: only a historical package (no version marker, or 1.0) may use the
+    # pre-V2 compatibility branch.  A current 2.0 package that is missing its
+    # disposition fields is unproven and stays review_required instead of
+    # being silently accepted as "historical default".
+    legacy_package = schema_version in {"", "1.0"}
+    if (
+        legacy_package
+        and not review_status
+        and authority_status in {"", "code_verified"}
+        and formula_lane in {"", "repository_derived"}
+    ):
         return "accepted"
     if review_status == "not_applicable":
         return "not_applicable"
@@ -818,10 +1344,7 @@ def _binding_anchors(constraints: Mapping[str, Any]) -> tuple[str, ...]:
     """Project exact, semantic, and condition anchors for both Binder stages."""
 
     values = list(_text_values(constraints.get("exact")))
-    semantic_atom = str(constraints.get("semantic_atom") or "").strip()
-    if semantic_atom and semantic_atom.casefold() not in {"formal expression", "formula"}:
-        values.append(semantic_atom)
-        values.extend(_semantic_anchor_variants(semantic_atom))
+    values.extend(_constraint_semantic_anchors(constraints))
     values.extend(_text_values(constraints.get("conditions")))
     return tuple(dict.fromkeys(value for value in values if value))
 
@@ -1266,8 +1789,7 @@ def required_anchors_from_plan_row(
         conditions = constraints["conditions"]
         values = list(exact)
         if semantic_atom and semantic_atom.casefold() not in {"formal expression", "formula"}:
-            values.append(semantic_atom)
-            values.extend(_semantic_anchor_variants(semantic_atom))
+            values.extend(_constraint_semantic_anchors(constraints))
         values.extend(conditions)
         values = list(dict.fromkeys(values))
         if values:
@@ -1371,13 +1893,15 @@ def bind_paragraph_witnesses(
         semantic_atom = str(local.get("semantic_atom") or "").strip()
         semantic_fallback_anchors = tuple(dict.fromkeys(
             (
-                semantic_atom,
-                *_semantic_anchor_variants(semantic_atom),
+                *_text_values(local.get("exact")),
+                *_constraint_semantic_anchors(local),
+                *_text_values(local.get("conditions")),
             )
             if semantic_atom
             and semantic_atom.casefold() not in {"formal expression", "formula"}
-            else anchors
+            else (*_text_values(local.get("exact")), *anchors)
         ))
+        source_fallback_anchors = set(_source_semantic_anchor_variants(local))
         for raw in candidates:
             candidate = str(raw or "").strip()
             if not candidate or body.count(candidate) != 1:
@@ -1387,7 +1911,8 @@ def bind_paragraph_witnesses(
             # for the strict package-backed slot/edge path; ordinary prose
             # witnesses remain unique across targets.
             if candidate in existing_witness_texts and not (
-                package is not None and target_kind in {"slot", "edge"}
+                target_kind == "atom"
+                or package is not None and target_kind in {"slot", "edge"}
             ):
                 continue
             if package is not None and candidate not in {
@@ -1408,7 +1933,9 @@ def bind_paragraph_witnesses(
         # among several plausible sentences.
         if (
             package is None
-            and target_kind in {"facet", "field", "slot", "edge"}
+            and target_kind in {
+                "facet", "field", "slot", "edge", "atom", "detail"
+            }
             and semantic_fallback_anchors
             and allow_semantic_fallback
         ):
@@ -1428,51 +1955,149 @@ def bind_paragraph_witnesses(
                 for sentence in re.split(r"(?<=[.!?])\s+|\n+", prose_body)
                 if sentence.strip()
             )
-            semantic_matches: list[tuple[float, int, str, str]] = []
+            semantic_matches: list[tuple[float, int, str, str, float, int, str]] = []
             for sentence in sentences:
-                if (
-                    body.count(sentence) != 1
-                    or not _witness_satisfies_constraints(sentence, local)
-                ):
-                    continue
-                sentence_tokens = _semantic_tokens(sentence)
-                if not sentence_tokens:
-                    continue
-                best_score = 0.0
-                best_overlap = 0
-                best_anchor = ""
-                for raw_anchor in semantic_fallback_anchors:
-                    anchor_tokens = _semantic_tokens(raw_anchor)
-                    if not anchor_tokens:
+                # A condition atom is witnessed by its bounded guard clause,
+                # not by the whole following sentence. Keep both forms in the
+                # candidate set so condition structure remains exact while
+                # ordinary atoms can still use the complete sentence.
+                candidate_spans = [sentence]
+                # A bounded guard clause is an appropriate witness for an
+                # atom/detail target, whose contract is the condition itself.
+                # Facet/field/slot/edge targets describe the reader-facing
+                # operation, however; scoring a ``with ...`` or ``when ...``
+                # fragment would let a sibling sentence win over the complete
+                # paragraph sentence.  Keep those higher-level targets bound
+                # to the full sentence while exact supplied witnesses remain
+                # handled by the strict path above.
+                if target_kind in {"atom", "detail"}:
+                    for match in re.finditer(
+                        r"(?is)\b(?:when|if|whenever|provided|assuming|under|with)\b"
+                        r".*?(?=,\s|;\s|:\s|$)",
+                        sentence,
+                    ):
+                        clause = match.group(0).strip(" ,;:")
+                        if clause and clause not in candidate_spans:
+                            candidate_spans.append(clause)
+                for candidate_span in candidate_spans:
+                    if (
+                        body.count(candidate_span) != 1
+                        or not _witness_satisfies_constraints(candidate_span, local)
+                    ):
                         continue
-                    overlap = len(sentence_tokens.intersection(anchor_tokens))
-                    if overlap < 2:
+                    sentence_tokens = _semantic_tokens(candidate_span)
+                    if not sentence_tokens:
                         continue
-                    # Prefer coverage of the authorized semantic atom while
-                    # retaining a precision term so a generic long sentence
-                    # cannot win merely by containing two common words.
-                    score = (
-                        0.75 * overlap / max(1, len(anchor_tokens))
-                        + 0.25 * overlap / max(1, len(sentence_tokens))
+                    best_score = 0.0
+                    best_overlap = 0
+                    best_anchor = ""
+                    best_source_score = 0.0
+                    best_source_overlap = 0
+                    best_source_anchor = ""
+                    for raw_anchor in semantic_fallback_anchors:
+                        anchor_tokens = _semantic_tokens(raw_anchor)
+                        if not anchor_tokens:
+                            continue
+                        overlap = len(sentence_tokens.intersection(anchor_tokens))
+                        if overlap < 2:
+                            continue
+                        # Prefer coverage of the authorized semantic atom
+                        # while retaining a precision term so a generic long
+                        # sentence cannot win merely by containing two common
+                        # words. Exact source excerpts are a bounded fallback
+                        # for implementation-shaped atom labels.
+                        score = (
+                            0.75 * overlap / max(1, len(anchor_tokens))
+                            + 0.25 * overlap / max(1, len(sentence_tokens))
+                        )
+                        if score > best_score:
+                            best_score = score
+                            best_overlap = overlap
+                            best_anchor = raw_anchor
+                        if raw_anchor in source_fallback_anchors:
+                            # A source-derived phrase can disambiguate two
+                            # otherwise similar sentences, but only when it
+                            # contributes enough of its own terms.  A weak
+                            # overlap remains unbound and is not promoted by
+                            # this representation-only preference.
+                            coverage = overlap / max(1, len(anchor_tokens))
+                            if (
+                                overlap >= 3
+                                and coverage >= 0.60
+                                and score > best_source_score
+                            ):
+                                best_source_score = score
+                                best_source_overlap = overlap
+                                best_source_anchor = raw_anchor
+                    # If the semantic label is too sparse for the sentence,
+                    # retry scoring against the closed source excerpt. This
+                    # is distinct from accepting a low-confidence semantic
+                    # match: the excerpt must still contribute at least two
+                    # lexical terms and meet the bounded exact-fallback
+                    # threshold below.
+                    if (
+                        target_kind in {"atom", "detail"}
+                        and best_score < 0.38
+                    ):
+                        exact_score = 0.0
+                        exact_overlap = 0
+                        exact_anchor = ""
+                        for raw_anchor in _text_values(local.get("exact")):
+                            anchor_tokens = _semantic_tokens(raw_anchor)
+                            if not anchor_tokens:
+                                continue
+                            overlap = len(sentence_tokens.intersection(anchor_tokens))
+                            if overlap < 2:
+                                continue
+                            score = (
+                                0.75 * overlap / max(1, len(anchor_tokens))
+                                + 0.25 * overlap / max(1, len(sentence_tokens))
+                            )
+                            if score > exact_score:
+                                exact_score = score
+                                exact_overlap = overlap
+                                exact_anchor = raw_anchor
+                        if exact_score >= 0.24 and exact_overlap >= 2:
+                            best_score = exact_score
+                            best_overlap = exact_overlap
+                            best_anchor = exact_anchor
+                    # Slots, edges, and atoms are recoverable from a closed
+                    # contract, but still require enough independent lexical
+                    # overlap. This keeps a short generic sentence from
+                    # binding an implementation target.
+                    exact_fallback = best_anchor in _text_values(local.get("exact"))
+                    minimum_score = (
+                        0.24
+                        if exact_fallback and target_kind in {"atom", "detail"}
+                        else 0.34
+                        if target_kind in {"slot", "edge"}
+                        else 0.38
                     )
-                    if score > best_score:
-                        best_score = score
-                        best_overlap = overlap
-                        best_anchor = raw_anchor
-                # Slots and edges are also recoverable from the paragraph's
-                # closed semantic contract, but require three overlapping
-                # lexical forms.  This keeps a short generic sentence from
-                # binding an implementation target while allowing ordinary
-                # prose to witness a paraphrased operation.
-                minimum_score = 0.34 if target_kind in {"slot", "edge"} else 0.38
-                minimum_overlap = 3 if target_kind in {"slot", "edge"} else 2
-                if (
-                    best_overlap >= minimum_overlap
-                    and best_score >= minimum_score
-                    and _anchor_compatible(sentence, body, semantic_fallback_anchors)
-                ):
-                    semantic_matches.append((best_score, best_overlap, sentence, best_anchor))
-            semantic_matches.sort(key=lambda item: (-item[0], -item[1], item[2]))
+                    minimum_overlap = 3 if target_kind in {"slot", "edge"} else 2
+                    if (
+                        best_overlap >= minimum_overlap
+                        and best_score >= minimum_score
+                        and (
+                            _anchor_compatible(
+                                candidate_span, body, semantic_fallback_anchors
+                            )
+                            or _exact_excerpt_semantic_match(candidate_span, local)
+                        )
+                    ):
+                        semantic_matches.append((
+                            best_score,
+                            best_overlap,
+                            candidate_span,
+                            best_anchor,
+                            best_source_score,
+                            best_source_overlap,
+                            best_source_anchor,
+                        ))
+            semantic_matches.sort(
+                key=lambda item: (
+                    -item[4], -item[5], -item[0], -item[1], item[2]
+                )
+            )
             if semantic_matches:
                 top = semantic_matches[0]
                 second_score = semantic_matches[1][0] if len(semantic_matches) > 1 else 0.0
@@ -1482,6 +2107,12 @@ def bind_paragraph_witnesses(
                 # of guessing which sentence carries the target.
                 raw_semantic_atom = str(local.get("semantic_atom") or "").strip()
                 derived_anchors = set(_semantic_anchor_variants(raw_semantic_atom))
+                primary_anchors = {
+                    raw_semantic_atom,
+                    *derived_anchors,
+                    *_text_values(local.get("conditions")),
+                }
+                exact_anchors = set(_text_values(local.get("exact")))
                 # A legacy frozen slot can have a specific raw atom such as
                 # ``enable use dedicated attention attend``.  Its reader
                 # sentence may lose one implementation word and therefore
@@ -1496,9 +2127,38 @@ def bind_paragraph_witnesses(
                     and top[1] >= second_overlap + 2
                     and top[0] > second_score
                 )
+                source_specificity_recovery = (
+                    top[4] > 0
+                    and (
+                        top[4] > (semantic_matches[1][4] if len(semantic_matches) > 1 else 0.0)
+                        or top[5] > (semantic_matches[1][5] if len(semantic_matches) > 1 else 0)
+                    )
+                )
                 if (
                     top[0] - second_score >= 0.05
+                    or source_specificity_recovery
                     or raw_specificity_recovery
+                    or (
+                        len(semantic_matches) > 1
+                        and top[3] in primary_anchors
+                        and semantic_matches[1][3] in exact_anchors
+                        and top[0] >= second_score
+                    )
+                    or (
+                        # Two distinct sentences may paraphrase the same
+                        # closed implementation excerpt. For atom targets,
+                        # either unique substring is valid evidence; choose
+                        # the deterministic strongest one rather than
+                        # converting a genuine duplicate fact into an
+                        # unresolved Binder failure. Repeated copies of one
+                        # sentence are still rejected by body.count(...).
+                        target_kind == "atom"
+                        and len(semantic_matches) > 1
+                        and top[3] in exact_anchors
+                        and semantic_matches[1][3] == top[3]
+                        and top[1] >= second_overlap
+                        and top[0] >= second_score
+                    )
                     or (
                         len(semantic_matches) > 1
                         and top[3] in derived_anchors
@@ -1626,8 +2286,32 @@ def bind_paragraph_witnesses(
             })
             existing.add((kind, target_id))
             existing_witness_texts.add(exact)
-    if additions:
-        source["witnesses"] = [*(source.get("witnesses") or ()), *additions]
+    # R5 correction: a Writer-declared witness is not authority.  When the
+    # local contract states conditions or polarity, drop a declaration that
+    # changes them so the target stays visibly unbound instead of passing
+    # through the binder untouched.
+    kept_witnesses: list[Any] = []
+    for raw in (source.get("witnesses") or ()):
+        if isinstance(raw, Mapping):
+            raw_kind = str(raw.get("witness_kind") or raw.get("kind") or "").strip()
+            raw_target = str(raw.get("target_id") or "").strip()
+            raw_exact = str(raw.get("exact_text") or "").strip()
+        else:
+            raw_kind = str(getattr(raw, "witness_kind", "") or "").strip()
+            raw_target = str(getattr(raw, "target_id", "") or "").strip()
+            raw_exact = str(getattr(raw, "exact_text", "") or "").strip()
+        constraint = constraints.get((raw_kind, raw_target))
+        if (
+            raw_exact
+            and constraint
+            and not _witness_condition_and_polarity_satisfied(raw_exact, constraint)
+        ):
+            existing.discard((raw_kind, raw_target))
+            existing_witness_texts.discard(raw_exact)
+            continue
+        kept_witnesses.append(raw)
+    if kept_witnesses or additions or source.get("witnesses"):
+        source["witnesses"] = [*kept_witnesses, *additions]
     declaration_fields = dict(_TRANSACTION_DECLARATION_FIELDS)
     for kind, values in candidate_declarations.items():
         field_name = declaration_fields.get(kind)
@@ -1635,29 +2319,54 @@ def bind_paragraph_witnesses(
             if not isinstance(transaction, Mapping) and field_name not in getattr(transaction.__class__, "model_fields", {}):
                 continue
             source[field_name] = list(dict.fromkeys(values))
-    if "unbound_target_ids" in source:
-        witness_keys = {
-            (
-                str(item.get("witness_kind") or "").strip(),
-                str(item.get("target_id") or "").strip(),
-            )
-            for item in source.get("witnesses") or ()
-            if isinstance(item, Mapping)
-            and str(item.get("witness_kind") or "").strip()
-            and str(item.get("target_id") or "").strip()
-        }
+    witness_keys = {
+        (
+            str(item.get("witness_kind") or "").strip(),
+            str(item.get("target_id") or "").strip(),
+        )
+        for item in source.get("witnesses") or ()
+        if isinstance(item, Mapping)
+        and str(item.get("witness_kind") or "").strip()
+        and str(item.get("target_id") or "").strip()
+    }
 
-        def _detail_atom_complete(detail_id: str) -> bool:
-            atom_keys = {
-                (atom_kind, atom_id)
-                for (atom_kind, atom_id), local in constraints.items()
-                if (
-                    atom_kind == "atom"
-                    and local.get("detail_id") == detail_id
-                    and local.get("required", True)
-                )
-            }
-            return bool(atom_keys) and atom_keys.issubset(witness_keys)
+    def _detail_atom_complete(detail_id: str) -> bool:
+        atom_keys = {
+            (atom_kind, atom_id)
+            for (atom_kind, atom_id), local in constraints.items()
+            if (
+                atom_kind == "atom"
+                and local.get("detail_id") == detail_id
+                and local.get("required", True)
+            )
+        }
+        return bool(atom_keys) and atom_keys.issubset(witness_keys)
+
+    # A complete required atom set is the lossless proof for a V3 Detail. It
+    # is derived metadata, not an invented aggregate witness, and must be
+    # populated for both mapping inputs and Pydantic paragraph responses.
+    allowed_detail_ids: set[str] = set()
+    if isinstance(plan_row, Mapping):
+        allowed_detail_ids.update(
+            str(value).strip()
+            for value in (
+                *(plan_row.get("required_detail_ids") or ()),
+                *(plan_row.get("optional_detail_ids") or ()),
+            )
+            if str(value).strip()
+        )
+    detail_values = list(source.get("rendered_detail_ids") or ())
+    for detail_id in sorted({
+        str(local.get("detail_id") or "").strip()
+        for (kind, _target), local in constraints.items()
+        if kind == "atom" and str(local.get("detail_id") or "").strip()
+    }):
+        if detail_id in allowed_detail_ids and _detail_atom_complete(detail_id):
+            if detail_id not in detail_values:
+                detail_values.append(detail_id)
+    source["rendered_detail_ids"] = detail_values
+
+    if "unbound_target_ids" in source:
 
         source["unbound_target_ids"] = [
             f"{kind}:{target}"
@@ -1722,6 +2431,17 @@ def assess_paragraph_transaction(
             continue
         if not body or body.count(exact) != 1:
             invalid.append(f"witness_not_unique_substring:{kind}:{target}")
+        # R5 correction: a Writer-declared witness carries no authority of its
+        # own.  When the local contract states conditions or polarity, the
+        # witness must keep them exactly; the lexical helpers only locate a
+        # candidate clause.
+        constraint = _witness_constraints_from_plan_row(plan_row).get(key)
+        if constraint and not _witness_condition_and_polarity_satisfied(
+            exact, constraint
+        ):
+            invalid.append(
+                f"witness_condition_or_polarity_mismatch:{kind}:{target}"
+            )
         witness_keys.add(key)
         witness_by_key[key] = exact
 
@@ -1836,14 +2556,20 @@ def assess_paragraph_transaction(
             missing[kind] = tuple(formula_missing)
 
     semantic_failures: list[str] = []
+    constraints_by_key = _witness_constraints_from_plan_row(plan_row)
     for (kind, target), anchors in (required_anchors or {}).items():
         if (kind, target) not in witness_keys:
             continue
         anchors = tuple(str(anchor).strip() for anchor in anchors if str(anchor).strip())
         witness = witness_by_key.get((kind, target), "")
-        if anchors and not _anchor_compatible(witness, body, anchors):
+        local_constraints = constraints_by_key.get((kind, target), {})
+        if (
+            anchors
+            and not _anchor_compatible(witness, body, anchors)
+            and not _exact_excerpt_semantic_match(witness, local_constraints)
+        ):
             semantic_failures.append(f"semantic_anchor_missing:{kind}:{target}")
-    for key, constraints in _witness_constraints_from_plan_row(plan_row).items():
+    for key, constraints in constraints_by_key.items():
         witness = witness_by_key.get(key)
         if witness is not None and not _witness_satisfies_constraints(witness, constraints):
             semantic_failures.append(

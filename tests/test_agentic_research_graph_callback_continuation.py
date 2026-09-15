@@ -28,6 +28,7 @@ from code2paper.agentic.method_argument_models import (
     WritingResearchRequestV1,
 )
 from code2paper.agentic.writing_callback_fulfillment import (
+    _portable_callback_filename,
     WritingCallbackFulfillmentBudgetV1,
     build_research_continuation_seed,
     fulfill_and_resume_writing_callbacks,
@@ -164,8 +165,11 @@ def test_continuation_fulfills_request_through_original_research_graph() -> None
         assert updated.requests[0].status == "fulfilled"
         artifact_id = updated.requests[0].fulfilled_artifact_ids[0]
         artifact_dir = tmp / "artifacts" / "research_tool_data" / "writing_callbacks" / "request:cont:1"
-        artifact_file = artifact_dir / f"{artifact_id}.json"
+        # R6: the on-disk name is portable; derive it through the production
+        # naming helper instead of assuming the logical id is a filename.
+        artifact_file = artifact_dir / _portable_callback_filename(artifact_id)
         assert artifact_file.is_file()
+        assert ":" not in artifact_file.name
         payload = json.loads(artifact_file.read_text(encoding="utf-8"))
         # Owning validator report: validated is a pure function of the checks,
         # never self-authorized.
@@ -295,10 +299,11 @@ def test_continuation_persists_concept_judgment_and_placement() -> None:
             bundle_path.read_text(encoding="utf-8")
         )
         artifact_id = updated.requests[0].fulfilled_artifact_ids[0]
-        artifact_file = (
+        artifact_dir = (
             tmp / "artifacts" / "research_tool_data" / "writing_callbacks"
-            / "request:cont:1" / f"{artifact_id}.json"
+            / "request:cont:1"
         )
+        artifact_file = artifact_dir / _portable_callback_filename(artifact_id)
         payload = json.loads(artifact_file.read_text(encoding="utf-8"))
         assert "CK-RUN" in payload["concept_judgment"]
         placement = payload["placement"]

@@ -231,7 +231,12 @@ def test_javascript_configuration_and_build_graph_are_auditable(tmp_path: Path) 
     observation = inspect_configuration(context, call)
     assert observation.status == "success"
     refs = set(observation.result_refs)
-    assert any("manifest:scripts" in ref for ref in refs)
+    # JSON build manifests now use the structured config namespace:
+    # ``config:<path>:<line>:<dotted-keypath>``.
+    assert any(
+        ref.startswith("config:package.json:") and ref.endswith(":scripts")
+        for ref in refs
+    )
     assert any("build:vite.config.ts:define_config" in ref for ref in refs)
     assert any("env:PUBLIC_BASE" in ref for ref in refs)
     assert any("env:API_URL" in ref for ref in refs)

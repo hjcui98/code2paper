@@ -26,7 +26,11 @@ from pathlib import Path
 
 import pytest
 
-from code2paper.agentic.behavior_graph import BehaviorNodeV1, CodeBehaviorGraphV1
+from code2paper.agentic.behavior_graph import (
+    BehaviorNodeV1,
+    BehaviorRelationV1,
+    CodeBehaviorGraphV1,
+)
 from code2paper.agentic.repo_snapshot import build_repo_snapshot
 from code2paper.agentic.research_models import ResearchToolCallV1
 from code2paper.agentic.research_tools import (
@@ -417,6 +421,234 @@ class TestInspectConfiguration:
         # README.md is not .py, so no bindings.
         assert obs.status == "success_empty"
         assert obs.result_refs == ()
+
+
+@pytest.fixture()
+def structured_config_repo(tmp_path: Path) -> Path:
+    root = tmp_path / "structured-config-repo"
+    (root / "conf" / "retrieval_model").mkdir(parents=True)
+    (root / "conf" / "config.yaml").write_text(
+        "defaults:\n"
+        "  - retrieval_model: contriever\n"
+        "add_positional_encoding: true\n"
+        "use_dedicated_attention: true\n",
+        encoding="utf-8",
+    )
+    (root / "conf" / "retrieval_model" / "contriever.yaml").write_text(
+        "encode_kwargs:\n"
+        "  normalize_embeddings: true\n",
+        encoding="utf-8",
+    )
+    (root / "conf" / "retrieval_model" / "e5.yaml").write_text(
+        "encode_kwargs:\n"
+        "  normalize_embeddings: false\n",
+        encoding="utf-8",
+    )
+    (root / "settings.toml").write_text(
+        "[train]\nseed = 42\n",
+        encoding="utf-8",
+    )
+    (root / "plain.json").write_text(
+        '{\n  "serving": {"batch_size": 8}\n}\n',
+        encoding="utf-8",
+    )
+    (root / "ambiguous.yaml").write_text(
+        "left:\n  shared_key: 1\nright:\n  shared_key: 2\n",
+        encoding="utf-8",
+    )
+    return root
+
+
+@pytest.fixture()
+def structured_ctx(structured_config_repo: Path) -> ResearchToolContext:
+    snapshot = build_repo_snapshot(structured_config_repo)
+    return ResearchToolContext(repo_snapshot=snapshot)
+
+
+class TestStructuredConfigurationIdentity:
+    """YAML/TOML/JSON keys use the typed ``config:`` namespace."""
+
+    def test_yaml_top_level_key(self, structured_ctx: ResearchToolContext) -> None:
+        call = _tool_call(
+            tool_name="inspect_configuration",
+            repo_snapshot_id=structured_ctx.repo_snapshot.snapshot_id,
+            arguments={"config_key": "add_positional_encoding"},
+        )
+        obs = inspect_configuration(structured_ctx, call)
+        assert obs.status == "success"
+        assert obs.result_refs == (
+            "config:conf/config.yaml:3:add_positional_encoding",
+        )
+        assert obs.exact_span_ids == ("span:conf/config.yaml:3:3",)
+
+    def test_yaml_dotted_nested_key(self, structured_ctx: ResearchToolContext) -> None:
+        call = _tool_call(
+            tool_name="inspect_configuration",
+            repo_snapshot_id=structured_ctx.repo_snapshot.snapshot_id,
+            arguments={"config_key": "encode_kwargs.normalize_embeddings"},
+        )
+        obs = inspect_configuration(structured_ctx, call)
+        assert obs.status == "success"
+        assert set(obs.result_refs) == {
+            "config:conf/retrieval_model/contriever.yaml:2:encode_kwargs.normalize_embeddings",
+            "config:conf/retrieval_model/e5.yaml:2:encode_kwargs.normalize_embeddings",
+        }
+        assert all(span.startswith("span:") for span in obs.exact_span_ids)
+
+    def test_toml_nested_key(self, structured_ctx: ResearchToolContext) -> None:
+        call = _tool_call(
+            tool_name="inspect_configuration",
+            repo_snapshot_id=structured_ctx.repo_snapshot.snapshot_id,
+            arguments={"config_key": "train.seed"},
+        )
+        obs = inspect_configuration(structured_ctx, call)
+        assert obs.status == "success"
+        assert obs.result_refs == ("config:settings.toml:2:train.seed",)
+
+    def test_json_config_key(self, structured_ctx: ResearchToolContext) -> None:
+        call = _tool_call(
+            tool_name="inspect_configuration",
+            repo_snapshot_id=structured_ctx.repo_snapshot.snapshot_id,
+            arguments={"config_key": "serving.batch_size"},
+        )
+        obs = inspect_configuration(structured_ctx, call)
+        assert obs.status == "success"
+        assert obs.result_refs == ("config:plain.json:2:serving.batch_size",)
+
+    def test_same_leaf_in_two_keypaths_is_ambiguous(
+        self, structured_ctx: ResearchToolContext
+    ) -> None:
+        call = _tool_call(
+            tool_name="inspect_configuration",
+            repo_snapshot_id=structured_ctx.repo_snapshot.snapshot_id,
+            arguments={"config_key": "shared_key"},
+        )
+        obs = inspect_configuration(structured_ctx, call)
+        assert obs.status == "success_empty"
+        assert obs.result_refs == ()
+        assert obs.diagnostics.ambiguous is True
+        assert any("ambiguous" in note for note in obs.diagnostics.notes)
+
+    def test_search_symbols_encodes_config_keys_under_config_namespace(
+        self, structured_ctx: ResearchToolContext
+    ) -> None:
+        from code2paper.agentic.research_tools import search_symbols
+
+        call = _tool_call(
+            tool_name="search_symbols",
+            repo_snapshot_id=structured_ctx.repo_snapshot.snapshot_id,
+            arguments={"query": "add_positional_encoding"},
+        )
+        obs = search_symbols(structured_ctx, call)
+        assert obs.status in {"success", "truncated"}
+        assert obs.result_refs
+        assert all(ref.startswith("config:") for ref in obs.result_refs)
+        assert not any(ref.startswith("symbol:") for ref in obs.result_refs)
+
+    def test_resolve_configuration_binding_verifies_snapshot_identity(
+        self, structured_ctx: ResearchToolContext
+    ) -> None:
+        from code2paper.agentic.implementation_scope import (
+            resolve_configuration_binding,
+        )
+
+        binding = resolve_configuration_binding(
+            "config:conf/config.yaml:3:add_positional_encoding",
+            repo_snapshot=structured_ctx.repo_snapshot,
+        )
+        assert binding.resolved
+        assert binding.exact_span_id == "span:conf/config.yaml:3:3"
+
+        missing = resolve_configuration_binding(
+            "config:conf/config.yaml:99:add_positional_encoding",
+            repo_snapshot=structured_ctx.repo_snapshot,
+        )
+        assert missing.rejection_code == "configuration_line_mismatch"
+
+        unknown = resolve_configuration_binding(
+            "config:conf/config.yaml:3:not_a_key",
+            repo_snapshot=structured_ctx.repo_snapshot,
+        )
+        assert unknown.rejection_code == "configuration_key_not_found"
+
+    def test_resolve_configuration_binding_rejects_external_path(
+        self, structured_ctx: ResearchToolContext
+    ) -> None:
+        from code2paper.agentic.implementation_scope import (
+            resolve_configuration_binding,
+        )
+
+        binding = resolve_configuration_binding(
+            "config:../outside.yaml:1:key",
+            repo_snapshot=structured_ctx.repo_snapshot,
+        )
+        assert binding.rejection_code == "configuration_file_not_in_snapshot"
+
+    def test_resolve_configuration_binding_rejects_snapshot_drift(
+        self,
+        structured_config_repo: Path,
+        structured_ctx: ResearchToolContext,
+    ) -> None:
+        from code2paper.agentic.implementation_scope import (
+            resolve_configuration_binding,
+        )
+
+        (structured_config_repo / "conf" / "config.yaml").write_text(
+            "defaults:\n"
+            "  - retrieval_model: e5\n"
+            "add_positional_encoding: false\n"
+            "use_dedicated_attention: false\n",
+            encoding="utf-8",
+        )
+        binding = resolve_configuration_binding(
+            "config:conf/config.yaml:3:add_positional_encoding",
+            repo_snapshot=structured_ctx.repo_snapshot,
+        )
+        assert binding.rejection_code == "configuration_snapshot_content_drift"
+
+    def test_symbol_index_reads_frozen_snapshot_not_working_tree(
+        self,
+        structured_config_repo: Path,
+        structured_ctx: ResearchToolContext,
+    ) -> None:
+        (structured_config_repo / "conf" / "retrieval_model" / "contriever.yaml").write_text(
+            "renamed_key: true\n",
+            encoding="utf-8",
+        )
+        index = structured_ctx.ensure_symbol_index()
+        keypaths = {
+            entry.symbol
+            for entry in index.candidates
+            if entry.kind == "config_key"
+        }
+        assert "add_positional_encoding" in keypaths
+        assert "renamed_key" not in keypaths
+        assert any(
+            warning.startswith(
+                "snapshot_read_failed:conf/retrieval_model/contriever.yaml"
+            )
+            for warning in index.warnings
+        )
+
+    def test_split_config_ref_is_strict(self) -> None:
+        from code2paper.agentic.typed_refs import (
+            build_config_ref,
+            split_config_ref,
+        )
+
+        ref = build_config_ref(
+            "conf/retrieval_model/contriever.yaml",
+            11,
+            "encode_kwargs.normalize_embeddings",
+        )
+        assert split_config_ref(ref) == (
+            "conf/retrieval_model/contriever.yaml",
+            11,
+            "encode_kwargs.normalize_embeddings",
+        )
+        assert split_config_ref("config:conf/config.yaml:not-a-line:key") is None
+        assert split_config_ref("config:conf/config.yaml:11:") is None
+        assert split_config_ref("symbol:train.py:train:3") is None
 
 
 # ---------------------------------------------------------------------------
@@ -1106,6 +1338,144 @@ class TestValidateCodeFacts:
         )
         assert obs.status == "invalid_request"
         assert "fact_set_replay_mismatch" in obs.error_message
+
+    def test_configuration_definition_span_is_packet_bound_and_replayable(
+        self,
+        tmp_path: Path,
+    ) -> None:
+        root = tmp_path / "configuration-packet"
+        (root / "conf").mkdir(parents=True)
+        (root / "model.py").write_text(
+            "def forward(self):\n"
+            "    if self.cfg.enabled:\n"
+            "        return 1\n"
+            "    return 0\n",
+            encoding="utf-8",
+        )
+        (root / "conf" / "config.yaml").write_text(
+            "enabled: true\n",
+            encoding="utf-8",
+        )
+        snapshot = build_repo_snapshot(root)
+        branch = BehaviorNodeV1(
+            node_id="node:config-branch",
+            symbol_id="sym:model.forward",
+            operation_id="op:config-branch",
+            predicate="BRANCH",
+            operands=("self.cfg.enabled",),
+            guard="self.cfg.enabled",
+            source_span_id="span:model.py:2:3",
+            source_authority="executable_hard",
+        )
+        access = BehaviorNodeV1(
+            node_id="node:config-access",
+            symbol_id="sym:model.forward",
+            operation_id="op:config-access",
+            predicate="LOAD",
+            operands=("self.cfg.enabled",),
+            source_span_id="span:model.py:2:2",
+            source_authority="executable_hard",
+            diagnostics=("config_access", "attr_read"),
+        )
+        relation = BehaviorRelationV1(
+            relation_id="rel:config-binding",
+            kind="CONFIGURED_BY",
+            source_node_id=branch.node_id,
+            target_node_id=access.node_id,
+            source_symbol_id=branch.symbol_id,
+            target_symbol_id=access.symbol_id,
+            source_span_id=branch.source_span_id,
+            target_span_id=access.source_span_id,
+        )
+        graph = CodeBehaviorGraphV1(
+            repo_snapshot_id=snapshot.snapshot_id,
+            project_tree_hash=snapshot.project_tree_hash,
+            nodes=[branch, access],
+            relations=[relation],
+        ).with_digest()
+        config_ctx = ResearchToolContext(
+            repo_snapshot=snapshot,
+            behavior_graph=graph,
+            artifact_root=root / ".research-artifacts",
+        )
+        proposal = _tool_call(
+            tool_name="propose_evidence_packet",
+            tool_call_id="tc-config-propose",
+            obligation_id="obl-config",
+            repo_snapshot_id=snapshot.snapshot_id,
+            arguments={
+                "obligation_tag": "obl-config",
+                "packet_id": "packet-config",
+                "anchor_span_ids": (branch.source_span_id,),
+                "relation_span_ids": (access.source_span_id,),
+                "behavior_node_ids": (branch.node_id, access.node_id),
+                "behavior_relation_ids": (relation.relation_id,),
+                "conditions": ("self.cfg.enabled",),
+            },
+        )
+        assert propose_evidence_packet(config_ctx, proposal).status == "success"
+
+        validate_packet_call = _tool_call(
+            tool_name="validate_evidence_packet",
+            tool_call_id="tc-config-validate-packet",
+            obligation_id="obl-config",
+            repo_snapshot_id=snapshot.snapshot_id,
+            arguments={"packet_id": "packet-config"},
+        )
+        first_packet_validation = validate_evidence_packet(
+            config_ctx, validate_packet_call
+        )
+        assert first_packet_validation.status == "success", first_packet_validation
+        packet = config_ctx.read_artifact("validated_packets", "packet-config")
+        assert packet is not None
+        definition_span = "span:conf/config.yaml:1:1"
+        assert definition_span in packet["semantic_span_ids"]
+        config_relation = next(
+            item
+            for item in packet["relations"]
+            if item["relation_id"] == relation.relation_id
+        )
+        assert definition_span in config_relation["direct_span_ids"]
+        # Revalidation reconstructs the same deterministic enrichment instead
+        # of treating the persisted packet as drift.
+        assert validate_evidence_packet(
+            config_ctx, validate_packet_call
+        ).status == "success"
+
+        compiled = compile_code_facts(
+            config_ctx,
+            _tool_call(
+                tool_name="compile_code_facts",
+                tool_call_id="tc-config-compile-facts",
+                obligation_id="obl-config",
+                repo_snapshot_id=snapshot.snapshot_id,
+                arguments={"packet_id": "packet-config"},
+            ),
+        )
+        assert compiled.status == "success", compiled
+        fact_set = config_ctx.read_artifact("fact_sets", "packet-config")
+        assert fact_set is not None
+        definition_fact = next(
+            item
+            for item in fact_set["facts"]
+            if "config_definition" in item["semantic_context"]
+        )
+        assert definition_fact["direct_span_ids"] == [definition_span]
+
+        validated = validate_code_facts(
+            config_ctx,
+            _tool_call(
+                tool_name="validate_code_facts",
+                tool_call_id="tc-config-validate-facts",
+                obligation_id="obl-config",
+                repo_snapshot_id=snapshot.snapshot_id,
+                arguments={
+                    "fact_id": definition_fact["fact_id"],
+                    "fact_set_id": "packet-config",
+                },
+            ),
+        )
+        assert validated.status == "success", validated
 
 
 class TestDecomposeAtomicClaims:

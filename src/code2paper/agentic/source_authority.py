@@ -341,7 +341,9 @@ def _normalize_path(path: str) -> str:
     cleaned = (path or "").strip().replace("\\", "/")
     while "//" in cleaned:
         cleaned = cleaned.replace("//", "/")
-    return cleaned.lstrip("./").lstrip("/")
+    while cleaned.startswith("./"):
+        cleaned = cleaned[2:]
+    return cleaned.lstrip("/")
 
 
 def _matches_test_filename(name: str, patterns: tuple[str, ...]) -> bool:

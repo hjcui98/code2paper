@@ -75,6 +75,7 @@ _LLM_ALLOWED_ACTIONS: tuple[ResearchAction, ...] = (
     "INSPECT_CONFIG",
     "SEARCH_HINTS",
     "BUILD_BEHAVIOR_SUBGRAPH",
+    "PROPOSE_TARGET_REVISION",
     "COMPILE_EVIDENCE",
     "RECORD_GAP",
     "STOP_BLOCKED",
@@ -86,7 +87,7 @@ _LLM_ALLOWED_ACTIONS_SET = frozenset(_LLM_ALLOWED_ACTIONS)
 _TOOL_CALLING_ACTIONS = frozenset({
     "SEARCH_SYMBOLS", "READ_CANDIDATE", "TRACE_CALLS", "TRACE_DATA_FLOW",
     "INSPECT_BRANCH", "INSPECT_CONFIG", "SEARCH_HINTS",
-    "BUILD_BEHAVIOR_SUBGRAPH",
+    "BUILD_BEHAVIOR_SUBGRAPH", "PROPOSE_TARGET_REVISION",
 })
 
 
@@ -107,6 +108,7 @@ _MODEL_TOOL_TO_ACTION: dict[str, ResearchAction] = {
     "inspect_control_flow": "INSPECT_BRANCH",
     "inspect_configuration": "INSPECT_CONFIG",
     "build_behavior_subgraph": "BUILD_BEHAVIOR_SUBGRAPH",
+    "propose_target_revision": "PROPOSE_TARGET_REVISION",
 }
 
 _MODEL_TOOL_GUIDANCE: dict[str, dict[str, Any]] = {
@@ -122,6 +124,20 @@ _MODEL_TOOL_GUIDANCE: dict[str, dict[str, Any]] = {
     "inspect_control_flow": {"arguments": {"path": "exact path", "symbol": "optional exact symbol"}, "use_when": "checking branches, loops, and conditions"},
     "inspect_configuration": {"arguments": {"config_key": "key or empty", "path": "optional exact path"}, "use_when": "checking defaults and runtime configuration"},
     "build_behavior_subgraph": {"arguments": {"path": "exact path", "symbol": "exact symbol"}, "use_when": "extracting operations from code already read"},
+    "propose_target_revision": {
+        "arguments": {
+            "parent_obligation_id": "the active obligation id",
+            "source_type": "system_inferred|research_subquestion|unproven",
+            "before_target_ids": "array of existing target ids this revises",
+            "after_targets": "array of target objects (target_id, role, desired_predicates, required_relations, conditions, inputs, transformations, decisions, outputs, search_terms, replaces_target_ids)",
+            "observation_refs": "array of refs from observations this run already returned",
+            "relation_refs": "array of relation refs from observations",
+            "reason": "why the current targets are wrong",
+            "unresolved_impact": "array of what stays unresolved",
+            "budget_requests": "int, additional search budget requested",
+        },
+        "use_when": "the repository evidence shows the obligation's typed targets are wrong or incomplete; the harness decides whether to apply the revision",
+    },
 }
 
 _COMMON_TOOL_INPUT_FIELDS = {
@@ -411,7 +427,16 @@ class GemmaSupervisorBackend:
         self._temperature = self._llm_config.temperature
         self._degraded_events: list[str] = []
         self._representation_repairs: list[dict[str, Any]] = []
+        # R4: every proposal-boundary failure is recorded with its class and
+        # the request/schema/model identity that produced it, so a frozen run
+        # can be audited without guessing whether a missing decision came from
+        # no response, a timeout, representation damage, or a content error.
+        self._decision_failures: list[dict[str, Any]] = []
         self._llm_decision_count = 0
+        # No-progress guard state: the live manager may keep answering
+        # COMPILE_EVIDENCE for an obligation whose evidence did not change.
+        self._compile_progress: dict[str, tuple[Any, ...]] = {}
+        self._compile_stalls: dict[str, int] = {}
 
     @property
     def degraded_events(self) -> tuple[str, ...]:
@@ -426,6 +451,67 @@ class GemmaSupervisorBackend:
     @property
     def representation_repairs(self) -> tuple[dict[str, Any], ...]:
         return tuple(self._representation_repairs)
+
+    @property
+    def decision_failures(self) -> tuple[dict[str, Any], ...]:
+        """Typed parse/recovery/fallback records for this run.
+
+        ``failure_class`` separates representation damage (recovered, the
+        proposal was still parsed) from content/identity errors (returned to
+        the owning agent) and from missing responses (timeout, blocked,
+        empty), which keep their real terminal instead of becoming a
+        supported fact.
+        """
+
+        return tuple(self._decision_failures)
+
+    def _record_decision_failure(
+        self,
+        *,
+        context: Any,
+        failure_class: str,
+        response: Any | None,
+        parse_error: str = "",
+        recovery: Any | None = None,
+    ) -> None:
+        """Persist one proposal-boundary failure with its identity chain."""
+
+        text = str(getattr(response, "text", "") or "")
+        self._decision_failures.append({
+            "turn_index": int(getattr(context, "turn_index", 0) or 0),
+            "obligation_id": str(
+                getattr(getattr(context, "active_obligation", None), "obligation_id", "")
+                or ""
+            ),
+            "failure_class": failure_class,
+            "parse_error": str(parse_error or "")[:400],
+            "prompt_template_id": "agentic_repository_research_manager_v2",
+            "schema_name": "ResearchSupervisorProposalV1",
+            "model": str(getattr(self._llm_config, "model", "") or ""),
+            "provider": str(
+                getattr(getattr(self._llm_config, "provider", ""), "value", "")
+                or getattr(self._llm_config, "provider", "")
+                or ""
+            ),
+            "response_mode": str(getattr(response, "response_mode", "") or ""),
+            "finish_reason": str(getattr(response, "finish_reason", "") or ""),
+            "blocked_reason": str(getattr(response, "blocked_reason", "") or ""),
+            "raw_text_digest": (
+                "sha256:" + hashlib.sha256(text.encode("utf-8")).hexdigest()
+                if text else ""
+            ),
+            "raw_text_preview": text[:200].replace("\n", "\\n"),
+            "recovery_applied": bool(getattr(recovery, "applied", False)),
+            "recovery_operations": [
+                str(item) for item in (getattr(recovery, "operations", ()) or ())
+            ],
+            "recovery_original_text_digest": str(
+                getattr(recovery, "original_text_digest", "") or ""
+            ),
+            "recovery_parsed_payload_digest": str(
+                getattr(recovery, "parsed_payload_digest", "") or ""
+            ),
+        })
 
     @property
     def deterministic_fallback(self) -> DeterministicSupervisorBackend:
@@ -471,16 +557,34 @@ class GemmaSupervisorBackend:
             response = LLMClient(self._llm_config).complete(request)
         except Exception as exc:  # noqa: BLE001 — LLM failures must not stall the graph
             _logger.warning("gemma_supervisor_llm_error: %s", exc)
+            self._record_decision_failure(
+                context=context,
+                failure_class="llm_api_error",
+                response=None,
+                parse_error=f"{type(exc).__name__}:{str(exc)[:200]}",
+            )
             return self._fallback_decision(context, "llm_api_error")
 
         if response.blocked_reason:
             _logger.warning("gemma_supervisor_blocked: %s", response.blocked_reason)
+            self._record_decision_failure(
+                context=context,
+                failure_class="llm_blocked",
+                response=response,
+            )
             return self._fallback_decision(context, "llm_blocked")
 
         if not response.text.strip():
             _logger.warning("gemma_supervisor_empty_response")
+            self._record_decision_failure(
+                context=context,
+                failure_class="llm_empty_response",
+                response=response,
+            )
             return self._fallback_decision(context, "llm_empty_response")
 
+        recovery: Any | None = None
+        parsed: Any | None = None
         try:
             parsed, recovery, parse_error = try_parse_structured_response_with_trace(
                 response.text, _ResearchManagerProposalV1
@@ -508,12 +612,36 @@ class GemmaSupervisorBackend:
                 getattr(response, "finish_reason", ""),
                 raw_preview,
             )
+            if parsed is None and getattr(recovery, "applied", False):
+                # Representation repair ran but could not recover a payload:
+                # the damage is not merely cosmetic.
+                failure_class = "representation_repair_failed"
+            elif parsed is not None:
+                # JSON parsed but the proposal shape/identity is wrong; the
+                # owning agent must fix the content.
+                failure_class = "content_error_returned_to_owner"
+            else:
+                failure_class = "llm_parse_error"
+            self._record_decision_failure(
+                context=context,
+                failure_class=failure_class,
+                response=response,
+                parse_error=str(exc),
+                recovery=recovery,
+            )
             return self._fallback_decision(context, "llm_parse_error")
 
         try:
             decision = self._build_decision(context, proposal)
         except (KeyError, TypeError, ValueError, ValidationError) as exc:
             _logger.warning("research_manager_invalid_tool_proposal: %s", exc)
+            self._record_decision_failure(
+                context=context,
+                failure_class="content_error_returned_to_owner",
+                response=response,
+                parse_error=str(exc),
+                recovery=recovery,
+            )
             return self._fallback_decision(context, "invalid_tool_proposal")
         self._llm_decision_count += 1
         return decision
@@ -700,15 +828,28 @@ class GemmaSupervisorBackend:
         prompt["executed_tool_calls"] = [
             item.model_dump(mode="json") for item in context.executed_tool_calls
         ]
-        # Exact-repeat guard, mirror of the policy rule: re-reading the same
-        # path+symbol (or a code span that covers the same line) inside this
-        # snapshot returns identical bytes and is rejected by policy as a
-        # duplicate no-gain call, even when a different obligation prompted
-        # the original read.  The model must not propose these again; it must
-        # trace a caller/data/control/config relation or read another span.
+        # R4 exact-repeat guard, mirror of the policy rule: re-reading the
+        # same path+symbol (or a code span covering the same line) for the
+        # *same obligation* returns identical bytes and is rejected as a
+        # duplicate no-gain call.  A read executed for another obligation
+        # yields reusable bytes but does not answer this question; those are
+        # listed separately as reusable prior reads instead of being
+        # forbidden.
+        active_obligation_id = (
+            context.active_obligation.obligation_id
+            if context.active_obligation is not None else ""
+        )
         prompt["forbidden_exact_reads"] = [
             item.model_dump(mode="json") for item in context.executed_tool_calls
             if item.tool_name in {"read_symbol", "read_code_span"}
+            and (
+                not active_obligation_id
+                or str(getattr(item, "obligation_id", "") or "")
+                == active_obligation_id
+            )
+        ]
+        prompt["reusable_prior_reads"] = [
+            item.model_dump(mode="json") for item in context.relevant_prior_reads
         ]
         if context.policy_feedback:
             prompt["policy_feedback"] = list(context.policy_feedback)
@@ -841,6 +982,10 @@ class GemmaSupervisorBackend:
                 "COMPILE_EVIDENCE", "RECORD_GAP", "STOP_BLOCKED"
             }:
                 raise ValueError(f"invalid terminal_action: {terminal_action}")
+            if terminal_action == "COMPILE_EVIDENCE":
+                forced = self._no_progress_override(context, obligation_id)
+                if forced is not None:
+                    return forced
             if raw_tool_calls:
                 if terminal_action == "COMPILE_EVIDENCE":
                     # Compiling is a checkpoint, not an irreversible stop.  Some
@@ -1057,6 +1202,107 @@ class GemmaSupervisorBackend:
             node_budget=int(validated["node_budget"]),
             arguments=tool_arguments,
         )
+
+    def _forced_decision(
+        self,
+        context: ResearchDecisionContextV1,
+        *,
+        action: ResearchAction,
+        tool_calls: tuple[ResearchToolCallV1, ...],
+        rationale: str,
+    ) -> ResearchDecisionV1:
+        """Return a policy-override decision that bypasses the model proposal."""
+
+        obl = context.active_obligation
+        issue = context.active_issue
+        return ResearchDecisionV1(
+            decision_id=_decision_id(
+                self._run_id,
+                context.turn_index,
+                f"{action}:no_progress_guard",
+            ),
+            run_id=self._run_id,
+            turn_index=context.turn_index,
+            action=action,
+            obligation_id=obl.obligation_id if obl else "",
+            issue_id=issue.issue_id if issue else "",
+            goal=(
+                tool_calls[0].goal
+                if tool_calls
+                else self._fallback._goal_for(action, context)
+            ),
+            selected_tool_calls=tool_calls,
+            candidate_scope=tuple(context.top_candidate_symbol_ids),
+            expected_information_gain=self._fallback._expected_gain(action, context),
+            evidence_needed=tuple(context.missing_information),
+            stop_condition=self._fallback._stop_condition(context),
+            fallback_action=self._fallback_fallback_action(context),
+            rationale=rationale,
+            produced_by="policy_override",
+        )
+
+    def _no_progress_override(
+        self,
+        context: ResearchDecisionContextV1,
+        obligation_id: str,
+    ) -> ResearchDecisionV1 | None:
+        """Refuse to compile the same stalled evidence again.
+
+        A manager rationale that claims "all material parts are evidenced" is
+        not proof: the deterministic owner/path gates decide.  When two
+        consecutive compiles for one obligation see the same distinct gaps,
+        claims and bound nodes -- or the gain tracker already reported no
+        progress -- this forces the declared fallback action, and after the
+        bounded retries records an explicit typed gap so the scheduler can
+        advance to the next must-cover obligation.
+        """
+
+        if not obligation_id:
+            return None
+        signature = (
+            frozenset(str(item) for item in (context.missing_information or ())),
+            tuple(str(item) for item in (context.current_supported_claim_ids or ())),
+            tuple(
+                str(item)
+                for item in (context.candidate_bound_behavior_node_ids or ())
+            ),
+            tuple(
+                str(item) for item in (context.top_candidate_behavior_node_ids or ())
+            ),
+        )
+        previous = self._compile_progress.get(obligation_id)
+        stalls = self._compile_stalls.get(obligation_id, 0)
+        stalled = previous is not None and previous == signature
+        stalls = stalls + 1 if stalled else 0
+        if not stalled:
+            self._compile_progress[obligation_id] = signature
+        self._compile_stalls[obligation_id] = stalls
+        no_progress_counter = int(getattr(context, "no_progress_counter", 0) or 0)
+        if not stalled and no_progress_counter < 2:
+            return None
+        # Delegate the escalation to the audited deterministic policy instead
+        # of inventing an action here: only that policy knows whether a typed
+        # gap is currently allowed (three no-gain turns or exhausted tools).
+        # Forcing RECORD_GAP without its precondition made the gap finalizer
+        # reject the gap and churn the same obligation forever.
+        deterministic = self._fallback.decide(context)
+        if deterministic.action == "COMPILE_EVIDENCE":
+            return None
+        self._degraded_events.append(
+            "no_progress_guard:"
+            f"{deterministic.action}:{obligation_id}:stalls={stalls}:"
+            f"counter={no_progress_counter}"
+        )
+        return deterministic.model_copy(update={
+            "produced_by": "policy_override",
+            "rationale": (
+                "No-progress guard: COMPILE_EVIDENCE for "
+                f"{obligation_id} repeated without new evidence "
+                f"(stalls={stalls}, no_progress={no_progress_counter}); "
+                f"using the audited deterministic {deterministic.action} "
+                "instead."
+            ),
+        })
 
     def _fallback_fallback_action(
         self, context: ResearchDecisionContextV1

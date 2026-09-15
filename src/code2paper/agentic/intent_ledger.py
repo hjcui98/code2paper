@@ -236,7 +236,12 @@ def build_intent_implementation_ledger(
     no_progress_count = 0
     if compile_events:
         for event in compile_events:
-            delta = int(event.get("new_spans_count", 0)) + int(event.get("new_facts_count", 0)) + int(event.get("new_operations_count", 0))
+            delta = (
+                int(event.get("new_facts_count", 0))
+                + int(event.get("new_claims_count", 0))
+                + int(event.get("new_typed_slots_count", 0))
+                + int(event.get("new_operations_count", 0))
+            )
             if delta == 0 and not event.get("has_coverage_gain", False):
                 no_progress_count += 1
             else:

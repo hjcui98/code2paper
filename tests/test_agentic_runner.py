@@ -321,5 +321,214 @@ class AgenticRunnerTests(unittest.TestCase):
         self.assertIs(build_graph.call_args.kwargs["decision_provider"], fake_provider)
 
 
+class AgenticRunnerSupportPrecisionTests(unittest.TestCase):
+    """R3: the runner reports the measured support precision, never a default."""
+
+    def _state(
+        self,
+        root: Path,
+        *,
+        validation: TextEvidenceValidationReport,
+        plan_gate_passed: bool = True,
+    ):
+        quality_path = root / "quality.json"
+        validation_path = root / "validation.json"
+        ledger_path = root / "ledger.json"
+        writer_result_path = root / "writer_result.json"
+        quality = PublicationQualityReportV1(
+            status="incomplete",
+            plan_gate_passed=plan_gate_passed,
+            final_integrity_gate_passed=False,
+            safety=EpistemicSafetyMetricsV1(
+                authorship_gate_passed=True,
+                binding_gate_passed=True,
+                final_text_validation_status="pending",
+                hard_gate_passed=False,
+            ),
+            utility=PublicationUtilityMetricsV1(utility_gate_passed=True),
+        )
+        ledger = FinalTextAuthorshipLedgerV1(
+            final_text_digest="sha256:final",
+            hard_gate_passed=True,
+        )
+        quality_path.write_text(quality.model_dump_json(), encoding="utf-8")
+        validation_path.write_text(validation.model_dump_json(), encoding="utf-8")
+        ledger_path.write_text(ledger.model_dump_json(), encoding="utf-8")
+        writer_result_path.write_text(
+            PublicationWriterRunResultV1(
+                status="incomplete",
+                plan_digest="sha256:plan",
+                claim_digest="sha256:claims",
+                candidate_generation_status="generated",
+                candidate_available=True,
+            ).model_dump_json(),
+            encoding="utf-8",
+        )
+        return (
+            AgenticRunState(
+                project_root=Path("."),
+                out_root=root,
+                artifacts={
+                    "publication_quality_report_v1": str(quality_path),
+                    "text_evidence_validation": str(validation_path),
+                    "final_text_authorship_ledger_v1": str(ledger_path),
+                    "publication_writer_result_v1": str(writer_result_path),
+                },
+            ),
+            quality_path,
+            writer_result_path,
+        )
+
+    def test_runner_measures_precision_and_keeps_caveated_separate(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            state, quality_path, _result_path = self._state(
+                root,
+                validation=TextEvidenceValidationReport(
+                    status="passed",
+                    input_text_digest="sha256:final",
+                    projection_digest="sha256:projection",
+                    checked_factual_claims=3,
+                    supported_claims=2,
+                    caveated_claims=1,
+                    verification_mode="semantic",
+                ),
+            )
+            _reconcile_publication_quality_with_final_validation(state)
+            reconciled = PublicationQualityReportV1.model_validate_json(
+                quality_path.read_text(encoding="utf-8")
+            )
+            metric = reconciled.safety.support_precision_metric
+            self.assertEqual(metric.status, "measured")
+            self.assertEqual(metric.precision, 1.0)
+            self.assertEqual(metric.caveated, 1)
+            self.assertEqual(metric.supported, 2)
+            self.assertEqual(reconciled.safety.support_precision, 1.0)
+            self.assertTrue(metric.verified_authorized)
+
+            # Writer and runner reach the same conclusion for the same report:
+            # both consume the shared metric computed from the bound report.
+            from code2paper.agentic.publication_quality import (
+                compute_support_precision_metric,
+            )
+
+            shared = compute_support_precision_metric(
+                report=TextEvidenceValidationReport(
+                    status="passed",
+                    input_text_digest="sha256:final",
+                    projection_digest="sha256:projection",
+                    checked_factual_claims=3,
+                    supported_claims=2,
+                    caveated_claims=1,
+                    verification_mode="semantic",
+                ),
+                text_digest="sha256:final",
+            )
+            self.assertEqual(
+                metric.model_dump(mode="json"),
+                shared.model_dump(mode="json"),
+            )
+
+    def test_runner_zero_denominator_is_not_a_perfect_score(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            state, quality_path, _result_path = self._state(
+                root,
+                validation=TextEvidenceValidationReport(
+                    status="passed",
+                    input_text_digest="sha256:final",
+                    projection_digest="sha256:projection",
+                    checked_factual_claims=2,
+                    caveated_claims=2,
+                    verification_mode="semantic",
+                ),
+            )
+            _reconcile_publication_quality_with_final_validation(state)
+            reconciled = PublicationQualityReportV1.model_validate_json(
+                quality_path.read_text(encoding="utf-8")
+            )
+            metric = reconciled.safety.support_precision_metric
+            self.assertEqual(metric.status, "not_applicable")
+            self.assertIsNone(metric.precision)
+            self.assertIsNone(reconciled.safety.support_precision)
+            self.assertNotEqual(reconciled.safety.support_precision, 1.0)
+
+    def test_runner_unbound_report_gets_no_number(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            state, quality_path, _result_path = self._state(
+                root,
+                validation=TextEvidenceValidationReport(
+                    status="passed",
+                    input_text_digest="sha256:other-text",
+                    projection_digest="sha256:projection",
+                    checked_factual_claims=1,
+                    supported_claims=1,
+                    verification_mode="semantic",
+                ),
+            )
+            _reconcile_publication_quality_with_final_validation(state)
+            reconciled = PublicationQualityReportV1.model_validate_json(
+                quality_path.read_text(encoding="utf-8")
+            )
+            metric = reconciled.safety.support_precision_metric
+            self.assertEqual(metric.status, "invalid")
+            self.assertEqual(metric.failure_codes, ("support_precision_text_mismatch",))
+            self.assertIsNone(reconciled.safety.support_precision)
+            self.assertFalse(reconciled.safety.hard_gate_passed)
+            self.assertEqual(reconciled.safety.final_text_validation_status, "failed")
+
+    def test_runner_rewrites_validation_state_when_status_is_unchanged(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            validation_path = root / "validation.json"
+            state, quality_path, result_path = self._state(
+                root,
+                validation=TextEvidenceValidationReport(
+                    status="failed",
+                    input_text_digest="sha256:final",
+                    projection_digest="sha256:projection",
+                    checked_factual_claims=1,
+                    supported_claims=1,
+                    verification_mode="semantic",
+                ),
+                # The plan gate keeps the overall status at ``incomplete`` even
+                # after the reverse validator passes, so this test isolates the
+                # write-back of the validation state itself.
+                plan_gate_passed=False,
+            )
+            _reconcile_publication_quality_with_final_validation(state)
+            first = PublicationWriterRunResultV1.model_validate_json(
+                result_path.read_text(encoding="utf-8")
+            )
+            self.assertEqual(first.status, "incomplete")
+            self.assertEqual(first.candidate_validation_status, "warnings")
+
+            # The reverse validator now passes while the overall run status
+            # stays ``incomplete``; the observable validation state must still
+            # be written back.
+            validation_path.write_text(
+                TextEvidenceValidationReport(
+                    status="passed",
+                    input_text_digest="sha256:final",
+                    projection_digest="sha256:projection",
+                    checked_factual_claims=1,
+                    supported_claims=1,
+                    verification_mode="semantic",
+                ).model_dump_json(),
+                encoding="utf-8",
+            )
+            _reconcile_publication_quality_with_final_validation(state)
+            second = PublicationWriterRunResultV1.model_validate_json(
+                result_path.read_text(encoding="utf-8")
+            )
+            self.assertEqual(second.status, first.status)
+            self.assertEqual(second.candidate_validation_status, "passed")
+            self.assertEqual(second.verified_validation_status, "passed")
+            self.assertTrue(second.publication_quality_digest)
+
+
+
+
 if __name__ == "__main__":
     unittest.main()

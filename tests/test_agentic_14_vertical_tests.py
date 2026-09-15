@@ -91,6 +91,49 @@ from tests.test_agentic_publication_method_writer import _artifacts, _config
 
 
 def _mock_writer_caller(config: LLMConfig, request: LLMRequest) -> LLMResponse:
+    if (
+        str(getattr(request, "prompt_template_id", "")) == "unified_realizer_page_v2"
+        or (
+            isinstance(getattr(request, "input_payload", None), dict)
+            and str(request.input_payload.get("consumer_role", "")) == "realizer"
+        )
+    ):
+        technical_payload = request.input_payload.get("technical_payload") or {}
+        detail_ids: list[str] = []
+
+        def add_detail(value: object) -> None:
+            text = str(value or "").strip()
+            if not text:
+                return
+            canonical = "detail:" + text.removeprefix("detail:")
+            if canonical not in detail_ids:
+                detail_ids.append(canonical)
+
+        for value in technical_payload.get("detail_ids", ()) or ():
+            add_detail(value)
+        for atom in technical_payload.get("atoms", ()) or ():
+            if isinstance(atom, dict):
+                add_detail(atom.get("detail_id"))
+
+        return LLMResponse(
+            text=json.dumps({
+                "draft_markdown": "Realizer covers " + ", ".join(detail_ids),
+                "rendered_detail_ids": detail_ids,
+                "used_formula_package_ids": [],
+                "witnesses": [
+                    {
+                        "witness_kind": "detail",
+                        "target_id": detail_id,
+                        "exact_text": detail_id,
+                    }
+                    for detail_id in detail_ids
+                ],
+            }),
+            response_hash="sha256:test-realizer",
+            finish_reason="stop",
+            token_usage={"completion_tokens": 50, "prompt_tokens": 300},
+        )
+
     payload = request.prompt if isinstance(request.prompt, dict) else {}
     if isinstance(request.prompt, str):
         try:
@@ -220,11 +263,25 @@ def test_vertical_04_real_artifact_manifest_loader(tmp_path: Path) -> None:
     ):
         (art_dir / f"{name}.json").write_text("{}", encoding="utf-8")
 
-    writer_paths = _writer_artifact_paths(tmp_path)
+    writer_paths = _writer_artifact_paths(tmp_path, allow_legacy_discovery=True)
     assert "repo_snapshot_v2" in writer_paths
     assert "symbol_index_v2" in writer_paths
     assert "method_argument_briefs_v1" in writer_paths
     assert "method_story_nodes_v1" in writer_paths
+
+    # R2: unmarked directory discovery is refused instead of guessing which
+    # files belong to the current revision.
+    with pytest.raises(ValueError, match="writer_artifact_manifest_required"):
+        _writer_artifact_paths(tmp_path)
+
+    # R2: a manifest binds the inputs to this revision; a stale file with a
+    # colliding name in the artifact directory is not promoted.
+    stale_only = _writer_artifact_paths(
+        tmp_path,
+        persisted_paths={"symbol_index_v2": str(art_dir / "symbol_index_v2.json")},
+    )
+    assert set(stale_only) == {"symbol_index_v2"}
+    assert "method_argument_briefs_v1" not in stale_only
 
 
 # ============================================================================
@@ -274,6 +331,31 @@ def test_vertical_07_source_inventory_fixture_domain_pruning() -> None:
     assert classify_source_kind("data/calibration_set.pt") == "dataset_or_checkpoint"
     assert classify_source_kind("pruning/wanda.py") == "first_party_executable"
     assert classify_source_kind("tests/test_pruning.py") == "test"
+
+
+def test_first_party_packages_named_after_data_vocabulary_stay_readable() -> None:
+    """`src/dataset/...` is the project's own code, not a data artifact.
+
+    Regression: the name-based classifier treated any path part in the data
+    vocabulary (data/dataset/models/checkpoints/...) as dataset_or_checkpoint,
+    so first-party modules such as ``src/dataset/ebcar_dataset.py`` were
+    excluded from the readable source partition -- and the configuration
+    definition spans that live in them could not be authenticated.  Only a
+    top-level data container (``data/real/x/preprocess.py``) or a data-suffix
+    artifact (weights/arrays/checkpoints) is data now.
+    """
+
+    # First-party source whose package merely uses a data-vocabulary name.
+    assert classify_source_kind("src/dataset/ebcar_dataset.py") == "first_party_executable"
+    assert classify_source_kind("src/dataset/__init__.py") == "first_party_executable"
+    assert classify_source_kind("src/models/encoder.py") == "first_party_executable"
+    # Data tooling under a top-level data container stays excluded.
+    assert classify_source_kind("data/real/ConTEB_test/preprocess.py") == "dataset_or_checkpoint"
+    # Data-suffix artifacts stay excluded wherever they live.
+    assert classify_source_kind("weights/model.safetensors") == "dataset_or_checkpoint"
+    assert classify_source_kind("src/assets/blob.bin") == "dataset_or_checkpoint"
+    # Configuration files are configuration, not data.
+    assert classify_source_kind("conf/config.yaml") == "configuration"
 
 
 # ============================================================================

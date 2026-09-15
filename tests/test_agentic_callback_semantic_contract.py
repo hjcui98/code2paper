@@ -299,6 +299,37 @@ def test_structural_exit_rejects_invalid_required_transaction() -> None:
     assert decision.invalid_paragraphs == 1
 
 
+def test_structural_exit_rejects_incomplete_candidate_quality_and_adapter() -> None:
+    plan, trace, assessment, writer, callback = _structural_payloads(valid=True)
+    writer["candidate_complete"] = False
+    decision = evaluate_authoring_structural_exit(
+        plan_payload=plan,
+        trace_payload=trace,
+        assessment_payload=assessment,
+        writer_payload=writer,
+        callback_payload=callback,
+        quality_payload={
+            "plan_gate_passed": False,
+            "safety": {"hard_gate_passed": False},
+            "content_chain": {
+                "content_units": {"planned": 27, "rendered": 0},
+            },
+        },
+        adapter_payload={
+            "unassigned_source_argument_unit_ids": ["MA-AU-1"],
+            "unassigned_source_obligation_ids": ["intent:1"],
+        },
+        candidate_digest="sha256:candidate",
+    )
+    assert not decision.eligible
+    assert "candidate_completion_gate_open" in decision.reasons
+    assert "candidate_quality_plan_gate_failed" in decision.reasons
+    assert "candidate_quality_safety_gate_failed" in decision.reasons
+    assert "candidate_content_chain_incomplete" in decision.reasons
+    assert "plan_adapter_unassigned_source_units" in decision.reasons
+    assert "plan_adapter_unassigned_source_obligations" in decision.reasons
+
+
 def test_structural_exit_requires_scoped_callback_for_partial_fields() -> None:
     plan, trace, assessment, writer, callback = _structural_payloads(valid=True)
     trace["rows"][0]["field_bindings"] = [{"field_name": "operation", "status": "partial"}]
@@ -351,6 +382,41 @@ def test_structural_exit_rejects_accepted_formula_package_not_consumed() -> None
     )
     assert not denied.eligible
     assert any(reason.startswith("formula_packages_unconsumed:") for reason in denied.reasons)
+
+
+def test_structural_exit_consumes_distinct_packages_with_identical_formula_blocks() -> None:
+    plan, trace, assessment, writer, callback = _structural_payloads(valid=True)
+    plan["sections"][0]["paragraphs"][0]["formula_obligation_ids"] = ["formula:1"]
+    assessment["assessments"][0]["witnessed_by_kind"]["formula"] = ["formula:1"]
+    block = "$$\nq := 0\n$$"
+    formalization = {
+        "sections": [{
+            "section_id": "MA-S1",
+            "packages": [
+                {"package_id": "package:1", "markdown_block": block},
+                {"package_id": "package:2", "markdown_block": block},
+            ],
+            "obligation_truths": [{
+                "obligation_id": "formula:1",
+                "expectation": "required",
+                "outcome": "rendered",
+                "package_id": "package:1",
+            }],
+        }],
+    }
+    decision = evaluate_authoring_structural_exit(
+        plan_payload=plan,
+        trace_payload=trace,
+        assessment_payload=assessment,
+        writer_payload=writer,
+        callback_payload=callback,
+        formalization_payload=formalization,
+        candidate_digest="sha256:candidate",
+        candidate_markdown=f"The method uses the shared expression.\n\n{block}\n\n{block}",
+    )
+    assert decision.eligible
+    assert decision.accepted_formula_packages == 2
+    assert decision.consumed_formula_packages == 2
 
 
 def test_structural_exit_accepts_rhetorical_move_as_callback_target() -> None:

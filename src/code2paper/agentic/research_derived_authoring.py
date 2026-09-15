@@ -54,6 +54,12 @@ _INTERNAL_AUDIT_TERMS = re.compile(
     r"repository\s+evidence|formalization\s+pending|typed\s+gap)\b",
     re.I,
 )
+_INTERNAL_CODE_TOKENS = re.compile(
+    r"\b(?:Sym|mech_sym):[A-Za-z0-9_.:-]+|"
+    r"\bMA-(?:REV|S|AU|MOVE|OBL)-[A-Za-z0-9_.:-]+|"
+    r"\b(?:LOAD|WRITE|RESHAPE|CALL|READ|COMPARE|RETURN|CONSTRUCT|SELECT|"
+    r"FILTER|SORT|REDUCE|CONCAT|NORMALIZE)\s*\("
+)
 _NON_TARGET_CONTEXT = re.compile(
     r"(?:^|[/_.:-])(?:baseline|comparand|competitor|evaluation|benchmark|"
     r"metrics?|ablation|tests?|test_suite|config(?:uration)?|settings?)"
@@ -2126,7 +2132,10 @@ def validate_candidate_authority(
     text = str(candidate_text or "")
     violations: list[str] = []
     warnings: list[str] = []
-    internal_count = len(_INTERNAL_AUDIT_TERMS.findall(text))
+    internal_count = (
+        len(_INTERNAL_AUDIT_TERMS.findall(text))
+        + len(_INTERNAL_CODE_TOKENS.findall(text))
+    )
     if internal_count:
         violations.append("candidate_contains_internal_audit_terms")
     derivation_by_id = {item.derivation_id: item for item in derivations}

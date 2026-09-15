@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
+import sys
 from pathlib import Path
 
 from code2paper.pipeline.stages.evidence import write_phase3_artifacts
@@ -15,7 +17,10 @@ from code2paper.pipeline.stages.authoring import write_phase5_artifacts
 from code2paper.cli.agentic_benchmark import main as agentic_benchmark_main
 from code2paper.cli.prepare import run_prepare
 from code2paper.cli.agentic_run import main as agentic_run_main
-from code2paper.cli.agentic_run import method_agent_main
+from code2paper.cli.agentic_run import (
+    method_agent_main,
+    supervised_method_agent_main,
+)
 from code2paper.cli.run import main as run_main
 from code2paper.core.schemas import ClaimEvidenceMap, CodeMethodAnalysis, CodeAlignmentIR, LLMProvider, MethodEvidence, RawEvidencePack
 from code2paper.llm.providers import DEFAULT_TEXT_MODEL, load_llm_config_from_env
@@ -26,6 +31,17 @@ _LLM_PROVIDER_CHOICES = [provider.value for provider in LLMProvider] + ["moonsho
 
 
 def main(argv: list[str] | None = None) -> int:
+    raw_argv = list(argv) if argv is not None else list(sys.argv[1:])
+    # The Method Agent owns a richer parser than the legacy phase CLI.  Route
+    # the complete argument vector before the outer parser sees it; otherwise
+    # supervisor-only options (wall-clock budget, concept cards, and the
+    # authoring-context lane) are rejected before they can reach the worker.
+    if raw_argv and raw_argv[0] == "method-agent":
+        method_argv = raw_argv[1:]
+        if os.environ.get("CODE2PAPER_METHOD_AGENT_WORKER") == "1":
+            return method_agent_main(method_argv)
+        return supervised_method_agent_main(method_argv)
+
     parser = argparse.ArgumentParser(prog="code2paper")
     subparsers = parser.add_subparsers(dest="command", required=True)
 
@@ -91,25 +107,6 @@ def main(argv: list[str] | None = None) -> int:
     agentic_benchmark_parser.add_argument("--run", action="append", default=[])
     agentic_benchmark_parser.add_argument("reports", nargs="*")
     agentic_benchmark_parser.add_argument("--out", required=True)
-    method_agent_parser = subparsers.add_parser(
-        "method-agent",
-        help="Autonomous Method Agent product path.",
-    )
-    method_agent_sub = method_agent_parser.add_subparsers(dest="method_agent_command", required=True)
-    method_agent_run = method_agent_sub.add_parser("run", help="Run the full product path.")
-    method_agent_run.add_argument("--repo", dest="repo", required=True)
-    method_agent_run.add_argument("--author-intent", dest="author_intent", default="")
-    method_agent_run.add_argument("--claims", default="")
-    method_agent_run.add_argument("--out", dest="out_root", required=True)
-    method_agent_run.add_argument("--max-research-turns", type=int, default=30)
-    method_agent_run.add_argument("--llm-profile", default="")
-    method_agent_run.add_argument("--no-live-llm", action="store_true")
-    method_agent_run.add_argument("--llm-provider", default="")
-    method_agent_run.add_argument("--llm-model", default="")
-    method_agent_run.add_argument("--method-name", default="")
-    method_agent_run.add_argument("--run-id", default="")
-    method_agent_run.add_argument("--research-stage-checkpoint", default="")
-
     intake_parser = subparsers.add_parser("intake")
     intake_parser.add_argument("--project", dest="project_root", required=True)
     intake_parser.add_argument("--resolved-markers", required=True)
@@ -146,7 +143,7 @@ def main(argv: list[str] | None = None) -> int:
     prepare_parser.add_argument("--llm-provider", choices=_LLM_PROVIDER_CHOICES, default=None)
     prepare_parser.add_argument("--llm-model", default=None)
 
-    args = parser.parse_args(argv)
+    args = parser.parse_args(raw_argv)
     if args.command == "run":
         run_args = [args.project_root]
         if args.out_root:
@@ -231,35 +228,6 @@ def main(argv: list[str] | None = None) -> int:
         benchmark_args.extend(args.reports)
         benchmark_args.extend(["--out", args.out])
         return agentic_benchmark_main(benchmark_args)
-
-    if args.command == "method-agent":
-        if args.method_agent_command != "run":
-            return 1
-        run_args: list[str] = ["run"]
-        run_args.extend(["--repo", args.repo])
-        if args.author_intent:
-            run_args.extend(["--author-intent", args.author_intent])
-        if args.claims:
-            run_args.extend(["--claims", args.claims])
-        run_args.extend(["--out", args.out_root])
-        run_args.extend(["--max-research-turns", str(args.max_research_turns)])
-        if args.llm_profile:
-            run_args.extend(["--llm-profile", args.llm_profile])
-        if args.no_live_llm:
-            run_args.append("--no-live-llm")
-        if args.llm_provider:
-            run_args.extend(["--llm-provider", args.llm_provider])
-        if args.llm_model:
-            run_args.extend(["--llm-model", args.llm_model])
-        if args.method_name:
-            run_args.extend(["--method-name", args.method_name])
-        if args.run_id:
-            run_args.extend(["--run-id", args.run_id])
-        if args.research_stage_checkpoint:
-            run_args.extend([
-                "--research-stage-checkpoint", args.research_stage_checkpoint,
-            ])
-        return method_agent_main(run_args)
 
     if args.command == "intake":
         out_root = resolve_out_root(args.out_root, project_root=Path(args.project_root))

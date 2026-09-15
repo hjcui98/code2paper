@@ -12,11 +12,17 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import signal
+import subprocess
+import sys
+import threading
+import time
 import uuid
 from pathlib import Path
 from typing import Any
 
 from code2paper.agentic.autonomous_method_agent import (
+    MethodAgentSignal,
     MethodAgentRunResultV1,
     run_autonomous_method_agent,
 )
@@ -291,6 +297,392 @@ def _load_concept_cards(path: str) -> Any | None:
         ) from exc
 
 
+class _TeeStream:
+    """Copy live CLI output to a durable run log and the caller's stream."""
+
+    def __init__(self, primary: Any, log_file: Any) -> None:
+        self._primary = primary
+        self._log_file = log_file
+
+    def write(self, value: str) -> int:
+        self._primary.write(value)
+        self._log_file.write(value)
+        self._primary.flush()
+        self._log_file.flush()
+        return len(value)
+
+    def flush(self) -> None:
+        self._primary.flush()
+        self._log_file.flush()
+
+    def isatty(self) -> bool:
+        return bool(getattr(self._primary, "isatty", lambda: False)())
+
+
+def _write_json_atomically(path: Path, payload: Any) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    temporary = path.with_suffix(path.suffix + ".tmp")
+    temporary.write_text(
+        json.dumps(payload, ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8",
+    )
+    temporary.replace(path)
+
+
+def _write_method_process_artifact(
+    out_root: Path,
+    *,
+    status: str,
+    pid: int,
+    started_at: float,
+    exit_code: int | None,
+    stdout_path: Path,
+    stderr_path: Path,
+    run_id: str,
+    terminal_reason: str = "",
+    attempt_id: str = "",
+    supervisor_pid: int | None = None,
+    worker_pid: int | None = None,
+) -> Path:
+    path = (
+        out_root / "method_agent_attempts" / f"{attempt_id}.json"
+        if attempt_id
+        else out_root / "method_agent_process.json"
+    )
+    payload = {
+        "schema_version": "1.0",
+        "run_id": run_id,
+        "pid": pid,
+        "supervisor_pid": supervisor_pid,
+        "worker_pid": worker_pid or pid,
+        "attempt_id": attempt_id,
+        "status": status,
+        "started_at_unix": started_at,
+        "ended_at_unix": time.time() if status != "running" else None,
+        "exit_code": exit_code,
+        "terminal_reason": terminal_reason,
+        "stdout_path": str(stdout_path),
+        "stderr_path": str(stderr_path),
+    }
+    try:
+        _write_json_atomically(path, payload)
+    except OSError:
+        pass
+    return path
+
+
+def _mark_stale_method_process(out_root: Path) -> None:
+    """Mark a prior unclosed child when its PID is no longer alive.
+
+    SIGKILL cannot be caught by the child.  This small next-start check leaves
+    an explicit external-termination marker instead of treating a stale
+    ``status=running`` process artifact as a successful run.
+    """
+
+    path = out_root / "method_agent_process.json"
+    if not path.is_file():
+        return
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+        pid = int(payload.get("pid"))
+    except (OSError, TypeError, ValueError, json.JSONDecodeError):
+        return
+    if payload.get("status") != "running" or pid == os.getpid():
+        return
+    try:
+        os.kill(pid, 0)
+        return
+    except PermissionError:
+        # An inaccessible PID is not evidence that the prior process died.
+        return
+    except (ProcessLookupError, OSError):
+        pass
+    payload.update({
+        "status": "external_termination_detected",
+        "ended_at_unix": time.time(),
+        "terminal_reason": "external_termination_detected",
+        "exit_code": None,
+    })
+    try:
+        _write_json_atomically(path, payload)
+    except OSError:
+        pass
+    try:
+        from code2paper.agentic.unified_invocation_ledger import write_run_terminal_event
+
+        write_run_terminal_event(
+            out_root / "artifacts" / "06_authoring" / "invocations",
+            run_digest=str(payload.get("run_id") or "external-run"),
+            terminal_reason="external_termination_detected",
+            terminal_stage="method_agent",
+            extra={
+                "run_id": str(payload.get("run_id") or ""),
+                "pid": pid,
+                "stdout_path": str(payload.get("stdout_path") or ""),
+                "stderr_path": str(payload.get("stderr_path") or ""),
+            },
+        )
+    except (OSError, TypeError, ValueError):
+        pass
+
+
+def _latest_checkpoint_for_external_termination(out_root: Path) -> dict[str, Any]:
+    try:
+        from code2paper.agentic.autonomous_method_agent import (
+            _latest_research_checkpoint,
+        )
+
+        return _latest_research_checkpoint(out_root)
+    except (ImportError, OSError, TypeError, ValueError):
+        return {}
+
+
+def _read_json_object(path: Path) -> dict[str, Any] | None:
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, UnicodeError, TypeError, ValueError, json.JSONDecodeError):
+        return None
+    return payload if isinstance(payload, dict) else None
+
+
+def _worker_attempt_artifact_state(
+    out_root: Path,
+    attempt_id: str,
+) -> dict[str, Any]:
+    """Read worker-owned closure artifacts without treating stale files as current."""
+
+    partial_path = out_root / "artifacts" / "research_product" / "run_summary.partial.json"
+    terminal_path = (
+        out_root
+        / "artifacts"
+        / "06_authoring"
+        / "invocations"
+        / f"run_terminal_event.{attempt_id}.json"
+    )
+    partial = _read_json_object(partial_path)
+    terminal = _read_json_object(terminal_path)
+    terminal_extra = terminal.get("extra") if isinstance(terminal, dict) else None
+    partial_valid = bool(
+        partial
+        and str(partial.get("attempt_id") or "").strip() == attempt_id
+        and str(partial.get("terminal_reason") or "").strip()
+    )
+    terminal_valid = bool(
+        terminal
+        and str(terminal.get("terminal_reason") or "").strip()
+        and isinstance(terminal_extra, dict)
+        and str(terminal_extra.get("attempt_id") or "").strip() == attempt_id
+    )
+    return {
+        "partial_path": partial_path,
+        "terminal_path": terminal_path,
+        "partial_valid": partial_valid,
+        "terminal_valid": terminal_valid,
+        "terminal_reason": (
+            str(terminal.get("terminal_reason") or "").strip()
+            if terminal_valid
+            else ""
+        ),
+        "exit_type": (
+            str(terminal_extra.get("exit_type") or "").strip()
+            if terminal_valid and isinstance(terminal_extra, dict)
+            else ""
+        ),
+    }
+
+
+def _worker_primary_terminal_source(worker_artifacts: dict[str, Any]) -> str:
+    """Worker-owned evidence wins only when both closure artifacts validate."""
+
+    return (
+        "worker"
+        if worker_artifacts.get("partial_valid") and worker_artifacts.get("terminal_valid")
+        else "supervisor"
+    )
+
+
+def _persist_supervisor_observation(
+    *,
+    out_root: Path,
+    run_id: str,
+    attempt_id: str,
+    worker_returncode: int,
+    stop_signal: int | None,
+    worker_artifacts: dict[str, Any],
+    fallback_artifacts: dict[str, str],
+) -> str:
+    """Persist parent observations separately from worker-owned terminal evidence."""
+
+    path = (
+        out_root
+        / "artifacts"
+        / "06_authoring"
+        / "invocations"
+        / f"run_supervisor_event.{attempt_id}.json"
+    )
+    payload = {
+        "schema_version": "1.0",
+        "event_kind": "method_agent_supervisor_observation",
+        "run_id": run_id,
+        "attempt_id": attempt_id,
+        "recorded_at_unix": time.time(),
+        "worker_returncode": worker_returncode,
+        "parent_stop_signal": stop_signal,
+        "worker_terminal_reason": str(worker_artifacts.get("terminal_reason") or ""),
+        "worker_exit_type": str(worker_artifacts.get("exit_type") or ""),
+        "worker_partial_valid": bool(worker_artifacts.get("partial_valid")),
+        "worker_terminal_valid": bool(worker_artifacts.get("terminal_valid")),
+        "primary_terminal_source": _worker_primary_terminal_source(worker_artifacts),
+        "worker_partial_path": str(worker_artifacts.get("partial_path") or ""),
+        "worker_terminal_path": str(worker_artifacts.get("terminal_path") or ""),
+        "fallback_artifacts": dict(fallback_artifacts),
+    }
+    try:
+        _write_json_atomically(path, payload)
+    except OSError:
+        pass
+    return str(path)
+
+
+def _persist_external_method_termination(
+    *,
+    out_root: Path,
+    run_id: str,
+    attempt_id: str,
+    returncode: int,
+) -> dict[str, str]:
+    """Close a worker killed outside its Python signal handlers.
+
+    This function only writes fallback artifacts.  Worker-owned artifacts are
+    preserved when they carry the current attempt id; the parent observation
+    is written by ``_persist_supervisor_observation`` in a separate sidecar.
+    """
+
+    worker_artifacts = _worker_attempt_artifact_state(out_root, attempt_id)
+    checkpoint = _latest_checkpoint_for_external_termination(out_root)
+    if returncode < 0:
+        signal_number = -returncode
+        terminal_reason = f"external_termination_signal_{signal_number}"
+        exit_type = "external_signal"
+    else:
+        terminal_reason = "external_termination"
+        exit_type = "external_exit"
+    preferred_partial_path = (
+        out_root / "artifacts" / "research_product" / "run_summary.partial.json"
+    )
+    fallback_paths: dict[str, str] = {}
+    if not worker_artifacts["partial_valid"]:
+        partial_path = preferred_partial_path
+        if partial_path.exists():
+            partial_path = (
+                out_root
+                / "artifacts"
+                / "research_product"
+                / f"run_summary.partial.{attempt_id}.json"
+            )
+        partial_payload = {
+            "schema_version": "1.0",
+            "run_id": run_id,
+            "attempt_id": attempt_id,
+            "out_root": str(out_root),
+            "status": "interrupted",
+            "terminal_reason": terminal_reason,
+            "exit_type": exit_type,
+            "returncode": returncode,
+            "checkpoint": checkpoint,
+            "research": {
+                "status": "incomplete",
+                "termination_reason": terminal_reason,
+                "turn_index": checkpoint.get("turn_index", 0),
+                "agenda_statuses": checkpoint.get("agenda_statuses", {}),
+            },
+            "artifacts": {
+                "latest_checkpoint": checkpoint.get("path", ""),
+                "latest_checkpoint_digest": checkpoint.get("digest", ""),
+            },
+        }
+        try:
+            _write_json_atomically(partial_path, partial_payload)
+            fallback_paths["run_summary_partial"] = str(partial_path)
+        except OSError:
+            pass
+
+    terminal_path = (
+        out_root
+        / "artifacts"
+        / "06_authoring"
+        / "invocations"
+        / f"run_terminal_event.supervisor.{attempt_id}.json"
+    )
+    if not worker_artifacts["terminal_valid"]:
+        try:
+            from code2paper.agentic.unified_invocation_ledger import write_run_terminal_event
+
+            write_run_terminal_event(
+                terminal_path.parent,
+                run_digest=checkpoint.get("digest", "") or run_id,
+                terminal_reason=terminal_reason,
+                terminal_stage="method_agent_supervisor",
+                extra={
+                    "run_id": run_id,
+                    "attempt_id": attempt_id,
+                    "returncode": returncode,
+                    "checkpoint_path": checkpoint.get("path", ""),
+                    "checkpoint_digest": checkpoint.get("digest", ""),
+                },
+                filename=terminal_path.name,
+            )
+            fallback_paths["run_terminal_event"] = str(terminal_path)
+        except (OSError, TypeError, ValueError):
+            pass
+    return fallback_paths
+
+
+def _recover_stale_method_attempts(out_root: Path) -> None:
+    """Recover dead workers without overwriting prior attempt evidence."""
+
+    attempts_root = out_root / "method_agent_attempts"
+    try:
+        attempt_paths = tuple(attempts_root.glob("*.json"))
+    except OSError:
+        return
+    for attempt_path in attempt_paths:
+        try:
+            payload = json.loads(attempt_path.read_text(encoding="utf-8"))
+            if not isinstance(payload, dict) or payload.get("status") != "running":
+                continue
+            worker_pid = int(payload.get("worker_pid") or payload.get("pid") or 0)
+        except (OSError, TypeError, ValueError, json.JSONDecodeError):
+            continue
+        if worker_pid <= 0:
+            continue
+        try:
+            os.kill(worker_pid, 0)
+            continue
+        except PermissionError:
+            continue
+        except (ProcessLookupError, OSError):
+            pass
+        attempt_id = str(payload.get("attempt_id") or attempt_path.stem)
+        run_id = str(payload.get("run_id") or "external-run")
+        payload.update({
+            "status": "external_termination_detected",
+            "ended_at_unix": time.time(),
+            "terminal_reason": "external_termination_detected",
+            "exit_code": None,
+        })
+        try:
+            _write_json_atomically(attempt_path, payload)
+        except OSError:
+            pass
+        _persist_external_method_termination(
+            out_root=out_root,
+            run_id=run_id,
+            attempt_id=attempt_id,
+            returncode=-signal.SIGKILL,
+        )
+
+
 def _method_agent_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="code2paper method-agent",
@@ -307,6 +699,13 @@ def _method_agent_parser() -> argparse.ArgumentParser:
     run_parser.add_argument("--claims", default="", help="User claims JSON file")
     run_parser.add_argument("--out", dest="out_root", required=True, help="Output directory")
     run_parser.add_argument("--max-research-turns", dest="max_research_turns", type=int, default=30)
+    run_parser.add_argument(
+        "--max-wall-clock-seconds",
+        dest="max_wall_clock_seconds",
+        type=float,
+        default=0.0,
+        help="Research wall-clock deadline; 0 disables the deadline (default).",
+    )
     run_parser.add_argument("--llm-profile", dest="llm_profile", default="", help="Bash-style LLM env profile file")
     run_parser.add_argument("--no-live-llm", action="store_true", help="Force the deterministic research path; never call a model")
     run_parser.add_argument("--llm-provider", default="", help="LLM provider override")
@@ -340,6 +739,11 @@ def _method_agent_parser() -> argparse.ArgumentParser:
         default="",
         help="Resume after repository research from a trusted stage checkpoint.",
     )
+    run_parser.add_argument(
+        "--authoring-phase-checkpoint",
+        default="",
+        help="Resume/reuse a validated Formalizer authoring phase checkpoint.",
+    )
     return parser
 
 
@@ -352,6 +756,18 @@ def method_agent_main(argv: list[str] | None = None) -> int:
         parser.error(f"unknown method-agent command: {args.command}")
 
     changed_env: dict[str, str | None] = {}
+    out_root: Path | None = None
+    result: MethodAgentRunResultV1 | None = None
+    exit_code = 2
+    process_started_at = 0.0
+    process_stdout = Path()
+    process_stderr = Path()
+    process_pid = os.getpid()
+    original_stdout = sys.stdout
+    original_stderr = sys.stderr
+    stdout_log = None
+    stderr_log = None
+    terminal_reason = ""
     try:
         if args.llm_profile:
             changed_env = _apply_llm_profile(args.llm_profile)
@@ -375,13 +791,51 @@ def method_agent_main(argv: list[str] | None = None) -> int:
                 "provider": LLMProvider.NONE.value,
             })
         out_root = Path(args.out_root).expanduser().resolve()
+        out_root.mkdir(parents=True, exist_ok=True)
+        attempt_id = str(
+            os.environ.get("CODE2PAPER_METHOD_AGENT_ATTEMPT_ID", "") or ""
+        ).strip()
+        if not attempt_id:
+            _mark_stale_method_process(out_root)
+        process_stdout = (
+            out_root / f"run_stdout.{attempt_id}.log"
+            if attempt_id
+            else out_root / "run_stdout.log"
+        )
+        process_stderr = (
+            out_root / f"run_stderr.{attempt_id}.log"
+            if attempt_id
+            else out_root / "run_stderr.log"
+        )
+        stdout_log = process_stdout.open("w", encoding="utf-8")
+        stderr_log = process_stderr.open("w", encoding="utf-8")
+        sys.stdout = _TeeStream(original_stdout, stdout_log)
+        sys.stderr = _TeeStream(original_stderr, stderr_log)
+        process_started_at = time.time()
+        _write_method_process_artifact(
+            out_root,
+            status="running",
+            pid=process_pid,
+            started_at=process_started_at,
+            exit_code=None,
+            stdout_path=process_stdout,
+            stderr_path=process_stderr,
+            run_id=args.run_id or "auto",
+            attempt_id=attempt_id,
+            supervisor_pid=(
+                int(os.environ.get("CODE2PAPER_METHOD_AGENT_SUPERVISOR_PID", "0") or 0)
+                or None
+            ),
+            worker_pid=process_pid,
+        )
 
         print(f"[code2paper method-agent] run_id={args.run_id or 'auto'}")
         print(f"[code2paper method-agent] repo={repo_path}")
         print(f"[code2paper method-agent] out_root={out_root}")
+        live_llm = not args.no_live_llm and llm_config.provider != LLMProvider.NONE
         print(
             "[code2paper method-agent] "
-            f"live_llm={not args.no_live_llm and llm_config.provider != LLMProvider.NONE}"
+            f"live_llm={live_llm}"
         )
         result = run_autonomous_method_agent(
             repo_path=repo_path,
@@ -396,26 +850,361 @@ def method_agent_main(argv: list[str] | None = None) -> int:
             out_root=out_root,
             llm_config=llm_config,
             max_research_turns=max(1, int(args.max_research_turns)),
+            max_wall_clock_seconds=(
+                float(args.max_wall_clock_seconds)
+                if float(args.max_wall_clock_seconds) > 0
+                else None
+            ),
             method_name=args.method_name,
             run_id=args.run_id,
             research_stage_checkpoint=(
                 Path(args.research_stage_checkpoint).expanduser().resolve()
                 if args.research_stage_checkpoint else None
             ),
+            authoring_phase_checkpoint=(
+                Path(args.authoring_phase_checkpoint).expanduser().resolve()
+                if args.authoring_phase_checkpoint else None
+            ),
             concept_cards=_load_concept_cards(args.concept_cards),
             compile_concept_cards=bool(args.compile_concept_cards),
             compile_argument_briefs=bool(args.compile_argument_briefs),
             authoring_context_mode=args.authoring_context_mode,
         )
+        _print_method_agent_summary(result)
+        _write_method_agent_exit_artifact(out_root, result)
+        if live_llm:
+            writer_summary = result.summary.get("writer") or {}
+            exit_code = _live_method_agent_exit_code(result)
+            if exit_code:
+                terminal_reason = "candidate_incomplete:" + str(
+                    writer_summary.get("blocked_reason")
+                    or writer_summary.get("candidate_completion_status")
+                    or "candidate_not_complete"
+                )
+                print(
+                    "[code2paper method-agent] error=" + terminal_reason
+                )
+        else:
+            # An explicitly offline invocation is a diagnostic/research
+            # command.  Its successful execution does not claim a Candidate.
+            exit_code = 0
+    except MethodAgentSignal as exc:
+        print(f"[code2paper method-agent] error={exc}")
+        exit_code = 128 + int(exc.signum)
+    except KeyboardInterrupt:
+        print("[code2paper method-agent] error=keyboard_interrupt")
+        exit_code = 130
     except (FileNotFoundError, ValueError, RuntimeError, OSError) as exc:
         print(f"[code2paper method-agent] error={exc}")
-        return 2
+        exit_code = 2
+    except BaseException as exc:  # noqa: BLE001 — durable failure boundary
+        print(f"[code2paper method-agent] error={type(exc).__name__}:{exc}")
+        exit_code = 2
     finally:
+        if out_root is not None and process_started_at:
+            _write_method_process_artifact(
+                out_root,
+                status="completed" if exit_code == 0 else "failed",
+                pid=process_pid,
+                started_at=process_started_at,
+                exit_code=exit_code,
+                stdout_path=process_stdout,
+                stderr_path=process_stderr,
+                run_id=(result.run_id if result is not None else args.run_id or "auto"),
+                terminal_reason=(
+                    terminal_reason
+                    or (
+                        result.research_termination_reason
+                        if result is not None
+                        else "cli_error"
+                    )
+                ),
+                attempt_id=attempt_id,
+                supervisor_pid=(
+                    int(os.environ.get("CODE2PAPER_METHOD_AGENT_SUPERVISOR_PID", "0") or 0)
+                    or None
+                ),
+                worker_pid=process_pid,
+            )
+        sys.stdout = original_stdout
+        sys.stderr = original_stderr
+        if stdout_log is not None:
+            stdout_log.close()
+        if stderr_log is not None:
+            stderr_log.close()
         _restore_env(changed_env)
+    return exit_code
 
-    _print_method_agent_summary(result)
-    _write_method_agent_exit_artifact(out_root, result)
-    return 0
+
+def supervised_method_agent_main(argv: list[str] | None = None) -> int:
+    """Run the Method Agent as a supervised worker process.
+
+    The worker owns normal signal/exception closure.  This parent remains
+    outside the worker so a SIGKILL or abnormal worker exit is observable and
+    can immediately persist a partial summary and a uniquely named terminal
+    event.
+    """
+
+    raw_argv = list(argv) if argv is not None else list(sys.argv[1:])
+    parser = _method_agent_parser()
+    args = parser.parse_args(raw_argv)
+    if args.command != "run":
+        parser.error(f"unknown method-agent command: {args.command}")
+    out_root = Path(args.out_root).expanduser().resolve()
+    out_root.mkdir(parents=True, exist_ok=True)
+    _recover_stale_method_attempts(out_root)
+
+    attempt_id = (
+        time.strftime("%Y%m%d-%H%M%S", time.gmtime())
+        + "-"
+        + uuid.uuid4().hex[:12]
+    )
+    attempt_root = out_root / "method_agent_attempts"
+    attempt_root.mkdir(parents=True, exist_ok=True)
+    attempt_path = attempt_root / f"{attempt_id}.json"
+    stdout_path = out_root / f"run_stdout.{attempt_id}.log"
+    stderr_path = out_root / f"run_stderr.{attempt_id}.log"
+    run_id = str(args.run_id or "auto")
+    started_at = time.time()
+    # Create the immutable attempt log names before spawning the worker.  A
+    # worker can disappear before importing the CLI or opening its streams;
+    # the parent must still leave a concrete, attempt-scoped log target.
+    stdout_path.touch(exist_ok=True)
+    stderr_path.touch(exist_ok=True)
+    attempt_payload = {
+        "schema_version": "1.0",
+        "attempt_id": attempt_id,
+        "run_id": run_id,
+        "status": "running",
+        "supervisor_pid": os.getpid(),
+        "worker_pid": None,
+        "started_at_unix": started_at,
+        "ended_at_unix": None,
+        "exit_code": None,
+        "stdout_path": str(stdout_path),
+        "stderr_path": str(stderr_path),
+        "argv": raw_argv,
+    }
+    _write_json_atomically(attempt_path, attempt_payload)
+    _write_json_atomically(
+        out_root / "method_agent_process.json",
+        {
+            **attempt_payload,
+            "process_role": "supervisor",
+            "attempt_path": str(attempt_path),
+        },
+    )
+
+    child: subprocess.Popen[bytes] | None = None
+    stop_signal: int | None = None
+    original_stdout = sys.stdout
+    original_stderr = sys.stderr
+    old_handlers: dict[int, Any] = {}
+    worker_returncode = 2
+
+    def _forward(pipe: Any, target: Any) -> None:
+        try:
+            while True:
+                chunk = pipe.readline()
+                if not chunk:
+                    break
+                target.write(chunk.decode("utf-8", errors="replace"))
+                target.flush()
+        finally:
+            try:
+                pipe.close()
+            except OSError:
+                pass
+
+    def _on_parent_signal(signum: int, _frame: Any) -> None:
+        nonlocal stop_signal
+        stop_signal = int(signum)
+        if child is not None and child.poll() is None:
+            try:
+                child.terminate()
+            except OSError:
+                pass
+
+    try:
+        if threading.current_thread() is threading.main_thread():
+            for signum in (signal.SIGTERM, signal.SIGHUP, signal.SIGINT):
+                old_handlers[signum] = signal.getsignal(signum)
+                signal.signal(signum, _on_parent_signal)
+        child_env = os.environ.copy()
+        child_env["CODE2PAPER_METHOD_AGENT_WORKER"] = "1"
+        child_env["CODE2PAPER_METHOD_AGENT_ATTEMPT_ID"] = attempt_id
+        child_env["CODE2PAPER_METHOD_AGENT_SUPERVISOR_PID"] = str(os.getpid())
+        child = subprocess.Popen(
+            [
+                sys.executable,
+                "-m",
+                "code2paper.cli.main",
+                "method-agent",
+                *raw_argv,
+            ],
+            env=child_env,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+        attempt_payload["worker_pid"] = child.pid
+        _write_json_atomically(attempt_path, attempt_payload)
+        _write_json_atomically(
+            out_root / "method_agent_process.json",
+            {
+                **attempt_payload,
+                "process_role": "supervisor",
+                "attempt_path": str(attempt_path),
+            },
+        )
+        stdout_thread = threading.Thread(
+            target=_forward,
+            args=(child.stdout, original_stdout),
+            daemon=True,
+        )
+        stderr_thread = threading.Thread(
+            target=_forward,
+            args=(child.stderr, original_stderr),
+            daemon=True,
+        )
+        stdout_thread.start()
+        stderr_thread.start()
+        worker_returncode = child.wait()
+        stdout_thread.join(timeout=5)
+        stderr_thread.join(timeout=5)
+    except KeyboardInterrupt:
+        # Keep Ctrl-C inside the same durable finalizer path as an installed
+        # SIGINT handler.  This also covers embedders/tests that raise
+        # KeyboardInterrupt directly from ``wait``.
+        stop_signal = int(getattr(signal, "SIGINT", 2))
+        if child is not None and child.poll() is None:
+            try:
+                child.terminate()
+            except OSError:
+                pass
+        if child is None:
+            worker_returncode = 128 + stop_signal
+        else:
+            try:
+                worker_returncode = child.wait(timeout=5)
+            except (OSError, subprocess.TimeoutExpired, KeyboardInterrupt):
+                polled = child.poll()
+                worker_returncode = (
+                    int(polled)
+                    if polled is not None
+                    else -int(getattr(signal, "SIGTERM", 15))
+                )
+    except (OSError, ValueError) as exc:
+        worker_returncode = 2
+        attempt_payload.update({
+            "status": "failed",
+            "ended_at_unix": time.time(),
+            "exit_code": worker_returncode,
+            "terminal_reason": f"supervisor_error:{type(exc).__name__}",
+            "error": str(exc)[:500],
+        })
+        _write_json_atomically(attempt_path, attempt_payload)
+        _write_json_atomically(
+            out_root / "method_agent_process.json",
+            {
+                **attempt_payload,
+                "process_role": "supervisor",
+                "attempt_path": str(attempt_path),
+            },
+        )
+        return worker_returncode
+    finally:
+        if child is not None and child.poll() is None:
+            try:
+                child.kill()
+                child.wait(timeout=5)
+            except (OSError, subprocess.TimeoutExpired):
+                pass
+        for signum, handler in old_handlers.items():
+            signal.signal(signum, handler)
+
+    externally_terminated = bool(stop_signal) or worker_returncode < 0
+    worker_artifacts = _worker_attempt_artifact_state(out_root, attempt_id)
+    if externally_terminated or worker_returncode != 0:
+        external_code = (
+            -int(stop_signal)
+            if stop_signal is not None
+            else int(worker_returncode)
+        )
+        if worker_artifacts["partial_valid"] and worker_artifacts["terminal_valid"]:
+            partial_paths = {}
+        else:
+            partial_paths = _persist_external_method_termination(
+                out_root=out_root,
+                run_id=run_id,
+                attempt_id=attempt_id,
+                returncode=external_code,
+            )
+        partial_paths["supervisor_observation"] = _persist_supervisor_observation(
+            out_root=out_root,
+            run_id=run_id,
+            attempt_id=attempt_id,
+            worker_returncode=worker_returncode,
+            stop_signal=stop_signal,
+            worker_artifacts=worker_artifacts,
+            fallback_artifacts=partial_paths,
+        )
+        terminal_reason = (
+            f"parent_signal_{stop_signal}"
+            if stop_signal is not None
+            else (
+                f"worker_signal_{-worker_returncode}"
+                if worker_returncode < 0
+                else f"worker_exit_{worker_returncode}"
+            )
+        )
+    else:
+        partial_paths = {}
+        terminal_reason = "completed"
+    final_exit_code = (
+        128 + int(stop_signal)
+        if stop_signal is not None
+        else 128 + (-worker_returncode)
+        if worker_returncode < 0
+        else worker_returncode
+    )
+    attempt_payload.update({
+        "status": (
+            "external_termination"
+            if externally_terminated
+            else "completed"
+            if worker_returncode == 0
+            else "failed"
+        ),
+        "ended_at_unix": time.time(),
+        "exit_code": final_exit_code,
+        "worker_returncode": worker_returncode,
+        "terminal_reason": terminal_reason,
+        "parent_stop_signal": stop_signal,
+        "worker_terminal_reason": str(worker_artifacts.get("terminal_reason") or ""),
+        "worker_exit_type": str(worker_artifacts.get("exit_type") or ""),
+        "primary_terminal_source": _worker_primary_terminal_source(worker_artifacts),
+        "partial_artifacts": partial_paths,
+    })
+    _write_json_atomically(attempt_path, attempt_payload)
+    _write_json_atomically(
+        out_root / "method_agent_process.json",
+        {
+            **attempt_payload,
+            "process_role": "supervisor",
+            "attempt_path": str(attempt_path),
+        },
+    )
+    return final_exit_code
+
+
+def _live_method_agent_exit_code(result: MethodAgentRunResultV1) -> int:
+    """Return success only for a persisted, complete live Candidate."""
+
+    writer = result.summary.get("writer") or {}
+    return 0 if (
+        bool(writer.get("candidate_available"))
+        and bool(writer.get("candidate_complete"))
+    ) else 2
 
 
 def _print_method_agent_summary(result: MethodAgentRunResultV1) -> None:

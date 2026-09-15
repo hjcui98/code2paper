@@ -782,15 +782,20 @@ class TestV3SubgraphCrossInstanceResume:
         resumed.invoke(None, config={**thread, "recursion_limit": 100})
         result = resumed.last_result
         assert result is not None
-        assert result.termination_reason == "all_obligations_terminal"
+        assert result.termination_reason in {
+            "all_obligations_terminal",
+            "candidate_handoff_partial",
+        }
         assert result.loop_state.compiled_evidence
-        # ``partial`` is a terminal per-obligation status (design 8.4:
-        # "可写边界与 required qualifier 明确") when no other obligation can
-        # make progress; the loop must terminate instead of re-entering the
-        # supervisor with only exact-repeat calls available.
+        # ``partial`` is a terminal per-obligation status for the bounded
+        # Candidate lane when no other core obligation can make progress; the
+        # loop must terminate instead of re-entering the supervisor with only
+        # exact-repeat calls available. Non-core obligations may remain
+        # pending in that lane.
         assert all(
             item.status in {"supported", "partial", "explicit_gap", "blocked"}
             for item in result.loop_state.runtime.agenda.items
+            if item.priority == "must_cover"
         )
 
 
@@ -851,3 +856,144 @@ def test_v3_authoring_fails_closed_without_compiled_v3_artifacts(
     result = legacy_authoring_stage_tool.run_authoring(state)
     assert result.status.value == "blocked"
     assert result.blocked_reason == "generic_path_compilation_required"
+
+
+# ---------------------------------------------------------------------------
+# Six-core candidate handoff: 3 supported + 3 bounded partials
+# ---------------------------------------------------------------------------
+
+
+def test_six_core_candidate_handoff_partial_keeps_verified_blocked() -> None:
+    """A 3+3 supported/partial core agenda opens only the Candidate lane.
+
+    The Writer preadmission consumes every explicit partial handoff (one
+    post-partial retry, typed unresolved fields, qualifier, wording
+    boundary), while the strict terminal proof and Verified projection stay
+    blocked on the same three partials.
+    """
+
+    from code2paper.agentic.evidence_compiler_v3 import AtomicClaimV3
+    from code2paper.agentic.research_models import ResearchAgendaItemV1
+    from code2paper.agentic.research_promotion import (
+        ObservationPromotionRecordV1,
+    )
+    from code2paper.agentic.research_terminal import (
+        build_candidate_handoff,
+        build_research_closure_admission,
+        evaluate_obligation_terminal_proof,
+    )
+
+    items: list[ResearchAgendaItemV1] = []
+    records: list[ObservationPromotionRecordV1] = []
+    compiled_claims: dict[str, tuple[AtomicClaimV3, ...]] = {}
+    compiled_claim_ids: dict[str, tuple[str, ...]] = {}
+    retry_counts: dict[str, int] = {}
+    retry_gains: dict[str, bool] = {}
+    partial_items: list[ResearchAgendaItemV1] = []
+
+    for index in range(6):
+        obligation_id = f"core-{index}"
+        is_partial = index >= 3
+        claim_id = f"claim-{obligation_id}"
+        missing_information = (
+            [f"call_relation:unresolved-{obligation_id}"] if is_partial else []
+        )
+        item = ResearchAgendaItemV1(
+            obligation_id=obligation_id,
+            priority="must_cover",
+            status="partial" if is_partial else "supported",
+            supported_claim_ids=[claim_id],
+            missing_information=missing_information,
+            attempted_actions=["READ_CANDIDATE"],
+        )
+        claim = AtomicClaimV3(
+            claim_id=claim_id,
+            canonical_text=f"Observed implementation for {obligation_id}.",
+            fact_ids=[f"fact:{obligation_id}"],
+            covers_obligation_ids=[obligation_id],
+            direct_evidence_ids=[f"span:{obligation_id}"],
+            required_qualifiers=[f"only the observed fragment for {obligation_id}"],
+            allowed_wording_boundary=(
+                f"Only the observed fragment for {obligation_id} may be stated."
+            ),
+            canonical_identity=f"identity:{obligation_id}",
+        )
+        record = ObservationPromotionRecordV1(
+            observation_id=f"observation:{obligation_id}",
+            obligation_id=obligation_id,
+            tool_name="read_symbol",
+            status="claim_promoted",
+            behavior_node_ids=(f"node:{obligation_id}",),
+            packet_ids=(f"packet:{obligation_id}",),
+            fact_ids=(f"fact:{obligation_id}",),
+            claim_ids=(claim_id,),
+        )
+        items.append(item)
+        records.append(record)
+        compiled_claims[obligation_id] = (claim,)
+        compiled_claim_ids[obligation_id] = (claim_id,)
+        if is_partial:
+            partial_items.append(item)
+            retry_counts[obligation_id] = 1
+            retry_gains[obligation_id] = False
+
+    handoff = build_candidate_handoff(
+        run_id="run-six-core",
+        repo_snapshot_id="repo:snapshot",
+        project_tree_hash="sha256:tree",
+        agenda_items=items,
+        promotion_records=records,
+        compiled_claim_ids_by_obligation=compiled_claim_ids,
+        compiled_claims_by_obligation=compiled_claims,
+        post_partial_retry_counts=retry_counts,
+        retry_gain_by_obligation=retry_gains,
+    )
+    assert handoff.eligible is True
+    assert set(handoff.supported_obligation_ids) == {
+        "core-0", "core-1", "core-2",
+    }
+    assert set(handoff.partial_obligation_ids) == {
+        "core-3", "core-4", "core-5",
+    }
+    assert len(handoff.partial_obligations) == 3
+    unresolved_fields = [
+        field
+        for partial in handoff.partial_obligations
+        for field in partial.unresolved_fields
+    ]
+    assert len(unresolved_fields) == 3
+    assert all(
+        partial.post_partial_retry_count == 1
+        and partial.qualifier_clear
+        and partial.promoted_claim_ids
+        for partial in handoff.partial_obligations
+    )
+
+    # Verified stays blocked: the strict terminal proof is still false for
+    # each partial obligation even though Candidate admits them.
+    for item in partial_items:
+        proof = evaluate_obligation_terminal_proof(
+            item,
+            promotion_records=tuple(
+                record for record in records
+                if record.obligation_id == item.obligation_id
+            ),
+            promoted_claim_ids=compiled_claim_ids[item.obligation_id],
+        )
+        assert proof.terminal is False
+
+    admission = build_research_closure_admission(
+        run_id="run-six-core",
+        repo_snapshot_id="repo:snapshot",
+        project_tree_hash="sha256:tree",
+        research_status="incomplete",
+        failure_codes=tuple(
+            f"unified_core_intent_terminal_proof_missing:{item.obligation_id}"
+            for item in partial_items
+        ),
+        candidate_handoff_allowed=True,
+        candidate_handoff_id=handoff.handoff_id,
+        downstream_phases_planned=("planning", "formalizer", "writer"),
+    )
+    assert admission.model_calls_allowed is True
+    assert admission.candidate_handoff_allowed is True

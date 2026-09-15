@@ -345,6 +345,178 @@ def _relation_evidence_from_relation(
     )
 
 
+def _configuration_relation_mentions(
+    relation: RelationEvidenceV3,
+    expression: str,
+) -> bool:
+    """Return whether a selected configuration edge owns ``expression``.
+
+    Configuration declaration spans are not behavior nodes.  They may extend
+    a packet only when an already-selected ``CONFIGURED_BY`` edge has an exact
+    endpoint operand for the same access expression; lexical similarity or a
+    same-file guess is deliberately insufficient.
+    """
+
+    if relation.relation_type != "configuration_binding":
+        return False
+    values: list[str] = []
+    for endpoint in (relation.source_endpoint, relation.target_endpoint):
+        if endpoint is None:
+            continue
+        values.extend(
+            [
+                str(endpoint.operation_subject or ""),
+                str(endpoint.produced_entity or ""),
+                *(str(value) for value in endpoint.operands),
+            ]
+        )
+    return expression in values
+
+
+def _with_configuration_definition_evidence(
+    *,
+    proposal: EvidencePacketProposalV1,
+    graph: CodeBehaviorGraphV1,
+    selected_nodes: list[BehaviorNodeV1],
+    spans: list[EvidenceSpanV3],
+    relations: list[RelationEvidenceV3],
+    repo_snapshot_id: str,
+    project_tree_hash: str,
+    repo_snapshot: RepoSnapshot | None,
+) -> tuple[
+    EvidencePacketProposalV1,
+    list[EvidenceSpanV3],
+    list[RelationEvidenceV3],
+]:
+    """Close configuration-definition provenance inside the owning packet.
+
+    The generic behavior graph records the branch-to-access
+    ``CONFIGURED_BY`` edge, while the scalar definition itself lives in a
+    structured configuration file and therefore has no behavior node.  A
+    later fact compiler can discover that definition, but adding the fact
+    without first adding its frozen source span to this packet creates an
+    invalid ``unknown_packet_span`` lineage.
+
+    This deterministic pre-pass discovers only definitions for access facts
+    already selected by the proposal.  It attaches each exact declaration
+    span to the matching selected configuration edge, making the span
+    reachable from the packet anchors.  No matching typed edge means no packet
+    expansion and, downstream, no positive definition fact.
+    """
+
+    if repo_snapshot is None or not selected_nodes or not relations:
+        return proposal, spans, relations
+
+    # Local imports avoid introducing a module-level compiler cycle.
+    from code2paper.agentic.configuration_definitions import (
+        append_configuration_definition_facts,
+    )
+    from code2paper.agentic.generic_fact_compiler import (
+        FactCompilerInputV1,
+        compile_facts_from_behavior_graph,
+    )
+
+    preliminary = compile_facts_from_behavior_graph(
+        graph,
+        FactCompilerInputV1(
+            obligation_id=proposal.obligation_id,
+            behavior_node_ids=list(proposal.behavior_node_ids),
+            behavior_relation_ids=list(proposal.behavior_relation_ids),
+            evidence_span_ids=[span.span_id for span in spans],
+            guards=list(proposal.conditions),
+            source_authority="executable_hard",
+        ),
+        repo_snapshot_id=repo_snapshot_id,
+        project_tree_hash=project_tree_hash,
+        # This set is used only to discover configuration accesses.  The real
+        # fact set is compiled after the final packet digest is known.
+        evidence_packet_digest="sha256:configuration-definition-discovery",
+    )
+    enriched = append_configuration_definition_facts(
+        preliminary,
+        repo_snapshot=repo_snapshot,
+    )
+    preliminary_ids = {fact.fact_id for fact in preliminary.facts}
+    definition_facts = [
+        fact
+        for fact in enriched.facts
+        if fact.fact_id not in preliminary_ids
+        and "config_definition" in set(fact.semantic_context)
+    ]
+    if not definition_facts:
+        return proposal, spans, relations
+
+    updated_spans = list(spans)
+    updated_relations = list(relations)
+    known_span_ids = {span.span_id for span in updated_spans}
+    semantic_span_ids = list(proposal.semantic_span_ids)
+    added = False
+
+    for fact in definition_facts:
+        expression = str(fact.subject or "").strip()
+        if not expression:
+            continue
+        relation_indexes = [
+            index
+            for index, relation in enumerate(updated_relations)
+            if _configuration_relation_mentions(relation, expression)
+        ]
+        if not relation_indexes:
+            continue
+        for span_id in fact.direct_span_ids:
+            path, line_start, line_end = _parse_span_id(span_id)
+            if not path:
+                continue
+            if span_id not in known_span_ids:
+                updated_spans.append(
+                    _build_span(
+                        span_id=span_id,
+                        snapshot_id=repo_snapshot_id,
+                        project_tree_hash=project_tree_hash,
+                        path=path,
+                        symbol=expression,
+                        line_start=line_start,
+                        line_end=line_end,
+                        role="semantic",
+                        repo_snapshot=repo_snapshot,
+                    )
+                )
+                known_span_ids.add(span_id)
+            if span_id not in semantic_span_ids:
+                semantic_span_ids.append(span_id)
+            for index in relation_indexes:
+                relation = updated_relations[index]
+                direct_span_ids = list(relation.direct_span_ids)
+                if span_id not in direct_span_ids:
+                    direct_span_ids.append(span_id)
+                    updated_relations[index] = relation.model_copy(
+                        update={"direct_span_ids": direct_span_ids}
+                    )
+            added = True
+
+    if not added:
+        return proposal, spans, relations
+
+    composition_rationale = proposal.composition_rationale
+    total_span_roles = (
+        len(proposal.anchor_span_ids)
+        + len(proposal.relation_span_ids)
+        + len(semantic_span_ids)
+    )
+    if total_span_roles > 3 and not composition_rationale.strip():
+        composition_rationale = (
+            "Deterministic configuration binding adds the frozen scalar "
+            "definition span for the selected configuration access."
+        )
+    effective_proposal = proposal.model_copy(
+        update={
+            "semantic_span_ids": semantic_span_ids,
+            "composition_rationale": composition_rationale,
+        }
+    )
+    return effective_proposal, updated_spans, updated_relations
+
+
 def _endpoint_from_node(
     node: BehaviorNodeV1,
     span_id: str,
@@ -410,6 +582,16 @@ def compile_evidence_packet_proposal(
         _relation_evidence_from_relation(rel, nodes_by_id=nodes_by_id)
         for rel in selected_relations
     ]
+    effective_proposal, spans, relations = _with_configuration_definition_evidence(
+        proposal=proposal,
+        graph=graph,
+        selected_nodes=selected_nodes,
+        spans=spans,
+        relations=relations,
+        repo_snapshot_id=repo_snapshot_id,
+        project_tree_hash=project_tree_hash,
+        repo_snapshot=repo_snapshot,
+    )
     rejected = [
         RejectedEvidenceCandidateV3(
             path=rc.path,
@@ -423,16 +605,16 @@ def compile_evidence_packet_proposal(
     source_digest = _digest([span.excerpt_digest for span in spans])
     try:
         packet = EvidencePacketV3(
-            packet_id=proposal.packet_id,
-            obligation_tags=[proposal.obligation_id],
-            scope=proposal.scope,
-            anchor_span_ids=list(proposal.anchor_span_ids),
-            relation_span_ids=list(proposal.relation_span_ids),
-            semantic_span_ids=list(proposal.semantic_span_ids),
+            packet_id=effective_proposal.packet_id,
+            obligation_tags=[effective_proposal.obligation_id],
+            scope=effective_proposal.scope,
+            anchor_span_ids=list(effective_proposal.anchor_span_ids),
+            relation_span_ids=list(effective_proposal.relation_span_ids),
+            semantic_span_ids=list(effective_proposal.semantic_span_ids),
             spans=spans,
             relations=relations,
-            conditions=list(proposal.conditions),
-            composition_rationale=proposal.composition_rationale,
+            conditions=list(effective_proposal.conditions),
+            composition_rationale=effective_proposal.composition_rationale,
             rejected_candidates=rejected,
             source_digest=source_digest,
         )
@@ -443,7 +625,7 @@ def compile_evidence_packet_proposal(
         packet = None
 
     report = validate_evidence_packet_proposal(
-        proposal=proposal,
+        proposal=effective_proposal,
         graph=graph,
         compiled_packet=packet,
         repo_snapshot_id=repo_snapshot_id,

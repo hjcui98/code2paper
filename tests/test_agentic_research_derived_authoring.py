@@ -422,6 +422,39 @@ def test_one_formula_package_can_close_multiple_obligations_for_one_consumer() -
     )
 
 
+def test_candidate_authority_rejects_internal_symbols_and_operation_opcodes() -> None:
+    validation = validate_candidate_authority(
+        candidate_text=(
+            "## Sym:9773c5add7af1f92\n\n"
+            "The procedure exposes LOAD(input) before WRITE(cache)."
+        )
+    )
+    assert validation.status == "error"
+    assert validation.internal_audit_term_count >= 3
+    assert "candidate_contains_internal_audit_terms" in validation.violations
+
+
+def test_formula_package_rejects_control_characters_and_operation_opcodes() -> None:
+    package = SectionFormulaPackageV1(
+        package_id="package:corrupt",
+        section_id="section:method",
+        satisfied_obligation_ids=("formula:corrupt",),
+        consumer_paragraph_id="paragraph:mechanism",
+        purpose="corrupt formula",
+        latex="y = LOAD(x) + 	ext{bad}",
+        prose_explanation="A malformed formula must be rejected.",
+        authority_status="partial",
+        assumptions=("Paper-level abstraction.",),
+    )
+    failures = validate_section_formula_package(
+        package,
+        equations=type("Equations", (), {"equations": ()})(),
+        facts=type("Facts", (), {"facts": ()})(),
+    )
+    assert "latex_contains_control_character" in failures
+    assert "code_shaped_formula:operation_opcode" in failures
+
+
 def test_research_artifacts_are_content_addressed(tmp_path: Path) -> None:
     dossiers = build_research_mechanism_dossiers(
         plan=_plan(),

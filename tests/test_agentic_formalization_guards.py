@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from types import SimpleNamespace
 
 from code2paper.agentic.equation_claims import EquationClaimSetV1, EquationClaimV1, EquationSymbolBindingV1
 from code2paper.agentic.evidence_compiler_v3 import CodeFactSetV1, CodeFactV1
@@ -1496,3 +1497,626 @@ def test_unbound_fact_still_fails() -> None:
         operation_evidence_packs=(pack,),
     )
     assert "operation_evidence_unbound" in failures
+
+
+def _legacy_formalizer_context(*, operation_result: str = "y") -> SimpleNamespace:
+    """Minimal mechanism context with one bound detail and operation.
+
+    ``operation_result=""`` leaves the operation bound but not
+    deterministically formalizable, so the legacy LLM lane is reached.
+    """
+
+    from code2paper.agentic.mechanism_context_models import (
+        DetailWitnessAtomV1,
+        EvidenceOperationV1,
+        MechanismDetailV1,
+        MechanismEvidenceClosureV1,
+        SourceOperationDispositionV1,
+    )
+
+    operation = EvidenceOperationV1(
+        operation_id="op:legacy",
+        predicate="COMPUTE",
+        operands=("x", "W"),
+        result=operation_result,
+        source_span_id="span:src/model.py:1:2",
+        active_path_status="active_default",
+    )
+    detail = MechanismDetailV1(
+        detail_id="detail:legacy",
+        primary_mechanism_id="mech:legacy",
+        order_index=0,
+        role="transformation",
+        importance="core",
+        claim_kind="implementation",
+        evidence_authority="repository_verified",
+        publication_policy="clean_candidate",
+        semantic_atom="linear projection",
+        predicate="COMPUTE",
+        operands=("x", "W"),
+        result=operation_result,
+        active_path_status="active_default",
+        source_operation_ids=("op:legacy",),
+        source_span_ids=("span:src/model.py:1:2",),
+        witness_atoms=(
+            DetailWitnessAtomV1(
+                atom_id="atom:legacy",
+                atom_kind="operation",
+                semantic_anchor="linear projection",
+                source_operation_ids=("op:legacy",),
+                exact_excerpts=("y = x @ W",),
+            ),
+        ),
+        content_digest="",
+    )
+    closure = MechanismEvidenceClosureV1(
+        closure_id="closure:legacy",
+        mechanism_id="mech:legacy",
+        operation_nodes=(operation,),
+        operation_dispositions=(SourceOperationDispositionV1(
+            operation_id="op:legacy",
+            disposition="absorbed_by_detail",
+            detail_ids=("detail:legacy",),
+        ),),
+        source_operation_terminal_coverage=1.0,
+        exact_span_ids=("span:src/model.py:1:2",),
+        content_digest="",
+    )
+    return SimpleNamespace(
+        mechanism_id="mech:legacy",
+        content_digest="sha256:context",
+        source_context_digest="sha256:context",
+        details=(detail,),
+        evidence_closure=closure,
+    )
+
+# ---------------------------------------------------------------------------
+# R5: formula identity, authority and condition expression
+# ---------------------------------------------------------------------------
+
+
+def _mechanism_package(**overrides):
+    from code2paper.agentic.formalization_agent import MechanismFormulaPackageV2
+
+    payload = {
+        "package_id": "pkg:r5",
+        "mechanism_id": "mech:r5",
+        "source_detail_ids": ("detail:r5",),
+        "satisfied_obligation_ids": ("ob:r5",),
+        "latex": "y = W x",
+        "prose_explanation": "Linear projection.",
+        "evidence_authority": "repository_verified",
+        "formula_lane": "repository_derived",
+        "review_status": "accepted",
+        "bound_operation_ids": ("op:r5",),
+    }
+    payload.update(overrides)
+    return MechanismFormulaPackageV2.model_validate(payload)
+
+
+def test_compound_operator_chain_accepts_equivalent_latex_arrow() -> None:
+    """Content validation accepts typeset arrows while retaining operator order."""
+
+    from code2paper.agentic.formalization_agent import (
+        MechanismFormulaObligationV1,
+        MechanismFormulaPackageV2,
+        validate_mechanism_formula_package,
+    )
+
+    context = _legacy_formalizer_context()
+    obligation = MechanismFormulaObligationV1(
+        obligation_id="ob:legacy",
+        mechanism_id="mech:legacy",
+        source_detail_ids=("detail:legacy",),
+        mathematical_goal="Formalize the operation chain.",
+        required_operator_signatures=({
+            "predicate": "COMPUTE -> WRITE",
+            "operands": ["x", "W", "y"],
+            "result": "y",
+        },),
+        required_operand_sets=(("x", "W", "y"),),
+        source_operation_ids=("op:legacy",),
+    )
+    package = MechanismFormulaPackageV2(
+        package_id="pkg:compound",
+        mechanism_id="mech:legacy",
+        source_detail_ids=("detail:legacy",),
+        satisfied_obligation_ids=("ob:legacy",),
+        latex=r"\text{COMPUTE}(x, W) \xrightarrow{\text{WRITE}} y",
+        prose_explanation="The computed value is written to y.",
+        source_context_digest="sha256:context",
+        bound_operation_ids=("op:legacy",),
+    )
+
+    failures = validate_mechanism_formula_package(
+        package,
+        context=context,
+        obligation=obligation,
+    )
+
+    assert not any("missing_required_operator" in failure for failure in failures)
+    assert not any("formula_operand_set_mismatch" in failure for failure in failures)
+
+
+def test_author_intent_formula_with_fact_id_is_not_repository_authority() -> None:
+    """R5: an author-intent package never becomes code_verified via a fact id."""
+
+    from code2paper.agentic.formalization_agent import (
+        adapt_mechanism_formula_package_to_legacy,
+    )
+
+    disguised = _mechanism_package(
+        formula_lane="author_intent_academic",
+        review_status="review_required",
+        bound_operation_ids=(),
+        bound_fact_ids=("fact:author",),
+    )
+    legacy = adapt_mechanism_formula_package_to_legacy(disguised, section_id="sec:1")
+
+    assert legacy.authority_status == "author_intent"
+    assert legacy.formula_lane == "author_intent_academic"
+    assert legacy.review_status == "review_required"
+    assert legacy.schema_version == "2.0"
+
+
+def test_review_required_repository_formula_is_not_accepted() -> None:
+    from code2paper.agentic.formalization_agent import (
+        adapt_mechanism_formula_package_to_legacy,
+    )
+
+    pending = _mechanism_package(review_status="review_required")
+    legacy = adapt_mechanism_formula_package_to_legacy(pending, section_id="sec:1")
+
+    assert legacy.review_status == "review_required"
+    assert legacy.authority_status == "partial"
+    assert legacy.formula_lane == "hybrid_partial"
+
+
+def test_repository_derived_formula_requires_exact_bindings() -> None:
+    from code2paper.agentic.formalization_agent import (
+        adapt_mechanism_formula_package_to_legacy,
+    )
+
+    unbound = _mechanism_package(
+        bound_operation_ids=(),
+        bound_fact_ids=(),
+        bound_equation_ids=(),
+    )
+    legacy = adapt_mechanism_formula_package_to_legacy(unbound, section_id="sec:1")
+
+    assert legacy.authority_status == "partial"
+    assert legacy.review_status == "review_required"
+
+    bound = adapt_mechanism_formula_package_to_legacy(
+        _mechanism_package(), section_id="sec:1"
+    )
+    assert bound.authority_status == "code_verified"
+    assert bound.formula_lane == "repository_derived"
+    assert bound.review_status == "accepted"
+
+
+def test_current_package_missing_disposition_is_not_historically_accepted() -> None:
+    """R5: only a version-marked legacy package may use the compat branch."""
+
+    from code2paper.agentic.publication_transaction_contract import (
+        _formula_package_terminal_disposition,
+    )
+
+    current = {
+        "package_id": "pkg:current",
+        "schema_version": "2.0",
+        "authority_status": "code_verified",
+        "formula_lane": "repository_derived",
+    }
+    assert _formula_package_terminal_disposition(current) == "review_required"
+
+    legacy = {
+        "package_id": "pkg:legacy",
+        "authority_status": "code_verified",
+        "formula_lane": "repository_derived",
+    }
+    assert _formula_package_terminal_disposition(legacy) == "accepted"
+
+    explicit = {
+        "package_id": "pkg:current",
+        "schema_version": "2.0",
+        "authority_status": "code_verified",
+        "formula_lane": "repository_derived",
+        "review_status": "accepted",
+    }
+    assert _formula_package_terminal_disposition(explicit) == "accepted"
+
+    rejected = {
+        "package_id": "pkg:current",
+        "schema_version": "2.0",
+        "review_status": "rejected",
+    }
+    assert _formula_package_terminal_disposition(rejected) == "failed"
+
+
+def test_condition_binding_is_structural_and_never_lexical() -> None:
+    """R5 correction: only a provably identical condition may bind.
+
+    Lexical helpers locate a candidate clause; authorization requires the same
+    clause structure (order, AND/OR, negation parity, comparison operator and
+    numeric literals).  A bare identifier is not a reader-facing conditional
+    statement, so it never authorizes by itself.
+    """
+
+    from code2paper.agentic.publication_transaction_contract import (
+        _condition_statement_matches,
+        _witness_satisfies_constraints,
+    )
+
+    declared = "self.cfg.use_dedicated_attention"
+    # Reader-facing phrasing of the same switch is located and binds.
+    assert _condition_statement_matches(
+        declared, "When dedicated attention is enabled, the model uses the mask."
+    )
+    # Hyphenated reader labels and the word ``flag`` are representation-only
+    # variants of the same scoped switch.
+    assert _condition_statement_matches(
+        declared,
+        "When the dedicated-attention flag is enabled, the model uses the mask.",
+    )
+    assert _condition_statement_matches(
+        "self.cfg.add_positional_encoding",
+        "When the positional-encoding flag is enabled, the model adds the embedding.",
+    )
+    # The raw identifier is not prose and must not authorize on identity.
+    assert not _condition_statement_matches(declared, declared)
+    # A dropped condition never matches.
+    assert not _condition_statement_matches(
+        declared, "The model always builds the dedicated attention mask."
+    )
+    # A reversed condition never matches.
+    assert not _condition_statement_matches(
+        declared, "When dedicated attention is disabled, the model uses the mask."
+    )
+    # An appended opposite condition never matches.
+    assert not _condition_statement_matches(
+        declared,
+        "When dedicated attention is enabled or disabled, the mask is built.",
+    )
+    # A widened (unconditional) statement never matches.
+    assert not _condition_statement_matches(
+        declared, "Regardless of configuration the model uses the mask."
+    )
+    # Boolean structure is preserved: AND never authorizes OR and vice versa.
+    assert _condition_statement_matches(
+        "alpha and beta", "When alpha and beta hold, compute the output."
+    )
+    assert not _condition_statement_matches(
+        "alpha and beta", "When alpha or beta holds, compute the output."
+    )
+    assert _condition_statement_matches(
+        "alpha or beta", "When alpha or beta holds, compute the output."
+    )
+    assert not _condition_statement_matches(
+        "alpha or beta", "When alpha and beta hold, compute the output."
+    )
+    # Nested negation keeps its parity.
+    assert _condition_statement_matches(
+        "not alpha", "When alpha does not hold, compute the output."
+    )
+    assert not _condition_statement_matches(
+        "not alpha", "When alpha holds, compute the output."
+    )
+    # Comparison boundaries and scope are part of the condition.
+    assert _condition_statement_matches("x >= 5", "When x >= 5, compute the output.")
+    assert _condition_statement_matches(
+        "x >= 5", "When x is at least 5, compute the output."
+    )
+    assert not _condition_statement_matches(
+        "x >= 5", "When x >= 3, compute the output."
+    )
+    assert not _condition_statement_matches(
+        "x > 5", "When x >= 5, compute the output."
+    )
+    assert not _condition_statement_matches(
+        "x >= 5", "When x is at most 5, compute the output."
+    )
+
+    constraints = {
+        "semantic_atom": "",
+        "exact": (),
+        "conditions": (declared,),
+        "polarity": "conditional",
+    }
+    assert _witness_satisfies_constraints(
+        "When dedicated attention is enabled, the mask is built.", constraints
+    )
+    assert not _witness_satisfies_constraints(
+        "The mask is always built.", constraints
+    )
+    assert not _witness_satisfies_constraints(
+        "When dedicated attention is disabled, the mask is built.", constraints
+    )
+    assert not _witness_satisfies_constraints(
+        "When dedicated attention is enabled or disabled, the mask is built.",
+        constraints,
+    )
+
+
+def test_condition_binding_rejects_regrouping_signs_negation_and_operand_order() -> None:
+    """R5 correction: the second review's five structural counterexamples.
+
+    Each pair keeps the same words on both sides; only the structure differs.
+    Word-set matching accepted them, the structural grammar must not.
+    """
+
+    from code2paper.agentic.publication_transaction_contract import (
+        _condition_statement_matches,
+        _witness_condition_and_polarity_satisfied,
+    )
+
+    cases = (
+        (
+            "(alpha or beta) and gamma",
+            "When alpha or (beta and gamma), output is computed.",
+        ),
+        ("value > -5", "When value > 5, output is computed."),
+        ("not not alpha", "When not alpha, output is computed."),
+        ("alpha < beta", "When beta < alpha, output is computed."),
+        ("alpha", "When alpha or beta, output is computed."),
+    )
+    for declared, witness in cases:
+        assert not _condition_statement_matches(declared, witness), (
+            declared,
+            witness,
+        )
+        assert not _witness_condition_and_polarity_satisfied(
+            witness, {"conditions": (declared,)}
+        ), (declared, witness)
+
+    # The structurally identical forms still bind.
+    assert _condition_statement_matches(
+        "(alpha or beta) and gamma",
+        "When (alpha or beta) and gamma, the output is computed.",
+    )
+    assert _condition_statement_matches(
+        "value > -5", "When value > -5, the output is computed."
+    )
+    assert _condition_statement_matches(
+        "not not alpha", "When not not alpha, the output is computed."
+    )
+    assert _condition_statement_matches(
+        "alpha < beta", "When alpha < beta, the output is computed."
+    )
+
+
+def test_compact_formula_payload_keeps_machine_readable_metadata() -> None:
+    from code2paper.llm.section_writer import _compact_formula_packages_for_llm
+
+    package = {
+        "schema_version": "2.0",
+        "package_id": "pkg:meta",
+        "purpose": "State the objective.",
+        "prose_explanation": "Objective in paper notation.",
+        "authority_status": "code_verified",
+        "formula_lane": "repository_derived",
+        "review_status": "accepted",
+        "material_conditions": ["self.cfg.use_dedicated_attention"],
+        "assumptions": ["training scope"],
+        "consumer_paragraph_id": "sec:1:p2",
+        "source_detail_ids": ["detail:r5"],
+        "latex": "y = W x",
+    }
+    compact = _compact_formula_packages_for_llm([package])
+    assert len(compact) == 1
+    item = compact[0]
+    for key in (
+        "review_status",
+        "schema_version",
+        "source_detail_ids",
+        "material_conditions",
+        "assumptions",
+        "consumer_paragraph_id",
+        "formula_lane",
+        "authority_status",
+    ):
+        assert key in item, key
+    assert item["review_status"] == "accepted"
+    assert item["consumer_paragraph_id"] == "sec:1:p2"
+
+
+def test_legacy_formalizer_reads_real_llm_response_text() -> None:
+    """R5: the legacy caller reads LLMResponse.text / blocked_reason."""
+
+    import json as _json
+
+    from code2paper.llm.client import LLMResponse
+    from code2paper.agentic.formalization_agent import (
+        _run_mechanism_formalizer_legacy,
+    )
+
+    calls: list[object] = []
+
+    def caller(config, request):
+        calls.append(request)
+        return LLMResponse(
+            text=_json.dumps({
+                "latex": "y = W x",
+                "prose_explanation": "Linear projection.",
+                "symbol_definitions": [["W", "weight matrix"]],
+                "material_conditions": [],
+            }),
+            response_hash="sha256:legacy",
+            finish_reason="stop",
+        )
+
+    from code2paper.agentic.formalization_agent import (
+        MechanismFormulaObligationV1,
+    )
+
+    context = _legacy_formalizer_context(operation_result="")
+    obligation = MechanismFormulaObligationV1(
+        obligation_id="ob:legacy",
+        mechanism_id="mech:legacy",
+        source_detail_ids=("detail:legacy",),
+        source_operation_ids=("op:legacy",),
+        mathematical_goal="Formalize the projection.",
+    )
+    packages, trace = _run_mechanism_formalizer_legacy(
+        context=context,
+        obligations=(obligation,),
+        shared_payload_pages=("page-body",),
+        shared_payload_digest="sha256:page",
+        llm_config=SimpleNamespace(),
+        caller=caller,
+    )
+
+    assert calls and trace["llm_call_made"] is True
+    assert trace["llm_page_calls"] == 1
+    # The real ``LLMResponse.text`` payload was parsed; a caller reading the
+    # empty ``content`` field instead would record an empty-response failure.
+    assert not [
+        failure for failure in trace["failures"]
+        if failure.startswith("llm_empty_response:")
+    ]
+    assert [package.latex for package in packages] == ["y = W x"]
+
+
+def test_legacy_formalizer_records_blocked_response() -> None:
+    from code2paper.llm.client import LLMResponse
+    from code2paper.agentic.formalization_agent import (
+        _run_mechanism_formalizer_legacy,
+    )
+
+    def caller(config, request):
+        return LLMResponse(
+            text="",
+            response_hash="sha256:blocked",
+            blocked_reason="provider_timeout",
+            finish_reason="stop",
+        )
+
+    from code2paper.agentic.formalization_agent import (
+        MechanismFormulaObligationV1,
+    )
+
+    context = _legacy_formalizer_context(operation_result="")
+    obligation = MechanismFormulaObligationV1(
+        obligation_id="ob:legacy",
+        mechanism_id="mech:legacy",
+        source_detail_ids=("detail:legacy",),
+        source_operation_ids=("op:legacy",),
+        mathematical_goal="Formalize the projection.",
+    )
+    packages, trace = _run_mechanism_formalizer_legacy(
+        context=context,
+        obligations=(obligation,),
+        shared_payload_pages=("page-body",),
+        shared_payload_digest="sha256:page",
+        llm_config=SimpleNamespace(),
+        caller=caller,
+    )
+
+    assert packages == ()
+    assert any(
+        failure.startswith("llm_blocked:") for failure in trace["failures"]
+    )
+    assert trace["llm_page_calls"] == 1
+    # R5: an interface outcome is separated from a normal no-package result.
+    assert trace["interface_failures"] == [{
+        "kind": "llm_blocked",
+        "obligation_id": "ob:legacy",
+        "page_index": 0,
+        "reason": "provider_timeout",
+    }]
+    assert trace["missing_binding_obligations"] == []
+    assert trace["rejected_obligations"] == []
+    assert trace["not_applicable_obligations"] == []
+    assert trace["deterministic_obligation_ids"] == []
+
+def test_legacy_formalizer_separates_missing_binding_and_not_applicable() -> None:
+    """R5: no-package outcomes stay distinguishable in the legacy trace."""
+
+    from code2paper.agentic.formalization_agent import (
+        MechanismFormulaObligationV1,
+        _run_mechanism_formalizer_legacy,
+    )
+
+    context = _legacy_formalizer_context(operation_result="")
+    missing = MechanismFormulaObligationV1(
+        obligation_id="ob:missing",
+        mechanism_id="mech:legacy",
+        source_detail_ids=("detail:absent",),
+        mathematical_goal="Formalize the absent projection.",
+    )
+    optional = MechanismFormulaObligationV1(
+        obligation_id="ob:optional",
+        mechanism_id="mech:legacy",
+        source_detail_ids=("detail:legacy",),
+        source_operation_ids=("op:legacy",),
+        mathematical_goal="Optionally describe the projection.",
+        expectation="none",
+    )
+    calls: list[object] = []
+
+    def caller(config, request):  # pragma: no cover - must not be reached
+        calls.append(request)
+        raise AssertionError("no model call may occur here")
+
+    packages, trace = _run_mechanism_formalizer_legacy(
+        context=context,
+        obligations=(missing, optional),
+        shared_payload_pages=("page-body",),
+        shared_payload_digest="sha256:page",
+        llm_config=SimpleNamespace(),
+        caller=caller,
+    )
+
+    assert packages == ()
+    assert calls == []
+    assert trace["missing_binding_obligations"] == ["ob:missing"]
+    assert trace["not_applicable_obligations"] == ["ob:optional"]
+    assert trace["rejected_obligations"] == []
+    assert trace["interface_failures"] == []
+    assert trace["llm_page_calls"] == 0
+    assert "formula_source_binding_missing:ob:missing" in trace["failures"]
+
+
+def test_condition_binding_rejects_operator_and_scope_changes() -> None:
+    """R5 correction (third review): the expression must be fully conserved.
+
+    Arithmetic operators, attribute/index operands and boolean scope are part
+    of the condition; a witness that swaps ``*`` for ``/``, drops a negation or
+    adds an ``or`` branch around the matched phrase must not authorize it, while
+    an identical indexed guard must still bind.
+    """
+
+    from code2paper.agentic.publication_transaction_contract import (
+        _condition_statement_matches,
+        _witness_condition_and_polarity_satisfied,
+    )
+
+    cases = (
+        ("x * y > 5", "When x / y > 5, output is computed."),
+        ("x + y > 5", "When x - y > 5, output is computed."),
+        ("!alpha", "When alpha, output is computed."),
+        ("alpha", "When beta or when alpha, output is computed."),
+        ("x.shape[0] > 0", "When x.shape[1] > 0, the output is computed."),
+    )
+    for declared, witness in cases:
+        assert not _condition_statement_matches(declared, witness), (
+            declared,
+            witness,
+        )
+        assert not _witness_condition_and_polarity_satisfied(
+            witness, {"conditions": (declared,)}
+        ), (declared, witness)
+
+    # A legal indexed guard and the operator-preserving rewrites still bind.
+    assert _condition_statement_matches(
+        "x.shape[0] > 0", "When x.shape[0] > 0, the output is computed."
+    )
+    assert _condition_statement_matches(
+        "x * y > 5", "When x * y > 5, the output is computed."
+    )
+    assert _condition_statement_matches(
+        "x + y > 5", "When x + y > 5, the output is computed."
+    )
+    assert _condition_statement_matches(
+        "!alpha", "When !alpha, the output is computed."
+    )

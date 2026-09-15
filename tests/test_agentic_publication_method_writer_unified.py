@@ -32,6 +32,8 @@ from code2paper.agentic.method_content_trace import (
 from code2paper.agentic.publication_method_writer import (
     AuthoringContextMode,
     _assert_shared_payload_delivery,
+    _assert_unified_v2_realizer_delivery,
+    _realizer_detail_scope,
     _run_mechanism_formalizer,
     run_publication_method_writer,
 )
@@ -46,6 +48,32 @@ from tests.test_agentic_publication_method_writer import _artifacts, _config
 from tests.test_agentic_mechanism_formalizer import _make_context
 
 
+@pytest.mark.parametrize("reverse_order", [False, True])
+@pytest.mark.parametrize("as_objects", [False, True])
+def test_realizer_delivery_reports_latest_failure(reverse_order: bool, as_objects: bool) -> None:
+    invocation = SimpleNamespace(invocation_id="inv:realizer:test", role="realizer", is_repair=False)
+    receipts = [
+        {"invocation_id": invocation.invocation_id, "attempt": 1,
+         "delivery_status": "accepted", "task_status": "failed",
+         "task_failures": [{"code": "realizer_witness_text_missing"}]},
+        {"invocation_id": invocation.invocation_id, "attempt": 2,
+         "delivery_status": "accepted", "task_status": "failed",
+         "task_failures": [{"code": "realizer_required_witness_missing"}]},
+    ]
+    if reverse_order:
+        receipts.reverse()
+    values = [SimpleNamespace(**row) for row in receipts] if as_objects else receipts
+    with pytest.raises(ValueError, match="realizer_required_witness_missing$"):
+        _assert_unified_v2_realizer_delivery(
+            workset_manifest=SimpleNamespace(_page_index=lambda: {}),
+            invocation_plan=SimpleNamespace(invocations=[invocation]),
+            receipts=values,
+        )
+    assert {row["task_failures"][0]["code"] for row in receipts} == {
+        "realizer_witness_text_missing", "realizer_required_witness_missing",
+    }
+
+
 def _unified_budget_env() -> None:
     """Explicit small V2 live-budget values for deterministic tests."""
 
@@ -55,8 +83,25 @@ def _unified_budget_env() -> None:
         "CODE2PAPER_UNIFIED_MAX_FORMALIZER_CALLS": "32",
         "CODE2PAPER_UNIFIED_MAX_WRITER_CALLS": "64",
         "CODE2PAPER_UNIFIED_MAX_REALIZER_CALLS": "64",
+        "CODE2PAPER_UNIFIED_MAX_BINDER_CALLS": "0",
         "CODE2PAPER_UNIFIED_MAX_OBLIGATIONS_PER_PAGE": "8",
         "CODE2PAPER_UNIFIED_MAX_FORMULA_REPAIR_CALLS": "4",
+        # R6: the per-request contract is declared, never defaulted in code.
+        "CODE2PAPER_UNIFIED_SAFETY_MARGIN_TOKENS": "1024",
+        "CODE2PAPER_UNIFIED_PROMPT_TOKEN_RESERVE": "2048",
+        "CODE2PAPER_UNIFIED_THINKING_TOKEN_RESERVE": "0",
+        "CODE2PAPER_UNIFIED_OUTPUT_TOKEN_RESERVE_FORMALIZER": "4096",
+        "CODE2PAPER_UNIFIED_OUTPUT_TOKEN_RESERVE_WRITER": "8192",
+        "CODE2PAPER_UNIFIED_OUTPUT_TOKEN_RESERVE_REALIZER": "8192",
+        "CODE2PAPER_UNIFIED_OUTPUT_TOKEN_RESERVE_BINDER": "2048",
+        "CODE2PAPER_UNIFIED_MAX_REQUEST_INPUT_TOKENS_FORMALIZER": "60000",
+        "CODE2PAPER_UNIFIED_MAX_REQUEST_INPUT_TOKENS_WRITER": "60000",
+        "CODE2PAPER_UNIFIED_MAX_REQUEST_INPUT_TOKENS_REALIZER": "60000",
+        "CODE2PAPER_UNIFIED_MAX_REQUEST_INPUT_TOKENS_BINDER": "20000",
+        "CODE2PAPER_UNIFIED_SCAFFOLDING_TOKEN_RESERVE_FORMALIZER": "0",
+        "CODE2PAPER_UNIFIED_SCAFFOLDING_TOKEN_RESERVE_WRITER": "4096",
+        "CODE2PAPER_UNIFIED_SCAFFOLDING_TOKEN_RESERVE_REALIZER": "4096",
+        "CODE2PAPER_UNIFIED_SCAFFOLDING_TOKEN_RESERVE_BINDER": "0",
         "CODE2PAPER_MODEL_CONTEXT_TOKENS": "131072",
     })
 
@@ -68,8 +113,25 @@ def _clear_unified_budget_env() -> None:
         "CODE2PAPER_UNIFIED_MAX_FORMALIZER_CALLS",
         "CODE2PAPER_UNIFIED_MAX_WRITER_CALLS",
         "CODE2PAPER_UNIFIED_MAX_REALIZER_CALLS",
+        "CODE2PAPER_UNIFIED_MAX_BINDER_CALLS",
         "CODE2PAPER_UNIFIED_MAX_OBLIGATIONS_PER_PAGE",
         "CODE2PAPER_UNIFIED_MAX_FORMULA_REPAIR_CALLS",
+        "CODE2PAPER_UNIFIED_SAFETY_MARGIN_TOKENS",
+        "CODE2PAPER_UNIFIED_PROMPT_TOKEN_RESERVE",
+        "CODE2PAPER_UNIFIED_THINKING_TOKEN_RESERVE",
+        "CODE2PAPER_UNIFIED_OUTPUT_TOKEN_RESERVE_FORMALIZER",
+        "CODE2PAPER_UNIFIED_OUTPUT_TOKEN_RESERVE_WRITER",
+        "CODE2PAPER_UNIFIED_OUTPUT_TOKEN_RESERVE_REALIZER",
+        "CODE2PAPER_UNIFIED_OUTPUT_TOKEN_RESERVE_BINDER",
+        "CODE2PAPER_UNIFIED_MAX_REQUEST_INPUT_TOKENS_FORMALIZER",
+        "CODE2PAPER_UNIFIED_MAX_REQUEST_INPUT_TOKENS_WRITER",
+        "CODE2PAPER_UNIFIED_MAX_REQUEST_INPUT_TOKENS_REALIZER",
+        "CODE2PAPER_UNIFIED_MAX_REQUEST_INPUT_TOKENS_BINDER",
+        "CODE2PAPER_UNIFIED_SCAFFOLDING_TOKEN_RESERVE_FORMALIZER",
+        "CODE2PAPER_UNIFIED_SCAFFOLDING_TOKEN_RESERVE_WRITER",
+        "CODE2PAPER_UNIFIED_SCAFFOLDING_TOKEN_RESERVE_REALIZER",
+        "CODE2PAPER_UNIFIED_SCAFFOLDING_TOKEN_RESERVE_BINDER",
+        "CODE2PAPER_UNIFIED_RETRY_RESERVE_INPUT_TOKENS_WRITER",
         "CODE2PAPER_MODEL_CONTEXT_TOKENS",
     ):
         os.environ.pop(key, None)
@@ -97,14 +159,19 @@ def _with_source_manifest(paths: dict[str, str], tmp_path: Path) -> dict[str, st
         "class Encoder:\n    def read(self, configured_input):\n        return configured_input\n",
         encoding="utf-8",
     )
+    # R2: the declared source digest must match the bytes the resolver will
+    # actually read; a placeholder digest is now refused as drift instead of
+    # being silently served from the working tree.
+    source_bytes = source_path.read_bytes()
+    source_digest = "sha256:" + hashlib.sha256(source_bytes).hexdigest()
     snapshot = RepoSnapshot(
         snapshot_id="repo:writer",
         project_root=str(tmp_path),
         project_tree_hash="sha256:tree",
         included_files=[SnapshotFile(
             path="encoder.py",
-            size=source_path.stat().st_size,
-            content_digest="sha256:source",
+            size=len(source_bytes),
+            content_digest=source_digest,
         )],
     )
     symbol = SymbolRefV1(
@@ -134,7 +201,7 @@ def _with_source_manifest(paths: dict[str, str], tmp_path: Path) -> dict[str, st
         source_kind="first_party_executable",
         ownership_role="target_core",
         executable_authority=True,
-        content_digest="sha256:source",
+        content_digest=source_digest,
         symbol_ids=(symbol.symbol_id,),
         classification_reason="fixture:first_party_executable",
     )
@@ -238,6 +305,53 @@ def _mock_writer_caller(config: LLMConfig, request: LLMRequest) -> LLMResponse:
             token_usage={"completion_tokens": 50},
         )
 
+    if (
+        str(getattr(request, "prompt_template_id", "")) == "unified_realizer_page_v2"
+        or (
+            isinstance(getattr(request, "input_payload", None), dict)
+            and str(request.input_payload.get("consumer_role", "")) == "realizer"
+        )
+    ):
+        technical_payload = request.input_payload.get("technical_payload") or {}
+        detail_ids: list[str] = []
+
+        def add_detail(value: Any) -> None:
+            text = str(value or "").strip()
+            if not text:
+                return
+            canonical = "detail:" + text.removeprefix("detail:")
+            if canonical not in detail_ids:
+                detail_ids.append(canonical)
+
+        for value in technical_payload.get("detail_ids", ()) or ():
+            add_detail(value)
+        for atom in technical_payload.get("atoms", ()) or ():
+            if not isinstance(atom, dict):
+                continue
+            atom_id = str(atom.get("_atom_id") or "").strip()
+            if str(atom.get("_atom_kind") or "") == "detail" or atom_id.startswith("detail:"):
+                add_detail(atom.get("detail_id") or atom_id)
+
+        markdown = "Realizer covers " + ", ".join(detail_ids)
+        return LLMResponse(
+            text=json.dumps({
+                "draft_markdown": markdown,
+                "rendered_detail_ids": detail_ids,
+                "used_formula_package_ids": [],
+                "witnesses": [
+                    {
+                        "witness_kind": "detail",
+                        "target_id": detail_id,
+                        "exact_text": detail_id,
+                    }
+                    for detail_id in detail_ids
+                ],
+            }),
+            response_hash="sha256:mock-realizer-response",
+            finish_reason="stop",
+            token_usage={"completion_tokens": 50, "prompt_tokens": 300},
+        )
+
     payload = request.prompt if isinstance(request.prompt, dict) else {}
     if isinstance(request.prompt, str):
         try:
@@ -255,8 +369,18 @@ def _mock_writer_caller(config: LLMConfig, request: LLMRequest) -> LLMResponse:
         or payload.get("heading")
         or "Method"
     )
+    narrative_plan = (
+        request.input_payload.get("narrative_plan")
+        or payload.get("narrative_plan")
+        or {}
+    )
     p_plan = (
         request.input_payload.get("paragraph_plan")
+        or (
+            narrative_plan.get("paragraphs", ())
+            if isinstance(narrative_plan, dict)
+            else ()
+        )
         or payload.get("paragraph_plan")
         or ()
     )
@@ -264,20 +388,58 @@ def _mock_writer_caller(config: LLMConfig, request: LLMRequest) -> LLMResponse:
     paragraphs_out = []
     if p_plan and isinstance(p_plan, (list, tuple)):
         for item in p_plan:
-            pid = (
-                item.get("paragraph_id")
-                if isinstance(item, dict)
-                else getattr(item, "paragraph_id", "")
-            )
+            row = item if isinstance(item, dict) else {}
+            pid = row.get("paragraph_id") or getattr(item, "paragraph_id", "")
             if pid:
+                contract = row.get("witness_contract") or {}
+                targets = (
+                    contract.get("targets", ())
+                    if isinstance(contract, dict)
+                    else ()
+                )
+                witness_rows = []
+                rendered_detail_ids = []
+                prose_fragments = [
+                    "The encoder reads configured input and returns read value.",
+                    "The operation path reads operation.",
+                    "The operand uses configured input.",
+                    "The output is read value.",
+                ]
+                for target in targets:
+                    if not isinstance(target, dict):
+                        continue
+                    kind = str(target.get("target_kind") or "")
+                    target_id = str(target.get("target_id") or "")
+                    if not kind or not target_id:
+                        continue
+                    if kind == "detail":
+                        exact_text = (
+                            "encoder reads configured input and returns read value"
+                        )
+                        rendered_detail_ids.append(target_id)
+                    elif kind == "atom" and ":operation:" in target_id:
+                        exact_text = "operation path reads operation"
+                    elif kind == "atom" and ":operand:" in target_id:
+                        exact_text = "operand uses configured input"
+                    elif kind == "atom" and ":output:" in target_id:
+                        exact_text = "output is read value"
+                    else:
+                        continue
+                    witness_rows.append({
+                        "witness_kind": kind,
+                        "target_id": target_id,
+                        "exact_text": exact_text,
+                    })
                 paragraphs_out.append({
                     "paragraph_id": str(pid),
-                    "paragraph_markdown": "The encoder reads the configured input reliably.",
+                    "paragraph_markdown": " ".join(prose_fragments),
+                    "rendered_detail_ids": rendered_detail_ids,
+                    "witnesses": witness_rows,
                 })
     if not paragraphs_out:
         paragraphs_out.append({
             "paragraph_id": f"{section_id}_p1",
-            "paragraph_markdown": "The encoder reads the configured input reliably.",
+            "paragraph_markdown": "The encoder reads configured input and returns read value.",
         })
 
     body_prose = "\n\n".join(p["paragraph_markdown"] for p in paragraphs_out)
@@ -380,6 +542,260 @@ def test_run_publication_method_writer_unified_mode(tmp_path: Path) -> None:
     assert "context_to_plan" in funnel.funnel_survival_rates
 
 
+def test_unified_writer_reuses_completed_page_receipts_on_resume(
+    tmp_path: Path,
+) -> None:
+    """A second orchestration pass does not resend completed Writer pages."""
+
+    paths = _unified_artifacts(tmp_path)
+    try:
+        first, _outputs = run_publication_method_writer(
+            out_root=tmp_path,
+            artifact_paths=paths,
+            llm_config=_config(),
+            llm_caller=_mock_writer_caller,
+            authoring_context_mode="unified",
+        )
+        assert first.status != "blocked"
+
+        writer_calls: list[LLMRequest] = []
+
+        def counting_caller(config: LLMConfig, request: LLMRequest) -> LLMResponse:
+            if request.prompt_template_id == "unified_writer_page_v2":
+                writer_calls.append(request)
+            return _mock_writer_caller(config, request)
+
+        second, _resumed_outputs = run_publication_method_writer(
+            out_root=tmp_path,
+            artifact_paths=paths,
+            llm_config=_config(),
+            llm_caller=counting_caller,
+            authoring_context_mode="unified",
+        )
+        assert second.status != "blocked"
+        assert writer_calls == []
+    finally:
+        _clear_unified_budget_env()
+
+
+@pytest.mark.parametrize("invalid_mode", ["empty", "heading_only"])
+def test_writer_content_repair_uses_declared_retry_reserve_and_commits_only_after_acceptance(
+    tmp_path: Path,
+    invalid_mode: str,
+) -> None:
+    """Empty/title-only primaries need content repair before reuse."""
+
+    paths = _unified_artifacts(tmp_path)
+    os.environ["CODE2PAPER_UNIFIED_RETRY_RESERVE_INPUT_TOKENS_WRITER"] = "20000"
+    writer_requests: list[LLMRequest] = []
+
+    def caller(config: LLMConfig, request: LLMRequest) -> LLMResponse:
+        if request.prompt_template_id == "unified_writer_page_v2":
+            writer_requests.append(request)
+            if len(writer_requests) == 1:
+                if invalid_mode == "empty":
+                    return LLMResponse(
+                        text="",
+                        response_hash="sha256:mock-writer-empty-content",
+                        blocked_reason=(
+                            "provider_stream_finished_before_complete_json"
+                        ),
+                        finish_reason="stop",
+                        token_usage={"completion_tokens": 0, "prompt_tokens": 300},
+                    )
+                narrative_plan = request.input_payload.get("narrative_plan") or {}
+                paragraphs = [
+                    {
+                        "paragraph_id": str(row.get("paragraph_id") or ""),
+                        "paragraph_markdown": (
+                            "## Method"
+                            if invalid_mode == "heading_only"
+                            else "The encoder reads configured input reliably."
+                        ),
+                    }
+                    for row in (
+                        narrative_plan.get("paragraphs", ())
+                        if isinstance(narrative_plan, dict)
+                        else ()
+                    )
+                    if isinstance(row, dict) and row.get("paragraph_id")
+                ]
+                section_id = str(request.input_payload.get("section_id") or "")
+                body = "\n\n".join(
+                    str(row["paragraph_markdown"]) for row in paragraphs
+                )
+                return LLMResponse(
+                    text=json.dumps({
+                        "section_id": section_id,
+                        "heading_text": "Method",
+                        "section_markdown": (
+                            "## Method"
+                            if invalid_mode == "heading_only"
+                            else f"## Method\n\n{body}"
+                        ),
+                        "paragraphs": paragraphs,
+                    }),
+                    response_hash="sha256:mock-writer-invalid-content",
+                    finish_reason="stop",
+                    token_usage={"completion_tokens": 80, "prompt_tokens": 300},
+                )
+        return _mock_writer_caller(config, request)
+
+    try:
+        result, _outputs = run_publication_method_writer(
+            out_root=tmp_path,
+            artifact_paths=paths,
+            llm_config=_config(),
+            llm_caller=caller,
+            authoring_context_mode="unified",
+        )
+        # Exercise the production resume path with the same plan and identity.
+        resumed, _resumed_outputs = run_publication_method_writer(
+            out_root=tmp_path,
+            artifact_paths=paths,
+            llm_config=_config(),
+            llm_caller=caller,
+            authoring_context_mode="unified",
+        )
+    finally:
+        _clear_unified_budget_env()
+
+    assert result.status in ("success", "incomplete")
+    assert result.status != "blocked"
+    assert resumed.status != "blocked"
+    assert len(writer_requests) == 2
+    acceptance_files = sorted(
+        (tmp_path / "artifacts" / "06_authoring" / "invocations").rglob(
+            "*.content-acceptance.json"
+        )
+    )
+    acceptance_rows = [
+        json.loads(path.read_text(encoding="utf-8"))
+        for path in acceptance_files
+    ]
+    assert any(row["content_acceptance_status"] == "rejected" for row in acceptance_rows)
+    assert any(
+        row["content_acceptance_status"] == "accepted"
+        and row["resume_eligible"] is True
+        and row["repair_committed"] is True
+        for row in acceptance_rows
+    )
+
+
+def test_rejected_nonempty_writer_repair_is_not_resume_eligible(
+    tmp_path: Path,
+) -> None:
+    """A title-only repair remains an attempt, not a reusable page."""
+
+    paths = _unified_artifacts(tmp_path)
+    os.environ["CODE2PAPER_UNIFIED_RETRY_RESERVE_INPUT_TOKENS_WRITER"] = "20000"
+    writer_requests: list[LLMRequest] = []
+    response_hash = "sha256:writer-identical-response-hash"
+
+    def title_only_response(request: LLMRequest) -> LLMResponse:
+        narrative_plan = request.input_payload.get("narrative_plan") or {}
+        paragraphs = [
+            {
+                "paragraph_id": str(row.get("paragraph_id") or ""),
+                "paragraph_markdown": "## Method",
+            }
+            for row in (
+                narrative_plan.get("paragraphs", ())
+                if isinstance(narrative_plan, dict)
+                else ()
+            )
+            if isinstance(row, dict) and row.get("paragraph_id")
+        ]
+        section_id = str(request.input_payload.get("section_id") or "")
+        return LLMResponse(
+            text=json.dumps({
+                "section_id": section_id,
+                "heading_text": "Method",
+                "section_markdown": "## Method",
+                "paragraphs": paragraphs,
+            }),
+            response_hash=response_hash,
+            finish_reason="stop",
+            token_usage={"completion_tokens": 20, "prompt_tokens": 300},
+        )
+
+    def caller(config: LLMConfig, request: LLMRequest) -> LLMResponse:
+        if request.prompt_template_id == "unified_writer_page_v2":
+            writer_requests.append(request)
+            if len(writer_requests) == 1:
+                return LLMResponse(
+                    text="",
+                    response_hash=response_hash,
+                    blocked_reason=(
+                        "provider_stream_finished_before_complete_json"
+                    ),
+                    finish_reason="length",
+                    token_usage={"completion_tokens": 0, "prompt_tokens": 300},
+                )
+            if len(writer_requests) == 2:
+                return title_only_response(request)
+            return _mock_writer_caller(config, request).model_copy(
+                update={"response_hash": response_hash}
+            )
+        return _mock_writer_caller(config, request)
+
+    try:
+        first, _outputs = run_publication_method_writer(
+            out_root=tmp_path,
+            artifact_paths=paths,
+            llm_config=_config(),
+            llm_caller=caller,
+            authoring_context_mode="unified",
+        )
+        # A page whose primary and bounded repair both fail content gates may
+        # block the aggregate structural gate; that is still a valid failure
+        # outcome for this regression.  The key property is that the next
+        # orchestration pass must execute the page again.
+        assert first.status in {"blocked", "incomplete"}
+
+        acceptance_files = sorted(
+            (tmp_path / "artifacts" / "06_authoring" / "invocations").rglob(
+                "*.content-acceptance.json"
+            )
+        )
+        acceptance_rows = [
+            json.loads(path.read_text(encoding="utf-8"))
+            for path in acceptance_files
+        ]
+        assert len(acceptance_rows) == 2
+        assert all(row["content_acceptance_status"] == "rejected" for row in acceptance_rows)
+        assert all(row["resume_eligible"] is False for row in acceptance_rows)
+        assert all(row["repair_committed"] is False for row in acceptance_rows)
+        assert any(
+            row["attempt"] == 2
+            and "paragraph_body_not_substantive" in row["failures"]
+            for row in acceptance_rows
+        )
+
+        from code2paper.agentic.unified_context_models import ConsumerInvocationPlanV1
+        from code2paper.agentic.unified_invocation_ledger import build_resume_plan
+
+        authoring_root = tmp_path / "artifacts" / "06_authoring"
+        plan = ConsumerInvocationPlanV1.model_validate_json(
+            (authoring_root / "consumer_invocation_plan_v1.2.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        resume = build_resume_plan(
+            tmp_path / "artifacts" / "06_authoring" / "invocations",
+            plan,
+            archive_digest=plan.archive_digest,
+            workset_manifest_digest=plan.workset_manifest_digest,
+            model_identity_digest=plan.model_identity_digest,
+        )
+        invocation_id = plan.invocations[0].invocation_id
+        assert resume.decisions[invocation_id].decision == "execute"
+        # The rejected primary/repair pair must not make the page reusable.
+        assert len(writer_requests) == 2
+    finally:
+        _clear_unified_budget_env()
+
+
 def test_realizer_receipt_cannot_satisfy_section_writer_receipt() -> None:
     context = _make_context()
     view = build_mechanism_context_view(context)
@@ -478,6 +894,115 @@ def test_realizer_receipt_cannot_satisfy_section_writer_receipt() -> None:
             **common,
             writer_delivery_receipts=[realizer_receipt],
         )
+
+
+def test_realizer_detail_scope_canonicalizes_page_and_context_markers() -> None:
+    """A V2 page must not lose all required details at the Realizer boundary."""
+
+    page = SimpleNamespace(technical_payload={
+        "atoms": [
+            {"_atom_id": "detail:mech:1", "_atom_kind": "detail"},
+            {"_atom_id": "detail:mech:2", "_atom_kind": "detail"},
+        ],
+    })
+    context = SimpleNamespace(details=(
+        SimpleNamespace(detail_id="detail:mech:1"),
+        SimpleNamespace(detail_id="mech:2"),
+    ))
+
+    scoped, pool = _realizer_detail_scope(
+        page=page,
+        source_contexts=(context,),
+        section_detail_ids=("mech:1", "detail:mech:2"),
+    )
+
+    assert scoped == {"detail:mech:1", "detail:mech:2"}
+    assert set(pool) == scoped
+
+
+def test_realizer_response_schema_freezes_the_nested_witness_contract() -> None:
+    """Native JSON-schema mode must emit the current witness model, not legacy evidence blobs."""
+
+    from code2paper.agentic.unified_context_compiler import (
+        consumer_response_json_schema,
+    )
+
+    schema = consumer_response_json_schema("realizer")
+    witness_schema = schema["properties"]["witnesses"]["items"]
+
+    assert witness_schema["type"] == "object"
+    assert witness_schema["required"] == [
+        "witness_kind",
+        "target_id",
+        "exact_text",
+    ]
+    assert witness_schema["additionalProperties"] is False
+    assert witness_schema["properties"]["witness_kind"]["enum"] == [
+        "detail",
+        "atom",
+        "facet",
+        "field",
+        "slot",
+        "edge",
+        "formula",
+        "claim",
+        "equation",
+    ]
+
+
+def test_writer_response_schema_requires_nonempty_paragraph_transactions() -> None:
+    """Unified Writer pages must not admit section-markdown-only responses."""
+
+    from code2paper.agentic.unified_context_compiler import (
+        consumer_response_json_schema,
+    )
+
+    schema = consumer_response_json_schema("writer")
+
+    assert "section_id" in schema["required"]
+    assert "paragraphs" in schema["required"]
+    assert schema["properties"]["paragraphs"]["minItems"] == 1
+
+    scoped = consumer_response_json_schema(
+        "writer",
+        section_id="MA-S1",
+    )
+    assert scoped["properties"]["section_id"]["const"] == "MA-S1"
+    assert "const" not in schema["properties"]["section_id"]
+
+
+def test_formalizer_response_schema_closes_all_required_fields() -> None:
+    """Formalizer requests must expose one typed, closed six-field row."""
+
+    from code2paper.agentic.unified_context_compiler import (
+        consumer_response_json_schema,
+    )
+
+    schema = consumer_response_json_schema("formalizer")
+    assert schema["type"] == "object"
+    assert schema["required"] == ["results"]
+    assert schema["additionalProperties"] is False
+
+    row_ref = schema["properties"]["results"]["items"]["$ref"]
+    row_name = row_ref.rsplit("/", 1)[-1]
+    row_schema = schema["$defs"][row_name]
+    assert set(row_schema["required"]) == {
+        "obligation_id",
+        "latex",
+        "prose_explanation",
+        "symbol_definitions",
+        "material_conditions",
+        "assumptions",
+    }
+    assert row_schema["additionalProperties"] is False
+    symbol_schema = row_schema["properties"]["symbol_definitions"]
+    assert symbol_schema["items"]["type"] == "array"
+    assert symbol_schema["items"]["minItems"] == 2
+    assert symbol_schema["items"]["maxItems"] == 2
+    assert symbol_schema["items"]["items"]["type"] == "string"
+    assert symbol_schema["items"]["items"]["minLength"] == 1
+    assert row_schema["properties"]["material_conditions"]["items"]["minLength"] == 1
+    assert row_schema["properties"]["assumptions"]["items"]["minLength"] == 1
 
 
 def test_formalizer_without_formula_obligations_does_not_probe_pages() -> None:
@@ -614,3 +1139,106 @@ def test_run_publication_method_writer_expected_artifact_gate_fail_closed(
     assert result.status == "blocked"
     assert "expected_authoring_artifacts_missing" in result.blocked_reason
     assert "mechanism_formula_packages_v2" in result.blocked_reason
+
+
+def test_writer_request_plan_and_send_share_exact_wire_measurement(
+    tmp_path: Path,
+) -> None:
+    """R6/F4: planning and sending use the same serialized request contract.
+
+    The complete Writer wire request is now measured before the plan is
+    admitted.  A zero *additional* scaffolding reserve is therefore valid: it
+    must not create a plan/send mismatch or cause a second hidden rejection.
+    """
+
+    _unified_budget_env()
+    deliveries: list[object] = []
+
+    def _counting_caller(config, request):
+        if str(getattr(request, "prompt_template_id", "")) == "unified_writer_page_v2":
+            deliveries.append(request)
+        return _mock_writer_caller(config, request)
+
+    try:
+        paths = _unified_artifacts(tmp_path)
+        # All scaffolding is already present in the exact request material;
+        # zero here means no extra reserve is added to that measurement.
+        os.environ["CODE2PAPER_UNIFIED_SCAFFOLDING_TOKEN_RESERVE_WRITER"] = "0"
+        result, _outputs = run_publication_method_writer(
+            out_root=tmp_path,
+            artifact_paths=paths,
+            llm_config=_config(),
+            llm_caller=_counting_caller,
+            authoring_context_mode="unified",
+        )
+    finally:
+        _clear_unified_budget_env()
+
+    assert result.status in ("blocked", "incomplete")
+    assert len(deliveries) == 1
+    receipts = sorted(
+        (tmp_path / "artifacts" / "06_authoring" / "invocations").rglob(
+            "*.completed.json"
+        )
+    )
+    writer_receipts = [
+        json.loads(path.read_text(encoding="utf-8")) for path in receipts
+    ]
+    writer_receipts = [
+        row for row in writer_receipts if row.get("consumer_role") == "writer"
+    ]
+    assert writer_receipts
+    accepted = [row for row in writer_receipts if row.get("delivery_status") == "accepted"]
+    assert accepted, writer_receipts
+    assert accepted[0]["sent_to_caller"] is True
+    accounting = accepted[0]["token_accounting"]
+    assert accounting["fits"] is True
+    assert accounting["scaffolding_reserve_tokens"] == 0
+    assert accounting["input_tokens"] > 0
+
+
+def test_writer_request_over_declared_cap_fails_before_planning(
+    tmp_path: Path,
+) -> None:
+    """R6/F4: a cap below the planned bound blocks the phase before any send."""
+
+    _unified_budget_env()
+    deliveries: list[object] = []
+
+    def _counting_caller(config, request):
+        if str(getattr(request, "prompt_template_id", "")) == "unified_writer_page_v2":
+            deliveries.append(request)
+        return _mock_writer_caller(config, request)
+
+    try:
+        paths = _unified_artifacts(tmp_path)
+        os.environ["CODE2PAPER_UNIFIED_MAX_REQUEST_INPUT_TOKENS_WRITER"] = "2000"
+        result, _outputs = run_publication_method_writer(
+            out_root=tmp_path,
+            artifact_paths=paths,
+            llm_config=_config(),
+            llm_caller=_counting_caller,
+            authoring_context_mode="unified",
+        )
+    finally:
+        _clear_unified_budget_env()
+
+    assert result.status in ("blocked", "incomplete")
+    assert result.status != "success"
+    assert deliveries == []
+
+
+def test_split_narrative_plan_revision_has_a_registered_output_name(
+    tmp_path: Path,
+) -> None:
+    """A real page-budget split must not fail on an unregistered artifact key."""
+
+    from code2paper.core.output_names import method_output
+
+    path = method_output(tmp_path, "narrative_plan_v3.revision.2")
+    assert path == (
+        tmp_path
+        / "artifacts"
+        / "06_authoring"
+        / "narrative_plan_v3.revision.2.json"
+    )

@@ -33,6 +33,12 @@ from code2paper.agentic.intent_compiler_v2 import (
     IntentObligationGraphV2,
     IntentObligationV2,
 )
+from code2paper.agentic.research_revision_contract import (
+    DELETABLE_PROVENANCE,
+    AuthorTargetRequirementsV1,
+    author_target_requirements,
+    target_preserves_author_requirements,
+)
 from code2paper.agentic.research_models import TypedBehaviorTargetV1
 from code2paper.llm.client import LLMClient, LLMRequest
 from code2paper.llm.providers import has_provider_api_key
@@ -762,6 +768,17 @@ def _apply_proposal(
                 if target.desired_predicates or target.required_relations
             )
             original = eligible_by_id[item.obligation_id]
+            # Frozen author boundary of the pre-enrichment obligation.
+            author_requirements = [
+                author_target_requirements(target, item.obligation_id)
+                for target in (original.typed_behavior_targets or ())
+                if str(getattr(target, "provenance", "unproven"))
+                not in DELETABLE_PROVENANCE
+                and str(getattr(target, "target_id", "") or "")
+            ]
+            normalized_targets = _mark_author_derived_targets(
+                normalized_targets, author_requirements
+            )
             original_predicates = {
                 predicate
                 for target in original.typed_behavior_targets
@@ -788,10 +805,38 @@ def _apply_proposal(
                 )
             missing_predicates = sorted(original_predicates - proposed_predicates)
             missing_relations = sorted(original_relations - proposed_relations)
-            if missing_predicates or missing_relations:
+            # R10 (§15.1/§15.4): author-explicit conditions and input/decision
+            # structure are part of the constraint, not decoration.  Keeping the
+            # predicate but dropping "concat/positive-negative/order/condition"
+            # is a shrink, so the harness rejects it here as well.
+            original_conditions = {
+                value
+                for target in original.typed_behavior_targets
+                if str(getattr(target, "provenance", "unproven")) != "system_inferred"
+                for value in (getattr(target, "conditions", ()) or ())
+            }
+            proposed_conditions = {
+                value
+                for target in normalized_targets
+                for value in target.conditions
+            }
+            missing_conditions = sorted(original_conditions - proposed_conditions)
+            original_inputs = {
+                value
+                for target in original.typed_behavior_targets
+                if str(getattr(target, "provenance", "unproven")) != "system_inferred"
+                for value in (getattr(target, "inputs", ()) or ())
+            }
+            proposed_inputs = {
+                value for target in normalized_targets for value in target.inputs
+            }
+            missing_inputs = sorted(original_inputs - proposed_inputs)
+            if missing_predicates or missing_relations or missing_conditions or missing_inputs:
                 detail = ",".join([
                     *(f"predicate={value}" for value in missing_predicates),
                     *(f"relation={value}" for value in missing_relations),
+                    *(f"condition={value}" for value in missing_conditions),
+                    *(f"input={value}" for value in missing_inputs),
                 ])
                 raise ValueError(
                     f"dropped_deterministic_requirement:{item.obligation_id}:{detail}"
@@ -832,6 +877,72 @@ def _apply_proposal(
     )
 
 
+def _author_derived_provenance(
+    normalized: TypedBehaviorTargetV1,
+    author_targets: list[AuthorTargetRequirementsV1],
+) -> str:
+    """Provenance for one enriched target.
+
+    §15.1: enrichment replaces the deterministic targets, so the author's
+    boundary must survive inside the replacement.  A target that provably
+    carries an author target's full requirement payload is marked
+    ``author_derived``: it is still an inference (only the author's own record
+    is ``author_explicit``), but a later revision may not delete it.
+    """
+
+    for frozen in author_targets:
+        if target_preserves_author_requirements(normalized, frozen):
+            return "author_derived"
+    return "system_inferred"
+
+
+def _mark_author_derived_targets(
+    normalized_targets: tuple[TypedBehaviorTargetV1, ...],
+    author_targets: list[AuthorTargetRequirementsV1],
+) -> tuple[TypedBehaviorTargetV1, ...]:
+    """Mark enriched targets that carry an author target's requirements.
+
+    Every author target must stay represented: when no single enriched target
+    covers one (obligation-level conservation allows the requirements to be
+    spread across targets), the best-overlapping target carries the lineage
+    instead, so the author's protection can never silently disappear from the
+    enriched graph.
+    """
+
+    if not normalized_targets or not author_targets:
+        return normalized_targets
+    provenance = [
+        _author_derived_provenance(target, author_targets)
+        for target in normalized_targets
+    ]
+    covered = [
+        any(
+            target_preserves_author_requirements(target, frozen)
+            for target in normalized_targets
+        )
+        for frozen in author_targets
+    ]
+    for index, frozen in enumerate(author_targets):
+        if covered[index]:
+            continue
+        best_index = 0
+        best_overlap = -1
+        for candidate_index, target in enumerate(normalized_targets):
+            overlap = len(
+                set(frozen.predicates) & set(target.desired_predicates)
+            ) + len(set(frozen.relations) & set(target.required_relations))
+            if overlap > best_overlap:
+                best_overlap = overlap
+                best_index = candidate_index
+        provenance[best_index] = "author_derived"
+    return tuple(
+        target
+        if provenance[index] == str(getattr(target, "provenance", ""))
+        else target.model_copy(update={"provenance": provenance[index]})
+        for index, target in enumerate(normalized_targets)
+    )
+
+
 def _normalize_target(
     obligation_id: str,
     proposal: IntentTargetProposalV1,
@@ -861,6 +972,9 @@ def _normalize_target(
     ).hexdigest()[:12]
     return TypedBehaviorTargetV1(
         target_id=f"target-llm-{digest}",
+        # R10: an LLM enrichment is a system inference; it never carries author
+        # authority and may be revised by a later proposal.
+        provenance="system_inferred",
         **payload,
     )
 

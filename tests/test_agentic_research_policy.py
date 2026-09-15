@@ -575,11 +575,43 @@ class TestNoDuplicateNoGain:
         )
         assert "duplicate_no_gain_call" in result.rejection_rules
 
-    def test_cross_obligation_exact_read_is_rejected(self) -> None:
-        # The same read_symbol span was already executed while answering a
-        # different obligation.  Tool-call ids differ because they embed the
-        # obligation id, so the id-level rule cannot see the duplicate; the
-        # normalized read signature must reject it.
+    def test_same_obligation_exact_read_is_rejected(self) -> None:
+        # R4: the no-gain rule is per obligation.  Re-reading the same span
+        # for the obligation that already read it is still a duplicate, even
+        # when the tool-call id differs.
+        proposal = _decision(
+            tool_calls=(
+                _tool_call(
+                    tool_call_id="tc-same-obl-reread",
+                    tool_name="read_symbol",
+                    obligation_id="obl-2",
+                    tool_kind="code_read",
+                    arguments={
+                        "path": "utils/gaussian_model.py",
+                        "symbol": "GaussianModel.get_prune_input_f15",
+                    },
+                ),
+            ),
+        )
+        result = apply_policy_merge(
+            proposal,
+            agenda=_agenda(_obligation()),
+            active_issue=None,
+            per_obligation_budgets=_budgets(),
+            global_safety_budget=GlobalSafetyBudgetV1(),
+            ready_tools=_READY_TOOLS,
+            recent_tool_call_ids=("tc-same-obl-old",),
+            executed_read_signatures=(
+                "obl-2|read_symbol:utils/gaussian_model.py::"
+                "GaussianModel.get_prune_input_f15",
+            ),
+        )
+        assert "duplicate_no_gain_call" in result.rejection_rules
+
+    def test_cross_obligation_exact_read_is_allowed(self) -> None:
+        # R4: another obligation already read the same span.  The bytes are
+        # snapshot-identical and may be reused, but that does not answer this
+        # obligation's question, so the read is not a duplicate.
         proposal = _decision(
             tool_calls=(
                 _tool_call(
@@ -603,12 +635,13 @@ class TestNoDuplicateNoGain:
             ready_tools=_READY_TOOLS,
             recent_tool_call_ids=("tc-old-obl",),
             executed_read_signatures=(
-                "read_symbol:utils/gaussian_model.py::GaussianModel.get_prune_input_f15",
+                "obl-1|read_symbol:utils/gaussian_model.py::"
+                "GaussianModel.get_prune_input_f15",
             ),
         )
-        assert "duplicate_no_gain_call" in result.rejection_rules
+        assert "duplicate_no_gain_call" not in result.rejection_rules
 
-    def test_cross_obligation_read_code_span_is_rejected(self) -> None:
+    def test_same_obligation_read_code_span_is_rejected(self) -> None:
         proposal = _decision(
             tool_calls=(
                 _tool_call(
@@ -632,7 +665,7 @@ class TestNoDuplicateNoGain:
             global_safety_budget=GlobalSafetyBudgetV1(),
             ready_tools=_READY_TOOLS,
             executed_read_signatures=(
-                "read_code_span:utils/feature_utils.py:1:0",
+                "obl-2|read_code_span:utils/feature_utils.py:1:0",
             ),
         )
         assert "duplicate_no_gain_call" in result.rejection_rules

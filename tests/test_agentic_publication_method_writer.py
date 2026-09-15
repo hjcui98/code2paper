@@ -52,6 +52,7 @@ from code2paper.agentic.publication_method_writer import (
     _load_section_checkpoint,
     _sentence_validated_concept_claim_ids,
     _compose_candidate_markdown,
+    _complete_paragraph_transaction_markdown,
     _dedupe_writing_research_requests,
     _restore_callback_request_sidecar,
     _write_paragraph_checkpoint,
@@ -89,6 +90,68 @@ def test_candidate_view_keeps_invalid_transaction_body_but_excludes_malformed_bi
     assert "Accepted body." in candidate
     assert "Invalid witness body." in candidate
     assert "Malformed binding body." not in candidate
+
+
+def test_candidate_composition_uses_complete_ordered_paragraph_transactions() -> None:
+    plan = SimpleNamespace(sections=(SimpleNamespace(
+        section_id="MA-S1",
+        heading="Mechanism",
+        paragraphs=(
+            SimpleNamespace(paragraph_id="MA-S1:P1"),
+            SimpleNamespace(paragraph_id="MA-S1:P2"),
+        ),
+    ),))
+    output = PublicationMethodSectionOutputV1(
+        section_id="MA-S1",
+        section_markdown="legacy section projection",
+        paragraphs=[
+            PublicationMethodParagraphOutputV1(
+                paragraph_id="MA-S1:P2",
+                paragraph_markdown="Second paragraph with the formula $$z := 1$$.",
+            ),
+            PublicationMethodParagraphOutputV1(
+                paragraph_id="MA-S1:P1",
+                paragraph_markdown="First paragraph.",
+            ),
+        ],
+    )
+    rendered = _complete_paragraph_transaction_markdown(
+        section=plan.sections[0],
+        output=output,
+    )
+    assert rendered == (
+        "## Mechanism\n\n"
+        "First paragraph.\n\n"
+        "Second paragraph with the formula $$z := 1$$."
+    )
+    candidate = _compose_candidate_markdown(
+        accepted=[("MA-S1", output.section_markdown, "sha256:writer")],
+        plan=plan,
+        section_outputs={"MA-S1": output},
+    )
+    assert candidate == rendered
+
+
+def test_candidate_composition_falls_back_when_a_paragraph_transaction_is_missing() -> None:
+    section = SimpleNamespace(
+        section_id="MA-S1",
+        heading="Mechanism",
+        paragraphs=(SimpleNamespace(paragraph_id="MA-S1:P1"),),
+    )
+    output = PublicationMethodSectionOutputV1(
+        section_id="MA-S1",
+        section_markdown="legacy section projection",
+        paragraphs=[],
+    )
+    assert _complete_paragraph_transaction_markdown(
+        section=section,
+        output=output,
+    ) == ""
+    assert _compose_candidate_markdown(
+        accepted=[("MA-S1", output.section_markdown, "sha256:writer")],
+        plan=SimpleNamespace(sections=(section,)),
+        section_outputs={"MA-S1": output},
+    ) == output.section_markdown
 
 
 def test_paragraph_checkpoint_keeps_valid_sibling_of_failed_section(
@@ -2345,6 +2408,48 @@ def test_rewrite_cluster_context_exposes_only_assigned_failures() -> None:
         row.get("sentence_id") != "structure:MA-S2:fused-heading-suffix"
         for row in filtered
     )
+
+
+def test_rewrite_authority_context_drops_immutable_page_bytes() -> None:
+    from code2paper.agentic.publication_method_writer import (
+        _compact_rewrite_authority_context,
+    )
+    from code2paper.llm.section_writer import WriterSectionInput
+
+    writer_input = WriterSectionInput(
+        section_id="MA-S1",
+        heading="Mechanism",
+        prompt_payload={
+            "section_id": "MA-S1",
+            "heading": "Mechanism",
+            "unified_v2_full_narrative_plan": {
+                "section_id": "MA-S1",
+                "heading": "Mechanism",
+                "paragraphs": [{"paragraph_id": "MA-S1:P1"}],
+            },
+            # Unified V2 keeps these bytes private for post-call binding. A
+            # Rewrite request must not duplicate them in its auxiliary input.
+            "shared_contexts": [{"technical_payload": "x" * 1_000_000}],
+            "shared_context_metadata": [{"page_id": "page:1"}],
+            "writer_view": {"mechanism_drafts": ["w" * 1_000_000]},
+            "authoring_packets_v2": [{"facets": ["a" * 1_000_000]}],
+            "mechanism_authoring_packet": {"facets": ["m" * 1_000_000]},
+            "binding_contract": {
+                "required_detail_ids": ["detail:1"],
+                "required_atom_ids": ["atom:1"],
+            },
+        },
+    )
+
+    compact = _compact_rewrite_authority_context(writer_input)
+    encoded = json.dumps(compact, ensure_ascii=False, sort_keys=True)
+    assert "shared_contexts" not in compact
+    assert "technical_payload" not in encoded
+    assert "writer_view" not in compact
+    assert "authoring_packets_v2" not in compact
+    assert "mechanism_authoring_packet" not in compact
+    assert "detail:1" in encoded
+    assert len(encoded) < 100_000
 
 
 def test_writer_research_callback_requires_artifact_and_resumes_only_affected_section(
@@ -9039,6 +9144,38 @@ def test_unrendered_formula_package_routes_to_rewrite_cluster() -> None:
     assert _rewrite_issue_cluster(issues["MA-S1"][0]) == "formula_rendering"
 
 
+def test_unrendered_json_formula_symbol_pairs_are_representation_compatible() -> None:
+    """Persisted V2 formula rows use JSON lists for symbol pairs."""
+    from code2paper.agentic.publication_method_writer import (
+        _formula_rendering_issues_by_section,
+    )
+    from code2paper.llm.section_writer import WriterSectionInput
+
+    output = PublicationMethodSectionOutputV1(
+        section_id="MA-S1",
+        section_markdown="## Encoder\n\nThe score is computed.",
+    )
+    writer_input = WriterSectionInput(
+        section_id="MA-S1",
+        heading="Encoder",
+        prompt_payload={
+            "formula_packages": [{
+                "latex": "s = w x + b",
+                "symbol_definitions": [["s", "score"], ["w", "weights"]],
+            }],
+        },
+        publication_mode=True,
+    )
+
+    issues = _formula_rendering_issues_by_section(
+        {"MA-S1": output}, {"MA-S1": writer_input}
+    )
+
+    assert issues["MA-S1"][0].failure_type == "formula_not_rendered"
+    assert "s=score" in issues["MA-S1"][0].missing_fact_or_relation
+    assert "w=weights" in issues["MA-S1"][0].missing_fact_or_relation
+
+
 def test_editor_reject_reasons_never_empty() -> None:
     from code2paper.agentic.publication_method_writer import (
         _editor_candidate_decision,
@@ -9531,3 +9668,172 @@ def test_wp0_successful_resume_updates_only_affected_section_digest(tmp_path: Pa
     assert checkpoint_after["section_digests"]["MA-S2"] == ma2_digest_before
     assert checkpoint_after["section_digests"]["MA-S1"] != checkpoint_before["section_digests"]["MA-S1"]
     assert resumed.candidate_generation_status == "generated"
+
+
+# ---------------------------------------------------------------------------
+# R3: support precision is measured, never inferred from absence of failures
+# ---------------------------------------------------------------------------
+
+def _validation_report(**overrides):
+    from code2paper.agentic.trust_contracts import TextEvidenceValidationReport
+
+    payload = {
+        "status": "passed",
+        "input_text_digest": "sha256:text",
+        "projection_digest": "sha256:projection",
+        "checked_factual_claims": 4,
+        "supported_claims": 3,
+        "caveated_claims": 0,
+        "unsupported_claims": 0,
+        "unverified_claims": 1,
+        "verification_mode": "semantic",
+    }
+    payload.update(overrides)
+    return TextEvidenceValidationReport.model_validate(payload)
+
+
+def test_support_precision_status_matrix() -> None:
+    from code2paper.agentic.publication_quality import (
+        compute_support_precision_metric,
+    )
+
+    # Missing report: unknown, never a perfect score.
+    missing = compute_support_precision_metric(report=None, text_digest="sha256:text")
+    assert missing.status == "not_measured"
+    assert missing.precision is None
+
+    # Measured: caveated stays separate and unsupported/unverified survive.
+    measured = compute_support_precision_metric(
+        report=_validation_report(),
+        text_digest="sha256:text",
+    )
+    assert measured.status == "measured"
+    assert measured.supported == 3
+    assert measured.caveated == 0
+    assert measured.unverified == 1
+    assert measured.precision == 1.0
+    assert "support_precision_unverified_claims_present" in measured.failure_codes
+    # The lexical-only mode measured a number but can never authorize Verified.
+    lexical = compute_support_precision_metric(
+        report=_validation_report(
+            verification_mode="lexical_only",
+            unverified_claims=0,
+            checked_factual_claims=3,
+        ),
+        text_digest="sha256:text",
+    )
+    assert lexical.status == "measured"
+    assert lexical.precision == 1.0
+    assert lexical.verified_authorized is False
+    semantic = compute_support_precision_metric(
+        report=_validation_report(unverified_claims=0, checked_factual_claims=3),
+        text_digest="sha256:text",
+    )
+    assert semantic.verified_authorized is True
+
+    # Zero decided denominator: not_applicable, not 1.0.
+    all_caveated = compute_support_precision_metric(
+        report=_validation_report(
+            checked_factual_claims=2,
+            supported_claims=0,
+            caveated_claims=2,
+            unverified_claims=0,
+        ),
+        text_digest="sha256:text",
+    )
+    assert all_caveated.status == "not_applicable"
+    assert all_caveated.precision is None
+    assert all_caveated.caveated == 2
+
+    # Count partition must hold.
+    mismatched = compute_support_precision_metric(
+        report=_validation_report(checked_factual_claims=9),
+        text_digest="sha256:text",
+    )
+    assert mismatched.status == "invalid"
+    assert mismatched.failure_codes == ("support_precision_count_mismatch",)
+
+    # A boolean is not an integer count: the report model refuses to coerce
+    # it, and a duck-typed report is still flagged by the metric itself.
+    from pydantic import ValidationError
+
+    from code2paper.agentic.trust_contracts import TextEvidenceValidationReport
+
+    with pytest.raises(ValidationError):
+        TextEvidenceValidationReport.model_validate({
+            "status": "passed",
+            "input_text_digest": "sha256:text",
+            "projection_digest": "sha256:projection",
+            "checked_factual_claims": 1,
+            "supported_claims": True,
+        })
+    boolean_count = compute_support_precision_metric(
+        report=SimpleNamespace(
+            status="passed",
+            input_text_digest="sha256:text",
+            checked_factual_claims=1,
+            supported_claims=True,
+            caveated_claims=0,
+            unsupported_claims=0,
+            unverified_claims=0,
+            verification_mode="semantic",
+        ),
+        text_digest="sha256:text",
+    )
+    assert boolean_count.status == "invalid"
+    assert (
+        "support_precision_count_boolean:supported_claims"
+        in boolean_count.failure_codes
+    )
+
+    # A report for another text can never be reused.
+    stale_text = compute_support_precision_metric(
+        report=_validation_report(input_text_digest="sha256:other-text"),
+        text_digest="sha256:text",
+    )
+    assert stale_text.status == "invalid"
+    assert stale_text.failure_codes == ("support_precision_text_mismatch",)
+
+    # A blocked validator is blocked, never measured full marks.
+    blocked = compute_support_precision_metric(
+        report=_validation_report(status="blocked"),
+        text_digest="sha256:text",
+    )
+    assert blocked.status == "blocked"
+    assert blocked.precision is None
+    assert blocked.failure_codes == ("support_precision_report_blocked",)
+
+
+def test_quality_report_binds_support_precision_to_the_validation_report() -> None:
+    from code2paper.agentic.publication_quality import (
+        compute_support_precision_metric,
+    )
+
+    # The runner reconciles an unbound legacy report; the shared metric is the
+    # single authority for both the Writer and the runner.
+    metric = compute_support_precision_metric(
+        report=_validation_report(
+            checked_factual_claims=4,
+            supported_claims=2,
+            caveated_claims=1,
+            unsupported_claims=1,
+            unverified_claims=0,
+        ),
+        text_digest="sha256:text",
+    )
+    assert metric.status == "measured"
+    assert metric.precision == round(2 / 3, 6)
+    assert metric.caveated == 1
+    assert metric.unsupported == 1
+    # A historical report without the metric field stays readable but is not
+    # retroactively considered measured.
+    from code2paper.agentic.publication_quality import EpistemicSafetyMetricsV1
+
+    legacy = EpistemicSafetyMetricsV1.model_validate({
+        "authorship_gate_passed": True,
+        "binding_gate_passed": True,
+        "support_precision": 1.0,
+        "hard_gate_passed": True,
+    })
+    assert legacy.support_precision == 1.0
+    assert legacy.support_precision_metric.status == "not_measured"

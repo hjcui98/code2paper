@@ -1017,21 +1017,31 @@ def test_build_prompt_lists_forbidden_exact_reads() -> None:
         run_id=_RUN_ID,
         repo_snapshot_id=_SNAPSHOT_ID,
     )
-    ctx = _context(active_obligation=_obligation()).model_copy(update={
+    active = _obligation()
+    ctx = _context(active_obligation=active).model_copy(update={
         "executed_tool_calls": (
+            # Same obligation: this exact read is a duplicate no-gain call.
             ExecutedToolCallSummaryV1(
                 tool_name="read_symbol",
                 arguments={"path": "model.py", "symbol": "Encoder.forward"},
                 path_scope=("model.py",),
                 goal="read candidate",
-                obligation_id="obl-0",
+                obligation_id=active.obligation_id,
+            ),
+            # Another obligation: reusable bytes, but not forbidden here.
+            ExecutedToolCallSummaryV1(
+                tool_name="read_symbol",
+                arguments={"path": "other.py", "symbol": "Other.forward"},
+                path_scope=("other.py",),
+                goal="read for another obligation",
+                obligation_id="obl-other",
             ),
             ExecutedToolCallSummaryV1(
                 tool_name="search_symbols",
                 arguments={"query": "train", "kind_filter": []},
                 path_scope=(),
                 goal="search symbols",
-                obligation_id="obl-0",
+                obligation_id=active.obligation_id,
             ),
         ),
     })
@@ -1039,6 +1049,13 @@ def test_build_prompt_lists_forbidden_exact_reads() -> None:
 
     forbidden = prompt["forbidden_exact_reads"]
     assert [item["tool_name"] for item in forbidden] == ["read_symbol"]
+    assert forbidden[0]["arguments"]["symbol"] == "Encoder.forward"
+    # The other obligation's read is offered as reusable memory instead of
+    # being forbidden.
+    assert [item["arguments"]["symbol"] for item in prompt["reusable_prior_reads"]] == []
+    assert all(
+        item["obligation_id"] == active.obligation_id for item in forbidden
+    )
     assert forbidden[0]["arguments"] == {
         "path": "model.py",
         "symbol": "Encoder.forward",
@@ -1554,3 +1571,207 @@ def test_live_gemma_supervisor_decides_search_symbols() -> None:
     assert decision.produced_by in {"llm_proposal", "deterministic_fallback"}
     assert decision.action in _LLM_ALLOWED_ACTIONS_SET
     assert decision.run_id == _RUN_ID
+
+
+# ---------------------------------------------------------------------------
+# No-progress guard: repeated COMPILE_EVIDENCE must not loop forever
+# ---------------------------------------------------------------------------
+
+
+def test_no_progress_guard_forces_fallback_then_records_gap() -> None:
+    """A second identical compile is overridden; a third records a typed gap."""
+
+    backend = GemmaSupervisorBackend(
+        llm_config=_llm_config(),
+        run_id=_RUN_ID,
+        repo_snapshot_id=_SNAPSHOT_ID,
+    )
+    obligation = _obligation(typed_targets=(_typed_target(),))
+    proposal = {
+        "terminal_action": "COMPILE_EVIDENCE",
+        "tool_calls": [],
+        "goal": "Compile evidence for the obligation.",
+        "rationale": "All material parts of the author question are evidenced.",
+    }
+
+    first = backend._build_decision(
+        _context(active_obligation=obligation, turn_index=0),
+        dict(proposal),
+    )
+    assert first.produced_by == "llm_proposal"
+    assert first.action == "COMPILE_EVIDENCE"
+
+    second = backend._build_decision(
+        _context(active_obligation=obligation, turn_index=1),
+        dict(proposal),
+    )
+    assert second.produced_by == "policy_override"
+    assert second.action != "COMPILE_EVIDENCE"
+    assert second.selected_tool_calls
+    assert any(
+        event.startswith("no_progress_guard:")
+        for event in backend.degraded_events
+    )
+
+    # The guard delegates escalation to the audited deterministic policy, so a
+    # typed gap is only produced once that policy allows it (three no-gain
+    # turns or exhausted tools) -- never by the guard itself.
+    third = backend._build_decision(
+        _context(active_obligation=obligation, turn_index=2),
+        dict(proposal),
+    )
+    assert third.produced_by == "policy_override"
+    assert third.action != "COMPILE_EVIDENCE"
+    assert third.selected_tool_calls
+
+
+def test_no_progress_guard_allows_compile_after_new_evidence() -> None:
+    """Progress between compiles keeps the model's COMPILE_EVIDENCE decision."""
+
+    backend = GemmaSupervisorBackend(
+        llm_config=_llm_config(),
+        run_id=_RUN_ID,
+        repo_snapshot_id=_SNAPSHOT_ID,
+    )
+    obligation = _obligation(typed_targets=(_typed_target(),))
+    proposal = {
+        "terminal_action": "COMPILE_EVIDENCE",
+        "tool_calls": [],
+        "goal": "Compile evidence for the obligation.",
+        "rationale": "Evidence is now complete.",
+    }
+
+    first = backend._build_decision(
+        _context(active_obligation=obligation, turn_index=0),
+        dict(proposal),
+    )
+    assert first.produced_by == "llm_proposal"
+
+    progressed = _context(active_obligation=obligation, turn_index=1)
+    progressed = progressed.model_copy(
+        update={"missing_information": ("new:gap",)}
+    )
+    second = backend._build_decision(progressed, dict(proposal))
+    assert second.produced_by == "llm_proposal"
+    assert second.action == "COMPILE_EVIDENCE"
+
+
+# ---------------------------------------------------------------------------
+# R4: parse/recovery/fallback classification and its terminal semantics
+# ---------------------------------------------------------------------------
+
+
+def test_representation_damage_is_recovered_and_recorded(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Recoverable JSON damage goes through the existing recovery path."""
+
+    payload = (
+        '{"action": "SEARCH_SYMBOLS", "rationale": "r", "goal": "g",'
+        ' "query": "encoder",}'
+    )
+    _patch_llm_client(monkeypatch, responses=[_response(text=payload)])
+    backend = GemmaSupervisorBackend(
+        llm_config=_llm_config(),
+        run_id=_RUN_ID,
+        repo_snapshot_id=_SNAPSHOT_ID,
+    )
+    ctx = _context(active_obligation=_obligation(typed_targets=(_typed_target(),)))
+    decision = backend.decide(ctx)
+
+    assert decision.produced_by != "deterministic_fallback"
+    repairs = backend.representation_repairs
+    assert repairs and repairs[0]["operations"]
+    record = backend.decision_failures
+    # A recovered representation repair is not a failure; nothing is recorded
+    # as a terminal parse failure.
+    assert record == ()
+
+
+def test_unrecoverable_parse_failure_keeps_a_real_terminal(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """No response/parse failure never becomes a supported fact."""
+
+    _patch_llm_client(monkeypatch, responses=[_response(text="not json at all")])
+    backend = GemmaSupervisorBackend(
+        llm_config=_llm_config(),
+        run_id=_RUN_ID,
+        repo_snapshot_id=_SNAPSHOT_ID,
+    )
+    ctx = _context(active_obligation=_obligation(typed_targets=(_typed_target(),)))
+    decision = backend.decide(ctx)
+
+    assert decision.produced_by == "deterministic_fallback"
+    failures = backend.decision_failures
+    assert len(failures) == 1
+    # The recovery pass ran but could not rebuild a payload, so this is a
+    # failed repair rather than an untouched parse failure.
+    assert failures[0]["failure_class"] == "representation_repair_failed"
+    assert failures[0]["recovery_applied"] is True
+    assert failures[0]["raw_text_digest"].startswith("sha256:")
+    assert failures[0]["schema_name"] == "ResearchSupervisorProposalV1"
+    assert failures[0]["prompt_template_id"] == (
+        "agentic_repository_research_manager_v2"
+    )
+
+
+def test_empty_and_blocked_responses_have_distinct_failure_classes(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _patch_llm_client(monkeypatch, responses=[_response(text="   ")])
+    backend = GemmaSupervisorBackend(
+        llm_config=_llm_config(),
+        run_id=_RUN_ID,
+        repo_snapshot_id=_SNAPSHOT_ID,
+    )
+    ctx = _context(active_obligation=_obligation(typed_targets=(_typed_target(),)))
+    backend.decide(ctx)
+    assert backend.decision_failures[0]["failure_class"] == "llm_empty_response"
+
+    _patch_llm_client(
+        monkeypatch,
+        responses=[_response(text="", blocked_reason="provider_timeout")],
+    )
+    blocked = GemmaSupervisorBackend(
+        llm_config=_llm_config(),
+        run_id=_RUN_ID,
+        repo_snapshot_id=_SNAPSHOT_ID,
+    )
+    blocked.decide(ctx)
+    record = blocked.decision_failures[0]
+    assert record["failure_class"] == "llm_blocked"
+    assert record["blocked_reason"] == "provider_timeout"
+
+
+def test_content_error_takes_a_different_path_than_representation_damage(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """An unknown claim/evidence id is a content error, not JSON damage."""
+
+    payload = json.dumps({
+        "tool_calls": [{
+            "tool_name": "read_file",
+            "goal": "read the encoder",
+            "arguments": {"path": "train.py"},
+        }],
+        "terminal_action": "",
+        "rationale": "r",
+    })
+    _patch_llm_client(monkeypatch, responses=[_response(text=payload)])
+    backend = GemmaSupervisorBackend(
+        llm_config=_llm_config(),
+        run_id=_RUN_ID,
+        repo_snapshot_id=_SNAPSHOT_ID,
+    )
+    ctx = _context(active_obligation=_obligation(typed_targets=(_typed_target(),)))
+    decision = backend.decide(ctx)
+
+    assert decision.produced_by == "deterministic_fallback"
+    failures = backend.decision_failures
+    assert len(failures) == 1
+    # Content/identity errors are returned to the owning agent; they are not
+    # silent JSON repairs and not a fabricated successful decision.
+    assert failures[0]["failure_class"] == "content_error_returned_to_owner"
+    assert failures[0]["recovery_applied"] is False
+    assert backend.representation_repairs == ()

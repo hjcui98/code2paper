@@ -98,3 +98,125 @@ def test_deterministic_formula_packages_disable_operation_fallback(
     assert captured[0]["equations"] == ("equation:1",)
     # Offline must never invent an equation from an operation shape.
     assert captured[0]["allow_deterministic_operation_fallback"] is False
+
+
+# ---------------------------------------------------------------------------
+# R2.5 strict/Candidate research-gate parity
+# ---------------------------------------------------------------------------
+
+def _partial_agenda():
+    from code2paper.agentic.intent_compiler_v2 import (
+        IntentObligationGraphV2,
+        IntentObligationV2,
+    )
+    from code2paper.agentic.research_models import (
+        ResearchAgendaItemV1,
+        ResearchAgendaV1,
+    )
+
+    item = ResearchAgendaItemV1(
+        obligation_id="core-partial",
+        priority="must_cover",
+        status="partial",
+        supported_claim_ids=["claim-1"],
+        missing_information=["call_relation:callee output"],
+        attempted_actions=["READ_CANDIDATE"],
+    )
+    graph = IntentObligationGraphV2(obligations=[IntentObligationV2(
+        obligation_id="core-partial",
+        kind="organization",
+        priority="must_cover",
+        source_field="organization",
+        author_text="Describe the core mechanism.",
+    )])
+    agenda = ResearchAgendaV1(
+        run_id="run-matrix",
+        repo_snapshot_id="repo:snapshot",
+        project_tree_hash="sha256:tree",
+        items=[item],
+        intent_graph_digest=graph.content_digest,
+    )
+
+    class _Contexts:
+        repo_snapshot_id = "repo:snapshot"
+        project_tree_hash = "sha256:tree"
+
+    return graph, agenda, _Contexts()
+
+
+def test_matrix_research_gate_is_the_product_strict_gate() -> None:
+    from code2paper.agentic.publication_method_writer import (
+        _unified_research_gate_failures,
+    )
+
+    graph, agenda, contexts = _partial_agenda()
+    inputs = {
+        "intent_graph": graph,
+        "research_agenda": agenda,
+        "context_set": contexts,
+    }
+
+    matrix_failures = MATRIX._research_gate_failures(inputs)
+    product_failures = _unified_research_gate_failures(
+        intent_graph=graph,
+        research_agenda=agenda,
+        contexts=contexts,
+    )
+
+    assert matrix_failures == product_failures
+    assert "unified_core_intent_partial_without_terminal_gap:core-partial" in matrix_failures
+
+
+def test_matrix_reports_strict_and_candidate_lanes_separately(tmp_path: Path) -> None:
+    graph, agenda, contexts = _partial_agenda()
+    inputs = {
+        "intent_graph": graph,
+        "research_agenda": agenda,
+        "context_set": contexts,
+    }
+
+    strict, candidate, diagnostics = MATRIX._research_mode_failures(
+        inputs,
+        artifact_paths={},
+    )
+
+    # Without a handoff the Candidate lane is exactly the strict lane; a
+    # partial is never silently promoted.
+    assert candidate == strict
+    assert diagnostics["candidate_gate_pass"] is False
+    assert diagnostics["candidate_handoff_status"] == "missing"
+    assert diagnostics["gate_mode"] == "strict"
+    assert diagnostics["strict_failure_codes"] == list(strict)
+    assert diagnostics["candidate_failure_codes"] == list(strict)
+
+    # A handoff that fails authentication is reported as rejected and still
+    # cannot relax the strict failures.
+    bad_handoff = tmp_path / "candidate_handoff_v1.json"
+    bad_handoff.write_text("{not json", encoding="utf-8")
+    strict_bad, candidate_bad, diagnostics_bad = MATRIX._research_mode_failures(
+        inputs,
+        artifact_paths={"candidate_handoff_v1": str(bad_handoff)},
+    )
+
+    assert candidate_bad == strict_bad == strict
+    assert diagnostics_bad["candidate_handoff_status"] == "rejected"
+    assert diagnostics_bad["candidate_handoff_revalidation_failures"] == [
+        "candidate_handoff_invalid",
+    ]
+    assert diagnostics_bad["candidate_gate_pass"] is False
+
+
+def test_matrix_research_gate_reports_missing_context_like_the_product() -> None:
+    from code2paper.agentic.publication_method_writer import (
+        _unified_research_gate_failures,
+    )
+
+    graph, agenda, _contexts = _partial_agenda()
+    inputs = {"intent_graph": graph, "research_agenda": agenda}
+
+    assert MATRIX._research_gate_failures(inputs) == _unified_research_gate_failures(
+        intent_graph=graph,
+        research_agenda=agenda,
+        contexts=None,
+    )
+    assert "unified_research_context_set_missing" in MATRIX._research_gate_failures(inputs)

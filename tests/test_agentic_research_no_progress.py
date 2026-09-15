@@ -688,11 +688,14 @@ class TestEndToEndNoProgressTermination:
         )
         result = run_research_loop(runtime, max_turns=20)
         assert result.terminated
-        # Either record_gap (preferred) or all_obligations_terminal.
+        # R9: an unproven bounded search ends the *search*; the run reports the
+        # honest terminal state instead of promoting the stop into negative
+        # evidence.  Any of these bounded stops is acceptable, max_turns is not.
         assert result.termination_reason in {
             "all_obligations_terminal",
             "record_gap",
             "ready_to_author",
+            "intent_coverage_blocked",
         }, result.termination_reason
         # The loop must NOT have hit max_turns.
         assert result.termination_reason != "max_turns_reached"
@@ -801,33 +804,45 @@ class TestEndToEndNoProgressTermination:
         agenda = _agenda("run-wrap", snapshot, obl_a, obl_b, obl_c)
         runtime = _runtime(snapshot, agenda, run_id="run-wrap")
         result = run_research_loop(runtime, max_turns=30)
-        # The loop MUST terminate via all_obligations_terminal, not by
-        # hitting max_turns.  This is the core regression assertion.
+        # The loop MUST terminate through a bounded stop, not by hitting
+        # max_turns.  This is the core regression assertion.
         assert result.terminated is True
-        assert result.termination_reason == "all_obligations_terminal", (
-            f"expected all_obligations_terminal, got {result.termination_reason}; "
+        assert result.termination_reason != "max_turns_reached", (
+            f"expected a bounded stop, got {result.termination_reason}; "
             f"turns_executed={result.turns_executed}"
         )
-        assert result.termination_reason != "max_turns_reached"
-        # Every agenda item must be terminal (explicit_gap).  If
-        # gap_finalizer had not mutated the agenda, some items would
-        # still be ``in_progress`` and the loop would not have
-        # terminated via all_obligations_terminal.
-        terminal_statuses = {"supported", "explicit_gap", "blocked"}
+        assert result.termination_reason in {
+            "all_obligations_terminal",
+            "record_gap",
+            "intent_coverage_blocked",
+        }, result.termination_reason
+        # R9: every obligation records a typed bounded stop.  The stop ends
+        # the search without claiming that the implementation is absent, so
+        # the status stays non-negative and no item is silently promoted to
+        # ``explicit_gap``.
+        assert result.termination_reason in {
+            "all_obligations_terminal",
+            "record_gap",
+            "intent_coverage_blocked",
+        }, result.termination_reason
         for item in agenda.items:
-            assert item.status in terminal_statuses, (
-                f"obligation {item.obligation_id} has non-terminal status {item.status}"
+            stop_markers = [
+                value
+                for value in item.missing_information
+                if str(value).startswith("terminal_stop:")
+            ]
+            assert stop_markers, (
+                f"obligation {item.obligation_id} has no typed stop record"
             )
-        # All three should be explicit_gap (none of them match any symbol).
-        assert all(item.status == "explicit_gap" for item in agenda.items), (
-            [item.obligation_id for item in agenda.items if item.status != "explicit_gap"]
-        )
-        # Each gapped item must have at least one GapRequirementV1
-        # (required by the ResearchAgendaItemV1 model validator).
-        for item in agenda.items:
+            assert item.status != "explicit_gap", (
+                f"obligation {item.obligation_id} claimed negative evidence "
+                "without a receipt"
+            )
             assert item.gap_requirements, (
                 f"obligation {item.obligation_id} has no gap_requirements"
             )
+            for requirement in item.gap_requirements:
+                assert requirement.negative_evidence_authorized is False
 
 
 # ---------------------------------------------------------------------------

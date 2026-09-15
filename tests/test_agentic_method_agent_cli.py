@@ -12,7 +12,7 @@ from pathlib import Path
 
 import pytest
 
-from code2paper.cli.agentic_run import method_agent_main
+from code2paper.cli.agentic_run import _live_method_agent_exit_code, method_agent_main
 
 FIXTURE_REPO = Path(__file__).resolve().parent / "fixtures" / "research_loop_project"
 FIXTURE_INTENT = (
@@ -94,6 +94,22 @@ class TestMethodAgentArgValidation:
 
 
 class TestMethodAgentRun:
+    def test_live_exit_requires_complete_candidate(self) -> None:
+        incomplete = type("Result", (), {
+            "summary": {"writer": {
+                "candidate_available": True,
+                "candidate_complete": False,
+            }},
+        })()
+        complete = type("Result", (), {
+            "summary": {"writer": {
+                "candidate_available": True,
+                "candidate_complete": True,
+            }},
+        })()
+        assert _live_method_agent_exit_code(incomplete) == 2
+        assert _live_method_agent_exit_code(complete) == 0
+
     def test_full_product_run_writes_required_outputs(
         self,
         tmp_path: Path,

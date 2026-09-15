@@ -81,6 +81,11 @@ METHOD_PROPOSITION_ARCHITECT: Final[str] = "method_proposition_architect"
 METHOD_MECHANISM_DRAFT_PLANNER: Final[str] = "method_mechanism_draft_planner"
 METHOD_SECTION_FORMALIZER: Final[str] = "method_section_formalizer"
 METHOD_WRITER: Final[str] = "method_writer"
+# Publication organization is an auxiliary LLM role.  It has a generation
+# contract, but is intentionally not part of ``LLM_CALLING_ROLES``: the R8
+# baseline requires the historical unconditional role set while the unified
+# authoring envelope opts this role in explicitly when Editor calls are live.
+EDITOR: Final[str] = "editor"
 LOCAL_REWRITE: Final[str] = "local_rewrite"
 SEMANTIC_VERIFIER: Final[str] = "semantic_verifier"
 # Deterministic roles — never invoke the LLM.
@@ -219,6 +224,11 @@ ROLE_GENERATION_CONFIGS: Final[dict[str, RoleGenerationConfig]] = {
         top_p=0.90,
         top_k=50,
         seed=42,
+    ),
+    EDITOR: RoleGenerationConfig(
+        role=EDITOR,
+        temperature=0.35,
+        max_output_tokens_default=4096,
     ),
     LOCAL_REWRITE: RoleGenerationConfig(
         role=LOCAL_REWRITE,
@@ -576,6 +586,7 @@ __all__ = [
     "DETERMINISTIC_COMPILER",
     "DETERMINISTIC_ROLES",
     "DETERMINISTIC_VALIDATOR",
+    "EDITOR",
     "INTENT_COMPILER",
     "LLM_CALLING_ROLES",
     "LOCAL_REWRITE",

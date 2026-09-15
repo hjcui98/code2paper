@@ -7268,6 +7268,398 @@ _GAP_STATUSES = frozenset({
 
 
 
+#: Paragraph roles the deterministic narrative builder may emit.  A narrative
+#: organization proposal is a closed-choice contract: it may regroup a
+#: mechanism's details into these roles, but it cannot invent a role, a detail
+#: id or a section id.
+NARRATIVE_PARAGRAPH_ROLES: tuple[str, ...] = (
+    "overview_and_inputs",
+    "core_transformations",
+    "formal_objective",
+    "interface_and_outputs",
+    "evidence_status",
+    "mechanism_overview",
+)
+
+#: Maximum details one paragraph may own (mirrors the deterministic grouping).
+NARRATIVE_PARAGRAPH_DETAIL_LIMIT = 8
+
+
+def _call_narrative_proposal(
+    *,
+    mechanism_id: str,
+    detail_ids: tuple[str, ...],
+    section_ids: tuple[str, ...],
+    role_names: tuple[str, ...],
+    proposal_caller: Any | None,
+    context: Mapping[str, Any] | None = None,
+    repair_failures: tuple[str, ...] = (),
+) -> Any:
+    """Call the owner proposal with the closed sets for one mechanism.
+
+    The call keeps the legacy four positional arguments and adds the proposal
+    kind, the typed context and the previous rejection reasons as keywords, so
+    an existing caller that accepts ``**kwargs`` keeps working while a
+    narrative-aware caller can distinguish the request and repair itself.  A
+    caller that accepts none of the keywords falls back to the legacy call.
+    """
+
+    if proposal_caller is None:
+        return None
+    keywords = {
+        "kind": "narrative_organization",
+        "context": dict(context or {}),
+        "repair_failures": list(repair_failures),
+    }
+    try:
+        return proposal_caller(
+            mechanism_id,
+            list(detail_ids),
+            list(section_ids),
+            list(role_names),
+            **keywords,
+        )
+    except TypeError:
+        try:
+            return proposal_caller(
+                mechanism_id,
+                list(detail_ids),
+                list(section_ids),
+                list(role_names),
+                kind="narrative_organization",
+            )
+        except TypeError:
+            return proposal_caller(
+                mechanism_id,
+                list(detail_ids),
+                list(section_ids),
+                list(role_names),
+            )
+
+
+def _bounded_narrative_organization_proposal(
+    *,
+    mechanism_id: str,
+    detail_ids: tuple[str, ...],
+    section_ids: tuple[str, ...],
+    proposal_caller: Any | None,
+    context: Mapping[str, Any] | None = None,
+) -> tuple[tuple[tuple[str, tuple[str, ...]], ...], tuple[str, ...]]:
+    """Consume one bounded narrative organization proposal.
+
+    The proposal may only partition the mechanism's own clean detail ids into
+    paragraph groups that use the closed role set.  Every clean detail must
+    appear exactly once, no id may be invented or duplicated, and a group may
+    not exceed the paragraph detail limit.  A schema or binding failure is
+    retried once and then reported; the caller never places a detail the
+    deterministic builder did not offer.  Returns ``(groups, failures)``.
+    """
+
+    allowed_details = tuple(dict.fromkeys(str(value) for value in detail_ids))
+    if not allowed_details:
+        return (), ("narrative_proposal_no_details",)
+    raw = _call_narrative_proposal(
+        mechanism_id=mechanism_id,
+        detail_ids=allowed_details,
+        section_ids=section_ids,
+        role_names=NARRATIVE_PARAGRAPH_ROLES,
+        proposal_caller=proposal_caller,
+        context=context,
+    )
+    groups, failures = _validate_narrative_organization_proposal(
+        raw,
+        mechanism_id=mechanism_id,
+        allowed_details=allowed_details,
+    )
+    if not failures:
+        return groups, ()
+    # The owner gets the typed rejection as repair input instead of an
+    # identical second request.
+    raw = _call_narrative_proposal(
+        mechanism_id=mechanism_id,
+        detail_ids=allowed_details,
+        section_ids=section_ids,
+        role_names=NARRATIVE_PARAGRAPH_ROLES,
+        proposal_caller=proposal_caller,
+        context=context,
+        repair_failures=failures,
+    )
+    retry_groups, retry_failures = _validate_narrative_organization_proposal(
+        raw,
+        mechanism_id=mechanism_id,
+        allowed_details=allowed_details,
+    )
+    if not retry_failures:
+        return retry_groups, ()
+    return (), tuple(dict.fromkeys((*failures, *retry_failures)))
+
+
+def _validate_narrative_organization_proposal(
+    raw: Any,
+    *,
+    mechanism_id: str,
+    allowed_details: tuple[str, ...],
+) -> tuple[tuple[tuple[str, tuple[str, ...]], ...], tuple[str, ...]]:
+    """Validate one proposal against the closed detail/role sets."""
+
+    if not isinstance(raw, Mapping):
+        return (), ("narrative_proposal_not_a_mapping",)
+    if str(raw.get("mechanism_id") or "").strip() not in {"", mechanism_id}:
+        return (), ("narrative_proposal_mechanism_mismatch",)
+    paragraphs = raw.get("paragraphs")
+    if not isinstance(paragraphs, (list, tuple)) or not paragraphs:
+        return (), ("narrative_proposal_paragraphs_missing",)
+    allowed = set(allowed_details)
+    seen: list[str] = []
+    groups: list[tuple[str, tuple[str, ...]]] = []
+    failures: list[str] = []
+    for index, paragraph in enumerate(paragraphs):
+        if not isinstance(paragraph, Mapping):
+            failures.append(f"narrative_proposal_paragraph_not_a_mapping:{index}")
+            continue
+        role = str(paragraph.get("role") or "").strip()
+        if role not in NARRATIVE_PARAGRAPH_ROLES:
+            failures.append(f"narrative_proposal_unknown_role:{index}:{role}")
+            continue
+        raw_details = paragraph.get("detail_ids")
+        if not isinstance(raw_details, (list, tuple)):
+            failures.append(f"narrative_proposal_details_missing:{index}")
+            continue
+        detail_ids = tuple(
+            str(value).strip() for value in raw_details if str(value).strip()
+        )
+        if not detail_ids:
+            failures.append(f"narrative_proposal_empty_group:{index}")
+            continue
+        if len(detail_ids) > NARRATIVE_PARAGRAPH_DETAIL_LIMIT:
+            failures.append(f"narrative_proposal_group_too_large:{index}")
+            continue
+        unknown = [value for value in detail_ids if value not in allowed]
+        if unknown:
+            failures.append(
+                f"narrative_proposal_unknown_detail:{index}:{unknown[0]}"
+            )
+            continue
+        # A duplicate inside the same group is as invalid as one across groups:
+        # checking only the previously seen ids would let a group repeat a
+        # detail that the plan then places twice.
+        intra_group = [
+            value
+            for position, value in enumerate(detail_ids)
+            if value in detail_ids[:position]
+        ]
+        duplicated = [
+            value
+            for value in (*intra_group, *(value for value in detail_ids if value in seen))
+        ]
+        if duplicated:
+            failures.append(
+                f"narrative_proposal_duplicate_detail:{index}:{duplicated[0]}"
+            )
+            continue
+        seen.extend(detail_ids)
+        groups.append((role, detail_ids))
+    if failures:
+        return (), tuple(failures)
+    missing = [value for value in allowed_details if value not in seen]
+    if missing:
+        # Every clean detail must be placed exactly once; a proposal that drops
+        # one is a scope reduction, not an organization.
+        return (), (f"narrative_proposal_detail_unplaced:{missing[0]}",)
+    return tuple(groups), ()
+
+
+def _call_section_proposal(
+    *,
+    mechanism_id: str,
+    detail_ids: tuple[str, ...],
+    section_ids: tuple[str, ...],
+    proposal_caller: Any | None,
+    context: Mapping[str, Any] | None = None,
+    repair_failures: tuple[str, ...] = (),
+) -> Any:
+    """Call the owner proposal with the closed detail/section sets."""
+
+    if proposal_caller is None:
+        return None
+    try:
+        return proposal_caller(
+            mechanism_id,
+            list(detail_ids),
+            list(section_ids),
+            [],
+            kind="section_organization",
+            context=dict(context or {}),
+            repair_failures=list(repair_failures),
+        )
+    except TypeError:
+        try:
+            return proposal_caller(
+                mechanism_id,
+                list(detail_ids),
+                list(section_ids),
+                [],
+                kind="section_organization",
+            )
+        except TypeError:
+            return proposal_caller(
+                mechanism_id,
+                list(detail_ids),
+                list(section_ids),
+                [],
+            )
+
+
+def _validate_section_organization_proposal(
+    raw: Any,
+    *,
+    mechanism_id: str,
+    allowed_details: tuple[str, ...],
+    allowed_sections: tuple[str, ...],
+) -> tuple[tuple[tuple[str, tuple[str, ...]], ...], tuple[str, ...]]:
+    """Validate one section organization proposal against the closed sets."""
+
+    if not isinstance(raw, Mapping):
+        return (), ("section_proposal_not_a_mapping",)
+    if str(raw.get("mechanism_id") or "").strip() not in {"", mechanism_id}:
+        return (), ("section_proposal_mechanism_mismatch",)
+    sections = raw.get("sections")
+    if not isinstance(sections, (list, tuple)) or not sections:
+        return (), ("section_proposal_sections_missing",)
+    allowed_detail_set = set(allowed_details)
+    allowed_section_set = set(allowed_sections)
+    seen_details: list[str] = []
+    seen_sections: list[str] = []
+    groups: list[tuple[str, tuple[str, ...]]] = []
+    failures: list[str] = []
+    for index, entry in enumerate(sections):
+        if not isinstance(entry, Mapping):
+            failures.append(f"section_proposal_entry_not_a_mapping:{index}")
+            continue
+        section_id = str(entry.get("section_id") or "").strip()
+        if section_id not in allowed_section_set:
+            failures.append(f"section_proposal_unknown_section:{index}:{section_id}")
+            continue
+        if section_id in seen_sections:
+            failures.append(f"section_proposal_duplicate_section:{index}:{section_id}")
+            continue
+        raw_details = entry.get("detail_ids")
+        if not isinstance(raw_details, (list, tuple)):
+            failures.append(f"section_proposal_details_missing:{index}")
+            continue
+        detail_ids = tuple(
+            str(value).strip() for value in raw_details if str(value).strip()
+        )
+        if not detail_ids:
+            failures.append(f"section_proposal_empty_section:{section_id}")
+            continue
+        unknown = [value for value in detail_ids if value not in allowed_detail_set]
+        if unknown:
+            failures.append(
+                f"section_proposal_unknown_detail:{section_id}:{unknown[0]}"
+            )
+            continue
+        intra_group = [
+            value
+            for position, value in enumerate(detail_ids)
+            if value in detail_ids[:position]
+        ]
+        duplicated = [
+            value
+            for value in (
+                *intra_group,
+                *(value for value in detail_ids if value in seen_details),
+            )
+        ]
+        if duplicated:
+            failures.append(
+                f"section_proposal_duplicate_detail:{section_id}:{duplicated[0]}"
+            )
+            continue
+        seen_details.extend(detail_ids)
+        seen_sections.append(section_id)
+        groups.append((section_id, detail_ids))
+    if failures:
+        return (), tuple(failures)
+    missing_details = [
+        value for value in allowed_details if value not in seen_details
+    ]
+    if missing_details:
+        return (), (f"section_proposal_detail_unplaced:{missing_details[0]}",)
+    missing_sections = [
+        value for value in allowed_sections if value not in seen_sections
+    ]
+    if missing_sections:
+        # A proven section left without argument is a scope change, not an
+        # organization; the deterministic split stands instead.
+        return (), (f"section_proposal_section_unassigned:{missing_sections[0]}",)
+    return tuple(groups), ()
+
+
+def _bounded_section_organization_proposal(
+    *,
+    mechanism_id: str,
+    detail_ids: tuple[str, ...],
+    section_ids: tuple[str, ...],
+    proposal_caller: Any | None,
+    context: Mapping[str, Any] | None = None,
+) -> tuple[tuple[tuple[str, tuple[str, ...]], ...], tuple[str, ...]]:
+    """Consume one bounded section organization proposal.
+
+    A legacy outline may own several sections for one mechanism.  Splitting its
+    details by count cannot prove the argumentative intent of each section, so
+    the owning Agent may propose which details each section argues.  The
+    proposal is a closed-choice contract: only the mechanism's own detail ids
+    and its proven section ids, every detail exactly once, and no empty group
+    while details remain.  A failure is retried once and then reported; the
+    caller never receives a detail the deterministic builder did not offer.
+    Returns ``(groups, failures)``.
+    """
+
+    allowed_details = tuple(dict.fromkeys(str(value) for value in detail_ids))
+    allowed_sections = tuple(dict.fromkeys(str(value) for value in section_ids))
+    if not allowed_details:
+        return (), ("section_proposal_no_details",)
+    if not allowed_sections:
+        return (), ("section_proposal_no_sections",)
+    if len(allowed_details) < len(allowed_sections):
+        # Every section must argue something; with fewer details than sections
+        # the contract cannot be satisfied and the deterministic split stands.
+        return (), ("section_proposal_insufficient_details",)
+    raw = _call_section_proposal(
+        mechanism_id=mechanism_id,
+        detail_ids=allowed_details,
+        section_ids=allowed_sections,
+        proposal_caller=proposal_caller,
+        context=context,
+    )
+    groups, failures = _validate_section_organization_proposal(
+        raw,
+        mechanism_id=mechanism_id,
+        allowed_details=allowed_details,
+        allowed_sections=allowed_sections,
+    )
+    if not failures:
+        return groups, ()
+    raw = _call_section_proposal(
+        mechanism_id=mechanism_id,
+        detail_ids=allowed_details,
+        section_ids=allowed_sections,
+        proposal_caller=proposal_caller,
+        context=context,
+        repair_failures=failures,
+    )
+    retry_groups, retry_failures = _validate_section_organization_proposal(
+        raw,
+        mechanism_id=mechanism_id,
+        allowed_details=allowed_details,
+        allowed_sections=allowed_sections,
+    )
+    if not retry_failures:
+        return retry_groups, ()
+    return (), tuple(dict.fromkeys((*failures, *retry_failures)))
+
+
 def _bounded_architect_proposal(
     *,
     obligation_id: str,
@@ -7859,6 +8251,31 @@ def validate_narrative_plan(
                         failures.append(
                             f"witness_atom_owner_mismatch:{target_id}:{declared_detail_id}"
                         )
+                # R7 correction: a witness target must belong to the paragraph
+                # it is attached to.  A split that dropped or re-parented
+                # targets would otherwise leave a contract that still
+                # validates.
+                owned_details = {
+                    str(value).strip().removeprefix("detail:")
+                    for value in (
+                        *tuple(para.required_detail_ids),
+                        *tuple(para.optional_detail_ids),
+                    )
+                    if str(value).strip()
+                }
+                if kind == "atom":
+                    owner_detail = str(
+                        _value(target, "detail_id", "") or ""
+                    ).strip().removeprefix("detail:")
+                elif kind == "detail":
+                    owner_detail = target_id.removeprefix("detail:")
+                else:
+                    owner_detail = ""
+                if owner_detail and owner_detail not in owned_details:
+                    failures.append(
+                        "witness_target_detail_not_owned:"
+                        f"{para.paragraph_id}:{kind}:{target_id}"
+                    )
 
             for formula_id in para.formula_obligation_ids:
                 if not str(formula_id).strip():
@@ -7880,6 +8297,51 @@ def validate_narrative_plan(
                                 f"formula_obligation_mechanism_mismatch:"
                                 f"{formula_id}:{_value(package, 'package_id', '')}"
                             )
+
+    # 2b. Owner identity: a paragraph belongs to exactly one mechanism, and
+    # that mechanism must be declared by both its section and its unit.  A
+    # section id reused for a different owner would otherwise pass coverage.
+    unit_by_section: dict[str, set[str]] = {}
+    for unit in plan.narrative_units:
+        unit_by_section.setdefault(str(unit.section_id), set()).update(
+            str(value)
+            for value in (unit.mechanism_context_ids or ())
+            if str(value).strip()
+        )
+    for sec in plan.sections:
+        section_owner_ids = {
+            str(value) for value in (sec.mechanism_ids or ()) if str(value).strip()
+        }
+        unit_owner_ids = unit_by_section.get(str(sec.section_id), set())
+        for para in sec.paragraphs:
+            paragraph_owner = str(para.mechanism_id or "").strip()
+            if paragraph_owner and paragraph_owner not in section_owner_ids:
+                failures.append(
+                    f"paragraph_owner_not_in_section:{para.paragraph_id}:{paragraph_owner}"
+                )
+            if paragraph_owner and unit_owner_ids and paragraph_owner not in unit_owner_ids:
+                failures.append(
+                    f"paragraph_owner_not_in_unit:{para.paragraph_id}:{paragraph_owner}"
+                )
+            for detail_id in para.required_detail_ids:
+                owner_context = context_map.get(paragraph_owner)
+                if owner_context is None:
+                    continue
+                owner_details = {
+                    str(getattr(detail, "detail_id", ""))
+                    for detail in (getattr(owner_context, "details", ()) or ())
+                }
+                if str(detail_id) not in owner_details:
+                    failures.append(
+                        f"paragraph_detail_owner_mismatch:{para.paragraph_id}:{detail_id}"
+                    )
+        if section_owner_ids and unit_owner_ids and not unit_owner_ids.issubset(
+            section_owner_ids
+        ):
+            failures.append(
+                f"unit_owner_not_in_section:{sec.section_id}:"
+                + ",".join(sorted(unit_owner_ids - section_owner_ids))
+            )
 
     # 3. Core detail coverage check: each primary core detail placed exactly once
     core_details_to_place: set[str] = set()
@@ -8079,6 +8541,55 @@ def validate_narrative_plan(
     return tuple(failures)
 
 
+def _v3_section_slug(value: str) -> str:
+    """Return a filesystem-safe section identity component."""
+
+    slug = "".join(
+        character if character.isalnum() or character in "-_." else "-"
+        for character in str(value or "")
+    ).strip("-")
+    return slug[:80] or "mechanism"
+
+
+def _prior_section_owners(
+    prior_sections: Any,
+) -> tuple[dict[str, str], list[dict[str, Any]]]:
+    """Return the proven owner of every prior section.
+
+    R7 correction: the same identity contract is used for every count relation
+    between the prior outline and the current mechanism set.  A section's owner
+    is proven only when its declared mechanism ids and its paragraphs' owners
+    agree on exactly one mechanism; anything else is reported as unproven and
+    is never reused by position.
+    """
+
+    owners: dict[str, str] = {}
+    unproven: list[dict[str, Any]] = []
+    for prior_sec in prior_sections or ():
+        section_key = str(getattr(prior_sec, "section_id", "") or "")
+        declared = {
+            str(value)
+            for value in (getattr(prior_sec, "mechanism_ids", ()) or ())
+            if str(value).strip()
+        }
+        paragraph_owners = {
+            str(getattr(paragraph, "mechanism_id", "") or "")
+            for paragraph in (getattr(prior_sec, "paragraphs", ()) or ())
+            if str(getattr(paragraph, "mechanism_id", "") or "")
+        }
+        combined = declared | paragraph_owners
+        if len(combined) == 1:
+            owners[section_key] = combined.pop()
+        else:
+            owners[section_key] = ""
+            unproven.append({
+                "section_id": section_key,
+                "declared_owners": sorted(declared),
+                "paragraph_owners": sorted(paragraph_owners),
+            })
+    return owners, unproven
+
+
 def build_narrative_plan_v3(
     *,
     contexts: Any,
@@ -8086,7 +8597,9 @@ def build_narrative_plan_v3(
     formula_packages: tuple[Any, ...] = (),
     prior_plan: Any | None = None,
     proposal_caller: Callable[[Any, Any], Any] | None = None,
+    proposal_llm_caller: Any | None = None,
     llm_config: Any | None = None,
+    proposal_call_meter: Any | None = None,
 ) -> tuple[NarrativePlanV3, dict[str, Any]]:
     """Build NarrativePlanV3 grouping canonical mechanism details into scientific paragraphs."""
     from code2paper.agentic.formalization_agent import FormulaPlacementV1
@@ -8097,11 +8610,55 @@ def build_narrative_plan_v3(
         "sections_planned": 0,
         "paragraphs_planned": 0,
         "formula_placements_count": 0,
+        # R7 §12.2: a proposal may influence organization only inside the
+        # closed ID sets; a missing or rejected proposal is recorded and never
+        # counted as autonomous organization success.
+        "proposal_status": "not_requested" if proposal_caller is None else "pending",
+        "proposal_failures": [],
     }
+    if proposal_caller is None and llm_config is not None:
+        # R7 default wiring: the product entry passes no caller, so the writer
+        # builds the bounded, role-configured proposal caller from the run's
+        # model config instead of silently reporting "not_requested".
+        from code2paper.agentic.narrative_organization_proposal import (
+            build_narrative_organization_proposal_caller,
+        )
+
+        proposal_caller = build_narrative_organization_proposal_caller(
+            llm_config,
+            llm_caller=proposal_llm_caller,
+            call_meter=proposal_call_meter,
+        )
+        trace["proposal_status"] = (
+            "not_requested" if proposal_caller is None else "pending"
+        )
+        trace["proposal_default_caller"] = (
+            "unavailable" if proposal_caller is None else "configured"
+        )
+        if proposal_caller is not None:
+            # Organization proposals are authoring-planning calls: they are
+            # bounded (one request per attempt, at most two attempts per
+            # mechanism) and their request digests are recorded in
+            # ``proposal_attempts``.  Without a meter their tokens are only
+            # *recorded*; the accounting step must not treat that as measured.
+            from code2paper.agentic.proposal_call_accounting import (
+                PROPOSAL_ACCOUNTING_IN_PLAN,
+                PROPOSAL_ACCOUNTING_RECORDED_ONLY,
+            )
+
+            trace["proposal_call_accounting"] = (
+                PROPOSAL_ACCOUNTING_IN_PLAN
+                if getattr(proposal_caller, "accounting", None) is not None
+                else PROPOSAL_ACCOUNTING_RECORDED_ONLY
+            )
+    elif proposal_llm_caller is not None:
+        trace["proposal_default_caller"] = "injected_caller_present"
+
 
     sections: list[NarrativeSectionPlanV3] = []
     narrative_units: list[NarrativeUnitV1] = []
     placements: list[FormulaPlacementV1] = []
+    proposal_accepted_mechanisms: list[str] = []
 
     pkg_by_mech: dict[str, list[Any]] = {}
     for pkg in formula_packages:
@@ -8130,181 +8687,475 @@ def build_narrative_plan_v3(
 
     prior_sections = getattr(prior_plan, "sections", ()) or ()
     if prior_plan is not None and len(prior_sections) > len(context_items) and context_items:
-        # Multi-section narrative distribution across prior outline
-        ctx = context_items[0]
-        core_clean_details = [
-            d for d in ctx.details
-            if getattr(d, "active_path_status", "unknown") in {
-                "active_default",
-                "active_selected",
-                "conditional",
-            }
-        ]
-        review_details = [
-            d for d in ctx.details
-            if d not in core_clean_details
-            and getattr(d, "publication_policy", "") in {"annotated_only", "review_only"}
-        ]
-        overview_details = [d for d in core_clean_details if d.role in ("input", "representation", "configuration")]
-        transform_details = [d for d in core_clean_details if d.role in ("transformation", "branch", "condition")]
-        formal_details = [d for d in core_clean_details if d.role in ("training_objective", "inference", "formalization")]
-        output_details = [d for d in core_clean_details if d.role in ("output", "interface", "rationale", "limitation")]
-        other_details = [
-            d for d in core_clean_details
-            if d not in overview_details and d not in transform_details
-            and d not in formal_details and d not in output_details
-        ]
-        sorted_details = overview_details + transform_details + formal_details + output_details + other_details
+        # A legacy outline owns more sections than the current mechanism set.
+        # R7: content is assigned by PROVEN section ownership, never by
+        # position.  A prior section keeps its id and heading only when its
+        # typed owner (declared mechanism ids or its paragraphs' owners) is
+        # unambiguous and still exists; otherwise the mapping is reported and
+        # the section is not reused.  A mechanism that the outline does not
+        # own receives an explicit revision section instead of being written
+        # into another owner's section.
 
-        num_prior_secs = len(prior_sections)
-        unplaced_packages = list(pkg_by_mech.get(ctx.mechanism_id, ()))
-
-        for sec_idx, prior_sec in enumerate(prior_sections):
-            start = sec_idx * len(sorted_details) // num_prior_secs
-            end = (
-                (sec_idx + 1) * len(sorted_details) // num_prior_secs
-                if sec_idx < num_prior_secs - 1
-                else len(sorted_details)
-            )
-            sec_details = sorted_details[start:end]
-            section_id = str(prior_sec.section_id)
-            heading = str(getattr(prior_sec, "heading", "") or f"{ctx.mechanism_name}")
-            prior_paras = getattr(prior_sec, "paragraphs", ()) or ()
-
-            chunk_size = 8
-            chunks = [
-                sec_details[i : i + chunk_size]
-                for i in range(0, len(sec_details), chunk_size)
+        def _core_clean(details: Any) -> list[Any]:
+            return [
+                detail for detail in details
+                if getattr(detail, "active_path_status", "unknown") in {
+                    "active_default",
+                    "active_selected",
+                    "conditional",
+                }
             ]
+
+        def _review_only(details: Any, core_clean: list[Any]) -> list[Any]:
+            return [
+                detail for detail in details
+                if detail not in core_clean
+                and getattr(detail, "publication_policy", "") in {
+                    "annotated_only", "review_only",
+                }
+            ]
+
+        def _role_ordered(details: list[Any]) -> list[Any]:
+            overview = [d for d in details if d.role in ("input", "representation", "configuration")]
+            transform = [d for d in details if d.role in ("transformation", "branch", "condition")]
+            formal = [d for d in details if d.role in ("training_objective", "inference", "formalization")]
+            output = [d for d in details if d.role in ("output", "interface", "rationale", "limitation")]
+            placed = {
+                id(detail)
+                for group in (overview, transform, formal, output)
+                for detail in group
+            }
+            other = [d for d in details if id(d) not in placed]
+            return overview + transform + formal + output + other
+
+        context_blocks: list[tuple[Any, list[Any], list[Any]]] = []
+        for candidate in context_items:
+            if str(getattr(candidate, "importance", "")) == "side_branch":
+                continue
+            candidate_core = _core_clean(getattr(candidate, "details", ()) or ())
+            candidate_review = _review_only(
+                getattr(candidate, "details", ()) or (), candidate_core
+            )
+            if not candidate_core and not candidate_review:
+                continue
+            context_blocks.append(
+                (candidate, _role_ordered(candidate_core), candidate_review)
+            )
+        if not context_blocks:
+            context_blocks = [(context_items[0], [], [])]
+
+        mechanism_by_id = {
+            str(getattr(candidate, "mechanism_id", "")): candidate
+            for candidate, _ordered, _review in context_blocks
+        }
+        ordered_details_by_mechanism = {
+            str(getattr(candidate, "mechanism_id", "")): ordered
+            for candidate, ordered, _review in context_blocks
+        }
+        review_by_mechanism = {
+            str(getattr(candidate, "mechanism_id", "")): review
+            for candidate, _ordered, review in context_blocks
+        }
+        owner_order = [
+            str(getattr(candidate, "mechanism_id", ""))
+            for candidate, _ordered, _review in context_blocks
+        ]
+
+        identity_diagnostics: dict[str, Any] = {
+            "proven_sections": [],
+            "owner_unproven": [],
+            "revision_sections": [],
+        }
+        prior_owner, _unproven_prior = _prior_section_owners(prior_sections)
+
+        sections_for_owner: dict[str, list[Any]] = {mid: [] for mid in owner_order}
+        for prior_sec in prior_sections:
+            section_key = str(prior_sec.section_id)
+            owner = prior_owner.get(section_key, "")
+            if owner in mechanism_by_id:
+                sections_for_owner[owner].append(prior_sec)
+                identity_diagnostics["proven_sections"].append({
+                    "section_id": section_key,
+                    "owner": owner,
+                })
+            else:
+                identity_diagnostics["owner_unproven"].append({
+                    "section_id": section_key,
+                    "declared_owner": owner,
+                })
+
+        # One row per section we are allowed to write: a proven prior section
+        # keeps its identity; a mechanism without one gets a revision section.
+        section_rows: list[tuple[Any | None, Any, list[Any]]] = []
+        row_details: dict[int, list[Any]] = {}
+        for mechanism_id in owner_order:
+            candidate = mechanism_by_id[mechanism_id]
+            ordered = ordered_details_by_mechanism[mechanism_id]
+            owner_sections = sections_for_owner.get(mechanism_id, [])
+            if not owner_sections:
+                heading = f"{getattr(candidate, 'mechanism_name', mechanism_id)}"
+                section_rows.append((None, candidate, []))
+                row_index = len(section_rows) - 1
+                row_details[row_index] = list(ordered)
+                identity_diagnostics["revision_sections"].append({
+                    "section_id": f"MA-REV-{_v3_section_slug(mechanism_id)}",
+                    "owner": mechanism_id,
+                    "reason": "mechanism_without_proven_prior_section",
+                    "heading": heading,
+                })
+                continue
+            count = len(owner_sections)
+            # R7 autonomous organization: when one mechanism owns several prior
+            # sections, splitting its details by count cannot prove what each
+            # section argues.  The owning Agent may propose the assignment; the
+            # proposal is a closed-choice contract over this mechanism's own
+            # detail ids and proven section ids, and only a validated proposal
+            # replaces the deterministic count split.
+            section_organization: dict[str, list[Any]] = {}
+            if count > 1 and proposal_caller is not None:
+                detail_ids = tuple(
+                    str(getattr(detail, "detail_id", "") or "") for detail in ordered
+                )
+                section_ids = tuple(
+                    str(getattr(prior_sec, "section_id", "") or "")
+                    for prior_sec in owner_sections
+                )
+                groups, section_failures = _bounded_section_organization_proposal(
+                    mechanism_id=mechanism_id,
+                    detail_ids=detail_ids,
+                    section_ids=section_ids,
+                    proposal_caller=proposal_caller,
+                    context={
+                        "kind": "section_organization",
+                        "mechanism_id": mechanism_id,
+                        "mechanism_name": str(
+                            getattr(candidate, "mechanism_name", "") or ""
+                        ),
+                        "scientific_role": str(
+                            getattr(candidate, "scientific_role", "") or ""
+                        ),
+                        "reader_question": str(
+                            getattr(candidate, "reader_question", "") or ""
+                        ),
+                        "purpose": str(getattr(candidate, "purpose", "") or ""),
+                        "details": [
+                            {
+                                "detail_id": str(
+                                    getattr(detail, "detail_id", "") or ""
+                                ),
+                                "role": str(getattr(detail, "role", "") or ""),
+                                "importance": str(
+                                    getattr(detail, "importance", "") or ""
+                                ),
+                                "semantic_atom": str(
+                                    getattr(detail, "semantic_atom", "") or ""
+                                ),
+                            }
+                            for detail in ordered
+                        ],
+                        "sections": [
+                            {
+                                "section_id": str(
+                                    getattr(prior_sec, "section_id", "") or ""
+                                ),
+                                "heading": str(
+                                    getattr(prior_sec, "heading", "") or ""
+                                ),
+                            }
+                            for prior_sec in owner_sections
+                        ],
+                    },
+                )
+                if groups:
+                    detail_by_id = {
+                        str(getattr(detail, "detail_id", "") or ""): detail
+                        for detail in ordered
+                    }
+                    section_organization = {
+                        section_id: [detail_by_id[value] for value in values]
+                        for section_id, values in groups
+                    }
+                    proposal_accepted_mechanisms.append(mechanism_id)
+                    trace.setdefault("proposal_applied", []).append({
+                        "kind": "section_organization",
+                        "mechanism_id": mechanism_id,
+                        "section_details": {
+                            section_id: [
+                                str(getattr(detail, "detail_id", "") or "")
+                                for detail in values
+                            ]
+                            for section_id, values in section_organization.items()
+                        },
+                    })
+                else:
+                    trace["proposal_failures"].extend(
+                        f"{value}:{mechanism_id}"
+                        for value in (
+                            section_failures or ("section_proposal_empty",)
+                        )
+                    )
+            for index, prior_sec in enumerate(owner_sections):
+                section_rows.append((prior_sec, candidate, []))
+                row_index = len(section_rows) - 1
+                if count == 1:
+                    row_details[row_index] = list(ordered)
+                elif section_organization:
+                    row_details[row_index] = list(
+                        section_organization.get(
+                            str(getattr(prior_sec, "section_id", "") or ""), ()
+                        )
+                    )
+                else:
+                    begin = index * len(ordered) // count
+                    finish = (
+                        (index + 1) * len(ordered) // count
+                        if index < count - 1
+                        else len(ordered)
+                    )
+                    row_details[row_index] = list(ordered[begin:finish])
+
+        unplaced_packages: list[Any] = [
+            pkg
+            for candidate, _ordered, _review in context_blocks
+            for pkg in pkg_by_mech.get(candidate.mechanism_id, ())
+        ]
+        placed_review_mechanisms: set[str] = set()
+
+        for row_index, (prior_sec, candidate, _unused) in enumerate(section_rows):
+            mechanism_id = str(getattr(candidate, "mechanism_id", ""))
+            row_detail_list = row_details.get(row_index, [])
+            if prior_sec is not None:
+                section_id = str(prior_sec.section_id)
+                heading = str(
+                    getattr(prior_sec, "heading", "")
+                    or getattr(candidate, "mechanism_name", mechanism_id)
+                )
+                prior_paras = getattr(prior_sec, "paragraphs", ()) or ()
+            else:
+                section_id = f"MA-REV-{_v3_section_slug(mechanism_id)}"
+                heading = str(getattr(candidate, "mechanism_name", mechanism_id))
+                prior_paras = ()
+
+            chunks: list[list[Any]] = []
+            for detail in row_detail_list:
+                if chunks and len(chunks[-1]) < 8:
+                    chunks[-1].append(detail)
+                else:
+                    chunks.append([detail])
             if not chunks:
                 chunks = [[]]
 
-            paragraphs = []
+            paragraphs: list[NarrativeParagraphPlanV3] = []
             para_ids: list[str] = []
             all_unit_req_details: list[str] = []
             all_unit_opt_details: list[str] = []
 
-            for para_idx, chunk in enumerate(chunks):
-                if para_idx < len(prior_paras):
-                    p_id = str(prior_paras[para_idx].paragraph_id)
+            for chunk_index, chunk_details in enumerate(chunks):
+                if chunk_index < len(prior_paras):
+                    paragraph_id = str(prior_paras[chunk_index].paragraph_id)
                 else:
-                    p_id = f"{section_id}_p{para_idx + 1}"
-                para_ids.append(p_id)
-
-                req_dids = tuple(
-                    d.detail_id for d in chunk
-                    if d.importance == "core" and d.publication_policy == "clean_candidate"
+                    paragraph_id = f"{section_id}_p{chunk_index + 1}"
+                required_ids = tuple(
+                    detail.detail_id for detail in chunk_details
+                    if detail.importance == "core"
+                    and detail.publication_policy == "clean_candidate"
                 )
-                opt_dids = tuple(d.detail_id for d in chunk if d.detail_id not in req_dids)
-                if sec_idx == 0 and para_idx == 0 and review_details:
-                    opt_dids = tuple(dict.fromkeys((*opt_dids, *(d.detail_id for d in review_details))))
-                all_unit_req_details.extend(req_dids)
-                all_unit_opt_details.extend(opt_dids)
-
-                p_pkg_ids: list[str] = []
-                p_ob_ids: list[str] = []
-                chunk_dids = {d.detail_id for d in chunk}
-                remaining_pkgs: list[Any] = []
-                for pkg in unplaced_packages:
-                    pkg_id = str(getattr(pkg, "package_id", "") or "").strip()
-                    src_dids = {
-                        str(v).strip()
-                        for v in (getattr(pkg, "source_detail_ids", ()) or ())
-                        if str(v).strip()
-                    }
-                    is_match = bool(src_dids.intersection(chunk_dids))
-                    is_fallback = (
-                        not is_match
-                        and sec_idx == min(num_prior_secs - 1, max(1, num_prior_secs // 2))
-                        and para_idx == 0
+                optional_ids = tuple(
+                    detail.detail_id for detail in chunk_details
+                    if detail.detail_id not in required_ids
+                )
+                if mechanism_id not in placed_review_mechanisms:
+                    review_ids = review_by_mechanism.get(mechanism_id, ())
+                    if review_ids:
+                        optional_ids = tuple(dict.fromkeys(
+                            (*optional_ids, *(d.detail_id for d in review_ids))
+                        ))
+                        placed_review_mechanisms.add(mechanism_id)
+                chunk_detail_ids = {detail.detail_id for detail in chunk_details}
+                package_ids: list[str] = []
+                obligation_ids: list[str] = []
+                remaining_packages: list[Any] = []
+                for package in unplaced_packages:
+                    package_id = str(getattr(package, "package_id", "") or "").strip()
+                    package_mechanism = str(
+                        getattr(package, "mechanism_id", "") or ""
                     )
-                    if is_match or is_fallback:
-                        p_pkg_ids.append(pkg_id)
-                        p_ob_ids.extend(
-                            str(v).strip()
-                            for v in (getattr(pkg, "satisfied_obligation_ids", ()) or ())
-                            if str(v).strip()
+                    source_ids = {
+                        str(value).strip()
+                        for value in (getattr(package, "source_detail_ids", ()) or ())
+                        if str(value).strip()
+                    }
+                    if package_mechanism == mechanism_id and source_ids.intersection(
+                        chunk_detail_ids
+                    ):
+                        package_ids.append(package_id)
+                        obligation_ids.extend(
+                            str(value).strip()
+                            for value in (
+                                getattr(package, "satisfied_obligation_ids", ()) or ()
+                            )
+                            if str(value).strip()
                         )
                         placements.append(FormulaPlacementV1(
-                            package_id=pkg_id,
+                            package_id=package_id,
                             section_id=section_id,
-                            paragraph_id=p_id,
+                            paragraph_id=paragraph_id,
                         ))
                     else:
-                        remaining_pkgs.append(pkg)
-                unplaced_packages = remaining_pkgs
+                        remaining_packages.append(package)
+                unplaced_packages[:] = remaining_packages
 
-                role = chunk[0].role if chunk else "overview"
-                depth = compute_narrative_complexity(chunk, p_ob_ids)
-                p_plan = NarrativeParagraphPlanV3(
-                    paragraph_id=p_id,
+                role = str(getattr(chunk_details[0], "role", "") or "mechanism_overview") if chunk_details else "mechanism_overview"
+                prior_paragraph = (
+                    prior_paras[chunk_index]
+                    if chunk_index < len(prior_paras)
+                    else None
+                )
+                paragraphs.append(NarrativeParagraphPlanV3(
+                    paragraph_id=paragraph_id,
                     section_id=section_id,
                     role=role,
-                    mechanism_id=ctx.mechanism_id,
-                    required_detail_ids=req_dids,
-                    optional_detail_ids=opt_dids,
-                    formula_obligation_ids=tuple(dict.fromkeys(p_ob_ids)),
-                    formula_package_ids=tuple(dict.fromkeys(p_pkg_ids)),
-                    shared_detail_refs=getattr(ctx, "shared_detail_refs", ()),
+                    mechanism_id=mechanism_id,
+                    required_detail_ids=required_ids,
+                    optional_detail_ids=optional_ids,
+                    formula_obligation_ids=tuple(dict.fromkeys(obligation_ids)),
+                    formula_package_ids=tuple(dict.fromkeys(package_ids)),
+                    shared_detail_refs=getattr(candidate, "shared_detail_refs", ()),
                     witness_contract={
                         "schema_version": "1.0",
-                        "paragraph_id": p_id,
+                        "paragraph_id": paragraph_id,
                         "rhetorical_goal": role,
                         "targets": [
                             target
-                            for detail in chunk
+                            for detail in chunk_details
                             for target in _v3_detail_witness_contract(
                                 detail,
-                                required=detail.detail_id in req_dids,
+                                required=detail.detail_id in required_ids,
                             )
                         ],
                     },
-                    suggested_depth=depth,
-                    reader_goal=f"Explain {role} for {ctx.mechanism_name}.",
-                )
-                paragraphs.append(p_plan)
+                    suggested_depth=compute_narrative_complexity(
+                        chunk_details, obligation_ids
+                    ),
+                    reader_goal=(
+                        str(getattr(prior_paragraph, "reader_goal", "") or "")
+                        or (
+                            f"Explain {role} for "
+                            f"{getattr(candidate, 'mechanism_name', mechanism_id)}."
+                        )
+                    ),
+                    # A reused paragraph keeps its narrative dependencies; the
+                    # content owner is proven above, so the move authority and
+                    # transitions are not silently rewritten.
+                    transition_from=(
+                        str(getattr(prior_paragraph, "transition_from", "") or "")
+                        if chunk_index == 0
+                        else ""
+                    ),
+                    transition_to=(
+                        str(getattr(prior_paragraph, "transition_to", "") or "")
+                        if chunk_index == len(chunks) - 1
+                        else ""
+                    ),
+                ))
+                para_ids.append(paragraph_id)
+                all_unit_req_details.extend(required_ids)
+                all_unit_opt_details.extend(optional_ids)
 
-            sec_plan = NarrativeSectionPlanV3(
+            sections.append(NarrativeSectionPlanV3(
                 section_id=section_id,
                 heading=heading,
-                mechanism_ids=(ctx.mechanism_id,),
+                mechanism_ids=(mechanism_id,),
                 paragraphs=tuple(paragraphs),
-            )
-            sections.append(sec_plan)
-
-            unit_id = f"unit_{sec_idx + 1}"
+            ))
             narrative_units.append(NarrativeUnitV1(
-                unit_id=unit_id,
+                unit_id=f"unit_{len(narrative_units) + 1}",
                 section_id=section_id,
-                mechanism_context_ids=(ctx.mechanism_id,),
-                rhetorical_role=ctx.scientific_role or "mechanism_exposition",
-                reader_question=ctx.reader_question or f"How does {ctx.mechanism_name} operate?",
+                mechanism_context_ids=(mechanism_id,),
+                rhetorical_role=(
+                    str(getattr(candidate, "scientific_role", ""))
+                    or "mechanism_exposition"
+                ),
+                reader_question=(
+                    str(getattr(candidate, "reader_question", ""))
+                    or f"How does {getattr(candidate, 'mechanism_name', mechanism_id)} operate?"
+                ),
                 paragraph_ids=tuple(para_ids),
                 required_detail_ids=tuple(dict.fromkeys(all_unit_req_details)),
                 optional_detail_ids=tuple(dict.fromkeys(all_unit_opt_details)),
                 formula_obligation_ids=tuple(dict.fromkeys(
                     str(obligation_id).strip()
-                    for p in paragraphs
-                    for obligation_id in p.formula_obligation_ids
+                    for paragraph in paragraphs
+                    for obligation_id in paragraph.formula_obligation_ids
                     if str(obligation_id).strip()
                 )),
-                suggested_depth=compute_narrative_complexity(sec_details),
+                suggested_depth=compute_narrative_complexity(row_detail_list),
             ))
+
+        trace["section_identity"] = identity_diagnostics
+        if identity_diagnostics["owner_unproven"]:
+            # Explicit block: an unproven prior section is never silently
+            # reassigned to whichever mechanism happens to be next.
+            trace["section_identity_failures"] = [
+                f"prior_section_owner_unproven:{entry['section_id']}"
+                for entry in identity_diagnostics["owner_unproven"]
+            ]
     else:
+        # R7 correction: the same owner-proven identity contract applies when
+        # the prior outline has fewer than or exactly as many sections as the
+        # current mechanism set.  Reusing ``prior_sections[sec_idx - 1]`` by
+        # position swapped headings and owners whenever the outline order
+        # changed, and the plan validator could not see it because the new plan
+        # was internally consistent.
+        prior_owner_map, prior_owner_unproven = _prior_section_owners(
+            getattr(prior_plan, "sections", ()) or ()
+        )
+        identity_diagnostics = {
+            "proven_sections": [
+                {"section_id": section_id, "owner": owner}
+                for section_id, owner in prior_owner_map.items()
+                if owner
+            ],
+            "owner_unproven": prior_owner_unproven,
+            "revision_sections": [],
+        }
+        consumed_prior_sections: set[str] = set()
         for ctx in context_items:
             if ctx.importance == "side_branch":
                 continue
 
             prior_sections = getattr(prior_plan, "sections", ()) or ()
-            if prior_plan is not None and sec_idx - 1 < len(prior_sections):
-                prior_sec = prior_sections[sec_idx - 1]
+            prior_sec = None
+            if prior_plan is not None:
+                prior_sec = next(
+                    (
+                        candidate
+                        for candidate in prior_sections
+                        if prior_owner_map.get(str(candidate.section_id))
+                        == str(ctx.mechanism_id)
+                        and str(candidate.section_id)
+                        not in consumed_prior_sections
+                    ),
+                    None,
+                )
+            if prior_sec is not None:
                 section_id = str(prior_sec.section_id)
-                heading = str(getattr(prior_sec, "heading", "") or f"{ctx.mechanism_name}")
+                heading = str(
+                    getattr(prior_sec, "heading", "") or f"{ctx.mechanism_name}"
+                )
                 prior_paras = getattr(prior_sec, "paragraphs", ()) or ()
+                consumed_prior_sections.add(section_id)
             else:
                 section_id = f"sec_method_{sec_idx}"
                 heading = f"{ctx.mechanism_name}"
                 prior_paras = ()
+                if prior_plan is not None:
+                    identity_diagnostics["revision_sections"].append({
+                        "section_id": section_id,
+                        "owner": str(ctx.mechanism_id),
+                        "reason": "mechanism_without_proven_prior_section",
+                        "heading": heading,
+                    })
             paragraphs: list[NarrativeParagraphPlanV3] = []
 
             core_clean_details = [
@@ -8362,6 +9213,81 @@ def build_narrative_plan_v3(
 
             if not para_groups:
                 para_groups.append(("mechanism_overview", list(core_clean_details)))
+
+            # R7 autonomous organization: the owning Agent may propose how the
+            # mechanism's clean details are grouped into paragraphs.  The
+            # proposal is a closed-choice contract (its own detail ids, the
+            # closed role set, every clean detail exactly once) and is consumed
+            # only after validation; otherwise the deterministic grouping
+            # above stays authoritative and the rejection is recorded.
+            if proposal_caller is not None and core_clean_details:
+                detail_by_id = {
+                    str(detail.detail_id): detail for detail in core_clean_details
+                }
+                proposed_groups, proposal_failures = (
+                    _bounded_narrative_organization_proposal(
+                        mechanism_id=str(ctx.mechanism_id),
+                        detail_ids=tuple(detail_by_id),
+                        section_ids=(section_id,),
+                        proposal_caller=proposal_caller,
+                        context={
+                            "kind": "narrative_organization",
+                            "mechanism_id": str(ctx.mechanism_id),
+                            "mechanism_name": str(
+                                getattr(ctx, "mechanism_name", "") or ""
+                            ),
+                            "scientific_role": str(
+                                getattr(ctx, "scientific_role", "") or ""
+                            ),
+                            "reader_question": str(
+                                getattr(ctx, "reader_question", "") or ""
+                            ),
+                            "purpose": str(getattr(ctx, "purpose", "") or ""),
+                            "role_names": list(NARRATIVE_PARAGRAPH_ROLES),
+                            "details": [
+                                {
+                                    "detail_id": str(detail_id),
+                                    "role": str(
+                                        getattr(detail, "role", "") or ""
+                                    ),
+                                    "importance": str(
+                                        getattr(detail, "importance", "") or ""
+                                    ),
+                                    "semantic_atom": str(
+                                        getattr(detail, "semantic_atom", "") or ""
+                                    ),
+                                }
+                                for detail_id, detail in detail_by_id.items()
+                            ],
+                        },
+                    )
+                )
+                if proposed_groups:
+                    para_groups = [
+                        (
+                            role_name,
+                            [detail_by_id[value] for value in group_details],
+                        )
+                        for role_name, group_details in proposed_groups
+                    ]
+                    if review_details:
+                        para_groups.append(("evidence_status", review_details))
+                    proposal_accepted_mechanisms.append(str(ctx.mechanism_id))
+                    trace.setdefault("proposal_applied", []).append({
+                        "mechanism_id": str(ctx.mechanism_id),
+                        "section_id": section_id,
+                        "paragraph_roles": [role for role, _ in proposed_groups],
+                        "detail_groups": [
+                            list(group) for _role, group in proposed_groups
+                        ],
+                    })
+                else:
+                    trace["proposal_failures"].extend(
+                        f"{value}:{ctx.mechanism_id}"
+                        for value in (proposal_failures or (
+                            "narrative_proposal_empty",
+                        ))
+                    )
 
             # Expand groups so no single paragraph receives > 8 details
             expanded_para_groups: list[tuple[str, list[Any]]] = []
@@ -8499,6 +9425,17 @@ def build_narrative_plan_v3(
             ))
             sec_idx += 1
 
+        # R7 correction: the equal/fewer count path records the same identity
+        # evidence as the legacy-outline path, so a caller can audit which
+        # prior sections were proven, which were replaced, and which owners
+        # could not be proven at all.
+        trace["section_identity"] = identity_diagnostics
+        if identity_diagnostics["owner_unproven"]:
+            trace["section_identity_failures"] = [
+                f"prior_section_owner_unproven:{entry['section_id']}"
+                for entry in identity_diagnostics["owner_unproven"]
+            ]
+
     plan = NarrativePlanV3(
         plan_id=f"plan_v3_{sha256_digest(canonical_json_bytes([s.section_id for s in sections]))[:16]}",
         sections=tuple(sections),
@@ -8510,6 +9447,32 @@ def build_narrative_plan_v3(
     trace["sections_planned"] = len(sections)
     trace["paragraphs_planned"] = sum(len(s.paragraphs) for s in sections)
     trace["formula_placements_count"] = len(placements)
+    proposal_attempts = tuple(getattr(proposal_caller, "traces", ()) or ())
+    if proposal_attempts:
+        trace["proposal_attempts"] = [dict(row) for row in proposal_attempts]
+        trace["proposal_attempt_count"] = len(proposal_attempts)
+    if proposal_caller is not None and trace["proposal_status"] == "pending":
+        # The deterministic builder already produced a validated plan.  A
+        # caller whose proposal was validated and applied is ``accepted`` (or
+        # ``partially_accepted`` when other mechanisms rejected); an unused or
+        # rejected caller is reported rather than silently credited.
+        if proposal_accepted_mechanisms:
+            trace["proposal_status"] = (
+                "partially_accepted" if trace["proposal_failures"]
+                else "accepted"
+            )
+            trace["proposal_accepted_mechanism_ids"] = list(
+                dict.fromkeys(proposal_accepted_mechanisms)
+            )
+        else:
+            trace["proposal_status"] = "not_accepted"
+            trace["proposal_failures"].append(
+                "narrative_proposal_not_consumed"
+            )
+    elif proposal_accepted_mechanisms:
+        trace["proposal_accepted_mechanism_ids"] = list(
+            dict.fromkeys(proposal_accepted_mechanisms)
+        )
 
     validation_failures = validate_narrative_plan(
         plan,
@@ -8520,6 +9483,29 @@ def build_narrative_plan_v3(
         raise ValueError(
             "narrative_plan_v3_invalid:" + ";".join(validation_failures[:16])
         )
+
+    # The measured tally travels with the plan so a caller can persist or fold
+    # it into the run's accounting instead of guessing from the trace rows.
+    proposal_accounting = (
+        getattr(proposal_caller, "accounting", None)
+        if proposal_caller is not None
+        else None
+    )
+    if proposal_accounting is not None:
+        from code2paper.agentic.proposal_call_accounting import (
+            PROPOSAL_ACCOUNTING_IN_PLAN,
+        )
+
+        # A measured tally is the strongest available statement, whichever code
+        # path built the caller.
+        trace["proposal_call_accounting"] = PROPOSAL_ACCOUNTING_IN_PLAN
+        trace["proposal_call_totals"] = proposal_accounting.totals()
+        trace["proposal_call_accounting_digest"] = getattr(
+            proposal_accounting, "content_digest", ""
+        )
+        trace["proposal_call_rows"] = [
+            row.model_dump(mode="json") for row in proposal_accounting.rows
+        ]
 
     return plan, trace
 

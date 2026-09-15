@@ -56,18 +56,14 @@ class TestMethodAgentCommand:
         summary = json.loads(
             (product_dir / "run_summary.json").read_text(encoding="utf-8")
         )
-        # ``degraded`` is the honest product status for a deterministic
-        # ``--no-live-llm`` run whose research still completed with usable
-        # evidence (all obligations terminal, no synthetic support).  The
-        # assertion guards against ``blocked`` (fallback exhaustion).
+        # The deterministic fixture has a supported must-cover spine but two
+        # non-core obligations remain pending.  That is a valid bounded
+        # Candidate handoff, not strict Research completion.
         research = summary["research"]
-        assert research["status"] in {"trusted", "incomplete", "degraded"}
-        # The deterministic fixture must terminate with every obligation
-        # resolved (plan 13.3): not ``stop_blocked``, not turn-budget
-        # truncation, and a non-empty repository evidence chain.
-        assert research["termination_reason"] == "all_obligations_terminal"
+        assert research["status"] == "incomplete"
+        assert research["termination_reason"] == "candidate_handoff_partial"
         evidence = summary["evidence"]
-        assert evidence["unresolved_obligations"] == 0
+        assert evidence["unresolved_obligations"] == 2
         assert evidence["evidence_packets"] > 0
         assert evidence["verified_facts"] > 0
         assert evidence["supported_claims"] > 0
@@ -144,3 +140,28 @@ class TestMethodAgentCommand:
             )
         )
         assert summary["live_llm"] is False
+
+def test_installed_entry_point_forwards_method_agent() -> None:
+    """R6: ``code2paper method-agent`` works through the installed script."""
+
+    import importlib
+    import tomllib
+
+    config = tomllib.loads(
+        (Path(__file__).resolve().parents[1] / "pyproject.toml").read_text(
+            encoding="utf-8"
+        )
+    )
+    target = config["project"]["scripts"]["code2paper"]
+    module_name, _, attribute = target.partition(":")
+    entry = getattr(importlib.import_module(module_name), attribute)
+
+    # The method-agent parser is reachable without a second product parser.
+    with pytest.raises(SystemExit) as method_exit:
+        entry(["method-agent", "--help"])
+    assert method_exit.value.code == 0
+
+    # Every other subcommand and the top-level help stay intact.
+    with pytest.raises(SystemExit) as run_exit:
+        entry(["run", "--help"])
+    assert run_exit.value.code == 0

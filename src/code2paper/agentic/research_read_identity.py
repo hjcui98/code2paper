@@ -1,9 +1,16 @@
 """Canonical content-read identity shared by policy merge and the supervisor.
 
-Both layers must agree on what counts as "the exact repository read that
-was already executed".  Within one repo snapshot the returned source bytes
-are identical, so obligation id and turn index are deliberately excluded
-from the identity; the normalized (tool, path, symbol | span) is the key.
+Two identities are deliberately separate:
+
+* the *byte* identity (``content_read_signature``) is the normalized
+  ``(tool, path, symbol | span)`` key.  Within one repo snapshot the returned
+  bytes are identical regardless of which obligation prompted the read, so
+  this identity is the cache key for reusing already-read source;
+* the *analysis* identity (``obligation_read_signature``) adds the obligation
+  id.  A second read of the same span for a *different* obligation is allowed
+  (the bytes are reused, and the graph/claim compilation for that obligation
+  still has to happen), while the same obligation re-reading the same span
+  remains a no-gain duplicate.
 
 Rules (fail-closed):
 
@@ -25,7 +32,7 @@ from typing import Any, Mapping
 def content_read_signature(
     tool_name: str, arguments: Mapping[str, Any]
 ) -> str:
-    """Return the normalized identity of a content-read call, or ``""``.
+    """Return the normalized byte identity of a content-read call, or ``""``.
 
     ``arguments`` may come from a ``ResearchToolCallV1`` or an
     ``ExecutedToolCallSummaryV1`` (both expose ``tool_name`` +
@@ -46,6 +53,23 @@ def content_read_signature(
             return f"read_code_span:{path}:{start_line}:{end_line}"
         return ""
     return ""
+
+
+def obligation_read_signature(
+    obligation_id: str, tool_name: str, arguments: Mapping[str, Any]
+) -> str:
+    """Return the obligation-scoped analysis identity of a content read.
+
+    The no-gain rule applies per obligation: the same obligation may not
+    re-read the same span, while another obligation may reuse the cached
+    bytes for its own analysis.
+    """
+
+    identity = content_read_signature(tool_name, arguments)
+    scoped = str(obligation_id or "").strip()
+    if not identity or not scoped:
+        return ""
+    return f"{scoped}|{identity}"
 
 
 def content_read_covers_line(

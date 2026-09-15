@@ -64,6 +64,7 @@ ResearchAction = Literal[
     "COMPILE_FACTS",
     "DECOMPOSE_CLAIMS",
     "REWRITE_SENTENCES",
+    "PROPOSE_TARGET_REVISION",
     "COMPILE_EVIDENCE",
     "RECORD_GAP",
     "PLAN_METHOD",
@@ -105,6 +106,7 @@ RESEARCH_ACTIONS: tuple[ResearchAction, ...] = (
     "COMPILE_FACTS",
     "DECOMPOSE_CLAIMS",
     "REWRITE_SENTENCES",
+    "PROPOSE_TARGET_REVISION",
     "COMPILE_EVIDENCE",
     "RECORD_GAP",
     "PLAN_METHOD",
@@ -342,6 +344,7 @@ CandidateAcquisitionStatusV1 = Literal[
     "acquired_and_compiled",
     "explicitly_rejected",
     "superseded",
+    "not_selected",
 ]
 
 CandidateResolutionStatusV1 = Literal[
@@ -417,6 +420,7 @@ class CandidateAcquisitionRecordV1(_ResearchModel):
         acquired = self.terminal_status == "acquired_and_compiled"
         rejected = self.terminal_status == "explicitly_rejected"
         superseded = self.terminal_status == "superseded"
+        not_selected = self.terminal_status == "not_selected"
         if acquired and not (
             self.read_observation_refs
             and self.behavior_node_ids
@@ -427,8 +431,8 @@ class CandidateAcquisitionRecordV1(_ResearchModel):
             raise ValueError(
                 "acquired candidate requires read, behavior, packet, fact, and claim references"
             )
-        if (rejected or superseded) and not self.rejection_reason.strip():
-            raise ValueError("rejected/superseded candidate requires a typed reason")
+        if (rejected or superseded or not_selected) and not self.rejection_reason.strip():
+            raise ValueError("rejected/superseded/not-selected candidate requires a typed reason")
         if self.ownership_role in {"comparand", "evaluation"} and acquired and self.claim_ids:
             raise ValueError("comparand/evaluation candidates cannot authorize target claims")
         if self.resolution_status in {"out_of_scope", "inactive_alternative", "repo_mismatch"} and not (
@@ -443,6 +447,7 @@ class CandidateAcquisitionRecordV1(_ResearchModel):
     def terminal(self) -> bool:
         return self.terminal_status in {
             "acquired_and_compiled", "explicitly_rejected", "superseded",
+            "not_selected",
         } or (
             self.resolution_status in {
                 "implemented_exact", "implemented_partial", "author_spec_only",
@@ -670,6 +675,13 @@ class TypedBehaviorTargetV1(_ResearchModel):
 
     target_id: str
     role: str = ""
+    # R10 provenance: an author constraint and a legacy record whose source
+    # cannot be proven are both non-deletable; only a recorded system
+    # inference may be revised away.
+    provenance: Literal[
+        "author_explicit", "author_derived", "system_inferred",
+        "research_subquestion", "unproven",
+    ] = "unproven"
     desired_predicates: tuple[str, ...] = Field(default_factory=tuple)
     # Concept-level alternatives. Every group must be satisfied, while any
     # predicate (or registered concrete alias) inside one group is enough.
@@ -741,6 +753,157 @@ def _condition_polarity(values: tuple[str, ...]) -> str:
     return "unknown"
 
 
+TerminalSearchOutcome = Literal[
+    "search_inconclusive",
+    "budget_exhausted",
+    "unsupported_with_scoped_evidence",
+]
+
+
+class SearchReceiptV1(_ResearchModel):
+    """Typed receipt for one bounded repository search.
+
+    R9: a negative conclusion is authorized only by a receipt that binds the
+    frozen revision, the obligation, the canonical query and filter scope, the
+    truncation state, the result identity, the read/unread candidate sets, the
+    relation checks, tool failures and the budget.  A note such as
+    ``search_frontier_closed=true`` is never a substitute for these fields.
+    """
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    receipt_id: str
+    obligation_id: str
+    repo_snapshot_id: str
+    project_tree_hash: str
+    queries: tuple[str, ...] = Field(default_factory=tuple)
+    filter_scope: tuple[str, ...] = Field(default_factory=tuple)
+    top_k: int = 0
+    truncated: bool = False
+    result_ids: tuple[str, ...] = Field(default_factory=tuple)
+    result_digest: str = ""
+    read_candidate_ids: tuple[str, ...] = Field(default_factory=tuple)
+    unread_candidate_ids: tuple[str, ...] = Field(default_factory=tuple)
+    relation_checks: tuple[str, ...] = Field(default_factory=tuple)
+    tool_failures: tuple[str, ...] = Field(default_factory=tuple)
+    budget_used: int = 0
+    budget_limit: int = 0
+    stop_reason: str = ""
+    # R9 execution-ledger binding.  A receipt is only negative evidence when
+    # the execution layer derived it from real tool executions; the id of the
+    # record prefix and its digest make the derivation re-checkable.
+    ledger_digest: str = ""
+    execution_record_ids: tuple[str, ...] = Field(default_factory=tuple)
+    authentication: Literal["", "ledger_verified"] = ""
+    content_digest: str = ""
+
+    @model_validator(mode="after")
+    def _validate_receipt(self) -> "SearchReceiptV1":
+        if not all((
+            self.receipt_id.strip(),
+            self.obligation_id.strip(),
+            self.repo_snapshot_id.strip(),
+            self.project_tree_hash.strip(),
+        )):
+            raise ValueError("search receipt requires receipt/obligation/snapshot identities")
+        if self.top_k < 0 or self.budget_used < 0 or self.budget_limit < 0:
+            raise ValueError("search receipt counts must be >= 0")
+        expected = _digest_payload(self.model_dump(mode="json", exclude={"content_digest"}))
+        if self.content_digest and self.content_digest != expected:
+            raise ValueError("search receipt content_digest mismatch")
+        object.__setattr__(self, "content_digest", expected)
+        return self
+
+    def frontier_closed(self) -> bool:
+        """Return whether this receipt can prove a closed search frontier."""
+
+        return bool(
+            self.queries
+            and self.read_candidate_ids
+            and not self.unread_candidate_ids
+            and not self.truncated
+            and not self.tool_failures
+        )
+
+
+class TerminalSearchDispositionV1(_ResearchModel):
+    """The typed terminal outcome of one obligation's search.
+
+    The three outcomes are not interchangeable:
+
+    - ``search_inconclusive`` records what was actually queried and observed,
+      what stayed open and why the search stopped.  It never proves absence.
+    - ``budget_exhausted`` records the used budget, the remaining frontier and
+      unfinished work.  It is a bounded stop, not a completed search.
+    - ``unsupported_with_scoped_evidence`` authorizes a negative conclusion
+      only inside the frozen scope and proposition, backed by receipts whose
+      frontier is closed.
+    """
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    disposition_id: str
+    obligation_id: str
+    outcome: TerminalSearchOutcome
+    stop_reason: str = ""
+    # search_inconclusive
+    queries: tuple[str, ...] = Field(default_factory=tuple)
+    observations: tuple[str, ...] = Field(default_factory=tuple)
+    open_questions: tuple[str, ...] = Field(default_factory=tuple)
+    # budget_exhausted
+    budget_used: int = 0
+    budget_limit: int = 0
+    remaining_frontier_ids: tuple[str, ...] = Field(default_factory=tuple)
+    unfinished_task_ids: tuple[str, ...] = Field(default_factory=tuple)
+    # unsupported_with_scoped_evidence
+    frozen_scope: tuple[str, ...] = Field(default_factory=tuple)
+    scope_basis: str = ""
+    receipts: tuple[SearchReceiptV1, ...] = Field(default_factory=tuple)
+    content_digest: str = ""
+
+    @model_validator(mode="after")
+    def _validate_disposition(self) -> "TerminalSearchDispositionV1":
+        if not self.disposition_id.strip() or not self.obligation_id.strip():
+            raise ValueError("terminal disposition requires disposition/obligation ids")
+        if self.outcome == "search_inconclusive":
+            if not self.queries and not self.observations:
+                raise ValueError(
+                    "search_inconclusive requires the actual queries or observations"
+                )
+            if not self.stop_reason.strip():
+                raise ValueError("search_inconclusive requires a stop reason")
+        elif self.outcome == "budget_exhausted":
+            if self.budget_limit <= 0 or self.budget_used < 0:
+                raise ValueError("budget_exhausted requires a declared budget")
+            if not self.remaining_frontier_ids and not self.unfinished_task_ids:
+                raise ValueError(
+                    "budget_exhausted requires the remaining frontier or unfinished tasks"
+                )
+            if not self.stop_reason.strip():
+                raise ValueError("budget_exhausted requires a stop reason")
+        else:
+            if not self.frozen_scope or not self.scope_basis.strip():
+                raise ValueError(
+                    "unsupported_with_scoped_evidence requires a frozen scope and its basis"
+                )
+            if not self.receipts:
+                raise ValueError(
+                    "unsupported_with_scoped_evidence requires at least one receipt"
+                )
+            for receipt in self.receipts:
+                if receipt.obligation_id != self.obligation_id:
+                    raise ValueError("search receipt obligation mismatch")
+                if not receipt.frontier_closed():
+                    raise ValueError(
+                        "search receipt does not prove a closed frontier"
+                    )
+        expected = _digest_payload(self.model_dump(mode="json", exclude={"content_digest"}))
+        if self.content_digest and self.content_digest != expected:
+            raise ValueError("terminal disposition content_digest mismatch")
+        object.__setattr__(self, "content_digest", expected)
+        return self
+
+
 class GapRequirementV1(_ResearchModel):
     """A typed requirement that, if unmet after exhaustive search, yields a gap."""
 
@@ -754,6 +917,15 @@ class GapRequirementV1(_ResearchModel):
     attempted_tools: tuple[str, ...] = Field(default_factory=tuple)
     terminal: Literal["open", "explicit_gap", "blocked"] = "open"
     rationale: str = ""
+    qualifier: str = ""
+    allowed_wording_boundary: str = ""
+    # R9: the typed terminal record behind this requirement.  ``explicit_gap``
+    # alone is a claim; only a receipt-backed scoped disposition authorizes the
+    # negative conclusion.
+    terminal_outcome: TerminalSearchOutcome | Literal[""] = ""
+    terminal_record_only: bool = False
+    negative_evidence_authorized: bool = False
+    search_receipt: SearchReceiptV1 | None = None
 
 
 class ResearchAgendaItemV1(_ResearchModel):
@@ -774,6 +946,8 @@ class ResearchAgendaItemV1(_ResearchModel):
     status: ResearchAgendaItemStatus = "pending"
     supported_claim_ids: list[str] = Field(default_factory=list)
     missing_information: list[str] = Field(default_factory=list)
+    required_qualifiers: list[str] = Field(default_factory=list)
+    allowed_wording_boundary: str = ""
     attempted_actions: list[ResearchAction] = Field(default_factory=list)
     candidate_symbol_ids: list[str] = Field(default_factory=list)
     candidate_behavior_node_ids: list[str] = Field(default_factory=list)
@@ -799,6 +973,34 @@ class ResearchAgendaItemV1(_ResearchModel):
                 f"obligation {self.obligation_id} marked explicit_gap without gap_requirements"
             )
         return self
+
+
+def _agenda_digest_payload(agenda: Any) -> dict[str, Any]:
+    """Digest payload for one agenda.
+
+    R10 added ``provenance`` to ``TypedBehaviorTargetV1``.  The agenda is a
+    scheduling view whose identity predates that field, so the target records
+    are digested without it; provenance is bound by
+    ``IntentObligationGraphV2.target_identity_digest`` and by the revision
+    journal instead.  Keeping it out preserves the byte identity of frozen
+    pre-R10 agendas.
+    """
+
+    items: list[Any] = []
+    for item in agenda.items:
+        dumped = item.model_dump(mode="json")
+        for target in dumped.get("typed_behavior_targets") or ():
+            if isinstance(target, dict):
+                target.pop("provenance", None)
+        items.append(dumped)
+    return {
+        "schema_version": agenda.schema_version,
+        "run_id": agenda.run_id,
+        "repo_snapshot_id": agenda.repo_snapshot_id,
+        "project_tree_hash": agenda.project_tree_hash,
+        "intent_graph_digest": agenda.intent_graph_digest,
+        "items": items,
+    }
 
 
 class ResearchAgendaV1(_ResearchModel):
@@ -827,15 +1029,7 @@ class ResearchAgendaV1(_ResearchModel):
 
     @model_validator(mode="after")
     def _compute_digest(self) -> "ResearchAgendaV1":
-        payload = {
-            "schema_version": self.schema_version,
-            "run_id": self.run_id,
-            "repo_snapshot_id": self.repo_snapshot_id,
-            "project_tree_hash": self.project_tree_hash,
-            "intent_graph_digest": self.intent_graph_digest,
-            "items": [item.model_dump(mode="json") for item in self.items],
-        }
-        digest = _digest_payload(payload)
+        digest = _digest_payload(_agenda_digest_payload(self))
         object.__setattr__(self, "content_digest", digest)
         return self
 
@@ -849,15 +1043,7 @@ class ResearchAgendaV1(_ResearchModel):
         the boundary where it is persisted or exposed to another stage.
         """
 
-        payload = {
-            "schema_version": self.schema_version,
-            "run_id": self.run_id,
-            "repo_snapshot_id": self.repo_snapshot_id,
-            "project_tree_hash": self.project_tree_hash,
-            "intent_graph_digest": self.intent_graph_digest,
-            "items": [item.model_dump(mode="json") for item in self.items],
-        }
-        digest = _digest_payload(payload)
+        digest = _digest_payload(_agenda_digest_payload(self))
         object.__setattr__(self, "content_digest", digest)
         return digest
 
@@ -1107,7 +1293,7 @@ class ResearchDecisionV1(_ResearchModel):
             "SEARCH_SYMBOLS", "READ_CANDIDATE", "TRACE_CALLS", "TRACE_DATA_FLOW",
             "INSPECT_BRANCH", "INSPECT_CONFIG", "SEARCH_HINTS",
             "BUILD_BEHAVIOR_SUBGRAPH", "PROPOSE_PACKET", "COMPILE_FACTS",
-            "DECOMPOSE_CLAIMS", "REWRITE_SENTENCES",
+            "DECOMPOSE_CLAIMS", "REWRITE_SENTENCES", "PROPOSE_TARGET_REVISION",
         }
         if self.action in tool_calling_actions and not self.selected_tool_calls:
             raise ValueError(

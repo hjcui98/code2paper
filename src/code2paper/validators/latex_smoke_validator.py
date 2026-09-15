@@ -36,12 +36,16 @@ def validate_latex_smoke(latex: str) -> dict:
     )
     with tempfile.TemporaryDirectory() as tmpdir:
         tex_path = Path(tmpdir) / "method_smoke.tex"
-        tex_path.write_text(document, encoding="utf-8")
+        # R6: the smoke input keeps LF and the captured engine output is
+        # decoded explicitly, so a non-UTF-8 locale cannot corrupt the report.
+        tex_path.write_text(document, encoding="utf-8", newline="\n")
         try:
             result = subprocess.run(
                 [engine, "-interaction=nonstopmode", "-halt-on-error", tex_path.name],
                 cwd=tmpdir,
                 text=True,
+                encoding="utf-8",
+                errors="replace",
                 stdout=subprocess.PIPE,
                 stderr=subprocess.STDOUT,
                 timeout=20,

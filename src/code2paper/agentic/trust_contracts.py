@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any, Literal
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from code2paper.agentic.method_product_models import AuthorStoryNodeV1
 
@@ -193,6 +193,23 @@ class TextEvidenceValidationReport(TrustModel):
     verification_mode: Literal["lexical_only", "semantic"] = "lexical_only"
     verdicts: list[TextClaimEvidenceVerdict] = Field(default_factory=list)
     recommended_actions: list[str] = Field(default_factory=list)
+
+    @field_validator(
+        "checked_factual_claims",
+        "supported_claims",
+        "caveated_claims",
+        "unsupported_claims",
+        "unverified_claims",
+        "semantic_verifier_calls",
+        mode="before",
+    )
+    @classmethod
+    def _reject_boolean_counts(cls, value: object) -> object:
+        """A JSON boolean must never be coerced into a measurement count."""
+
+        if isinstance(value, bool):
+            raise ValueError("validation counts must be integers, not booleans")
+        return value
 
 
 class TextTraceEntry(TrustModel):

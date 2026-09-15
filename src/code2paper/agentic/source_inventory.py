@@ -66,8 +66,45 @@ _COMPARAND_TERMS = frozenset({"baseline", "baselines", "comparand", "comparison"
 _EVALUATION_TERMS = frozenset({"eval", "evals", "evaluation", "benchmark", "metrics", "ablation"})
 
 
+def normalize_source_path(value: str) -> str:
+    """Normalize a repository-relative path without damaging hidden names."""
+
+    raw = str(value or "").strip().replace("\\", "/")
+    if not raw:
+        return ""
+    normalized = PurePosixPath(raw).as_posix()
+    # ``str.lstrip("./")`` removes the leading dot from ``.gitignore`` and
+    # other valid hidden files.  Only remove explicit current-directory
+    # prefixes; the filename itself must remain byte-identical.
+    while normalized.startswith("./"):
+        normalized = normalized[2:]
+    return "" if normalized == "." else normalized
+
+
 def _clean_path(value: str) -> str:
-    return PurePosixPath(str(value or "").replace("\\", "/")).as_posix().lstrip("./")
+    return normalize_source_path(value)
+
+
+def _is_data_container_path(parts: tuple[str, ...], suffix: str) -> bool:
+    """Whether a path belongs to the data/checkpoint partition.
+
+    A data-suffix artifact (weights, arrays, checkpoints) is always data.  For
+    everything else the container directory decides, and for *executable
+    source* only a top-level data container does: ``data/real/x/preprocess.py``
+    is dataset tooling, while ``src/dataset/ebcar_dataset.py`` or
+    ``src/models/foo.py`` is the project's own implementation that merely uses
+    a name from the data vocabulary.  Classifying the latter as data excluded
+    first-party method code from the readable source partition -- and from the
+    configuration evidence whose definition spans live in those modules.
+    """
+
+    if suffix in _DATA_SUFFIXES:
+        return True
+    if not parts:
+        return False
+    if suffix in _EXECUTABLE_SUFFIXES:
+        return parts[0] in _DATA_PARTS
+    return any(part in _DATA_PARTS for part in parts)
 
 
 def classify_source_kind(path: str) -> SourceKindV1:
@@ -82,7 +119,7 @@ def classify_source_kind(path: str) -> SourceKindV1:
         return "vendor"
     if any(part in _GENERATED_PARTS for part in parts):
         return "generated"
-    if any(part in _DATA_PARTS for part in parts) or suffix in _DATA_SUFFIXES:
+    if _is_data_container_path(parts, suffix):
         return "dataset_or_checkpoint"
     if any(part in _PAPER_PARTS for part in parts) or suffix in {".tex", ".bib"}:
         return "paper_or_draft"
@@ -112,6 +149,15 @@ class RepositorySourceEntryV1(BaseModel):
 
     @model_validator(mode="after")
     def _safe_authority(self) -> "RepositorySourceEntryV1":
+        normalized_path = _clean_path(self.path)
+        if not normalized_path or normalized_path != self.path:
+            raise ValueError(
+                f"repository source path must be normalized and relative: {self.path!r}"
+            )
+        if not self.content_digest.strip():
+            raise ValueError(
+                f"repository source entry {self.path} is missing content_digest"
+            )
         if self.source_kind in {
             "vendor", "generated", "submodule", "dataset_or_checkpoint",
         }:
@@ -143,6 +189,10 @@ class RepositorySourceManifestV1(BaseModel):
 
     @model_validator(mode="after")
     def _closed_digest(self) -> "RepositorySourceManifestV1":
+        if not self.repo_snapshot_id.strip() or not self.project_tree_hash.strip():
+            raise ValueError(
+                "repository source manifest requires snapshot and project tree identities"
+            )
         paths = tuple(item.path for item in self.entries)
         if len(paths) != len(set(paths)):
             raise ValueError("repository source manifest contains duplicate paths")
@@ -184,6 +234,7 @@ def build_repository_source_manifest(
 ) -> RepositorySourceManifestV1:
     """Build a manifest from the frozen snapshot, symbol index, and scope."""
 
+    symbols = tuple(symbols)
     symbols_by_path: dict[str, list[str]] = {}
     for symbol in symbols:
         symbol_id = str(getattr(symbol, "symbol_id", "") or "").strip()
@@ -193,9 +244,22 @@ def build_repository_source_manifest(
 
     entries: list[RepositorySourceEntryV1] = []
     anomalies: list[str] = []
+    seen_normalized_paths: set[str] = set()
     for item in sorted(getattr(repo_snapshot, "included_files", ()) or (), key=lambda value: str(getattr(value, "path", ""))):
-        path = _clean_path(str(getattr(item, "path", "") or ""))
+        raw_path = str(getattr(item, "path", "") or "")
+        path = _clean_path(raw_path)
         if not path:
+            anomalies.append("source_entry_path_missing")
+            continue
+        if raw_path != path:
+            anomalies.append(f"source_path_normalization_conflict:{raw_path}")
+        if path in seen_normalized_paths:
+            anomalies.append(f"source_path_duplicate_after_normalization:{path}")
+            continue
+        seen_normalized_paths.add(path)
+        content_digest = str(getattr(item, "content_digest", "") or "")
+        if not content_digest.strip():
+            anomalies.append(f"source_entry_digest_missing:{path}")
             continue
         source_kind = "submodule" if str(getattr(item, "kind", "file")) == "submodule" else classify_source_kind(path)
         symbol_ids = tuple(dict.fromkeys(symbols_by_path.get(path, ())))
@@ -223,11 +287,21 @@ def build_repository_source_manifest(
             source_kind=source_kind,  # type: ignore[arg-type]
             ownership_role=role,
             executable_authority=executable,
-            content_digest=str(getattr(item, "content_digest", "") or ""),
+            content_digest=content_digest,
             symbol_ids=symbol_ids,
             classification_reason=reason,
         )
         entries.append(entry)
+
+    snapshot_paths = {
+        _clean_path(str(getattr(item, "path", "") or ""))
+        for item in (getattr(repo_snapshot, "included_files", ()) or ())
+        if _clean_path(str(getattr(item, "path", "") or ""))
+    }
+    for symbol in symbols:
+        symbol_path = _clean_path(str(getattr(symbol, "path", "") or ""))
+        if symbol_path and symbol_path not in snapshot_paths:
+            anomalies.append(f"source_span_unmapped:{symbol_path}")
 
     entry_ids = set(getattr(implementation_scope, "target_entry_symbol_ids", ()) or ())
     indexed_entry_ids = {
@@ -264,11 +338,54 @@ def build_repository_source_manifest(
     )
 
 
+def source_manifest_snapshot_failures(
+    manifest: RepositorySourceManifestV1,
+    repo_snapshot: Any,
+) -> tuple[str, ...]:
+    """Compare a source manifest with the exact snapshot it claims to classify.
+
+    The manifest is an authority partition over snapshot files, not an
+    independent file list.  A replay must therefore reject missing, extra or
+    digest-mutated entries before closure compilation.  The returned codes
+    are deliberately small and deterministic so callers can persist them in
+    an admission record without exposing exception text.
+    """
+
+    failures: list[str] = []
+    snapshot_id = str(getattr(repo_snapshot, "snapshot_id", "") or "")
+    tree_hash = str(getattr(repo_snapshot, "project_tree_hash", "") or "")
+    if manifest.repo_snapshot_id != snapshot_id:
+        failures.append("unified_repo_snapshot_id_mismatch")
+    if manifest.project_tree_hash != tree_hash:
+        failures.append("unified_project_tree_hash_mismatch")
+
+    snapshot_files = {
+        _clean_path(str(getattr(item, "path", "") or "")): str(
+            getattr(item, "content_digest", "") or ""
+        )
+        for item in (getattr(repo_snapshot, "included_files", ()) or ())
+    }
+    manifest_entries = {
+        _clean_path(str(entry.path)): str(entry.content_digest)
+        for entry in manifest.entries
+    }
+    for path in sorted(set(snapshot_files) - set(manifest_entries)):
+        failures.append(f"unified_source_entry_missing:{path}")
+    for path in sorted(set(manifest_entries) - set(snapshot_files)):
+        failures.append(f"unified_source_entry_unknown:{path}")
+    for path in sorted(set(snapshot_files) & set(manifest_entries)):
+        if snapshot_files[path] != manifest_entries[path]:
+            failures.append(f"unified_source_entry_digest_mismatch:{path}")
+    return tuple(dict.fromkeys(failures))
+
+
 __all__ = [
     "SourceKindV1",
     "SourceOwnershipRoleV1",
     "RepositorySourceEntryV1",
     "RepositorySourceManifestV1",
     "classify_source_kind",
+    "normalize_source_path",
     "build_repository_source_manifest",
+    "source_manifest_snapshot_failures",
 ]

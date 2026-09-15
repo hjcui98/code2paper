@@ -19,6 +19,8 @@ import json
 import unittest
 from typing import Any
 
+import pytest
+
 from code2paper.llm.client import LLMRequest, LLMResponse
 from code2paper.llm.role_config import (
     METHOD_WRITER,
@@ -37,6 +39,10 @@ from code2paper.llm.section_writer import (
     _llm_visible_section_payload,
     _normalize_publication_paragraph_transaction,
     _publication_section_partitions,
+    _publication_paragraph_repair_contract,
+    assess_publication_content_acceptance,
+    assess_publication_content_progress,
+    assess_publication_writer_response,
     _recover_exact_formula_block_representation,
     _project_operation_to_reader_surface,
     write_publication_method_by_sections,
@@ -49,6 +55,9 @@ from code2paper.llm.response_schemas import (
     json_schema_for,
 )
 from code2paper.agentic.publication_transaction_contract import (
+    _arithmetic_relation_satisfied,
+    _top_level_addition_terms,
+    assess_paragraph_transaction,
     bind_paragraph_witnesses,
     paragraph_binding_targets,
     splice_formula_placeholders,
@@ -163,6 +172,841 @@ def test_publication_writer_executes_one_actual_call_per_shared_page() -> None:
     assert len(requests) == 2
     assert [request.input_payload["shared_context_metadata"][0]["page_index"] for request in requests] == [0, 1]
     assert result.aggregate.context_partitioned_section_ids == ["MA-S1"]
+
+
+def test_unified_v2_multi_page_writer_is_not_limited_by_legacy_output_cap() -> None:
+    """All frozen V2 pages can run before the one-repair allowance is used."""
+
+    requests: list[LLMRequest] = []
+    sections = [
+        WriterSectionInput(
+            section_id=f"MA-S1-page-{index}",
+            heading="Mechanism",
+            prompt_payload={
+                "section_id": f"MA-S1-page-{index}",
+                "shared_contexts": [f"page-{index}"],
+                "shared_context_metadata": [{
+                    "v2_page_id": f"page:{index}",
+                    "invocation_max_output_tokens": 8192,
+                }],
+            },
+            publication_mode=True,
+        )
+        for index in range(4)
+    ]
+
+    def caller(_config: LLMConfig, request: LLMRequest) -> LLMResponse:
+        requests.append(request)
+        section_id = request.input_payload["section_id"]
+        return LLMResponse(
+            text=json.dumps({
+                "section_id": section_id,
+                "heading_text": "Mechanism",
+                "section_markdown": f"Body for {section_id}.",
+            }),
+            response_hash=f"sha256:{section_id}",
+            finish_reason="stop",
+            token_usage={"completion_tokens": 8192},
+        )
+
+    result = write_publication_method_by_sections(
+        _base_config(),
+        sections,
+        llm_caller=caller,
+    )
+
+    assert len(requests) == 4
+    assert not result.aggregate.incomplete_sections
+    assert [
+        request.response_json_schema["properties"]["section_id"]["const"]
+        for request in requests
+    ] == [f"MA-S1-page-{index}" for index in range(4)]
+
+
+def test_unified_v2_transaction_failure_uses_one_declared_writer_repair() -> None:
+    calls: list[LLMRequest] = []
+    section = WriterSectionInput(
+        section_id="MA-S1",
+        heading="Mechanism",
+        publication_mode=True,
+        argument_graph={"paragraphs": [{"paragraph_id": "MA-S1:p1"}]},
+        prompt_payload={
+            "section_id": "MA-S1",
+            "heading": "Mechanism",
+            "shared_contexts": [{"page": "frozen"}],
+            "shared_context_metadata": [{"v2_page_id": "page:1"}],
+            "paragraph_transaction_required": True,
+            "binding_contract": {
+                "allowed_paragraph_ids": ["MA-S1:p1"],
+            },
+        },
+    )
+
+    def caller(_config: LLMConfig, request: LLMRequest) -> LLMResponse:
+        calls.append(request)
+        if "writer_section_repair" not in request.input_payload:
+            text = json.dumps({
+                "section_id": "MA-S1",
+                "paragraphs": [
+                    {"paragraph_id": "MA-S1:p1", "paragraph_markdown": "first"},
+                    {"paragraph_id": "MA-S1:p1", "paragraph_markdown": "first"},
+                ],
+            })
+        else:
+            text = json.dumps({
+                "section_id": "MA-S1",
+                "paragraphs": [{
+                    "paragraph_id": "MA-S1:p1",
+                    "paragraph_markdown": "repaired substantive Method prose.",
+                }],
+            })
+        return LLMResponse(
+            text=text,
+            response_hash=f"sha256:call-{len(calls)}",
+            finish_reason="stop",
+            token_usage={"completion_tokens": 1},
+        )
+
+    result = write_publication_method_by_sections(
+        _base_config(),
+        [section],
+        llm_caller=caller,
+        content_transaction_assessor=lambda *_args: (True, "transaction_gain"),
+    )
+
+    assert len(calls) == 2
+    assert calls[0].prompt_template_id == "unified_writer_page_v2"
+    assert calls[1].prompt_template_id == "unified_writer_page_v2"
+    for request in calls:
+        assert request.response_json_schema["$defs"]["PublicationMethodParagraphOutputV1"][
+            "properties"
+        ]["paragraph_id"]["enum"] == ["MA-S1:p1"]
+    assert "paragraph_transaction_repairs" in calls[1].input_payload[
+        "writer_section_repair"
+    ]
+    assert result.aggregate.writer_repair_rounds == 1
+    assert result.aggregate.writer_repair_commits == 1
+    assert not result.aggregate.incomplete_sections
+    assert result.outputs[0].paragraphs[0].paragraph_markdown == (
+        "repaired substantive Method prose."
+    )
+    assert result.outputs[0].rendered_paragraph_ids == ["MA-S1:p1"]
+
+
+def test_unified_v2_formula_repair_packet_keeps_page_formula_contract() -> None:
+    calls: list[LLMRequest] = []
+    package = {
+        "package_id": "pkg:test:v2-formula",
+        "consumer_paragraph_id": "MA-S1:p1",
+        "markdown_block": "$$\nL = q + k\n$$",
+        "latex": "L = q + k",
+    }
+    section = WriterSectionInput(
+        section_id="MA-S1",
+        heading="Mechanism",
+        publication_mode=True,
+        argument_graph={"paragraphs": [{"paragraph_id": "MA-S1:p1"}]},
+        prompt_payload={
+            "section_id": "MA-S1",
+            "heading": "Mechanism",
+            "shared_contexts": [{"page": "frozen"}],
+            "shared_context_metadata": [{"v2_page_id": "page:1"}],
+            "paragraph_transaction_required": True,
+            "formula_packages": [package],
+            "formula_placeholders_required": True,
+            "binding_contract": {
+                "allowed_paragraph_ids": ["MA-S1:p1"],
+                "allowed_formula_package_ids": ["pkg:test:v2-formula"],
+            },
+        },
+    )
+
+    def caller(_config: LLMConfig, request: LLMRequest) -> LLMResponse:
+        calls.append(request)
+        paragraph = "The operation is described."
+        if "writer_section_repair" in request.input_payload:
+            paragraph += " [[FORMULA:pkg:test:v2-formula]]"
+        return LLMResponse(
+            text=json.dumps({
+                "section_id": "MA-S1",
+                "paragraphs": [{
+                    "paragraph_id": "MA-S1:p1",
+                    "paragraph_markdown": paragraph,
+                }],
+            }),
+            response_hash=f"sha256:v2-formula-{len(calls)}",
+            finish_reason="stop",
+            token_usage={"completion_tokens": 1},
+        )
+
+    result = write_publication_method_by_sections(
+        _base_config(),
+        [section],
+        llm_caller=caller,
+        content_transaction_assessor=lambda *_args: (True, "transaction_gain"),
+    )
+
+    assert len(calls) == 2
+    repair = calls[1].input_payload["writer_section_repair"]
+    assert repair["formula_packages"] == [{
+        "package_id": "pkg:test:v2-formula",
+        "consumer_paragraph_id": "MA-S1:p1",
+        "placeholder": "[[FORMULA:pkg:test:v2-formula]]",
+    }]
+    assert repair["missing_formula_witnesses"] == [
+        "[[FORMULA:pkg:test:v2-formula]]"
+    ]
+    assert "Do not write or alter the mathematical block" in repair[
+        "formula_placeholder_instruction"
+    ]
+    assert result.aggregate.writer_repair_commits == 1
+    assert "$$\nL = q + k\n$$" in result.outputs[0].paragraphs[0].paragraph_markdown
+
+
+def test_unified_v2_empty_stream_failure_uses_one_declared_writer_repair() -> None:
+    calls: list[LLMRequest] = []
+    section = WriterSectionInput(
+        section_id="MA-S1",
+        heading="Mechanism",
+        publication_mode=True,
+        argument_graph={"paragraphs": [{"paragraph_id": "MA-S1:p1"}]},
+        prompt_payload={
+            "section_id": "MA-S1",
+            "heading": "Mechanism",
+            "shared_contexts": [{"page": "frozen"}],
+            "shared_context_metadata": [{"v2_page_id": "page:1"}],
+            "paragraph_transaction_required": True,
+            "binding_contract": {"allowed_paragraph_ids": ["MA-S1:p1"]},
+        },
+    )
+
+    def caller(_config: LLMConfig, request: LLMRequest) -> LLMResponse:
+        calls.append(request)
+        if "writer_section_repair" not in request.input_payload:
+            return LLMResponse(
+                text="",
+                response_hash="sha256:empty-stream",
+                blocked_reason="provider_stream_finished_before_complete_json",
+            )
+        return LLMResponse(
+            text=json.dumps({
+                "section_id": "MA-S1",
+                "paragraphs": [{
+                    "paragraph_id": "MA-S1:p1",
+                    "paragraph_markdown": "recovered after representation failure.",
+                }],
+            }),
+            response_hash="sha256:repair",
+            finish_reason="stop",
+            token_usage={"completion_tokens": 1},
+        )
+
+    result = write_publication_method_by_sections(
+        _base_config(),
+        [section],
+        llm_caller=caller,
+        content_transaction_assessor=lambda *_args: (True, "transaction_gain"),
+    )
+
+    assert len(calls) == 2
+    assert calls[0].prompt_template_id == "unified_writer_page_v2"
+    assert calls[1].prompt_template_id == "unified_writer_page_v2"
+    assert "writer_section_repair" in calls[1].input_payload
+    assert result.aggregate.writer_repair_rounds == 1
+    assert result.aggregate.writer_repair_commits == 1
+    assert not result.aggregate.incomplete_sections
+    assert result.outputs[0].paragraphs[0].paragraph_markdown == (
+        "recovered after representation failure."
+    )
+
+
+def test_unified_v2_content_failed_repair_is_not_counted_as_commit() -> None:
+    """A non-empty but blocked paragraph repair stays incomplete."""
+
+    calls: list[LLMRequest] = []
+    section = WriterSectionInput(
+        section_id="MA-S1",
+        heading="Mechanism",
+        publication_mode=True,
+        argument_graph={"paragraphs": [{"paragraph_id": "MA-S1:p1"}]},
+        prompt_payload={
+            "section_id": "MA-S1",
+            "heading": "Mechanism",
+            "shared_contexts": [{"page": "frozen"}],
+            "shared_context_metadata": [{"v2_page_id": "page:1"}],
+            "paragraph_transaction_required": True,
+            "binding_contract": {"allowed_paragraph_ids": ["MA-S1:p1"]},
+        },
+    )
+
+    def caller(_config: LLMConfig, request: LLMRequest) -> LLMResponse:
+        calls.append(request)
+        if "writer_section_repair" not in request.input_payload:
+            return LLMResponse(
+                text="",
+                response_hash="sha256:empty-content-failure",
+                blocked_reason="provider_stream_finished_before_complete_json",
+            )
+        return LLMResponse(
+            text=json.dumps({
+                "section_id": "MA-S1",
+                "heading_text": "Mechanism",
+                "section_markdown": "## Mechanism",
+                "paragraphs": [{
+                    "paragraph_id": "MA-S1:p1",
+                    "paragraph_markdown": "## Mechanism",
+                }],
+            }),
+            response_hash="sha256:title-only-repair",
+            finish_reason="stop",
+            token_usage={"completion_tokens": 1},
+        )
+
+    result = write_publication_method_by_sections(
+        _base_config(),
+        [section],
+        llm_caller=caller,
+    )
+
+    assert len(calls) == 2
+    assert result.aggregate.writer_repair_rounds == 1
+    assert result.aggregate.writer_repair_commits == 0
+    assert result.aggregate.incomplete_sections == ["MA-S1"]
+
+
+def test_unified_v2_repairs_unique_casefold_paragraph_id() -> None:
+    recovery: list[dict[str, Any]] = []
+    section = WriterSectionInput(
+        section_id="MA-S1",
+        heading="Mechanism",
+        publication_mode=True,
+        argument_graph={"paragraphs": [{"paragraph_id": "MA-S1:p1"}]},
+        prompt_payload={"section_id": "MA-S1"},
+    )
+    output = PublicationMethodSectionOutputV1(
+        section_id="MA-S1",
+        paragraphs=[PublicationMethodParagraphOutputV1(
+            paragraph_id="ma-s1:P1",
+            paragraph_markdown="body",
+        )],
+    )
+
+    normalized, failures = _normalize_publication_paragraph_transaction(
+        output,
+        section=section,
+        require_transactions=True,
+        binder_recovery_sink=recovery,
+    )
+
+    assert failures == []
+    assert normalized.paragraphs[0].paragraph_id == "MA-S1:p1"
+    assert recovery[0]["operation"] == "repair_casefold_paragraph_id"
+
+
+def test_paragraph_heading_recovery_preserves_fused_body_and_rejects_heading_only() -> None:
+    section = WriterSectionInput(
+        section_id="MA-S1",
+        heading="Known heading",
+        publication_mode=True,
+        argument_graph={"paragraphs": [{"paragraph_id": "MA-S1:p1"}]},
+        prompt_payload={"paragraph_transaction_required": True},
+    )
+    fused = PublicationMethodSectionOutputV1(
+        section_id="MA-S1",
+        paragraphs=[PublicationMethodParagraphOutputV1(
+            paragraph_id="MA-S1:p1",
+            paragraph_markdown="## Known headingThe method maps inputs to outputs.",
+        )],
+    )
+    recovery: list[dict[str, Any]] = []
+    normalized, failures = _normalize_publication_paragraph_transaction(
+        fused,
+        section=section,
+        require_transactions=True,
+        binder_recovery_sink=recovery,
+    )
+    assert failures == []
+    assert normalized.paragraphs[0].paragraph_markdown == (
+        "The method maps inputs to outputs."
+    )
+    assert recovery[-1]["operation"] == "repair_known_section_heading_from_paragraph"
+
+    heading_only = fused.model_copy(update={
+        "paragraphs": [fused.paragraphs[0].model_copy(
+            update={"paragraph_markdown": "## Known heading"}
+        )]
+    })
+    _normalized, heading_failures = _normalize_publication_paragraph_transaction(
+        heading_only,
+        section=section,
+        require_transactions=True,
+    )
+    assert any("paragraph_body_not_substantive" in item for item in heading_failures)
+
+
+def test_arithmetic_gate_ignores_nested_shape_addition_but_rejects_wrong_sum() -> None:
+    zeros = (
+        "dedicated_attention_mask = torch.zeros("
+        "(batch_size, num_passages + 1, num_passages + 1), "
+        "device=self.device)"
+    )
+    assert _top_level_addition_terms(zeros) == ()
+    shape_constraints = {
+        "exact": (zeros,),
+        "semantic_atom": (
+            "transformation: calls transforms torch.zeros, "
+            "(batch_size, num_passages + 1, num_passages + 1), "
+            "device=self.device into dedicated_attention_mask"
+        ),
+        "paper_role": "operation",
+        "conditions": (),
+    }
+    assert _arithmetic_relation_satisfied(zeros, shape_constraints)
+    assert _arithmetic_relation_satisfied(
+        "A zero tensor is allocated with the requested shape.",
+        shape_constraints,
+    )
+
+    addition_constraints = {
+        "exact": ("combined = document_embeddings + passage_embeddings",),
+        "semantic_atom": "document_embeddings + passage_embeddings",
+        "paper_role": "operation",
+        "conditions": (),
+    }
+    assert _top_level_addition_terms(addition_constraints["exact"][0]) == (
+        "document_embeddings",
+        "passage_embeddings",
+    )
+    assert _arithmetic_relation_satisfied(
+        "The result sums document embeddings and passage embeddings.",
+        addition_constraints,
+    )
+    for wrong in (
+        "The result multiplies document embeddings and passage embeddings.",
+        "The result adds only document embeddings.",
+        "The result is not added to the passage embeddings.",
+    ):
+        assert not _arithmetic_relation_satisfied(wrong, addition_constraints)
+
+
+def test_conditioned_operations_still_require_the_authorized_sum() -> None:
+    constraints = {
+        "exact": ("result = left_embeddings + right_embeddings",),
+        "semantic_atom": "left_embeddings + right_embeddings",
+        "paper_role": "operation",
+        "conditions": ("cfg.enable_fusion",),
+    }
+    assert _arithmetic_relation_satisfied(
+        "When fusion is enabled, add left embeddings and right embeddings.",
+        constraints,
+    )
+    for wrong in (
+        "When fusion is enabled, multiply left embeddings and right embeddings.",
+        "When fusion is enabled, add only left embeddings.",
+    ):
+        assert not _arithmetic_relation_satisfied(wrong, constraints)
+    guard = {**constraints, "paper_role": "condition", "semantic_atom": "cfg.enable_fusion"}
+    assert _arithmetic_relation_satisfied("When fusion is enabled.", guard)
+    assert not _arithmetic_relation_satisfied(
+        "When fusion is enabled.", {**guard, "semantic_atom": "unrelated_guard"}
+    )
+
+
+def test_publication_repair_packet_exposes_only_authorized_source_excerpts() -> None:
+    section = WriterSectionInput(
+        section_id="MA-S1",
+        heading="Mechanism",
+        publication_mode=True,
+        argument_graph={"paragraphs": [{
+            "paragraph_id": "MA-S1:p1",
+            "paragraph_role": "construction",
+            "required_detail_ids": ["detail:op"],
+            "witness_contract": {"targets": [{
+                "target_kind": "detail",
+                "target_id": "detail:op",
+                "detail_id": "detail:op",
+                "paper_role": "transformation",
+                "semantic_atom": "transforms the input",
+                "required_conditions": ["when enabled"],
+                "required_polarity": "conditional",
+                "allowed_exact_excerpts": ["x = transform(input)"],
+            }]},
+        }]},
+        prompt_payload={"section_id": "MA-S1"},
+    )
+    response = LLMResponse(
+        text="",
+        response_hash="sha256:empty",
+        metadata=PublicationMethodSectionOutputV1(
+            section_id="MA-S1",
+            paragraphs=[PublicationMethodParagraphOutputV1(
+                paragraph_id="MA-S1:p1",
+                paragraph_markdown="Mechanism",
+            )],
+        ),
+    )
+
+    repairs = _publication_paragraph_repair_contract(section, response)
+
+    assert len(repairs) == 1
+    target = repairs[0]["missing_targets"][0]
+    assert target["authorized_source_excerpts"] == ["x = transform(input)"]
+    assert "target_id" not in target
+    assert "source_anchor_ids" not in target
+
+
+def test_publication_repair_packet_expands_missing_detail_atoms_with_owner() -> None:
+    section = WriterSectionInput(
+        section_id="MA-S1",
+        heading="Mechanism",
+        publication_mode=True,
+        argument_graph={"paragraphs": [{
+            "paragraph_id": "MA-S1:p1",
+            "required_detail_ids": ["detail:op"],
+            "witness_contract": {"targets": [
+                {
+                    "target_kind": "atom",
+                    "target_id": "atom:operation",
+                    "detail_id": "detail:op",
+                    "paper_role": "operation",
+                    "semantic_atom": "transforms inputs into outputs",
+                    "allowed_exact_excerpts": ["x = transform(inputs)"],
+                    "required": True,
+                },
+                {
+                    "target_kind": "atom",
+                    "target_id": "atom:output",
+                    "detail_id": "detail:op",
+                    "paper_role": "output",
+                    "semantic_atom": "outputs representations",
+                    "allowed_exact_excerpts": ["y = representations"],
+                    "required": True,
+                },
+            ]},
+        }]},
+        prompt_payload={"section_id": "MA-S1"},
+    )
+    output = PublicationMethodSectionOutputV1(
+        section_id="MA-S1",
+        paragraphs=[PublicationMethodParagraphOutputV1(
+            paragraph_id="MA-S1:p1",
+            paragraph_markdown=(
+                "The method transforms inputs into outputs and produces "
+                "representations."
+            ),
+        )],
+    )
+    response = LLMResponse(
+        text="",
+        response_hash="sha256:atoms",
+        blocked_reason="publication_paragraph_transaction_failed:detail",
+        metadata=output,
+    )
+    repairs = _publication_paragraph_repair_contract(section, response)
+    assert len(repairs) == 1
+    atom_targets = repairs[0]["missing_atom_targets"]
+    assert len(atom_targets) == 2
+    assert len(repairs[0]["missing_targets"]) == 2
+    assert {item["paper_role"] for item in atom_targets} == {"operation", "output"}
+    assert all("target_id" not in item for item in atom_targets)
+    assert all(item["repair_owner"] in {"writer", "binder"} for item in atom_targets)
+
+
+def test_deterministic_binder_projects_source_atoms_to_reader_anchors() -> None:
+    """A frozen prose sentence can close source-shaped CALL/interface atoms."""
+
+    section = WriterSectionInput(
+        section_id="MA-S1",
+        heading="Attention",
+        prompt_payload={},
+        publication_mode=True,
+        argument_graph={"paragraphs": [{
+            "paragraph_id": "MA-S1:p1",
+            "required_detail_ids": ["detail:mask"],
+            "witness_contract": {"targets": [
+                {
+                    "target_kind": "atom",
+                    "target_id": "atom:call",
+                    "detail_id": "detail:mask",
+                    "paper_role": "operation",
+                    "semantic_atom": "CALL operation",
+                    "allowed_exact_excerpts": [
+                        "dedicated_attention_mask = torch.zeros((batch_size + 1,), device=self.device)"
+                    ],
+                    "required": True,
+                },
+                {
+                    "target_kind": "atom",
+                    "target_id": "atom:device",
+                    "detail_id": "detail:mask",
+                    "paper_role": "operand",
+                    "semantic_atom": "device=self.device",
+                    "allowed_exact_excerpts": [
+                        "dedicated_attention_mask = torch.zeros((batch_size + 1,), device=self.device)"
+                    ],
+                    "required": True,
+                },
+                {
+                    "target_kind": "atom",
+                    "target_id": "atom:output",
+                    "detail_id": "detail:mask",
+                    "paper_role": "interface",
+                    "semantic_atom": "sym:attention",
+                    "allowed_exact_excerpts": [
+                        "dedicated_attention_mask = torch.zeros((batch_size + 1,), device=self.device)"
+                    ],
+                    "required": True,
+                },
+            ]},
+        }]},
+    )
+    output = PublicationMethodSectionOutputV1(
+        section_id="MA-S1",
+        paragraphs=[PublicationMethodParagraphOutputV1(
+            paragraph_id="MA-S1:p1",
+            paragraph_markdown=(
+                "The dedicated attention mask is produced by calling torch.zeros "
+                "with shape (batch size + 1) on the model's device."
+            ),
+        )],
+    )
+
+    normalized, failures = _normalize_publication_paragraph_transaction(
+        output,
+        section=section,
+        require_transactions=True,
+    )
+
+    assert failures == []
+    assert normalized.paragraphs[0].rendered_detail_ids == ["detail:mask"]
+    assert {
+        witness.target_id for witness in normalized.paragraphs[0].witnesses
+    } == {"atom:call", "atom:device", "atom:output"}
+
+    natural_output = output.model_copy(update={
+        "paragraphs": [output.paragraphs[0].model_copy(update={
+            "paragraph_markdown": (
+                "The dedicated attention mask is constructed by zero-initialization "
+                "on the model's device."
+            ),
+            "witnesses": [],
+        })],
+    })
+    natural_normalized, natural_failures = _normalize_publication_paragraph_transaction(
+        natural_output,
+        section=section,
+        require_transactions=True,
+    )
+    assert natural_failures == []
+    assert {
+        witness.target_id for witness in natural_normalized.paragraphs[0].witnesses
+    } == {"atom:call", "atom:device", "atom:output"}
+
+
+def test_atom_gain_is_a_valid_bounded_repair_progress_signal() -> None:
+    section = WriterSectionInput(
+        section_id="MA-S1",
+        heading="Mechanism",
+        prompt_payload={},
+        publication_mode=True,
+        argument_graph={"paragraphs": [{
+            "paragraph_id": "MA-S1:p1",
+            "required_detail_ids": ["detail:op"],
+            "witness_contract": {"targets": [{
+                "target_kind": "atom",
+                "target_id": "atom:op",
+                "detail_id": "detail:op",
+                "paper_role": "output",
+                "semantic_atom": "produces result",
+                "allowed_exact_excerpts": ["result = transform(input)"],
+                "required": True,
+            }, {
+                "target_kind": "atom",
+                "target_id": "atom:other",
+                "detail_id": "detail:op",
+                "paper_role": "output",
+                "semantic_atom": "produces representation",
+                "allowed_exact_excerpts": ["result = transform(input)"],
+                "required": True,
+            }]},
+        }]},
+    )
+    incumbent = LLMResponse(
+        text="",
+        response_hash="sha256:incumbent",
+        metadata=PublicationMethodSectionOutputV1(
+            section_id="MA-S1",
+            paragraphs=[PublicationMethodParagraphOutputV1(
+                paragraph_id="MA-S1:p1",
+                paragraph_markdown="The transformation is described.",
+            )],
+        ),
+    )
+    candidate = LLMResponse(
+        text="",
+        response_hash="sha256:candidate",
+        metadata=PublicationMethodSectionOutputV1(
+            section_id="MA-S1",
+            paragraphs=[PublicationMethodParagraphOutputV1(
+                paragraph_id="MA-S1:p1",
+                paragraph_markdown="The transformation produces the result.",
+                witnesses=[PublicationContentWitnessV1(
+                    witness_kind="atom",
+                    target_id="atom:op",
+                    exact_text="The transformation produces the result.",
+                )],
+            )],
+        ),
+    )
+
+    assert assess_publication_content_progress(section, incumbent, candidate) == (
+        True,
+        "atom_gain",
+    )
+
+
+def test_source_anchor_resolves_similar_embedding_sentences() -> None:
+    """Prefer the source-derived lookup sentence when prose has a tie."""
+
+    section = WriterSectionInput(
+        section_id="MA-S1",
+        heading="Position encoding",
+        prompt_payload={},
+        publication_mode=True,
+        argument_graph={"paragraphs": [{
+            "paragraph_id": "MA-S1:p1",
+            "required_detail_ids": ["detail:embedding"],
+            "witness_contract": {"targets": [
+                {
+                    "target_kind": "atom",
+                    "target_id": "atom:call",
+                    "detail_id": "detail:embedding",
+                    "paper_role": "operation",
+                    "semantic_atom": "CALL operation",
+                    "allowed_exact_excerpts": [
+                        "passage_id_embeddings = self.passage_id_embedding("
+                        "passage_id.long())"
+                    ],
+                },
+                {
+                    "target_kind": "atom",
+                    "target_id": "atom:embedding",
+                    "detail_id": "detail:embedding",
+                    "paper_role": "operand",
+                    "semantic_atom": "self.passage_id_embedding",
+                    "allowed_exact_excerpts": [
+                        "passage_id_embeddings = self.passage_id_embedding("
+                        "passage_id.long())"
+                    ],
+                },
+                {
+                    "target_kind": "atom",
+                    "target_id": "atom:output",
+                    "detail_id": "detail:embedding",
+                    "paper_role": "output",
+                    "semantic_atom": "passage_id_embeddings",
+                    "allowed_exact_excerpts": [
+                        "passage_id_embeddings = self.passage_id_embedding("
+                        "passage_id.long())"
+                    ],
+                },
+            ]},
+        }]},
+    )
+    output = PublicationMethodSectionOutputV1(
+        section_id="MA-S1",
+        paragraphs=[PublicationMethodParagraphOutputV1(
+            paragraph_id="MA-S1:p1",
+            paragraph_markdown=(
+                "The document and passage embeddings are added directly to the "
+                "passage representation. Each passage identifier is used as the "
+                "index into a passage-position embedding table, producing a "
+                "passage-ID embedding."
+            ),
+        )],
+    )
+
+    normalized, failures = _normalize_publication_paragraph_transaction(
+        output,
+        section=section,
+        require_transactions=True,
+    )
+
+    assert failures == []
+    assert normalized.paragraphs[0].rendered_detail_ids == ["detail:embedding"]
+    assert {
+        witness.target_id for witness in normalized.paragraphs[0].witnesses
+    } == {"atom:call", "atom:embedding", "atom:output"}
+
+
+def test_unified_page_projection_keeps_page_and_compacts_duplicate_contracts() -> None:
+    page = {
+        "archive_digest": "sha256:page",
+        "atoms": [{"_atom_id": "atom:1", "exact_excerpts": ["x = 1"]}],
+    }
+    target = {
+        "target_id": "atom:1",
+        "target_kind": "atom",
+        "detail_id": "detail:1",
+        "semantic_atom": "repeated semantic text",
+        "allowed_anchor_ids": ["span:1"],
+        "allowed_exact_excerpts": ["x = 1"],
+        "required": True,
+        "required_polarity": "positive",
+        "required_conditions": ["when enabled"],
+    }
+    section = WriterSectionInput(
+        section_id="MA-S1",
+        heading="Mechanism",
+        publication_mode=True,
+        prompt_payload={
+            "section_id": "MA-S1",
+            "heading": "Mechanism",
+            "narrative_plan": {
+                "section_id": "MA-S1",
+                "heading": "Mechanism",
+                "mechanism_ids": ["mech:1"],
+                "page_id": "page:1",
+                "content_digest": "sha256:narrative",
+                "paragraphs": [{
+                    "paragraph_id": "p:1",
+                    "section_id": "MA-S1",
+                    "role": "construction",
+                    "required_detail_ids": ["detail:1"],
+                    "witness_contract": {
+                        "schema_version": "1",
+                        "paragraph_id": "p:1",
+                        "rhetorical_goal": "explain",
+                        "targets": [target],
+                    },
+                }],
+            },
+            "shared_contexts": [page],
+            "binding_contract": {
+                "allowed_detail_ids": ["detail:1"],
+                "required_detail_ids": ["detail:1"],
+                "allowed_atom_ids": ["atom:1"],
+                "required_atom_ids": ["atom:1"],
+                "detail_witness_contracts": {"detail:1": [target]},
+                "atom_contracts_by_detail": {"detail:1": [target]},
+            },
+        },
+    )
+
+    visible = _llm_visible_section_payload(section)
+
+    assert visible["shared_contexts"] == [page]
+    visible_target = visible["narrative_plan"]["paragraphs"][0]["witness_contract"]["targets"][0]
+    assert visible_target == {
+        "target_id": "atom:1",
+        "target_kind": "atom",
+        "detail_id": "detail:1",
+        "required": True,
+    }
+    assert "semantic_atom" not in visible_target
+    assert "allowed_anchor_ids" not in visible_target
+    assert "allowed_exact_excerpts" not in visible_target
+    assert section.prompt_payload["binding_contract"]["detail_witness_contracts"]["detail:1"][0] == target
 
 
 def test_v2_surface_bounds_author_specification_before_writer_sees_it() -> None:
@@ -407,6 +1251,58 @@ def test_formula_placeholder_replacement_preserves_formalizer_block_verbatim() -
     assert "formula_placeholder_wrong_consumer:package:augmentation" in wrong_consumer
 
 
+def test_repeated_formula_bindings_follow_placeholder_occurrences() -> None:
+    packages = [
+        {"package_id": "pkg:first", "latex": "y = f(x)"},
+        {"package_id": "pkg:second", "latex": "y = f(x)"},
+    ]
+    body = "Initialization: [[FORMULA:pkg:first]]. Update: [[FORMULA:pkg:second]]."
+    witnesses: list[dict[str, str]] = []
+    rendered, failures = splice_formula_placeholders(
+        body, packages, required_package_ids=("pkg:first", "pkg:second"),
+        allowed_package_ids=("pkg:first", "pkg:second"), witness_sink=witnesses,
+    )
+    assert not failures
+    assert rendered == splice_formula_placeholders(body, packages)[0]
+    assert len(witnesses) == 2
+    assert witnesses[0]["target_id"] == "pkg:first"
+    assert witnesses[1]["target_id"] == "pkg:second"
+    assert witnesses[0]["exact_text"] != witnesses[1]["exact_text"]
+    for witness in witnesses:
+        assert rendered.count(witness["exact_text"]) == 1
+        assert "$$\ny = f(x)\n$$" in witness["exact_text"]
+    assessment = assess_paragraph_transaction({
+        "paragraph_id": "p1", "paragraph_markdown": rendered,
+        "used_formula_package_ids": ["pkg:first", "pkg:second"],
+        "witnesses": witnesses,
+    }, plan_row={"paragraph_id": "p1"})
+    assert not assessment.invalid_witnesses
+
+    # Equal rendered formulas without owner-checked placeholders supply no
+    # occurrence provenance and must not gain bindings through this path.
+    unbound: list[dict[str, str]] = []
+    assert splice_formula_placeholders(rendered, packages, witness_sink=unbound) == (rendered, ())
+    assert unbound == []
+
+
+@pytest.mark.parametrize("body,allowed,expected_failure", [
+    ("[[FORMULA:pkg:first]] [[FORMULA:pkg:first]]", ("pkg:first",), "formula_placeholder_duplicate:"),
+    ("[[FORMULA:pkg:unknown]]", ("pkg:first",), "formula_placeholder_unknown_package:"),
+    ("[[FORMULA:pkg:first]]", ("pkg:other",), "formula_placeholder_wrong_consumer:"),
+])
+def test_failed_formula_splice_never_publishes_occurrence_bindings(
+    body: str, allowed: tuple[str, ...], expected_failure: str,
+) -> None:
+    witnesses: list[dict[str, str]] = []
+    rendered, failures = splice_formula_placeholders(
+        body, [{"package_id": "pkg:first", "latex": "y = f(x)"}],
+        allowed_package_ids=allowed, witness_sink=witnesses,
+    )
+    assert rendered == body
+    assert any(failure.startswith(expected_failure) for failure in failures)
+    assert witnesses == []
+
+
 def test_splice_strips_formula_memo_wrapper_to_display_math() -> None:
     latex = r"\Delta t = f(\tau)"
     rendered, failures = splice_formula_placeholders(
@@ -617,6 +1513,73 @@ def test_binder_does_not_bind_ambiguous_omitted_slot_sentence() -> None:
     assert bound["witnesses"] == []
 
 
+def test_binder_recovers_reader_language_for_closed_library_operations() -> None:
+    """Source-backed operation aliases may bridge normal Method wording.
+
+    The model need not copy ``torch.sort``/``torch.cat`` into prose, but the
+    Binder must still require distinctive operands from the same frozen
+    source excerpt before deriving a required Detail from its atoms.
+    """
+
+    sort_row = {
+        "paragraph_id": "paragraph:method:sort",
+        "required_detail_ids": ["detail:sort"],
+        "witness_contract": {"targets": [{
+            "target_kind": "atom",
+            "target_id": "atom:sort:operation",
+            "detail_id": "detail:sort",
+            "semantic_atom": "sorts_by operation",
+            "paper_role": "operation",
+            "allowed_exact_excerpts": [
+                "relevance_scores, indices = torch.sort("
+                "similarities, dim=1, descending=True)"
+            ],
+            "required": True,
+        }]},
+    }
+    sort_transaction = {
+        "paragraph_id": sort_row["paragraph_id"],
+        "paragraph_markdown": (
+            "The similarity scores are sorted in descending order via "
+            "torch.sort, producing relevance scores and permutation indices."
+        ),
+        "witnesses": [],
+    }
+    sort_bound = bind_paragraph_witnesses(sort_transaction, plan_row=sort_row)
+    assert sort_bound["rendered_detail_ids"] == ["detail:sort"]
+    assert sort_bound["witnesses"][0]["target_id"] == "atom:sort:operation"
+
+    concat_row = {
+        "paragraph_id": "paragraph:method:concat",
+        "required_detail_ids": ["detail:concat"],
+        "witness_contract": {"targets": [{
+            "target_kind": "atom",
+            "target_id": "atom:concat:operation",
+            "detail_id": "detail:concat",
+            "semantic_atom": "concatenates operation",
+            "paper_role": "operation",
+            "allowed_exact_excerpts": [
+                "temp_indices = torch.cat((torch.tensor([True]), temp_indices))"
+            ],
+            "required": True,
+        }]},
+    }
+    concat_transaction = {
+        "paragraph_id": concat_row["paragraph_id"],
+        "paragraph_markdown": (
+            "A True sentinel is prepended to the passage indices by "
+            "concatenation."
+        ),
+        "witnesses": [],
+    }
+    concat_bound = bind_paragraph_witnesses(
+        concat_transaction,
+        plan_row=concat_row,
+    )
+    assert concat_bound["rendered_detail_ids"] == ["detail:concat"]
+    assert concat_bound["witnesses"][0]["target_id"] == "atom:concat:operation"
+
+
 def test_binder_allows_one_sentence_to_witness_two_closed_facets() -> None:
     sentence = (
         "The dense retriever produces candidate passage embeddings for the query."
@@ -654,6 +1617,121 @@ def test_binder_allows_one_sentence_to_witness_two_closed_facets() -> None:
         "facet:retrieval",
     ]
     assert all(item["exact_text"] in sentence for item in bound["witnesses"])
+
+
+def _detail_atom_plan_row() -> dict[str, Any]:
+    exact = "passages + document_id_embeddings + passage_id_embeddings"
+    return {
+        "paragraph_id": "paragraph:method:detail",
+        "required_detail_ids": ["detail:1"],
+        "optional_detail_ids": [],
+        "witness_contract": {
+            "targets": [
+                {
+                    "target_kind": "atom",
+                    "target_id": "atom:document",
+                    "detail_id": "detail:1",
+                    "semantic_atom": "document_id_embeddings",
+                    "allowed_exact_excerpts": [exact],
+                    "required": True,
+                },
+                {
+                    "target_kind": "atom",
+                    "target_id": "atom:passage",
+                    "detail_id": "detail:1",
+                    "semantic_atom": "passage_id_embeddings",
+                    "allowed_exact_excerpts": [exact],
+                    "required": True,
+                },
+                {
+                    "target_kind": "atom",
+                    "target_id": "atom:condition",
+                    "detail_id": "detail:1",
+                    "semantic_atom": "self.cfg.add_positional_encoding",
+                    "required_conditions": ["self.cfg.add_positional_encoding"],
+                    "allowed_exact_excerpts": [exact],
+                    "required": True,
+                },
+            ],
+        },
+    }
+
+
+def _detail_atom_body() -> str:
+    return (
+        "When positional encoding is enabled, document ID embeddings are "
+        "combined with passage representations, and passage ID embeddings "
+        "are added to the resulting tensor."
+    )
+
+
+def test_v3_atom_detail_id_is_preserved_and_complete_atoms_derive_detail() -> None:
+    plan_row = _detail_atom_plan_row()
+    transaction = {
+        "paragraph_id": plan_row["paragraph_id"],
+        "paragraph_markdown": _detail_atom_body(),
+        "rendered_detail_ids": [],
+        "witnesses": [],
+    }
+
+    targets = paragraph_binding_targets(transaction, plan_row=plan_row)
+    assert {item["detail_id"] for item in targets} == {"detail:1"}
+
+    bound = bind_paragraph_witnesses(transaction, plan_row=plan_row)
+    assert bound["rendered_detail_ids"] == ["detail:1"]
+    assert len(bound["witnesses"]) == 3
+    assessment = assess_paragraph_transaction(
+        bound,
+        plan_row=plan_row,
+    )
+    assert assessment.valid is True
+    assert assessment.witnessed_by_kind["detail"] == ("detail:1",)
+
+
+def test_v3_atom_detail_stays_incomplete_when_one_required_atom_is_absent() -> None:
+    plan_row = _detail_atom_plan_row()
+    transaction = {
+        "paragraph_id": plan_row["paragraph_id"],
+        "paragraph_markdown": (
+            "When positional encoding is enabled, document ID embeddings "
+            "are indexed by the document identifier."
+        ),
+        "rendered_detail_ids": [],
+        "witnesses": [],
+    }
+
+    bound = bind_paragraph_witnesses(transaction, plan_row=plan_row)
+    assert bound["rendered_detail_ids"] == []
+    assessment = assess_paragraph_transaction(bound, plan_row=plan_row)
+    assert assessment.valid is False
+    assert assessment.missing_by_kind["detail"] == ("detail:1",)
+
+
+def test_v3_complete_atoms_pass_pydantic_transaction_normalization() -> None:
+    plan_row = _detail_atom_plan_row()
+    section = WriterSectionInput(
+        section_id="section:detail",
+        heading="Detail",
+        publication_mode=True,
+        argument_graph={"paragraphs": [plan_row]},
+        prompt_payload={"section_id": "section:detail"},
+    )
+    output = PublicationMethodSectionOutputV1(
+        section_id="section:detail",
+        paragraphs=[PublicationMethodParagraphOutputV1(
+            paragraph_id=plan_row["paragraph_id"],
+            paragraph_markdown=_detail_atom_body(),
+        )],
+    )
+
+    normalized, failures = _normalize_publication_paragraph_transaction(
+        output,
+        section=section,
+        require_transactions=True,
+    )
+
+    assert failures == []
+    assert normalized.paragraphs[0].rendered_detail_ids == ["detail:1"]
 
 
 class _RecordingCaller:
@@ -708,6 +1786,12 @@ class DefaultSystemPromptTests(unittest.TestCase):
         prompt = default_section_system_prompt()
         self.assertIn("Method writer", prompt)
         self.assertIn("Hard constraints", prompt)
+
+    def test_default_prompt_scopes_heading_to_section_mode(self) -> None:
+        prompt = default_section_system_prompt()
+        self.assertIn("For a section-level response", prompt)
+        self.assertIn("For a paragraph-transaction response, do not emit any heading", prompt)
+        self.assertNotIn("Begin with exactly '## <supplied heading>'", prompt)
 
     def test_writer_view_hides_legacy_competing_content_surfaces(self) -> None:
         section = WriterSectionInput(
@@ -1771,6 +2855,48 @@ class DynamicPublicationBudgetTests(unittest.TestCase):
         self.assertEqual(result.outputs, [])
         self.assertTrue(result.aggregate.sections[0].incomplete)
         self.assertIn("publication_section_binding_failed", result.aggregate.sections[0].blocked_reason)
+
+    def test_unique_casefold_section_binding_is_recovered_from_scoped_call(self) -> None:
+        section = WriterSectionInput(
+            section_id="mechanism-f6Cf",
+            heading="Mechanism",
+            prompt_payload={
+                "binding_contract": {
+                    "used_argument_unit_ids": ["unit:1"],
+                    "used_claim_ids": ["claim:1"],
+                    "used_equation_ids": [],
+                    "used_configuration_ids": [],
+                    "completed_rhetorical_moves": ["mechanism_overview"],
+                },
+            },
+            argument_graph={"moves": [{"move": "mechanism_overview", "required": True}]},
+            publication_mode=True,
+        )
+        caller = _RecordingCaller([_response(text=json.dumps({
+            # The model changed the case of the hexadecimal suffix.  The
+            # scoped request remains the only authority for the canonical id.
+            "section_id": "MECHANISM-F6cf",
+            "section_markdown": "A grounded mechanism explanation.",
+            "used_argument_unit_ids": ["unit:1"],
+            "used_claim_ids": ["claim:1"],
+            "used_equation_ids": [],
+            "used_configuration_ids": [],
+            "completed_rhetorical_moves": ["mechanism_overview"],
+        }))])
+
+        result = write_publication_method_by_sections(
+            _base_config(),
+            [section],
+            llm_caller=caller,
+        )
+
+        self.assertEqual(len(result.outputs), 1)
+        self.assertFalse(result.aggregate.sections[0].incomplete)
+        self.assertEqual(result.outputs[0].section_id, "mechanism-f6Cf")
+        self.assertTrue(any(
+            item.get("operation") == "repair_casefold_section_id"
+            for item in result.aggregate.response_recovery_traces
+        ))
 
     def test_empty_section_binding_is_recovered_from_scoped_call(self) -> None:
         section = WriterSectionInput(
@@ -3170,3 +4296,107 @@ class ParagraphTransactionTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+def test_transaction_condition_binding_rejects_structure_changes() -> None:
+    """R5 correction: the real Binder path enforces condition structure.
+
+    The transaction path must not accept a flipped AND/OR, an appended
+    opposite condition, a widened scope, or a changed comparison boundary just
+    because the same predicate words appear.
+    """
+
+    from code2paper.agentic.publication_transaction_contract import (
+        assess_paragraph_transaction,
+        bind_paragraph_witnesses,
+    )
+
+    def _plan_row(condition: str) -> dict:
+        return {
+            "paragraph_id": "paragraph:section:guard",
+            "required_publication_slot_ids": ["slot:guard"],
+            "witness_contract": {"targets": [{
+                "target_kind": "slot",
+                "target_id": "slot:guard",
+                "semantic_atom": "",
+                "required_conditions": [condition],
+                "required_polarity": "conditional",
+            }]},
+        }
+
+    def _bind(markdown: str, sentence: str, condition: str):
+        transaction = {
+            "paragraph_id": "paragraph:section:guard",
+            "paragraph_markdown": markdown,
+            "witnesses": [{
+                "witness_kind": "slot",
+                "target_id": "slot:guard",
+                "exact_text": sentence,
+            }],
+        }
+        plan_row = _plan_row(condition)
+        bound = bind_paragraph_witnesses(transaction, plan_row=plan_row)
+        assessment = assess_paragraph_transaction(bound, plan_row=plan_row)
+        return bound, assessment
+
+    bound, assessment = _bind(
+        "When alpha and beta hold, the output is computed.",
+        "When alpha and beta hold",
+        "alpha and beta",
+    )
+    assert [item["target_id"] for item in bound["witnesses"]] == ["slot:guard"]
+    assert assessment.valid is True
+
+    for markdown, sentence in (
+        ("When alpha or beta holds, the output is computed.", "When alpha or beta holds"),
+        (
+            "When alpha and beta hold, or gamma is never built, the output is computed.",
+            "When alpha and beta hold, or gamma is never built",
+        ),
+        ("Whenever alpha holds, the output is computed.", "Whenever alpha holds"),
+    ):
+        bound_bad, assessment_bad = _bind(markdown, sentence, "alpha and beta")
+        assert bound_bad["witnesses"] == [], (markdown, bound_bad["witnesses"])
+        assert assessment_bad.valid is False
+        assert "slot:guard" in assessment_bad.missing_by_kind.get("slot", ())
+
+    bound_cmp, assessment_cmp = _bind(
+        "When x >= 3, the output is computed.", "When x >= 3", "x >= 5"
+    )
+    assert bound_cmp["witnesses"] == []
+    assert assessment_cmp.valid is False
+
+    bound_ok, assessment_ok = _bind(
+        "When x is at least 5, the output is computed.",
+        "When x is at least 5",
+        "x >= 5",
+    )
+    assert [item["target_id"] for item in bound_ok["witnesses"]] == ["slot:guard"]
+    assert assessment_ok.valid is True
+
+    # R5 correction: the review's five counterexamples must not bind through
+    # the real Writer transaction path either.
+    for declared, markdown, sentence in (
+        # Boolean regrouping.
+        (
+            "(alpha or beta) and gamma",
+            "When alpha or (beta and gamma), the output is computed.",
+            "When alpha or (beta and gamma)",
+        ),
+        # Numeric sign.
+        ("value > -5", "When value > 5, the output is computed.", "When value > 5"),
+        # Repeated negation.
+        ("not not alpha", "When not alpha, the output is computed.", "When not alpha"),
+        # Comparator operand order.
+        (
+            "alpha < beta",
+            "When beta < alpha, the output is computed.",
+            "When beta < alpha",
+        ),
+        # Widened operand set.
+        ("alpha", "When alpha or beta, the output is computed.", "When alpha or beta"),
+    ):
+        bound_bad, assessment_bad = _bind(markdown, sentence, declared)
+        assert bound_bad["witnesses"] == [], (declared, markdown)
+        assert assessment_bad.valid is False, (declared, markdown)
+        assert "slot:guard" in assessment_bad.missing_by_kind.get("slot", ())

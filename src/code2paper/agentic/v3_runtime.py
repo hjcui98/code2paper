@@ -494,13 +494,17 @@ def merge_compiled_evidence(
     *,
     repo_snapshot_id: str,
     project_tree_hash: str,
+    claim_id_map: dict[str, str] | None = None,
 ) -> tuple[EvidencePacketSetV3 | None, CodeFactSetV1 | None, AtomicClaimSetV3 | None]:
     """Merge all per-obligation ``CompiledEvidence`` into aggregate sets.
 
     Returns ``(packet_set, fact_set, claim_set)``.  Any element is ``None``
     when no obligation produced compiled evidence for that artifact kind.
     The merged sets are content-addressed so downstream consumers (legacy
-    writer, R8 acceptance checker) can verify integrity.
+    writer, R8 acceptance checker) can verify integrity.  When
+    ``claim_id_map`` is supplied it is filled with the per-input-claim to
+    canonical-claim id mapping, so callers that freeze claim lineage against
+    the merged set can re-key the same identities instead of guessing.
     """
 
     if not compiled_evidence:
@@ -618,6 +622,8 @@ def merge_compiled_evidence(
             ])),
         })
     all_claims = canonical_claims
+    if claim_id_map is not None:
+        claim_id_map.update(canonical_claim_id_by_input_id)
 
     remapped_stage_groups: list[Any] = []
     for group in all_stage_groups:

@@ -28,8 +28,9 @@ requested via ``--reuse-authoring-callbacks``.
 Usage: run_authoring_replay.py <frozen-root> <fresh-root> [--resume MA-S2]
        [--repo <repo-path>] [--callback-rounds N] [--callback-tool-turns N]
        [--profile <env-file>] [--force-profile]
+       [--authoring-stage {full,prepare,execute-prepared}]
        [--rebuild-authoring] [--reuse-authoring-callbacks]
-       [--persist-authoring-rebuild-manifest]
+       [--persist-authoring-rebuild-manifest] [--deterministic-preflight-only]
 
 When ``--repo`` is given and the replay exposes an open authoring issue, local
 callbacks are fulfilled through the Research LangGraph.  A persisted
@@ -48,8 +49,11 @@ import re
 import shutil
 import signal
 import sys
+from urllib.error import HTTPError, URLError
 from pathlib import Path
 from typing import Any, Mapping
+from urllib.parse import urlsplit
+from urllib.request import Request, urlopen
 
 _ROOT = Path(__file__).resolve().parents[1]
 _SRC = _ROOT / "src"
@@ -104,9 +108,40 @@ OPTIONAL_RESEARCH_ARTIFACTS = (
     "repo_snapshot_v2",
     "repository_source_manifest_v1",
     "symbol_index_v2",
+    "implementation_scope_v1",
+    "repository_authoring_artifacts_v1",
+    # Candidate-lane Research authority.  The production Writer rebuilds
+    # Candidate eligibility from these frozen artifacts (agenda + promotion
+    # ledger + retry ledger + handoff); without them in the fresh root its
+    # preadmission falls back to the strict terminal proof and blocks a run
+    # whose authenticated Candidate handoff was already accepted.  They stay
+    # optional here because the Writer itself revalidates them: a frozen root
+    # that has none keeps the previous, stricter behaviour.
+    "candidate_handoff_v1",
+    "observation_promotion_ledger_v1",
+    "candidate_retry_ledger_v1",
+    "research_revision_journal_v1",
 )
 
 OPTIONAL_FROZEN_ARTIFACTS = OPTIONAL_RESEARCH_ARTIFACTS
+
+# A prepared authoring root carries this exact frozen Formalizer phase.  The
+# phase is deliberately copied as a separate closure: execute-prepared must
+# never regenerate it merely because an older replay layout placed files in a
+# different artifact directory.
+FORMALIZER_PHASE_COPY_ARTIFACTS = (
+    "unified_context_archive_v2",
+    "consumer_workset_manifest_v2",
+    "run_invocation_budget_envelope_v1",
+    "consumer_invocation_plan_v1.1",
+    "formalizer_plan_execution_v2",
+    "mechanism_formula_obligations_v1",
+    "mechanism_formula_packages_v2",
+    "unified_live_admission_v1.formalizer.1",
+    "mechanism_context_set_v1",
+    "mechanism_evidence_closures_v1",
+    "mechanism_context_page_manifest_v1",
+)
 
 RESEARCH_STAGE_CHECKPOINT_CANDIDATES = (
     "artifacts/research_product/research_stage_checkpoint_v1.json",
@@ -156,6 +191,63 @@ def _persist_reused_method_unit_surface(fresh: Path) -> None:
         source = artifacts / f"{name}.json"
         if source.is_file():
             shutil.copy2(source, authoring / f"{name}.json")
+
+
+def _build_replay_auxiliary_budget_envelope(
+    *,
+    llm_config: Any,
+    run_digest: str,
+) -> Any | None:
+    """Build the opt-in envelope for non-page authoring calls.
+
+    The normal qwen38 profile declares only the four page roles, so this
+    returns ``None`` and replay uses the deterministic authoring fallbacks.
+    An auxiliary role is enabled only when its complete budget declaration is
+    present in the same profile; the caller wrapper then applies the same
+    envelope to planner, verifier and proposal requests.
+    """
+
+    from code2paper.agentic.unified_context_compiler import (
+        build_run_invocation_budget_envelope_v1,
+        read_unified_budget_profile,
+        read_unified_extra_roles,
+        declared_extra_roles,
+    )
+    from code2paper.agentic.unified_context_models import sha256_digest
+    from code2paper.agentic.mechanism_context_models import canonical_json_bytes
+
+    profile_budget = read_unified_budget_profile(os.environ)
+    profile_budget.update(read_unified_extra_roles(os.environ))
+    if not declared_extra_roles(profile_budget):
+        return None
+    context_tokens = 0
+    try:
+        context_tokens = int(
+            os.environ.get("CODE2PAPER_MODEL_CONTEXT_TOKENS", "") or 0
+        )
+    except ValueError:
+        context_tokens = 0
+    if context_tokens <= 0:
+        from code2paper.llm.capabilities import load_capability_profile
+
+        capability = load_capability_profile(
+            provider=getattr(llm_config.provider, "value", str(llm_config.provider)),
+            model=str(getattr(llm_config, "model", "") or ""),
+        )
+        context_tokens = int(getattr(capability, "max_model_len", 0) or 0)
+    if context_tokens <= 0:
+        return None
+    profile_digest = sha256_digest(canonical_json_bytes(profile_budget))
+    model_digest = sha256_digest(
+        str(getattr(llm_config, "model", "unknown") or "unknown").encode("utf-8")
+    )
+    return build_run_invocation_budget_envelope_v1(
+        profile_budget=profile_budget,
+        model_capabilities={"context_tokens": context_tokens},
+        run_digest=str(run_digest),
+        profile_digest=profile_digest,
+        model_identity_digest=model_digest,
+    )
 
 
 def _digest_file(path: Path) -> str:
@@ -361,11 +453,7 @@ def _execution_manifest_digest(
     else:
         parts.append("profile:missing")
     for name in sorted(copied_artifact_names):
-        candidates = [
-            frozen / "artifacts" / "06_authoring" / f"{name}.json",
-            frozen / "artifacts" / f"{name}.json",
-        ]
-        source = next((path for path in candidates if path.is_file()), None)
+        source = _frozen_artifact_path(frozen, name)
         if source is None:
             parts.append(f"frozen:{name}:missing")
         else:
@@ -373,7 +461,430 @@ def _execution_manifest_digest(
     return _digest_text("\n".join(parts))
 
 
-DEFAULT_LIVE_PROFILE = Path("tests/live/profiles/qwen36_vllm_budgeted.example.env")
+_BOUNDED_PREPARED_CONTINUATION_FAILURES = frozenset({
+    "realizer_response_not_json",
+    "realizer_response_not_object",
+})
+_BOUNDED_CHAINED_CONTINUATION_FAILURES = frozenset({
+    "realizer_witness_text_missing",
+    "realizer_required_witness_missing",
+})
+
+
+def _prepared_continuation_execution_digest(
+    *,
+    fresh: Path,
+    current_execution_digest: str,
+    telemetry: dict,
+) -> str:
+    """Admit bounded code-repair continuations for a failed prepared run.
+
+    ``authoring_prepare_result_v1`` remains the immutable material contract.
+    A code change after preparation normally makes ``execute-prepared`` fail
+    closed.  The only exception is a prior failed execution whose durable
+    failure artifact identifies the known representation-only Realizer JSON
+    failure.  If that repair parses but exposes a witness-binding failure, a
+    second explicitly recorded continuation may hand the frozen excerpts back
+    to the Realizer.  This is deliberately narrow: it cannot start a new
+    primary page, change the prepared material, or be used more than once per
+    continuation stage for the same root.
+    """
+
+    if current_execution_digest == "":
+        return current_execution_digest
+    prepare_path = (
+        fresh / "artifacts" / "06_authoring" / "authoring_prepare_result_v1.json"
+    )
+    stored_prepare = _read_json_mapping(prepare_path)
+    parent_digest = str(stored_prepare.get("execution_manifest_digest") or "")
+    if not parent_digest or parent_digest == current_execution_digest:
+        return current_execution_digest
+
+    continuation_dir = fresh / "artifacts" / "06_authoring"
+    continuation_path = continuation_dir / "authoring_prepare_continuation_v1.json"
+    chained_continuation_path = (
+        continuation_dir / "authoring_prepare_continuation_v2.json"
+    )
+    budget_continuation_path = (
+        continuation_dir / "authoring_prepare_continuation_v3.json"
+    )
+    post_budget_continuation_path = (
+        continuation_dir / "authoring_prepare_continuation_v4.json"
+    )
+    if post_budget_continuation_path.is_file():
+        return current_execution_digest
+
+    execution_record = _read_json_mapping(fresh / "execution_record.json")
+    prior_structural_exit = execution_record.get("structural_exit") or {}
+    prior_terminal_complete = (
+        str(execution_record.get("terminal_stage") or "") == "complete"
+        and not str(execution_record.get("terminal_reason") or "").strip()
+        and str(execution_record.get("writer_status") or "") == "success"
+        and str(execution_record.get("writer_transaction_status") or "") == "success"
+        and isinstance(prior_structural_exit, Mapping)
+        and bool(prior_structural_exit.get("eligible"))
+    )
+    if (
+        str(execution_record.get("authoring_stage") or "") != "execute-prepared"
+        or (
+            int(execution_record.get("exit_code") or 0) == 0
+            and not prior_terminal_complete
+        )
+    ):
+        return current_execution_digest
+
+    def _write_continuation(
+        *,
+        path: Path,
+        failure_codes: list[str],
+        reason: str,
+        parent_continuation_digest: str = "",
+    ) -> str:
+        continuation = {
+            "schema_version": "1.0",
+            "kind": "bounded_code_repair_continuation",
+            "stage": "execute-prepared",
+            "parent_prepare_result_digest": str(
+                stored_prepare.get("content_digest") or ""
+            ),
+            "parent_continuation_digest": parent_continuation_digest,
+            "parent_execution_manifest_digest": parent_digest,
+            "current_execution_manifest_digest": current_execution_digest,
+            "prior_execution_record": str(fresh / "execution_record.json"),
+            "prior_execution_record_exit_code": int(
+                execution_record.get("exit_code") or 0
+            ),
+            "prior_execution_code_state_digest": str(
+                execution_record.get("code_state_digest") or ""
+            ),
+            "failure_codes": failure_codes,
+            "reason": reason,
+            "model_calls_before_continuation": int(
+                stored_prepare.get("model_calls") or 0
+            ),
+        }
+        continuation["content_digest"] = _digest_text(
+            json.dumps(
+                continuation,
+                ensure_ascii=False,
+                sort_keys=True,
+                separators=(",", ":"),
+            )
+        )
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(
+            json.dumps(continuation, ensure_ascii=False, indent=2) + "\n",
+            encoding="utf-8",
+        )
+        telemetry["authoring_prepare_continuation"] = {
+            "status": "admitted",
+            "path": str(path),
+            "content_digest": continuation["content_digest"],
+            "failure_codes": failure_codes,
+            "parent_execution_manifest_digest": parent_digest,
+            "current_execution_manifest_digest": current_execution_digest,
+            "reason": reason,
+        }
+        return parent_digest
+
+    if chained_continuation_path.is_file():
+        prior_continuation = _read_json_mapping(chained_continuation_path)
+        prior_continuation_digest = str(
+            prior_continuation.get("content_digest") or ""
+        )
+        prior_continuation_body = {
+            key: value
+            for key, value in prior_continuation.items()
+            if key != "content_digest"
+        }
+        if (
+            not prior_continuation_digest
+            or _digest_text(
+                json.dumps(
+                    prior_continuation_body,
+                    ensure_ascii=False,
+                    sort_keys=True,
+                    separators=(",", ":"),
+                )
+            ) != prior_continuation_digest
+        ):
+            return current_execution_digest
+        # The completed structural run may have exposed a separate, bounded
+        # F6 defect: local Rewrite received the full immutable V2 page bytes
+        # and every auxiliary attempt was rejected before transport by the
+        # declared request cap.  Admit one continuation for the production
+        # context projection repair.  Require every recorded Rewrite row to
+        # be pre-send rejected so this branch cannot replay a provider result
+        # or hide an actual content failure behind a code-only continuation.
+        rewrite_payload = _read_json_mapping(
+            fresh / "artifacts/07_validation/publication_rewrite_transitions_v1.json"
+        )
+        rewrite_accounting = _read_json_mapping(
+            fresh
+            / "artifacts/06_authoring/proposal_call_accounting_local_rewrite.json"
+        )
+        rewrite_failures = tuple(
+            str(item) for item in (rewrite_payload.get("failures") or ())
+        )
+        rewrite_cap_reasons = tuple(
+            str(item.get("reason") or "")
+            for item in (rewrite_payload.get("transitions") or ())
+            if isinstance(item, Mapping)
+        )
+        rewrite_result_reasons = tuple(
+            str((item.get("result") or {}).get("blocked_reason") or "")
+            for item in (rewrite_payload.get("results") or ())
+            if isinstance(item, Mapping)
+            and isinstance(item.get("result"), Mapping)
+        )
+        rewrite_rows = tuple(
+            item for item in (rewrite_accounting.get("rows") or ())
+            if isinstance(item, Mapping)
+        )
+        observed_cap_reasons = tuple(
+            item
+            for item in (*rewrite_cap_reasons, *rewrite_result_reasons)
+            if item
+        )
+        rewrite_cap_only = bool(observed_cap_reasons) and all(
+            "unified_auxiliary_request_cap_exceeded:" in item
+            for item in observed_cap_reasons
+        ) and bool(rewrite_rows) and all(
+            not bool(item.get("sent_to_caller"))
+            and "unified_auxiliary_request_cap_exceeded:" in str(
+                item.get("error") or ""
+            )
+            for item in rewrite_rows
+        )
+        if (
+            prior_terminal_complete
+            and prior_continuation.get("failure_codes")
+            == ["deterministic_projection_code_repair"]
+            and rewrite_cap_only
+        ):
+            return _write_continuation(
+                path=budget_continuation_path,
+                failure_codes=["rewrite_auxiliary_context_compaction"],
+                reason="resume_after_pre_send_rewrite_context_cap_repair",
+                parent_continuation_digest=prior_continuation_digest,
+            )
+        latest_failure_parts = [
+            str(execution_record.get(key) or "")
+            for key in ("terminal_reason", "writer_blocked_reason")
+        ]
+        for relative in (
+            "artifacts/06_authoring/publication_writer_result_v1.json",
+            "artifacts/06_authoring/realizer_plan_execution_v2.json",
+        ):
+            payload = _read_json_mapping(fresh / relative)
+            latest_failure_parts.extend(
+                str(payload.get(key) or "")
+                for key in ("blocked_reason", "terminal_reason", "failure")
+            )
+            for trace in payload.get("traces", ()) or ():
+                if isinstance(trace, Mapping):
+                    latest_failure_parts.extend(
+                        str(trace.get(key) or "")
+                        for key in ("blocked_reason", "failure", "draft_blocked_reason")
+                    )
+        usage = _read_json_mapping(
+            continuation_dir / "token_usage_summary_v1.json"
+        )
+        latest_failure_text = " ".join(latest_failure_parts)
+        if (
+            (
+                "planned_request_input_tokens" in latest_failure_text
+                or "attempt_limit_exhausted" in latest_failure_text
+            )
+            and int(usage.get("total_tokens") or 0) == 0
+            and int(usage.get("calls") or 0) == 0
+        ):
+            next_path = (
+                post_budget_continuation_path
+                if budget_continuation_path.is_file()
+                else budget_continuation_path
+            )
+            next_failure_codes = (
+                ["realizer_attempt_limit_after_pre_send_rejection"]
+                if budget_continuation_path.is_file()
+                else ["realizer_planned_request_input_tokens"]
+            )
+            next_reason = (
+                "resume_after_unmetered_attempt_limit_rejection"
+                if budget_continuation_path.is_file()
+                else "retry_reserve_capability_repair_after_pre_send_rejection"
+            )
+            return _write_continuation(
+                path=next_path,
+                failure_codes=next_failure_codes,
+                reason=next_reason,
+                parent_continuation_digest=prior_continuation_digest,
+            )
+        return current_execution_digest
+
+    if budget_continuation_path.is_file():
+        prior_continuation = _read_json_mapping(budget_continuation_path)
+        prior_continuation_digest = str(
+            prior_continuation.get("content_digest") or ""
+        )
+        prior_continuation_body = {
+            key: value
+            for key, value in prior_continuation.items()
+            if key != "content_digest"
+        }
+        if (
+            not prior_continuation_digest
+            or _digest_text(
+                json.dumps(
+                    prior_continuation_body,
+                    ensure_ascii=False,
+                    sort_keys=True,
+                    separators=(",", ":"),
+                )
+            ) != prior_continuation_digest
+        ):
+            return current_execution_digest
+        latest_failure_parts = [
+            str(execution_record.get(key) or "")
+            for key in ("terminal_reason", "writer_blocked_reason")
+        ]
+        usage = _read_json_mapping(
+            continuation_dir / "token_usage_summary_v1.json"
+        )
+        if (
+            "attempt_limit_exhausted" in " ".join(latest_failure_parts)
+            and int(usage.get("total_tokens") or 0) == 0
+            and int(usage.get("calls") or 0) == 0
+        ):
+            return _write_continuation(
+                path=post_budget_continuation_path,
+                failure_codes=["realizer_attempt_limit_after_pre_send_rejection"],
+                reason="resume_after_unmetered_attempt_limit_rejection",
+                parent_continuation_digest=prior_continuation_digest,
+            )
+        return current_execution_digest
+
+    if continuation_path.is_file():
+        prior_continuation = _read_json_mapping(continuation_path)
+        prior_continuation_digest = str(
+            prior_continuation.get("content_digest") or ""
+        )
+        prior_continuation_body = {
+            key: value
+            for key, value in prior_continuation.items()
+            if key != "content_digest"
+        }
+        if (
+            not prior_continuation_digest
+            or _digest_text(
+                json.dumps(
+                    prior_continuation_body,
+                    ensure_ascii=False,
+                    sort_keys=True,
+                    separators=(",", ":"),
+                )
+        ) != prior_continuation_digest
+        ):
+            return current_execution_digest
+        # A completed prepared execution may still need a deterministic
+        # projection repair (for example, promoting complete paragraph
+        # transactions over an incomplete legacy section summary) after the
+        # first bounded code-repair continuation.  Admit exactly one chained
+        # continuation only when the prior run reached the complete terminal
+        # boundary, its Writer transaction and structural exit both passed,
+        # and no earlier failure was recorded.  No new input, request, or
+        # provider result is authorized by this branch.
+        if (
+            prior_terminal_complete
+            and not str(execution_record.get("first_failed_reason") or "").strip()
+        ):
+            return _write_continuation(
+                path=chained_continuation_path,
+                failure_codes=["deterministic_projection_code_repair"],
+                reason="resume_after_completed_structural_projection_repair",
+                parent_continuation_digest=prior_continuation_digest,
+            )
+        latest_failure_parts: list[str] = []
+        for relative in (
+            "artifacts/06_authoring/publication_writer_result_v1.json",
+            "artifacts/06_authoring/realizer_plan_execution_v2.json",
+        ):
+            payload = _read_json_mapping(fresh / relative)
+            latest_failure_parts.extend(
+                str(payload.get(key) or "")
+                for key in ("blocked_reason", "terminal_reason", "failure")
+            )
+            for trace in payload.get("traces", ()) or ():
+                if isinstance(trace, Mapping):
+                    latest_failure_parts.extend(
+                        str(trace.get(key) or "")
+                        for key in ("blocked_reason", "failure", "draft_blocked_reason")
+                    )
+        chained_codes = sorted(
+            code for code in _BOUNDED_CHAINED_CONTINUATION_FAILURES
+            if code in " ".join(latest_failure_parts)
+        )
+        if not chained_codes:
+            return current_execution_digest
+        return _write_continuation(
+            path=chained_continuation_path,
+            failure_codes=chained_codes,
+            reason="witness_repair_after_response_format_repair",
+            parent_continuation_digest=prior_continuation_digest,
+        )
+
+    # A prepared root may be resumed after a deterministic production-code
+    # repair that happened after ``prepare``.  The material contract remains
+    # immutable; the failed attempt below is admitted only when the sole
+    # failure was the execution-manifest code binding itself and the attempt
+    # provably made no provider call.  This is narrower than accepting an
+    # arbitrary code drift: content/input/request digests are still checked by
+    # ``run_publication_method_writer`` against the stored prepare result, and
+    # the continuation is single-use through ``continuation_path``.
+    zero_call_usage = _read_json_mapping(
+        continuation_dir / "token_usage_summary_v1.json"
+    )
+    manifest_binding_failure = "authoring_prepare_result_binding_mismatch:execution_manifest_digest"
+    prior_failure_text = " ".join(
+        str(execution_record.get(key) or "")
+        for key in ("terminal_reason", "writer_blocked_reason", "first_failed_reason")
+    )
+    if (
+        manifest_binding_failure in prior_failure_text
+        and int(zero_call_usage.get("calls") or 0) == 0
+        and int(zero_call_usage.get("total_tokens") or 0) == 0
+        and int(stored_prepare.get("model_calls") or 0) == 0
+    ):
+        return _write_continuation(
+            path=continuation_path,
+            failure_codes=["prepared_execution_manifest_code_repair"],
+            reason="resume_after_zero_call_prepare_binding_repair",
+        )
+
+    failure_candidates = (
+        fresh / "artifacts" / "06_authoring" / "authoring_failure_v1.json",
+        fresh / "authoring_failure_v1.json",
+    )
+    failure_path = next((path for path in failure_candidates if path.is_file()), None)
+    failure = _read_json_mapping(failure_path) if failure_path is not None else {}
+    failure_text = " ".join(
+        str(failure.get(key) or "")
+        for key in ("terminal_reason", "direct_reason")
+    )
+    failure_codes = sorted(
+        code for code in _BOUNDED_PREPARED_CONTINUATION_FAILURES
+        if code in failure_text
+    )
+    if not failure_codes:
+        return current_execution_digest
+    return _write_continuation(
+        path=continuation_path,
+        failure_codes=failure_codes,
+        reason="representation_only_realizer_response_format_repair",
+    )
+
+
+DEFAULT_LIVE_PROFILE = Path("tests/live/profiles/qwen38_vllm_budgeted.example.env")
 TOKEN_USAGE_SUMMARY_FILENAME = "token_usage_summary_v1.json"
 
 
@@ -452,7 +963,31 @@ def _apply_live_profile(profile: str | Path | None, *, overwrite: bool = False) 
         key, _, value = line.partition("=")
         key = key.strip()
         value = value.strip().strip("'").strip('"')
-        if key and not key.startswith("_") and value and "$" not in value:
+        if key == "CODE2PAPER_LLM_CAPABILITY_PROFILE" and value:
+            # This is a tracked, non-secret path.  Resolve only the profile
+            # directory token used by qwen36 and relative capability paths;
+            # never evaluate arbitrary shell expressions from a profile.
+            value = value.replace(
+                "${_CODE2PAPER_PROFILE_DIR}",
+                str(path.parent),
+            )
+            value = value.replace(
+                "$_CODE2PAPER_PROFILE_DIR",
+                str(path.parent),
+                1,
+            )
+            capability_path = Path(value).expanduser()
+            if not capability_path.is_absolute():
+                profile_relative = path.parent / capability_path
+                capability_path = (
+                    profile_relative
+                    if profile_relative.is_file()
+                    else Path.cwd() / capability_path
+                )
+            value = str(capability_path.resolve())
+        if key and not key.startswith("_") and value and (
+            "$" not in value or key == "CODE2PAPER_LLM_CAPABILITY_PROFILE"
+        ):
             if overwrite or key not in os.environ:
                 os.environ[key] = value
 
@@ -477,6 +1012,22 @@ def _apply_replay_profile(
         _apply_live_profile(profile, overwrite=True)
     else:
         _apply_live_profile(profile)
+
+
+def _build_replay_unified_tokenizer(
+    *,
+    llm_config: Any,
+    fresh: Path,
+) -> Any:
+    """Compatibility wrapper around the shared product/replay tokenizer gate."""
+
+    from code2paper.llm.tokenizer import prepare_vllm_openai_chat_tokenizer
+
+    return prepare_vllm_openai_chat_tokenizer(
+        llm_config=llm_config,
+        out_root=fresh,
+        require_loopback_8006=True,
+    )
 
 
 def _positive_int(value: object) -> int | None:
@@ -650,13 +1201,51 @@ def _summarize_token_usage(calls: list[Mapping[str, Any]] | tuple[Mapping[str, A
 def _write_token_usage_summary(fresh: Path) -> dict[str, Any]:
     """Persist the aggregate usage sidecar and return its execution-record view."""
 
-    try:
-        from code2paper.llm.generation_trace import get_run_generation_traces
+    ledger_root = fresh / "artifacts" / "06_authoring" / "invocations"
+    calls: list[Mapping[str, Any]] = []
+    source = "code2paper.llm.generation_trace"
+    if ledger_root.is_dir():
+        from code2paper.agentic.unified_context_models import ActualRequestReceiptV2
 
-        calls = get_run_generation_traces()
-    except Exception:
-        calls = []
+        seen: set[tuple[str, int]] = set()
+        corrupt: list[str] = []
+        for receipt_path in sorted(ledger_root.glob("*/attempt-*.completed.json")):
+            try:
+                receipt = ActualRequestReceiptV2.model_validate_json(
+                    receipt_path.read_text(encoding="utf-8")
+                )
+            except Exception:
+                corrupt.append(str(receipt_path.relative_to(ledger_root)))
+                continue
+            key = (receipt.invocation_id, receipt.attempt)
+            if key in seen:
+                continue
+            seen.add(key)
+            if not receipt.sent_to_caller:
+                continue
+            calls.append({
+                "role": receipt.consumer_role,
+                "token_usage": dict(receipt.provider_usage or {}),
+                "model": receipt.model_identity_digest,
+                "blocked_reason": (
+                    receipt.delivery_rejection_code
+                    if receipt.delivery_status == "rejected" else ""
+                ),
+            })
+        if corrupt:
+            raise ValueError(
+                "durable_usage_receipt_corrupt:" + ",".join(corrupt[:5])
+            )
+        source = "durable_unified_invocation_receipts"
+    else:
+        try:
+            from code2paper.llm.generation_trace import get_run_generation_traces
+
+            calls = list(get_run_generation_traces())
+        except Exception:
+            calls = []
     summary = _summarize_token_usage(calls)
+    summary["source"] = source
     path = fresh / "artifacts" / "06_authoring" / TOKEN_USAGE_SUMMARY_FILENAME
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(
@@ -893,9 +1482,16 @@ def _write_execution_record(
         "exit_code": exit_code,
         "frozen_root": str(frozen),
         "fresh_root": str(fresh),
+        "authoring_stage": telemetry.get(
+            "authoring_stage", getattr(arguments, "authoring_stage", "full")
+        ),
         "resume_section_ids": list(arguments.resume),
         "code_state_digest": _code_state_digest(),
         "authoring_context": telemetry.get("authoring_context", {}),
+        "preflight_only": bool(telemetry.get("preflight_only")),
+        "deterministic_preflight": telemetry.get(
+            "deterministic_preflight", {}
+        ),
         "runtime": {
             "start": runtime_start or {},
             "end": runtime_end or {},
@@ -911,6 +1507,11 @@ def _write_execution_record(
             "writer_transaction_status", telemetry.get("writer_status", "")
         ),
         "publication_status": telemetry.get("publication_status", ""),
+        "candidate_completion_status": telemetry.get(
+            "candidate_completion_status", ""
+        ),
+        "candidate_complete": bool(telemetry.get("candidate_complete")),
+        "verified_complete": bool(telemetry.get("verified_complete")),
         "writer_blocked_reason": telemetry.get("writer_blocked_reason", ""),
         "terminal_stage": telemetry.get("terminal_stage", ""),
         "terminal_reason": telemetry.get("terminal_reason", ""),
@@ -920,7 +1521,8 @@ def _write_execution_record(
         "first_failed_error_code": telemetry.get("first_failed_error_code", ""),
         "failure_artifact": str(
             _authoring_failure_path(fresh)
-            if _authoring_failure_path(fresh).is_file() else ""
+            if exit_code != 0 and _authoring_failure_path(fresh).is_file()
+            else ""
         ),
         "candidate_digest": telemetry.get("candidate_digest", ""),
         "research_continuation_seed": telemetry.get(
@@ -933,6 +1535,12 @@ def _write_execution_record(
         "content_chain": telemetry.get("content_chain", {}),
         "structural_exit": telemetry.get("structural_exit", {}),
         "token_usage": telemetry.get("token_usage", {}),
+        "repository_source_rehydration": telemetry.get(
+            "repository_source_rehydration", {}
+        ),
+        "invocation_terminal_event": telemetry.get(
+            "invocation_terminal_event", {}
+        ),
     }
     fresh.mkdir(parents=True, exist_ok=True)
     (fresh / "execution_record.json").write_text(
@@ -987,7 +1595,22 @@ def _record_method_content_trace(
     from code2paper.agentic.method_content_trace import write_method_content_trace
 
     trace_path = fresh / "artifacts" / "research_product" / "method_content_trace_v1.json"
-    trace = write_method_content_trace(trace_path, artifact_paths)
+    trace_artifact_paths = dict(artifact_paths)
+    if str(
+        (telemetry.get("authoring_context") or {}).get("effective_mode") or ""
+    ) == "unified":
+        # The compatibility MethodSectionPlanV2 is still needed by legacy
+        # helpers, but the replay trace must use the final NarrativePlanV3
+        # paragraph identity after page splitting.  Otherwise the trace and
+        # transaction assessment compute different target sets.
+        for name in ("narrative_plan_v3.revision.2", "narrative_plan_v3"):
+            narrative_path = Path(
+                trace_artifact_paths.get(name) or _find_fresh_artifact(fresh, name) or ""
+            )
+            if narrative_path.is_file():
+                trace_artifact_paths["method_section_plan_v2"] = str(narrative_path)
+                break
+    trace = write_method_content_trace(trace_path, trace_artifact_paths)
     telemetry["content_chain"] = {
         **trace.summary,
         "content_digest": trace.content_digest,
@@ -1022,6 +1645,16 @@ def _record_authoring_structural_exit(
     plan_path = paths.get("method_section_plan_v2") or _find_fresh_artifact(
         fresh, "method_section_plan_v2"
     )
+    if str(
+        (telemetry.get("authoring_context") or {}).get("effective_mode") or ""
+    ) == "unified":
+        for name in ("narrative_plan_v3.revision.2", "narrative_plan_v3"):
+            narrative_path = Path(
+                paths.get(name) or _find_fresh_artifact(fresh, name) or ""
+            )
+            if narrative_path.is_file():
+                plan_path = narrative_path
+                break
     trace_path = paths.get("method_content_trace_v1") or _find_fresh_artifact(
         fresh, "method_content_trace_v1"
     )
@@ -1039,6 +1672,12 @@ def _record_authoring_structural_exit(
     callback_path = paths.get("writing_research_callback_artifacts_v1") or _find_fresh_artifact(
         fresh, "writing_research_callback_artifacts_v1"
     )
+    quality_path = paths.get("publication_quality_report_v1") or _find_fresh_artifact(
+        fresh, "publication_quality_report_v1"
+    )
+    adapter_path = paths.get("method_section_plan_adapter_v1") or _find_fresh_artifact(
+        fresh, "method_section_plan_adapter_v1"
+    )
     candidate_path = method_output(fresh, "publication_candidate_method")
     try:
         candidate_markdown = candidate_path.read_text(encoding="utf-8")
@@ -1051,6 +1690,8 @@ def _record_authoring_structural_exit(
         formalization_payload=_load_artifact_payload(formalization_path),
         callback_payload=_load_artifact_payload(callback_path),
         assessment_payload=_load_artifact_payload(assessment_path),
+        quality_payload=_load_artifact_payload(quality_path),
+        adapter_payload=_load_artifact_payload(adapter_path),
         candidate_digest=str(telemetry.get("candidate_digest") or ""),
         candidate_markdown=candidate_markdown,
     )
@@ -1115,6 +1756,367 @@ def _manifest_entry(
         "decision": decision,
         "reason": reason,
     }
+
+
+def _frozen_artifact_path(frozen: Path, name: str) -> Path | None:
+    """Resolve a frozen artifact without depending on one historical layout."""
+
+    candidates = (
+        frozen / "artifacts" / "06_authoring" / f"{name}.json",
+        frozen / "artifacts" / f"{name}.json",
+        frozen / "artifacts" / "research_product" / f"{name}.json",
+        frozen / "06_authoring" / f"{name}.json",
+        frozen / "research_product" / f"{name}.json",
+        frozen / f"{name}.json",
+    )
+    return next((path for path in candidates if path.is_file()), None)
+
+
+def _copy_frozen_formalizer_phase(
+    *,
+    frozen: Path,
+    fresh: Path,
+    artifacts: Path,
+    copied: list[str],
+    manifest_entries: list[dict[str, Any]],
+) -> tuple[str, ...]:
+    """Copy and inventory the immutable Formalizer phase for prepare mode."""
+
+    authoring = artifacts / "06_authoring"
+    authoring.mkdir(parents=True, exist_ok=True)
+    missing: list[str] = []
+    for name in FORMALIZER_PHASE_COPY_ARTIFACTS:
+        source = _frozen_artifact_path(frozen, name)
+        if source is None or source.is_symlink():
+            missing.append(name)
+            continue
+        target = authoring / f"{name}.json"
+        shutil.copy2(source, target)
+        if name not in copied:
+            copied.append(name)
+        manifest_entries.append(_manifest_entry(
+            name=name,
+            path=target,
+            authority_class="formalizer-phase",
+            decision="copied",
+            reason="prepare_checkpoint",
+        ))
+
+    source_invocations = next(
+        (
+            candidate
+            for candidate in (
+                frozen / "artifacts" / "06_authoring" / "invocations",
+                frozen / "artifacts" / "invocations",
+            )
+            if candidate.is_dir()
+        ),
+        None,
+    )
+    target_invocations = authoring / "invocations"
+    if source_invocations is None:
+        missing.append("formalizer_phase_invocations")
+    else:
+        invocation_digests: list[str] = []
+        for source_path in sorted(source_invocations.rglob("*")):
+            relative = source_path.relative_to(source_invocations)
+            if source_path.is_symlink():
+                raise ValueError(
+                    f"formalizer_phase_checkpoint_symlink:{relative}"
+                )
+            if not source_path.is_file():
+                continue
+            target_path = target_invocations / relative
+            target_path.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(source_path, target_path)
+            invocation_digests.append(
+                f"{relative}:{_digest_file(source_path)}"
+            )
+        if not invocation_digests:
+            missing.append("formalizer_phase_invocations")
+        else:
+            manifest_entries.append({
+                "artifact_name": "formalizer_phase_invocations",
+                "path": str(target_invocations),
+                "digest": _digest_text("\n".join(invocation_digests)),
+                "schema": "unified_invocation_ledger_v1",
+                "authority_class": "formalizer-phase",
+                "decision": "copied",
+                "reason": "prepare_checkpoint",
+            })
+    return tuple(dict.fromkeys(missing))
+
+
+def _frozen_project_tree_hash(frozen: Path) -> tuple[str, str]:
+    """Return the single tree hash asserted by trusted frozen evidence.
+
+    New runs persist the hash in the repository snapshot and source manifest.
+    Older replay roots may only have the same immutable identity in the
+    continuation seed or the execution record.  Those two locations are
+    accepted only at their typed, fixed paths; arbitrary diagnostic JSON is
+    deliberately not searched so a stale nested value cannot authorize a
+    different repository.
+    """
+
+    values: list[tuple[str, str]] = []
+
+    def _record(name: str, payload: Mapping[str, Any]) -> None:
+        value = str(payload.get("project_tree_hash") or "").strip()
+        # Diagnostic placeholders such as ``tree:unknown`` must never
+        # authorize a repository.  Only the exact digest form emitted by the
+        # repository snapshot builder is a valid migration anchor.
+        if re.fullmatch(r"sha256:[0-9a-f]{64}", value):
+            values.append((name, value))
+
+    for name in ("repo_snapshot_v2", "repository_source_manifest_v1"):
+        path = _frozen_artifact_path(frozen, name)
+        if path is None:
+            continue
+        payload = _read_json_mapping(path)
+        _record(name, payload)
+
+    continuation_candidates = (
+        (
+            "research_continuation_seed_v1",
+            _frozen_artifact_path(frozen, "research_continuation_seed_v1"),
+        ),
+        (
+            "execution_record.research_continuation_seed",
+            frozen / "execution_record.json",
+        ),
+    )
+    for source_name, path in continuation_candidates:
+        if path is None or not path.is_file():
+            continue
+        payload = _read_json_mapping(path)
+        if source_name == "execution_record.research_continuation_seed":
+            payload = payload.get("research_continuation_seed", {})
+        if isinstance(payload, Mapping):
+            _record(source_name, payload)
+
+    contract_path = _frozen_artifact_path(frozen, "authoring_run_contract_v1")
+    if contract_path is not None:
+        _record("authoring_run_contract_v1", _read_json_mapping(contract_path))
+
+    # V1 authoring outputs can be the only surviving immutable identity in a
+    # historical root.  They are accepted solely as a migration anchor; the
+    # caller still rebuilds and exact-hash-checks the supplied repository using
+    # the shared source builder before any model boundary.
+    for name in ("mechanism_context_set_v1", "formalization_result_v1"):
+        path = _frozen_artifact_path(frozen, name)
+        if path is not None:
+            _record(name, _read_json_mapping(path))
+    if not values:
+        raise ValueError("unified_project_tree_hash_missing")
+    hashes = {value for _name, value in values}
+    if len(hashes) != 1:
+        detail = ",".join(f"{name}={value}" for name, value in values)
+        raise ValueError("unified_project_tree_hash_mismatch:frozen_artifacts_disagree:" + detail)
+    return values[0][1], values[0][0]
+
+
+def _frozen_authoring_scope_hints(artifacts: Path) -> tuple[tuple[str, ...], tuple[str, ...]]:
+    """Extract only explicit author/scope hints for the shared source builder."""
+
+    author_texts: list[str] = []
+    for name in ("intent_obligation_graph_v2", "research_agenda_v1"):
+        payload = _read_json_mapping(artifacts / f"{name}.json")
+        if not payload:
+            continue
+        for key in (
+            "project_goal", "method_goal", "implementation_scope", "author_text",
+            "author_statement", "description", "rationale", "question", "query",
+        ):
+            value = payload.get(key)
+            if isinstance(value, str) and value.strip():
+                author_texts.append(value.strip())
+
+        def visit(value: Any, key: str = "") -> None:
+            if isinstance(value, Mapping):
+                for child_key, child_value in value.items():
+                    child_name = str(child_key)
+                    if child_name in {
+                        "author_text", "source_text", "description", "question",
+                        "query", "method_goal", "project_goal",
+                    } and isinstance(child_value, str) and child_value.strip():
+                        author_texts.append(child_value.strip())
+                    visit(child_value, child_name)
+            elif isinstance(value, list):
+                for child in value:
+                    visit(child, key)
+
+        visit(payload)
+
+    entry_ids: list[str] = []
+    scope_payload = _read_json_mapping(artifacts / "implementation_scope_v1.json")
+
+    def collect_entries(value: Any, key: str = "") -> None:
+        key_lower = key.casefold()
+        if isinstance(value, Mapping):
+            for child_key, child_value in value.items():
+                collect_entries(child_value, str(child_key))
+        elif isinstance(value, list):
+            for child in value:
+                collect_entries(child, key)
+        elif isinstance(value, str) and value.strip() and key_lower in {
+            "target_entry_symbol_ids", "target_entry_symbol_id", "entry_symbol_ids",
+            "entry_symbol_id",
+        }:
+            entry_ids.append(value.strip())
+
+    collect_entries(scope_payload)
+    intent_payload = _read_json_mapping(artifacts / "intent_obligation_graph_v2.json")
+    collect_entries(intent_payload)
+    return (
+        tuple(dict.fromkeys(author_texts)),
+        tuple(dict.fromkeys(entry_ids)),
+    )
+
+
+def _rehydrate_repository_source_artifacts(
+    *,
+    frozen: Path,
+    fresh: Path,
+    artifacts: Path,
+    repo: Path,
+) -> tuple[tuple[str, ...], list[dict[str, Any]], str]:
+    """Rebuild the source closure from ``--repo`` after an exact tree check.
+
+    Product and replay use the same deterministic builder.  The replay never
+    accepts a current repository merely because it is readable: its tree hash
+    must equal the hash asserted by the frozen run before any Writer/model
+    boundary is reached.
+    """
+
+    from code2paper.agentic.repository_authoring_artifacts import (
+        rebuild_repository_authoring_artifacts,
+        repository_authoring_identity_payload,
+    )
+
+    expected_tree_hash, hash_source = _frozen_project_tree_hash(frozen)
+    author_texts, entry_symbol_ids = _frozen_authoring_scope_hints(artifacts)
+    rebuilt = rebuild_repository_authoring_artifacts(
+        repo,
+        expected_project_tree_hash=expected_tree_hash,
+        author_texts=author_texts,
+        entry_symbol_ids=entry_symbol_ids,
+    )
+    # The frozen behavior graph is a historical Research observation.  Keep a
+    # byte-preserving copy for audit, then derive the graph from the same
+    # current source closure the Writer will consume.  The old graph is never
+    # allowed to remain under the live ``behavior_graph_v1`` name.
+    historical_graph = None
+    historical_graph_load_failure = ""
+    historical_graph_path = artifacts / "behavior_graph_v1.json"
+    historical_copy_path = artifacts / "behavior_graph_historical_v1.json"
+    if historical_graph_path.is_file():
+        if not historical_copy_path.is_file():
+            shutil.copy2(historical_graph_path, historical_copy_path)
+        try:
+            from code2paper.agentic.behavior_graph import CodeBehaviorGraphV1
+
+            graph_payload = json.loads(
+                historical_graph_path.read_text(encoding="utf-8")
+            )
+            if isinstance(graph_payload, Mapping):
+                graph_payload = (
+                    graph_payload.get("behavior_graph")
+                    or graph_payload.get("graph")
+                    or graph_payload
+                )
+            historical_graph = CodeBehaviorGraphV1.model_validate(graph_payload)
+        except Exception as exc:  # noqa: BLE001 - history is diagnostic only
+            historical_graph_load_failure = (
+                f"{exc.__class__.__name__}:{str(exc)[:160]}"
+            )
+
+    from code2paper.agentic.mechanism_context_compiler import (
+        build_current_behavior_graph,
+    )
+
+    entry_roots = tuple(
+        str(item).strip()
+        for item in (getattr(rebuilt.implementation_scope, "target_entry_symbol_ids", ()) or ())
+        if str(item).strip()
+    )
+    current_graph = build_current_behavior_graph(
+        symbol_index=rebuilt.symbol_index,
+        source_provider=rebuilt.files,
+        entry_symbol_ids=entry_roots,
+    )
+    if historical_graph is not None and current_graph is None:
+        raise ValueError("unified_behavior_graph_rebuild_missing")
+
+    from code2paper.agentic.publication_method_writer import (
+        _behavior_graph_rebuild_report,
+    )
+
+    graph_report = _behavior_graph_rebuild_report(
+        historical_graph,
+        current_graph,
+        entry_symbol_ids=entry_roots,
+        snapshot_id=rebuilt.snapshot.snapshot_id,
+        project_tree_hash=rebuilt.snapshot.project_tree_hash,
+        historical_load_failure=historical_graph_load_failure,
+    )
+    graph_report_path = artifacts / "behavior_graph_rebuild_v1.json"
+    graph_report_path.write_text(
+        json.dumps(graph_report, ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8",
+    )
+    payloads: dict[str, Any] = {
+        "repo_snapshot_v2": rebuilt.snapshot.model_dump(mode="json"),
+        "symbol_index_v2": rebuilt.symbol_index.model_dump(mode="json"),
+        "implementation_scope_v1": rebuilt.implementation_scope.model_dump(mode="json"),
+        "repository_source_manifest_v1": rebuilt.source_manifest.model_dump(mode="json"),
+        "repository_authoring_artifacts_v1": repository_authoring_identity_payload(
+            snapshot=rebuilt.snapshot,
+            symbol_index=rebuilt.symbol_index,
+            implementation_scope=rebuilt.implementation_scope,
+            source_manifest=rebuilt.source_manifest,
+        ),
+    }
+    # ``behavior_graph_v1`` is derived from the rebuilt source closure, not a
+    # copied Research artifact.  Keep the historical copy out of the normal
+    # artifact path map so no consumer can accidentally load it.
+    if current_graph is not None:
+        payloads["behavior_graph_v1"] = current_graph.model_dump(mode="json")
+    names: list[str] = []
+    entries: list[dict[str, Any]] = []
+    for name, payload in payloads.items():
+        target = artifacts / f"{name}.json"
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text(
+            json.dumps(payload, ensure_ascii=False, indent=2) + "\n",
+            encoding="utf-8",
+        )
+        names.append(name)
+        entries.append(_manifest_entry(
+            name=name,
+            path=target,
+            authority_class="repository-source",
+            decision="rehydrated_from_repo",
+            reason=(
+                "exact_project_tree_hash:" + expected_tree_hash
+                + ":frozen_hash_source:" + hash_source
+            ),
+        ))
+    if historical_copy_path.is_file():
+        entries.append(_manifest_entry(
+            name="behavior_graph_historical_v1",
+            path=historical_copy_path,
+            authority_class="research-history",
+            decision="preserved_historical_observation",
+            reason="not_consumed_by_unified_writer",
+        ))
+    entries.append(_manifest_entry(
+        name="behavior_graph_rebuild_v1",
+        path=graph_report_path,
+        authority_class="derived-source",
+        decision="recorded_current_graph_identity",
+        reason="current_graph_rebuilt_from_verified_source",
+    ))
+    return tuple(names), entries, ""
 
 
 def _method_evidence_rebuild_template(
@@ -1186,6 +2188,8 @@ def _rebuild_derived_authoring(
     artifacts: Path,
     llm_config: Any,
     llm_caller: Any = None,
+    auxiliary_envelope: Any | None = None,
+    auxiliary_tokenizer: Any | None = None,
 ) -> tuple[dict[str, str], list[dict[str, Any]], str]:
     """Rebuild derived authoring from frozen research authority only."""
 
@@ -1221,6 +2225,38 @@ def _rebuild_derived_authoring(
     from code2paper.agentic.method_product_models import build_default_method_output_policy
     from code2paper.agentic.obligation_fact_alignment import ObligationCoverageReportV2
     from code2paper.llm.providers import has_provider_api_key
+    from code2paper.llm.role_config import (
+        METHOD_MECHANISM_DRAFT_PLANNER,
+        METHOD_PROPOSITION_ARCHITECT,
+        SEMANTIC_VERIFIER,
+    )
+    from code2paper.agentic.proposal_call_accounting import (
+        build_budgeted_auxiliary_llm_caller,
+        proposal_call_meter_from_envelope,
+    )
+
+    auxiliary_llm_caller = None
+    if auxiliary_envelope is not None:
+        auxiliary_llm_caller = build_budgeted_auxiliary_llm_caller(
+            llm_config,
+            auxiliary_envelope,
+            accounting_root=fresh,
+            tokenizer=auxiliary_tokenizer,
+            base_caller=llm_caller,
+            revision_id="replay-derived-authoring",
+        )
+
+    def _auxiliary_role_enabled(role: str) -> bool:
+        return (
+            auxiliary_envelope is not None
+            and auxiliary_llm_caller is not None
+            and proposal_call_meter_from_envelope(
+                auxiliary_envelope,
+                consumer_role=role,
+                tokenizer=auxiliary_tokenizer,
+            )
+            is not None
+        )
 
     claims = load_atomic_claims_v3(str(artifacts / "atomic_claims_v3.json"))
     facts = load_code_facts_v1(str(artifacts / "code_facts_v1.json"))
@@ -1263,12 +2299,17 @@ def _rebuild_derived_authoring(
     )
     planner = None
     require_planner = False
-    if llm_config is not None and has_provider_api_key(llm_config):
+    planner_enabled = _auxiliary_role_enabled(METHOD_MECHANISM_DRAFT_PLANNER)
+    if (
+        llm_config is not None
+        and has_provider_api_key(llm_config)
+        and planner_enabled
+    ):
         planner = build_mechanism_draft_planner(
             llm_config,
             claims=claims,
             equations=equations,
-            llm_caller=llm_caller,
+            llm_caller=auxiliary_llm_caller,
         )
         require_planner = True
     argument_briefs = compile_method_argument_briefs(
@@ -1282,6 +2323,10 @@ def _rebuild_derived_authoring(
         planner=planner,
         require_planner_for_unlicensed=require_planner,
     )
+    facet_llm_enabled = (
+        _auxiliary_role_enabled(METHOD_PROPOSITION_ARCHITECT)
+        and _auxiliary_role_enabled(SEMANTIC_VERIFIER)
+    )
     facet_result = decompose_and_align_argument_facets(
         briefs=argument_briefs,
         claims=claims,
@@ -1289,9 +2334,15 @@ def _rebuild_derived_authoring(
         evidence_packets=packets,
         equations=equations,
         llm_config=(
-            llm_config if llm_config is not None and has_provider_api_key(llm_config)
+            llm_config
+            if (
+                llm_config is not None
+                and has_provider_api_key(llm_config)
+                and facet_llm_enabled
+            )
             else None
         ),
+        llm_caller=auxiliary_llm_caller if facet_llm_enabled else None,
         intent_graph=intent_graph,
     )
     argument_briefs = bind_facets_to_argument_briefs(
@@ -1578,6 +2629,56 @@ def _build_replay_continuation_context(
     return runtime, seed, seed_path
 
 
+def _run_deterministic_replay_preflight(
+    *,
+    artifact_paths: Mapping[str, str],
+    effective_mode: str,
+) -> dict[str, Any]:
+    """Validate deterministic replay inputs before any authoring model call."""
+
+    if effective_mode not in {"unified", "shadow_unified"}:
+        return {
+            "status": "not_applicable",
+            "effective_mode": effective_mode,
+            "model_calls": 0,
+        }
+
+    from code2paper.agentic.publication_method_writer import (
+        _behavior_graph_summary,
+        _load_authenticated_candidate_handoff,
+        _load_repository_authoring_context,
+    )
+
+    context = _load_repository_authoring_context(artifact_paths)
+    load_failures = tuple(
+        str(item).strip()
+        for item in (context.get("load_failures") or ())
+        if str(item).strip()
+    )
+    handoff, handoff_failures = _load_authenticated_candidate_handoff(artifact_paths)
+    failures = tuple(dict.fromkeys(
+        (*load_failures, *(str(item).strip() for item in handoff_failures if str(item).strip()))
+    ))
+    if handoff is None:
+        failures = tuple(dict.fromkeys((*failures, "candidate_handoff_missing_or_invalid")))
+    return {
+        "schema_version": "1.0",
+        "status": "fail" if failures else "pass",
+        "effective_mode": effective_mode,
+        "model_calls": 0,
+        "failure_codes": list(failures),
+        "candidate_handoff": {
+            "status": "eligible" if handoff is not None and handoff.eligible else "rejected",
+            "content_digest": str(getattr(handoff, "content_digest", "") or "")
+            if handoff is not None else "",
+            "revalidation_failures": list(handoff_failures),
+        },
+        "behavior_graph": _behavior_graph_summary(context.get("behavior_graph")),
+        "behavior_graph_rebuild": context.get("behavior_graph_rebuild") or {},
+        "source_load_failures": list(load_failures),
+    }
+
+
 def _replay(
     *,
     frozen: Path,
@@ -1587,6 +2688,38 @@ def _replay(
 ) -> int:
     telemetry["terminal_stage"] = "input"
     telemetry["terminal_reason"] = ""
+    authoring_stage = str(
+        getattr(arguments, "authoring_stage", "full") or "full"
+    ).strip().casefold()
+    if authoring_stage not in {"full", "prepare", "execute-prepared"}:
+        telemetry["terminal_reason"] = "authoring_stage_invalid:" + authoring_stage
+        _remember_first_failure(
+            telemetry,
+            stage="input",
+            reason=telemetry["terminal_reason"],
+            error_code="authoring_stage_invalid",
+        )
+        return 2
+    telemetry["authoring_stage"] = authoring_stage
+    legacy_stage_flags = (
+        "resume",
+        "rebuild_authoring",
+        "reuse_derived_authoring",
+        "reuse_authoring_callbacks",
+    )
+    if authoring_stage != "full" and any(
+        bool(getattr(arguments, flag, False)) for flag in legacy_stage_flags
+    ):
+        telemetry["terminal_reason"] = (
+            "authoring_stage_mutually_exclusive_with_legacy_flags"
+        )
+        _remember_first_failure(
+            telemetry,
+            stage="input",
+            reason=telemetry["terminal_reason"],
+            error_code="authoring_stage_mutually_exclusive",
+        )
+        return 2
     # A replay is one accounting boundary.  Reset the process-local collector
     # so direct test calls or a prior in-process run cannot contaminate its
     # token total.
@@ -1623,28 +2756,109 @@ def _replay(
     artifacts.mkdir(parents=True, exist_ok=True)
     copied: list[str] = []
     manifest_entries: list[dict[str, Any]] = []
-    for name in RESEARCH_COPY_ARTIFACTS:
-        source_candidates = [
-            frozen / "artifacts" / "06_authoring" / f"{name}.json",
-            frozen / "artifacts" / f"{name}.json",
+    if authoring_stage == "execute-prepared":
+        # The prepared root is the input contract.  Never recopy from the
+        # frozen root or overwrite a settled receipt/response on resume.
+        for name in (*RESEARCH_COPY_ARTIFACTS, *OPTIONAL_RESEARCH_ARTIFACTS,
+                     *FORMALIZER_PHASE_COPY_ARTIFACTS):
+            target = (
+                artifacts / "06_authoring" / f"{name}.json"
+                if name in FORMALIZER_PHASE_COPY_ARTIFACTS
+                else artifacts / f"{name}.json"
+            )
+            if target.is_file():
+                copied.append(name)
+                manifest_entries.append(_manifest_entry(
+                    name=name,
+                    path=target,
+                    authority_class=(
+                        "formalizer-phase"
+                        if name in FORMALIZER_PHASE_COPY_ARTIFACTS
+                        else "research"
+                    ),
+                    decision="reused-prepared-root",
+                ))
+        missing = [
+            name for name in RESEARCH_COPY_ARTIFACTS
+            if not (artifacts / f"{name}.json").is_file()
         ]
-        source = next((path for path in source_candidates if path.is_file()), None)
-        if source is None:
-            continue
-        target = artifacts / f"{name}.json"
-        shutil.copy2(source, target)
-        copied.append(name)
-        manifest_entries.append(_manifest_entry(
-            name=name,
-            path=target,
-            authority_class="research",
-            decision="copied",
-        ))
-    print(f"[replay] copied {len(copied)} research artifacts: {', '.join(copied)}")
-    missing = [
-        name for name in RESEARCH_COPY_ARTIFACTS
-        if not (artifacts / f"{name}.json").is_file()
-    ]
+        missing.extend(
+            name for name in FORMALIZER_PHASE_COPY_ARTIFACTS
+            if not (artifacts / "06_authoring" / f"{name}.json").is_file()
+        )
+        invocation_root = artifacts / "06_authoring" / "invocations"
+        if not invocation_root.is_dir() or not any(
+            path.is_file() for path in invocation_root.rglob("*")
+        ):
+            missing.append("formalizer_phase_invocations")
+        else:
+            manifest_entries.append({
+                "artifact_name": "formalizer_phase_invocations",
+                "path": str(invocation_root),
+                "digest": _digest_text("\n".join(
+                    f"{path.relative_to(invocation_root)}:{_digest_file(path)}"
+                    for path in sorted(invocation_root.rglob("*"))
+                    if path.is_file()
+                )),
+                "schema": "unified_invocation_ledger_v1",
+                "authority_class": "formalizer-phase",
+                "decision": "reused-prepared-root",
+                "reason": "execute_prepared",
+            })
+        print(
+            "[replay] reused prepared root artifacts: "
+            + ", ".join(copied)
+        )
+    else:
+        for name in RESEARCH_COPY_ARTIFACTS:
+            source_candidates = [
+                frozen / "artifacts" / "06_authoring" / f"{name}.json",
+                frozen / "artifacts" / f"{name}.json",
+            ]
+            source = next((path for path in source_candidates if path.is_file()), None)
+            if source is None:
+                continue
+            target = artifacts / f"{name}.json"
+            shutil.copy2(source, target)
+            copied.append(name)
+            manifest_entries.append(_manifest_entry(
+                name=name,
+                path=target,
+                authority_class="research",
+                decision="copied",
+            ))
+        print(f"[replay] copied {len(copied)} research artifacts: {', '.join(copied)}")
+        missing = [
+            name for name in RESEARCH_COPY_ARTIFACTS
+            if not (artifacts / f"{name}.json").is_file()
+        ]
+    if authoring_stage != "execute-prepared":
+        for name in OPTIONAL_RESEARCH_ARTIFACTS:
+            source_candidates = [
+                frozen / "artifacts" / "06_authoring" / f"{name}.json",
+                frozen / "artifacts" / f"{name}.json",
+            ]
+            source = next((path for path in source_candidates if path.is_file()), None)
+            if source is not None:
+                shutil.copy2(source, artifacts / f"{name}.json")
+                copied.append(name)
+                manifest_entries.append(_manifest_entry(
+                    name=name,
+                    path=artifacts / f"{name}.json",
+                    authority_class="research",
+                    decision="copied",
+                ))
+                print(f"[replay] copied optional research artifact: {name}")
+        if authoring_stage == "prepare":
+            phase_missing = _copy_frozen_formalizer_phase(
+                frozen=frozen,
+                fresh=fresh,
+                artifacts=artifacts,
+                copied=copied,
+                manifest_entries=manifest_entries,
+            )
+            missing = [*missing, *phase_missing]
+
     if missing:
         telemetry["terminal_stage"] = "input"
         telemetry["terminal_reason"] = "missing_frozen_artifacts:" + ",".join(missing)
@@ -1657,22 +2871,76 @@ def _replay(
         print(f"[replay] FATAL missing frozen artifacts: {missing}")
         return 2
 
-    for name in OPTIONAL_RESEARCH_ARTIFACTS:
-        source_candidates = [
-            frozen / "artifacts" / "06_authoring" / f"{name}.json",
-            frozen / "artifacts" / f"{name}.json",
+    # Unified/shadow replay must use the same source closure as product runs.
+    # A frozen run from before source artifacts were persisted can still be
+    # reconstructed, but only from an explicitly supplied repository whose
+    # exact project tree hash matches the frozen authority.
+    if (
+        authoring_stage != "execute-prepared"
+        and effective_mode in {"unified", "shadow_unified"}
+        and str(
+        getattr(arguments, "repo", "") or ""
+        ).strip()
+    ):
+        replay_repo = Path(arguments.repo).expanduser().resolve()
+        if not replay_repo.is_dir():
+            telemetry["terminal_stage"] = "input"
+            telemetry["terminal_reason"] = "unified_replay_repo_missing"
+            _remember_first_failure(
+                telemetry,
+                stage="input",
+                reason=telemetry["terminal_reason"],
+                error_code="unified_replay_repo_missing",
+            )
+            print(f"[replay] FATAL --repo is not a directory: {replay_repo}")
+            return 2
+        try:
+            rehydrated_names, rehydrated_entries, _rehydration_reason = (
+                _rehydrate_repository_source_artifacts(
+                    frozen=frozen,
+                    fresh=fresh,
+                    artifacts=artifacts,
+                    repo=replay_repo,
+                )
+            )
+        except Exception as exc:  # noqa: BLE001 - typed replay boundary
+            reason = _safe_failure_text(exc)
+            code = (
+                "unified_project_tree_hash_mismatch"
+                if "project_tree_hash_mismatch" in reason
+                else "unified_replay_rehydration_failed"
+            )
+            telemetry["terminal_stage"] = "input"
+            telemetry["terminal_reason"] = code + ":" + reason
+            telemetry["terminal_error_code"] = code
+            _remember_first_failure(
+                telemetry,
+                stage="input",
+                reason=telemetry["terminal_reason"],
+                error_code=code,
+            )
+            print(f"[replay] FATAL source rehydration failed: {reason}")
+            return 2
+        rehydrated_set = set(rehydrated_names)
+        copied[:] = [name for name in copied if name not in rehydrated_set]
+        manifest_entries[:] = [
+            item for item in manifest_entries
+            if str(item.get("artifact_name") or "") not in rehydrated_set
         ]
-        source = next((path for path in source_candidates if path.is_file()), None)
-        if source is not None:
-            shutil.copy2(source, artifacts / f"{name}.json")
-            copied.append(name)
-            manifest_entries.append(_manifest_entry(
-                name=name,
-                path=artifacts / f"{name}.json",
-                authority_class="research",
-                decision="copied",
-            ))
-            print(f"[replay] copied optional research artifact: {name}")
+        copied.extend(rehydrated_names)
+        manifest_entries.extend(rehydrated_entries)
+        telemetry["repository_source_rehydration"] = {
+            "status": "rehydrated",
+            "repo": str(replay_repo),
+            "artifact_names": list(rehydrated_names),
+            "project_tree_hash": _read_json_mapping(
+                artifacts / "repo_snapshot_v2.json"
+            ).get("project_tree_hash", ""),
+        }
+        print(
+            "[replay] rehydrated repository source artifacts: "
+            + ", ".join(rehydrated_names)
+        )
 
     execution_digest = _execution_manifest_digest(
         profile_path=profile_path,
@@ -1680,6 +2948,23 @@ def _replay(
         copied_artifact_names=tuple(copied),
         authoring_context_mode=effective_mode,
     )
+    writer_execution_digest = execution_digest
+    if authoring_stage == "execute-prepared":
+        writer_execution_digest = _prepared_continuation_execution_digest(
+            fresh=fresh,
+            current_execution_digest=execution_digest,
+            telemetry=telemetry,
+        )
+        if writer_execution_digest != execution_digest:
+            continuation_info = telemetry.get("authoring_prepare_continuation") or {}
+            continuation_codes = ",".join(
+                str(value) for value in (continuation_info.get("failure_codes") or ())
+                if str(value).strip()
+            )
+            print(
+                "[replay] admitted one bounded prepared-root continuation"
+                + (f" ({continuation_codes})" if continuation_codes else "")
+            )
     if not profile_path.is_file():
         telemetry["terminal_stage"] = "input"
         telemetry["terminal_reason"] = "authoring_rebuild_profile_missing"
@@ -1700,6 +2985,165 @@ def _replay(
             decision="refused",
             reason="not_copied_by_default",
         ))
+
+    def _copied_artifact_path(name: str) -> Path:
+        return (
+            artifacts / "06_authoring" / f"{name}.json"
+            if name in FORMALIZER_PHASE_COPY_ARTIFACTS
+            else artifacts / f"{name}.json"
+        )
+
+    # Deterministic source/graph/Candidate checks must run before the optional
+    # argument-brief/facet rebuild, whose planner/verifier calls are expensive.
+    # The preflight has no caller and records an explicit zero-call boundary.
+    preflight_artifact_paths = {
+        name: str(_copied_artifact_path(name))
+        for name in copied
+    }
+    historical_graph_path = artifacts / "behavior_graph_historical_v1.json"
+    if historical_graph_path.is_file():
+        preflight_artifact_paths["behavior_graph_historical_v1"] = str(
+            historical_graph_path
+        )
+    preflight = _run_deterministic_replay_preflight(
+        artifact_paths=preflight_artifact_paths,
+        effective_mode=effective_mode,
+    )
+    telemetry["deterministic_preflight"] = preflight
+    from code2paper.core.output_names import method_output
+
+    preflight_path = method_output(fresh, "deterministic_preflight_v1")
+    preflight_path.write_text(
+        json.dumps(preflight, ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8",
+    )
+    telemetry["deterministic_preflight_path"] = str(preflight_path)
+    manifest_entries.append(_manifest_entry(
+        name="deterministic_preflight_v1",
+        path=preflight_path,
+        authority_class="derived-source",
+        decision=("passed" if preflight.get("status") == "pass" else "failed"),
+        reason="model_calls:0",
+    ))
+    if preflight.get("status") == "fail":
+        telemetry["terminal_stage"] = "input"
+        telemetry["terminal_reason"] = (
+            "deterministic_preflight_failed:"
+            + ",".join(str(item) for item in preflight.get("failure_codes", ()))
+        )
+        _remember_first_failure(
+            telemetry,
+            stage="input",
+            reason=telemetry["terminal_reason"],
+            error_code="deterministic_preflight_failed",
+        )
+        print(
+            "[replay] FATAL deterministic preflight failed: "
+            + ",".join(str(item) for item in preflight.get("failure_codes", ()))
+        )
+        if getattr(arguments, "persist_authoring_rebuild_manifest", False):
+            _write_authoring_rebuild_manifest(
+                fresh=fresh,
+                entries=manifest_entries,
+                execution_digest=execution_digest,
+                refused_reason=telemetry["terminal_reason"],
+            )
+        return 2
+
+    if getattr(arguments, "deterministic_preflight_only", False):
+        telemetry["preflight_only"] = True
+        telemetry["terminal_stage"] = "input"
+        telemetry["terminal_reason"] = "deterministic_preflight_only"
+        if getattr(arguments, "persist_authoring_rebuild_manifest", False):
+            _write_authoring_rebuild_manifest(
+                fresh=fresh,
+                entries=manifest_entries,
+                execution_digest=execution_digest,
+                refused_reason="deterministic_preflight_only",
+            )
+        print("[replay] deterministic preflight passed; stopping before model calls")
+        return 0
+
+    unified_tokenizer = None
+    if effective_mode in {"unified", "shadow_unified"}:
+        try:
+            unified_tokenizer = _build_replay_unified_tokenizer(
+                llm_config=llm_config,
+                fresh=fresh,
+            )
+        except Exception as exc:  # noqa: BLE001 - live meter is an admission gate
+            telemetry["terminal_stage"] = "budget"
+            telemetry["terminal_reason"] = (
+                "unified_tokenizer_admission_failed:" + _safe_failure_text(exc)
+            )
+            _remember_first_failure(
+                telemetry,
+                stage="budget",
+                reason=telemetry["terminal_reason"],
+                error_code="unified_tokenizer_admission_failed",
+            )
+            print(
+                "[replay] FATAL exact unified tokenizer admission failed: "
+                + _safe_failure_text(exc)
+            )
+            return 2
+        telemetry["unified_tokenizer"] = {
+            "status": "admitted",
+            "identity": str(getattr(unified_tokenizer, "identity", "") or ""),
+            "contract_path": str(
+                fresh / "artifacts" / "06_authoring"
+                / "unified_tokenizer_contract_v1.json"
+            ),
+        }
+
+    auxiliary_envelope = None
+    try:
+        auxiliary_envelope = _build_replay_auxiliary_budget_envelope(
+            llm_config=llm_config,
+            run_digest=writer_execution_digest,
+        )
+    except Exception as exc:  # noqa: BLE001 - a malformed opt-in is a gate
+        telemetry["terminal_stage"] = "input"
+        telemetry["terminal_reason"] = (
+            "auxiliary_budget_profile_invalid:" + _safe_failure_text(exc)
+        )
+        _remember_first_failure(
+            telemetry,
+            stage="input",
+            reason=telemetry["terminal_reason"],
+            error_code="auxiliary_budget_profile_invalid",
+        )
+        print(
+            "[replay] FATAL auxiliary budget profile invalid: "
+            + _safe_failure_text(exc)
+        )
+        return 2
+    if auxiliary_envelope is not None:
+        # The replay execution identity is known before the Writer archive is
+        # assembled.  Bind all optional pre-page calls and the later proposal
+        # meter to this same run identity.
+        os.environ["CODE2PAPER_AUXILIARY_RUN_DIGEST"] = writer_execution_digest
+    telemetry["auxiliary_budget"] = (
+        {
+            "status": "enabled",
+            "envelope_digest": str(
+                getattr(auxiliary_envelope, "content_digest", "") or ""
+            ),
+            "run_digest": str(
+                getattr(auxiliary_envelope, "run_digest", "") or ""
+            ),
+            "roles": sorted(
+                str(role)
+                for role in (
+                    getattr(auxiliary_envelope, "max_calls_by_role", {}) or {}
+                )
+                if str(role)
+                not in {"formalizer", "writer", "realizer", "binder"}
+            ),
+        }
+        if auxiliary_envelope is not None
+        else {"status": "not_declared", "model_calls": 0}
+    )
 
     # A frozen authoring replay may intentionally exercise the current
     # Formalizer/Writer/Binder against an already-built MethodUnit surface.
@@ -1747,6 +3191,7 @@ def _replay(
             fresh=fresh,
             artifacts=artifacts,
             llm_config=llm_config,
+            auxiliary_envelope=auxiliary_envelope,
         )
         if refused:
             telemetry["terminal_stage"] = "method_unit_reassembly"
@@ -1863,9 +3308,13 @@ def _replay(
         )
 
     artifact_paths = {
-        name: str(artifacts / f"{name}.json")
+        name: str(_copied_artifact_path(name))
         for name in copied
     }
+    if historical_graph_path.is_file():
+        artifact_paths["behavior_graph_historical_v1"] = str(
+            historical_graph_path
+        )
 
     from code2paper.agentic.publication_method_writer import (
         effective_writer_transaction_status,
@@ -1877,14 +3326,23 @@ def _replay(
         out_root=fresh,
         artifact_paths=artifact_paths,
         llm_config=llm_config,
+        run_id=arguments.run_id,
         resume_section_ids=tuple(arguments.resume),
         llm_caller=None,
         editor_caller=None,
         rewrite_caller=None,
         formalization_caller=None,
         architect_proposal_caller=None,
+        unified_tokenizer=unified_tokenizer,
         authoring_context_mode=requested_mode or None,
         authoring_context_mode_source=mode_source,
+        formalizer_phase_checkpoint=(
+            fresh
+            if authoring_stage in {"prepare", "execute-prepared"}
+            else None
+        ),
+        authoring_stage=authoring_stage,
+        authoring_execution_manifest_digest=writer_execution_digest,
     )
     print(f"[replay] writer status: {result.status} blocked={result.blocked_reason}")
     print(f"[replay] paths: {json.dumps({k: v for k, v in sorted(paths.items()) if v}, indent=1)[:1200]}")
@@ -1894,8 +3352,45 @@ def _replay(
     telemetry["writer_resumed_section_ids"] = list(result.resumed_section_ids)
     telemetry["publication_status"] = result.status
     telemetry["writer_transaction_status"] = effective_writer_transaction_status(result)
-    telemetry["writer_status"] = telemetry["writer_transaction_status"]
+    telemetry["candidate_completion_status"] = str(
+        getattr(result, "candidate_completion_status", "incomplete") or "incomplete"
+    )
+    telemetry["candidate_complete"] = bool(
+        getattr(result, "candidate_complete", False)
+    )
+    telemetry["verified_complete"] = bool(
+        getattr(result, "verified_complete", False)
+    )
+    telemetry["writer_status"] = (
+        "success"
+        if telemetry["writer_transaction_status"] == "success"
+        and telemetry["candidate_complete"]
+        else "blocked"
+        if telemetry["writer_transaction_status"] == "blocked"
+        else "incomplete"
+    )
     telemetry["writer_blocked_reason"] = result.blocked_reason
+    if authoring_stage == "prepare":
+        prepare_complete = (
+            result.status == "incomplete"
+            and result.blocked_reason == "authoring_prepare_complete"
+        )
+        telemetry["prepare_status"] = "complete" if prepare_complete else "failed"
+        telemetry["terminal_stage"] = "prepare"
+        telemetry["terminal_reason"] = "" if prepare_complete else str(
+            result.blocked_reason or f"prepare_status:{result.status}"
+        )
+        telemetry["writer_status"] = "prepared" if prepare_complete else "blocked"
+        if not prepare_complete:
+            _remember_first_failure(
+                telemetry,
+                stage="prepare",
+                reason=telemetry["terminal_reason"],
+                error_code="authoring_prepare_failed",
+            )
+        else:
+            print("[replay] authoring prepare complete; no generation calls made")
+        return 0 if prepare_complete else 2
     telemetry["authoring_context"].update({
         "requested_mode": getattr(result, "requested_authoring_context_mode", effective_mode),
         "effective_mode": getattr(result, "effective_authoring_context_mode", effective_mode),
@@ -1952,6 +3447,8 @@ def _replay(
         )
 
     callback_requested = (
+        authoring_stage == "full"
+        and
         arguments.repo
         and Path(arguments.repo).is_dir()
         and int(arguments.callback_rounds) > 0
@@ -2112,7 +3609,20 @@ def _replay(
                 )
             )
             telemetry["writer_transaction_status"] = callback_status
-            telemetry["writer_status"] = callback_status
+            telemetry["candidate_completion_status"] = str(
+                callback_writer_payload.get("candidate_completion_status") or "incomplete"
+            )
+            telemetry["candidate_complete"] = bool(
+                callback_writer_payload.get("candidate_complete")
+            )
+            telemetry["verified_complete"] = bool(
+                callback_writer_payload.get("verified_complete")
+            )
+            telemetry["writer_status"] = (
+                "success"
+                if callback_status == "success" and telemetry["candidate_complete"]
+                else "blocked" if callback_status == "blocked" else "incomplete"
+            )
             telemetry["writer_blocked_reason"] = callback_reason
             telemetry["terminal_stage"] = "callback"
             telemetry["terminal_reason"] = str(
@@ -2245,18 +3755,19 @@ def _replay(
 
     writer_status = str(telemetry.get("writer_status") or result.status)
     candidate_digest = str(telemetry.get("candidate_digest") or "")
-    if writer_status == "success" and bool(
+    if writer_status == "success" and bool(telemetry.get("candidate_complete")) and bool(
         telemetry.get("structural_exit", {}).get("eligible")
     ):
         telemetry["terminal_stage"] = "complete"
         telemetry["terminal_reason"] = ""
-    if writer_status != "success":
+    if writer_status != "success" or not bool(telemetry.get("candidate_complete")):
         # A retained incumbent/candidate is useful diagnostic evidence, but
         # it is not a successful replay.  Exit non-zero so evaluators cannot
         # mistake an incomplete or blocked writer for acceptance.
         return 2
     if not bool(telemetry.get("structural_exit", {}).get("eligible")):
         return 2
+    return 0
 def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("frozen_root", help="Frozen run root with research artifacts")
@@ -2270,7 +3781,7 @@ def _build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--profile",
         default=None,
-        help="Path to an env profile (defaults to tests/live/profiles/qwen36_vllm_budgeted.example.env only if environment is not already configured)",
+        help="Path to an env profile (defaults to tests/live/profiles/qwen38_vllm_budgeted.example.env only if environment is not already configured)",
     )
     parser.add_argument(
         "--force-profile",
@@ -2283,6 +3794,15 @@ def _build_parser() -> argparse.ArgumentParser:
         choices=("legacy", "shadow_unified", "unified"),
         default=None,
         help="Authoring context lane; explicit CLI input wins over the profile/environment",
+    )
+    parser.add_argument(
+        "--authoring-stage",
+        choices=("full", "prepare", "execute-prepared"),
+        default="full",
+        help=(
+            "Authoring execution stage: full delivery, zero-generation prepare, "
+            "or execute a fresh prepared root"
+        ),
     )
     parser.add_argument(
         "--rebuild-authoring",
@@ -2304,6 +3824,14 @@ def _build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Write authoring_rebuild_manifest_v1.json with copy/rebuild decisions",
     )
+    parser.add_argument(
+        "--deterministic-preflight-only",
+        action="store_true",
+        help=(
+            "Stop after the zero-model source/graph/Candidate preflight and "
+            "record its result"
+        ),
+    )
     return parser
 
 
@@ -2311,9 +3839,34 @@ def main(argv: list[str] | None = None) -> int:
     parser = _build_parser()
     arguments = parser.parse_args(argv)
 
+    if arguments.authoring_stage != "full" and any((
+        bool(arguments.resume),
+        bool(arguments.rebuild_authoring),
+        bool(arguments.reuse_derived_authoring),
+        bool(arguments.reuse_authoring_callbacks),
+        bool(arguments.deterministic_preflight_only),
+    )):
+        parser.error(
+            "--authoring-stage prepare/execute-prepared cannot be combined "
+            "with --resume, --rebuild-authoring, --reuse-derived-authoring, "
+            "--reuse-authoring-callbacks, or --deterministic-preflight-only"
+        )
+
     frozen = Path(arguments.frozen_root).expanduser().resolve()
     fresh = Path(arguments.fresh_root).expanduser().resolve()
-    fresh.mkdir(parents=True, exist_ok=True)
+    if arguments.authoring_stage == "execute-prepared":
+        if not fresh.is_dir():
+            parser.error(
+                "--authoring-stage execute-prepared requires an existing prepared fresh root"
+            )
+    elif arguments.authoring_stage == "prepare":
+        if fresh.exists() and any(fresh.iterdir()):
+            parser.error(
+                "--authoring-stage prepare requires a fresh root that is empty"
+            )
+        fresh.mkdir(parents=True, exist_ok=True)
+    else:
+        fresh.mkdir(parents=True, exist_ok=True)
     initial_profile_path = _resolve_profile_path(arguments.profile, fresh=fresh)
     _apply_replay_profile(
         initial_profile_path,
@@ -2330,6 +3883,7 @@ def main(argv: list[str] | None = None) -> int:
     def _request_exit(signum: int, _frame: object) -> None:
         raise SystemExit(128 + int(signum))
 
+    signal.signal(signal.SIGINT, _request_exit)
     signal.signal(signal.SIGTERM, _request_exit)
     signal.signal(signal.SIGHUP, _request_exit)
     try:
@@ -2398,7 +3952,12 @@ def main(argv: list[str] | None = None) -> int:
             print(f"[replay] token usage summary failed: {exc!r}")
         structural = telemetry.get("structural_exit") or {}
         writer_status = str(telemetry.get("writer_status") or "")
-        failure_needed = bool(
+        preflight_only = bool(telemetry.get("preflight_only"))
+        prepare_complete = (
+            telemetry.get("authoring_stage") == "prepare"
+            and telemetry.get("prepare_status") == "complete"
+        )
+        failure_needed = False if (preflight_only or prepare_complete) else bool(
             exit_code != 0
             or writer_status not in {"", "success"}
             or not bool(structural.get("eligible"))
@@ -2411,6 +3970,84 @@ def main(argv: list[str] | None = None) -> int:
             telemetry["terminal_error_code"] = telemetry.get(
                 "first_failed_error_code", "authoring_failure"
             )
+        terminal_mode = str(
+            (telemetry.get("authoring_context") or {}).get("effective_mode")
+            or getattr(arguments, "authoring_context_mode", "")
+            or os.environ.get("CODE2PAPER_AUTHORING_CONTEXT_MODE", "")
+            or ""
+        ).strip().casefold()
+        if terminal_mode in {"unified", "shadow_unified"}:
+            try:
+                from code2paper.agentic.unified_invocation_ledger import (
+                    write_run_terminal_event,
+                )
+
+                ledger_root = fresh / "artifacts" / "06_authoring" / "invocations"
+                archive_payload = _read_json_mapping(
+                    fresh / "artifacts" / "06_authoring" / "unified_context_archive_v2.json"
+                )
+                if not archive_payload:
+                    archive_payload = _read_json_mapping(
+                        fresh / "artifacts" / "unified_context_archive_v2.json"
+                    )
+                run_digest = str(
+                    archive_payload.get("content_digest")
+                    or telemetry.get("unified_run_digest")
+                    or _digest_text(
+                        json.dumps(
+                            {
+                                "run_id": str(arguments.run_id),
+                                "frozen_root": str(frozen),
+                                "fresh_root": str(fresh),
+                            },
+                            ensure_ascii=False,
+                            sort_keys=True,
+                        )
+                    )
+                )
+                completed: list[tuple[int, int, str]] = []
+                if ledger_root.is_dir():
+                    for directory in ledger_root.iterdir():
+                        if not directory.is_dir():
+                            continue
+                        for receipt_path in directory.glob("attempt-*.completed.json"):
+                            payload = _read_json_mapping(receipt_path)
+                            invocation_id = str(payload.get("invocation_id") or "")
+                            if not invocation_id:
+                                continue
+                            try:
+                                attempt = int(payload.get("attempt", 0) or 0)
+                            except (TypeError, ValueError):
+                                attempt = 0
+                            try:
+                                mtime = receipt_path.stat().st_mtime_ns
+                            except OSError:
+                                mtime = 0
+                            completed.append((mtime, attempt, invocation_id))
+                last_completed = (
+                    max(completed, key=lambda item: (item[0], item[1]))[2]
+                    if completed else ""
+                )
+                terminal_path = write_run_terminal_event(
+                    ledger_root,
+                    run_digest=run_digest,
+                    terminal_reason=str(telemetry.get("terminal_reason") or ""),
+                    terminal_stage=str(telemetry.get("terminal_stage") or "replay"),
+                    last_completed_invocation_id=last_completed,
+                    extra={
+                        "exit_code": int(exit_code),
+                        "terminal_error_code": str(
+                            telemetry.get("terminal_error_code") or ""
+                        ),
+                    },
+                )
+                telemetry["invocation_terminal_event"] = {
+                    "path": str(terminal_path),
+                    "run_digest": run_digest,
+                    "last_completed_invocation_id": last_completed,
+                }
+            except Exception as exc:  # noqa: BLE001 - terminal diagnostics only
+                print(f"[replay] invocation terminal event failed: {exc!r}")
         failure_path = _authoring_failure_path(fresh)
         if failure_needed and not failure_path.is_file():
             try:

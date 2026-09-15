@@ -44,6 +44,22 @@ from code2paper.agentic.source_inventory import normalize_source_path
 
 _ACTIVE_STATUSES = frozenset({"active_default", "active_selected", "conditional"})
 _INACTIVE_STATUSES = frozenset({"inactive_default", "unreachable"})
+# Generic semantic predicate families used only to prove that a fact-view
+# operation and a graph-view operation are the *same* operation (e.g. the
+# frozen ``calls`` fact and the adapter ``CALL`` node).  A family match alone
+# never merges: correspondence additionally requires one exact shared span,
+# one symbol scope, and identical operands/result (see
+# ``_proven_same_operation``).  ``calls``/``CALL`` is the reference mapping.
+_PREDICATE_FAMILIES: tuple[frozenset[str], ...] = (
+    frozenset({"calls", "call", "invokes", "invoke", "dispatches", "dispatch"}),
+    frozenset({"computes", "compute", "projects", "project", "attends", "attend"}),
+    frozenset({"loads", "load", "reads", "read", "fetches", "fetch"}),
+    frozenset({"writes", "write", "stores", "store", "emits", "emit"}),
+    frozenset({"concatenates", "concatenate", "concat", "cat", "stacks", "stack"}),
+    frozenset({"branches", "branch", "compares", "compare", "selects", "select", "select_top_k"}),
+    frozenset({"configured_by", "configures", "configure"}),
+    frozenset({"transforms", "transform", "converts", "convert", "maps", "map"}),
+)
 _GRAPH_RELATIONS = frozenset({
     "CONTAINS", "NEXT_CONTROL", "CALLS", "RETURNS_TO", "DATA_DEPENDS_ON",
     "CONTROL_DEPENDS_ON", "TRUE_BRANCH", "FALSE_BRANCH", "READS_FROM",
@@ -131,7 +147,19 @@ def _source_digest(value: Any) -> str:
     try:
         return sha256_digest(canonical_json_bytes(value))
     except TypeError:
-        return sha256_digest(_text(value))
+        # Never digest ``str(object)``: a provider without a declared identity
+        # would then hash its memory address and make the closure, archive and
+        # downstream page/plan digests change on every process.
+        fallback_identity = {
+            "provider_type": (
+                f"{type(value).__module__}.{type(value).__qualname__}"
+            ),
+            "repo_snapshot_id": _text(
+                _get(value, "repo_snapshot_id") or _get(value, "snapshot_id")
+            ),
+            "project_tree_hash": _text(_get(value, "project_tree_hash")),
+        }
+        return sha256_digest(canonical_json_bytes(fallback_identity))
 
 
 def _canonical_mechanism_id(value: Any) -> str:
@@ -148,6 +176,15 @@ def _span_order(span_id: str) -> tuple[str, int, int, str]:
     if not match:
         return (span_id, 10**9, 10**9, span_id)
     return (match.group(1), int(match.group(2)), int(match.group(3)), span_id)
+
+
+def _normalize_guard_text(value: Any) -> str:
+    """Normalize a guard/condition string without changing its logic.
+
+    Whitespace collapsing is the only transformation: equivalence is never
+    inferred from keyword overlap or substring containment.
+    """
+    return " ".join(str(value or "").split())
 
 
 def _fact_values(value: Any) -> tuple[str, ...]:
@@ -438,6 +475,147 @@ def _relation_endpoint(relation: Any, side: str, nodes: Mapping[str, Any]) -> st
     return node_id or symbol_id
 
 
+def _branch_dominance_guards(
+    nodes: Mapping[str, Any],
+    relations: Mapping[str, Any],
+) -> tuple[
+    dict[str, tuple[tuple[str, ...], tuple[str, ...]]],
+    dict[str, tuple[str, tuple[str, ...]]],
+    dict[str, tuple[str, tuple[str, ...]]],
+]:
+    """Recover the branch guard that dominates each graph node.
+
+    A node is condition-dominated only when a typed ``TRUE_BRANCH`` /
+    ``FALSE_BRANCH`` (or guard-carrying ``CONTROL_DEPENDS_ON``) relation ties
+    it to a branch node whose span contains the node span, or when it is
+    reached from such a target through ``NEXT_CONTROL`` edges without leaving
+    the branch span (bounded dominance).  The guard text travels on the
+    frozen typed edge, never from a fact string or a filename heuristic.
+
+    Returns three mappings:
+
+    - ``recovered``: ``node_id -> (conjuncts, relation_ids)`` where
+      ``conjuncts`` is the deterministic conjunction of the dominating
+      guards (a negative branch renders as ``not (G)``; conjuncts are sorted
+      so the normalized text does not depend on traversal order);
+    - ``unproven``: ``node_id -> (guard, relation_ids)`` for guarded typed
+      edges whose bounded dominance could not be established (span
+      containment fails).  The conditional claim may still belong to the
+      enclosing scope, so the node keeps its own resolution and the caller
+      records the gap instead of silently aligning;
+    - ``conflicted``: ``node_id -> (guard, relation_ids)`` when the same
+      guard text would dominate the node with both polarities (a frozen
+      graph inconsistency).  The node keeps ``unknown`` so the conflict
+      stays visible to the status aggregation and the owning agent.
+    """
+
+    span_bounds: dict[str, tuple[int, int]] = {}
+    for node_id, node in nodes.items():
+        match = re.match(r"^span:(.*):(\d+):(\d+)$", _text(_get(node, "source_span_id")))
+        if match:
+            span_bounds[node_id] = (int(match.group(2)), int(match.group(3)))
+
+    def bound_of(node_id: str) -> tuple[int, int] | None:
+        return span_bounds.get(node_id)
+
+    def contains(outer: tuple[int, int], inner: tuple[int, int]) -> bool:
+        return outer[0] <= inner[0] and inner[1] <= outer[1]
+
+    dominance: dict[str, list[tuple[str, str, str, tuple[int, int]]]] = defaultdict(list)
+    unproven: dict[str, list[tuple[str, str]]] = defaultdict(list)
+    for rid, relation in relations.items():
+        kind = _text(_get(relation, "kind")).upper()
+        guard = _normalize_guard_text(_get(relation, "guard"))
+        polarity = ""
+        if kind == "TRUE_BRANCH":
+            polarity = "positive"
+        elif kind == "FALSE_BRANCH":
+            polarity = "negative"
+        elif kind == "CONTROL_DEPENDS_ON":
+            if guard:
+                polarity = "positive"
+            else:
+                source_id = _relation_endpoint(relation, "source", nodes)
+                guard = _normalize_guard_text(_get(nodes.get(source_id), "guard"))
+                if guard:
+                    polarity = "positive"
+        if not guard or not polarity:
+            continue
+        source_id = _relation_endpoint(relation, "source", nodes)
+        target_id = _relation_endpoint(relation, "target", nodes)
+        source_bound = bound_of(source_id)
+        target_bound = bound_of(target_id)
+        if (
+            source_bound is None or target_bound is None
+            or not contains(source_bound, target_bound)
+        ):
+            # The typed edge carries a guard but bounded dominance cannot be
+            # established; record the gap for the owning agent.
+            unproven[target_id].append((guard, rid))
+            continue
+        dominance[target_id].append((guard, polarity, rid, source_bound))
+
+    queue: deque[tuple[str, tuple[str, str, str, tuple[int, int]]]] = deque(
+        (target_id, entry)
+        for target_id, entries in dominance.items()
+        for entry in entries
+    )
+    while queue:
+        node_id, (guard, polarity, rid, branch_span) = queue.popleft()
+        node_bound = bound_of(node_id)
+        if node_bound is None or not contains(branch_span, node_bound):
+            continue
+        for out_rid, relation in relations.items():
+            if _text(_get(relation, "kind")).upper() != "NEXT_CONTROL":
+                continue
+            if _relation_endpoint(relation, "source", nodes) != node_id:
+                continue
+            target_id = _relation_endpoint(relation, "target", nodes)
+            target_bound = bound_of(target_id)
+            if target_bound is None or not contains(branch_span, target_bound):
+                continue
+            if any(
+                existing[0] == guard and existing[1] == polarity
+                for existing in dominance.get(target_id, ())
+            ):
+                continue
+            dominance[target_id].append((guard, polarity, out_rid, branch_span))
+            queue.append((target_id, (guard, polarity, out_rid, branch_span)))
+
+    recovered: dict[str, tuple[tuple[str, ...], tuple[str, ...]]] = {}
+    conflicted: dict[str, tuple[str, tuple[str, ...]]] = {}
+    for node_id, entries in dominance.items():
+        polarities_by_guard: dict[str, set[str]] = defaultdict(set)
+        relation_ids: list[str] = []
+        for guard, polarity, rid, _branch_span in entries:
+            polarities_by_guard[guard].add(polarity)
+            if rid not in relation_ids:
+                relation_ids.append(rid)
+        if any(
+            polarities == {"positive", "negative"}
+            for polarities in polarities_by_guard.values()
+        ):
+            conflicting_guard = next(
+                guard for guard, polarities in polarities_by_guard.items()
+                if polarities == {"positive", "negative"}
+            )
+            conflicted[node_id] = (conflicting_guard, tuple(relation_ids))
+            continue
+        conjuncts = tuple(sorted(
+            f"not ({guard})" if "negative" in polarities else guard
+            for guard, polarities in polarities_by_guard.items()
+        ))
+        if conjuncts:
+            recovered[node_id] = (conjuncts, tuple(relation_ids))
+    return recovered, {
+        node_id: (guards[0][0], tuple(dict.fromkeys(
+            rid for _guard, rid in guards
+        )))
+        for node_id, guards in unproven.items()
+        if guards
+    }, conflicted
+
+
 def _source_provider_files(source_provider: Any) -> dict[str, str]:
     if isinstance(source_provider, Mapping):
         return {str(k): _text(v) for k, v in source_provider.items() if isinstance(v, str)}
@@ -459,13 +637,22 @@ def _source_provider_files(source_provider: Any) -> dict[str, str]:
     return {}
 
 
-def _build_adapter_graph(
+def build_current_behavior_graph(
     *,
     symbol_index: Any,
     source_provider: Any,
     entry_symbol_ids: Sequence[str],
 ) -> Any | None:
-    """Build a bounded graph when the caller supplied a real source snapshot."""
+    """Build the canonical current-source behavior graph.
+
+    Offline reconstruction and the product Writer must not choose different
+    graph origins.  This is the single bounded adapter entry point for both:
+    it consumes the verified source provider and the same indexed entry roots,
+    while retaining the existing ``depth=2``/``node_budget=2000`` limits.
+    A missing entry or source closure remains an explicit ``None`` so legacy
+    fixtures without repository authority can keep their typed fallback; a
+    present source closure never falls back to a persisted historical graph.
+    """
 
     if not symbol_index or not entry_symbol_ids:
         return None
@@ -489,6 +676,21 @@ def _build_adapter_graph(
         return _get(result, "graph")
     except Exception:
         return None
+
+
+def _build_adapter_graph(
+    *,
+    symbol_index: Any,
+    source_provider: Any,
+    entry_symbol_ids: Sequence[str],
+) -> Any | None:
+    """Backward-compatible private alias for the canonical graph builder."""
+
+    return build_current_behavior_graph(
+        symbol_index=symbol_index,
+        source_provider=source_provider,
+        entry_symbol_ids=entry_symbol_ids,
+    )
 
 
 def _entry_start_nodes(
@@ -1689,7 +1891,12 @@ def _graph_node_operation(
     relation_ids: Iterable[str] = (),
     operation_id: str = "",
     source_kind: str = "",
+    activation_basis_ids: Iterable[str] = (),
+    recovered_guard: str = "",
 ) -> EvidenceOperationV1:
+    recovered_basis = tuple(dict.fromkeys(_ids(activation_basis_ids))) or _ids(
+        _get(node, "activation_basis_ids", ())
+    )
     return EvidenceOperationV1(
         # Behavior adapters may reuse a local operation label for every
         # symbol.  The node id is the stable graph identity and prevents a
@@ -1699,13 +1906,13 @@ def _graph_node_operation(
         predicate=_text(_get(node, "predicate")) or "unknown_operation",
         operands=_ids(_get(node, "operands", ())),
         result=_text(_get(node, "result")),
-        guard=_text(_get(node, "guard")),
+        guard=_text(recovered_guard) or _text(_get(node, "guard")),
         source_span_id=_text(_get(node, "source_span_id")),
         relation_ids=tuple(dict.fromkeys(
             (*_ids(_get(node, "relation_ids", ())), *_ids(relation_ids)
         ))),
         active_path_status=active_status,
-        activation_basis_ids=_ids(_get(node, "activation_basis_ids", ())),
+        activation_basis_ids=recovered_basis,
         shape_or_type_hints=_ids(_get(node, "shape_or_type_hints", ())),
         source_fact_ids=_ids(_get(node, "source_fact_ids", ())),
         source_kind=_text(_get(node, "source_kind")) or source_kind or "unknown",
@@ -1807,6 +2014,94 @@ def compile_mechanism_evidence_closures(
     # isolated.
     seeds, merge_proof_rows = _merge_mechanism_seed_rows(seeds, facts=facts, graph=graph)
     graph_nodes, graph_relations, unresolved_relations = _graph_parts(graph)
+    # Recover each graph node's dominating branch guard from the frozen typed
+    # TRUE_BRANCH/FALSE_BRANCH/guarded CONTROL_DEPENDS_ON relations (bounded
+    # by span containment plus NEXT_CONTROL stay-inside).  A graph node whose
+    # own guard is empty but is provably dominated by a typed branch then
+    # resolves to the same conditional semantics as its fact-view twin
+    # instead of collapsing the mixed status to unknown.  Guarded edges whose
+    # dominance is unbounded, or that claim both polarities for one guard,
+    # are reported instead of being aligned.
+    (
+        dominated_guards,
+        unproven_dominance,
+        conflicted_dominance,
+    ) = _branch_dominance_guards(graph_nodes, graph_relations)
+    # Span-level dominance: when an operation at one exact span is proven
+    # condition-dominated by typed relations, every operation at that same
+    # span shares the same code location and therefore the same guard.  The
+    # proof is bounded to the exact span (never the file or the symbol), the
+    # symbol scope must agree, and a span where any guarded typed edge is
+    # unproven or contradictory is excluded so the two views cannot be
+    # silently aligned on contested evidence.
+    span_dominance: dict[str, tuple[str, tuple[str, ...], str]] = {}
+    contested_spans: set[str] = set()
+    for dominated_node_id, (conjuncts, relation_ids) in dominated_guards.items():
+        span = _text(_get(graph_nodes.get(dominated_node_id), "source_span_id"))
+        symbol = _text(_get(graph_nodes.get(dominated_node_id), "symbol_id"))
+        if not span or not symbol:
+            continue
+        guard_text = " and ".join(conjuncts)
+        existing = span_dominance.get(span)
+        if existing is not None and (
+            existing[0] != guard_text or existing[2] != symbol
+        ):
+            contested_spans.add(span)
+            continue
+        span_dominance[span] = (guard_text, relation_ids, symbol)
+    for contested_node_id in (*unproven_dominance, *conflicted_dominance):
+        span = _text(_get(graph_nodes.get(contested_node_id), "source_span_id"))
+        if span:
+            contested_spans.add(span)
+    for span in contested_spans:
+        span_dominance.pop(span, None)
+
+    def resolve_typed_guard(
+        node_id: str,
+        span_id: str,
+        symbol_name: str,
+        own_guard: str,
+        explicit_status: str,
+    ) -> tuple[str, tuple[str, ...], str]:
+        """Resolve one operation's guard from typed dominance evidence.
+
+        Returns ``(guard, activation_basis_ids, explicit_status)``.  A node's
+        own guard or explicit path status always wins.  Otherwise node-level
+        typed dominance applies, then the exact-span proof, while unproven or
+        contradictory dominance is reported and never silently aligned.
+        """
+
+        if own_guard or explicit_status:
+            return own_guard, (), explicit_status
+        conflict = conflicted_dominance.get(node_id)
+        if conflict:
+            conflict_guard, conflict_relations = conflict
+            return (
+                "",
+                (f"path_polarity_conflict:{conflict_guard}", *conflict_relations),
+                "unknown",
+            )
+        recovered = dominated_guards.get(node_id)
+        if recovered:
+            conjuncts, relation_ids = recovered
+            return " and ".join(conjuncts), relation_ids, explicit_status
+        unproven = unproven_dominance.get(node_id)
+        if unproven:
+            unproven_guard, unproven_relations = unproven
+            return (
+                own_guard,
+                (f"unproven_dominance:{unproven_guard}", *unproven_relations),
+                explicit_status,
+            )
+        span_proof = span_dominance.get(span_id)
+        if span_proof is not None and span_proof[2] == symbol_name:
+            guard_text, relation_ids, _symbol = span_proof
+            return (
+                guard_text,
+                (f"same_span_dominance:{span_id}", *relation_ids),
+                explicit_status,
+            )
+        return own_guard, (), explicit_status
     fact_values = _items(facts, "facts")
     fact_by_id = {
         _text(_get(item, "fact_id")): item
@@ -2001,11 +2296,18 @@ def compile_mechanism_evidence_closures(
                 reachable_flag = bool(matching_graph_nodes.intersection(reachable_nodes))
             if scope_kind in {"comparand", "evaluation"} and not explicit_status:
                 explicit_status = "inactive_default"
+            atom_guard, atom_basis, explicit_status = resolve_typed_guard(
+                "",
+                span_id,
+                symbol_name,
+                _text(atom.get("guard")),
+                explicit_status,
+            )
             status = resolve_active_path_status(
                 symbol_name=symbol_name,
                 operation_id=operation_id,
                 source_span_id=span_id,
-                guard=_text(atom.get("guard")),
+                guard=atom_guard,
                 config_bindings=config_values,
                 author_config_overrides=author_config_overrides,
                 default_branch=default_branch,
@@ -2018,11 +2320,13 @@ def compile_mechanism_evidence_closures(
                 predicate=_text(atom.get("predicate")) or "unknown_operation",
                 operands=_ids(atom.get("operands", ())),
                 result=_text(atom.get("result")),
-                guard=_text(atom.get("guard")),
+                guard=atom_guard,
                 source_span_id=span_id,
                 relation_ids=_ids(atom.get("relation_evidence_ids", ())),
                 active_path_status=status,
-                activation_basis_ids=_ids(atom.get("activation_basis_ids", ())),
+                activation_basis_ids=tuple(dict.fromkeys(
+                    (*_ids(atom.get("activation_basis_ids", ())), *atom_basis)
+                )),
                 shape_or_type_hints=_ids(atom.get("shape_or_type_hints", ())),
                 source_fact_ids=(_text(atom.get("fact_id")),) if _text(atom.get("fact_id")) else (),
                 source_kind=source_kind,
@@ -2063,11 +2367,19 @@ def compile_mechanism_evidence_closures(
             explicit_status = _text(_get(node, "active_path_status"))
             if scope_kind in {"comparand", "evaluation"} and not explicit_status:
                 explicit_status = "inactive_default"
+            node_guard = _text(_get(node, "guard"))
+            node_guard, recovered_basis, explicit_status = resolve_typed_guard(
+                node_id,
+                span_id,
+                symbol_name,
+                node_guard,
+                explicit_status,
+            )
             status = resolve_active_path_status(
                 symbol_name=symbol_name,
                 operation_id=operation_id,
                 source_span_id=span_id,
-                guard=_text(_get(node, "guard")),
+                guard=node_guard,
                 config_bindings=config_matches,
                 author_config_overrides=author_config_overrides,
                 default_branch=default_branch,
@@ -2089,6 +2401,8 @@ def compile_mechanism_evidence_closures(
                 relation_ids=node_relation_ids,
                 operation_id=operation_id,
                 source_kind=source_kind,
+                activation_basis_ids=recovered_basis,
+                recovered_guard=node_guard,
             ))
             seen_operations.add(operation_id)
 
@@ -2154,11 +2468,18 @@ def compile_mechanism_evidence_closures(
                             symbol_name, raw_symbol_name, set(seed["entry_symbol_ids"])
                         )
                         explicit_status = "inactive_default" if scope_kind in {"comparand", "evaluation"} else ""
+                        callee_guard, callee_basis, explicit_status = resolve_typed_guard(
+                            callee_node_id,
+                            _text(_get(callee_node, "source_span_id")),
+                            symbol_name,
+                            _text(_get(callee_node, "guard")),
+                            explicit_status,
+                        )
                         status = resolve_active_path_status(
                             symbol_name=symbol_name,
                             operation_id=callee_operation_id,
                             source_span_id=_text(_get(callee_node, "source_span_id")),
-                            guard=_text(_get(callee_node, "guard")),
+                            guard=callee_guard,
                             config_bindings=config_values,
                             author_config_overrides=author_config_overrides,
                             default_branch=default_branch,
@@ -2180,6 +2501,8 @@ def compile_mechanism_evidence_closures(
                             relation_ids=(relation_id,) if relation_id else (),
                             operation_id=callee_operation_id,
                             source_kind=callee_source_kind,
+                            activation_basis_ids=callee_basis,
+                            recovered_guard=callee_guard,
                         ))
                         seen_operations.add(callee_operation_id)
                         span = _text(_get(callee_node, "source_span_id"))
@@ -3026,13 +3349,153 @@ def _operation_fact_ids(operation_id: str, closure: MechanismEvidenceClosureV1) 
     return ()
 
 
-def _operation_status(operations: Sequence[EvidenceOperationV1]) -> ActivePathStatus:
+def _same_predicate_family(left: str, right: str) -> bool:
+    left_raw, right_raw = _text(left).casefold(), _text(right).casefold()
+    if left_raw and left_raw == right_raw:
+        return True
+    return bool(left_raw and right_raw and any(
+        left_raw in family and right_raw in family
+        for family in _PREDICATE_FAMILIES
+    ))
+
+
+def _proven_same_operation(operations: Sequence[EvidenceOperationV1]) -> bool:
+    """Prove that all operations in a cluster are one operation across views.
+
+    Correspondence requires one exact shared span, at most one symbol scope,
+    and equal operands/result combined with a generic predicate-family match
+    (``calls``↔``CALL``).  Case-only, span-only, or result-name-only equality
+    never proves correspondence; nested operations at the same span with
+    different kinds (e.g. ``LOAD`` vs ``CALL``) stay distinguishable.
+    """
+
+    if len(operations) < 2:
+        return True
+    spans = {operation.source_span_id for operation in operations if operation.source_span_id}
+    if len(spans) != 1:
+        return False
+    symbols = {operation.symbol_id for operation in operations if operation.symbol_id}
+    if len(symbols) > 1:
+        return False
+
+    def operand_key(operation: EvidenceOperationV1) -> tuple[str, ...]:
+        return tuple(sorted(
+            str(value).strip().casefold()
+            for value in operation.operands
+            if str(value).strip()
+        ))
+
+    first = operations[0]
+    base_operands = operand_key(first)
+    base_result = str(first.result).strip().casefold()
+    for operation in operations[1:]:
+        if operand_key(operation) != base_operands:
+            return False
+        if str(operation.result).strip().casefold() != base_result:
+            return False
+        if not _same_predicate_family(first.predicate, operation.predicate):
+            return False
+    return True
+
+
+def _path_evidence_marker_reason(basis_ids: Sequence[str]) -> str:
+    """Map a typed recovery marker in the activation basis to a reason code."""
+
+    for basis in basis_ids:
+        if basis.startswith("path_polarity_conflict:"):
+            return basis
+        if basis.startswith("unproven_dominance:"):
+            return "guard_dominance_unproven:" + basis.split(":", 1)[1]
+    return ""
+
+
+def _cluster_path_evidence(
+    operations: Sequence[EvidenceOperationV1],
+) -> tuple[ActivePathStatus, tuple[str, ...], tuple[str, ...], str]:
+    """Aggregate a cluster's active-path status from its operation evidence.
+
+    Returns ``(status, conditions, basis_ids, reason_code)``.  The status
+    rules are strict and follow the frozen-evidence contract:
+
+    - a recovery marker (polarity conflict / unbounded dominance) keeps the
+      cluster unresolved with that exact reason, even when every view
+      happens to report the same status;
+    - proven dual views of one operation whose guard texts disagree are a
+      guard conflict, never a conjunction (textual difference is not proof
+      of equivalence);
+    - one distinct status: that status;
+    - any ``unknown`` view keeps the cluster unknown (fail-closed);
+    - the pre-existing mixed active/inactive rule stays ``conditional``;
+    - a mixed *active* set collapses only when the operations are proven to
+      be the same operation across views: a single recovered guard becomes
+      ``conditional`` (the guarded view dominates, the guardless view is an
+      omission), and ``active_selected`` is retained only when selection
+      evidence produced it;
+    - missing correspondence or inconsistent selection stays ``unknown``
+      with a concrete reason for the owning agent.
+    """
+
     statuses = {operation.active_path_status for operation in operations}
+    conditions = tuple(dict.fromkeys(
+        _normalize_guard_text(operation.guard)
+        for operation in operations
+        if _normalize_guard_text(operation.guard)
+    ))
+    basis_ids = tuple(dict.fromkeys(
+        basis
+        for operation in operations
+        for basis in operation.activation_basis_ids
+        if basis
+    ))
+    marker = _path_evidence_marker_reason(basis_ids)
+    if marker:
+        return "unknown", conditions, basis_ids, marker
+    if len(operations) > 1 and len(conditions) > 1 and _proven_same_operation(operations):
+        # Two views of one operation name different guards.  Distinct
+        # condition texts are not provably equivalent, so the cluster stays
+        # unknown (nesting is preserved inside one recovered guard text,
+        # not by unioning unrelated strings).
+        return (
+            "unknown", conditions, basis_ids,
+            "guard_conflict:" + "|".join(conditions),
+        )
     if len(statuses) == 1:
-        return next(iter(statuses))  # type: ignore[return-value]
+        return next(iter(statuses)), conditions, basis_ids, ""  # type: ignore[return-value]
+    if "unknown" in statuses:
+        return "unknown", conditions, basis_ids, "unknown_status_present"
     if statuses.intersection(_INACTIVE_STATUSES) and statuses.intersection(_ACTIVE_STATUSES):
-        return "conditional"
-    return "unknown"
+        return "conditional", conditions, basis_ids, ""
+    if statuses.issubset(_ACTIVE_STATUSES):
+        if not _proven_same_operation(operations):
+            return (
+                "unknown", conditions, basis_ids,
+                "dual_view_correspondence_missing",
+            )
+        if not conditions:
+            if "active_selected" in statuses:
+                return (
+                    "active_selected", conditions, basis_ids,
+                    "dual_view_selection_evidence",
+                )
+            return "active_default", conditions, basis_ids, "dual_view_guard_omission"
+        if len(conditions) == 1:
+            marker = _path_evidence_marker_reason(basis_ids)
+            if marker:
+                # A guarded typed edge exists for this operation, but its
+                # dominance is unproven (or contradictory): the conditional
+                # claim may not be aligned onto this span.
+                return "unknown", conditions, basis_ids, marker
+            return "conditional", conditions, basis_ids, "dual_view_guard_alignment"
+        return (
+            "unknown", conditions, basis_ids,
+            "guard_conflict:" + "|".join(conditions),
+        )
+    return "unknown", conditions, basis_ids, "mixed_status_unresolved"
+
+
+def _operation_status(operations: Sequence[EvidenceOperationV1]) -> ActivePathStatus:
+    """Legacy status-only projection of :func:`_cluster_path_evidence`."""
+    return _cluster_path_evidence(operations)[0]
 
 
 def annotate_mechanism_paper_details(
@@ -3154,11 +3617,14 @@ def annotate_mechanism_paper_details(
             if span_id not in exact_excerpt_by_span and index < len(closure.exact_excerpts):
                 exact_excerpt_by_span[span_id] = closure.exact_excerpts[index]
 
-        detail_specs: list[tuple[str, tuple[EvidenceOperationV1, ...], DetailRole, DetailImportance, ActivePathStatus]] = []
+        detail_specs: list[tuple[str, tuple[EvidenceOperationV1, ...], DetailRole, DetailImportance, ActivePathStatus, str, tuple[str, ...], tuple[str, ...]]] = []
         for index, cluster in enumerate(owned_clusters):
             role = _detail_role(cluster, index, len(owned_clusters))
             importance = _detail_importance(cluster, role=role)
-            status = _operation_status(cluster)
+            cluster_status, cluster_conditions, cluster_basis, status_reason = _cluster_path_evidence(
+                cluster
+            )
+            status = cluster_status
             # Core redefinition (remediation plan point 5): ``active_default``
             # alone never makes a detail core.  Core additionally requires
             # first-party executable source and an exact obligation/facet
@@ -3198,10 +3664,14 @@ def annotate_mechanism_paper_details(
                 role,
                 importance,
                 status,
+                status_reason,
+                cluster_conditions,
+                cluster_basis,
             ))
 
         details: list[MechanismDetailV1] = []
-        for index, (detail_id, cluster, role, importance, status) in enumerate(detail_specs):
+        for index, spec in enumerate(detail_specs):
+            detail_id, cluster, role, importance, status, status_reason, cluster_conditions, cluster_basis = spec
             source_operation_ids = tuple(operation.operation_id for operation in cluster)
             source_fact_ids = tuple(dict.fromkeys(
                 fact_id
@@ -3298,9 +3768,7 @@ def annotate_mechanism_paper_details(
             results = tuple(dict.fromkeys(
                 operation.result for operation in cluster if operation.result
             ))
-            conditions = tuple(dict.fromkeys(
-                operation.guard for operation in cluster if operation.guard
-            ))
+            conditions = cluster_conditions
             claim_kind: ClaimKind = (
                 "formalization"
                 if any(operation.predicate.upper() in {"COMPUTE", "REDUCE", "NORMALIZE", "PROJECT", "ATTEND"} for operation in cluster)
@@ -3326,9 +3794,7 @@ def annotate_mechanism_paper_details(
                     hint for operation in cluster for hint in operation.shape_or_type_hints
                 )),
                 active_path_status=status,
-                activation_basis_ids=tuple(dict.fromkeys(
-                    basis for operation in cluster for basis in operation.activation_basis_ids
-                )),
+                activation_basis_ids=cluster_basis,
                 source_operation_ids=source_operation_ids,
                 source_fact_ids=source_fact_ids,
                 source_claim_ids=source_claim_ids,
@@ -3342,6 +3808,9 @@ def annotate_mechanism_paper_details(
                 source_brief_ids=intent["brief_ids"],
                 source_obligation_ids=intent["obligation_ids"],
                 author_statements=intent["author_statements"],
+                mismatch_reason=(
+                    status_reason if status == "unknown" else ""
+                ),
                 # Keep the semantic atom scientific and source-structured;
                 # raw ``CALL``/``NORMALIZE`` labels are implementation tokens,
                 # not a reader-facing mechanism description.
@@ -3784,6 +4253,16 @@ def annotate_mechanism_paper_details(
                 "mechanism_id": context.mechanism_id,
                 "unresolved_items": list(context.unresolved_items),
             } for context in final_contexts if context.unresolved_items),
+            *({
+                "kind": "core_path_status_unknown",
+                "mechanism_id": context.mechanism_id,
+                "detail_id": detail.detail_id,
+                "reason_code": detail.mismatch_reason or "core_active_path_unknown",
+            }
+                for context in final_contexts
+                for detail in context.details
+                if detail.importance == "core" and detail.active_path_status == "unknown"
+            ),
         ]),
         merge_proofs=tuple(
             merge_proof_by_digest[key] for key in sorted(merge_proof_by_digest)

@@ -67,6 +67,9 @@ from code2paper.agentic.generic_fact_compiler import (
     FactCompilerInputV1,
     compile_facts_from_behavior_graph,
 )
+from code2paper.agentic.research_revision_contract import (
+    PROPOSABLE_PROVENANCE,
+)
 from code2paper.agentic.research_models import (
     ResearchObservationDiagnosticsV1,
     ResearchObservationNotebookV1,
@@ -76,12 +79,18 @@ from code2paper.agentic.research_models import (
     ToolKind,
     make_observation,
 )
-from code2paper.agentic.retrieval import SymbolIndexEntry, SymbolIndexReport, build_symbol_index
+from code2paper.agentic.retrieval import (
+    SymbolIndexEntry,
+    SymbolIndexReport,
+    build_symbol_index_from_files,
+    config_key_entries,
+    match_config_key,
+)
 from code2paper.agentic.source_authority import (
     SourceAuthorityV1,
     classify_source_authority,
 )
-from code2paper.agentic.typed_refs import build_symbol_ref
+from code2paper.agentic.typed_refs import build_config_ref, build_symbol_ref, split_config_ref
 from code2paper.agentic.tool_runtime import atomic_write_json
 
 
@@ -115,8 +124,10 @@ RESEARCH_TOOL_NAMES: tuple[str, ...] = (
     "validate_code_facts",
     "decompose_atomic_claims",
     "authorize_atomic_claims",
+    "close_search_frontier",
     "record_explicit_code_gap",
     "check_obligation_coverage",
+    "propose_target_revision",
 )
 
 
@@ -145,8 +156,14 @@ RESEARCH_TOOL_KINDS: dict[str, ToolKind] = {
     "validate_code_facts": "packet_repair",
     "decompose_atomic_claims": "packet_repair",
     "authorize_atomic_claims": "packet_repair",
+    "close_search_frontier": "other",
     "record_explicit_code_gap": "other",
     "check_obligation_coverage": "other",
+    # A revision proposal is a model-proposed structured object the harness
+    # validates, the same move class as ``propose_evidence_packet``.  It must
+    # consume a real per-obligation budget slot, otherwise policy accepts it
+    # for free on every turn.
+    "propose_target_revision": "packet_repair",
 }
 
 
@@ -187,24 +204,41 @@ class ResearchToolContext(BaseModel):
         return _resolve_snapshot_path(self.repo_snapshot, candidate)
 
     def ensure_symbol_index(self) -> SymbolIndexReport:
-        """Return the cached symbol index, building it lazily if needed."""
+        """Return the cached symbol index, building it lazily if needed.
+
+        The index is built from the frozen snapshot contents, never from a
+        fresh walk of the working tree.  A file whose on-disk bytes no longer
+        match its snapshot record is skipped (and reported as a warning) so a
+        post-freeze edit cannot change search results.
+        """
 
         if self.symbol_index is not None:
             return self.symbol_index
-        # Build a minimal plan-less symbol index.  ``build_symbol_index``
-        # accepts an empty plan and still walks the snapshot files.
         from code2paper.agentic.retrieval import AgenticRetrievalPlan
 
         plan = AgenticRetrievalPlan()
-        index = build_symbol_index(
-            project_root=self.repo_snapshot.project_root,
-            plan=plan,
-            max_files=self.max_indexed_files,
-            max_candidates=self.max_indexed_symbols,
-        )
+        files: dict[str, str] = {}
+        warnings: list[str] = []
+        for item in self.repo_snapshot.included_files:
+            if item.kind != "file":
+                continue
+            text, read_error = _read_snapshot_file(
+                self.repo_snapshot, item.path, expected_digest=item.content_digest
+            )
+            if read_error is not None:
+                warnings.append(f"snapshot_read_failed:{item.path}:{read_error}")
+                continue
+            files[item.path] = text
         # Context is frozen; callers that want to reuse the index should
         # construct a new context via model_copy(update={"symbol_index": index}).
-        return index
+        return build_symbol_index_from_files(
+            files=files,
+            plan=plan,
+            project_root=str(self.repo_snapshot.project_root),
+            max_files=self.max_indexed_files,
+            max_candidates=self.max_indexed_symbols,
+            warnings=warnings,
+        )
 
     def language_adapter(self) -> Any:
         if self.adapter_language.strip():
@@ -558,12 +592,48 @@ class RecordExplicitCodeGapInput(_ResearchToolInputBase):
     partial_gap: bool = False
     search_complete: bool = False
     scope_exhausted: bool = False
+    terminal_record_only: bool = False
+    # R9: the id of a receipt minted by the execution layer
+    # (``close_search_frontier``).  The tool reloads and re-verifies it against
+    # the run's execution ledger; receipt *content* in arguments is ignored.
+    search_receipt_id: str = ""
+
+
+class CloseSearchFrontierInput(_ResearchToolInputBase):
+    """Input schema for ``close_search_frontier``.
+
+    The tool takes no model-authored evidence fields: it derives the receipt
+    from the executions the dispatcher already recorded.
+    """
 
 
 class CheckObligationCoverageInput(_ResearchToolInputBase):
     """Input schema for ``check_obligation_coverage``."""
 
     obligation_id_ref: str = ""
+
+
+class ProposeTargetRevisionInput(_ResearchToolInputBase):
+    """Input schema for ``propose_target_revision`` (R10 submission surface).
+
+    The model may describe what it believes the obligation's targets should
+    be and cite the observations that made it believe so.  It cannot set
+    provenance to ``author_explicit``, cannot decide acceptance, and cannot
+    spend budget: the harness re-derives the proposal identity, authenticates
+    every cited reference against the execution ledger and applies the
+    revision through the single application point.
+    """
+
+    parent_obligation_id: str = ""
+    source_type: str = "system_inferred"
+    before_target_ids: list[str] = Field(default_factory=list)
+    after_targets: list[dict[str, Any]] = Field(default_factory=list)
+    observation_refs: list[str] = Field(default_factory=list)
+    relation_refs: list[str] = Field(default_factory=list)
+    reason: str = ""
+    unresolved_impact: list[str] = Field(default_factory=list)
+    budget_requests: int = 0
+    subquestion_parent_id: str = ""
 
 
 # ---------------------------------------------------------------------------
@@ -748,7 +818,7 @@ def search_symbols(
         [classify_source_authority(entry.path) for entry in selected]
     )
     result_refs = tuple(
-        f"symbol:{entry.path}:{entry.symbol}:{entry.start_line}" for entry in selected
+        _index_entry_result_ref(entry) for entry in selected
     )
     symbol_names = tuple(
         f"{entry.path}::{entry.symbol}" for entry in selected[:10]
@@ -1275,24 +1345,37 @@ def inspect_configuration(
     top_k = tool_call.top_k or 20
 
     bindings: list[tuple[str, int, SourceAuthorityV1, str]] = []
+    ambiguous_paths: list[str] = []
     truncated = False
     for rel_path in _iter_snapshot_files(ctx.repo_snapshot, scope_paths):
         file_text, read_error = _read_snapshot_file(ctx.repo_snapshot, rel_path)
         if read_error is not None:
             continue
         authority = classify_source_authority(rel_path)
+        found: list[tuple[int, str]] = []
         if rel_path.endswith(".py"):
             try:
                 tree = ast.parse(file_text)
             except SyntaxError:
                 continue
-            found = _find_config_bindings(tree, config_key)
-        elif rel_path.endswith((".js", ".jsx", ".ts", ".tsx", ".json", ".yaml", ".yml", ".toml", ".lock")):
-            found = _find_javascript_config_bindings(rel_path, file_text, config_key)
+            found = list(_find_config_bindings(tree, config_key))
+        elif rel_path.endswith((".yaml", ".yml", ".toml", ".json")):
+            found, ambiguous = _find_structured_config_bindings(
+                rel_path, file_text, config_key
+            )
+            if ambiguous:
+                # A leaf-name request with several same-named declarations
+                # is reported as ambiguous instead of choosing the first.
+                ambiguous_paths.append(rel_path)
+                continue
+        elif rel_path.endswith((".js", ".jsx", ".ts", ".tsx", ".lock")):
+            found = list(_find_javascript_config_bindings(rel_path, file_text, config_key))
         else:
             continue
         for line_no, key in found:
-            bindings.append((rel_path, line_no, authority, key))
+            if not str(key).strip():
+                continue
+            bindings.append((rel_path, line_no, authority, str(key)))
             if len(bindings) >= top_k:
                 truncated = True
                 break
@@ -1300,6 +1383,21 @@ def inspect_configuration(
             break
 
     if not bindings:
+        if ambiguous_paths:
+            return make_observation(
+                tool_call=tool_call,
+                status="success_empty",
+                source_authority="executable_hard",
+                diagnostics=ResearchObservationDiagnosticsV1(
+                    candidate_count=0,
+                    ambiguous=True,
+                    notes=(
+                        "ambiguous_leaf_key",
+                        f"config_key={config_key}",
+                        f"paths={','.join(ambiguous_paths[:3])}",
+                    ),
+                ),
+            )
         return make_observation(
             tool_call=tool_call,
             status="success_empty",
@@ -2380,6 +2478,19 @@ def compile_code_facts(
         project_tree_hash=ctx.repo_snapshot.project_tree_hash,
         evidence_packet_digest=packet.source_digest,
     )
+    # Configuration definitions are part of the compiled fact-set identity,
+    # not a caller-local decoration.  Persist them before any validator or
+    # claim tool reads the set so the immutable data plane cannot split into
+    # an enriched in-memory view and a stale on-disk view.
+    from code2paper.agentic.configuration_definitions import (
+        append_configuration_definition_facts,
+    )
+
+    fact_set = append_configuration_definition_facts(
+        fact_set,
+        repo_snapshot=ctx.repo_snapshot,
+        allowed_definition_span_ids=(span.span_id for span in packet.spans),
+    )
     if not fact_set.facts:
         return _invalid_request(tool_call, f"no facts compiled for packet: {packet_id}")
     fact_path = ctx.write_artifact("fact_sets", packet_id, fact_set)
@@ -2480,6 +2591,17 @@ def validate_code_facts(
                     repo_snapshot_id=ctx.repo_snapshot.snapshot_id,
                     project_tree_hash=ctx.repo_snapshot.project_tree_hash,
                     evidence_packet_digest=expected_packet.source_digest,
+                )
+                from code2paper.agentic.configuration_definitions import (
+                    append_configuration_definition_facts,
+                )
+
+                expected_fact_set = append_configuration_definition_facts(
+                    expected_fact_set,
+                    repo_snapshot=ctx.repo_snapshot,
+                    allowed_definition_span_ids=(
+                        span.span_id for span in expected_packet.spans
+                    ),
                 )
                 if expected_fact_set.model_dump(mode="json") != fact_set.model_dump(mode="json"):
                     replay_failures.append("fact_set_replay_mismatch")
@@ -2693,6 +2815,74 @@ def authorize_atomic_claims(
 
 
 # ---------------------------------------------------------------------------
+# close_search_frontier
+# ---------------------------------------------------------------------------
+
+
+def close_search_frontier(
+    ctx: ResearchToolContext,
+    tool_call: ResearchToolCallV1,
+) -> ResearchObservationV1:
+    """Mint the obligation's search receipt from the real execution ledger.
+
+    R9: the tool has no model-authored evidence inputs.  It re-derives the
+    receipt from the discovery/read executions the dispatcher already recorded
+    and returns the receipt id.  A receipt is minted even when the frontier is
+    not closed so the caller can see the exact reason; only a closed receipt
+    can authorize a negative conclusion in ``record_explicit_code_gap``.
+    """
+
+    if ctx.artifact_root is None:
+        return _invalid_request(
+            tool_call, "search receipt data plane requires artifact_root"
+        )
+    from code2paper.agentic.research_execution_ledger import (
+        ExecutionLedgerError,
+        mint_frontier_receipt,
+    )
+
+    try:
+        receipt, failures = mint_frontier_receipt(ctx, tool_call.obligation_id)
+    except ExecutionLedgerError as exc:
+        return _invalid_request(
+            tool_call, f"search_ledger_integrity:{exc}"
+        )
+    if receipt is None:
+        reasons = failures or ("search_ledger_empty",)
+        return make_observation(
+            tool_call=tool_call,
+            status="success_empty",
+            source_authority="executable_hard",
+            diagnostics=ResearchObservationDiagnosticsV1(
+                candidate_count=0,
+                notes=("search_frontier_closed=false", *reasons),
+            ),
+            output_payload={"failures": list(reasons)},
+        )
+    closed = bool(receipt.frontier_closed()) and not failures
+    return make_observation(
+        tool_call=tool_call,
+        status="success",
+        source_authority="executable_hard",
+        result_refs=(f"search-receipt:{receipt.receipt_id}",),
+        diagnostics=ResearchObservationDiagnosticsV1(
+            candidate_count=len(receipt.result_ids),
+            truncated=bool(receipt.truncated),
+            notes=(
+                f"search_receipt_id={receipt.receipt_id}",
+                f"search_frontier_closed={str(closed).lower()}",
+                *(failures or ("search_frontier_closure_proven",)),
+            ),
+        ),
+        output_payload={
+            "search_receipt_id": receipt.receipt_id,
+            "search_frontier_closed": closed,
+            "failures": list(failures),
+        },
+    )
+
+
+# ---------------------------------------------------------------------------
 # record_explicit_code_gap
 # ---------------------------------------------------------------------------
 
@@ -2759,20 +2949,44 @@ def record_explicit_code_gap(
     scope_exhausted = bool(
         _arg_value(tool_call, "scope_exhausted", default=False)
     )
+    receipt_arg = _arg_value(tool_call, "search_receipt", default=None) or {}
+    if not isinstance(receipt_arg, dict):
+        receipt_arg = {}
+    if receipt_arg:
+        # R9: receipt *content* in tool arguments is caller-authored text.  It
+        # is deliberately ignored; only an execution-ledger receipt id can
+        # authorize a negative conclusion.
+        return _invalid_request(
+            tool_call,
+            "gap_search_receipt_content_not_evidence: pass search_receipt_id "
+            "from close_search_frontier",
+        )
+    search_receipt_id = str(
+        _arg_value(tool_call, "search_receipt_id", default="") or ""
+    ).strip()
+    # R9: a caller that cannot prove a closed frontier may still record the
+    # bounded stop.  That record is explicit and never authorizes negative
+    # evidence, so it is a different lane from a claimed exhaustive search.
+    terminal_record_only = bool(
+        _arg_value(tool_call, "terminal_record_only", default=False)
+    )
     failures: list[str] = []
     if not search_scope:
         failures.append("gap_search_scope_missing")
-    if not search_complete:
+    if not search_complete and not terminal_record_only:
         failures.append("gap_search_not_complete")
     if not any(
         name in attempted_tools
         for name in ("search_code", "search_symbols", "find_entrypoints")
     ):
         failures.append("gap_search_strategy_missing_discovery")
-    if not scope_exhausted and not any(
+    if not scope_exhausted and not terminal_record_only and not any(
         name in attempted_tools
         for name in ("read_symbol", "read_code_span", "build_behavior_subgraph")
     ):
+        # A stop record reports that the bounded search ended; it never claims
+        # a closed scope, so the read-coverage requirement belongs to the
+        # negative-evidence lane only.
         failures.append("gap_search_strategy_missing_read")
     if missing_relations and not any(
         name in attempted_tools
@@ -2803,6 +3017,46 @@ def record_explicit_code_gap(
             break
     if authorized_positive_claim and not partial_gap:
         failures.append("gap_contradicts_authorized_positive_claim")
+    # R9: a full negative conclusion needs an execution-ledger receipt.  The
+    # caller supplies the id of a receipt minted by ``close_search_frontier``;
+    # this tool reloads it from the run's artifact store and re-derives it from
+    # the raw execution records.  Tool arguments never carry receipt content,
+    # so an unexecuted search cannot become negative evidence.
+    from code2paper.agentic.research_execution_ledger import (
+        authenticate_search_receipt,
+        receipt_scope_covers,
+    )
+
+    receipt: SearchReceiptV1 | None = None
+    receipt_failures: tuple[str, ...] = ()
+    if search_receipt_id:
+        from code2paper.agentic.research_execution_ledger import (
+            ExecutionLedgerError as _LedgerError,
+        )
+
+        try:
+            receipt, receipt_failures = authenticate_search_receipt(
+                ctx, search_receipt_id, obligation_id=obligation_id_ref
+            )
+        except _LedgerError as exc:
+            # Integrity failure: the request must stay unresolved instead of
+            # being authorized from a ledger that cannot be read completely.
+            failures.append(f"gap_search_ledger_integrity:{exc}")
+            receipt, receipt_failures = None, ()
+        if receipt is None:
+            failures.extend(
+                receipt_failures or ("gap_search_receipt_unauthenticated",)
+            )
+    elif search_complete and scope_exhausted and not partial_gap and not (
+        terminal_record_only
+    ):
+        failures.append("gap_search_receipt_required")
+    if missing_relations and receipt is not None:
+        missing_checks = set(receipt.relation_checks)
+        if not set(str(value) for value in missing_relations).issubset(missing_checks):
+            failures.append("gap_missing_relation_not_in_receipt")
+    if receipt is not None and not receipt_scope_covers(search_scope, receipt):
+        failures.append("gap_search_scope_not_covered_by_receipt")
     if partial_gap and not gap_fields:
         failures.append("gap_partial_scope_missing")
     if failures:
@@ -2821,6 +3075,72 @@ def record_explicit_code_gap(
     gap_id = "gap-" + hashlib.sha256(
         f"{ctx.repo_snapshot.snapshot_id}:{obligation_id_ref}".encode("utf-8")
     ).hexdigest()[:16]
+    # The terminal outcome is typed and receipt-backed.  An incomplete or
+    # unproven search is recorded as a bounded stop, never as negative
+    # evidence that the implementation is absent.
+    from code2paper.agentic.research_models import TerminalSearchDispositionV1
+
+    authenticated_closure = bool(
+        receipt is not None
+        and receipt.frontier_closed()
+        and not partial_gap
+    )
+    if partial_gap:
+        disposition = TerminalSearchDispositionV1(
+            disposition_id=f"disposition:{gap_id}",
+            obligation_id=obligation_id_ref,
+            outcome="search_inconclusive",
+            stop_reason=termination_reason,
+            queries=tuple(receipt.queries if receipt is not None else ()) or (
+                f"scope:{len(search_scope)} paths",
+            ),
+            observations=tuple(attempted_tools),
+            open_questions=tuple(str(value) for value in missing_relations)
+            or tuple(gap_fields),
+        )
+    elif authenticated_closure:
+        disposition = TerminalSearchDispositionV1(
+            disposition_id=f"disposition:{gap_id}",
+            obligation_id=obligation_id_ref,
+            outcome="unsupported_with_scoped_evidence",
+            stop_reason=termination_reason,
+            frozen_scope=search_scope,
+            scope_basis="execution_ledger_verified_receipt",
+            receipts=(receipt,),
+        )
+    elif receipt is not None and receipt.budget_limit > 0 and (
+        receipt.budget_used >= receipt.budget_limit
+    ):
+        disposition = TerminalSearchDispositionV1(
+            disposition_id=f"disposition:{gap_id}",
+            obligation_id=obligation_id_ref,
+            outcome="budget_exhausted",
+            stop_reason=termination_reason,
+            budget_used=receipt.budget_used,
+            budget_limit=receipt.budget_limit,
+            remaining_frontier_ids=receipt.unread_candidate_ids
+            or ("unproven_frontier",),
+            unfinished_task_ids=tuple(str(value) for value in missing_relations),
+        )
+    else:
+        disposition = TerminalSearchDispositionV1(
+            disposition_id=f"disposition:{gap_id}",
+            obligation_id=obligation_id_ref,
+            outcome="search_inconclusive",
+            stop_reason=termination_reason,
+            queries=tuple(receipt.queries if receipt is not None else ()) or (
+                f"scope:{len(search_scope)} paths",
+            ),
+            observations=tuple(attempted_tools),
+            open_questions=tuple(str(value) for value in missing_relations)
+            or tuple(gap_fields)
+            or (f"obligation_remainder:{obligation_id_ref}",),
+        )
+    # A stop record never claims a completed search, and it keeps the raw
+    # provenance so a reader can see exactly what was attempted.
+    recorded_complete = bool(
+        disposition.outcome == "unsupported_with_scoped_evidence"
+    )
     payload = {
         "gap_id": gap_id,
         "obligation_id": obligation_id_ref,
@@ -2830,9 +3150,22 @@ def record_explicit_code_gap(
         "attempted_tools": list(attempted_tools),
         "missing_relations": list(missing_relations),
         "termination_reason": termination_reason,
-        "search_complete": True,
-        "scope_exhausted": scope_exhausted,
-        "terminal": True,
+        "search_complete": recorded_complete,
+        "scope_exhausted": bool(scope_exhausted) if recorded_complete else False,
+        "terminal": recorded_complete,
+        "terminal_record_only": terminal_record_only,
+        "terminal_outcome": disposition.outcome,
+        "terminal_disposition": disposition.model_dump(mode="json"),
+        "search_receipt_id": search_receipt_id,
+        "search_receipt": (
+            receipt.model_dump(mode="json") if receipt is not None else None
+        ),
+        "receipt_authentication": (
+            "ledger_verified" if receipt is not None else ""
+        ),
+        "negative_evidence_authorized": (
+            disposition.outcome == "unsupported_with_scoped_evidence"
+        ),
     }
     if partial_gap:
         # A bounded gap may coexist with already-authorized positive claims,
@@ -2893,6 +3226,155 @@ def check_obligation_coverage(
 
 
 # ---------------------------------------------------------------------------
+# propose_target_revision
+# ---------------------------------------------------------------------------
+
+
+#: Provenance a proposal may claim for itself.  ``author_explicit`` and
+#: ``author_derived`` are absent on purpose: those are harness-assigned, and a
+#: proposer cannot promote its own hypothesis into author authority.
+_PROPOSABLE_PROVENANCE: tuple[str, ...] = PROPOSABLE_PROVENANCE
+
+
+def propose_target_revision(
+    ctx: ResearchToolContext,
+    tool_call: ResearchToolCallV1,
+) -> ResearchObservationV1:
+    """Submit one ``RevisionProposalV1``; the harness decides whether to apply it.
+
+    The tool writes a content-addressed submission envelope and returns a
+    reference to it.  It does not touch the intent graph, the agenda, the
+    journal or any status field, and it never reports acceptance.
+    """
+
+    from code2paper.agentic.research_revision_contract import (
+        PROPOSABLE_PROVENANCE,
+        RevisionProposalV1,
+        RevisionTargetV1,
+    )
+    from code2paper.agentic.research_revision_ingest import (
+        persist_revision_proposal,
+        proposal_directory,
+    )
+
+    if ctx.artifact_root is None:
+        return _invalid_request(
+            tool_call, "revision proposals require an artifact_root"
+        )
+    parent_obligation_id = str(
+        _arg_value(tool_call, "parent_obligation_id", default="") or ""
+    ).strip()
+    if not parent_obligation_id:
+        return _invalid_request(tool_call, "parent_obligation_id must not be empty")
+    if parent_obligation_id != tool_call.obligation_id:
+        return _invalid_request(
+            tool_call,
+            "revision parent obligation does not match the active obligation",
+        )
+    source_type = str(
+        _arg_value(tool_call, "source_type", default="system_inferred") or ""
+    ).strip()
+    if source_type not in _PROPOSABLE_PROVENANCE:
+        return _invalid_request(
+            tool_call,
+            "revision source_type must be one of "
+            f"{list(_PROPOSABLE_PROVENANCE)}: a proposal cannot claim "
+            "author_explicit provenance",
+        )
+    raw_after_targets = _arg_value(tool_call, "after_targets", default=()) or ()
+    try:
+        after_targets = tuple(
+            RevisionTargetV1.model_validate(item)
+            if isinstance(item, dict)
+            else RevisionTargetV1.model_validate(
+                getattr(item, "model_dump", lambda: item)()
+            )
+            for item in raw_after_targets
+        )
+    except Exception as exc:  # noqa: BLE001 — a malformed target is not a proposal
+        return _invalid_request(
+            tool_call, f"revision_target_invalid:{type(exc).__name__}:{exc}"
+        )
+    try:
+        budget_requests = int(_arg_value(tool_call, "budget_requests", default=0) or 0)
+    except (TypeError, ValueError):
+        return _invalid_request(tool_call, "budget_requests must be an integer")
+    if budget_requests < 0:
+        return _invalid_request(tool_call, "budget_requests must be >= 0")
+    try:
+        proposal = RevisionProposalV1(
+            proposal_id=f"revision-proposal:{tool_call.tool_call_id}",
+            parent_obligation_id=parent_obligation_id,
+            source_type=source_type,
+            before_target_ids=tuple(
+                str(value)
+                for value in (
+                    _arg_value(tool_call, "before_target_ids", default=()) or ()
+                )
+            ),
+            after_targets=after_targets,
+            observation_refs=tuple(
+                str(value)
+                for value in (
+                    _arg_value(tool_call, "observation_refs", default=()) or ()
+                )
+            ),
+            relation_refs=tuple(
+                str(value)
+                for value in (_arg_value(tool_call, "relation_refs", default=()) or ())
+            ),
+            reason=str(_arg_value(tool_call, "reason", default="") or ""),
+            unresolved_impact=tuple(
+                str(value)
+                for value in (
+                    _arg_value(tool_call, "unresolved_impact", default=()) or ()
+                )
+            ),
+            budget_requests=budget_requests,
+            subquestion_parent_id=str(
+                _arg_value(tool_call, "subquestion_parent_id", default="") or ""
+            ),
+        )
+    except Exception as exc:  # noqa: BLE001 — validation failure is a typed refusal
+        return _invalid_request(
+            tool_call, f"revision_proposal_invalid:{type(exc).__name__}:{exc}"
+        )
+    try:
+        path = persist_revision_proposal(
+            ctx.artifact_root,
+            proposal,
+            tool_call_id=tool_call.tool_call_id,
+        )
+    except ValueError as exc:
+        return _invalid_request(tool_call, str(exc))
+    store = proposal_directory(ctx.artifact_root)
+    return make_observation(
+        tool_call=tool_call,
+        status="success",
+        # A proposal is a hypothesis, never evidence: it can never be promoted
+        # into a fact or a supporting claim.
+        source_authority="semantic_hint",
+        result_refs=(f"revision-proposal:{proposal.revision_id}",),
+        diagnostics=ResearchObservationDiagnosticsV1(
+            candidate_count=1,
+            notes=(
+                f"obligation={parent_obligation_id}",
+                f"revision_id={proposal.revision_id}",
+                f"proposal_store={store}",
+                "awaiting_harness_assessment",
+            ),
+        ),
+        output_payload={
+            "proposal_id": proposal.proposal_id,
+            "revision_id": proposal.revision_id,
+            "parent_obligation_id": proposal.parent_obligation_id,
+            "after_target_ids": [target.target_id for target in after_targets],
+            "status": "submitted",
+        },
+    )
+
+
+# ---------------------------------------------------------------------------
 # Tool registry
 # ---------------------------------------------------------------------------
 
@@ -2922,8 +3404,10 @@ RESEARCH_TOOL_EXECUTORS: dict[str, Any] = {
     "validate_code_facts": validate_code_facts,
     "decompose_atomic_claims": decompose_atomic_claims,
     "authorize_atomic_claims": authorize_atomic_claims,
+    "close_search_frontier": close_search_frontier,
     "record_explicit_code_gap": record_explicit_code_gap,
     "check_obligation_coverage": check_obligation_coverage,
+    "propose_target_revision": propose_target_revision,
 }
 
 
@@ -2952,8 +3436,10 @@ RESEARCH_TOOL_INPUT_SCHEMAS: dict[str, type[BaseModel]] = {
     "validate_code_facts": ValidateCodeFactsInput,
     "decompose_atomic_claims": DecomposeAtomicClaimsInput,
     "authorize_atomic_claims": AuthorizeAtomicClaimsInput,
+    "close_search_frontier": CloseSearchFrontierInput,
     "record_explicit_code_gap": RecordExplicitCodeGapInput,
     "check_obligation_coverage": CheckObligationCoverageInput,
+    "propose_target_revision": ProposeTargetRevisionInput,
 }
 
 
@@ -2976,7 +3462,49 @@ def execute_research_tool(
             tool_call,
             f"tool_call.repo_snapshot_id mismatch: {tool_call.repo_snapshot_id}",
         )
-    return executor(ctx, tool_call)
+    # R9: the execution layer, not the caller, records what really ran.  The
+    # call identity is checked *before* the executor so a rejected request can
+    # never observe the repository and leave its candidates unregistered while
+    # the older, narrower frontier still authorizes a negative conclusion.
+    from code2paper.agentic.research_execution_ledger import (
+        ExecutionLedgerError,
+        ExecutionLedgerReplayMismatch,
+        check_execution_call_identity,
+        record_ledger_conflict,
+        record_ledger_write_failure,
+        record_tool_execution,
+    )
+
+    try:
+        identity_conflict = check_execution_call_identity(ctx, tool_call)
+    except ExecutionLedgerError as exc:
+        return _invalid_request(tool_call, f"research_execution_ledger:{exc}")
+    if identity_conflict:
+        return _invalid_request(tool_call, identity_conflict)
+    observation = executor(ctx, tool_call)
+    try:
+        record_tool_execution(ctx, tool_call, observation)
+    except ExecutionLedgerReplayMismatch as exc:
+        # The execution already happened but cannot be registered under this
+        # id.  Persist a blocking conflict so the frontier stays open until the
+        # search is repeated under a fresh id.
+        try:
+            record_ledger_conflict(ctx, tool_call, str(exc))
+        except Exception:  # pragma: no cover - defensive
+            pass
+        return _invalid_request(tool_call, str(exc))
+    except ExecutionLedgerError as exc:
+        return _invalid_request(tool_call, f"research_execution_ledger:{exc}")
+    except Exception as exc:  # pragma: no cover - defensive: disk-level failure
+        try:
+            record_ledger_write_failure(ctx, tool_call, exc)
+        except Exception:
+            pass
+        return _invalid_request(
+            tool_call,
+            f"research_execution_ledger_write_failed:{type(exc).__name__}",
+        )
+    return observation
 
 
 # ---------------------------------------------------------------------------
@@ -3059,26 +3587,45 @@ def _iter_snapshot_files(snapshot: RepoSnapshot, scope_paths: tuple[str, ...]) -
                 break
 
 
-def _read_snapshot_file(snapshot: RepoSnapshot, rel_path: str) -> tuple[str, str | None]:
-    """Read a file from the snapshot's project root.
-
-    Returns ``(text, error_message)``.  ``error_message`` is ``None`` on
-    success.  Tools never follow symlinks outside the snapshot.
-    """
-
-    from pathlib import Path
+def _read_snapshot_bytes(snapshot: RepoSnapshot, rel_path: str) -> tuple[bytes, str | None]:
+    """Read raw file bytes from the snapshot's project root."""
 
     root = Path(snapshot.project_root)
     target = (root / rel_path).resolve()
     try:
         target.relative_to(root.resolve())
     except ValueError:
-        return "", f"path escapes repo root: {rel_path}"
+        return b"", f"path escapes repo root: {rel_path}"
     try:
-        text = target.read_text(encoding="utf-8", errors="ignore")
+        data = target.read_bytes()
     except OSError as exc:
-        return "", f"read_failed: {exc.__class__.__name__}"
-    return text, None
+        return b"", f"read_failed: {exc.__class__.__name__}"
+    return data, None
+
+
+def _read_snapshot_file(
+    snapshot: RepoSnapshot,
+    rel_path: str,
+    *,
+    expected_digest: str = "",
+) -> tuple[str, str | None]:
+    """Read a file from the snapshot's project root.
+
+    Returns ``(text, error_message)``.  ``error_message`` is ``None`` on
+    success.  Tools never follow symlinks outside the snapshot.  When
+    ``expected_digest`` is supplied (the frozen ``SnapshotFile.content_digest``
+    recorded at freeze time), the current bytes must still hash to it; a
+    drift is returned as a typed error rather than silently read.
+    """
+
+    data, read_error = _read_snapshot_bytes(snapshot, rel_path)
+    if read_error is not None:
+        return "", read_error
+    if expected_digest:
+        actual = "sha256:" + hashlib.sha256(data).hexdigest()
+        if actual != expected_digest:
+            return "", f"snapshot_content_drift: {rel_path}"
+    return data.decode("utf-8", errors="ignore"), None
 
 
 def _classify_entrypoint(
@@ -3100,6 +3647,19 @@ def _classify_entrypoint(
     }:
         return "config_entrypoint"
     return None
+
+
+def _index_entry_result_ref(entry: SymbolIndexEntry) -> str:
+    """Encode one index hit in its own typed namespace.
+
+    Configuration keys are not Python symbols.  Encoding them as
+    ``symbol:`` made the compile lane send a dotted YAML key through the
+    Python symbol resolver, where it inevitably failed identity.
+    """
+
+    if entry.kind == "config_key":
+        return build_config_ref(entry.path, entry.start_line, entry.symbol)
+    return build_symbol_ref(entry.path, entry.symbol, entry.start_line)
 
 
 def _symbol_matches(
@@ -3381,6 +3941,28 @@ _JS_BUILD_CONFIG_NAMES = frozenset({
     "jest.config.js",
     "jest.config.ts",
 })
+
+
+def _find_structured_config_bindings(
+    rel_path: str,
+    source: str,
+    config_key: str,
+) -> tuple[list[tuple[int, str]], bool]:
+    """Match one requested key against structured YAML/TOML/JSON config.
+
+    Returns ``(found, ambiguous)``.  The shared retrieval helpers parse the
+    payload and flatten dotted keypaths; a full keypath outranks a unique
+    leaf.  ``ambiguous=True`` means several distinct keypaths share the
+    requested leaf and the caller must not pick one arbitrarily.
+    """
+
+    entries = config_key_entries(text=source, rel_path=rel_path)
+    if not entries:
+        return [], False
+    matches, ambiguous = match_config_key(entries, config_key)
+    if ambiguous:
+        return [], True
+    return [(line, keypath) for keypath, line, _preview in matches], False
 
 
 def _find_javascript_config_bindings(
@@ -3731,6 +4313,7 @@ __all__ = [
     "AuthorizeAtomicClaimsInput",
     "BuildBehaviorSubgraphInput",
     "CheckObligationCoverageInput",
+    "ProposeTargetRevisionInput",
     "CompareHintToCodeInput",
     "CompareImplementationBranchesInput",
     "CompileCodeFactsInput",

@@ -373,6 +373,31 @@ class MergeCompiledEvidenceTests(unittest.TestCase):
         )
         self.assertEqual(claims.claims[0].fact_ids, [facts.facts[0].fact_id])
 
+    def test_claim_id_map_rekeys_canonicalized_claim_lineage(self) -> None:
+        ce1 = _compiled_evidence(obligation_id="obl-1")
+        second_fact = _fact(fact_id="fact-obl-2-1", scope="sym:obl-1")
+        ce2 = CompiledEvidence(
+            obligation_id="obl-2",
+            packet_set=_packet_set([_packet(packet_id="pkt-2", obligation_tag="obl-2")]),
+            fact_set=_fact_set([second_fact]),
+            claim_set=_claim_set([_claim(
+                claim_id="claim-obl-2-1",
+                fact_id=second_fact.fact_id,
+                obligation_id="obl-2",
+            )]),
+        )
+        claim_id_map: dict[str, str] = {}
+        _packets, _facts, claims = merge_compiled_evidence(
+            {"obl-1": ce1, "obl-2": ce2},
+            repo_snapshot_id=_REPO_SNAPSHOT_ID,
+            project_tree_hash=_PROJECT_TREE_HASH,
+            claim_id_map=claim_id_map,
+        )
+        canonical_id = claims.claims[0].claim_id
+        self.assertEqual(claim_id_map["claim-obl-1-1"], canonical_id)
+        self.assertEqual(claim_id_map["claim-obl-2-1"], canonical_id)
+        self.assertEqual(len(claim_id_map), 2)
+
     def test_merged_sets_carry_content_digest(self) -> None:
         ce = _compiled_evidence(obligation_id="obl-1")
         packets, facts, claims = merge_compiled_evidence(

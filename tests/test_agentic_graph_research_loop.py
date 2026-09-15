@@ -571,12 +571,11 @@ class TestLoopStateManagement:
         result = run_research_loop(runtime, max_turns=3)
         assert result.terminated or result.termination_reason == "max_turns_reached"
 
-    def test_executed_read_signatures_span_obligations(self, snapshot: RepoSnapshot) -> None:
-        # A read executed for one obligation must be visible to the policy
-        # layer when another obligation is active, so the Manager cannot
-        # re-read the same exact span.  This is the regression for the
-        # canary where the LLM re-read ``get_prune_input_f15`` on two
-        # consecutive component obligations.
+    def test_executed_read_signatures_are_obligation_scoped(self, snapshot: RepoSnapshot) -> None:
+        # R4: the executed-read key carries the obligation so the policy can
+        # still reject the same obligation re-reading the same span, while a
+        # different obligation may reuse the snapshot-identical bytes for its
+        # own analysis.
         from code2paper.agentic.research_graph import _executed_read_signatures
         from code2paper.agentic.research_models import ResearchToolCallV1
 
@@ -612,7 +611,16 @@ class TestLoopStateManagement:
         )
         loop.decision_trace.append(decision)
         signatures = _executed_read_signatures(loop)
-        assert "read_symbol:utils/gaussian_model.py::GaussianModel.get_prune_input_f15" in signatures
+        assert (
+            "obl-a|read_symbol:utils/gaussian_model.py::"
+            "GaussianModel.get_prune_input_f15"
+        ) in signatures
+        # The byte identity stays available for caching, but it is not the
+        # key the no-gain rule compares against.
+        assert (
+            "read_symbol:utils/gaussian_model.py::GaussianModel.get_prune_input_f15"
+            not in signatures
+        )
 
     def test_executed_read_signatures_skip_rejected_calls(self, snapshot: RepoSnapshot) -> None:
         from code2paper.agentic.research_graph import _executed_read_signatures
@@ -650,3 +658,112 @@ class TestLoopStateManagement:
         # executed, so it must not enter the read-signature set.
         signatures = _executed_read_signatures(loop)
         assert "read_symbol:utils/gaussian_model.py::GaussianModel.prune_points" not in signatures
+
+
+# ---------------------------------------------------------------------------
+# Executed-action ledger and scheduler/policy budget consistency
+# ---------------------------------------------------------------------------
+
+
+class TestExecutedActionLedgerAndBudgetConsistency:
+    def test_driver_records_attempted_actions_after_execution(
+        self, snapshot: RepoSnapshot
+    ) -> None:
+        obl = _obligation(
+            "obl-attempt",
+            search_terms=("train",),
+            missing_information=("entry_point",),
+        )
+        obl.status = "pending"
+        agenda = _agenda("run-attempt", snapshot, obl)
+        runtime = _runtime(snapshot, agenda, run_id="run-attempt")
+        result = ResearchLoopDriver(runtime, max_turns=4).run()
+
+        assert obl.attempted_actions
+        assert obl.status != "pending"
+        assert obl.last_information_gain
+        observations = [
+            item
+            for item in result.loop_state.observation_history
+            if item.obligation_id == "obl-attempt"
+        ]
+        assert observations
+
+    def test_record_executed_research_action_requires_an_observation(
+        self, snapshot: RepoSnapshot
+    ) -> None:
+        from code2paper.agentic.research_graph import (
+            record_executed_research_action,
+        )
+
+        obl = _obligation("obl-stop")
+        agenda = _agenda("run-stop", snapshot, obl)
+        record_executed_research_action(
+            agenda,
+            obligation_id="obl-stop",
+            action="STOP_BLOCKED",
+            observations=[],
+        )
+        assert obl.attempted_actions == []
+
+    def test_action_ledger_survives_checkpoint_restore(
+        self, snapshot: RepoSnapshot
+    ) -> None:
+        from code2paper.agentic.research_graph import (
+            restore_loop_state_from_snapshot,
+            snapshot_loop_state,
+        )
+
+        obl = _obligation(
+            "obl-resume-ledger",
+            search_terms=("train",),
+            missing_information=("entry_point",),
+        )
+        obl.status = "pending"
+        agenda = _agenda("run-resume-ledger", snapshot, obl)
+        runtime = _runtime(snapshot, agenda, run_id="run-resume-ledger")
+        result = ResearchLoopDriver(runtime, max_turns=4).run()
+        expected = tuple(obl.attempted_actions)
+        assert expected
+
+        payload = snapshot_loop_state(result.loop_state)
+        restored = restore_loop_state_from_snapshot(runtime, payload, strict=False)
+        assert restored is not None
+        restored_item = next(
+            item
+            for item in runtime.agenda.items
+            if item.obligation_id == "obl-resume-ledger"
+        )
+        assert tuple(restored_item.attempted_actions) == expected
+
+    def test_exhausted_tool_budget_sets_budget_constrained(
+        self, snapshot: RepoSnapshot
+    ) -> None:
+        from code2paper.agentic.research_graph import (
+            _refresh_intent_coverage_scheduler,
+        )
+
+        obl = _obligation(
+            "obl-budget",
+            search_terms=("train",),
+            missing_information=("entry_point",),
+        )
+        agenda = _agenda("run-budget", snapshot, obl)
+        runtime = _runtime(snapshot, agenda, run_id="run-budget")
+        loop = initial_loop_state(runtime)
+        budget = loop.per_obligation_budgets["obl-budget"]
+        for kind, limit in tuple(budget.limits.items()):
+            budget = budget.consume(kind, limit)
+        loop.per_obligation_budgets["obl-budget"] = budget
+
+        schedule = _refresh_intent_coverage_scheduler(
+            loop,
+            {},
+            remaining_budget_turns=5,
+            current_action_is_novelty=True,
+        )
+
+        assert schedule["legal_action_available"] is False
+        assert schedule["budget_constrained"] is True
+        assert schedule["can_continue"] is False
+        assert schedule["unresolved_core_intent_ids"]

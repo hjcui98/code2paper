@@ -35,7 +35,7 @@ import os
 import re
 import tempfile
 from pathlib import Path
-from typing import Any, Mapping
+from typing import Any, Mapping, Sequence
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
@@ -70,8 +70,10 @@ from code2paper.agentic.execution_profile import (
 from code2paper.agentic.implementation_scope import (
     ownership_rank,
     resolve_candidate_binding,
+    resolve_configuration_binding,
     scope_role_for_candidate,
     seed_child_candidates_from_parents,
+    select_configuration_candidates,
 )
 from code2paper.agentic.research_models import (
     BUDGET_TOOL_KINDS,
@@ -116,9 +118,11 @@ from code2paper.agentic.repository_authoring_artifacts import (
 from code2paper.agentic.state_v3 import AgentStateV3
 from code2paper.agentic.typed_refs import (
     behavior_refs,
+    config_refs,
     is_behavior_ref,
     is_entrypoint_ref,
     is_symbol_ref,
+    split_config_ref,
     split_symbol_ref,
     split_span_ref,
     symbol_refs,
@@ -131,6 +135,93 @@ _SPECIALIZED_MISSING_TERMS: dict[str, tuple[str, ...]] = {
     "branch": ("branch", "condition", "control"),
     "config": ("config", "parameter", "setting", "option"),
 }
+
+
+#: Configuration access expressions a branch may depend on.  Requirements
+#: still carry the leaf accepted by ``inspect_configuration``, but matching a
+#: resolved claim must retain the full access identity when the claim has one.
+_CONFIG_ACCESS_KEY_RE = re.compile(
+    r"\b(?:self\.)?(?:cfg|config|conf|args|options|params|parameters|settings|flags)\."
+    r"([A-Za-z_][A-Za-z0-9_]*(?:\.[A-Za-z_][A-Za-z0-9_]*)*)"
+)
+#: Claim states that prove a configuration key already has a value.
+_RESOLVED_CONFIGURATION_STATES = frozenset({"default", "actual", "conditional"})
+
+
+def _configuration_access_leaves(value: Any) -> tuple[str, ...]:
+    """Return the leaf configuration keys one fact value reads."""
+
+    terms = value if isinstance(value, (list, tuple, set)) else (value,)
+    leaves: list[str] = []
+    for term in terms:
+        leaves.extend(
+            match.group(1)
+            for match in _CONFIG_ACCESS_KEY_RE.finditer(str(term or ""))
+        )
+    return tuple(leaves)
+
+
+def _configuration_access_terms(value: Any) -> tuple[str, ...]:
+    """Return normalized full configuration access expressions.
+
+    ``self.cfg.mode`` and ``other.cfg.mode`` intentionally remain different
+    identities.  Only the conventional receiver prefix is removed; matching
+    by the final component alone would let an unrelated object's ``mode``
+    claim close the branch requirement.
+    """
+
+    terms = value if isinstance(value, (list, tuple, set)) else (value,)
+    found: list[str] = []
+    for term in terms:
+        for match in _CONFIG_ACCESS_KEY_RE.finditer(str(term or "")):
+            prefix = match.group(0).casefold()
+            normalized = prefix.removeprefix("self.")
+            if normalized and normalized not in found:
+                found.append(normalized)
+    return tuple(found)
+
+
+def _normalize_configuration_claim_key(value: Any) -> str:
+    """Normalize a claim key without discarding its access scope."""
+
+    text = str(value or "").strip().casefold()
+    return text.removeprefix("self.")
+
+
+def branch_configuration_evidence_requirements(
+    facts: Any,
+    configuration_claims: Any,
+) -> tuple[str, ...]:
+    """Return branch-gating configuration keys with no resolved value.
+
+    Research must *acquire* the definition of a configuration key that gates a
+    branch: an unresolved key leaves every operation on that branch with an
+    unknown active path, which the frozen completeness gate then reports as a
+    structural failure.  Only keys that actually gate a branch are requested,
+    and a key already resolved by a compiled configuration claim is skipped, so
+    this is a bounded requirement rather than a blanket config scan.
+    """
+
+    resolved_accesses = {
+        _normalize_configuration_claim_key(getattr(claim, "key", ""))
+        for claim in configuration_claims or ()
+        if str(getattr(claim, "state", "")) in _RESOLVED_CONFIGURATION_STATES
+        if "." in _normalize_configuration_claim_key(getattr(claim, "key", ""))
+        and _normalize_configuration_claim_key(getattr(claim, "key", ""))
+    }
+    pending: list[str] = []
+    for fact in facts or ():
+        if str(getattr(fact, "predicate", "")) != "branches_on":
+            continue
+        access_terms = _configuration_access_terms(getattr(fact, "object", ()))
+        for term in access_terms:
+            leaf = term.rsplit(".", 1)[-1]
+            if term not in resolved_accesses:
+                pending.append(leaf)
+    return tuple(
+        f"configuration:branch_key:{leaf}"
+        for leaf in sorted(dict.fromkeys(pending))
+    )
 
 
 def _resolved_missing_information(
@@ -161,6 +252,22 @@ def _resolved_missing_information(
 
     unresolved: list[str] = []
     for requirement in missing:
+        if requirement.startswith("configuration:branch_key:"):
+            # A branch-gating key is discharged only by evidence that names
+            # *that* key: a successful scan that found other configuration
+            # keys does not resolve the branch.
+            key = requirement.split(":", 2)[2].strip().casefold()
+            observed_config_refs = " ".join(
+                (
+                    *(observation.result_refs or ()),
+                    *(observation.exact_span_ids or ()),
+                    *(getattr(observation.diagnostics, "notes", ()) or ()),
+                )
+            ).casefold()
+            if key and key in observed_config_refs:
+                continue
+            unresolved.append(requirement)
+            continue
         if requirement.startswith("typed_semantic:"):
             # Only target-to-fact alignment can discharge a semantic
             # requirement.  A successful read may still contain unrelated
@@ -246,6 +353,11 @@ def seed_per_obligation_budgets(
 # ---------------------------------------------------------------------------
 
 
+#: Ref prefixes that name a harness request rather than repository evidence.
+#: Submitting one is an attempt, never information gain.
+NON_EVIDENCE_REF_PREFIXES: tuple[str, ...] = ("revision-proposal:",)
+
+
 class InformationGainTracker:
     """Tracks information gain per obligation and detects no-progress windows.
 
@@ -309,6 +421,14 @@ class InformationGainTracker:
                 spans.add(span)
                 gained_items.append(f"span:{span}")
         for ref in observation.result_refs:
+            if any(
+                str(ref).startswith(prefix)
+                for prefix in NON_EVIDENCE_REF_PREFIXES
+            ):
+                # R10: a submitted revision proposal is a request for the
+                # harness; it proves nothing about the repository and must not
+                # mask a no-gain turn.
+                continue
             # Phase 3: use typed_refs for uniform symbol/entrypoint
             # detection instead of hard-coded ``startswith`` checks.
             # This lets the gain tracker recognize every symbol or
@@ -534,6 +654,10 @@ class ResearchGraphRuntime(BaseModel):
     repo_snapshot: RepoSnapshot
     agenda: ResearchAgendaV1
     intent_graph: Any | None = None
+    # R10 §15.1: the frozen author boundary captured before target enrichment.
+    # Revisions, coverage denominators and resume read this object; they never
+    # rebuild author authority from the mutable graph.
+    author_constraints: Any | None = None
     intent_target_proposal_report: dict[str, Any] = Field(default_factory=dict)
     budget_policy: BudgetPolicyV1 = Field(default_factory=BudgetPolicyV1)
     global_safety_budget: GlobalSafetyBudgetV1 = Field(default_factory=GlobalSafetyBudgetV1)
@@ -552,6 +676,11 @@ class ResearchGraphRuntime(BaseModel):
     execution_rollback: bool = False
     execution_default_authorized: bool = False
     evidence_policy_digest: str = ""
+    # R10: optional independent semantic reviewer.  Replacing an author target
+    # in place requires a verdict that does not come from the proposer; when no
+    # reviewer is configured the assessment stays ``pending_review`` and the
+    # revision is not applied.
+    revision_semantic_verifier: Any | None = None
     ready_tools: tuple[str, ...] = (
         "find_entrypoints",
         "search_symbols",
@@ -933,6 +1062,7 @@ def research_supervisor_node(
     per_obligation_budgets: dict[str, PerObligationBudgetV1],
     active_issue: ResearchIssueV1 | None,
     recent_observations: tuple[ResearchObservationV1, ...] = (),
+    observation_history: tuple[ResearchObservationV1, ...] = (),
     no_progress_counter: int = 0,
     no_progress_history: tuple[str, ...] = (),
     recent_tool_call_ids: tuple[str, ...] = (),
@@ -967,6 +1097,7 @@ def research_supervisor_node(
         active_obligation_id=state.get("active_obligation_id", ""),
         active_issue=active_issue,
         recent_observations=recent_observations,
+        observation_history=observation_history,
         per_obligation_budgets=per_obligation_budgets,
         global_safety_budget=runtime.global_safety_budget,
         no_progress_counter=no_progress_counter,
@@ -980,6 +1111,16 @@ def research_supervisor_node(
         behavior_graph=behavior_graph,
     )
     proposal = backend.decide(context)
+    # A pending branch-configuration requirement binds the next read to its
+    # exact key; the LLM proposal may otherwise inspect an unrelated key (or do
+    # a different step) and the branch would never resolve.
+    proposal = bind_pending_configuration_requirement(
+        proposal,
+        obligation=context.active_obligation,
+        ready_tools=runtime.ready_tools,
+        repo_snapshot_id=runtime.repo_snapshot.snapshot_id,
+        run_id=runtime.run_id,
+    )
     merge_result = apply_policy_merge(
         proposal,
         agenda=runtime.agenda,
@@ -1247,7 +1388,7 @@ def observation_ingest_node(
         # The evidence_critic_node reads candidate_symbol_ids to decide
         # whether to route to compile_candidate; without this update
         # the loop never compiles evidence.
-        for ref in symbol_refs(list(obs.result_refs)):
+        for ref in (*symbol_refs(list(obs.result_refs)), *config_refs(list(obs.result_refs))):
             if ref not in new_symbol_refs:
                 new_symbol_refs.append(ref)
         for ref in behavior_refs(list(obs.result_refs)):
@@ -1712,6 +1853,11 @@ def _match_nodes_by_candidate(
     selected: list[Any] = []
     saw_typed_candidate = False
     for candidate in candidate_symbol_ids:
+        if split_config_ref(candidate) is not None:
+            # A config key is a typed identity, but it is not a behavior
+            # node candidate.  It must neither match a node nor force the
+            # legacy path fallback to stop for its untyped siblings.
+            continue
         binding = resolve_candidate_binding(
             candidate,
             symbols=symbol_items,
@@ -1749,6 +1895,9 @@ def _match_nodes_by_candidate(
 
     for candidate in candidate_symbol_ids:
         if not candidate:
+            continue
+        if split_config_ref(candidate) is not None:
+            # Never widen a config key into a file/path behavior match.
             continue
         # Direct symbol_id / node_id match.
         direct = [
@@ -2608,6 +2757,86 @@ def _compile_identity_failure(
     }
 
 
+def bind_pending_configuration_requirement(
+    proposal: ResearchDecisionV1,
+    *,
+    obligation: ResearchAgendaItemV1 | None,
+    ready_tools: Sequence[str],
+    repo_snapshot_id: str,
+    run_id: str,
+) -> ResearchDecisionV1:
+    """Bind the next configuration read to the key a branch actually needs.
+
+    A pending ``configuration:branch_key:<key>`` requirement is a typed
+    contract: the branch stays unresolved until that key has definition
+    evidence.  A proposal that inspects configuration with a different (or
+    empty) key, or that does another step entirely, cannot discharge it, so the
+    call is repaired to read the required key.  Policy merge still validates the
+    repaired proposal, so budgets, duplicate detection and scope checks are
+    unchanged.
+    """
+
+    if "inspect_configuration" not in tuple(ready_tools or ()):
+        return proposal
+    key = ""
+    for requirement in (getattr(obligation, "missing_information", ()) or ()):
+        text = str(requirement or "")
+        if text.startswith("configuration:branch_key:"):
+            key = text.split(":", 2)[2].strip()
+            if key:
+                break
+    if not key:
+        return proposal
+
+    from code2paper.agentic.research_supervisor import _stable_tool_call_id
+
+    calls = tuple(proposal.selected_tool_calls or ())
+    if len(calls) == 1 and calls[0].tool_name == "inspect_configuration":
+        arguments = {**dict(calls[0].arguments or {}), "config_key": key}
+        if dict(calls[0].arguments or {}) == arguments:
+            return proposal
+        obligation_id = calls[0].obligation_id
+        repaired_call = calls[0].model_copy(update={
+            "arguments": arguments,
+            "tool_call_id": _stable_tool_call_id(
+                run_id,
+                "inspect_configuration",
+                obligation_id,
+                arguments=arguments,
+                path_scope=tuple(calls[0].path_scope or ()),
+            ),
+        })
+        return proposal.model_copy(update={
+            "selected_tool_calls": (repaired_call,),
+            "rationale": (
+                proposal.rationale
+                + f" | configuration_requirement:{key}"
+            )[:400],
+        })
+
+    obligation_id = str(proposal.obligation_id or "")
+    arguments = {"config_key": key, "top_k": 20}
+    forced_call = ResearchToolCallV1(
+        tool_call_id=_stable_tool_call_id(
+            run_id, "inspect_configuration", obligation_id, arguments=arguments
+        ),
+        tool_name="inspect_configuration",
+        tool_kind=RESEARCH_TOOL_KINDS["inspect_configuration"],
+        obligation_id=obligation_id,
+        goal=proposal.goal,
+        repo_snapshot_id=repo_snapshot_id,
+        top_k=20,
+        arguments=arguments,
+    )
+    return proposal.model_copy(update={
+        "action": "INSPECT_CONFIG",
+        "selected_tool_calls": (forced_call,),
+        "rationale": (
+            proposal.rationale + f" | configuration_requirement:{key}"
+        )[:400],
+    })
+
+
 def _compile_candidate_node_impl(
     state: AgentStateV3,
     *,
@@ -2667,6 +2896,8 @@ def _compile_candidate_node_impl(
 
     def _is_indexed_location_candidate(value: Any) -> bool:
         raw_value = str(value)
+        if split_config_ref(raw_value) is not None:
+            return False
         if split_symbol_ref(raw_value) is not None:
             return True
         if is_behavior_ref(raw_value):
@@ -2732,6 +2963,49 @@ def _compile_candidate_node_impl(
                 state=state,
                 obligation=active_obligation,
                 code=(binding.rejection_code or "candidate_identity_resolution_failed"),
+                detail=str(candidate),
+            )
+
+    # Configuration keys use a dedicated resolver against the frozen
+    # snapshot.  They are never routed through ``SymbolIndexV2`` and never
+    # create a behavior node.  Only the candidates selected as evidence for
+    # this obligation can block compilation; alternatives such as a
+    # non-default config branch are recorded as not-selected by the
+    # acquisition ledger instead of poisoning the obligation.
+    config_candidates = tuple(dict.fromkeys(
+        str(candidate).strip()
+        for candidate in (
+            *tuple(active_obligation.candidate_symbol_ids or ()),
+            *tuple(active_obligation.candidate_behavior_node_ids or ()),
+        )
+        if str(candidate).strip() and split_config_ref(str(candidate)) is not None
+    ))
+    selected_config, _config_not_selected, config_failure = (
+        select_configuration_candidates(
+            config_candidates,
+            obligation=active_obligation,
+            repo_snapshot=runtime.repo_snapshot,
+        )
+    )
+    if config_failure:
+        return _compile_identity_failure(
+            state=state,
+            obligation=active_obligation,
+            code=config_failure,
+        )
+    for candidate in selected_config:
+        config_binding = resolve_configuration_binding(
+            candidate,
+            repo_snapshot=runtime.repo_snapshot,
+        )
+        if config_binding.ambiguous or config_binding.rejection_code:
+            return _compile_identity_failure(
+                state=state,
+                obligation=active_obligation,
+                code=(
+                    config_binding.rejection_code
+                    or "configuration_binding_ambiguous"
+                ),
                 detail=str(candidate),
             )
     selected_nodes = _select_behavior_nodes_for_obligation(
@@ -2905,6 +3179,10 @@ def _compile_candidate_node_impl(
                 }
             ),
         )
+    # ``compile_code_facts`` persists the complete set, including any
+    # repository-verified configuration definition facts.  Every downstream
+    # tool must consume this exact persisted identity; enriching only this
+    # local object would make claim decomposition reject the added fact ids.
     fact_set = CodeFactSetV1.model_validate(fact_payload)
     validate_fact_observation = _execute_compile_data_plane_tool(
         ctx=tool_ctx,
@@ -3151,12 +3429,49 @@ def _compile_candidate_node_impl(
             gain_tracker=gain_tracker,
         )
 
+    # Materialize the wording contract on the agenda item itself.  Terminal
+    # proof is evaluated from the frozen agenda, while Candidate receives the
+    # richer claim objects; copying only these typed qualifier fields keeps
+    # the strict proof and the downstream handoff on the same authority
+    # boundary without inferring closure from missing-information prose.
+    required_qualifiers = tuple(dict.fromkeys(
+        str(value).strip()
+        for claim in claim_set.claims
+        for value in (getattr(claim, "required_qualifiers", ()) or ())
+        if str(value).strip()
+    ))
+    wording_boundaries = tuple(dict.fromkeys(
+        str(getattr(claim, "allowed_wording_boundary", "") or "").strip()
+        for claim in claim_set.claims
+        if str(getattr(claim, "allowed_wording_boundary", "") or "").strip()
+    ))
+    if required_qualifiers:
+        active_obligation.required_qualifiers = list(required_qualifiers)
+    if wording_boundaries:
+        active_obligation.allowed_wording_boundary = " OR ".join(wording_boundaries)
+
     # Authorization succeeded. Exact claims survive even when the broader
     # author question is only partially resolved; only a fully resolved set
     # of typed targets advances the obligation to supported.
     authorized_claim_ids = [c.claim_id for c in claim_set.claims]
     active_obligation.supported_claim_ids = list(authorized_claim_ids)
-    active_obligation.status = "supported" if all_targets_resolved else "partial"
+    # A branch that reads an unresolved configuration key cannot be a terminal
+    # obligation: the key's value decides which branch is active, so Research
+    # keeps the obligation open and the supervisor requests
+    # ``inspect_configuration`` for that key (see the requirement producer).
+    from code2paper.agentic.configuration_claims import (
+        compile_configuration_claims,
+    )
+
+    configuration_requirements = branch_configuration_evidence_requirements(
+        fact_set.facts,
+        compile_configuration_claims(fact_set).claims,
+    )
+    for requirement in configuration_requirements:
+        if requirement not in active_obligation.missing_information:
+            active_obligation.missing_information.append(requirement)
+    obligation_terminal = all_targets_resolved and not configuration_requirements
+    active_obligation.status = "supported" if obligation_terminal else "partial"
 
     return {
         "evidence_packet_set_ref": packet_set.content_digest,
@@ -3170,7 +3485,7 @@ def _compile_candidate_node_impl(
         # Private channel: the driver pops this and stashes the objects in
         # the loop state sidecar so the writer can consume them. A partial
         # channel preserves the claims but keeps research on this obligation.
-        ("_compiled_evidence" if all_targets_resolved else "_partial_evidence"): {
+        ("_compiled_evidence" if obligation_terminal else "_partial_evidence"): {
             "obligation_id": active_obligation_id,
             "packet_set": packet_set,
             "fact_set": fact_set,
@@ -3486,6 +3801,10 @@ def gap_finalizer_node(
         str(value).strip()
         for value in active_obligation.missing_information
         if str(value).strip()
+        # The typed stop marker is loop bookkeeping, not gap provenance:
+        # feeding it back would change the idempotent tool payload and turn a
+        # legitimate replay into a provenance conflict.
+        and not str(value).strip().startswith("terminal_stop:")
     )
     if partial_gap and not gap_fields:
         # A partial compile can retain a validated claim while the alignment
@@ -3493,26 +3812,70 @@ def gap_finalizer_node(
         # target slot).  Keep the bounded remainder explicit instead of
         # allowing an unscoped partial gap or looping forever.
         gap_fields = (f"obligation_remainder:{active_obligation_id}",)
+    # R9: the execution layer mints the receipt from the real search/read
+    # ledger.  The finalizer only forwards its id; record_explicit_code_gap
+    # re-verifies it, so a closure the ledger cannot prove stays a bounded
+    # stop instead of becoming negative evidence.
+    tool_context = runtime.tool_context()
+    from code2paper.agentic.research_execution_ledger import (
+        mint_frontier_receipt,
+    )
+
+    frontier_receipt, frontier_failures = mint_frontier_receipt(
+        tool_context, active_obligation_id
+    )
+    receipt_closed = bool(
+        frontier_receipt is not None
+        and frontier_receipt.frontier_closed()
+        and not frontier_failures
+    )
+    # A negative conclusion may only cover what was really searched.  When the
+    # verified receipt is narrower than the obligation's candidate scope, the
+    # recorded gap scope is narrowed to the receipt's own filter scope.
+    gap_scope = search_scope
+    if receipt_closed and frontier_receipt is not None:
+        from code2paper.agentic.research_execution_ledger import (
+            WHOLE_SNAPSHOT_SCOPE,
+        )
+
+        narrowed = tuple(
+            path
+            for path in frontier_receipt.filter_scope
+            if path != WHOLE_SNAPSHOT_SCOPE
+        )
+        if narrowed:
+            gap_scope = narrowed
     gap_observation = _execute_compile_data_plane_tool(
-        ctx=runtime.tool_context(),
+        ctx=tool_context,
         obligation_id=active_obligation_id,
         packet_id="terminal-gap",
         tool_name="record_explicit_code_gap",
         arguments={
             "obligation_id_ref": active_obligation_id,
+            # R9: the tool payload must be byte-stable across a replay, so the
+            # volatile no-gain counter stays in the requirement rationale and
+            # never enters the idempotent terminal record.
             "termination_reason": (
-                f"No executable evidence satisfied the obligation after "
-                f"{gain_tracker.no_progress_counter(active_obligation_id)} "
-                "consecutive no-gain turns."
+                "No executable evidence satisfied the obligation after a "
+                "bounded no-gain search."
             ),
-            "search_scope": search_scope,
+            "search_scope": gap_scope,
             "attempted_tools": attempted_tools,
             "missing_relations": missing_relations,
             "gap_fields": gap_fields,
             "partial_gap": partial_gap,
-            "search_complete": True,
-            "scope_exhausted": bool(
-                gain_tracker.exhausted_tools(active_obligation_id)
+            # R9: the bounded loop can prove that it stopped, not that the
+            # repository lacks the implementation.  A receipt-backed closure
+            # mints the id below; without it this call records an explicit
+            # stop (inconclusive or budget-exhausted) and never authorizes
+            # negative evidence.
+            "terminal_record_only": not receipt_closed,
+            "search_complete": receipt_closed,
+            "scope_exhausted": receipt_closed,
+            "search_receipt_id": (
+                frontier_receipt.receipt_id
+                if receipt_closed and frontier_receipt is not None
+                else ""
             ),
         },
     )
@@ -3544,6 +3907,25 @@ def gap_finalizer_node(
     # ``gap_requirements`` entry for ``explicit_gap`` status, so we
     # append a typed ``GapRequirementV1`` recording the exhaustive
     # search evidence.
+    # R9: the observation does not carry the tool payload, so read the
+    # persisted terminal record the tool just wrote.
+    gap_payload = dict(
+        tool_context.read_artifact("terminal_gaps", active_obligation_id) or {}
+    )
+    negative_authorized = bool(
+        gap_payload.get("negative_evidence_authorized", False)
+    )
+    receipt_payload = gap_payload.get("search_receipt")
+    try:
+        from code2paper.agentic.research_models import SearchReceiptV1
+
+        typed_receipt = (
+            SearchReceiptV1.model_validate(receipt_payload)
+            if isinstance(receipt_payload, dict) and receipt_payload
+            else None
+        )
+    except (TypeError, ValueError):
+        typed_receipt = None
     gap_requirement = GapRequirementV1(
         requirement_id=f"gap-req:{active_obligation_id}:{gap_ref}",
         description=(
@@ -3569,20 +3951,46 @@ def gap_finalizer_node(
         ),
         # Preserve the actual frozen-source scope.  Recording the obligation
         # id here loses the provenance needed to audit an explicit gap.
-        search_scope=",".join(search_scope) if search_scope else active_obligation_id,
+        search_scope=",".join(gap_scope) if gap_scope else active_obligation_id,
         attempted_tools=attempted_tools,
-        terminal="explicit_gap",
+        # R9: only a receipt-backed conclusion is ``explicit_gap``; a bounded
+        # stop is recorded as an open requirement with its typed outcome.
+        terminal="explicit_gap" if negative_authorized else "open",
+        terminal_outcome=str(gap_payload.get("terminal_outcome") or ""),
+        terminal_record_only=bool(
+            gap_payload.get("terminal_record_only", False)
+        ),
+        negative_evidence_authorized=negative_authorized,
+        search_receipt=typed_receipt,
         rationale=(
             f"Accepted after {gain_tracker.no_progress_counter(active_obligation_id)} "
             f"consecutive no-gain turns."
         ),
+        qualifier="; ".join(
+            str(value).strip()
+            for value in (active_obligation.required_qualifiers or ())
+            if str(value).strip()
+        ),
+        allowed_wording_boundary=str(
+            active_obligation.allowed_wording_boundary or ""
+        ).strip(),
     )
     if not any(
         requirement.requirement_id == gap_requirement.requirement_id
         for requirement in active_obligation.gap_requirements
     ):
         active_obligation.gap_requirements.append(gap_requirement)
-    if not partial_gap:
+    # R9: the obligation is terminal for *search* either way, but only a
+    # receipt-backed scoped conclusion becomes ``explicit_gap`` (negative
+    # evidence).  A bounded stop keeps its status and records the typed stop
+    # marker so no consumer mistakes it for absence.
+    stop_marker = f"terminal_stop:{gap_requirement.terminal_outcome or 'search_inconclusive'}"
+    if stop_marker not in active_obligation.missing_information:
+        active_obligation.missing_information = [
+            *active_obligation.missing_information,
+            stop_marker,
+        ]
+    if gap_requirement.negative_evidence_authorized and not partial_gap:
         active_obligation.status = "explicit_gap"
 
     return {

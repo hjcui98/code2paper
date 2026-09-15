@@ -860,6 +860,204 @@ class ConsumerWorksetManifestV2(BaseModel):
 # ---------------------------------------------------------------------------
 
 
+UNIFIED_TOKEN_METER_VERSION = "unified-token-meter-v1"
+UNIFIED_REQUEST_ACCOUNTING_VERSION = "unified-request-token-accounting-v1"
+
+
+class UnifiedTokenMeterV1(BaseModel):
+    """Versioned token measurement contract shared by plan and send time.
+
+    ``conservative_utf8_bytes_div_4`` is an explicit, declared estimate: its
+    unit is tokens only as a conservative upper-bound proxy for canonical JSON
+    bytes, and it never claims that a byte count *is* a tokenizer count.  A
+    real tokenizer is usable only when its identity is recorded.
+    """
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    meter_version: str = UNIFIED_TOKEN_METER_VERSION
+    method: Literal["model_tokenizer", "conservative_utf8_bytes_div_4"]
+    tokenizer_identity: str = ""
+    unit: Literal["tokens"] = "tokens"
+    measurement_basis: str = ""
+    bytes_per_token: int = 0
+    content_digest: str = ""
+
+    @model_validator(mode="after")
+    def _validate_meter(self) -> "UnifiedTokenMeterV1":
+        if self.method == "model_tokenizer":
+            if not self.tokenizer_identity.strip():
+                raise ValueError(
+                    "a model_tokenizer meter must record the tokenizer identity"
+                )
+            if self.bytes_per_token:
+                raise ValueError(
+                    "a model_tokenizer meter must not declare bytes_per_token"
+                )
+        else:
+            if self.bytes_per_token <= 0:
+                raise ValueError(
+                    "a conservative meter must declare a positive bytes_per_token"
+                )
+            if not self.measurement_basis.strip():
+                raise ValueError(
+                    "a conservative meter must declare its measurement basis"
+                )
+        payload = self.model_dump(mode="json", exclude={"content_digest"})
+        expected = sha256_digest(canonical_json_bytes(payload))
+        if self.content_digest and self.content_digest != expected:
+            raise ValueError("token meter content_digest mismatch")
+        object.__setattr__(self, "content_digest", expected)
+        return self
+
+
+def conservative_token_meter() -> UnifiedTokenMeterV1:
+    """Return the only meter production may use without a real tokenizer."""
+
+    return UnifiedTokenMeterV1(
+        method="conservative_utf8_bytes_div_4",
+        measurement_basis="canonical_json_utf8_bytes_ceil_div_4",
+        bytes_per_token=4,
+    )
+
+
+def model_tokenizer_meter(tokenizer_identity: str) -> UnifiedTokenMeterV1:
+    return UnifiedTokenMeterV1(
+        method="model_tokenizer",
+        tokenizer_identity=str(tokenizer_identity),
+        measurement_basis="tokenizer_encode",
+    )
+
+
+def model_chat_template_tokenizer_meter(tokenizer_identity: str) -> UnifiedTokenMeterV1:
+    """Declare a model tokenizer that counts the actual OpenAI chat sequence."""
+
+    return UnifiedTokenMeterV1(
+        method="model_tokenizer",
+        tokenizer_identity=str(tokenizer_identity),
+        measurement_basis="openai_chat_template_v1",
+    )
+
+
+class RoleRequestBudgetV1(BaseModel):
+    """Declared per-request budget for one consumer role.
+
+    Every field comes from the frozen profile contract.  There is no global
+    code default: an undeclared role budget is a hard planning failure.
+    """
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    role: str
+    prompt_token_reserve: int = Field(ge=0)
+    output_token_reserve: int = Field(gt=0)
+    thinking_token_reserve: int = Field(ge=0)
+    # R6/F4: a declared allowance for the role's own request scaffolding
+    # (prompt envelope, metadata and payload wrappers the consumer adds around
+    # the admitted page).  It makes the planned per-invocation input an upper
+    # bound for the actual request instead of a different measurement.
+    scaffolding_token_reserve: int = Field(ge=0, default=0)
+    content_digest: str = ""
+
+    @model_validator(mode="after")
+    def _validate_role_budget(self) -> "RoleRequestBudgetV1":
+        if not self.role.strip():
+            raise ValueError("role request budget requires a role")
+        payload = self.model_dump(mode="json", exclude={"content_digest"})
+        expected = sha256_digest(canonical_json_bytes(payload))
+        if self.content_digest and self.content_digest != expected:
+            raise ValueError(f"role budget {self.role} content_digest mismatch")
+        object.__setattr__(self, "content_digest", expected)
+        return self
+
+
+class UnifiedRequestTokenAccountingV1(BaseModel):
+    """One measurement of a planned or actually-built consumer request.
+
+    Plan time and send time measure the same parts with the same meter:
+    the rendered prompt, the structured payload, the closed response schema,
+    and optionally the literal system prompt.  ``wrapper_reserve_tokens`` is
+    the declared role reserve that covers the provider-side chat wrapper; it
+    is a declared allowance, never a measured value.
+    """
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    accounting_version: str = UNIFIED_REQUEST_ACCOUNTING_VERSION
+    consumer_role: str
+    invocation_id: str = ""
+    page_id: str = ""
+    meter: UnifiedTokenMeterV1
+    system_prompt_tokens: int = Field(ge=0)
+    rendered_prompt_tokens: int = Field(ge=0)
+    input_payload_tokens: int = Field(ge=0)
+    response_schema_tokens: int = Field(ge=0)
+    wrapper_reserve_tokens: int = Field(ge=0)
+    scaffolding_reserve_tokens: int = Field(ge=0)
+    input_tokens: int = Field(ge=0)
+    output_reserve_tokens: int = Field(ge=0)
+    thinking_reserve_tokens: int = Field(ge=0)
+    safety_margin_tokens: int = Field(ge=0)
+    model_context_tokens: int = Field(gt=0)
+    max_input_tokens: int = Field(gt=0)
+    fits: bool
+    overflow_tokens: int = Field(ge=0)
+    content_digest: str = ""
+
+    @model_validator(mode="after")
+    def _validate_accounting(self) -> "UnifiedRequestTokenAccountingV1":
+        if not self.consumer_role.strip():
+            raise ValueError("token accounting requires a consumer role")
+        if (
+            self.meter.method == "model_tokenizer"
+            and self.meter.measurement_basis == "openai_chat_template_v1"
+        ):
+            expected_input = (
+                self.rendered_prompt_tokens
+                + self.response_schema_tokens
+                + self.wrapper_reserve_tokens
+                + self.scaffolding_reserve_tokens
+            )
+        else:
+            expected_input = (
+                self.system_prompt_tokens
+                + self.rendered_prompt_tokens
+                + self.input_payload_tokens
+                + self.response_schema_tokens
+                + self.wrapper_reserve_tokens
+                + self.scaffolding_reserve_tokens
+            )
+        if self.input_tokens != expected_input:
+            raise ValueError(
+                f"token accounting input_tokens {self.input_tokens} does not match "
+                f"the measured parts {expected_input}"
+            )
+        required_context = (
+            self.input_tokens
+            + self.output_reserve_tokens
+            + self.thinking_reserve_tokens
+            + self.safety_margin_tokens
+        )
+        expected_overflow = max(
+            0,
+            self.input_tokens - self.max_input_tokens,
+            required_context - self.model_context_tokens,
+        )
+        if self.overflow_tokens != expected_overflow:
+            raise ValueError(
+                f"token accounting overflow_tokens {self.overflow_tokens} does not "
+                f"match the measured overflow {expected_overflow}"
+            )
+        if self.fits != (expected_overflow == 0):
+            raise ValueError("token accounting fits disagrees with its measurement")
+        payload = self.model_dump(mode="json", exclude={"content_digest"})
+        expected = sha256_digest(canonical_json_bytes(payload))
+        if self.content_digest and self.content_digest != expected:
+            raise ValueError("token accounting content_digest mismatch")
+        object.__setattr__(self, "content_digest", expected)
+        return self
+
+
 class RunInvocationBudgetEnvelopeV1(BaseModel):
     """Frozen whole-run budget envelope admitted before any model request."""
 
@@ -870,8 +1068,22 @@ class RunInvocationBudgetEnvelopeV1(BaseModel):
     run_digest: str
     profile_digest: str
     model_identity_digest: str
+    token_meter: UnifiedTokenMeterV1
+    request_budget_by_role: Mapping[str, RoleRequestBudgetV1]
+    max_request_input_tokens_by_role: Mapping[str, int]
+    safety_margin_tokens: int = Field(ge=0)
+    # The advertised context window the per-request contract was checked
+    # against; recorded so send-time accounting cannot use a second window.
+    model_context_tokens: int = Field(gt=0)
     max_calls_by_role: Mapping[str, int]
     max_input_tokens_by_role: Mapping[str, int]
+    # Explicit headroom for bounded consumer retries.  This is part of the
+    # frozen run contract: retry attempts debit the same role reservation as
+    # primary attempts, but must not consume the reservation needed by later
+    # primary invocations merely because they happen to run first.
+    retry_reserve_input_tokens_by_role: Mapping[str, int] = Field(
+        default_factory=dict
+    )
     max_total_input_tokens: int = Field(gt=0)
     max_formula_repair_calls: int = Field(ge=0)
     max_page_input_tokens: int = Field(gt=0)
@@ -887,6 +1099,52 @@ class RunInvocationBudgetEnvelopeV1(BaseModel):
             if int(value) < 0:
                 raise ValueError(
                     f"envelope max_input_tokens_by_role[{role}] must be >= 0"
+                )
+        for role, value in self.retry_reserve_input_tokens_by_role.items():
+            if int(value) < 0:
+                raise ValueError(
+                    f"envelope retry_reserve_input_tokens_by_role[{role}] "
+                    "must be >= 0"
+                )
+        # R6: every planned role must declare a request budget and a per-request
+        # input cap.  An undeclared role is unplannable, not unlimited.
+        for role in self.max_calls_by_role:
+            if role not in self.request_budget_by_role:
+                raise ValueError(
+                    f"envelope role {role} has no declared request budget"
+                )
+            if role not in self.max_request_input_tokens_by_role:
+                raise ValueError(
+                    f"envelope role {role} has no declared per-request input cap"
+                )
+        for role, budget in self.request_budget_by_role.items():
+            if str(budget.role) != str(role):
+                raise ValueError(
+                    f"envelope request budget role mismatch: {budget.role} != {role}"
+                )
+        unknown_retry_roles = set(self.retry_reserve_input_tokens_by_role) - set(
+            self.max_calls_by_role
+        )
+        if unknown_retry_roles:
+            raise ValueError(
+                "envelope retry reserve has undeclared roles: "
+                + ",".join(sorted(str(role) for role in unknown_retry_roles))
+            )
+        for role, value in self.max_request_input_tokens_by_role.items():
+            if int(value) <= 0:
+                raise ValueError(
+                    f"envelope max_request_input_tokens_by_role[{role}] must be positive"
+                )
+            if int(value) > self.max_total_input_tokens:
+                raise ValueError(
+                    f"envelope max_request_input_tokens_by_role[{role}] exceeds the "
+                    "run-wide input reservation"
+                )
+            per_role_total = int(self.max_input_tokens_by_role.get(role, -1))
+            if per_role_total >= 0 and int(value) > per_role_total:
+                raise ValueError(
+                    f"envelope max_request_input_tokens_by_role[{role}] exceeds the "
+                    "role input reservation"
                 )
         if self.max_formula_repair_calls < 0:
             raise ValueError("envelope max_formula_repair_calls must be >= 0")
@@ -992,6 +1250,10 @@ class ConsumerInvocationPlanV1(BaseModel):
     planned_input_tokens_by_role: Mapping[str, int] = Field(default_factory=dict)
     reserved_calls_by_role: Mapping[str, int] = Field(default_factory=dict)
     reserved_input_tokens_by_role: Mapping[str, int] = Field(default_factory=dict)
+    # R6/F4: how the run-level reservation is enforced.  ``atomic_debit_v1``
+    # means every attempt (retries and resumed attempts included) is measured
+    # before it is sent and debited from the same reservation.
+    reservation_contract: str = "atomic_debit_v1"
     content_digest: str = ""
 
     def invocations_for_role(self, role: str) -> tuple[ConsumerInvocationV1, ...]:
@@ -1188,6 +1450,11 @@ class InvocationAttemptStartedV1(BaseModel):
     expected_request_envelope_digest: str
     model_identity_digest: str
     started_at_unix: float = Field(ge=0)
+    # A Writer/Realizer content retry reuses the primary invocation id but is
+    # a separate provider debit.  Persist the classification in the start
+    # marker as well as the completed receipt so a crash between the provider
+    # call and receipt publication cannot turn a retry into primary capacity.
+    content_repair_attempt: bool = False
     content_digest: str = ""
 
     @model_validator(mode="after")
@@ -1195,9 +1462,18 @@ class InvocationAttemptStartedV1(BaseModel):
         payload = self.model_dump(mode="json", exclude={"content_digest"})
         expected = sha256_digest(canonical_json_bytes(payload))
         if self.content_digest and self.content_digest != expected:
-            raise ValueError(
-                f"invocation attempt started {self.invocation_id} content_digest mismatch"
-            )
+            # Markers written before this field existed remain valid only in
+            # the non-repair case.  Accept their exact legacy digest shape;
+            # every new marker is normalized to the current digest schema.
+            legacy_payload = dict(payload)
+            if not self.content_repair_attempt:
+                legacy_payload.pop("content_repair_attempt", None)
+            legacy_expected = sha256_digest(canonical_json_bytes(legacy_payload))
+            if self.content_digest != legacy_expected:
+                raise ValueError(
+                    f"invocation attempt started {self.invocation_id} content_digest mismatch"
+                )
+            expected = self.content_digest
         object.__setattr__(self, "content_digest", expected)
         return self
 
@@ -1237,9 +1513,26 @@ class ActualRequestReceiptV2(BaseModel):
     failed_task_ids: tuple[str, ...] = ()
     task_failures: tuple[Mapping[str, Any], ...] = ()
     is_repair: bool = False
+    # A bounded consumer content retry belongs to the same planned immutable
+    # page invocation.  It is still a real request and must be metered and
+    # persisted, but it must not be mistaken for a second page delivery when
+    # resume or page-integrity gates count accepted deliveries.
+    content_repair_attempt: bool = False
     upstream_archive_digest: str = ""
     upstream_workset_manifest_digest: str = ""
     upstream_plan_digest: str = ""
+    # R6: the actual request measurement is recorded beside the digests; a
+    # rejected request keeps its measurement so the rejection is auditable.
+    token_accounting: UnifiedRequestTokenAccountingV1 | None = None
+    # A request can be rejected after measurement but before transport.  Keep
+    # that distinction explicit so its auditable measurement is not charged as
+    # provider spend when the whole-run ledger is recomputed.
+    sent_to_caller: bool = True
+    # Provider settlement is independent from the pre-send estimate. Unknown
+    # usage retains the original reservation; it is never treated as free.
+    provider_usage: dict[str, int] | None = None
+    provider_diagnostics_digest: str = ""
+    reserved_input_tokens: int = Field(default=0, ge=0)
     content_digest: str = ""
 
     @model_validator(mode="after")
@@ -1271,6 +1564,10 @@ class ActualRequestReceiptV2(BaseModel):
         if self.delivery_status == "rejected" and not self.delivery_rejection_code:
             raise ValueError(
                 f"receipt {self.invocation_id} rejected without a rejection code"
+            )
+        if not self.sent_to_caller and self.delivery_status == "accepted":
+            raise ValueError(
+                f"receipt {self.invocation_id} accepted without crossing the caller boundary"
             )
         if self.delivery_status == "accepted":
             if not self.actual_technical_bytes_digest:
@@ -1326,9 +1623,27 @@ class ActualRequestReceiptV2(BaseModel):
         payload = self.model_dump(mode="json", exclude={"content_digest"})
         expected = sha256_digest(canonical_json_bytes(payload))
         if self.content_digest and self.content_digest != expected:
-            raise ValueError(
-                f"actual request receipt {self.invocation_id} content_digest mismatch"
-            )
+            # ``content_repair_attempt`` was added after the first durable
+            # Writer receipts were emitted.  Accept exactly the old digest
+            # shape for a non-repair receipt, then normalize the in-memory
+            # digest to the current schema before any new write.  All other
+            # digest mismatches remain fail-closed.
+            legacy_payload = dict(payload)
+            optional_fields = ("provider_usage", "provider_diagnostics_digest", "reserved_input_tokens")
+            defaults = self.provider_usage is None and not self.provider_diagnostics_digest and not self.reserved_input_tokens
+            candidates = []
+            if defaults:
+                for key in optional_fields:
+                    legacy_payload.pop(key, None)
+                candidates.append(sha256_digest(canonical_json_bytes(legacy_payload)))
+            if not self.content_repair_attempt:
+                legacy_payload.pop("content_repair_attempt", None)
+                candidates.append(sha256_digest(canonical_json_bytes(legacy_payload)))
+            if self.content_digest not in candidates:
+                raise ValueError(f"actual request receipt {self.invocation_id} content_digest mismatch")
+            expected = self.content_digest
+        if self.provider_usage is not None and any(value < 0 for value in self.provider_usage.values()):
+            raise ValueError("provider usage must be nonnegative")
         object.__setattr__(self, "content_digest", expected)
         return self
 
@@ -1505,7 +1820,15 @@ __all__ = [
     "UNIFIED_ACTUAL_PAGE_BYTES_MISMATCH",
     "UNIFIED_CONSUMER_RECEIPT_MISSING",
     "UNIFIED_CONSUMER_TASK_INCOMPLETE",
+    "UNIFIED_REQUEST_ACCOUNTING_VERSION",
     "UNIFIED_RESUME_DIGEST_MISMATCH",
+    "UNIFIED_TOKEN_METER_VERSION",
+    "RoleRequestBudgetV1",
+    "UnifiedRequestTokenAccountingV1",
+    "UnifiedTokenMeterV1",
+    "conservative_token_meter",
+    "model_tokenizer_meter",
+    "model_chat_template_tokenizer_meter",
     "compute_technical_page_id",
     "compute_request_envelope_digest",
     "ArchiveAtomV2",

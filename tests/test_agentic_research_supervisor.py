@@ -547,9 +547,9 @@ class TestDeterministicSupervisorBackend:
         )
 
     def test_backend_compiles_when_candidate_read_already_executed(self) -> None:
-        """A read already executed for another obligation must not be re-proposed.
+        """A read already executed for this obligation must not be re-proposed.
 
-        Policy rejects the exact re-read (identical snapshot bytes), so the
+        Policy rejects the exact re-read for the same obligation, so the
         deterministic supervisor must switch to COMPILE_EVIDENCE when the
         behavior graph already carries nodes that bind to the exact
         candidate; otherwise the loop burns turns until fallback-exhaustion
@@ -562,13 +562,13 @@ class TestDeterministicSupervisorBackend:
             # fixture); only the exact read bytes are already in the run.
             missing_information=("describe the code-backed aggregation output",),
         )
-        # The read was executed while answering another obligation.
+        # The read was executed while answering this same obligation.
         executed = ExecutedToolCallSummaryV1(
             tool_name="read_symbol",
             arguments={"path": "train.py", "symbol": "train", "top_k": 1},
             path_scope=("train.py",),
             goal="READ_CANDIDATE for obl-0",
-            obligation_id="obl-0",
+            obligation_id=obl.obligation_id,
         )
         # Recent search found the same symbol (so READ_CANDIDATE would be the
         # naive next step).
@@ -588,6 +588,35 @@ class TestDeterministicSupervisorBackend:
         decision = backend.decide(ctx)
         assert decision.action == "COMPILE_EVIDENCE"
         assert decision.selected_tool_calls == ()
+
+    def test_read_executed_for_another_obligation_does_not_suppress_read(self) -> None:
+        """R4: snapshot-identical bytes read for another obligation are reused,
+        but they do not answer this obligation, so the exact read for *this*
+        obligation is still proposed."""
+        backend = _backend()
+        obl = _obligation(candidate_symbol_ids=("symbol:train.py:train:10",))
+        executed = ExecutedToolCallSummaryV1(
+            tool_name="read_symbol",
+            arguments={"path": "train.py", "symbol": "train", "top_k": 1},
+            path_scope=("train.py",),
+            goal="READ_CANDIDATE for another obligation",
+            obligation_id="obl-other",
+        )
+        search_call = _tool_call(tool_call_id="tc-search", tool_name="search_symbols")
+        search_observation = _observation(
+            search_call,
+            status="success",
+            result_refs=("symbol:train.py:train:10",),
+            exact_span_ids=(),
+        )
+        ctx = _context(
+            active_obligation=obl,
+            recent_observations=(search_observation,),
+            executed_tool_calls=(executed,),
+            behavior_graph=self._bound_graph(),
+        )
+        decision = backend.decide(ctx)
+        assert decision.action == "READ_CANDIDATE"
 
     def test_same_symbol_name_in_other_path_does_not_suppress_read(self) -> None:
         """A prior read_symbol of ``other.py:train`` must not suppress
@@ -689,13 +718,14 @@ class TestDeterministicSupervisorBackend:
             candidate_symbol_ids=("symbol:train.py:train:10",),
             missing_information=("describe the code-backed aggregation output",),
         )
-        # Prior span covers lines 1-30, candidate at line 10.
+        # Prior span covers lines 1-30, candidate at line 10, and was read
+        # for this same obligation.
         executed = ExecutedToolCallSummaryV1(
             tool_name="read_code_span",
             arguments={"path": "train.py", "start_line": 1, "end_line": 30},
             path_scope=("train.py",),
-            goal="READ_CANDIDATE for obl-0",
-            obligation_id="obl-0",
+            goal="READ_CANDIDATE for this obligation",
+            obligation_id=obl.obligation_id,
         )
         search_call = _tool_call(tool_call_id="tc-search", tool_name="search_symbols")
         search_observation = _observation(
@@ -726,8 +756,8 @@ class TestDeterministicSupervisorBackend:
             tool_name="read_symbol",
             arguments={"path": "train.py", "symbol": "train", "top_k": 1},
             path_scope=("train.py",),
-            goal="READ_CANDIDATE for obl-0",
-            obligation_id="obl-0",
+            goal="READ_CANDIDATE for this obligation",
+            obligation_id=obl.obligation_id,
         )
         search_call = _tool_call(tool_call_id="tc-search", tool_name="search_symbols")
         search_observation = _observation(
@@ -1223,7 +1253,7 @@ class TestBuildDecisionContext:
                 },
                 path_scope=("src/model/ebcar_dedicated_attention_model.py",),
                 goal="read",
-                obligation_id="obl-0",
+                obligation_id="obl-1",
             ),
         )
         ctx = build_decision_context(
@@ -1239,6 +1269,36 @@ class TestBuildDecisionContext:
             executed_tool_calls=executed,
         )
         assert ctx.top_candidate_symbol_ids == (
+            "sym:src/model/ebcar_dedicated_attention_model.py:EBCarRerankerHybridAttention.rerank",
+        )
+
+        # R4: the same read executed for another obligation does not remove
+        # the candidate from this question.
+        other_obligation_ctx = build_decision_context(
+            run_id=_RUN_ID,
+            repo_snapshot_id=_SNAPSHOT_ID,
+            turn_index=0,
+            agenda=agenda,
+            active_obligation_id="obl-1",
+            active_issue=None,
+            recent_observations=(),
+            per_obligation_budgets={},
+            global_safety_budget=GlobalSafetyBudgetV1(),
+            executed_tool_calls=(
+                ExecutedToolCallSummaryV1(
+                    tool_name="read_symbol",
+                    arguments={
+                        "path": "src/model/ebcar_dedicated_attention_model.py",
+                        "symbol": "EBCarRerankerHybridAttention.forward",
+                    },
+                    path_scope=("src/model/ebcar_dedicated_attention_model.py",),
+                    goal="read for another obligation",
+                    obligation_id="obl-0",
+                ),
+            ),
+        )
+        assert other_obligation_ctx.top_candidate_symbol_ids == (
+            "sym:src/model/ebcar_dedicated_attention_model.py:EBCarRerankerHybridAttention.forward",
             "sym:src/model/ebcar_dedicated_attention_model.py:EBCarRerankerHybridAttention.rerank",
         )
 
@@ -1330,3 +1390,111 @@ class TestSupervisorNode:
         )
         assert update["status"] == "blocked"
         assert update["pending_tool_calls"] == []
+
+
+class TestPriorReadMemoryProjection:
+    """R4: bounded, explainable memory projection from persistent history."""
+
+    def _observation(
+        self,
+        *,
+        observation_id: str,
+        obligation_id: str,
+        path: str,
+        symbol: str,
+        tool_name: str = "read_symbol",
+    ):
+        from code2paper.agentic.research_models import ResearchObservationV1
+
+        return ResearchObservationV1(
+            observation_id=observation_id,
+            tool_call_id=f"call:{observation_id}",
+            tool_name=tool_name,
+            obligation_id=obligation_id,
+            repo_snapshot_id=_SNAPSHOT_ID,
+            status="success",
+            result_refs=(f"symbol:{path}:{symbol}:1",),
+            exact_span_ids=(f"span:{path}:1:20",),
+        )
+
+    def test_projection_selects_relevant_reads_with_reasons(self) -> None:
+        from code2paper.agentic.research_supervisor import build_decision_context
+
+        obl = _obligation(
+            candidate_symbol_ids=(
+                "sym:src/model.py:Model.forward",
+                "sym:src/other.py:Helper.run",
+            )
+        )
+        history = (
+            self._observation(
+                observation_id="obs-unrelated",
+                obligation_id="obl-2",
+                path="src/unrelated.py",
+                symbol="Unrelated.thing",
+            ),
+            self._observation(
+                observation_id="obs-shared-path",
+                obligation_id="obl-2",
+                path="src/model.py",
+                symbol="Model.other_method",
+            ),
+            self._observation(
+                observation_id="obs-same-obligation",
+                obligation_id="obl-1",
+                path="src/model.py",
+                symbol="Model.somewhere",
+            ),
+        )
+        ctx = build_decision_context(
+            run_id=_RUN_ID,
+            repo_snapshot_id=_SNAPSHOT_ID,
+            turn_index=3,
+            agenda=_agenda(obl),
+            active_obligation_id="obl-1",
+            active_issue=None,
+            recent_observations=(),
+            per_obligation_budgets={},
+            global_safety_budget=GlobalSafetyBudgetV1(),
+            observation_history=history,
+        )
+
+        projected = {
+            item.observation_id: item for item in ctx.relevant_prior_reads
+        }
+        assert set(projected) == {"obs-same-obligation", "obs-shared-path"}
+        assert projected["obs-same-obligation"].selection_reason == "same_obligation"
+        assert projected["obs-shared-path"].selection_reason == "shared_path"
+        # Most recent first, and the projection never claims to be coverage.
+        assert ctx.relevant_prior_reads[0].observation_id == "obs-same-obligation"
+        assert ctx.prior_reads_projection_status == "bounded_projection"
+        assert ctx.prior_reads_truncated is False
+
+    def test_projection_is_bounded_and_marks_truncation(self) -> None:
+        from code2paper.agentic.research_supervisor import build_decision_context
+
+        obl = _obligation(candidate_symbol_ids=("sym:src/model.py:Model.forward",))
+        history = tuple(
+            self._observation(
+                observation_id=f"obs-{index}",
+                obligation_id="obl-1",
+                path="src/model.py",
+                symbol=f"Model.method_{index}",
+            )
+            for index in range(5)
+        )
+        ctx = build_decision_context(
+            run_id=_RUN_ID,
+            repo_snapshot_id=_SNAPSHOT_ID,
+            turn_index=5,
+            agenda=_agenda(obl),
+            active_obligation_id="obl-1",
+            active_issue=None,
+            recent_observations=(),
+            per_obligation_budgets={},
+            global_safety_budget=GlobalSafetyBudgetV1(),
+            observation_history=history,
+            memory_budget=2,
+        )
+        assert len(ctx.relevant_prior_reads) == 2
+        assert ctx.prior_reads_truncated is True

@@ -1415,6 +1415,7 @@ class TestCrossInstanceResumeViaSubgraph:
             "gap_finalizer_blocked",
             "evidence_critic_blocked",
             "no_tool_calls_no_terminal",
+            "intent_coverage_blocked",
             "max_turns_reached",
         )
         # The final state must carry a loop_state_snapshot (re-emitted

@@ -629,7 +629,11 @@ def test_research_actions_canonical() -> None:
     # deterministic evidence compiler once it judges the observations answer
     # the active issue (policy accepts it for any issue kind).
     assert "COMPILE_EVIDENCE" in RESEARCH_ACTIONS
-    assert len(RESEARCH_ACTIONS) == 16
+    # R10: PROPOSE_TARGET_REVISION lets the manager submit a target revision
+    # proposal.  It is a tool-calling action (the proposal is a tool call) and
+    # the harness alone decides whether the proposal is applied.
+    assert "PROPOSE_TARGET_REVISION" in RESEARCH_ACTIONS
+    assert len(RESEARCH_ACTIONS) == 17
 
 
 def test_tool_kinds_canonical() -> None:
@@ -868,7 +872,6 @@ def test_observation_promotion_ledger_lifecycle() -> None:
     from code2paper.agentic.research_promotion import (
         build_observation_promotion_ledger,
     )
-
     observations = [
         {
             "observation_id": "obs:search:1",
@@ -940,6 +943,270 @@ def test_observation_promotion_ledger_lifecycle() -> None:
     assert records_by_id["obs:promoted:1"].status == "claim_promoted"
     assert records_by_id["obs:promoted:1"].claim_ids == ("c:1",)
     assert records_by_id["obs:promoted:1"].rejection_code == ""
+
+
+@pytest.mark.parametrize(
+    ("initial_status", "updates", "expected_status"),
+    [
+        (
+            "fact_promoted",
+            {
+                "status": "claim_promoted",
+                "packet_ids": ("packet:terminal",),
+                "claim_ids": ("claim:terminal",),
+                "rejection_code": "",
+            },
+            "claim_promoted",
+        ),
+        (
+            "behavior_built",
+            {
+                "status": "superseded",
+                "disposition_reason": "replaced_by_compiled_evidence",
+                "superseding_claim_ids": ("claim:terminal",),
+                "superseding_compile_digest": "sha256:compile",
+                "rejection_code": "",
+            },
+            "superseded",
+        ),
+        (
+            "behavior_built",
+            {
+                "status": "not_selected",
+                "disposition_reason": "observation_not_selected_for_compile",
+                "rejection_code": "",
+            },
+            "not_selected",
+        ),
+        (
+            "observed_unpromoted",
+            {
+                "status": "deferred",
+                "disposition_reason": "non_core_observation_deferred_to_review",
+                "rejection_code": "",
+            },
+            "deferred",
+        ),
+    ],
+)
+def test_terminal_disposition_recomputes_record_and_ledger_digest(
+    initial_status: str,
+    updates: dict,
+    expected_status: str,
+) -> None:
+    from code2paper.agentic.digest import digest_json
+    from code2paper.agentic.research_promotion import (
+        ObservationPromotionLedgerV1,
+        ObservationPromotionRecordV1,
+        _replace_promotion_record,
+    )
+
+    original = ObservationPromotionRecordV1(
+        observation_id=f"observation:{expected_status}",
+        obligation_id="OBL-TERMINAL",
+        tool_name="read_code_span",
+        status=initial_status,
+        behavior_node_ids=("node:terminal",),
+        packet_ids=("packet:original",),
+        fact_ids=("fact:terminal",),
+        rejection_code="terminal_probe",
+    )
+    updated = _replace_promotion_record(original, updates)
+    assert updated.status == expected_status
+    assert updated.content_digest != original.content_digest
+    assert updated.content_digest == digest_json(
+        updated.model_dump(mode="json", exclude={"content_digest"})
+    )
+
+    ledger = ObservationPromotionLedgerV1(records=(updated,))
+    reloaded = ObservationPromotionLedgerV1.model_validate_json(
+        ledger.model_dump_json()
+    )
+    assert reloaded.content_digest == ledger.content_digest
+    assert reloaded.records[0].content_digest == updated.content_digest
+
+
+def test_promotion_record_rejects_model_copy_updates() -> None:
+    from code2paper.agentic.research_promotion import ObservationPromotionRecordV1
+
+    record = ObservationPromotionRecordV1(
+        observation_id="observation:copy",
+        obligation_id="OBL-COPY",
+        tool_name="read_symbol",
+        status="behavior_built",
+        behavior_node_ids=("node:copy",),
+        rejection_code="evidence_packet_not_emitted",
+    )
+    with pytest.raises(ValueError, match="model_copy"):
+        record.model_copy(update={"status": "deferred"})
+
+
+def test_observation_terminal_disposition_survives_ledger_persistence() -> None:
+    from types import SimpleNamespace
+
+    from code2paper.agentic.digest import digest_json
+    from code2paper.agentic.research_promotion import (
+        INCOMPLETE_PROMOTION_STATUSES,
+        ObservationPromotionLedgerV1,
+        build_observation_promotion_ledger,
+    )
+
+    span_id = "span:train.py:3:3"
+    observation = SimpleNamespace(
+        observation_id="observation:config-later-compiled",
+        obligation_id="OBL-LATER",
+        tool_name="inspect_configuration",
+        status="success",
+        source_authority="executable_hard",
+        result_refs=("config:train.py:3:lr",),
+        exact_span_ids=(span_id,),
+        notebook=SimpleNamespace(discovered_symbols=()),
+    )
+    graph = SimpleNamespace(nodes=(
+        SimpleNamespace(
+            node_id="node:parse_args",
+            symbol_id="symbol:train.py:parse_args:1",
+            source_span_id="span:train.py:1:5",
+        ),
+    ))
+
+    before = build_observation_promotion_ledger(
+        observations=(observation,),
+        behavior_graph=graph,
+        repo_snapshot_id="snap-before",
+        project_tree_hash="tree-before",
+    )
+    record_before = next(
+        record for record in before.records
+        if record.observation_id == observation.observation_id
+    )
+    assert record_before.status in INCOMPLETE_PROMOTION_STATUSES
+
+    compiled = SimpleNamespace(
+        packet_set=SimpleNamespace(packets=(
+            {
+                "packet_id": "packet:later",
+                "anchor_span_ids": [span_id],
+                "spans": [{"span_id": span_id}],
+            },
+        )),
+        fact_set=SimpleNamespace(facts=(
+            {"fact_id": "fact:later", "direct_span_ids": [span_id]},
+        )),
+        claim_set=SimpleNamespace(
+            claims=({"claim_id": "claim:later", "fact_ids": ["fact:later"]},),
+            content_digest="sha256:later",
+        ),
+    )
+    after = build_observation_promotion_ledger(
+        observations=(observation,),
+        behavior_graph=graph,
+        compiled_by_obligation={"OBL-LATER": compiled},
+        repo_snapshot_id="snap-after",
+        project_tree_hash="tree-after",
+    )
+    record_after = next(
+        record for record in after.records
+        if record.observation_id == observation.observation_id
+    )
+    assert record_after.status == "claim_promoted"
+    assert record_after.claim_ids == ("claim:later",)
+    assert record_after.content_digest != record_before.content_digest
+    assert record_after.content_digest == digest_json(
+        record_after.model_dump(mode="json", exclude={"content_digest"})
+    )
+
+    reloaded = ObservationPromotionLedgerV1.model_validate_json(
+        after.model_dump_json()
+    )
+    assert reloaded.content_digest == after.content_digest
+    reloaded_record = next(
+        record for record in reloaded.records
+        if record.observation_id == observation.observation_id
+    )
+    assert reloaded_record.status == record_after.status
+    assert reloaded_record.content_digest == record_after.content_digest
+
+
+def test_unbound_must_cover_probe_is_not_selected_for_a_frozen_compile() -> None:
+    from types import SimpleNamespace
+
+    from code2paper.agentic.research_promotion import (
+        ObservationPromotionLedgerV1,
+        build_observation_promotion_ledger,
+        promotion_record_blocks_candidate,
+        promotion_record_blocks_strict_research,
+    )
+
+    probe_span = "span:conf/model.yaml:1:4"
+    source_span = "span:src/model.py:10:12"
+    observation = SimpleNamespace(
+        observation_id="observation:yaml-probe",
+        obligation_id="OBL-CORE",
+        tool_name="read_code_span",
+        status="success",
+        source_authority="executable_hard",
+        result_refs=(),
+        exact_span_ids=(probe_span,),
+        notebook=SimpleNamespace(discovered_symbols=()),
+    )
+    graph = SimpleNamespace(nodes=(
+        SimpleNamespace(
+            node_id="node:core",
+            symbol_id="sym:core",
+            source_span_id=source_span,
+        ),
+    ))
+    compiled = SimpleNamespace(
+        packet_set=SimpleNamespace(packets=(
+            SimpleNamespace(
+                packet_id="packet:core",
+                anchor_span_ids=(source_span,),
+                spans=(SimpleNamespace(span_id=source_span),),
+                relations=(),
+            ),
+        )),
+        fact_set=SimpleNamespace(facts=(
+            SimpleNamespace(
+                fact_id="fact:core",
+                direct_span_ids=(source_span,),
+                relation_span_ids=(),
+            ),
+        )),
+        claim_set=SimpleNamespace(
+            claims=(SimpleNamespace(claim_id="claim:core", fact_ids=("fact:core",)),),
+            content_digest="sha256:core",
+        ),
+    )
+    item = ResearchAgendaItemV1(
+        obligation_id="OBL-CORE",
+        priority="must_cover",
+        status="supported",
+        supported_claim_ids=["claim:core"],
+        attempted_actions=["READ_CANDIDATE"],
+    )
+
+    ledger = build_observation_promotion_ledger(
+        observations=(observation,),
+        behavior_graph=graph,
+        compiled_by_obligation={"OBL-CORE": compiled},
+        agenda_items=(item,),
+        repo_snapshot_id="snap",
+        project_tree_hash="tree",
+    )
+    record = next(
+        record for record in ledger.records
+        if record.observation_id == observation.observation_id
+    )
+    assert record.status == "not_selected"
+    assert record.disposition_reason == "observation_not_selected_for_compile"
+    assert promotion_record_blocks_candidate(record, None, item) is False
+    assert promotion_record_blocks_strict_research(record) is False
+
+    reloaded = ObservationPromotionLedgerV1.model_validate_json(
+        ledger.model_dump_json()
+    )
+    assert reloaded.content_digest == ledger.content_digest
 
 
 def test_configuration_observation_stays_in_separate_evidence_lane() -> None:
@@ -1103,17 +1370,99 @@ def test_partial_obligation_requires_the_complete_terminal_proof() -> None:
     assert not before_gap.terminal
     assert "explicit_gap_not_bound_to_missing_field" in before_gap.reasons
 
+    # R9: an ``explicit_gap`` marker alone is a claim, not evidence.  The
+    # complete terminal proof now also requires a typed disposition whose
+    # receipt carries the execution layer's authentication verdict.
     item.gap_requirements.append(GapRequirementV1(
         requirement_id="gap:partial",
         description="The normalization remainder was exhaustively searched.",
         required_predicate="normalize",
         terminal="explicit_gap",
+        allowed_wording_boundary="Only the observed normalization branch may be stated.",
     ))
+    without_receipt = evaluate_obligation_terminal_proof(
+        item,
+        promotion_records=(promoted,),
+    )
+    assert not without_receipt.terminal
+    assert "explicit_gap_not_bound_to_missing_field" in without_receipt.reasons
+    assert "bounded_search_not_exhausted" in without_receipt.reasons
+    assert not without_receipt.bounded_search_exhausted
+
+    from code2paper.agentic.research_models import SearchReceiptV1
+
+    item.gap_requirements[-1] = item.gap_requirements[-1].model_copy(update={
+        "terminal_outcome": "unsupported_with_scoped_evidence",
+        "negative_evidence_authorized": True,
+        "search_receipt": SearchReceiptV1(
+            receipt_id="receipt:partial",
+            obligation_id=item.obligation_id,
+            repo_snapshot_id="repo:test",
+            project_tree_hash="sha256:test-tree",
+            queries=("normalize hidden state",),
+            filter_scope=("model.py",),
+            top_k=10,
+            read_candidate_ids=("sym:normalize",),
+            # R9: terminal consumers require the execution layer's verdict.
+            ledger_digest="sha256:ledger",
+            execution_record_ids=("exec:partial",),
+            authentication="ledger_verified",
+        ),
+    })
+    # R9 correction: the current-revision re-authentication adapter is what
+    # turns a stored receipt into a proved negative conclusion.
+    from code2paper.agentic.research_models import SearchReceiptV1 as _Receipt
+
+    def _verifier(receipt_id: str) -> _Receipt:
+        declared = item.gap_requirements[-1].search_receipt
+        assert declared is not None
+        return declared
+
     after_gap = evaluate_obligation_terminal_proof(
         item,
         promotion_records=(promoted,),
+        receipt_verifier=_verifier,
     )
     assert after_gap.terminal
     assert after_gap.promoted_repository_evidence
     assert after_gap.bounded_search_exhausted
     assert after_gap.explicit_gap_bound
+
+
+def test_compact_symbol_refs_resolve_only_when_unique() -> None:
+    """R4: a compact path/name ref never binds an arbitrary first match."""
+
+    from code2paper.agentic.implementation_scope import _canonical_symbol_id
+
+    symbols = {
+        "sym:a-forward": {
+            "symbol_id": "sym:a-forward",
+            "path": "src/model.py",
+            "qualified_name": "ModelA.forward",
+        },
+        "sym:b-forward": {
+            "symbol_id": "sym:b-forward",
+            "path": "src/model.py",
+            "qualified_name": "ModelB.forward",
+        },
+        "sym:solo": {
+            "symbol_id": "sym:solo",
+            "path": "src/utils.py",
+            "qualified_name": "helper",
+        },
+    }
+
+    # Exact id and unique compact forms resolve.
+    assert _canonical_symbol_id("sym:a-forward", symbols) == "sym:a-forward"
+    assert (
+        _canonical_symbol_id("src/model.py:ModelA.forward", symbols)
+        == "sym:a-forward"
+    )
+    assert _canonical_symbol_id("src/utils.py:helper", symbols) == "sym:solo"
+    assert _canonical_symbol_id("src/utils.py", symbols) == "sym:solo"
+
+    # A leaf-name collision in one file and a path hosting several symbols
+    # stay ambiguous instead of picking the first match.
+    assert _canonical_symbol_id("src/model.py:forward", symbols) == "src/model.py:forward"
+    assert _canonical_symbol_id("src/model.py", symbols) == "src/model.py"
+    assert _canonical_symbol_id("missing.py:forward", symbols) == "missing.py:forward"

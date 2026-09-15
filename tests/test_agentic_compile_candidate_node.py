@@ -1444,3 +1444,218 @@ class TestBehaviorLocationRefs:
         )
 
         assert [node.node_id for node in selected] == ["node:uq"]
+
+
+# ---------------------------------------------------------------------------
+# 8. Configuration candidates: two-phase resolution and branch selection
+# ---------------------------------------------------------------------------
+
+
+_CONFIG_REPO_FILES = {
+    "conf/config.yaml": (
+        "defaults:\n"
+        "  - retrieval_model: contriever\n"
+        "add_positional_encoding: true\n"
+    ),
+    "conf/retrieval_model/contriever.yaml": (
+        "encode_kwargs:\n"
+        "  normalize_embeddings: true\n"
+    ),
+    "conf/retrieval_model/e5.yaml": (
+        "encode_kwargs:\n"
+        "  normalize_embeddings: false\n"
+    ),
+}
+
+
+@pytest.fixture()
+def config_snapshot(tmp_path: Path) -> RepoSnapshot:
+    root = tmp_path / "config_project"
+    (root / "conf" / "retrieval_model").mkdir(parents=True)
+    for rel_path, text in _CONFIG_REPO_FILES.items():
+        (root / rel_path).write_text(text, encoding="utf-8")
+    (root / "train.py").write_text(_TRAIN_PY, encoding="utf-8")
+    return build_repo_snapshot(root)
+
+
+def _config_runtime(
+    snapshot: RepoSnapshot,
+    obligation: ResearchAgendaItemV1,
+    *,
+    run_id: str = "run-config",
+) -> ResearchGraphRuntime:
+    return _runtime(snapshot, _agenda(run_id, snapshot, obligation))
+
+
+def test_unrelated_config_candidate_does_not_poison_compile(
+    config_snapshot: RepoSnapshot,
+) -> None:
+    obl = _obligation(
+        "obl-unrelated-config",
+        candidate_symbol_ids=(
+            "train.py:train",
+            "config:conf/retrieval_model/e5.yaml:99:missing_key",
+        ),
+        author_text="Train the optimizer loop.",
+    )
+    runtime = _config_runtime(config_snapshot, obl)
+    node = _node(
+        node_id="node:train",
+        symbol_id="sym:train.train",
+        predicate="READ",
+        operands=("optimizer",),
+        source_span_id="span:train.py:9:10",
+    )
+    update = compile_candidate_node(
+        _state("obl-unrelated-config"),
+        runtime=runtime,
+        behavior_graph=_graph(nodes=[node]),
+        active_obligation_id="obl-unrelated-config",
+        gain_tracker=InformationGainTracker(),
+    )
+    assert "_compiled_evidence" in update
+
+
+def test_selected_config_candidate_identity_failure_blocks(
+    config_snapshot: RepoSnapshot,
+) -> None:
+    obl = _obligation(
+        "obl-selected-config",
+        candidate_symbol_ids=(
+            "train.py:train",
+            "config:conf/retrieval_model/contriever.yaml:99:encode_kwargs.normalize_embeddings",
+        ),
+        author_text="Configure the Contriever retrieval model.",
+    )
+    runtime = _config_runtime(config_snapshot, obl)
+    node = _node(
+        node_id="node:train-config",
+        symbol_id="sym:train.train",
+        predicate="READ",
+        operands=("optimizer",),
+        source_span_id="span:train.py:9:10",
+    )
+    update = compile_candidate_node(
+        _state("obl-selected-config"),
+        runtime=runtime,
+        behavior_graph=_graph(nodes=[node]),
+        active_obligation_id="obl-selected-config",
+        gain_tracker=InformationGainTracker(),
+    )
+    assert "_compiled_evidence" not in update
+    assert update["blocked_reason"] == "configuration_line_mismatch"
+    assert any(
+        value.startswith("identity:configuration_line_mismatch")
+        for value in obl.missing_information
+    )
+
+
+def test_default_branch_selects_contriever_over_e5(
+    config_snapshot: RepoSnapshot,
+) -> None:
+    from code2paper.agentic.implementation_scope import (
+        build_candidate_acquisition_ledger,
+        select_configuration_candidates,
+    )
+    from code2paper.agentic.research_models import ImplementationScopeV1
+
+    candidates = (
+        "config:conf/retrieval_model/contriever.yaml:2:encode_kwargs.normalize_embeddings",
+        "config:conf/retrieval_model/e5.yaml:2:encode_kwargs.normalize_embeddings",
+    )
+    obl = _obligation(
+        "obl-branch",
+        candidate_symbol_ids=("train.py:train", *candidates),
+        author_text="Select the retrieval model configuration branch.",
+    )
+    selected, not_selected, failure = select_configuration_candidates(
+        candidates,
+        obligation=obl,
+        repo_snapshot=config_snapshot,
+    )
+    assert failure == ""
+    assert selected == (candidates[0],)
+    assert not_selected == (candidates[1],)
+
+    ledger = build_candidate_acquisition_ledger(
+        scope=ImplementationScopeV1(),
+        agenda_items=[obl],
+        repo_snapshot=config_snapshot,
+        repo_snapshot_id=config_snapshot.snapshot_id,
+        project_tree_hash=config_snapshot.project_tree_hash,
+    )
+    records = {
+        record.candidate_symbol_id: record for record in ledger.records
+    }
+    assert records[candidates[1]].terminal_status == "not_selected"
+    assert records[candidates[1]].rejection_code == "candidate_not_selected_for_compile"
+    assert records[candidates[0]].terminal_status == "read"
+
+
+def test_ambiguous_default_branch_is_typed_unresolved_field(
+    tmp_path: Path,
+) -> None:
+    root = tmp_path / "ambiguous_config_project"
+    (root / "conf" / "retrieval_model").mkdir(parents=True)
+    (root / "conf" / "config.yaml").write_text(
+        "defaults:\n"
+        "  - retrieval_model: contriever\n"
+        "  - retrieval_model: e5\n",
+        encoding="utf-8",
+    )
+    (root / "conf" / "retrieval_model" / "contriever.yaml").write_text(
+        "encode_kwargs:\n  normalize_embeddings: true\n", encoding="utf-8"
+    )
+    (root / "conf" / "retrieval_model" / "e5.yaml").write_text(
+        "encode_kwargs:\n  normalize_embeddings: false\n", encoding="utf-8"
+    )
+    (root / "train.py").write_text(_TRAIN_PY, encoding="utf-8")
+    snapshot = build_repo_snapshot(root)
+    candidates = (
+        "config:conf/retrieval_model/contriever.yaml:2:encode_kwargs.normalize_embeddings",
+        "config:conf/retrieval_model/e5.yaml:2:encode_kwargs.normalize_embeddings",
+    )
+    obl = _obligation(
+        "obl-ambiguous-branch",
+        candidate_symbol_ids=("train.py:train", *candidates),
+        author_text="Select the retrieval model configuration branch.",
+    )
+    runtime = _config_runtime(snapshot, obl)
+    node = _node(
+        node_id="node:train-amb",
+        symbol_id="sym:train.train",
+        predicate="READ",
+        operands=("optimizer",),
+        source_span_id="span:train.py:9:10",
+    )
+    update = compile_candidate_node(
+        _state("obl-ambiguous-branch"),
+        runtime=runtime,
+        behavior_graph=_graph(nodes=[node]),
+        active_obligation_id="obl-ambiguous-branch",
+        gain_tracker=InformationGainTracker(),
+    )
+    assert "_compiled_evidence" not in update
+    assert update["blocked_reason"] == "configuration_branch_ambiguous"
+    assert any(
+        value.startswith("identity:configuration_branch_ambiguous")
+        for value in obl.missing_information
+    )
+
+
+def test_config_ref_never_matches_behavior_nodes_by_path(
+    config_snapshot: RepoSnapshot,
+) -> None:
+    from code2paper.agentic.research_nodes import _match_nodes_by_candidate
+
+    node = _node(
+        node_id="node:conf-path",
+        symbol_id="sym:train.train",
+        source_span_id="span:conf/config.yaml:1:3",
+    )
+    selected = _match_nodes_by_candidate(
+        [node],
+        ["config:conf/config.yaml:1:defaults"],
+        symbols=(),
+    )
+    assert selected == []

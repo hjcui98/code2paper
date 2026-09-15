@@ -104,6 +104,58 @@ def _formula_package_uniquely_in_body(body: str, package: Mapping[str, Any]) -> 
     return False
 
 
+def _formula_package_body_token(
+    package: Mapping[str, Any],
+) -> tuple[str, str] | None:
+    """Return the exact body token used to consume one formula package.
+
+    ``markdown_block`` is preferred because it preserves the Writer/Binder
+    display-math boundary.  The LaTeX fallback is retained for older
+    formalization artifacts that did not persist the Markdown wrapper.
+    """
+
+    block = str(package.get("markdown_block") or "")
+    if block:
+        return "markdown_block", block
+    latex = str(package.get("latex") or "").strip()
+    if latex:
+        return "latex", latex
+    return None
+
+
+def _formula_packages_consumed_in_body(
+    body: str,
+    packages: Mapping[str, Mapping[str, Any]],
+) -> set[str]:
+    """Consume accepted packages by exact occurrence, including duplicates.
+
+    Two distinct obligations can intentionally produce the same canonical
+    formula text.  Treating each package as individually unique then rejects a
+    valid paragraph merely because the shared body token occurs twice.  Group
+    packages by their exact canonical token and require the body to contain
+    exactly the number of accepted owners in that group.  This preserves the
+    fail-closed property: an omitted, duplicated, or extra occurrence does not
+    receive credit.
+    """
+
+    from code2paper.agentic.publication_transaction_contract import _DISPLAY_MATH_RE
+
+    if not body or not _DISPLAY_MATH_RE.search(body):
+        return set()
+    groups: dict[tuple[str, str], list[str]] = {}
+    for package_id, package in packages.items():
+        token = _formula_package_body_token(package)
+        if token is not None:
+            groups.setdefault(token, []).append(str(package_id))
+    consumed: set[str] = set()
+    for (kind, token), package_ids in groups.items():
+        occurrences = body.count(token)
+        if occurrences != len(package_ids):
+            continue
+        consumed.update(package_ids)
+    return consumed
+
+
 def _ids(values: Any) -> tuple[str, ...]:
     if isinstance(values, (str, bytes, dict)) or values is None:
         return ()
@@ -118,35 +170,16 @@ def _ids(values: Any) -> tuple[str, ...]:
 
 def _required_targets(row: dict[str, Any]) -> dict[str, tuple[str, ...]]:
     from code2paper.agentic.publication_transaction_contract import (
-        _publication_slot_ids,
+        required_targets_from_plan_row,
     )
 
-    result = {
-        "facet": _ids(row.get("required_facet_ids")),
-        "detail": _ids(row.get("required_detail_ids")),
-        "slot": _publication_slot_ids(row),
-        "edge": _ids(row.get("required_edge_ids")),
-        "formula": _ids(row.get("formula_obligation_ids")),
-    }
-    # Atom ids are nested in the paragraph-local contract.  They remain
-    # separate targets so a Detail declaration cannot hide a missing required
-    # semantic atom.
-    contract = row.get("witness_contract") or {}
-    raw_targets = contract.get("targets", ()) if isinstance(contract, Mapping) else ()
-    result["atom"] = tuple(dict.fromkeys(
-        str(item.get("target_id") or "").strip()
-        for item in raw_targets
-        if isinstance(item, Mapping)
-        and str(item.get("target_kind") or "") == "atom"
-        and str(item.get("target_id") or "").strip()
-        and bool(
-            item.get(
-                "required",
-                True if "render_policy" not in item else item.get("render_policy") == "required",
-            )
-        )
-    ))
-    return {kind: values for kind, values in result.items() if values}
+    # Keep the structural denominator identical to the paragraph transaction
+    # assessor.  Detail/atom contracts are lossless: the assessor validates
+    # every required atom and credits the owning detail only after the full
+    # atom set is witnessed.  Counting nested atoms again here would create a
+    # second, unassessed publication target class and make a valid Narrative
+    # plan fail its own structural-exit coverage check.
+    return required_targets_from_plan_row(row)
 
 
 def _open_callback_scope(request: dict[str, Any]) -> bool:
@@ -198,6 +231,8 @@ def evaluate_authoring_structural_exit(
     formalization_payload: Any = None,
     callback_payload: Any = None,
     assessment_payload: Any = None,
+    quality_payload: Any = None,
+    adapter_payload: Any = None,
     candidate_digest: str = "",
     candidate_markdown: str = "",
 ) -> AuthoringStructuralExitV1:
@@ -215,6 +250,8 @@ def evaluate_authoring_structural_exit(
     formalization = _as_mapping(formalization_payload)
     callback = _as_mapping(callback_payload)
     assessments = _as_mapping(assessment_payload)
+    quality = _as_mapping(quality_payload)
+    adapter = _as_mapping(adapter_payload)
     reasons: list[str] = []
     plan_digest = str(plan.get("content_digest") or writer.get("plan_digest") or "").strip()
     trace_digest = str(trace.get("content_digest") or "").strip()
@@ -241,6 +278,27 @@ def evaluate_authoring_structural_exit(
         reasons.append("assessment_plan_digest_mismatch")
     if not candidate_digest:
         reasons.append("candidate_missing")
+    if "candidate_complete" in writer and not bool(writer.get("candidate_complete")):
+        reasons.append("candidate_completion_gate_open")
+    if quality:
+        if not bool(quality.get("plan_gate_passed")):
+            reasons.append("candidate_quality_plan_gate_failed")
+        safety = _as_mapping(quality.get("safety"))
+        if not bool(safety.get("hard_gate_passed")):
+            reasons.append("candidate_quality_safety_gate_failed")
+        chain = _as_mapping(quality.get("content_chain"))
+        units = _as_mapping(chain.get("content_units"))
+        planned_units = int(units.get("planned") or 0)
+        rendered_units = int(units.get("rendered") or 0)
+        if planned_units and rendered_units < planned_units:
+            reasons.append("candidate_content_chain_incomplete")
+    if adapter:
+        if adapter.get("unassigned_source_argument_unit_ids"):
+            reasons.append("plan_adapter_unassigned_source_units")
+        if adapter.get("ambiguous_source_argument_unit_sections"):
+            reasons.append("plan_adapter_ambiguous_source_units")
+        if adapter.get("unassigned_source_obligation_ids"):
+            reasons.append("plan_adapter_unassigned_source_obligations")
 
     plan_rows: dict[tuple[str, str], dict[str, Any]] = {}
     for section in plan.get("sections") or ():
@@ -399,18 +457,18 @@ def evaluate_authoring_structural_exit(
                 parts.append(text)
         body = "\n\n".join(parts)
     if body:
-        body_consumed: set[str] = set()
-        for section in formalization.get("sections") or ():
-            if not isinstance(section, dict):
-                continue
-            for package in section.get("packages") or ():
-                if not isinstance(package, dict):
-                    continue
-                package_id = str(package.get("package_id") or "").strip()
-                if package_id not in accepted_packages:
-                    continue
-                if _formula_package_uniquely_in_body(body, package):
-                    body_consumed.add(package_id)
+        accepted_package_rows = {
+            str(package.get("package_id") or "").strip(): package
+            for section in formalization.get("sections") or ()
+            if isinstance(section, dict)
+            for package in section.get("packages") or ()
+            if isinstance(package, dict)
+            and str(package.get("package_id") or "").strip() in accepted_packages
+        }
+        body_consumed = _formula_packages_consumed_in_body(
+            body,
+            accepted_package_rows,
+        )
         # Assembled Candidate text is the consume authority.  A paragraph
         # transaction that still has ``$$`` while the published section lost
         # display math must not count as consumed.

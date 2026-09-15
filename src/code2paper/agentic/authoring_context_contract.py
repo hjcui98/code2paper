@@ -184,7 +184,11 @@ def resolve_authoring_context_mode(
     return value, source  # type: ignore[return-value]
 
 
-def expected_authoring_artifact_keys(mode: str) -> tuple[str, ...]:
+def expected_authoring_artifact_keys(
+    mode: str,
+    *,
+    candidate_lane: bool = False,
+) -> tuple[str, ...]:
     """Return the artifact contract for the selected lane.
 
     Unified deliberately does not require the legacy MethodSectionPlan before
@@ -194,7 +198,7 @@ def expected_authoring_artifact_keys(mode: str) -> tuple[str, ...]:
     """
 
     if mode == "unified":
-        return (
+        keys = (
             "repo_snapshot_v2",
             "symbol_index_v2",
             "repository_source_manifest_v1",
@@ -231,8 +235,11 @@ def expected_authoring_artifact_keys(mode: str) -> tuple[str, ...]:
             "binder_receipts_v2",
             "run_terminal_event",
         )
+        if candidate_lane:
+            keys = (*keys, "candidate_handoff_v1", "candidate_retry_ledger_v1")
+        return keys
     if mode == "shadow_unified":
-        return (
+        keys = (
             "repo_snapshot_v2",
             "symbol_index_v2",
             "repository_source_manifest_v1",
@@ -264,6 +271,9 @@ def expected_authoring_artifact_keys(mode: str) -> tuple[str, ...]:
             "mechanism_formula_packages_v2",
             "run_terminal_event",
         )
+        if candidate_lane:
+            keys = (*keys, "candidate_handoff_v1", "candidate_retry_ledger_v1")
+        return keys
     return (
         "atomic_claims_v3",
         "code_facts_v1",
@@ -346,6 +356,7 @@ def build_authoring_run_contract(
     run_identity: RunIdentityV1 | None = None,
     not_applicable_artifact_keys: tuple[str, ...] = (),
     contract_stage: str = "writer",
+    candidate_lane: bool = False,
 ) -> AuthoringRunContractV1:
     """Build a contract from paths that actually exist on disk."""
 
@@ -355,7 +366,10 @@ def build_authoring_run_contract(
         for key, value in paths.items()
         if str(key).strip() and str(value).strip() and Path(str(value)).is_file()
     ))
-    expected = expected_authoring_artifact_keys(str(effective_mode))
+    expected = expected_authoring_artifact_keys(
+        str(effective_mode),
+        candidate_lane=bool(candidate_lane),
+    )
     not_applicable = tuple(sorted(
         key for key in not_applicable_artifact_keys if key in expected
     ))
