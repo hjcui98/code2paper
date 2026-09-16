@@ -9522,4 +9522,11 @@ __all__ = [
     "compute_narrative_complexity",
     "validate_narrative_plan",
     "build_narrative_plan_v3",
+    "build_narrative_plan_v4",
 ]
+
+
+def build_narrative_plan_v4(*args: Any, **kwargs: Any):
+    from code2paper.agentic.intent_narrative_compiler import build_intent_narrative_plan_v4
+
+    return build_intent_narrative_plan_v4(*args, **kwargs)

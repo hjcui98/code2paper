@@ -40,6 +40,9 @@ class LocalRewritePatchV1(BaseModel):
 
     patch_id: str
     section_id: str = ""
+    paragraph_id: str = ""
+    incumbent_digest: str = ""
+    required_target_set_digest: str = ""
     start: int
     end: int
     original_text: str
@@ -136,6 +139,9 @@ def apply_local_rewrite_patches(
     patches: Iterable[LocalRewritePatchV1],
     *,
     allowed_issue_ids: set[str] | None = None,
+    expected_incumbent_digest: str = "",
+    expected_target_set_digest: str = "",
+    expected_paragraph_id: str = "",
 ) -> tuple[str | None, tuple[str, ...]]:
     """Apply only exact, non-overlapping response spans.
 
@@ -145,6 +151,20 @@ def apply_local_rewrite_patches(
 
     patch_list = list(patches)
     failures: list[str] = []
+    current_digest = _digest(incumbent_text)
+    if expected_incumbent_digest and expected_incumbent_digest != current_digest:
+        failures.append("patch:incumbent_digest_mismatch")
+    for patch in patch_list:
+        if patch.incumbent_digest and patch.incumbent_digest != current_digest:
+            failures.append(f"patch:{patch.patch_id}:incumbent_digest_mismatch")
+        if (
+            expected_target_set_digest
+            and patch.required_target_set_digest
+            and patch.required_target_set_digest != expected_target_set_digest
+        ):
+            failures.append(f"patch:{patch.patch_id}:target_set_digest_mismatch")
+        if expected_paragraph_id and patch.paragraph_id and patch.paragraph_id != expected_paragraph_id:
+            failures.append(f"patch:{patch.patch_id}:paragraph_identity_mismatch")
     if allowed_issue_ids is not None:
         for patch in patch_list:
             if not set(patch.issue_ids).issubset(allowed_issue_ids):
@@ -639,6 +659,13 @@ class LocalRewriteAgent:
                 for issue_id in (item.atomic_claim_id, item.sentence_id)
                 if issue_id
             },
+            expected_incumbent_digest=incumbent_digest,
+            expected_target_set_digest=str(
+                (section_context or {}).get("required_target_set_digest") or ""
+            ),
+            expected_paragraph_id=str(
+                (section_context or {}).get("paragraph_id") or ""
+            ),
         )
         if candidate is None:
             return RewriteCallResult(

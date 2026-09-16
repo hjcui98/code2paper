@@ -1,5 +1,66 @@
 # Codex 工作记录
 
+## 2026-09-16：P0–P6 产品集成闭环（未 V4 默认 cutover，未 P7 live）
+
+- 依据：独立验收对 2026-09-16 执行文档实现的阻断项。本片修正常入口集成，
+  不把 V4 设为默认，不启动 P7。
+- 阻断 1：`method_propositions_v2` 进入 `build_product_planning` 返回字典，
+  `persist_product_artifacts` 从 planning 读取并落盘。briefs 主线同时写出
+  `intent_evidence_atoms_v1`。`test_compile_concept_cards_is_noop_without_live_llm`
+  覆盖 planning→persist 真实链路。
+- 阻断 2：V4 放入 `intent_narrative_envelope`（trace），不再向冻结 V3
+  setattr。Writer 从 envelope 持久化 V4/bindings。仅当
+  `CODE2PAPER_INTENT_NARRATIVE_PLAN=v4` 时用 V4 投影作为 workset/Writer
+  身份（显式 canary）。
+- 阻断 3：diagnostic checkpoint `complete=false`；clean 文件只写
+  `clean_candidate_markdown`。fallback 只在 incumbent `complete=true` 时
+  重发 clean Candidate，否则只发 diagnostic。
+- 阻断 4：Writer 加载 V2 并投影到 aligner；alignment 缺失理由改为
+  `method_propositions_missing`。最终验证写入 `ClaimVerificationReceiptV2`，
+  `verification_mode` 由 receipt 派生，不再用“全 supported 且 0 次调用”
+  冒充 exact。有 LLM 时才构造 semantic verifier。
+- 阻断 5：Facet 阶段生产 atom/closure/field→atom trace。公式 identity 按
+  `formula:facet:{id}` 与 `source_facet_ids` 桥接；`consumed_package_ids`
+  与 `committed_paragraph_ids` 分列；required 未桥接保持 open。
+- 阻断 6：`apply_local_rewrite_patches` 的产品调用强制传入
+  `expected_incumbent_digest` 与 paragraph identity。
+- 验证：组合回归 502 passed；全量 `python -m pytest -q` **3597 passed, 3 skipped**；
+  `compileall` 与 `git diff --check` exit 0。未跑 P7 live，未默认 cutover。
+
+## 2026-09-16：Author Intent spine 闭环修复（P0–P6 静态，未 cutover / 未 P7 live）
+
+- 依据：`docs/intent_spine_authoring_closure_repair_execution_2026-09-16.md`。
+  绑定 live10 `/tmp/c2p-production-entry-20260915-live10`；历史 live commit 与
+  当前 probe 不得混作同一快照。未默认 cutover，未启动新的全文 live。
+- P0：`_write_closure_metrics` 改为 schema 2.0，分母拆成
+  `obligation_candidate_records` / unique symbols / unique obligations /
+  must-cover atoms，并区分 search terminal、Candidate surface、repository
+  proof。写出 `formula_identity_conservation_v1.json`。冻结夹具
+  `tests/fixtures/intent_spine_ebcar/frozen_identity_v1.json`（5 节、28 units、
+  7+84 公式 ID、26 包、44/17/6 获取记录；无仓库路径）。
+- P1：新增 `IntentNarrativePlanV4` 与 `StoryMechanismBindingV1`。作者 section
+  identity 先冻结，mechanism 只做多对多证据绑定；禁止 `Sym:*`/`mech_` 标题。
+  产品路径仍以 V3 为 Writer 身份（P7 前不 cutover），V4 作为 sidecar 编译。
+  Adapter 在 section id 对齐时按作者 section 回贴 argument units。
+- P2：narrative unit 保持，证据拆 `IntentEvidenceAtomV1`；quote 不得窄于
+  semantic fields；跨 span proof 拒绝不同 snapshot、互斥分支、未执行构造、
+  部分 layer。`author_spec_only` 不能单独清零 Candidate surface。
+- P3：canonical formula identity 桥接 7 个 legacy ID 与 84 个 mechanism
+  obligation（原始交集 0 保留在 trace）。`formula_worthiness` 去掉
+  LOAD/WRITE/RESHAPE 等 plumbing 的默认 display 资格。Mechanism 与 Section
+  validator 共用 `formula_code_trace_failures`；冻结 WRITE 包被内容门拒绝。
+- P4：clean Candidate 仅在全部 required section committed 后更新；partial
+  进 diagnostic / checkpoint。失败 resume 保 incumbent。aggregate
+  `completed_section_ids` 逐节保留，另有 `all_required_sections_complete`。
+- P5：未知 failure 不默认 Rewrite；patch 校验 incumbent digest 与 paragraph
+  identity；`no_progress` 停止同 owner 重试。
+- P6：briefs 存在时仍编译 `method_propositions_v2`。词汇 overlap 只召回；
+  加法→减法/乘法、极性/量词/条件破坏不能 deterministic exact。验证 mode
+  为 `exact_verified|semantic|unresolved`，全 exact 允许 0 次语义调用。
+- 验证：`python -m compileall -q src tests scripts` exit 0；`git diff --check`
+  exit 0；执行文档列出的测试再加 writer/formalizer/issue-router/p0-closure
+  共 467 passed。未跑全量静态、未做 P7 `method-agent run`。
+
 ## 2026-09-14：S3.6 后续——错误绑定与统一入口/预算校准检查点
 
 - 依据：`docs/research_to_method_unified_repair_execution_plan_2026-09-12.md` §15.6.4

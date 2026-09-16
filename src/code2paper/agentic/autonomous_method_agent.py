@@ -1944,6 +1944,43 @@ def build_product_planning(
             getattr(proposition_evidence_judge, "evidence_judge_traces", ())
             if proposition_evidence_judge is not None else ()
         )
+    # Argument briefs and the validation proposition set are parallel, not
+    # mutually exclusive.  V2 is compiled even when briefs already exist.
+    intent_atoms: tuple[Any, ...] = ()
+    intent_atom_closures: tuple[Any, ...] = ()
+    legacy_field_to_atom_trace: dict[str, tuple[str, ...]] = {}
+    if facet_alignment_result is not None:
+        from code2paper.agentic.intent_evidence_atoms import compile_intent_evidence_from_facets
+
+        atom_bundle = compile_intent_evidence_from_facets(
+            facets=facet_alignment_result.facets,
+            alignments=facet_alignment_result.alignments,
+            story_spine=story_spine,
+        )
+        intent_atoms = tuple(atom_bundle.get("atoms") or ())
+        intent_atom_closures = tuple(atom_bundle.get("closures") or ())
+        legacy_field_to_atom_trace = dict(atom_bundle.get("legacy_field_to_atom_trace") or {})
+    propositions_v2 = None
+    try:
+        from code2paper.agentic.intent_proposition_compiler import compile_method_propositions_v2
+
+        mechanism_details = ()
+        propositions_v2 = compile_method_propositions_v2(
+            intent_atoms=intent_atoms,
+            publication_field_candidates=(
+                facet_alignment_result.publication_field_candidates
+                if facet_alignment_result is not None
+                else ()
+            ),
+            candidate_facet_policies=(
+                facet_alignment_result.policies
+                if facet_alignment_result is not None
+                else ()
+            ),
+            mechanism_details=mechanism_details,
+        )
+    except (TypeError, ValueError):
+        propositions_v2 = None
     plan = None
     readiness = None
     if claim_set is not None and claim_set.claims:
@@ -2000,6 +2037,10 @@ def build_product_planning(
         "proposition_clusters": proposition_clusters,
         "proposition_architect_traces": proposition_architect_traces,
         "proposition_evidence_judge_traces": proposition_evidence_judge_traces,
+        "method_propositions_v2": propositions_v2,
+        "intent_atoms": intent_atoms,
+        "intent_atom_closures": intent_atom_closures,
+        "legacy_field_to_atom_trace": legacy_field_to_atom_trace,
         "concept_cards": concept_cards,
         "argument_briefs": argument_briefs,
         "argument_facets": (
@@ -2332,6 +2373,7 @@ def persist_product_artifacts(
     readiness = planning["readiness"]
     review_candidates = planning["review_candidates"]
     propositions = planning.get("method_propositions")
+    propositions_v2 = planning.get("method_propositions_v2")
     proposition_bindings = planning.get("proposition_bindings")
     proposition_clusters = planning.get("proposition_clusters") or ()
     proposition_architect_traces = planning.get("proposition_architect_traces") or ()
@@ -2468,6 +2510,35 @@ def persist_product_artifacts(
         paths["method_propositions_v1"] = _write(
             "method_propositions_v1",
             propositions.model_dump(mode="json"),
+            product=False,
+        )
+    if propositions_v2 is not None:
+        paths["method_propositions_v2"] = _write(
+            "method_propositions_v2",
+            propositions_v2.model_dump(mode="json"),
+            product=False,
+        )
+    intent_atoms = planning.get("intent_atoms") or ()
+    intent_atom_closures = planning.get("intent_atom_closures") or ()
+    legacy_field_to_atom_trace = planning.get("legacy_field_to_atom_trace") or {}
+    if intent_atoms or intent_atom_closures:
+        paths["intent_evidence_atoms_v1"] = _write(
+            "intent_evidence_atoms_v1",
+            {
+                "schema_version": "1.0",
+                "atoms": [
+                    item.model_dump(mode="json") if hasattr(item, "model_dump") else dict(item)
+                    for item in intent_atoms
+                ],
+                "closures": [
+                    item.model_dump(mode="json") if hasattr(item, "model_dump") else dict(item)
+                    for item in intent_atom_closures
+                ],
+                "legacy_field_to_atom_trace": {
+                    str(key): list(values)
+                    for key, values in dict(legacy_field_to_atom_trace).items()
+                },
+            },
             product=False,
         )
     if proposition_bindings is not None:
@@ -2642,7 +2713,6 @@ def _write_closure_metrics(
     )
     acquired = sum(item.terminal_status == "acquired_and_compiled" for item in target_records)
     rejected = sum(item.terminal_status in {"explicitly_rejected", "superseded"} for item in target_records)
-    unresolved = sum(not item.terminal for item in target_records)
     comparand_records = tuple(item for item in records if item.ownership_role in {"comparand", "evaluation"})
     comparand_packets = sum(bool(item.packet_ids) for item in comparand_records)
 
@@ -2710,27 +2780,112 @@ def _write_closure_metrics(
             if isinstance(package, Mapping) and str(package.get("package_id") or "").strip()
         )
 
-    metrics = {
-        "schema_version": "1.0",
-        "research": {
-            "must_cover_candidates": len(target_records),
-            "acquired": acquired,
-            "explicitly_rejected": rejected,
-            "unresolved_acquisition": unresolved,
-            "target_core_packet_ratio": (acquired / len(target_records)) if target_records else 0.0,
-            "comparand_packet_ratio": (comparand_packets / len(comparand_records)) if comparand_records else 0.0,
+    from code2paper.agentic.intent_spine_metrics import compile_research_closure_dashboard
+
+    facets_payload: dict[str, Any] = {}
+    facets_path = artifact_dir / "method_argument_facets_v1.json"
+    if facets_path.is_file():
+        try:
+            facets_payload = json.loads(facets_path.read_text(encoding="utf-8"))
+        except (OSError, TypeError, ValueError, json.JSONDecodeError):
+            facets_payload = {}
+    facet_rows = tuple(facets_payload.get("facets") or ())
+    atoms_payload: dict[str, Any] = {}
+    atoms_path = artifact_dir / "06_authoring" / "intent_evidence_atoms_v1.json"
+    if not atoms_path.is_file():
+        atoms_path = artifact_dir / "intent_evidence_atoms_v1.json"
+    if atoms_path.is_file():
+        try:
+            atoms_payload = json.loads(atoms_path.read_text(encoding="utf-8"))
+        except (OSError, TypeError, ValueError, json.JSONDecodeError):
+            atoms_payload = {}
+    author_formula_ids = tuple(sorted(required_formula_ids))
+    mechanism_obligations: list[Any] = []
+    formula_ob_path = artifact_dir / "06_authoring" / "mechanism_formula_obligations_v1.json"
+    if formula_ob_path.is_file():
+        try:
+            formula_ob_payload = json.loads(formula_ob_path.read_text(encoding="utf-8"))
+        except (OSError, TypeError, ValueError, json.JSONDecodeError):
+            formula_ob_payload = {}
+        by_mechanism = formula_ob_payload.get("by_mechanism") or {}
+        if isinstance(by_mechanism, Mapping):
+            for rows in by_mechanism.values():
+                if isinstance(rows, list):
+                    mechanism_obligations.extend(rows)
+    accepted_packages: list[Any] = []
+    package_path = artifact_dir / "06_authoring" / "mechanism_formula_packages_v2.json"
+    if package_path.is_file():
+        try:
+            package_payload = json.loads(package_path.read_text(encoding="utf-8"))
+        except (OSError, TypeError, ValueError, json.JSONDecodeError):
+            package_payload = {}
+        accepted_packages = list(package_payload.get("packages") or ())
+    dashboard = compile_research_closure_dashboard(
+        records=target_records,
+        publication_field_candidates=candidates,
+        typed_field_deferred=deferred,
+        intent_atoms=tuple(atoms_payload.get("atoms") or ()),
+        atom_closures=tuple(atoms_payload.get("closures") or ()),
+        atom_ids_by_legacy_field={
+            str(key): tuple(str(item) for item in (values or ()))
+            for key, values in dict(atoms_payload.get("legacy_field_to_atom_trace") or {}).items()
         },
-        "alignment": {
-            "atomic_fields": len(candidates),
-            "renderable_fields": sum(bool(getattr(item, "is_consumable", False)) for item in candidates),
-            "deferred_fields": len(deferred),
-            "hard_target_from_unresolved": hard_from_unresolved,
-        },
-        "planning": {
+        legacy_field_ids=tuple(
+            str(item.get("facet_id") or "")
+            for item in facet_rows
+            if isinstance(item, Mapping) and str(item.get("facet_id") or "").strip()
+        ),
+        must_cover_obligation_ids=tuple(
+            dict.fromkeys(
+                str(getattr(item, "obligation_id", "") or "")
+                for item in target_records
+                if str(getattr(item, "obligation_id", "") or "").strip()
+            )
+        ),
+        author_formula_ids=author_formula_ids,
+        mechanism_obligations=mechanism_obligations,
+        accepted_packages=accepted_packages,
+        consumed_package_ids=tuple(
+            str(item)
+            for item in (
+                (trace_summary.get("consumed_formula_package_ids") or ())
+                if isinstance(trace_summary, Mapping) else ()
+            )
+            if str(item).strip()
+        ),
+        planning_targets={
             "hard_targets": hard_targets,
             "support_slots": support_slots,
             "publication_slots": publication_slots,
         },
+    )
+    identity_path = artifact_dir / "06_authoring" / "formula_identity_conservation_v1.json"
+    try:
+        identity_path.parent.mkdir(parents=True, exist_ok=True)
+        _atomic_write_text(identity_path, _json_text(dashboard.get("formula_identity") or {}))
+    except OSError:
+        identity_path = artifact_dir / "formula_identity_conservation_v1.json"
+        _atomic_write_text(identity_path, _json_text(dashboard.get("formula_identity") or {}))
+    research_metrics = dict(dashboard.get("research") or {})
+    research_metrics.update({
+        "acquired": acquired,
+        "explicitly_rejected": rejected,
+        "comparand_packet_ratio": (
+            (comparand_packets / len(comparand_records)) if comparand_records else 0.0
+        ),
+    })
+    alignment_metrics = dict(dashboard.get("alignment") or {})
+    alignment_metrics["hard_target_from_unresolved"] = hard_from_unresolved
+    metrics = {
+        "schema_version": "2.0",
+        "research": research_metrics,
+        "alignment": alignment_metrics,
+        "planning": dict(dashboard.get("planning") or {
+            "hard_targets": hard_targets,
+            "support_slots": support_slots,
+            "publication_slots": publication_slots,
+        }),
+        "formula_identity_path": str(identity_path),
         "writer": {
             "paragraphs": writer_paragraphs,
             "witnesses": writer_witnesses,

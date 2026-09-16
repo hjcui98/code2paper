@@ -183,7 +183,7 @@ def compute_support_precision_metric(
     precision = round(counts["supported_claims"] / denominator, 6)
     verified_authorized = bool(
         report_status == "passed"
-        and verification_mode == "semantic"
+        and verification_mode in {"semantic", "exact_verified"}
         and counts["unsupported_claims"] == 0
         and counts["unverified_claims"] == 0
     )

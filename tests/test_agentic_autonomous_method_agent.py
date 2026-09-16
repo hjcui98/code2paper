@@ -621,6 +621,8 @@ class TestRunAutonomousMethodAgent:
         assert "method_concept_cards_v1" not in result.artifact_paths
         assert "method_argument_briefs_v1" in result.artifact_paths
         assert "method_propositions_v1" not in result.artifact_paths
+        assert "method_propositions_v2" in result.artifact_paths
+        assert "intent_evidence_atoms_v1" in result.artifact_paths
 
     def test_max_research_turns_must_be_positive(
         self,

@@ -642,37 +642,64 @@ def _adapt_narrative_plan_to_method_section_plan(
     }
     unit_assignment: dict[str, str] = {}
     ambiguous_units: dict[str, list[str]] = {}
+    narrative_section_ids = {
+        str(getattr(section, "section_id", "") or "")
+        for section in (getattr(narrative_plan, "sections", ()) or ())
+        if str(getattr(section, "section_id", "") or "").strip()
+    }
+    legacy_unit_owners: dict[str, str] = {}
+    for section in (getattr(legacy_plan, "sections", ()) or ()):
+        section_id = str(getattr(section, "section_id", "") or "").strip()
+        if not section_id:
+            continue
+        for unit_id in (getattr(section, "argument_unit_ids", ()) or ()):
+            unit_id = str(unit_id or "").strip()
+            if unit_id:
+                legacy_unit_owners[unit_id] = section_id
+        for paragraph in (getattr(section, "paragraphs", ()) or ()):
+            for unit_id in (getattr(paragraph, "argument_unit_ids", ()) or ()):
+                unit_id = str(unit_id or "").strip()
+                if unit_id and unit_id not in legacy_unit_owners:
+                    legacy_unit_owners[unit_id] = section_id
+    identity_first = bool(narrative_section_ids & set(legacy_unit_owners.values()))
     for unit in (getattr(legacy_plan, "argument_units", ()) or ()):
         unit_id = str(getattr(unit, "argument_unit_id", "") or "").strip()
         if not unit_id:
             continue
-        unit_refs = {
-            str(value).strip()
-            for field_name in (
-                "source_artifact_ids", "claim_ids", "equation_ids",
-                "configuration_ids", "behavior_relation_ids",
+        owner = ""
+        if identity_first:
+            declared = legacy_unit_owners.get(unit_id, "")
+            if declared in narrative_section_ids:
+                owner = declared
+        if not owner:
+            unit_refs = {
+                str(value).strip()
+                for field_name in (
+                    "source_artifact_ids", "claim_ids", "equation_ids",
+                    "configuration_ids", "behavior_relation_ids",
+                )
+                for value in (getattr(unit, field_name, ()) or ())
+                if str(value).strip()
+            }
+            scores = sorted(
+                (
+                    len(unit_refs & anchors),
+                    section_id,
+                )
+                for section_id, anchors in anchors_by_section.items()
             )
-            for value in (getattr(unit, field_name, ()) or ())
-            if str(value).strip()
-        }
-        scores = sorted(
-            (
-                len(unit_refs & anchors),
-                section_id,
-            )
-            for section_id, anchors in anchors_by_section.items()
-        )
-        best_score = scores[-1][0] if scores else 0
-        best_sections = [
-            section_id for score, section_id in scores
-            if score == best_score and score > 0
-        ]
-        if len(best_sections) == 1:
-            owner = best_sections[0]
-            assigned_units_by_section[owner].append(unit_id)
+            best_score = scores[-1][0] if scores else 0
+            best_sections = [
+                section_id for score, section_id in scores
+                if score == best_score and score > 0
+            ]
+            if len(best_sections) == 1:
+                owner = best_sections[0]
+            elif best_sections:
+                ambiguous_units[unit_id] = best_sections
+        if owner:
+            assigned_units_by_section.setdefault(owner, []).append(unit_id)
             unit_assignment[unit_id] = owner
-        elif best_sections:
-            ambiguous_units[unit_id] = best_sections
 
     sections = [
         section.model_copy(update={
@@ -805,7 +832,11 @@ def _adapt_narrative_plan_to_method_section_plan(
         "unassigned_source_obligation_ids": [
             item for item in source_obligations if item not in obligation_assignment
         ],
-        "binding_policy": "unique_exact_source_anchor_to_narrative_section",
+        "binding_policy": (
+            "author_section_identity_then_unique_exact_source_anchor"
+            if identity_first else
+            "unique_exact_source_anchor_to_narrative_section"
+        ),
     }
     return adapted, trace
 
@@ -2166,6 +2197,7 @@ def _run_publication_method_writer_impl(
             )
         propositions = None
         proposition_bindings = None
+        propositions_v2 = None
         proposition_value = artifact_paths.get("method_propositions_v1", "")
         if proposition_value and Path(proposition_value).is_file():
             propositions = MethodPropositionSetV1.model_validate_json(
@@ -2179,6 +2211,16 @@ def _run_publication_method_writer_impl(
             proposition_bindings = PropositionBindingSidecarV1.model_validate_json(
                 Path(binding_value).read_text(encoding="utf-8")
             )
+        v2_value = artifact_paths.get("method_propositions_v2", "")
+        if v2_value and Path(v2_value).is_file():
+            from code2paper.agentic.intent_spine_models import MethodPropositionSetV2
+            from code2paper.agentic.intent_proposition_compiler import propositions_v2_as_v1
+
+            propositions_v2 = MethodPropositionSetV2.model_validate_json(
+                Path(v2_value).read_text(encoding="utf-8")
+            )
+            if propositions is None:
+                propositions = propositions_v2_as_v1(propositions_v2)
         concept_cards = None
         argument_briefs = None
         argument_facets = ()
@@ -3062,6 +3104,19 @@ def _run_publication_method_writer_impl(
                 proposal_llm_caller=proposal_llm_caller,
                 proposal_call_meter=_proposal_meter,
             )
+            envelope = dict((architect_trace_v3 or {}).get("intent_narrative_envelope") or {})
+            if (
+                str(envelope.get("selected_plan_version") or "") == "v4"
+                and envelope.get("intent_plan_v4")
+            ):
+                from code2paper.agentic.intent_narrative_compiler import (
+                    project_intent_plan_to_narrative_v3,
+                )
+                from code2paper.agentic.intent_spine_models import IntentNarrativePlanV4
+
+                unified_narrative_plan = project_intent_plan_to_narrative_v3(
+                    IntentNarrativePlanV4.model_validate(envelope["intent_plan_v4"])
+                )
             narrative_target_sets_before = _narrative_target_sets(unified_narrative_plan)
             # R10 §15 / round-4 review: persist the proposal-call tally the
             # plan builder measured.  A trace without measured rows writes
@@ -3095,8 +3150,72 @@ def _run_publication_method_writer_impl(
                         f"{type(exc).__name__}"
                     ) from exc
             narrative_plan_path = method_output(Path(out_root), "narrative_plan_v3")
-            _atomic_write_text(narrative_plan_path, unified_narrative_plan.model_dump_json(indent=2) + "\n")
+            if hasattr(unified_narrative_plan, "model_dump_json"):
+                _atomic_write_text(narrative_plan_path, unified_narrative_plan.model_dump_json(indent=2) + "\n")
+            else:
+                import json as _json
+                _atomic_write_text(
+                    narrative_plan_path,
+                    _json.dumps(
+                        {
+                            "plan_id": getattr(unified_narrative_plan, "plan_id", ""),
+                            "schema_version": "v4-projected",
+                            "sections": [
+                                {
+                                    "section_id": getattr(section, "section_id", ""),
+                                    "heading": getattr(section, "heading", ""),
+                                    "mechanism_ids": list(getattr(section, "mechanism_ids", ()) or ()),
+                                    "ordered_story_node_ids": list(
+                                        getattr(section, "ordered_story_node_ids", ()) or ()
+                                    ),
+                                    "ordered_argument_unit_ids": list(
+                                        getattr(section, "ordered_argument_unit_ids", ()) or ()
+                                    ),
+                                    "paragraphs": [
+                                        {
+                                            "paragraph_id": getattr(paragraph, "paragraph_id", ""),
+                                            "section_id": getattr(paragraph, "section_id", ""),
+                                            "mechanism_ids": list(
+                                                getattr(paragraph, "mechanism_ids", ()) or ()
+                                            ),
+                                            "ordered_story_node_ids": list(
+                                                getattr(paragraph, "ordered_story_node_ids", ()) or ()
+                                            ),
+                                        }
+                                        for paragraph in (getattr(section, "paragraphs", ()) or ())
+                                    ],
+                                }
+                                for section in (getattr(unified_narrative_plan, "sections", ()) or ())
+                            ],
+                            "content_digest": getattr(unified_narrative_plan, "content_digest", ""),
+                        },
+                        ensure_ascii=False,
+                        indent=2,
+                    ) + "\n",
+                )
             paths["narrative_plan_v3"] = str(narrative_plan_path)
+            envelope = dict((architect_trace_v3 or {}).get("intent_narrative_envelope") or {})
+            if envelope.get("intent_plan_v4"):
+                intent_path = method_output(Path(out_root), "intent_narrative_plan_v4")
+                _atomic_write_text(
+                    intent_path,
+                    json.dumps(envelope["intent_plan_v4"], ensure_ascii=False, indent=2) + "\n",
+                )
+                paths["intent_narrative_plan_v4"] = str(intent_path)
+            if envelope.get("bindings"):
+                binding_path = method_output(Path(out_root), "story_mechanism_bindings_v1")
+                _atomic_write_text(
+                    binding_path,
+                    json.dumps(
+                        {
+                            "schema_version": "1.0",
+                            "bindings": list(envelope.get("bindings") or ()),
+                        },
+                        ensure_ascii=False,
+                        indent=2,
+                    ) + "\n",
+                )
+                paths["story_mechanism_bindings_v1"] = str(binding_path)
 
             # The formalizer plan is bound to the formula-only workset
             # manifest above.  Section pages are discovered only after the
@@ -5926,9 +6045,7 @@ def _run_publication_method_writer_impl(
         unified_v2_writer_aggregate_receipt = WriterAggregateReceiptV2(
             plan_digest=unified_writer_plan.content_digest,
             required_section_ids=required_sections,
-            completed_section_ids=(
-                completed_sections if set(completed_sections) == set(required_sections) else ()
-            ),
+            completed_section_ids=completed_sections,
             section_receipt_digests=tuple(
                 receipt.content_digest for receipt in unified_v2_section_receipts
             ),
@@ -7198,7 +7315,7 @@ def _run_publication_method_writer_impl(
     # paragraph transactions remain in this Candidate snapshot for review;
     # only ``accepted`` is used for rendered/Verified accounting.
     candidate_checkpoint_written = False
-    candidate_preview = _compose_candidate_markdown(
+    candidate_preview = _compose_diagnostic_markdown(
         accepted=accepted,
         plan=active_plan,
         section_outputs=output_by_section,
@@ -7215,6 +7332,8 @@ def _run_publication_method_writer_impl(
             claim_digest=claims.content_digest,
             proposition_set_digest=(propositions.content_digest if propositions is not None else ""),
             reason="first_nonempty_writer_output",
+            complete=False,
+            lane="diagnostic",
         )
         candidate_checkpoint_written = True
 
@@ -8370,10 +8489,11 @@ def _run_publication_method_writer_impl(
     # validator passed, the same-binding Verified view for error recovery.
     final_candidate_digest = _digest_text(candidate_markdown) if candidate_markdown else ""
     if candidate_markdown and final_candidate_digest:
+        clean_final = str((split_report or {}).get("clean_candidate_markdown") or "")
         _write_candidate_checkpoint(
             out_root=out_root,
             stage="final",
-            final_text=candidate_markdown,
+            final_text=clean_final or candidate_markdown,
             accepted=accepted,
             rendered_text=final_text,
             plan_digest=active_plan_digest,
@@ -8383,6 +8503,8 @@ def _run_publication_method_writer_impl(
                 verified_markdown if final_text_validation_status == "passed" else ""
             ),
             reason="final_publication",
+            complete=bool(clean_final.strip()),
+            lane="clean" if clean_final.strip() else "diagnostic",
             last_committed_attempt_id=_publication_attempt_id(
                 out_root=out_root,
                 plan_digest=active_plan_digest,
@@ -12607,18 +12729,49 @@ def _maybe_validate_final_text(
                 if card.may_enter_verified
                 and card.evidence_verdict == "entailed"
             }
+        from code2paper.agentic.semantic_verifier_provider import build_llm_semantic_verifier
+
+        semantic_verifier = build_llm_semantic_verifier(llm_config)
+        try:
+            max_semantic_calls = int(
+                os.environ.get("CODE2PAPER_MAX_SEMANTIC_VERIFIER_CALLS", "8")
+            )
+        except ValueError:
+            max_semantic_calls = 8
+        if semantic_verifier is None:
+            max_semantic_calls = 0
+        receipts: list[Any] = []
         validation = validate_text_evidence(
             final_claims=final_claims,
             projection=projection,
             raw_evidence=raw_evidence,
             evidence_snapshot_v2=snapshot,
             evidence_packets_v3=packets,
-            require_semantic_verifier=False,
-            max_semantic_verifier_calls=0,
+            semantic_verifier=semantic_verifier,
+            require_semantic_verifier=bool(propositions is not None and semantic_verifier is not None),
+            max_semantic_verifier_calls=max_semantic_calls if semantic_verifier is not None else 0,
+            propositions=propositions,
+            claim_receipts=receipts,
             proposition_claim_ids=proposition_claim_ids,
             candidate_only_proposition_ids=candidate_only_proposition_ids,
             evidence_entailed_proposition_ids=evidence_entailed_proposition_ids,
         )
+        if receipts:
+            receipt_path = method_output(Path(out_root), "claim_verification_receipts_v2")
+            _atomic_write_text(
+                receipt_path,
+                json.dumps(
+                    {
+                        "schema_version": "2.0",
+                        "receipts": [
+                            item.model_dump(mode="json") if hasattr(item, "model_dump") else dict(item)
+                            for item in receipts
+                        ],
+                    },
+                    ensure_ascii=False,
+                    indent=2,
+                ) + "\n",
+            )
     except (OSError, TypeError, ValueError, KeyError):
         # Supplying malformed frozen inputs is an integrity failure, not a
         # reason to silently keep a pending quality report.  It is also not a
@@ -16926,6 +17079,8 @@ def _apply_local_rewrite_repairs(
                     issues=attempt_issues,
                     section_context=attempt_context,
                 )
+                if result.status == "no_progress":
+                    break
                 if result.status == "applied":
                     try:
                         patches = (
@@ -21053,8 +21208,10 @@ def _build_narrative_plan_v3(
     proposal_llm_caller: Callable[..., Any] | None = None,
     proposal_call_meter: Any | None = None,
 ) -> tuple[Any, dict[str, Any]]:
+    from code2paper.agentic.intent_narrative_compiler import build_intent_narrative_plan_v4
     from code2paper.agentic.method_architect import build_narrative_plan_v3
-    return build_narrative_plan_v3(
+
+    plan, trace = build_narrative_plan_v3(
         contexts=contexts,
         story_spine=story_spine,
         formula_packages=formula_packages,
@@ -21067,6 +21224,36 @@ def _build_narrative_plan_v3(
         # ``proposal_llm_caller`` is the transport override used by tests.
         proposal_llm_caller=proposal_llm_caller,
     )
+    envelope: dict[str, Any] = {
+        "schema_version": "1.0",
+        "selected_plan_version": str(
+            os.environ.get("CODE2PAPER_INTENT_NARRATIVE_PLAN", "v3") or "v3"
+        ).strip().casefold() or "v3",
+        "intent_plan_v4": None,
+        "bindings": [],
+        "intent_plan_v4_trace": {},
+    }
+    if story_spine or prior_plan is not None:
+        try:
+            intent_plan, bindings, intent_trace = build_intent_narrative_plan_v4(
+                story_spine=story_spine,
+                prior_plan=prior_plan,
+                contexts=contexts,
+            )
+            envelope["intent_plan_v4"] = intent_plan.model_dump(mode="json")
+            envelope["bindings"] = [
+                item.model_dump(mode="json") for item in bindings
+            ]
+            envelope["intent_plan_v4_trace"] = intent_trace
+        except (TypeError, ValueError):
+            envelope["intent_plan_v4_trace"] = {"error": "intent_plan_v4_compile_failed"}
+    trace = {
+        **trace,
+        "intent_narrative_envelope": envelope,
+        "intent_plan_v4": bool(envelope.get("intent_plan_v4")),
+        "binding_count": len(envelope.get("bindings") or ()),
+    }
+    return plan, trace
 
 
 def _writer_section_inputs_v2(
@@ -25809,7 +25996,7 @@ def _audit_proposition_alignment(
     if propositions is None:
         return {
             "schema_version": "1.0", "status": "not_run",
-            "reason": "method_propositions_v1_missing", "sections": [],
+            "reason": "method_propositions_missing", "sections": [],
             "semantic_alignment_calls": 0, "semantic_alignment_ambiguous": 0,
         }
     proposition_by_id = {
@@ -26062,16 +26249,12 @@ def _compose_candidate_markdown(
     plan: Any,
     section_outputs: Mapping[str, PublicationMethodSectionOutputV1],
     excluded_section_ids: Iterable[str] = (),
+    committed_only: bool = True,
 ) -> str:
-    """Keep every non-empty authored section in the Candidate view.
+    """Compose Candidate markdown from committed sections and paragraphs.
 
-    ``accepted`` is deliberately narrower than the Candidate product: a
-    section can fail a required witness transaction and still contain useful
-    author-intent prose for diagnosis/review.  Such prose must never enter the
-    rendered/Verified counters, but dropping it from the Candidate would hide
-    the exact failure the author needs to repair.  Accepted sections retain
-    their post-editor text; failed sections retain the Writer's normalized
-    body verbatim.
+    Partial or rejected Writer text belongs in the diagnostic artifact, not
+    the clean Candidate.  ``committed_only=False`` is the diagnostic view.
     """
 
     excluded = {str(value) for value in excluded_section_ids if str(value).strip()}
@@ -26098,6 +26281,8 @@ def _compose_candidate_markdown(
     for section_id in ordered_ids:
         if section_id in excluded:
             continue
+        if committed_only and section_id not in accepted_by_id:
+            continue
         text = accepted_by_id.get(section_id, "")
         output = output_by_id.get(section_id)
         paragraph_text = _complete_paragraph_transaction_markdown(
@@ -26109,11 +26294,29 @@ def _compose_candidate_markdown(
             or text == str(getattr(output, "section_markdown", "") or "").strip()
         ):
             text = paragraph_text
-        if not text:
+        if not text and not committed_only:
             text = str(getattr(output, "section_markdown", "") or "").strip()
         if text:
             sections.append(text)
     return "\n\n".join(sections)
+
+
+def _compose_diagnostic_markdown(
+    *,
+    accepted: list[tuple[str, str, str]],
+    plan: Any,
+    section_outputs: Mapping[str, PublicationMethodSectionOutputV1],
+    excluded_section_ids: Iterable[str] = (),
+) -> str:
+    """Retain partial/rejected prose for diagnosis without promoting it."""
+
+    return _compose_candidate_markdown(
+        accepted=accepted,
+        plan=plan,
+        section_outputs=section_outputs,
+        excluded_section_ids=excluded_section_ids,
+        committed_only=False,
+    )
 
 
 def _build_product_bundle(
@@ -26158,6 +26361,27 @@ def _build_product_bundle(
     # Verified projection.  The Candidate additionally retains non-empty
     # section bodies whose paragraph transaction was rejected, so the author
     # can inspect and repair the exact prose instead of losing it.
+    required_section_ids = {
+        str(getattr(section, "section_id", "") or "")
+        for section in (getattr(current_narrative_plan or plan, "sections", ()) or ())
+        if str(getattr(section, "section_id", "") or "").strip()
+    }
+    accepted_ids = {
+        str(section_id)
+        for section_id, text, _ref in accepted
+        if str(text or "").strip()
+    }
+    all_required_committed = bool(required_section_ids) and required_section_ids <= accepted_ids
+    diagnostic_markdown = _compose_diagnostic_markdown(
+        accepted=accepted,
+        plan=current_narrative_plan or plan,
+        section_outputs={
+            str(output.section_id): output
+            for output in section_outputs
+            if output is not None
+        },
+        excluded_section_ids=excluded_section_ids,
+    )
     candidate_markdown = _compose_candidate_markdown(
         accepted=accepted,
         plan=current_narrative_plan or plan,
@@ -26167,7 +26391,10 @@ def _build_product_bundle(
             if output is not None
         },
         excluded_section_ids=excluded_section_ids,
-    ) or final_text
+        committed_only=True,
+    )
+    clean_candidate_markdown = candidate_markdown if all_required_committed else ""
+    candidate_markdown = diagnostic_markdown
     split_report: dict[str, Any] = {}
     verified_markdown = ""
     final_claims, validation_report, projection = _load_product_validation_artifacts(
@@ -26202,6 +26429,10 @@ def _build_product_bundle(
             "verified_ready_sections": sorted(verified_ready_sections),
             "split_mode": "unit_granular_readiness",
         }
+    split_report["clean_candidate_markdown"] = clean_candidate_markdown
+    split_report["all_required_sections_committed"] = all_required_committed
+    split_report["accepted_section_count"] = len(accepted_ids)
+    split_report["diagnostic_candidate"] = bool(diagnostic_markdown) and not all_required_committed
 
     review_items: list[MethodReviewCandidateV1] = []
     seen_ids: set[str] = set()
@@ -27254,18 +27485,36 @@ def _write_publication_outputs(
     # exists it is durably published even when validation reports warnings,
     # quality is blocked, or the repair budget is exhausted.  Only a truly
     # empty draft (generation failure) leaves the candidate unpublished.
+    diagnostic_path = method_output(root, "publication_candidate_diagnostic")
+    clean_markdown = str((split_report or {}).get("clean_candidate_markdown") or "")
     if candidate_markdown.strip():
-        # The verified document contains only repository-supported positive
-        # implementation facts; it may be shorter or empty without
-        # invalidating the candidate.
+        _atomic_write_text(diagnostic_path, candidate_markdown)
+        published_paths["publication_candidate_diagnostic"] = str(diagnostic_path)
+    if clean_markdown.strip():
+        # Clean Candidate is written only when every required section committed.
         _atomic_write_text(repository_path, verified_markdown)
-        _atomic_write_text(candidate_path, candidate_markdown)
-        published_paths = {
+        _atomic_write_text(candidate_path, clean_markdown)
+        published_paths.update({
             "repository_verified_method": str(repository_path),
             "publication_candidate_method": str(candidate_path),
             "text_md": str(candidate_path),
             "text_clean_md": str(candidate_path),
-        }
+        })
+    elif resumed_section_ids:
+        incumbent = _load_candidate_checkpoint(root)
+        if (
+            isinstance(incumbent, dict)
+            and incumbent.get("complete") is True
+            and candidate_path.is_file()
+            and candidate_path.stat().st_size > 0
+        ):
+            published_paths.update({
+                "publication_candidate_method": str(candidate_path),
+                "text_md": str(candidate_path),
+                "text_clean_md": str(candidate_path),
+            })
+            if repository_path.is_file():
+                published_paths["repository_verified_method"] = str(repository_path)
     review_payload = {
         "schema_version": "1.1",
         "publication_status": status,
@@ -28040,14 +28289,18 @@ def _write_result_only(
         })
     path = method_output(Path(out_root), "publication_writer_result_v1")
     _atomic_write_text(path, result.model_dump_json(indent=2) + "\n")
-    return {
-        **{
-            str(key): str(value)
-            for key, value in (extra_paths or {}).items()
-            if str(key).strip() and str(value).strip()
-        },
-        "publication_writer_result_v1": str(path),
+    published: dict[str, str] = {
+        str(key): str(value)
+        for key, value in (extra_paths or {}).items()
+        if str(key).strip() and str(value).strip()
     }
+    candidate_path = method_output(Path(out_root), "publication_candidate_method")
+    if incumbent_digest and candidate_path.is_file() and candidate_path.stat().st_size > 0:
+        published.setdefault("publication_candidate_method", str(candidate_path))
+        published.setdefault("text_md", str(candidate_path))
+        published.setdefault("text_clean_md", str(candidate_path))
+    published["publication_writer_result_v1"] = str(path)
+    return published
 
 
 def _publish_checkpoint_fallback(
@@ -28085,7 +28338,15 @@ def _publish_checkpoint_fallback(
     rendered_text = str(payload.get("rendered_text") or final_text)
     candidate_path = method_output(root, "publication_candidate_method")
     verified_path = method_output(root, "repository_verified_method")
-    _atomic_write_text(candidate_path, final_text)
+    diagnostic_path = method_output(root, "publication_candidate_diagnostic")
+    if final_text.strip():
+        _atomic_write_text(diagnostic_path, final_text)
+    complete_incumbent = payload.get("complete") is True
+    if complete_incumbent:
+        _atomic_write_text(candidate_path, final_text)
+    elif candidate_path.is_file() and not complete_incumbent:
+        # Diagnostic checkpoints must never overwrite or mint a clean Candidate.
+        pass
     verified_markdown = ""
     view = payload.get("verified_view")
     if isinstance(view, dict):
@@ -28101,11 +28362,22 @@ def _publish_checkpoint_fallback(
             verified_markdown = str(view.get("markdown") or "")
     _atomic_write_text(verified_path, verified_markdown)
     paths: dict[str, str] = {
-        "publication_candidate_method": str(candidate_path),
+        "publication_candidate_checkpoint_v1": str(
+            method_output(root, "publication_candidate_checkpoint_v1")
+        ),
+        "publication_section_checkpoint_v1": str(
+            method_output(root, "publication_section_checkpoint_v1")
+        ),
         "repository_verified_method": str(verified_path),
-        "text_md": str(candidate_path),
-        "text_clean_md": str(candidate_path),
     }
+    if diagnostic_path.is_file():
+        paths["publication_candidate_diagnostic"] = str(diagnostic_path)
+    if complete_incumbent and candidate_path.is_file():
+        paths.update({
+            "publication_candidate_method": str(candidate_path),
+            "text_md": str(candidate_path),
+            "text_clean_md": str(candidate_path),
+        })
     result = PublicationWriterRunResultV1(
         status="incomplete",
         plan_digest=plan_digest,
@@ -28330,6 +28602,8 @@ def _write_candidate_checkpoint(
     reason: str = "",
     last_committed_attempt_id: str = "",
     warnings: tuple[str, ...] = (),
+    complete: bool = False,
+    lane: str = "diagnostic",
 ) -> Path:
     """Atomically persist the best durable Candidate draft (Q0).
 
@@ -28364,9 +28638,11 @@ def _write_candidate_checkpoint(
     )
     rendered_text = str(rendered_text or final_text)
     payload: dict[str, Any] = {
-        "schema_version": "1.1",
+        "schema_version": "1.2",
         "stage": stage,
         "reason": reason,
+        "complete": bool(complete),
+        "lane": "clean" if complete else (lane or "diagnostic"),
         "plan_digest": plan_digest,
         "claim_digest": claim_digest,
         "proposition_set_digest": proposition_set_digest,

@@ -50,10 +50,14 @@ _RESEARCH_FAILURES = frozenset({
     "missing_relation",
     "semantic_verifier_exhausted",
     "unsupported_rationale",
+    "missing_evidence_atom",
+    "missing_repository_proof",
 })
 _FORMALIZER_FAILURES = frozenset({
     "formula_unsupported",
     "formula_not_rendered",
+    "missing_formula_target",
+    "canonical_formula_unbound",
 })
 _WRITER_FAILURES = frozenset({
     "authority_framing",
@@ -63,6 +67,10 @@ _WRITER_FAILURES = frozenset({
     "missing_qualifier",
     "comparison_polarity_flipped",
     "allowed_wording_boundary_exceeded",
+    "binder_transaction_failure",
+    "missing_story_target",
+    "missing_author_surface",
+    "paragraph_contract_incomplete",
 })
 _EDITOR_FAILURE_PREFIXES = (
     "cross_section_",
@@ -108,6 +116,8 @@ def _owner_for_failure(failure_type: str, scope: str) -> tuple[IssueOwnerV1, str
         return "research_continuation", "the issue requires repository-side evidence work"
     if scope in {"claim_decomposition"}:
         return "writer", "content organization belongs to the Writer owner"
+    if not failure:
+        return "review", "unknown failure is fail-closed and is not assigned to Rewrite"
     return "review", "no safe automatic owner is defined for this issue"
 
 

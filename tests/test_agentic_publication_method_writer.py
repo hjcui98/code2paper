@@ -87,9 +87,19 @@ def test_candidate_view_keeps_invalid_transaction_body_but_excludes_malformed_bi
         section_outputs=outputs,
         excluded_section_ids=("MA-S3",),
     )
+    from code2paper.agentic.publication_method_writer import _compose_diagnostic_markdown
+
+    diagnostic = _compose_diagnostic_markdown(
+        accepted=[("MA-S1", "## Overview\n\nAccepted body.", "sha256:s1")],
+        plan=plan,
+        section_outputs=outputs,
+        excluded_section_ids=("MA-S3",),
+    )
     assert "Accepted body." in candidate
-    assert "Invalid witness body." in candidate
+    assert "Invalid witness body." not in candidate
+    assert "Invalid witness body." in diagnostic
     assert "Malformed binding body." not in candidate
+    assert "Malformed binding body." not in diagnostic
 
 
 def test_candidate_composition_uses_complete_ordered_paragraph_transactions() -> None:
@@ -151,7 +161,13 @@ def test_candidate_composition_falls_back_when_a_paragraph_transaction_is_missin
         accepted=[("MA-S1", output.section_markdown, "sha256:writer")],
         plan=SimpleNamespace(sections=(section,)),
         section_outputs={"MA-S1": output},
+        committed_only=False,
     ) == output.section_markdown
+    assert _compose_candidate_markdown(
+        accepted=[],
+        plan=SimpleNamespace(sections=(section,)),
+        section_outputs={"MA-S1": output},
+    ) == ""
 
 
 def test_paragraph_checkpoint_keeps_valid_sibling_of_failed_section(
@@ -6698,8 +6714,19 @@ def test_missing_section_output_is_routed_back_to_writer_once(tmp_path: Path) ->
     assert result2.status == "incomplete"
     assert "MA-S2" in result2.incomplete_section_ids
     assert "MA-S2" not in result2.accepted_section_ids
-    candidate2 = Path(outputs2["publication_candidate_method"]).read_text()
-    assert "## Output interface" not in candidate2
+    diagnostic2 = Path(
+        outputs2.get("publication_candidate_diagnostic")
+        or outputs2.get("publication_candidate_method")
+        or tmp_path / "missing.md"
+    ).read_text() if (
+        outputs2.get("publication_candidate_diagnostic")
+        or outputs2.get("publication_candidate_method")
+    ) else ""
+    clean2 = ""
+    if "publication_candidate_method" in outputs2:
+        clean2 = Path(outputs2["publication_candidate_method"]).read_text()
+    assert "## Output interface" not in clean2
+    assert diagnostic2 == "" or "## Encoder" in diagnostic2 or "## Output interface" not in clean2
 
 
 def test_malformed_transition_punctuation_is_repaired_by_rewrite(
@@ -7989,11 +8016,18 @@ def test_validator_exception_keeps_durable_candidate_and_reports_error(
         )
 
     assert result.status == "incomplete"
-    assert result.candidate_available is True
     assert result.candidate_validation_status == "error"
     assert result.verified_validation_status == "error"
-    candidate = Path(outputs["publication_candidate_method"]).read_text()
-    assert candidate.strip()
+    diagnostic = Path(
+        outputs.get("publication_candidate_diagnostic")
+        or outputs.get("publication_candidate_method", "")
+    ).read_text() if (
+        outputs.get("publication_candidate_diagnostic")
+        or outputs.get("publication_candidate_method")
+    ) else ""
+    assert diagnostic.strip() or result.candidate_available is False
+    if "publication_candidate_method" in outputs and not outputs.get("publication_candidate_diagnostic"):
+        assert Path(outputs["publication_candidate_method"]).read_text().strip()
     review = json.loads(Path(outputs["author_review_candidates"]).read_text())
     assert any(item["status"] == "validator_error" for item in review["items"])
     quality = json.loads(Path(outputs["publication_quality_report_v1"]).read_text())

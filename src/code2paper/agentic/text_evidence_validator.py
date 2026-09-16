@@ -99,6 +99,8 @@ def validate_text_evidence(
     semantic_verifier: SemanticVerifier | None = None,
     max_semantic_verifier_calls: int = 0,
     require_semantic_verifier: bool | None = None,
+    propositions: Any | None = None,
+    claim_receipts: list[Any] | None = None,
     proposition_claim_ids: Mapping[str, list[str] | tuple[str, ...]] | None = None,
     candidate_only_proposition_ids: set[str] | None = None,
     evidence_entailed_proposition_ids: set[str] | None = None,
@@ -398,7 +400,33 @@ def validate_text_evidence(
         )
     unsupported = sum(item.status == "unsupported" for item in verdicts)
     unverified = sum(item.status == "unverified" for item in verdicts)
-    status = "passed" if final_claims.deterministic_completeness_passed and not unsupported and not unverified else "failed"
+    receipts = _compile_claim_verification_receipts(
+        final_claims=final_claims,
+        propositions=propositions,
+        semantic_aligner=semantic_verifier,
+        verifier_calls=verifier_calls,
+    )
+    if claim_receipts is not None:
+        claim_receipts.extend(receipts)
+    if receipts:
+        statuses = {item.verification_status for item in receipts}
+        if statuses <= {"exact_verified"} and receipts:
+            mode = "exact_verified"
+        elif "semantic_verified" in statuses:
+            mode = "semantic"
+        else:
+            mode = "unresolved"
+        if any(item.verification_status in {"unresolved", "rejected"} for item in receipts):
+            unverified = max(unverified, sum(
+                item.verification_status in {"unresolved", "rejected"} for item in receipts
+            ))
+            status_failed = True
+        else:
+            status_failed = False
+    else:
+        mode = "semantic" if verifier_calls > 0 else "unresolved"
+        status_failed = False
+    status = "passed" if final_claims.deterministic_completeness_passed and not unsupported and not unverified and not status_failed else "failed"
     actions = _dedupe(item.repair_action for item in verdicts if item.repair_action)
     if not final_claims.deterministic_completeness_passed:
         actions.append("repair_final_claim_extraction_completeness")
@@ -416,10 +444,80 @@ def validate_text_evidence(
         unsupported_claims=unsupported,
         unverified_claims=unverified,
         semantic_verifier_calls=verifier_calls,
-        verification_mode="semantic" if verifier_calls > 0 else "lexical_only",
+        verification_mode=mode,  # type: ignore[arg-type]
         verdicts=verdicts,
         recommended_actions=actions,
     )
+
+
+def _compile_claim_verification_receipts(
+    *,
+    final_claims: FinalTextClaims,
+    propositions: Any | None,
+    semantic_aligner: SemanticVerifier | None,
+    verifier_calls: int,
+) -> list[Any]:
+    from code2paper.agentic.intent_spine_models import ClaimVerificationReceiptV2
+    from code2paper.agentic.proposition_semantic_aligner import (
+        align_sentence_to_section_propositions,
+        deterministic_exact_match,
+        retrieve_section_propositions,
+    )
+
+    items = tuple(getattr(propositions, "propositions", ()) or ())
+    if not items:
+        return []
+    receipts: list[Any] = []
+    for claim in final_claims.atomic_claims:
+        text = str(getattr(claim, "text", "") or "")
+        claim_id = str(getattr(claim, "atomic_claim_id", "") or getattr(claim, "claim_id", "") or "")
+        paragraph_id = str(getattr(claim, "section_id", "") or "")
+        if not text or not claim_id:
+            continue
+        candidates, exact = retrieve_section_propositions(text, items)
+        retrieved_ids = tuple(item.proposition_id for item in candidates)
+        if exact and candidates and deterministic_exact_match(text, candidates[0]):
+            receipts.append(ClaimVerificationReceiptV2(
+                claim_id=claim_id,
+                paragraph_id=paragraph_id,
+                retrieved_proposition_ids=retrieved_ids[:1],
+                verification_status="exact_verified",
+                predicate_role_polarity_check=True,
+                quantifier_condition_boundary_check=True,
+                semantic_call_receipt_id="",
+            ))
+            continue
+        alignment = align_sentence_to_section_propositions(
+            text,
+            items,
+            semantic_aligner=semantic_aligner if semantic_aligner is not None else None,
+        )
+        if alignment.status == "matched":
+            status = "semantic_verified" if semantic_aligner is not None else "unresolved"
+            receipts.append(ClaimVerificationReceiptV2(
+                claim_id=claim_id,
+                paragraph_id=paragraph_id,
+                retrieved_proposition_ids=tuple(alignment.matched_proposition_ids),
+                verification_status=status,  # type: ignore[arg-type]
+                predicate_role_polarity_check=False,
+                quantifier_condition_boundary_check=False,
+                semantic_call_receipt_id="semantic" if semantic_aligner is not None else "",
+            ))
+        elif alignment.status == "no_match":
+            receipts.append(ClaimVerificationReceiptV2(
+                claim_id=claim_id,
+                paragraph_id=paragraph_id,
+                retrieved_proposition_ids=retrieved_ids,
+                verification_status="rejected",
+            ))
+        else:
+            receipts.append(ClaimVerificationReceiptV2(
+                claim_id=claim_id,
+                paragraph_id=paragraph_id,
+                retrieved_proposition_ids=retrieved_ids,
+                verification_status="unresolved",
+            ))
+    return receipts
 
 
 def _drop_heading_only_verified_sections(text: str) -> str:

@@ -190,7 +190,9 @@ class TextEvidenceValidationReport(TrustModel):
     unsupported_claims: int = 0
     unverified_claims: int = 0
     semantic_verifier_calls: int = 0
-    verification_mode: Literal["lexical_only", "semantic"] = "lexical_only"
+    verification_mode: Literal[
+        "lexical_only", "semantic", "exact_verified", "unresolved"
+    ] = "lexical_only"
     verdicts: list[TextClaimEvidenceVerdict] = Field(default_factory=list)
     recommended_actions: list[str] = Field(default_factory=list)
 

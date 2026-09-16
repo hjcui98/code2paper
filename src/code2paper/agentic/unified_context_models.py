@@ -1697,6 +1697,7 @@ class WriterAggregateReceiptV2(BaseModel):
     plan_digest: str
     required_section_ids: tuple[str, ...] = ()
     completed_section_ids: tuple[str, ...] = ()
+    all_required_sections_complete: bool = False
     section_receipt_digests: tuple[str, ...] = ()
     content_digest: str = ""
 
@@ -1708,11 +1709,18 @@ class WriterAggregateReceiptV2(BaseModel):
         object.__setattr__(
             self, "completed_section_ids", _sorted_unique(self.completed_section_ids)
         )
-        if self.completed_section_ids and self.completed_section_ids != self.required_section_ids:
+        extra = set(self.completed_section_ids) - set(self.required_section_ids)
+        if extra:
             raise ValueError(
-                "writer aggregate receipt completed sections must exactly cover the "
-                "required sections"
+                "writer aggregate receipt completed sections must be a subset of "
+                "the required sections"
             )
+        object.__setattr__(
+            self,
+            "all_required_sections_complete",
+            bool(self.required_section_ids)
+            and set(self.completed_section_ids) == set(self.required_section_ids),
+        )
         payload = self.model_dump(mode="json", exclude={"content_digest"})
         expected = sha256_digest(canonical_json_bytes(payload))
         if self.content_digest and self.content_digest != expected:

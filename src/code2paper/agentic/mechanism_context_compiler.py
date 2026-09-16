@@ -899,6 +899,7 @@ def _collect_seed_data(
         }
 
     seeds: dict[str, dict[str, Any]] = defaultdict(empty)
+    ownerless_seed_ids: set[str] = set()
     story_values = tuple(story_spine)
     brief_values = _items(argument_briefs, "briefs")
     facet_values = tuple(facets)
@@ -987,6 +988,8 @@ def _collect_seed_data(
             # A narrative node without an executable owner is retained by the
             # upstream intent artifacts, but cannot create a mechanism or
             # acquire repository evidence through this compiler.
+            if story_id:
+                ownerless_seed_ids.add(story_id)
             continue
         row = add_mid(mechanism_id)
         if explicit_mid:
@@ -1402,7 +1405,6 @@ def _collect_seed_data(
         else:
             row["seed_kind"] = "unresolved"
 
-    ownerless_seed_ids: set[str] = set()
     if not seeds and (fact_by_id or claim_by_id or equation_by_id):
         # Owner-first rule: facts without any owner anchor never become a
         # project-wide pseudo mechanism.  They are reported as ownerless
@@ -4248,6 +4250,10 @@ def annotate_mechanism_paper_details(
                 "seed_count_before_merge": seed_count_before_merge,
                 "mechanism_count_after_merge": len(final_contexts),
                 "ownerless_seed_count": len(ownerless_seed_ids),
+                "unbound_story_node_ids": [
+                    seed_id for seed_id in sorted(ownerless_seed_ids)
+                    if str(seed_id).startswith("story:")
+                ],
             },
             *({
                 "mechanism_id": context.mechanism_id,

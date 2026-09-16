@@ -770,8 +770,16 @@ def compile_mechanism_formula_obligations(
     } if claims is not None else None
     active_statuses = {"active_default", "active_selected", "conditional"}
     eligible_details: list[Any] = []
+    from code2paper.agentic.formula_identity import classify_formula_worthiness
+
     for detail in formalizable_details:
         if getattr(detail, "evidence_authority", "") != "repository_verified":
+            continue
+        worthiness, _reason = classify_formula_worthiness(
+            detail,
+            author_expectation="required" if author_formula_expectations else "preferred",
+        )
+        if worthiness in {"prose_or_algorithm", "rejected"}:
             continue
         detail_equation_ids = {
             str(value).strip()
@@ -1346,8 +1354,11 @@ def validate_mechanism_formula_package(
         if set(obligation.source_equation_ids) - set(package.bound_equation_ids):
             failures.append("formula_obligation_equation_coverage_missing")
 
-    # 5. Latex cleanliness and code plumbing guards
+    # 5. Latex cleanliness and shared content gate (Section + Mechanism).
+    from code2paper.agentic.formula_content_guard import formula_code_trace_failures
+
     latex = package.latex or ""
+    failures.extend(formula_code_trace_failures(package))
     forbidden_code_plumbing = (
         r"\btorch\.", r"\bnn\.Module\b", r"\bself\.", r"\.forward\(",
         r"\bimport\b", r"\bdef\s+", r"\breturn\s+", r"\.to\(",
@@ -5472,16 +5483,9 @@ _FORMULA_CODE_TRACE_PATTERNS: tuple[tuple[str, re.Pattern[str]], ...] = (
 def _formula_code_trace_failures(package: SectionFormulaPackageV1) -> list[str]:
     """Detect implementation syntax that should not be a paper formula."""
 
-    surface = " ".join((
-        package.latex,
-        package.markdown_block,
-        package.prose_explanation,
-    ))
-    return [
-        f"code_shaped_formula:{name}"
-        for name, pattern in _FORMULA_CODE_TRACE_PATTERNS
-        if pattern.search(surface)
-    ]
+    from code2paper.agentic.formula_content_guard import formula_code_trace_failures
+
+    return formula_code_trace_failures(package)
 
 
 def _operand_value_mutation(*, statement: str, equation: Any) -> str:

@@ -57,10 +57,15 @@ def _closed_proposal_schema(kind: str) -> dict[str, Any]:
         return {
             "type": "object",
             "properties": {
+                "section_id": {"type": "string"},
+                "mechanism_ids": {
+                    "type": "array",
+                    "items": {"type": "string"},
+                },
                 "mechanism_id": {"type": "string"},
                 "sections": {"type": "array", "items": entries},
             },
-            "required": ["mechanism_id", "sections"],
+            "required": ["sections"],
             "additionalProperties": False,
         }
     entries = {

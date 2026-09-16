@@ -1082,6 +1082,12 @@ def _facet_from_row(
             _canonical_facet_field_name(key): value
             for key, value in _fallback_semantic_fields(quote, facet_kind).items()
         }
+    from code2paper.agentic.intent_evidence_atoms import semantic_fields_exceed_quote
+
+    fields, field_range_failures = semantic_fields_exceed_quote(fields, quote)
+    failures.extend(field_range_failures)
+    if field_range_failures:
+        failures.append("semantic_fields_require_bounded_owner_repair")
     search_terms = _clean_strings(
         row.get("search_terms")
         or row.get("candidate_symbols_or_terms")

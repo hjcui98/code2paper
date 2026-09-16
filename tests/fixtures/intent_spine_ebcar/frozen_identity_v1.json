@@ -1,0 +1,368 @@
+{
+  "schema_version": "1.0",
+  "historical_live_source_commit": "287506e3e2df30e3c840b8f6398b5010c25111e1",
+  "probe_code_commit": "92236c25056d1ca399702d08ea3bfcb2cd3cc923",
+  "note": "Sanitized identity freeze from live10. No repository source paths. Do not splice conclusions across the two commits.",
+  "author_sections": [
+    {
+      "section_id": "MA-S1",
+      "heading": "Motivation: efficiency and cross‑passage inference challenges in existing rerankers.",
+      "argument_unit_ids": [
+        "MA-S1:unit-1",
+        "MA-S1:unit-2"
+      ]
+    },
+    {
+      "section_id": "MA-S2",
+      "heading": "Embedding‑based reranking formulation and overall framework.",
+      "argument_unit_ids": [
+        "MA-S2:unit"
+      ]
+    },
+    {
+      "section_id": "MA-S3",
+      "heading": "Architecture details: enriching embeddings with document ID and position",
+      "argument_unit_ids": [
+        "MA-S3:unit-1",
+        "MA-S3:unit-2",
+        "MA-S3:unit-3",
+        "MA-S3:unit-4",
+        "MA-S3:unit-5",
+        "MA-S3:unit-6",
+        "MA-S3:unit-7",
+        "MA-S3:unit-8",
+        "MA-S3:unit-9",
+        "MA-S3:unit-10",
+        "MA-S3:unit-11",
+        "MA-S3:unit-12",
+        "MA-S3:unit-13",
+        "MA-S3:unit-14",
+        "MA-S3:unit-15"
+      ]
+    },
+    {
+      "section_id": "MA-S4",
+      "heading": "Training objective: InfoNCE loss with fixed query anchor.",
+      "argument_unit_ids": [
+        "MA-S4:unit-1",
+        "MA-S4:unit-2",
+        "MA-S4:unit-3",
+        "MA-S4:unit-4",
+        "MA-S4:unit-5",
+        "MA-S4:unit-6"
+      ]
+    },
+    {
+      "section_id": "MA-S5",
+      "heading": "Inference procedure.",
+      "argument_unit_ids": [
+        "MA-S5:unit-1",
+        "MA-S5:unit-2",
+        "MA-S5:unit-3",
+        "MA-S5:unit-4"
+      ]
+    }
+  ],
+  "argument_unit_count": 28,
+  "must_cover_story_nodes": [
+    {
+      "story_node_id": "story:O-METHOD-MAINLINE-01-c8146479",
+      "title": "Start with pre‑computed dense passage embeddings from a standard retriever (e.g., Contriever) and the query embedding",
+      "intended_role": "algorithm_step"
+    },
+    {
+      "story_node_id": "story:O-STAGE-01-039a963a",
+      "title": "Retrieval and embedding preparation: Use a dense retriever (Contriever) to fetch top‑k candidate passages and their",
+      "intended_role": "algorithm_step"
+    },
+    {
+      "story_node_id": "story:O-STAGE-02-42e8d68d",
+      "title": "Structural augmentation: For each retrieved passage, add a dynamic document ID embedding and a sinusoidal",
+      "intended_role": "algorithm_step"
+    },
+    {
+      "story_node_id": "story:O-STAGE-03-2c5bd758",
+      "title": "Hybrid‑attention encoding: Feed the query and augmented passage embeddings into a Transformer encoder that applies",
+      "intended_role": "algorithm_step"
+    },
+    {
+      "story_node_id": "story:O-STAGE-04-c50e0bef",
+      "title": "Contrastive training: Using a contrastive InfoNCE loss, pull the updated positive passage embedding toward the fixed",
+      "intended_role": "algorithm_step"
+    },
+    {
+      "story_node_id": "story:O-STAGE-05-5b3d398a",
+      "title": "Inference scoring and ranking: Compute dot‑product similarities between the unchanged query embedding and the",
+      "intended_role": "algorithm_step"
+    }
+  ],
+  "organization_story_nodes": [
+    {
+      "story_node_id": "story:O-ORGANIZATION-01-6b45ad90",
+      "title": "Motivation: efficiency and cross‑passage inference challenges in existing rerankers."
+    },
+    {
+      "story_node_id": "story:O-ORGANIZATION-02-54911271",
+      "title": "Embedding‑based reranking formulation and overall framework."
+    },
+    {
+      "story_node_id": "story:O-ORGANIZATION-03-2c92c853",
+      "title": "Architecture details: enriching embeddings with document ID and position, the Transformer encoder with hybrid attention"
+    },
+    {
+      "story_node_id": "story:O-ORGANIZATION-04-1dd970df",
+      "title": "Training objective: InfoNCE loss with fixed query anchor."
+    },
+    {
+      "story_node_id": "story:O-ORGANIZATION-05-baf0d276",
+      "title": "Inference procedure."
+    }
+  ],
+  "failed_narrative_headings": [
+    "Sym:9773C5Add7Af1F92",
+    "Sym:F6Cf5Bdfe2Ae16F0"
+  ],
+  "legacy_author_formula_ids": [
+    "formula:facet:facet-6bc5ee440fdc8329",
+    "formula:facet:facet-71df0ec224b91883",
+    "formula:facet:facet-833638c7783e3952",
+    "formula:facet:facet-d57e6b007d62768e",
+    "formula:section:MA-S3:derivation",
+    "formula:section:MA-S4:derivation",
+    "formula:section:MA-S5:derivation"
+  ],
+  "mechanism_formula_obligation_ids": [
+    "ob:formula:mech_sym:9773c5add7af1f92:detail:detail:mech_sym:9773c5add7af1f92:1",
+    "ob:formula:mech_sym:9773c5add7af1f92:detail:detail:mech_sym:9773c5add7af1f92:4",
+    "ob:formula:mech_sym:9773c5add7af1f92:detail:detail:mech_sym:9773c5add7af1f92:5",
+    "ob:formula:mech_sym:9773c5add7af1f92:detail:detail:mech_sym:9773c5add7af1f92:7",
+    "ob:formula:mech_sym:9773c5add7af1f92:detail:detail:mech_sym:9773c5add7af1f92:9",
+    "ob:formula:mech_sym:9773c5add7af1f92:detail:detail:mech_sym:9773c5add7af1f92:10",
+    "ob:formula:mech_sym:9773c5add7af1f92:detail:detail:mech_sym:9773c5add7af1f92:12",
+    "ob:formula:mech_sym:9773c5add7af1f92:equation:equation:fact-O-METHOD-MAINLINE-01-c8146479-node:5ff7f276f04b71a8",
+    "ob:formula:mech_sym:9773c5add7af1f92:equation:equation:fact-O-STAGE-01-039a963a-node:856e72eeddb87554",
+    "ob:formula:mech_sym:9773c5add7af1f92:detail:detail:mech_sym:9773c5add7af1f92:14",
+    "ob:formula:mech_sym:9773c5add7af1f92:detail:detail:mech_sym:9773c5add7af1f92:15",
+    "ob:formula:mech_sym:9773c5add7af1f92:detail:detail:mech_sym:9773c5add7af1f92:16",
+    "ob:formula:mech_sym:9773c5add7af1f92:detail:detail:mech_sym:9773c5add7af1f92:17",
+    "ob:formula:mech_sym:9773c5add7af1f92:detail:detail:mech_sym:9773c5add7af1f92:22",
+    "ob:formula:mech_sym:9773c5add7af1f92:equation:equation:fact-O-METHOD-MAINLINE-01-c8146479-node:a6f6c00ca097eeb1",
+    "ob:formula:mech_sym:9773c5add7af1f92:detail:detail:mech_sym:9773c5add7af1f92:26",
+    "ob:formula:mech_sym:9773c5add7af1f92:detail:detail:mech_sym:9773c5add7af1f92:27",
+    "ob:formula:mech_sym:9773c5add7af1f92:detail:detail:mech_sym:9773c5add7af1f92:28",
+    "ob:formula:mech_sym:9773c5add7af1f92:detail:detail:mech_sym:9773c5add7af1f92:29",
+    "ob:formula:mech_sym:9773c5add7af1f92:detail:detail:mech_sym:9773c5add7af1f92:31",
+    "ob:formula:mech_sym:9773c5add7af1f92:detail:detail:mech_sym:9773c5add7af1f92:32",
+    "ob:formula:mech_sym:9773c5add7af1f92:detail:detail:mech_sym:9773c5add7af1f92:33",
+    "ob:formula:mech_sym:9773c5add7af1f92:detail:detail:mech_sym:9773c5add7af1f92:34",
+    "ob:formula:mech_sym:9773c5add7af1f92:detail:detail:mech_sym:9773c5add7af1f92:35",
+    "ob:formula:mech_sym:9773c5add7af1f92:detail:detail:mech_sym:9773c5add7af1f92:38",
+    "ob:formula:mech_sym:9773c5add7af1f92:detail:detail:mech_sym:9773c5add7af1f92:40",
+    "ob:formula:mech_sym:9773c5add7af1f92:detail:detail:mech_sym:9773c5add7af1f92:41",
+    "ob:formula:mech_sym:9773c5add7af1f92:detail:detail:mech_sym:9773c5add7af1f92:42",
+    "ob:formula:mech_sym:9773c5add7af1f92:detail:detail:mech_sym:9773c5add7af1f92:43",
+    "ob:formula:mech_sym:9773c5add7af1f92:detail:detail:mech_sym:9773c5add7af1f92:44",
+    "ob:formula:mech_sym:9773c5add7af1f92:detail:detail:mech_sym:9773c5add7af1f92:46",
+    "ob:formula:mech_sym:9773c5add7af1f92:detail:detail:mech_sym:9773c5add7af1f92:49",
+    "ob:formula:mech_sym:9773c5add7af1f92:detail:detail:mech_sym:9773c5add7af1f92:54",
+    "ob:formula:mech_sym:9773c5add7af1f92:detail:detail:mech_sym:9773c5add7af1f92:55",
+    "ob:formula:mech_sym:9773c5add7af1f92:detail:detail:mech_sym:9773c5add7af1f92:56",
+    "ob:formula:mech_sym:9773c5add7af1f92:detail:detail:mech_sym:9773c5add7af1f92:57",
+    "ob:formula:mech_sym:9773c5add7af1f92:detail:detail:mech_sym:9773c5add7af1f92:58",
+    "ob:formula:mech_sym:9773c5add7af1f92:detail:detail:mech_sym:9773c5add7af1f92:59",
+    "ob:formula:mech_sym:9773c5add7af1f92:detail:detail:mech_sym:9773c5add7af1f92:64",
+    "ob:formula:mech_sym:9773c5add7af1f92:detail:detail:mech_sym:9773c5add7af1f92:65",
+    "ob:formula:mech_sym:9773c5add7af1f92:detail:detail:mech_sym:9773c5add7af1f92:68",
+    "ob:formula:mech_sym:f6cf5bdfe2ae16f0:detail:detail:mech_sym:f6cf5bdfe2ae16f0:1",
+    "ob:formula:mech_sym:f6cf5bdfe2ae16f0:detail:detail:mech_sym:f6cf5bdfe2ae16f0:4",
+    "ob:formula:mech_sym:f6cf5bdfe2ae16f0:detail:detail:mech_sym:f6cf5bdfe2ae16f0:5",
+    "ob:formula:mech_sym:f6cf5bdfe2ae16f0:detail:detail:mech_sym:f6cf5bdfe2ae16f0:7",
+    "ob:formula:mech_sym:f6cf5bdfe2ae16f0:detail:detail:mech_sym:f6cf5bdfe2ae16f0:9",
+    "ob:formula:mech_sym:f6cf5bdfe2ae16f0:detail:detail:mech_sym:f6cf5bdfe2ae16f0:10",
+    "ob:formula:mech_sym:f6cf5bdfe2ae16f0:detail:detail:mech_sym:f6cf5bdfe2ae16f0:12",
+    "ob:formula:mech_sym:f6cf5bdfe2ae16f0:equation:equation:fact-O-METHOD-MAINLINE-01-c8146479-node:d7c63b2682fd8c2b",
+    "ob:formula:mech_sym:f6cf5bdfe2ae16f0:equation:equation:fact-O-STAGE-02-42e8d68d-node:4b560ac114ae99ec",
+    "ob:formula:mech_sym:f6cf5bdfe2ae16f0:detail:detail:mech_sym:f6cf5bdfe2ae16f0:14",
+    "ob:formula:mech_sym:f6cf5bdfe2ae16f0:detail:detail:mech_sym:f6cf5bdfe2ae16f0:15",
+    "ob:formula:mech_sym:f6cf5bdfe2ae16f0:detail:detail:mech_sym:f6cf5bdfe2ae16f0:17",
+    "ob:formula:mech_sym:f6cf5bdfe2ae16f0:detail:detail:mech_sym:f6cf5bdfe2ae16f0:18",
+    "ob:formula:mech_sym:f6cf5bdfe2ae16f0:detail:detail:mech_sym:f6cf5bdfe2ae16f0:21",
+    "ob:formula:mech_sym:f6cf5bdfe2ae16f0:detail:detail:mech_sym:f6cf5bdfe2ae16f0:22",
+    "ob:formula:mech_sym:f6cf5bdfe2ae16f0:detail:detail:mech_sym:f6cf5bdfe2ae16f0:27",
+    "ob:formula:mech_sym:f6cf5bdfe2ae16f0:detail:detail:mech_sym:f6cf5bdfe2ae16f0:30",
+    "ob:formula:mech_sym:f6cf5bdfe2ae16f0:detail:detail:mech_sym:f6cf5bdfe2ae16f0:31",
+    "ob:formula:mech_sym:f6cf5bdfe2ae16f0:detail:detail:mech_sym:f6cf5bdfe2ae16f0:32",
+    "ob:formula:mech_sym:f6cf5bdfe2ae16f0:detail:detail:mech_sym:f6cf5bdfe2ae16f0:34",
+    "ob:formula:mech_sym:f6cf5bdfe2ae16f0:detail:detail:mech_sym:f6cf5bdfe2ae16f0:35",
+    "ob:formula:mech_sym:f6cf5bdfe2ae16f0:detail:detail:mech_sym:f6cf5bdfe2ae16f0:38",
+    "ob:formula:mech_sym:f6cf5bdfe2ae16f0:detail:detail:mech_sym:f6cf5bdfe2ae16f0:39",
+    "ob:formula:mech_sym:f6cf5bdfe2ae16f0:detail:detail:mech_sym:f6cf5bdfe2ae16f0:40",
+    "ob:formula:mech_sym:f6cf5bdfe2ae16f0:detail:detail:mech_sym:f6cf5bdfe2ae16f0:43",
+    "ob:formula:mech_sym:f6cf5bdfe2ae16f0:detail:detail:mech_sym:f6cf5bdfe2ae16f0:44",
+    "ob:formula:mech_sym:f6cf5bdfe2ae16f0:detail:detail:mech_sym:f6cf5bdfe2ae16f0:45",
+    "ob:formula:mech_sym:f6cf5bdfe2ae16f0:detail:detail:mech_sym:f6cf5bdfe2ae16f0:46",
+    "ob:formula:mech_sym:f6cf5bdfe2ae16f0:detail:detail:mech_sym:f6cf5bdfe2ae16f0:49",
+    "ob:formula:mech_sym:f6cf5bdfe2ae16f0:detail:detail:mech_sym:f6cf5bdfe2ae16f0:51",
+    "ob:formula:mech_sym:f6cf5bdfe2ae16f0:detail:detail:mech_sym:f6cf5bdfe2ae16f0:52",
+    "ob:formula:mech_sym:f6cf5bdfe2ae16f0:detail:detail:mech_sym:f6cf5bdfe2ae16f0:53",
+    "ob:formula:mech_sym:f6cf5bdfe2ae16f0:detail:detail:mech_sym:f6cf5bdfe2ae16f0:54",
+    "ob:formula:mech_sym:f6cf5bdfe2ae16f0:detail:detail:mech_sym:f6cf5bdfe2ae16f0:57",
+    "ob:formula:mech_sym:f6cf5bdfe2ae16f0:detail:detail:mech_sym:f6cf5bdfe2ae16f0:58",
+    "ob:formula:mech_sym:f6cf5bdfe2ae16f0:detail:detail:mech_sym:f6cf5bdfe2ae16f0:59",
+    "ob:formula:mech_sym:f6cf5bdfe2ae16f0:detail:detail:mech_sym:f6cf5bdfe2ae16f0:60",
+    "ob:formula:mech_sym:f6cf5bdfe2ae16f0:detail:detail:mech_sym:f6cf5bdfe2ae16f0:63",
+    "ob:formula:mech_sym:f6cf5bdfe2ae16f0:detail:detail:mech_sym:f6cf5bdfe2ae16f0:64",
+    "ob:formula:mech_sym:f6cf5bdfe2ae16f0:detail:detail:mech_sym:f6cf5bdfe2ae16f0:65",
+    "ob:formula:mech_sym:f6cf5bdfe2ae16f0:equation:equation:fact-O-METHOD-MAINLINE-01-c8146479-node:7fabddc9286307b4",
+    "ob:formula:mech_sym:f6cf5bdfe2ae16f0:detail:detail:mech_sym:f6cf5bdfe2ae16f0:76",
+    "ob:formula:mech_sym:f6cf5bdfe2ae16f0:detail:detail:mech_sym:f6cf5bdfe2ae16f0:77"
+  ],
+  "accepted_package_ids": [
+    "pkg:formula:llm:mech_sym:9773c5add7af1f92:ob:formula:mech_sym:9773c5add7af1f92:detail:detail:mech_sym:9773c5add7af1f92:16",
+    "pkg:formula:llm:mech_sym:9773c5add7af1f92:ob:formula:mech_sym:9773c5add7af1f92:detail:detail:mech_sym:9773c5add7af1f92:32",
+    "pkg:formula:llm:mech_sym:9773c5add7af1f92:ob:formula:mech_sym:9773c5add7af1f92:detail:detail:mech_sym:9773c5add7af1f92:33",
+    "pkg:formula:llm:mech_sym:9773c5add7af1f92:ob:formula:mech_sym:9773c5add7af1f92:detail:detail:mech_sym:9773c5add7af1f92:34",
+    "pkg:formula:llm:mech_sym:9773c5add7af1f92:ob:formula:mech_sym:9773c5add7af1f92:detail:detail:mech_sym:9773c5add7af1f92:38",
+    "pkg:formula:llm:mech_sym:9773c5add7af1f92:ob:formula:mech_sym:9773c5add7af1f92:detail:detail:mech_sym:9773c5add7af1f92:22",
+    "pkg:formula:llm:mech_sym:9773c5add7af1f92:ob:formula:mech_sym:9773c5add7af1f92:detail:detail:mech_sym:9773c5add7af1f92:27",
+    "pkg:formula:llm:mech_sym:9773c5add7af1f92:ob:formula:mech_sym:9773c5add7af1f92:detail:detail:mech_sym:9773c5add7af1f92:28",
+    "pkg:formula:llm:mech_sym:9773c5add7af1f92:ob:formula:mech_sym:9773c5add7af1f92:detail:detail:mech_sym:9773c5add7af1f92:55",
+    "pkg:formula:llm:mech_sym:9773c5add7af1f92:ob:formula:mech_sym:9773c5add7af1f92:detail:detail:mech_sym:9773c5add7af1f92:56",
+    "pkg:formula:llm:mech_sym:9773c5add7af1f92:ob:formula:mech_sym:9773c5add7af1f92:detail:detail:mech_sym:9773c5add7af1f92:57",
+    "pkg:formula:llm:mech_sym:9773c5add7af1f92:ob:formula:mech_sym:9773c5add7af1f92:detail:detail:mech_sym:9773c5add7af1f92:58",
+    "pkg:formula:llm:mech_sym:9773c5add7af1f92:ob:formula:mech_sym:9773c5add7af1f92:detail:detail:mech_sym:9773c5add7af1f92:59",
+    "pkg:formula:llm:mech_sym:f6cf5bdfe2ae16f0:ob:formula:mech_sym:f6cf5bdfe2ae16f0:detail:detail:mech_sym:f6cf5bdfe2ae16f0:14",
+    "pkg:formula:llm:mech_sym:f6cf5bdfe2ae16f0:ob:formula:mech_sym:f6cf5bdfe2ae16f0:detail:detail:mech_sym:f6cf5bdfe2ae16f0:43",
+    "pkg:formula:llm:mech_sym:f6cf5bdfe2ae16f0:ob:formula:mech_sym:f6cf5bdfe2ae16f0:detail:detail:mech_sym:f6cf5bdfe2ae16f0:32",
+    "pkg:formula:llm:mech_sym:f6cf5bdfe2ae16f0:ob:formula:mech_sym:f6cf5bdfe2ae16f0:detail:detail:mech_sym:f6cf5bdfe2ae16f0:34",
+    "pkg:formula:llm:mech_sym:f6cf5bdfe2ae16f0:ob:formula:mech_sym:f6cf5bdfe2ae16f0:detail:detail:mech_sym:f6cf5bdfe2ae16f0:44",
+    "pkg:formula:llm:mech_sym:f6cf5bdfe2ae16f0:ob:formula:mech_sym:f6cf5bdfe2ae16f0:detail:detail:mech_sym:f6cf5bdfe2ae16f0:54",
+    "pkg:formula:llm:mech_sym:f6cf5bdfe2ae16f0:ob:formula:mech_sym:f6cf5bdfe2ae16f0:detail:detail:mech_sym:f6cf5bdfe2ae16f0:77",
+    "pkg:formula:llm:mech_sym:9773c5add7af1f92:ob:formula:mech_sym:9773c5add7af1f92:detail:detail:mech_sym:9773c5add7af1f92:1",
+    "pkg:formula:llm:mech_sym:9773c5add7af1f92:ob:formula:mech_sym:9773c5add7af1f92:detail:detail:mech_sym:9773c5add7af1f92:14",
+    "pkg:formula:llm:mech_sym:9773c5add7af1f92:ob:formula:mech_sym:9773c5add7af1f92:detail:detail:mech_sym:9773c5add7af1f92:40",
+    "pkg:formula:llm:mech_sym:9773c5add7af1f92:ob:formula:mech_sym:9773c5add7af1f92:detail:detail:mech_sym:9773c5add7af1f92:43",
+    "pkg:formula:llm:mech_sym:9773c5add7af1f92:ob:formula:mech_sym:9773c5add7af1f92:detail:detail:mech_sym:9773c5add7af1f92:46",
+    "pkg:formula:llm:mech_sym:9773c5add7af1f92:ob:formula:mech_sym:9773c5add7af1f92:detail:detail:mech_sym:9773c5add7af1f92:54"
+  ],
+  "accepted_package_obligation_ids": [
+    [
+      "ob:formula:mech_sym:9773c5add7af1f92:detail:detail:mech_sym:9773c5add7af1f92:16"
+    ],
+    [
+      "ob:formula:mech_sym:9773c5add7af1f92:detail:detail:mech_sym:9773c5add7af1f92:32"
+    ],
+    [
+      "ob:formula:mech_sym:9773c5add7af1f92:detail:detail:mech_sym:9773c5add7af1f92:33"
+    ],
+    [
+      "ob:formula:mech_sym:9773c5add7af1f92:detail:detail:mech_sym:9773c5add7af1f92:34"
+    ],
+    [
+      "ob:formula:mech_sym:9773c5add7af1f92:detail:detail:mech_sym:9773c5add7af1f92:38"
+    ],
+    [
+      "ob:formula:mech_sym:9773c5add7af1f92:detail:detail:mech_sym:9773c5add7af1f92:22"
+    ],
+    [
+      "ob:formula:mech_sym:9773c5add7af1f92:detail:detail:mech_sym:9773c5add7af1f92:27"
+    ],
+    [
+      "ob:formula:mech_sym:9773c5add7af1f92:detail:detail:mech_sym:9773c5add7af1f92:28"
+    ],
+    [
+      "ob:formula:mech_sym:9773c5add7af1f92:detail:detail:mech_sym:9773c5add7af1f92:55"
+    ],
+    [
+      "ob:formula:mech_sym:9773c5add7af1f92:detail:detail:mech_sym:9773c5add7af1f92:56"
+    ],
+    [
+      "ob:formula:mech_sym:9773c5add7af1f92:detail:detail:mech_sym:9773c5add7af1f92:57"
+    ],
+    [
+      "ob:formula:mech_sym:9773c5add7af1f92:detail:detail:mech_sym:9773c5add7af1f92:58"
+    ],
+    [
+      "ob:formula:mech_sym:9773c5add7af1f92:detail:detail:mech_sym:9773c5add7af1f92:59"
+    ],
+    [
+      "ob:formula:mech_sym:f6cf5bdfe2ae16f0:detail:detail:mech_sym:f6cf5bdfe2ae16f0:14"
+    ],
+    [
+      "ob:formula:mech_sym:f6cf5bdfe2ae16f0:detail:detail:mech_sym:f6cf5bdfe2ae16f0:43"
+    ],
+    [
+      "ob:formula:mech_sym:f6cf5bdfe2ae16f0:detail:detail:mech_sym:f6cf5bdfe2ae16f0:32"
+    ],
+    [
+      "ob:formula:mech_sym:f6cf5bdfe2ae16f0:detail:detail:mech_sym:f6cf5bdfe2ae16f0:34"
+    ],
+    [
+      "ob:formula:mech_sym:f6cf5bdfe2ae16f0:detail:detail:mech_sym:f6cf5bdfe2ae16f0:44"
+    ],
+    [
+      "ob:formula:mech_sym:f6cf5bdfe2ae16f0:detail:detail:mech_sym:f6cf5bdfe2ae16f0:54"
+    ],
+    [
+      "ob:formula:mech_sym:f6cf5bdfe2ae16f0:detail:detail:mech_sym:f6cf5bdfe2ae16f0:77"
+    ],
+    [
+      "ob:formula:mech_sym:9773c5add7af1f92:detail:detail:mech_sym:9773c5add7af1f92:1"
+    ],
+    [
+      "ob:formula:mech_sym:9773c5add7af1f92:detail:detail:mech_sym:9773c5add7af1f92:14"
+    ],
+    [
+      "ob:formula:mech_sym:9773c5add7af1f92:detail:detail:mech_sym:9773c5add7af1f92:40"
+    ],
+    [
+      "ob:formula:mech_sym:9773c5add7af1f92:detail:detail:mech_sym:9773c5add7af1f92:43"
+    ],
+    [
+      "ob:formula:mech_sym:9773c5add7af1f92:detail:detail:mech_sym:9773c5add7af1f92:46"
+    ],
+    [
+      "ob:formula:mech_sym:9773c5add7af1f92:detail:detail:mech_sym:9773c5add7af1f92:54"
+    ]
+  ],
+  "consumed_formula_packages": 24,
+  "acquisition": {
+    "obligation_candidate_records": 44,
+    "unique_symbols": 17,
+    "unique_obligations": 6,
+    "full_chain": 11
+  },
+  "facet_ids": [
+    "facet-d57e6b007d62768e",
+    "facet-bd2114e7ad9b1773",
+    "facet-308602a0138b57ea",
+    "facet-df672e4efc3751e2",
+    "facet-6bc5ee440fdc8329",
+    "facet-cbc0a588831ac015",
+    "facet-14d4dbe911667c07",
+    "facet-c70f411cffdc0a8f",
+    "facet-676fcfceb7eddd8a",
+    "facet-d87af6e7082cc916",
+    "facet-ba08ce41d6e1d9b9",
+    "facet-47997bc7d81ecdf5",
+    "facet-00e27dd88a70848f",
+    "facet-85ba5afaa2fbe7ac",
+    "facet-0bce6b6595a44f58",
+    "facet-833638c7783e3952",
+    "facet-3c6a3824f6a9641a",
+    "facet-c5e7c214b56a659f",
+    "facet-f6e629096087c520",
+    "facet-9e754ab14c6fde20",
+    "facet-b9735878c5548c4a",
+    "facet-68ed73e7a64fbbfd",
+    "facet-71df0ec224b91883",
+    "facet-f55b63fbde1d45df",
+    "facet-c8bf8030283400b2",
+    "facet-e517f869034a38aa",
+    "facet-d27285ebc144a3fa",
+    "facet-f49282e62c6e52fe",
+    "facet-c0d9a5e725c77367",
+    "facet-ecd069d8ab3be38f"
+  ],
+  "write_package_latex": "WRITE(dedicated_attention_mask) → dedicated_attention_mask"
+}

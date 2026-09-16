@@ -6,6 +6,14 @@
 
 ## 当前状态
 
+- [Author Intent 主导的 Method Authoring 闭环修复执行文档（2026-09-16）](intent_spine_authoring_closure_repair_execution_2026-09-16.md)：
+  绑定 `/tmp/c2p-production-entry-20260915-live10`，确认本次两节 `Sym:*` Candidate 的首因不是 intent
+  缺失，而是 executable mechanism owner 被错误提升为 Narrative section owner：无 symbol owner 的 story
+  node 未进入 mechanism context，五节作者计划只能事后按 exact anchor 回贴。文档同时纠正 44/11/25%
+  obligation–candidate 统计键，并在独立复核后补入 7 个 legacy 公式需求与 84 个 mechanism 义务的
+  canonical identity bridge、统一公式内容门、逐 claim exact/semantic 验证状态、原子化跨文件负例和 clean
+  Candidate 事务。文档给出 P0–P7 实施顺序与 EBCAR 验收反例。当前为根因与执行方案，
+  不表示生产代码或新 live 已完成。
 - [生产入口收敛执行文档（2026-09-15，第二次核验修订）](research_to_method_production_closure_execution_2026-09-15.md)：
   当前执行入口，细化统一计划 §15.7。按 A 完整准备合同 → B 合法成果续跑与全文集成 → C 真实全文 Candidate
   及正常产品入口交付推进。有限必修项 F1–F6：row/片段、handoff 后追加导致请求漂移、正文旧计划投影、
