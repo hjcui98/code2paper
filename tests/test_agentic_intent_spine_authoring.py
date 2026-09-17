@@ -6,6 +6,8 @@ import json
 from pathlib import Path
 from types import SimpleNamespace
 
+import pytest
+
 from code2paper.agentic.formula_content_guard import shared_formula_content_failures
 from code2paper.agentic.formula_identity import compile_canonical_formula_obligations
 from code2paper.agentic.intent_evidence_atoms import (
@@ -14,7 +16,10 @@ from code2paper.agentic.intent_evidence_atoms import (
     semantic_fields_exceed_quote,
     terminal_atom_closure,
 )
-from code2paper.agentic.intent_narrative_compiler import build_intent_narrative_plan_v4
+from code2paper.agentic.intent_narrative_compiler import (
+    build_intent_narrative_plan_v4,
+    project_intent_plan_to_narrative_v3,
+)
 from code2paper.agentic.intent_proposition_compiler import compile_method_propositions_v2
 from code2paper.agentic.intent_spine_metrics import compile_research_closure_dashboard
 from code2paper.agentic.intent_spine_models import heading_is_internal_identifier
@@ -218,14 +223,14 @@ def test_p1_story_without_owner_and_multi_mechanism_section_keep_author_ids() ->
             mechanism_id="mech_shared",
             mechanism_name="Shared attention",
             story_node_ids=(),
-            details=(SimpleNamespace(detail_id="d1", primary_mechanism_id="mech_shared", publication_policy="clean_candidate", active_path_status="active_default"),),
+            details=(SimpleNamespace(detail_id="d1", primary_mechanism_id="mech_shared", importance="core", publication_policy="clean_candidate", active_path_status="active_default", source_claim_ids=("claim:a",)),),
             evidence_closure=SimpleNamespace(fact_ids=(), claim_ids=("claim:a",), equation_ids=(), exact_span_ids=(), seed_obligation_ids=()),
         ),
         SimpleNamespace(
             mechanism_id="mech_mask",
             mechanism_name="Masked attention",
             story_node_ids=(),
-            details=(SimpleNamespace(detail_id="d2", primary_mechanism_id="mech_mask", publication_policy="clean_candidate", active_path_status="active_default"),),
+            details=(SimpleNamespace(detail_id="d2", primary_mechanism_id="mech_mask", importance="core", publication_policy="clean_candidate", active_path_status="active_default", source_claim_ids=("claim:b",)),),
             evidence_closure=SimpleNamespace(fact_ids=(), claim_ids=("claim:b",), equation_ids=(), exact_span_ids=(), seed_obligation_ids=()),
         ),
     ))
@@ -242,6 +247,61 @@ def test_p1_story_without_owner_and_multi_mechanism_section_keep_author_ids() ->
     assert set(binding["story:shared"].mechanism_ids) == {"mech_shared", "mech_mask"}
     assert binding["story:evidence-no-owner"].mechanism_ids == ()
     assert by_id["MA-S2"].paragraphs[0].paragraph_id.startswith("MA-S2:")
+    assert all(not paragraph.required_detail_ids for paragraph in by_id["MA-S1"].paragraphs)
+    assert all(not paragraph.required_detail_ids for paragraph in by_id["MA-S2"].paragraphs if not paragraph.mechanism_id)
+    detail_owners = [
+        (paragraph.mechanism_id, detail_id)
+        for section in plan.sections for paragraph in section.paragraphs
+        for detail_id in paragraph.required_detail_ids
+    ]
+    assert sorted(detail_owners) == [("mech_mask", "d2"), ("mech_shared", "d1")]
+    assert all(len(paragraph.mechanism_ids) <= 1 for section in plan.sections for paragraph in section.paragraphs)
+    from code2paper.agentic.method_architect import validate_narrative_plan
+
+    projected = project_intent_plan_to_narrative_v3(plan)
+    assert validate_narrative_plan(projected, contexts) == ()
+    assert sum(
+        len(paragraph.ordered_argument_unit_ids)
+        for section in projected.sections for paragraph in section.paragraphs
+    ) == 3
+
+
+def test_p1_v4_formula_package_has_one_mechanism_owned_placement() -> None:
+    from code2paper.agentic.method_architect import validate_narrative_plan
+
+    context = SimpleNamespace(
+        mechanism_id="mech:encoder",
+        details=(
+            SimpleNamespace(detail_id="d:score", primary_mechanism_id="mech:encoder", importance="core", publication_policy="clean_candidate", active_path_status="active_default", source_claim_ids=("claim:score",)),
+            SimpleNamespace(detail_id="d:mask", primary_mechanism_id="mech:encoder", importance="core", publication_policy="clean_candidate", active_path_status="active_default", source_claim_ids=("claim:mask",)),
+        ),
+        evidence_closure=SimpleNamespace(fact_ids=(), claim_ids=("claim:score", "claim:mask"), equation_ids=(), exact_span_ids=(), seed_obligation_ids=()),
+    )
+    contexts = SimpleNamespace(contexts=(context,))
+    prior = _prior_plan([
+        {"section_id": "S1", "heading": "Score", "argument_unit_ids": ("AU1",), "claim_ids": ("claim:score",)},
+        {"section_id": "S2", "heading": "Mask", "argument_unit_ids": ("AU2",), "claim_ids": ("claim:mask",)},
+    ])
+    package = SimpleNamespace(
+        package_id="pkg:score-mask",
+        mechanism_id="mech:encoder",
+        source_detail_ids=("d:score", "d:mask"),
+        satisfied_obligation_ids=("ob:formula:score-mask",),
+        source_context_digest="",
+    )
+    plan, _bindings, _trace = build_intent_narrative_plan_v4(
+        story_spine=(
+            _story("story:score", "Score", kind="organization", priority="must_cover", claims=("claim:score",)),
+            _story("story:mask", "Mask", kind="organization", priority="must_cover", claims=("claim:mask",)),
+        ),
+        prior_plan=prior,
+        contexts=contexts,
+        formula_packages=(package,),
+    )
+    projected = project_intent_plan_to_narrative_v3(plan)
+    assert validate_narrative_plan(projected, contexts, formula_packages=(package,)) == ()
+    assert len(projected.formula_placements) == 1
+    assert projected.formula_placements[0].package_id == package.package_id
 
 
 def test_p2_atoms_split_implementation_from_rationale_and_keep_scope() -> None:
@@ -526,7 +586,7 @@ def test_p3_author_facet_formula_bridges_matching_mechanism_obligation() -> None
     assert "pkg:loss" not in bridged.committed_paragraph_ids or True
 
 
-def test_p1_v4_envelope_is_traced_without_mutating_frozen_v3() -> None:
+def test_p1_v4_envelope_is_traced_without_mutating_frozen_v3(monkeypatch) -> None:
     from code2paper.agentic.mechanism_context_models import (
         EvidenceOperationV1,
         MechanismContextSetV1,
@@ -622,6 +682,22 @@ def test_p1_v4_envelope_is_traced_without_mutating_frozen_v3() -> None:
     except Exception:
         assigned = False
     assert assigned is False
+
+    # Selected V4 must not silently fall back to a mechanism-first V3 plan.
+    import code2paper.agentic.intent_narrative_compiler as compiler
+
+    monkeypatch.setenv("CODE2PAPER_INTENT_NARRATIVE_PLAN", "v4")
+
+    def rejected_v4(**_kwargs):
+        raise ValueError("intent_plan_v4_test_rejection")
+
+    monkeypatch.setattr(compiler, "build_intent_narrative_plan_v4", rejected_v4)
+    with pytest.raises(ValueError, match="intent_plan_v4_test_rejection"):
+        _build_narrative_plan_v3(
+            contexts,
+            story_spine=(_story("story:arch", "Architecture details", kind="organization", priority="preference"),),
+            prior_plan=prior,
+        )
 
 
 def test_p5_rewrite_caller_must_pass_incumbent_digest() -> None:

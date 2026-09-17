@@ -1,0 +1,15 @@
+{
+  "schema_version": "1.0",
+  "measurement_basis": "openai_chat_template_v1",
+  "tokenizer_identity": "vllm-openai-chat-template-v1:qwen38-27b-nvfp4|http://127.0.0.1:8006/v1|sha256:c0de9206a013581f2934ca19b3658a1d1b47d335c73050c20d6d57b9359dcfb5",
+  "runtime_identity": {
+    "provider": "openai",
+    "base_url": "http://127.0.0.1:8006/v1",
+    "configured_model": "qwen38-27b-nvfp4",
+    "served_model_ids": [
+      "qwen38-27b-nvfp4"
+    ]
+  },
+  "probe_token_count": 59,
+  "status": "pass"
+}

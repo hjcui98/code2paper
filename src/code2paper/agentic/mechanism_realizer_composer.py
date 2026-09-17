@@ -455,16 +455,37 @@ class MechanismRealizer:
             if str(getattr(pkg, "mechanism_id", "")) == mech_id
             and str(getattr(pkg, "package_id", ""))
         }
-        page_bytes = (
-            page_slice.serialized_payload
-            if page_slice is not None
-            else json.dumps(
+        if page_slice is not None:
+            page_bytes = page_slice.serialized_payload
+        elif hasattr(context, "model_dump"):
+            page_bytes = json.dumps(
                 context.model_dump(mode="json"),
                 ensure_ascii=False,
                 sort_keys=True,
                 separators=(",", ":"),
             ).encode("utf-8")
-        )
+        elif isinstance(context, Mapping):
+            page_bytes = json.dumps(
+                dict(context),
+                ensure_ascii=False,
+                sort_keys=True,
+                separators=(",", ":"),
+            ).encode("utf-8")
+        else:
+            context_dict = {
+                "mechanism_id": str(getattr(context, "mechanism_id", "")),
+                "mechanism_name": str(getattr(context, "mechanism_name", "")),
+                "details": [
+                    d.model_dump(mode="json") if hasattr(d, "model_dump") else dict(d)
+                    for d in (getattr(context, "details", ()) or ())
+                ],
+            }
+            page_bytes = json.dumps(
+                context_dict,
+                ensure_ascii=False,
+                sort_keys=True,
+                separators=(",", ":"),
+            ).encode("utf-8")
         allowed_atoms = {
             str(atom.atom_id)
             for detail in details

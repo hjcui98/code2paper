@@ -1,0 +1,13 @@
+{
+  "attempt": 1,
+  "fragment": {
+    "blocked_reason": "",
+    "consumer_role": "writer",
+    "page_id": "page:8c7ae468359f379d3a97eeabd9fb2a560ae9176193119c1f61d7ead54e4bc962",
+    "response_hash": "sha256:40874bedf92f9263603aef9006515b02c55537db9852719bd84765aa78f9803c",
+    "response_text": "{\"paragraphs\": [{\"paragraph_id\": \"MA-S3:P2__f6\", \"paragraph_markdown\": \"The dedicated-attention model completes its forward pass by appending the reranked passage collection to the accumulated reranked passages and returning the pair of reranked passages and relevance scores, shaped as [batch_size, num_passages]. The Transformer encoder that underlies this reranking accepts four mask and control parameters in its forward signature: an attention mask, a key padding mask, a causal mask, and a return-attention flag, each defaulting to None, None, False, and False respectively. Before iterating over the encoder layers, the encoder conditionally initializes an attention-collection container: when the return-attention flag is set, an empty list is allocated; otherwise the container remains unset. The encoder then applies each layer sequentially to the source representation. Within the layer loop, a branch on the return-attention flag determines the calling convention: when the flag is true, each layer is invoked with the return-attention flag propagated, and the resulting attention weights are appended to the collection; when the flag is false, the layer is invoked without attention-weight collection, and only the transformed source is retained. When attention weights are collected, each layer yields both the updated source representation and its attention weights as a joint output.\", \"rendered_from_facet_ids\": [], \"rendered_slot_ids\": [], \"used_formula_package_ids\": []}], \"section_id\": \"MA-S3\"}",
+    "section_id": "MA-S3"
+  },
+  "invocation_id": "inv:writer:MA-S3:page:8c7ae468359f379d3a97eeabd9fb2a560ae9176193119c1f61d7ead54e4bc962",
+  "schema_version": "2.0"
+}

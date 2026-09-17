@@ -1,0 +1,34 @@
+{
+  "attempt": 1,
+  "fragment": {
+    "consumer_role": "realizer",
+    "content_repair_attempt": false,
+    "draft": {
+      "authority_disposition": "repository_verified",
+      "blocked_reason": "",
+      "content_digest": "sha256:2faa9f71e2d84b60eb1302f952c990bd6472f036dc65185d7b99cfedeeb9d73d",
+      "draft_id": "draft:header:MA-S1:p0",
+      "draft_markdown": "Mechanism MA-S1 is defined by the provided technical payload. No specific detail IDs, formula packages, or atomic targets are mandated for this section. The mechanism header identifies the join structure as 'join:MA-S1' and includes two paragraph identifiers: 'MA-S1:P1' and 'MA-S1:P2'. As there are no required detail witnesses, formula witnesses, or atom witnesses specified in the response contract, the draft preserves the structural integrity of the mechanism without asserting unresolved configuration values.",
+      "formula_package_ids": [],
+      "heading": "join:MA-S1",
+      "mechanism_id": "header:MA-S1",
+      "page_index": 0,
+      "realized_detail_ids": [],
+      "repair_feedback": [],
+      "representation_diff_class": "none",
+      "request_digest": "sha256:63f612d46476cc568b2769fed5f1bcde1d132a0c0a81392f6baa187fcad9d359",
+      "required_detail_ids": [],
+      "status": "accepted",
+      "unresolved_detail_ids": [],
+      "witness_atoms": [],
+      "witnesses": []
+    },
+    "page_id": "page:281af1e758001328894fc2f8200e5e244a060ff3eafae98e6dcfb3a428ed052a",
+    "repair_feedback": [],
+    "response_hash": "sha256:7080bbac88e579f2c1ce17f1fd3820c708eb345177b7466e5418af78e3372960",
+    "response_text": "{\n  \"draft_markdown\": \"Mechanism MA-S1 is defined by the provided technical payload. No specific detail IDs, formula packages, or atomic targets are mandated for this section. The mechanism header identifies the join structure as 'join:MA-S1' and includes two paragraph identifiers: 'MA-S1:P1' and 'MA-S1:P2'. As there are no required detail witnesses, formula witnesses, or atom witnesses specified in the response contract, the draft preserves the structural integrity of the mechanism without asserting unresolved configuration values.\",\n  \"rendered_detail_ids\": [],\n  \"used_formula_package_ids\": [],\n  \"witnesses\": []\n}",
+    "section_id": "MA-S1"
+  },
+  "invocation_id": "inv:realizer:MA-S1:page:281af1e758001328894fc2f8200e5e244a060ff3eafae98e6dcfb3a428ed052a",
+  "schema_version": "2.0"
+}

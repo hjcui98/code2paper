@@ -1,0 +1,102 @@
+{
+  "attempt": 1,
+  "fragment": {
+    "consumer_role": "realizer",
+    "content_repair_attempt": false,
+    "draft": {
+      "authority_disposition": "repository_verified",
+      "blocked_reason": "realizer_witness_text_missing",
+      "content_digest": "sha256:33e9b7ee364cacdcf0ed1cc5b7c4446351b00f2bff885fe6bea62f3af484e6fd",
+      "draft_id": "draft:join:MA-S3:p7",
+      "draft_markdown": "",
+      "formula_package_ids": [],
+      "heading": "join:MA-S3",
+      "mechanism_id": "join:MA-S3",
+      "page_index": 7,
+      "realized_detail_ids": [],
+      "repair_feedback": [
+        {
+          "failure_code": "realizer_witness_text_missing",
+          "previous_draft_markdown": "## MA-S3: Dedicated Attention Mask Construction and Model Inference\n\nThis section describes the construction of the `dedicated_attention_mask` and its subsequent use in model inference. The process is governed by a conditional branch based on the configuration flag `self.cfg.use_dedicated_attention`.\n\n### Conditional Branch: `self.cfg.use_dedicated_attention`\n\nIf the configuration flag `self.cfg.use_dedicated_attention` is active, the system loads `temp_indices` to identify passages with matching document IDs. It then writes to the mask, setting `dedicated_attention_mask[i, row, temp_indices]` to 0. This ensures that the dedicated attention mask is set to 0 for the passages that have the same document ID as the current passage.\n\n### Conditional Branch: `not (self.cfg.use_dedicated_attention)`\n\nIf the configuration flag `self.cfg.use_dedicated_attention` is not active, the system initializes the mask by calling `torch.zeros` with the shape `(batch_size, num_passages + 1, num_passages + 1)` and `device=self.device`. This creates a zero-initialized tensor of shape `[batch_size, num_passages + 1, num_passages + 1]`.\n\n### Unconditional Steps\n\nRegardless of the configuration branch, the following steps are executed:\n\n1.  **Shape Computation**: The shape `(batch_size, num_passages + 1, num_passages + 1)` is computed, involving the loading of `num_passages`, `1`, and `batch_size`.\n2.  **Device Configuration**: The device is configured by loading `self` and `self.device`.\n3.  **Mask Reshaping**: The `dedicated_attention_mask` is unsqueezed at dimension 1, resulting in a tensor of shape `[batch_size, 1, num_passages + 1, num_passages + 1]`.\n4.  **Model Inference**: The model is called with `concat_embeddings` and the `dedicated_attention_mask` to produce `outputs` of shape `[batch_size, num_passages + 1, hidden_size]`.\n\n### Code Excerpts\n\n```python\n# Conditional branch: self.cfg.use_dedicated_attention\n# Loads temp_indices\ntemp_indices,\n\n# Writes to mask\ndedicated_attention_mask[\n    i, row, temp_indices\n] = 0  # Set the dedicated attention mask to 0 for the passages that have the same document id as the current passage\n\n# Conditional branch: not (self.cfg.use_dedicated_attention)\n# Initializes mask\ndedicated_attention_mask = torch.zeros(\n    (batch_size, num_passages + 1, num_passages + 1),\n    device=self.device,\n)  # [batch_size, num_passages + 1, num_passages + 1]\n\n# Unconditional steps\ndedicated_attention_mask = dedicated_attention_mask.unsqueeze(\n    1\n)  # [batch_size, 1, num_passages + 1, num_passages + 1]\n\noutputs = self.model(\n    concat_embeddings,\n    dedicated_attention_mask,\n)  # [batch_size, num_passages + 1, hidden_size]\n```",
+          "source_exact_excerpts": [
+            "dedicated_attention_mask[\n                        i, row, temp_indices\n                    ] = 0  # Set the dedicated attention mask to 0 for the passages that have the same document id as the current passage"
+          ],
+          "target_id": "detail:mech_sym:f6cf5bdfe2ae16f0:38",
+          "validated_incumbent_witnesses": [
+            {
+              "exact_text": "temp_indices,",
+              "target_id": "detail:mech_sym:f6cf5bdfe2ae16f0:37",
+              "witness_kind": "detail"
+            },
+            {
+              "exact_text": "dedicated_attention_mask = torch.zeros(",
+              "target_id": "detail:mech_sym:f6cf5bdfe2ae16f0:39",
+              "witness_kind": "detail"
+            },
+            {
+              "exact_text": "(batch_size, num_passages + 1, num_passages + 1),",
+              "target_id": "detail:mech_sym:f6cf5bdfe2ae16f0:40",
+              "witness_kind": "detail"
+            },
+            {
+              "exact_text": "(batch_size, num_passages + 1, num_passages + 1),",
+              "target_id": "detail:mech_sym:f6cf5bdfe2ae16f0:41",
+              "witness_kind": "detail"
+            },
+            {
+              "exact_text": "device=self.device,",
+              "target_id": "detail:mech_sym:f6cf5bdfe2ae16f0:42",
+              "witness_kind": "detail"
+            },
+            {
+              "exact_text": "dedicated_attention_mask = dedicated_attention_mask.unsqueeze(",
+              "target_id": "detail:mech_sym:f6cf5bdfe2ae16f0:43",
+              "witness_kind": "detail"
+            },
+            {
+              "exact_text": "dedicated_attention_mask = dedicated_attention_mask.unsqueeze(",
+              "target_id": "detail:mech_sym:f6cf5bdfe2ae16f0:44",
+              "witness_kind": "detail"
+            },
+            {
+              "exact_text": "outputs = self.model(",
+              "target_id": "detail:mech_sym:f6cf5bdfe2ae16f0:45",
+              "witness_kind": "detail"
+            },
+            {
+              "exact_text": "outputs = self.model(",
+              "target_id": "detail:mech_sym:f6cf5bdfe2ae16f0:46",
+              "witness_kind": "detail"
+            }
+          ],
+          "witness_kind": "detail"
+        }
+      ],
+      "representation_diff_class": "none",
+      "request_digest": "sha256:b72ce452b33127cb9ddbda280caa141d599da21140d5f8692768087476a2ebca",
+      "required_detail_ids": [
+        "detail:mech_sym:f6cf5bdfe2ae16f0:37",
+        "detail:mech_sym:f6cf5bdfe2ae16f0:38",
+        "detail:mech_sym:f6cf5bdfe2ae16f0:39",
+        "detail:mech_sym:f6cf5bdfe2ae16f0:40",
+        "detail:mech_sym:f6cf5bdfe2ae16f0:41",
+        "detail:mech_sym:f6cf5bdfe2ae16f0:42",
+        "detail:mech_sym:f6cf5bdfe2ae16f0:43",
+        "detail:mech_sym:f6cf5bdfe2ae16f0:44",
+        "detail:mech_sym:f6cf5bdfe2ae16f0:45",
+        "detail:mech_sym:f6cf5bdfe2ae16f0:46"
+      ],
+      "status": "blocked",
+      "unresolved_detail_ids": [],
+      "witness_atoms": [],
+      "witnesses": []
+    },
+    "page_id": "page:baf0b6a91335ba96aac3b50d40de7a76588b2483fac50202e4684d2bcdbf38e1",
+    "repair_feedback": [],
+    "response_hash": "sha256:26937f2a0f59f6acb0d97def81855e50b9d6295a05fae2a25d20c2223cf677fe",
+    "response_text": "{\n  \"draft_markdown\": \"## MA-S3: Dedicated Attention Mask Construction and Model Inference\\n\\nThis section describes the construction of the `dedicated_attention_mask` and its subsequent use in model inference. The process is governed by a conditional branch based on the configuration flag `self.cfg.use_dedicated_attention`.\\n\\n### Conditional Branch: `self.cfg.use_dedicated_attention`\\n\\nIf the configuration flag `self.cfg.use_dedicated_attention` is active, the system loads `temp_indices` to identify passages with matching document IDs. It then writes to the mask, setting `dedicated_attention_mask[i, row, temp_indices]` to 0. This ensures that the dedicated attention mask is set to 0 for the passages that have the same document ID as the current passage.\\n\\n### Conditional Branch: `not (self.cfg.use_dedicated_attention)`\\n\\nIf the configuration flag `self.cfg.use_dedicated_attention` is not active, the system initializes the mask by calling `torch.zeros` with the shape `(batch_size, num_passages + 1, num_passages + 1)` and `device=self.device`. This creates a zero-initialized tensor of shape `[batch_size, num_passages + 1, num_passages + 1]`.\\n\\n### Unconditional Steps\\n\\nRegardless of the configuration branch, the following steps are executed:\\n\\n1.  **Shape Computation**: The shape `(batch_size, num_passages + 1, num_passages + 1)` is computed, involving the loading of `num_passages`, `1`, and `batch_size`.\\n2.  **Device Configuration**: The device is configured by loading `self` and `self.device`.\\n3.  **Mask Reshaping**: The `dedicated_attention_mask` is unsqueezed at dimension 1, resulting in a tensor of shape `[batch_size, 1, num_passages + 1, num_passages + 1]`.\\n4.  **Model Inference**: The model is called with `concat_embeddings` and the `dedicated_attention_mask` to produce `outputs` of shape `[batch_size, num_passages + 1, hidden_size]`.\\n\\n### Code Excerpts\\n\\n```python\\n# Conditional branch: self.cfg.use_dedicated_attention\\n# Loads temp_indices\\ntemp_indices,\\n\\n# Writes to mask\\ndedicated_attention_mask[\\n    i, row, temp_indices\\n] = 0  # Set the dedicated attention mask to 0 for the passages that have the same document id as the current passage\\n\\n# Conditional branch: not (self.cfg.use_dedicated_attention)\\n# Initializes mask\\ndedicated_attention_mask = torch.zeros(\\n    (batch_size, num_passages + 1, num_passages + 1),\\n    device=self.device,\\n)  # [batch_size, num_passages + 1, num_passages + 1]\\n\\n# Unconditional steps\\ndedicated_attention_mask = dedicated_attention_mask.unsqueeze(\\n    1\\n)  # [batch_size, 1, num_passages + 1, num_passages + 1]\\n\\noutputs = self.model(\\n    concat_embeddings,\\n    dedicated_attention_mask,\\n)  # [batch_size, num_passages + 1, hidden_size]\\n```\",\n  \"rendered_detail_ids\": [\n    \"detail:mech_sym:f6cf5bdfe2ae16f0:37\",\n    \"detail:mech_sym:f6cf5bdfe2ae16f0:38\",\n    \"detail:mech_sym:f6cf5bdfe2ae16f0:39\",\n    \"detail:mech_sym:f6cf5bdfe2ae16f0:40\",\n    \"detail:mech_sym:f6cf5bdfe2ae16f0:41\",\n    \"detail:mech_sym:f6cf5bdfe2ae16f0:42\",\n    \"detail:mech_sym:f6cf5bdfe2ae16f0:43\",\n    \"detail:mech_sym:f6cf5bdfe2ae16f0:44\",\n    \"detail:mech_sym:f6cf5bdfe2ae16f0:45\",\n    \"detail:mech_sym:f6cf5bdfe2ae16f0:46\"\n  ],\n  \"used_formula_package_ids\": [],\n  \"witnesses\": [\n    {\n      \"exact_text\": \"temp_indices,\",\n      \"target_id\": \"detail:mech_sym:f6cf5bdfe2ae16f0:37\",\n      \"witness_kind\": \"detail\"\n    },\n    {\n      \"exact_text\": \"dedicated_attention_mask[i, row, temp_indices] = 0\",\n      \"target_id\": \"detail:mech_sym:f6cf5bdfe2ae16f0:38\",\n      \"witness_kind\": \"detail\"\n    },\n    {\n      \"exact_text\": \"dedicated_attention_mask = torch.zeros(\",\n      \"target_id\": \"detail:mech_sym:f6cf5bdfe2ae16f0:39\",\n      \"witness_kind\": \"detail\"\n    },\n    {\n      \"exact_text\": \"(batch_size, num_passages + 1, num_passages + 1),\",\n      \"target_id\": \"detail:mech_sym:f6cf5bdfe2ae16f0:40\",\n      \"witness_kind\": \"detail\"\n    },\n    {\n      \"exact_text\": \"(batch_size, num_passages + 1, num_passages + 1),\",\n      \"target_id\": \"detail:mech_sym:f6cf5bdfe2ae16f0:41\",\n      \"witness_kind\": \"detail\"\n    },\n    {\n      \"exact_text\": \"device=self.device,\",\n      \"target_id\": \"detail:mech_sym:f6cf5bdfe2ae16f0:42\",\n      \"witness_kind\": \"detail\"\n    },\n    {\n      \"exact_text\": \"dedicated_attention_mask = dedicated_attention_mask.unsqueeze(\",\n      \"target_id\": \"detail:mech_sym:f6cf5bdfe2ae16f0:43\",\n      \"witness_kind\": \"detail\"\n    },\n    {\n      \"exact_text\": \"dedicated_attention_mask = dedicated_attention_mask.unsqueeze(\",\n      \"target_id\": \"detail:mech_sym:f6cf5bdfe2ae16f0:44\",\n      \"witness_kind\": \"detail\"\n    },\n    {\n      \"exact_text\": \"outputs = self.model(\",\n      \"target_id\": \"detail:mech_sym:f6cf5bdfe2ae16f0:45\",\n      \"witness_kind\": \"detail\"\n    },\n    {\n      \"exact_text\": \"outputs = self.model(\",\n      \"target_id\": \"detail:mech_sym:f6cf5bdfe2ae16f0:46\",\n      \"witness_kind\": \"detail\"\n    }\n  ]\n}",
+    "section_id": "MA-S3"
+  },
+  "invocation_id": "inv:realizer:MA-S3:page:baf0b6a91335ba96aac3b50d40de7a76588b2483fac50202e4684d2bcdbf38e1",
+  "schema_version": "2.0"
+}

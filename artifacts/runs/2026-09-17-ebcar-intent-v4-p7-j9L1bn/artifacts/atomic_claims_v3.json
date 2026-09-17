@@ -1,0 +1,1315 @@
+{
+  "schema_version": "3.0",
+  "producer_version": "code2paper-generic-research-data-plane-v1",
+  "repo_snapshot_id": "repo:9b4f1a34c70f10c2317f024df585e282c9d02371586a629e00ace26d8988c942",
+  "project_tree_hash": "sha256:9b4f1a34c70f10c2317f024df585e282c9d02371586a629e00ace26d8988c942",
+  "evidence_packet_digest": "sha256:e7348d0f9ff1afa18682ba73adeca5e10d04b5d1825b8d2541fd4e66feec02c6",
+  "code_fact_digest": "sha256:9ca7b65fdd0f7287baceed9b0792b0df785c11b13b7ba76c9b90ef7287b22b08",
+  "claims": [
+    {
+      "claim_id": "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:b6468fc08c848936",
+      "canonical_text": "EBCarRerankerHybridAttention.forward branches on self.cfg.use_dedicated_attention",
+      "claim_kind": "implementation_behavior",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:b6468fc08c848936"
+      ],
+      "covers_obligation_ids": [
+        "O-METHOD-MAINLINE-01-c8146479"
+      ],
+      "direct_evidence_ids": [
+        "span:src/model/ebcar_dedicated_attention_model.py:145:174"
+      ],
+      "relation_evidence_ids": [
+        "rel:83ef85703286c813"
+      ],
+      "required_qualifiers": [
+        "self.cfg.use_dedicated_attention"
+      ],
+      "unsupported_author_fragments": [],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "canonical_identity": "sha256:afc3ad94eefe5a6efc62ae9a537d49f374a1785e4a1ecec9c3ca2a162a1b5872",
+      "status": "supported",
+      "inference_level": "E0",
+      "parent_claim_ids": [],
+      "math_op_kind": ""
+    },
+    {
+      "claim_id": "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:a48f78c0e1931462",
+      "canonical_text": "EBCarRerankerHybridAttention.forward concatenates torch.cat, (query, passages), dim=1, result=concat_embeddings",
+      "claim_kind": "implementation_behavior",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:a48f78c0e1931462"
+      ],
+      "covers_obligation_ids": [
+        "O-METHOD-MAINLINE-01-c8146479",
+        "O-STAGE-04-c50e0bef"
+      ],
+      "direct_evidence_ids": [
+        "span:src/model/ebcar_dedicated_attention_model.py:135:137"
+      ],
+      "relation_evidence_ids": [],
+      "required_qualifiers": [],
+      "unsupported_author_fragments": [],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "canonical_identity": "sha256:eb2e84f1806ef36bb508ad7f84390ab3f88c9ad0a10cda7cb99fa3c18eda2974",
+      "status": "supported",
+      "inference_level": "E0",
+      "parent_claim_ids": [],
+      "math_op_kind": ""
+    },
+    {
+      "claim_id": "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:8e87e1804f77f50f",
+      "canonical_text": "EBCarRerankerHybridAttention.rerank sorts by torch.sort, similarities, dim=1, descending=True, result=(relevance_scores, indices)",
+      "claim_kind": "implementation_behavior",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:8e87e1804f77f50f"
+      ],
+      "covers_obligation_ids": [
+        "O-METHOD-MAINLINE-01-c8146479",
+        "O-STAGE-05-5b3d398a"
+      ],
+      "direct_evidence_ids": [
+        "span:src/model/ebcar_dedicated_attention_model.py:334:336"
+      ],
+      "relation_evidence_ids": [],
+      "required_qualifiers": [],
+      "unsupported_author_fragments": [],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "canonical_identity": "sha256:74921781da949a178d3cfb1822e2ac1e8851c67e6e7c146bba91fbc8fe47ef0f",
+      "status": "supported",
+      "inference_level": "E0",
+      "parent_claim_ids": [],
+      "math_op_kind": ""
+    },
+    {
+      "claim_id": "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:fd2ce32dbb55ed63",
+      "canonical_text": "EBCarRerankerHybridAttention.forward reduces torch.stack(losses).mean, result=loss",
+      "claim_kind": "implementation_behavior",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:fd2ce32dbb55ed63"
+      ],
+      "covers_obligation_ids": [
+        "O-METHOD-MAINLINE-01-c8146479"
+      ],
+      "direct_evidence_ids": [
+        "span:src/model/ebcar_dedicated_attention_model.py:243:243"
+      ],
+      "relation_evidence_ids": [],
+      "required_qualifiers": [],
+      "unsupported_author_fragments": [],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "canonical_identity": "sha256:72ed47b0ebba137ffd69ebcdc3228b468e7caed213d280e7c9f08fd9c452db83",
+      "status": "supported",
+      "inference_level": "E0",
+      "parent_claim_ids": [],
+      "math_op_kind": ""
+    },
+    {
+      "claim_id": "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:c1802b91f97392cc",
+      "canonical_text": "EBCarRerankerHybridAttention.rerank returns (reranked_passages, relevance_scores)",
+      "claim_kind": "implementation_behavior",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:c1802b91f97392cc"
+      ],
+      "covers_obligation_ids": [
+        "O-METHOD-MAINLINE-01-c8146479",
+        "O-STAGE-05-5b3d398a"
+      ],
+      "direct_evidence_ids": [
+        "span:src/model/ebcar_dedicated_attention_model.py:344:344"
+      ],
+      "relation_evidence_ids": [],
+      "required_qualifiers": [],
+      "unsupported_author_fragments": [],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "canonical_identity": "sha256:bd05f7eb50e882f555dc1fe333bc97f9dfd49e6f6a0d8027d5849d59cf91cf03",
+      "status": "supported",
+      "inference_level": "E0",
+      "parent_claim_ids": [],
+      "math_op_kind": ""
+    },
+    {
+      "claim_id": "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:4c8511d6e8fc4240",
+      "canonical_text": "TransformerEncoderLayerHybridAttention.forward computes formula shared_out, dedicated_out",
+      "claim_kind": "implementation_behavior",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:4c8511d6e8fc4240"
+      ],
+      "covers_obligation_ids": [
+        "O-METHOD-MAINLINE-01-c8146479",
+        "O-STAGE-03-2c5bd758"
+      ],
+      "direct_evidence_ids": [
+        "span:src/model/transformer_encoder_hybrid_attention.py:119:119"
+      ],
+      "relation_evidence_ids": [],
+      "required_qualifiers": [],
+      "unsupported_author_fragments": [],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "canonical_identity": "sha256:320b19bab282b2905d9aff4a6511b53ee61540981d8ba6438ff7f984fac66d58",
+      "status": "supported",
+      "inference_level": "E0",
+      "parent_claim_ids": [],
+      "math_op_kind": ""
+    },
+    {
+      "claim_id": "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:5ff7f276f04b71a8",
+      "canonical_text": "EBCarRerankerHybridAttention.rerank computes formula passages + document_id_embeddings, passage_id_embeddings, result=passages",
+      "claim_kind": "implementation_behavior",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:5ff7f276f04b71a8"
+      ],
+      "covers_obligation_ids": [
+        "O-METHOD-MAINLINE-01-c8146479"
+      ],
+      "direct_evidence_ids": [
+        "span:src/model/ebcar_dedicated_attention_model.py:276:276"
+      ],
+      "relation_evidence_ids": [],
+      "required_qualifiers": [],
+      "unsupported_author_fragments": [],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "canonical_identity": "sha256:286672a368dbc2ac08372923cefaca39c70126a072a50823a62c009c6b085653",
+      "status": "supported",
+      "inference_level": "E0",
+      "parent_claim_ids": [],
+      "math_op_kind": ""
+    },
+    {
+      "claim_id": "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:6daefc8982533bad",
+      "canonical_text": "EBCarRerankerHybridAttention.forward loads weights self.cfg.use_dedicated_attention",
+      "claim_kind": "implementation_behavior",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:6daefc8982533bad"
+      ],
+      "covers_obligation_ids": [
+        "O-METHOD-MAINLINE-01-c8146479"
+      ],
+      "direct_evidence_ids": [
+        "span:src/model/ebcar_dedicated_attention_model.py:145:145"
+      ],
+      "relation_evidence_ids": [
+        "rel:83ef85703286c813"
+      ],
+      "required_qualifiers": [],
+      "unsupported_author_fragments": [],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "canonical_identity": "sha256:dda5d0556f7ae7a89653b7414390d16289155f6e24304d72761d38983737ee38",
+      "status": "supported",
+      "inference_level": "E0",
+      "parent_claim_ids": [],
+      "math_op_kind": ""
+    },
+    {
+      "claim_id": "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:7fabddc9286307b4",
+      "canonical_text": "EBCarRerankerHybridAttention.forward computes formula -pos_sim, torch.logsumexp(all_sims, dim=0), result=loss_i",
+      "claim_kind": "implementation_behavior",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:7fabddc9286307b4"
+      ],
+      "covers_obligation_ids": [
+        "O-METHOD-MAINLINE-01-c8146479",
+        "O-STAGE-04-c50e0bef"
+      ],
+      "direct_evidence_ids": [
+        "span:src/model/ebcar_dedicated_attention_model.py:232:232"
+      ],
+      "relation_evidence_ids": [],
+      "required_qualifiers": [],
+      "unsupported_author_fragments": [],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "canonical_identity": "sha256:a0c7831df6c9d891c43c0845584330aec081bbd496f4f722dffa5706410f68b1",
+      "status": "supported",
+      "inference_level": "E0",
+      "parent_claim_ids": [],
+      "math_op_kind": ""
+    },
+    {
+      "claim_id": "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:a6f6c00ca097eeb1",
+      "canonical_text": "EBCarRerankerHybridAttention.rerank computes formula row, 1, result=mask_row",
+      "claim_kind": "implementation_behavior",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:a6f6c00ca097eeb1"
+      ],
+      "covers_obligation_ids": [
+        "O-METHOD-MAINLINE-01-c8146479"
+      ],
+      "direct_evidence_ids": [
+        "span:src/model/ebcar_dedicated_attention_model.py:294:294"
+      ],
+      "relation_evidence_ids": [],
+      "required_qualifiers": [],
+      "unsupported_author_fragments": [],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "canonical_identity": "sha256:e22a346503b05797cc5f9ef24f42f4df6f50c76fd15b20e665c749c920a550d8",
+      "status": "supported",
+      "inference_level": "E0",
+      "parent_claim_ids": [],
+      "math_op_kind": ""
+    },
+    {
+      "claim_id": "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:c8936a17df7bdc83",
+      "canonical_text": "TransformerEncoderLayerHybridAttention.forward computes formula src, self.dropout1(shared_out + dedicated_out), result=src",
+      "claim_kind": "implementation_behavior",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:c8936a17df7bdc83"
+      ],
+      "covers_obligation_ids": [
+        "O-METHOD-MAINLINE-01-c8146479"
+      ],
+      "direct_evidence_ids": [
+        "span:src/model/transformer_encoder_hybrid_attention.py:119:119"
+      ],
+      "relation_evidence_ids": [],
+      "required_qualifiers": [],
+      "unsupported_author_fragments": [],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "canonical_identity": "sha256:e5c38702a2cc1978183ca7fda8f842f2c8bd82a945461f6d027c6b7bf6d165f5",
+      "status": "supported",
+      "inference_level": "E0",
+      "parent_claim_ids": [],
+      "math_op_kind": ""
+    },
+    {
+      "claim_id": "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-rel:1b2f2e5db0f09696",
+      "canonical_text": "EBCarRerankerHybridAttention.forward configured by self.cfg.use_dedicated_attention",
+      "claim_kind": "implementation_behavior",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-rel:1b2f2e5db0f09696"
+      ],
+      "covers_obligation_ids": [
+        "O-METHOD-MAINLINE-01-c8146479"
+      ],
+      "direct_evidence_ids": [
+        "span:src/model/ebcar_dedicated_attention_model.py:145:174",
+        "span:src/model/ebcar_dedicated_attention_model.py:145:145"
+      ],
+      "relation_evidence_ids": [
+        "rel:83ef85703286c813"
+      ],
+      "required_qualifiers": [],
+      "unsupported_author_fragments": [],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "canonical_identity": "sha256:466941fd824602428b3a6afac808c150a17b1a76902ee26d9aab3587881eec80",
+      "status": "supported",
+      "inference_level": "E0",
+      "parent_claim_ids": [],
+      "math_op_kind": ""
+    },
+    {
+      "claim_id": "claim-O-METHOD-MAINLINE-01-c8146479-fact-configuration-rel:dc95ead65d3bb047",
+      "canonical_text": "self.cfg.use_dedicated_attention configured by true",
+      "claim_kind": "implementation_behavior",
+      "fact_ids": [
+        "fact-configuration-rel:dc95ead65d3bb047"
+      ],
+      "covers_obligation_ids": [
+        "O-METHOD-MAINLINE-01-c8146479"
+      ],
+      "direct_evidence_ids": [
+        "span:conf/config.yaml:19:19"
+      ],
+      "relation_evidence_ids": [],
+      "required_qualifiers": [],
+      "unsupported_author_fragments": [],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "canonical_identity": "sha256:4878ffc9af095a416ddce4c371c2db89f534f2bb85e6f8ab0a27f3514c36d4e0",
+      "status": "supported",
+      "inference_level": "E0",
+      "parent_claim_ids": [],
+      "math_op_kind": ""
+    },
+    {
+      "claim_id": "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:3673b2e5dbd63bd0",
+      "canonical_text": "MultiheadAttention.forward normalizes F.softmax, attn_logits, dim=-1, result=attn_weights",
+      "claim_kind": "implementation_behavior",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:3673b2e5dbd63bd0"
+      ],
+      "covers_obligation_ids": [
+        "O-METHOD-MAINLINE-01-c8146479",
+        "O-STAGE-03-2c5bd758"
+      ],
+      "direct_evidence_ids": [
+        "span:src/model/transformer_encoder_hybrid_attention.py:56:56"
+      ],
+      "relation_evidence_ids": [
+        "rel:597477ee05849627"
+      ],
+      "required_qualifiers": [],
+      "unsupported_author_fragments": [],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "canonical_identity": "sha256:7d4f6e07a4352caa61bd36af13a890c3d74e810dfa83688e335e902b439dbfc0",
+      "status": "supported",
+      "inference_level": "E0",
+      "parent_claim_ids": [],
+      "math_op_kind": ""
+    },
+    {
+      "claim_id": "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:73ea6c8145b47e07",
+      "canonical_text": "MultiheadAttention.forward constructs mask attn_logits.masked_fill, padding_mask, float('-inf'), result=attn_logits",
+      "claim_kind": "implementation_behavior",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:73ea6c8145b47e07"
+      ],
+      "covers_obligation_ids": [
+        "O-METHOD-MAINLINE-01-c8146479",
+        "O-STAGE-03-2c5bd758"
+      ],
+      "direct_evidence_ids": [
+        "span:src/model/transformer_encoder_hybrid_attention.py:51:51"
+      ],
+      "relation_evidence_ids": [
+        "rel:597477ee05849627"
+      ],
+      "required_qualifiers": [],
+      "unsupported_author_fragments": [],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "canonical_identity": "sha256:5ec15d22a62e1afb7c0b501e14415cbaaf43b2a1d251a26d5cf21cf884157446",
+      "status": "supported",
+      "inference_level": "E0",
+      "parent_claim_ids": [],
+      "math_op_kind": ""
+    },
+    {
+      "claim_id": "l2:math:fact-O-METHOD-MAINLINE-01-c8146479-node:7fabddc9286307b4:weighted_sum",
+      "canonical_text": "Contributing terms are aggregated by a sum.",
+      "claim_kind": "technical_semantic",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:7fabddc9286307b4"
+      ],
+      "covers_obligation_ids": [
+        "O-METHOD-MAINLINE-01-c8146479"
+      ],
+      "direct_evidence_ids": [
+        "span:src/model/ebcar_dedicated_attention_model.py:232:232"
+      ],
+      "relation_evidence_ids": [],
+      "required_qualifiers": [],
+      "unsupported_author_fragments": [],
+      "allowed_wording_boundary": "effect interpretation licensed; polarity must match parent comparison units",
+      "canonical_identity": "sha256:936176d81b8f7f036fa504074b4fef90c8ce53381ed8cd7adb6e57396185b875",
+      "status": "supported",
+      "inference_level": "E2",
+      "parent_claim_ids": [
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:7fabddc9286307b4"
+      ],
+      "math_op_kind": "weighted_sum"
+    },
+    {
+      "claim_id": "l2:math:fact-O-METHOD-MAINLINE-01-c8146479-node:5ff7f276f04b71a8:weighted_sum",
+      "canonical_text": "Contributing terms are aggregated by a sum.",
+      "claim_kind": "technical_semantic",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:5ff7f276f04b71a8"
+      ],
+      "covers_obligation_ids": [
+        "O-METHOD-MAINLINE-01-c8146479"
+      ],
+      "direct_evidence_ids": [
+        "span:src/model/ebcar_dedicated_attention_model.py:276:276"
+      ],
+      "relation_evidence_ids": [],
+      "required_qualifiers": [],
+      "unsupported_author_fragments": [],
+      "allowed_wording_boundary": "effect interpretation licensed; polarity must match parent comparison units",
+      "canonical_identity": "sha256:85ccbd498f387742aad70dd7d793dde6252d24fb64d6a1d7a510e286cb4242fc",
+      "status": "supported",
+      "inference_level": "E2",
+      "parent_claim_ids": [
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:5ff7f276f04b71a8"
+      ],
+      "math_op_kind": "weighted_sum"
+    },
+    {
+      "claim_id": "l2:math:fact-O-METHOD-MAINLINE-01-c8146479-node:a6f6c00ca097eeb1:weighted_sum",
+      "canonical_text": "Contributing terms are aggregated by a sum.",
+      "claim_kind": "technical_semantic",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:a6f6c00ca097eeb1"
+      ],
+      "covers_obligation_ids": [
+        "O-METHOD-MAINLINE-01-c8146479"
+      ],
+      "direct_evidence_ids": [
+        "span:src/model/ebcar_dedicated_attention_model.py:294:294"
+      ],
+      "relation_evidence_ids": [],
+      "required_qualifiers": [],
+      "unsupported_author_fragments": [],
+      "allowed_wording_boundary": "effect interpretation licensed; polarity must match parent comparison units",
+      "canonical_identity": "sha256:a241e0cab3fa00e0bbf5a5bacf83a9eb3488b0d11bf86ef8a34c1331ab3b62b3",
+      "status": "supported",
+      "inference_level": "E2",
+      "parent_claim_ids": [
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:a6f6c00ca097eeb1"
+      ],
+      "math_op_kind": "weighted_sum"
+    },
+    {
+      "claim_id": "l2:math:fact-O-METHOD-MAINLINE-01-c8146479-node:4c8511d6e8fc4240:weighted_sum",
+      "canonical_text": "Contributing terms are aggregated by a sum.",
+      "claim_kind": "technical_semantic",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:4c8511d6e8fc4240"
+      ],
+      "covers_obligation_ids": [
+        "O-METHOD-MAINLINE-01-c8146479",
+        "O-STAGE-03-2c5bd758"
+      ],
+      "direct_evidence_ids": [
+        "span:src/model/transformer_encoder_hybrid_attention.py:119:119"
+      ],
+      "relation_evidence_ids": [],
+      "required_qualifiers": [],
+      "unsupported_author_fragments": [],
+      "allowed_wording_boundary": "effect interpretation licensed; polarity must match parent comparison units",
+      "canonical_identity": "sha256:e36a2f8288e4ee1d466fca063ccf3313d415bd340bf4cceab3d18ec4f1de8efb",
+      "status": "supported",
+      "inference_level": "E2",
+      "parent_claim_ids": [
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:4c8511d6e8fc4240"
+      ],
+      "math_op_kind": "weighted_sum"
+    },
+    {
+      "claim_id": "l2:math:fact-O-METHOD-MAINLINE-01-c8146479-node:c8936a17df7bdc83:weighted_sum",
+      "canonical_text": "Contributing terms are aggregated by a sum.",
+      "claim_kind": "technical_semantic",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:c8936a17df7bdc83"
+      ],
+      "covers_obligation_ids": [
+        "O-METHOD-MAINLINE-01-c8146479"
+      ],
+      "direct_evidence_ids": [
+        "span:src/model/transformer_encoder_hybrid_attention.py:119:119"
+      ],
+      "relation_evidence_ids": [],
+      "required_qualifiers": [],
+      "unsupported_author_fragments": [],
+      "allowed_wording_boundary": "effect interpretation licensed; polarity must match parent comparison units",
+      "canonical_identity": "sha256:70245faa122a240457b7983b629bf066ad3de8d6b9d3e90f9a3e7beff008fdb6",
+      "status": "supported",
+      "inference_level": "E2",
+      "parent_claim_ids": [
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:c8936a17df7bdc83"
+      ],
+      "math_op_kind": "weighted_sum"
+    },
+    {
+      "claim_id": "l2:math:fact-O-METHOD-MAINLINE-01-c8146479-node:3673b2e5dbd63bd0:normalize",
+      "canonical_text": "Scores are normalized before they are compared or aggregated.",
+      "claim_kind": "technical_semantic",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:3673b2e5dbd63bd0"
+      ],
+      "covers_obligation_ids": [
+        "O-METHOD-MAINLINE-01-c8146479",
+        "O-STAGE-03-2c5bd758"
+      ],
+      "direct_evidence_ids": [
+        "span:src/model/transformer_encoder_hybrid_attention.py:56:56"
+      ],
+      "relation_evidence_ids": [
+        "rel:597477ee05849627"
+      ],
+      "required_qualifiers": [],
+      "unsupported_author_fragments": [],
+      "allowed_wording_boundary": "effect interpretation licensed; polarity must match parent comparison units",
+      "canonical_identity": "sha256:008629e8053656e14bb664fcdf48cb502fab08bee6bc1cf15cff908345e8fb68",
+      "status": "supported",
+      "inference_level": "E2",
+      "parent_claim_ids": [
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:3673b2e5dbd63bd0"
+      ],
+      "math_op_kind": "normalize"
+    },
+    {
+      "claim_id": "claim-O-STAGE-01-039a963a-fact-O-STAGE-01-039a963a-node:2911a2ecfb714992",
+      "canonical_text": "EBCARDatasetReal.__init__ branches on size is not None",
+      "claim_kind": "implementation_behavior",
+      "fact_ids": [
+        "fact-O-STAGE-01-039a963a-node:2911a2ecfb714992"
+      ],
+      "covers_obligation_ids": [
+        "O-STAGE-01-039a963a"
+      ],
+      "direct_evidence_ids": [
+        "span:src/dataset/ebcar_dataset.py:48:55"
+      ],
+      "relation_evidence_ids": [],
+      "required_qualifiers": [
+        "size is not None"
+      ],
+      "unsupported_author_fragments": [],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "canonical_identity": "sha256:49df01761d4ea16bfc07c667a0d8d02683632278f7b5cf210a80872b8998fc4f",
+      "status": "supported",
+      "inference_level": "E0",
+      "parent_claim_ids": [],
+      "math_op_kind": ""
+    },
+    {
+      "claim_id": "claim-O-STAGE-01-039a963a-fact-O-STAGE-01-039a963a-node:4480dac4431aabbe",
+      "canonical_text": "load_conteb_dataset branches on doc['chunk_id'] == query['chunk_id']",
+      "claim_kind": "implementation_behavior",
+      "fact_ids": [
+        "fact-O-STAGE-01-039a963a-node:4480dac4431aabbe"
+      ],
+      "covers_obligation_ids": [
+        "O-STAGE-01-039a963a"
+      ],
+      "direct_evidence_ids": [
+        "span:src/dataset/__init__.py:224:227"
+      ],
+      "relation_evidence_ids": [],
+      "required_qualifiers": [
+        "doc['chunk_id'] == query['chunk_id']"
+      ],
+      "unsupported_author_fragments": [],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "canonical_identity": "sha256:389299c13227a2acf5e66a087afae1baa181a781ca1802b8fc50bea092d9ed58",
+      "status": "supported",
+      "inference_level": "E0",
+      "parent_claim_ids": [],
+      "math_op_kind": ""
+    },
+    {
+      "claim_id": "claim-O-STAGE-01-039a963a-fact-O-STAGE-01-039a963a-node:4be5b539dce0e4f4",
+      "canonical_text": "load_conteb_dataset concatenates [1], temp_label_list[:-1], result=temp_label_list",
+      "claim_kind": "implementation_behavior",
+      "fact_ids": [
+        "fact-O-STAGE-01-039a963a-node:4be5b539dce0e4f4"
+      ],
+      "covers_obligation_ids": [
+        "O-STAGE-01-039a963a"
+      ],
+      "direct_evidence_ids": [
+        "span:src/dataset/__init__.py:226:226"
+      ],
+      "relation_evidence_ids": [],
+      "required_qualifiers": [],
+      "unsupported_author_fragments": [],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "canonical_identity": "sha256:84e64339e26a3f3b82ffba2f23364e52a53408f8c656d20b3377129b0a971218",
+      "status": "supported",
+      "inference_level": "E0",
+      "parent_claim_ids": [],
+      "math_op_kind": ""
+    },
+    {
+      "claim_id": "claim-O-STAGE-01-039a963a-fact-O-STAGE-01-039a963a-node:00757f21e4c9d9f3",
+      "canonical_text": "load_conteb_dataset computes formula processed_count, save_interval",
+      "claim_kind": "implementation_behavior",
+      "fact_ids": [
+        "fact-O-STAGE-01-039a963a-node:00757f21e4c9d9f3"
+      ],
+      "covers_obligation_ids": [
+        "O-STAGE-01-039a963a"
+      ],
+      "direct_evidence_ids": [
+        "span:src/dataset/__init__.py:260:260"
+      ],
+      "relation_evidence_ids": [],
+      "required_qualifiers": [],
+      "unsupported_author_fragments": [],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "canonical_identity": "sha256:167242f15ce636077cd1121742928a16fa68ab03184d04c5382d53a5f5658688",
+      "status": "supported",
+      "inference_level": "E0",
+      "parent_claim_ids": [],
+      "math_op_kind": ""
+    },
+    {
+      "claim_id": "claim-O-STAGE-01-039a963a-fact-O-STAGE-01-039a963a-node:36bd05a333b6a4fc",
+      "canonical_text": "load_conteb_dataset calls HuggingFaceEmbeddings, model_name=model_name, model_kwargs=model_kwargs, encode_kwargs=encode_kwargs, show_progress=True, result=hf",
+      "claim_kind": "implementation_behavior",
+      "fact_ids": [
+        "fact-O-STAGE-01-039a963a-node:36bd05a333b6a4fc"
+      ],
+      "covers_obligation_ids": [
+        "O-STAGE-01-039a963a"
+      ],
+      "direct_evidence_ids": [
+        "span:src/dataset/__init__.py:147:152"
+      ],
+      "relation_evidence_ids": [],
+      "required_qualifiers": [],
+      "unsupported_author_fragments": [],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "canonical_identity": "sha256:d2f66a09c870b79a34ae538329a7d28b0966f4292b60cc0ede23b0f2c2ac1a42",
+      "status": "supported",
+      "inference_level": "E0",
+      "parent_claim_ids": [],
+      "math_op_kind": ""
+    },
+    {
+      "claim_id": "claim-O-STAGE-01-039a963a-fact-O-STAGE-01-039a963a-node:c4189835f8e67f5e",
+      "canonical_text": "load_conteb_dataset concatenates [doc['chunk']], documents[:-1], result=documents",
+      "claim_kind": "implementation_behavior",
+      "fact_ids": [
+        "fact-O-STAGE-01-039a963a-node:c4189835f8e67f5e"
+      ],
+      "covers_obligation_ids": [
+        "O-STAGE-01-039a963a"
+      ],
+      "direct_evidence_ids": [
+        "span:src/dataset/__init__.py:225:225"
+      ],
+      "relation_evidence_ids": [],
+      "required_qualifiers": [],
+      "unsupported_author_fragments": [],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "canonical_identity": "sha256:506877cfe0cc70d00b4552a534766d5e55be0fbce434d31f70812e224a410d38",
+      "status": "supported",
+      "inference_level": "E0",
+      "parent_claim_ids": [],
+      "math_op_kind": ""
+    },
+    {
+      "claim_id": "claim-O-STAGE-02-42e8d68d-fact-O-STAGE-02-42e8d68d-node:9a4893d308318488",
+      "canonical_text": "EBCarRerankerHybridAttention.__init__ calls nn.Embedding.from_pretrained, passage_id_embedding, freeze=True, result=self.passage_id_embedding",
+      "claim_kind": "implementation_behavior",
+      "fact_ids": [
+        "fact-O-STAGE-02-42e8d68d-node:9a4893d308318488"
+      ],
+      "covers_obligation_ids": [
+        "O-STAGE-02-42e8d68d"
+      ],
+      "direct_evidence_ids": [
+        "span:src/model/ebcar_dedicated_attention_model.py:48:50"
+      ],
+      "relation_evidence_ids": [
+        "rel:98ac18e6d68d03c8"
+      ],
+      "required_qualifiers": [],
+      "unsupported_author_fragments": [],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "canonical_identity": "sha256:98263cdc07e6116d01723d3c6feb2dfde94efa63dfede523906a11b49756d1f2",
+      "status": "supported",
+      "inference_level": "E0",
+      "parent_claim_ids": [],
+      "math_op_kind": ""
+    },
+    {
+      "claim_id": "claim-O-STAGE-02-42e8d68d-fact-O-STAGE-02-42e8d68d-node:d643b3469b0df29c",
+      "canonical_text": "EBCarRerankerHybridAttention.__init__ reshapes self.get_passage_positional_encoding(torch.tensor([list(range(5000))], device=device)).squeeze, 0, result=passage_id_embedding",
+      "claim_kind": "implementation_behavior",
+      "fact_ids": [
+        "fact-O-STAGE-02-42e8d68d-node:d643b3469b0df29c"
+      ],
+      "covers_obligation_ids": [
+        "O-STAGE-02-42e8d68d"
+      ],
+      "direct_evidence_ids": [
+        "span:src/model/ebcar_dedicated_attention_model.py:43:47"
+      ],
+      "relation_evidence_ids": [
+        "rel:98ac18e6d68d03c8"
+      ],
+      "required_qualifiers": [],
+      "unsupported_author_fragments": [],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "canonical_identity": "sha256:d48bdcf2d1eca1ef750af5885d4fef9c779c35120ddd632f79553654581d93a8",
+      "status": "supported",
+      "inference_level": "E0",
+      "parent_claim_ids": [],
+      "math_op_kind": ""
+    },
+    {
+      "claim_id": "claim-O-STAGE-03-2c5bd758-fact-O-STAGE-03-2c5bd758-node:b220afbc1e6023fe",
+      "canonical_text": "TransformerEncoderLayerHybridAttention.forward branches on return_attention",
+      "claim_kind": "implementation_behavior",
+      "fact_ids": [
+        "fact-O-STAGE-03-2c5bd758-node:b220afbc1e6023fe"
+      ],
+      "covers_obligation_ids": [
+        "O-STAGE-03-2c5bd758"
+      ],
+      "direct_evidence_ids": [
+        "span:src/model/transformer_encoder_hybrid_attention.py:125:126"
+      ],
+      "relation_evidence_ids": [],
+      "required_qualifiers": [
+        "return_attention"
+      ],
+      "unsupported_author_fragments": [],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "canonical_identity": "sha256:9305446e4d7539dc569b81dd6863b70e16de618a5475f75c7d801f88fe162532",
+      "status": "supported",
+      "inference_level": "E0",
+      "parent_claim_ids": [],
+      "math_op_kind": ""
+    },
+    {
+      "claim_id": "claim-O-STAGE-03-2c5bd758-fact-O-STAGE-03-2c5bd758-node:142f7d2a2f9e8288",
+      "canonical_text": "TransformerEncoderLayerHybridAttention.forward returns (src, (shared_attn_weights, dedicated_attn_weights))",
+      "claim_kind": "implementation_behavior",
+      "fact_ids": [
+        "fact-O-STAGE-03-2c5bd758-node:142f7d2a2f9e8288"
+      ],
+      "covers_obligation_ids": [
+        "O-STAGE-03-2c5bd758"
+      ],
+      "direct_evidence_ids": [
+        "span:src/model/transformer_encoder_hybrid_attention.py:126:126"
+      ],
+      "relation_evidence_ids": [],
+      "required_qualifiers": [],
+      "unsupported_author_fragments": [],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "canonical_identity": "sha256:b56bb49101800e225faba7977572b0cb55d6b0085e102764d74396122cbff415",
+      "status": "supported",
+      "inference_level": "E0",
+      "parent_claim_ids": [],
+      "math_op_kind": ""
+    },
+    {
+      "claim_id": "claim-O-STAGE-03-2c5bd758-fact-O-STAGE-03-2c5bd758-node:15f8ab428198f369",
+      "canonical_text": "TransformerEncoderLayerHybridAttention.forward computes formula src, self.dropout2(src2), result=src",
+      "claim_kind": "implementation_behavior",
+      "fact_ids": [
+        "fact-O-STAGE-03-2c5bd758-node:15f8ab428198f369"
+      ],
+      "covers_obligation_ids": [
+        "O-STAGE-03-2c5bd758"
+      ],
+      "direct_evidence_ids": [
+        "span:src/model/transformer_encoder_hybrid_attention.py:123:123"
+      ],
+      "relation_evidence_ids": [
+        "rel:622508515b3080f4"
+      ],
+      "required_qualifiers": [],
+      "unsupported_author_fragments": [],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "canonical_identity": "sha256:cef658d044e7830f3e097489473d93542373f43d120aaaa34c98539097012fce",
+      "status": "supported",
+      "inference_level": "E0",
+      "parent_claim_ids": [],
+      "math_op_kind": ""
+    },
+    {
+      "claim_id": "claim-O-STAGE-03-2c5bd758-fact-O-STAGE-03-2c5bd758-node:c8936a17df7bdc83",
+      "canonical_text": "TransformerEncoderLayerHybridAttention.forward computes formula src, self.dropout1(shared_out + dedicated_out), result=src",
+      "claim_kind": "implementation_behavior",
+      "fact_ids": [
+        "fact-O-STAGE-03-2c5bd758-node:c8936a17df7bdc83"
+      ],
+      "covers_obligation_ids": [
+        "O-STAGE-03-2c5bd758"
+      ],
+      "direct_evidence_ids": [
+        "span:src/model/transformer_encoder_hybrid_attention.py:119:119"
+      ],
+      "relation_evidence_ids": [
+        "rel:622508515b3080f4"
+      ],
+      "required_qualifiers": [],
+      "unsupported_author_fragments": [],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "canonical_identity": "sha256:347dc2247419499f2de47e014b9d6f9c0df6197fb2eddcb7db7e3851f9ccc285",
+      "status": "supported",
+      "inference_level": "E0",
+      "parent_claim_ids": [],
+      "math_op_kind": ""
+    },
+    {
+      "claim_id": "claim-O-STAGE-03-2c5bd758-fact-O-STAGE-03-2c5bd758-node:4f3a01f0d7880c82",
+      "canonical_text": "MultiheadAttention.forward computes formula torch.matmul, Q, K.transpose(-2, -1)",
+      "claim_kind": "implementation_behavior",
+      "fact_ids": [
+        "fact-O-STAGE-03-2c5bd758-node:4f3a01f0d7880c82"
+      ],
+      "covers_obligation_ids": [
+        "O-STAGE-03-2c5bd758"
+      ],
+      "direct_evidence_ids": [
+        "span:src/model/transformer_encoder_hybrid_attention.py:41:41"
+      ],
+      "relation_evidence_ids": [],
+      "required_qualifiers": [],
+      "unsupported_author_fragments": [],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "canonical_identity": "sha256:7cf6358880ccdfa6bee3af4cbb2a3d05a6ea2d8b5b738c44c6ab32db1f182140",
+      "status": "supported",
+      "inference_level": "E0",
+      "parent_claim_ids": [],
+      "math_op_kind": ""
+    },
+    {
+      "claim_id": "l2:math:fact-O-STAGE-03-2c5bd758-node:c8936a17df7bdc83:weighted_sum",
+      "canonical_text": "Contributing terms are aggregated by a sum.",
+      "claim_kind": "technical_semantic",
+      "fact_ids": [
+        "fact-O-STAGE-03-2c5bd758-node:c8936a17df7bdc83"
+      ],
+      "covers_obligation_ids": [
+        "O-STAGE-03-2c5bd758"
+      ],
+      "direct_evidence_ids": [
+        "span:src/model/transformer_encoder_hybrid_attention.py:119:119"
+      ],
+      "relation_evidence_ids": [],
+      "required_qualifiers": [],
+      "unsupported_author_fragments": [],
+      "allowed_wording_boundary": "effect interpretation licensed; polarity must match parent comparison units",
+      "canonical_identity": "sha256:7210532289c99ee2d3f2f8d16a2886d49384e8814fea2e5f62cef8dfe19a3f6d",
+      "status": "supported",
+      "inference_level": "E2",
+      "parent_claim_ids": [
+        "claim-O-STAGE-03-2c5bd758-fact-O-STAGE-03-2c5bd758-node:c8936a17df7bdc83"
+      ],
+      "math_op_kind": "weighted_sum"
+    },
+    {
+      "claim_id": "claim-O-STAGE-04-c50e0bef-fact-O-STAGE-04-c50e0bef-node:93633547c32d9f45",
+      "canonical_text": "EBCarRerankerHybridAttention.forward branches on loss_i.shape[0] == 0",
+      "claim_kind": "implementation_behavior",
+      "fact_ids": [
+        "fact-O-STAGE-04-c50e0bef-node:93633547c32d9f45"
+      ],
+      "covers_obligation_ids": [
+        "O-STAGE-04-c50e0bef"
+      ],
+      "direct_evidence_ids": [
+        "span:src/model/ebcar_dedicated_attention_model.py:234:240"
+      ],
+      "relation_evidence_ids": [],
+      "required_qualifiers": [
+        "loss_i.shape[0] == 0"
+      ],
+      "unsupported_author_fragments": [],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "canonical_identity": "sha256:6cc5d4f879a07ba8c85b0d4887eb56125260ac81e630c666ee73f5aeb02c4222",
+      "status": "supported",
+      "inference_level": "E0",
+      "parent_claim_ids": [],
+      "math_op_kind": ""
+    },
+    {
+      "claim_id": "claim-O-STAGE-04-c50e0bef-fact-O-STAGE-04-c50e0bef-node:a2dae47572460254",
+      "canonical_text": "EBCarRerankerHybridAttention.forward concatenates torch.cat, [pos_sim, neg_sims], result=all_sims",
+      "claim_kind": "implementation_behavior",
+      "fact_ids": [
+        "fact-O-STAGE-04-c50e0bef-node:a2dae47572460254"
+      ],
+      "covers_obligation_ids": [
+        "O-STAGE-04-c50e0bef"
+      ],
+      "direct_evidence_ids": [
+        "span:src/model/ebcar_dedicated_attention_model.py:231:231"
+      ],
+      "relation_evidence_ids": [],
+      "required_qualifiers": [],
+      "unsupported_author_fragments": [],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "canonical_identity": "sha256:3070811cae1b0837d2a666e5f3792396a212f98c4768bb6d03a900862fd83663",
+      "status": "supported",
+      "inference_level": "E0",
+      "parent_claim_ids": [],
+      "math_op_kind": ""
+    },
+    {
+      "claim_id": "claim-O-STAGE-04-c50e0bef-fact-O-STAGE-04-c50e0bef-node:fd2ce32dbb55ed63",
+      "canonical_text": "EBCarRerankerHybridAttention.forward reduces torch.stack(losses).mean, result=loss",
+      "claim_kind": "implementation_behavior",
+      "fact_ids": [
+        "fact-O-STAGE-04-c50e0bef-node:fd2ce32dbb55ed63"
+      ],
+      "covers_obligation_ids": [
+        "O-STAGE-04-c50e0bef"
+      ],
+      "direct_evidence_ids": [
+        "span:src/model/ebcar_dedicated_attention_model.py:243:243"
+      ],
+      "relation_evidence_ids": [
+        "rel:84af4602b176e7bd"
+      ],
+      "required_qualifiers": [],
+      "unsupported_author_fragments": [],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "canonical_identity": "sha256:b96bad24d602fe7d92543fc0f3b360b43565f8aa7ca93b7bd06d265a0695a2d9",
+      "status": "supported",
+      "inference_level": "E0",
+      "parent_claim_ids": [],
+      "math_op_kind": ""
+    },
+    {
+      "claim_id": "claim-O-STAGE-04-c50e0bef-fact-O-STAGE-04-c50e0bef-node:0c0995d424e07399",
+      "canonical_text": "EBCarRerankerHybridAttention.forward returns loss",
+      "claim_kind": "implementation_behavior",
+      "fact_ids": [
+        "fact-O-STAGE-04-c50e0bef-node:0c0995d424e07399"
+      ],
+      "covers_obligation_ids": [
+        "O-STAGE-04-c50e0bef"
+      ],
+      "direct_evidence_ids": [
+        "span:src/model/ebcar_dedicated_attention_model.py:244:244"
+      ],
+      "relation_evidence_ids": [
+        "rel:84af4602b176e7bd"
+      ],
+      "required_qualifiers": [],
+      "unsupported_author_fragments": [],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "canonical_identity": "sha256:7a54b6a78047783620b20e83288fcdb83b19d8fdf71d820666543c2f571b910d",
+      "status": "supported",
+      "inference_level": "E0",
+      "parent_claim_ids": [],
+      "math_op_kind": ""
+    },
+    {
+      "claim_id": "claim-O-STAGE-04-c50e0bef-fact-O-STAGE-04-c50e0bef-node:4b560ac114ae99ec",
+      "canonical_text": "EBCarRerankerHybridAttention.forward computes formula passages, document_id_embeddings",
+      "claim_kind": "implementation_behavior",
+      "fact_ids": [
+        "fact-O-STAGE-04-c50e0bef-node:4b560ac114ae99ec"
+      ],
+      "covers_obligation_ids": [
+        "O-STAGE-04-c50e0bef"
+      ],
+      "direct_evidence_ids": [
+        "span:src/model/ebcar_dedicated_attention_model.py:132:132"
+      ],
+      "relation_evidence_ids": [],
+      "required_qualifiers": [],
+      "unsupported_author_fragments": [],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "canonical_identity": "sha256:bd26f2731d55e290b417d2eb6e9fea9770f91c361beaf2baaf4d244060ad7544",
+      "status": "supported",
+      "inference_level": "E0",
+      "parent_claim_ids": [],
+      "math_op_kind": ""
+    },
+    {
+      "claim_id": "claim-O-STAGE-05-5b3d398a-fact-O-STAGE-05-5b3d398a-node:06b37685c9288fb6",
+      "canonical_text": "EBCarRerankerHybridAttention.rerank branches on self.cfg.add_positional_encoding",
+      "claim_kind": "implementation_behavior",
+      "fact_ids": [
+        "fact-O-STAGE-05-5b3d398a-node:06b37685c9288fb6"
+      ],
+      "covers_obligation_ids": [
+        "O-STAGE-05-5b3d398a"
+      ],
+      "direct_evidence_ids": [
+        "span:src/model/ebcar_dedicated_attention_model.py:265:277"
+      ],
+      "relation_evidence_ids": [
+        "rel:9812df01436b5f4c",
+        "rel:75d4bb1bf855ff42"
+      ],
+      "required_qualifiers": [
+        "self.cfg.add_positional_encoding"
+      ],
+      "unsupported_author_fragments": [],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "canonical_identity": "sha256:9ce7f664eec3b656944fa1b4805302eaecae4e9a50eb460a986ed0ee28e32709",
+      "status": "supported",
+      "inference_level": "E0",
+      "parent_claim_ids": [],
+      "math_op_kind": ""
+    },
+    {
+      "claim_id": "claim-O-STAGE-05-5b3d398a-fact-O-STAGE-05-5b3d398a-node:a002e187c0346457",
+      "canonical_text": "EBCarRerankerHybridAttention.rerank concatenates torch.cat, (query, passages), dim=1",
+      "claim_kind": "implementation_behavior",
+      "fact_ids": [
+        "fact-O-STAGE-05-5b3d398a-node:a002e187c0346457"
+      ],
+      "covers_obligation_ids": [
+        "O-STAGE-05-5b3d398a"
+      ],
+      "direct_evidence_ids": [
+        "span:src/model/ebcar_dedicated_attention_model.py:310:310"
+      ],
+      "relation_evidence_ids": [],
+      "required_qualifiers": [],
+      "unsupported_author_fragments": [],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "canonical_identity": "sha256:6bb19fa8562baa34c9f2c00e327bbbb45e942fe8d86eb319a3b4e4a6cc09c272",
+      "status": "supported",
+      "inference_level": "E0",
+      "parent_claim_ids": [],
+      "math_op_kind": ""
+    },
+    {
+      "claim_id": "claim-O-STAGE-05-5b3d398a-fact-O-STAGE-05-5b3d398a-node:856e72eeddb87554",
+      "canonical_text": "EBCarRerankerHybridAttention.rerank computes formula passages, document_id_embeddings",
+      "claim_kind": "implementation_behavior",
+      "fact_ids": [
+        "fact-O-STAGE-05-5b3d398a-node:856e72eeddb87554"
+      ],
+      "covers_obligation_ids": [
+        "O-STAGE-05-5b3d398a"
+      ],
+      "direct_evidence_ids": [
+        "span:src/model/ebcar_dedicated_attention_model.py:276:276"
+      ],
+      "relation_evidence_ids": [
+        "rel:be1af249e1645ad8"
+      ],
+      "required_qualifiers": [],
+      "unsupported_author_fragments": [],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "canonical_identity": "sha256:c4b4819cbd9ded22e47060a7f3cb5b78fc1688806272f316819549a0db0f5db0",
+      "status": "supported",
+      "inference_level": "E0",
+      "parent_claim_ids": [],
+      "math_op_kind": ""
+    },
+    {
+      "claim_id": "claim-O-STAGE-05-5b3d398a-fact-O-STAGE-05-5b3d398a-node:1077d0d81c820fb0",
+      "canonical_text": "EBCarRerankerHybridAttention.rerank calls self.document_id_embedding, document_id.long() % self.cfg.retrieval.top_k + document_id.long() // self.cfg.retrieval.top_k, result=document_id_embeddings",
+      "claim_kind": "implementation_behavior",
+      "fact_ids": [
+        "fact-O-STAGE-05-5b3d398a-node:1077d0d81c820fb0"
+      ],
+      "covers_obligation_ids": [
+        "O-STAGE-05-5b3d398a"
+      ],
+      "direct_evidence_ids": [
+        "span:src/model/ebcar_dedicated_attention_model.py:267:270"
+      ],
+      "relation_evidence_ids": [
+        "rel:9812df01436b5f4c",
+        "rel:be1af249e1645ad8"
+      ],
+      "required_qualifiers": [
+        "self.cfg.add_positional_encoding"
+      ],
+      "unsupported_author_fragments": [],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "canonical_identity": "sha256:8535a71ed34b2ff8216f63f6df9c5fabec8d88f61b0341a2544af146d3dbb7e2",
+      "status": "supported",
+      "inference_level": "E0",
+      "parent_claim_ids": [],
+      "math_op_kind": ""
+    },
+    {
+      "claim_id": "claim-O-STAGE-05-5b3d398a-fact-O-STAGE-05-5b3d398a-node:26c1ec766ceee404",
+      "canonical_text": "EBCarRerankerHybridAttention.rerank loads weights self.cfg.add_positional_encoding",
+      "claim_kind": "implementation_behavior",
+      "fact_ids": [
+        "fact-O-STAGE-05-5b3d398a-node:26c1ec766ceee404"
+      ],
+      "covers_obligation_ids": [
+        "O-STAGE-05-5b3d398a"
+      ],
+      "direct_evidence_ids": [
+        "span:src/model/ebcar_dedicated_attention_model.py:265:265"
+      ],
+      "relation_evidence_ids": [
+        "rel:75d4bb1bf855ff42"
+      ],
+      "required_qualifiers": [],
+      "unsupported_author_fragments": [],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "canonical_identity": "sha256:cdd58d4f00f42010bea7ea3988763de24dd8d39a7b72ff852ad89054ff5ae7ac",
+      "status": "supported",
+      "inference_level": "E0",
+      "parent_claim_ids": [],
+      "math_op_kind": ""
+    },
+    {
+      "claim_id": "claim-O-STAGE-05-5b3d398a-fact-O-STAGE-05-5b3d398a-node:31075c1f6e053a85",
+      "canonical_text": "EBCarRerankerHybridAttention.rerank calls self.passage_id_embedding, passage_id.long(), result=passage_id_embeddings",
+      "claim_kind": "implementation_behavior",
+      "fact_ids": [
+        "fact-O-STAGE-05-5b3d398a-node:31075c1f6e053a85"
+      ],
+      "covers_obligation_ids": [
+        "O-STAGE-05-5b3d398a"
+      ],
+      "direct_evidence_ids": [
+        "span:src/model/ebcar_dedicated_attention_model.py:271:273"
+      ],
+      "relation_evidence_ids": [],
+      "required_qualifiers": [],
+      "unsupported_author_fragments": [],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "canonical_identity": "sha256:6583f9308268f758b6aac4882700578400609c7592def38786277650cb360813",
+      "status": "supported",
+      "inference_level": "E0",
+      "parent_claim_ids": [],
+      "math_op_kind": ""
+    },
+    {
+      "claim_id": "claim-O-STAGE-05-5b3d398a-fact-O-STAGE-05-5b3d398a-rel:caa3e47dda8fdf04",
+      "canonical_text": "EBCarRerankerHybridAttention.rerank configured by self.cfg.add_positional_encoding",
+      "claim_kind": "implementation_behavior",
+      "fact_ids": [
+        "fact-O-STAGE-05-5b3d398a-rel:caa3e47dda8fdf04"
+      ],
+      "covers_obligation_ids": [
+        "O-STAGE-05-5b3d398a"
+      ],
+      "direct_evidence_ids": [
+        "span:src/model/ebcar_dedicated_attention_model.py:265:277",
+        "span:src/model/ebcar_dedicated_attention_model.py:265:265"
+      ],
+      "relation_evidence_ids": [
+        "rel:75d4bb1bf855ff42"
+      ],
+      "required_qualifiers": [],
+      "unsupported_author_fragments": [],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "canonical_identity": "sha256:8d72aa0666921ae12f80a69f403ecf1d8d3ee7bba7a00196f68bc6e58bf0f88b",
+      "status": "supported",
+      "inference_level": "E0",
+      "parent_claim_ids": [],
+      "math_op_kind": ""
+    },
+    {
+      "claim_id": "claim-O-STAGE-05-5b3d398a-fact-configuration-rel:696083475512bfc5",
+      "canonical_text": "self.cfg.add_positional_encoding configured by true",
+      "claim_kind": "implementation_behavior",
+      "fact_ids": [
+        "fact-configuration-rel:696083475512bfc5"
+      ],
+      "covers_obligation_ids": [
+        "O-STAGE-05-5b3d398a"
+      ],
+      "direct_evidence_ids": [
+        "span:conf/config.yaml:18:18"
+      ],
+      "relation_evidence_ids": [],
+      "required_qualifiers": [],
+      "unsupported_author_fragments": [],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "canonical_identity": "sha256:bc9596d345fb28623e735d8e3d0ad36948c16f8b3a5d8e429b4029a20e8b6a1c",
+      "status": "supported",
+      "inference_level": "E0",
+      "parent_claim_ids": [],
+      "math_op_kind": ""
+    }
+  ],
+  "explicit_code_gaps": [],
+  "semantic_stage_groups": [
+    {
+      "stage_id": "SG-INTENT-01-039a963a",
+      "name": "Retrieval and embedding preparation",
+      "purpose": "Retrieval and embedding preparation: Use a dense retriever (Contriever) to fetch top‑k candidate passages and their pre‑computed embeddings; encode the query with the same model.",
+      "ordered_claim_ids": [
+        "claim-O-STAGE-01-039a963a-fact-O-STAGE-01-039a963a-node:2911a2ecfb714992",
+        "claim-O-STAGE-01-039a963a-fact-O-STAGE-01-039a963a-node:4480dac4431aabbe",
+        "claim-O-STAGE-01-039a963a-fact-O-STAGE-01-039a963a-node:4be5b539dce0e4f4",
+        "claim-O-STAGE-01-039a963a-fact-O-STAGE-01-039a963a-node:00757f21e4c9d9f3",
+        "claim-O-STAGE-01-039a963a-fact-O-STAGE-01-039a963a-node:36bd05a333b6a4fc",
+        "claim-O-STAGE-01-039a963a-fact-O-STAGE-01-039a963a-node:c4189835f8e67f5e"
+      ],
+      "covers_obligation_ids": [
+        "O-STAGE-01-039a963a"
+      ],
+      "relation_evidence_ids": [],
+      "organization_priority": 1
+    },
+    {
+      "stage_id": "SG-INTENT-02-42e8d68d",
+      "name": "Structural augmentation",
+      "purpose": "Structural augmentation: For each retrieved passage, add a dynamic document ID embedding and a sinusoidal passage‑position encoding to its original embedding to inject document‑identity and ordering signals.",
+      "ordered_claim_ids": [
+        "claim-O-STAGE-02-42e8d68d-fact-O-STAGE-02-42e8d68d-node:9a4893d308318488",
+        "claim-O-STAGE-02-42e8d68d-fact-O-STAGE-02-42e8d68d-node:d643b3469b0df29c"
+      ],
+      "covers_obligation_ids": [
+        "O-STAGE-02-42e8d68d"
+      ],
+      "relation_evidence_ids": [
+        "rel:98ac18e6d68d03c8"
+      ],
+      "organization_priority": 2
+    },
+    {
+      "stage_id": "SG-INTENT-03-2c5bd758",
+      "name": "Hybrid‑attention encoding",
+      "purpose": "Hybrid‑attention encoding: Feed the query and augmented passage embeddings into a Transformer encoder that applies shared full attention (global interactions) and dedicated masked attention (intra‑document interactions) in every layer, producing contextualized passage embeddings.",
+      "ordered_claim_ids": [
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:4c8511d6e8fc4240",
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:3673b2e5dbd63bd0",
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:73ea6c8145b47e07",
+        "l2:math:fact-O-METHOD-MAINLINE-01-c8146479-node:4c8511d6e8fc4240:weighted_sum",
+        "l2:math:fact-O-METHOD-MAINLINE-01-c8146479-node:3673b2e5dbd63bd0:normalize",
+        "claim-O-STAGE-03-2c5bd758-fact-O-STAGE-03-2c5bd758-node:b220afbc1e6023fe",
+        "claim-O-STAGE-03-2c5bd758-fact-O-STAGE-03-2c5bd758-node:142f7d2a2f9e8288",
+        "claim-O-STAGE-03-2c5bd758-fact-O-STAGE-03-2c5bd758-node:15f8ab428198f369",
+        "claim-O-STAGE-03-2c5bd758-fact-O-STAGE-03-2c5bd758-node:c8936a17df7bdc83",
+        "claim-O-STAGE-03-2c5bd758-fact-O-STAGE-03-2c5bd758-node:4f3a01f0d7880c82",
+        "l2:math:fact-O-STAGE-03-2c5bd758-node:c8936a17df7bdc83:weighted_sum",
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:c8936a17df7bdc83",
+        "l2:math:fact-O-METHOD-MAINLINE-01-c8146479-node:c8936a17df7bdc83:weighted_sum",
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:6daefc8982533bad",
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:b6468fc08c848936",
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-rel:1b2f2e5db0f09696",
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-configuration-rel:dc95ead65d3bb047"
+      ],
+      "covers_obligation_ids": [
+        "O-STAGE-03-2c5bd758",
+        "O-METHOD-MAINLINE-01-c8146479"
+      ],
+      "relation_evidence_ids": [
+        "rel:597477ee05849627",
+        "rel:622508515b3080f4",
+        "rel:83ef85703286c813"
+      ],
+      "organization_priority": 3
+    },
+    {
+      "stage_id": "SG-INTENT-04-c50e0bef",
+      "name": "Contrastive training",
+      "purpose": "Contrastive training: Using a contrastive InfoNCE loss, pull the updated positive passage embedding toward the fixed query embedding and push negative passage embeddings away.",
+      "ordered_claim_ids": [
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:a48f78c0e1931462",
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:7fabddc9286307b4",
+        "claim-O-STAGE-04-c50e0bef-fact-O-STAGE-04-c50e0bef-node:93633547c32d9f45",
+        "claim-O-STAGE-04-c50e0bef-fact-O-STAGE-04-c50e0bef-node:a2dae47572460254",
+        "claim-O-STAGE-04-c50e0bef-fact-O-STAGE-04-c50e0bef-node:fd2ce32dbb55ed63",
+        "claim-O-STAGE-04-c50e0bef-fact-O-STAGE-04-c50e0bef-node:0c0995d424e07399",
+        "claim-O-STAGE-04-c50e0bef-fact-O-STAGE-04-c50e0bef-node:4b560ac114ae99ec",
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:fd2ce32dbb55ed63",
+        "l2:math:fact-O-METHOD-MAINLINE-01-c8146479-node:7fabddc9286307b4:weighted_sum"
+      ],
+      "covers_obligation_ids": [
+        "O-STAGE-04-c50e0bef"
+      ],
+      "relation_evidence_ids": [
+        "rel:84af4602b176e7bd"
+      ],
+      "organization_priority": 4
+    },
+    {
+      "stage_id": "SG-INTENT-05-5b3d398a",
+      "name": "Inference scoring and ranking",
+      "purpose": "Inference scoring and ranking: Compute dot‑product similarities between the unchanged query embedding and the contextualized passage embeddings, then sort passages by descending score.",
+      "ordered_claim_ids": [
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:8e87e1804f77f50f",
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:c1802b91f97392cc",
+        "claim-O-STAGE-05-5b3d398a-fact-O-STAGE-05-5b3d398a-node:06b37685c9288fb6",
+        "claim-O-STAGE-05-5b3d398a-fact-O-STAGE-05-5b3d398a-node:a002e187c0346457",
+        "claim-O-STAGE-05-5b3d398a-fact-O-STAGE-05-5b3d398a-node:856e72eeddb87554",
+        "claim-O-STAGE-05-5b3d398a-fact-O-STAGE-05-5b3d398a-node:1077d0d81c820fb0",
+        "claim-O-STAGE-05-5b3d398a-fact-O-STAGE-05-5b3d398a-node:26c1ec766ceee404",
+        "claim-O-STAGE-05-5b3d398a-fact-O-STAGE-05-5b3d398a-node:31075c1f6e053a85",
+        "claim-O-STAGE-05-5b3d398a-fact-O-STAGE-05-5b3d398a-rel:caa3e47dda8fdf04",
+        "claim-O-STAGE-05-5b3d398a-fact-configuration-rel:696083475512bfc5",
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:5ff7f276f04b71a8",
+        "l2:math:fact-O-METHOD-MAINLINE-01-c8146479-node:5ff7f276f04b71a8:weighted_sum",
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:a6f6c00ca097eeb1",
+        "l2:math:fact-O-METHOD-MAINLINE-01-c8146479-node:a6f6c00ca097eeb1:weighted_sum"
+      ],
+      "covers_obligation_ids": [
+        "O-STAGE-05-5b3d398a",
+        "O-METHOD-MAINLINE-01-c8146479"
+      ],
+      "relation_evidence_ids": [
+        "rel:9812df01436b5f4c",
+        "rel:75d4bb1bf855ff42",
+        "rel:be1af249e1645ad8"
+      ],
+      "organization_priority": 5
+    }
+  ],
+  "content_digest": "sha256:2382431a9216a34d323f39be391c8f19a2685255207f2e83da2dde2892567d8c"
+}

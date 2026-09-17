@@ -1,0 +1,25 @@
+{
+  "attempt": 1,
+  "blocked_reason": "",
+  "content_digest": "sha256:30a8c88e0130634e255379857cbf18e2c88bed26a5cf4c078777fbea417d9b0d",
+  "diagnostics": {
+    "finish_seen": true,
+    "partial_chars": 1579,
+    "stream_events": 513,
+    "terminal_status": "finish_seen",
+    "usage_seen": true
+  },
+  "finish_reason": "structured_complete",
+  "invocation_id": "inv:writer:MA-S3:page:a7853ad742b4a90d168a0a886b86bf839cace3caec2b11337a9883ca055e68ae",
+  "provider_finish_reason": "stop",
+  "request_diagnostics_digest": "sha256:6f744f52600cdb8a5a43dc82a7a867e4a22bdef73d2a48da2d4b2c991b6d74eb",
+  "response_digest": "sha256:1fc8425245d61d9dce206c029825343ab2052b09e39917b479db00e8354f5298",
+  "response_text": "{\"paragraphs\":[{\"deferred_detail_ids\":[],\"formula_disposition\":\"consumed\",\"paragraph_id\":\"MA-S3:P2__f2\",\"paragraph_markdown\":\"The dedicated-attention path enriches the passage representations with positional information before constructing the attention mask. Each document identifier is mapped to a passage-level ordinal by integer division of the document index by the retrieval top-$k$ parameter, yielding a position index that reflects the document's rank within the retrieved passage sequence. When positional encoding is enabled, this ordinal is passed through a learned passage-ID embedding table to produce a dense passage-position vector, which is then concatenated or added to the passage representations to form the enriched passage tensor. From this tensor, the number of passages is read from its second dimension and the batch size from its first. A dedicated attention mask is then allocated as a zero-initialized tensor of shape $[B, P+1, P+1]$, where $B$ is the batch size and $P$ is the number of passages; the additional position in each of the last two dimensions accommodates a query or special token that is attended over jointly with all passages. The mask is placed on the same device as the model parameters. The retrieval-matching condition under which a passage is selected for inclusion in the enriched set is specified by a size-presence check and a chunk-identity comparison between the document and the query, though the precise selection predicate remains an open design choice at this stage.\",\"used_formula_package_ids\":[]}],\"section_id\":\"MA-S3\"}",
+  "schema_version": "1.0",
+  "thinking_chars": 0,
+  "usage": {
+    "completion_tokens": 1336,
+    "prompt_tokens": 33500,
+    "total_tokens": 34836
+  }
+}

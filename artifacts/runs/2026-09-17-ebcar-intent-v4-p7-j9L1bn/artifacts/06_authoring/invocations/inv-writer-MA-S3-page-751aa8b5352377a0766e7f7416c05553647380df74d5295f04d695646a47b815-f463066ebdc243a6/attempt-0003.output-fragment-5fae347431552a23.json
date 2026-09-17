@@ -1,0 +1,13 @@
+{
+  "attempt": 3,
+  "fragment": {
+    "blocked_reason": "unified_actual_request_rejected:attempt_limit_exhausted:inv:writer:MA-S3:page:751aa8b5352377a0766e7f7416c05553647380df74d5295f04d695646a47b815:3>2",
+    "consumer_role": "writer",
+    "page_id": "page:751aa8b5352377a0766e7f7416c05553647380df74d5295f04d695646a47b815",
+    "response_hash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "response_text": "",
+    "section_id": "MA-S3"
+  },
+  "invocation_id": "inv:writer:MA-S3:page:751aa8b5352377a0766e7f7416c05553647380df74d5295f04d695646a47b815",
+  "schema_version": "2.0"
+}

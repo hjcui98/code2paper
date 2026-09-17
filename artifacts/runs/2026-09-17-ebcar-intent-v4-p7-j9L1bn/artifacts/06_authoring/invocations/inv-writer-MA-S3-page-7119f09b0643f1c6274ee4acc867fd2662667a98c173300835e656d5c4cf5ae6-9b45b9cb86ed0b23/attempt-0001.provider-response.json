@@ -1,0 +1,25 @@
+{
+  "attempt": 1,
+  "blocked_reason": "",
+  "content_digest": "sha256:f076cf3e915c40b1d66bc0fde0e01922ea0a6f40a032011681d3102ff11dc5d3",
+  "diagnostics": {
+    "finish_seen": true,
+    "partial_chars": 1149,
+    "stream_events": 491,
+    "terminal_status": "finish_seen",
+    "usage_seen": true
+  },
+  "finish_reason": "structured_complete",
+  "invocation_id": "inv:writer:MA-S3:page:7119f09b0643f1c6274ee4acc867fd2662667a98c173300835e656d5c4cf5ae6",
+  "provider_finish_reason": "stop",
+  "request_diagnostics_digest": "sha256:86dd8be838d96a20da6f30cef238684cd8d6dea086b2b4b6bb5f239a84bbaef8",
+  "response_digest": "sha256:7572634b102c1d129aadbfd84f070cc1898eea5828ed510d98e0a31691db66e6",
+  "response_text": "{\"paragraphs\":[{\"paragraph_id\":\"MA-S3:P1__f2\",\"paragraph_markdown\":\"The enrichment mechanism decomposes each document identifier into two positional components through modular arithmetic with the configured retrieval list size. The remainder of the document identifier divided by the retrieval list size yields the position of the passage within the current retrieval list, while the integer quotient identifies the document-level index across the corpus. These two components are combined additively to form a composite positional code that distinguishes both intra-document position and inter-document provenance. When positional encoding is enabled, passage identifiers are additionally mapped through a learned embedding table, producing dense passage-level positional representations of shape [batch_size, num_passages, hidden_size]. The base passage embeddings and the derived positional representations are then concatenated along the feature dimension to yield the final enriched embedding, which is passed to the Transformer encoder.\",\"rendered_from_facet_ids\":[],\"rendered_slot_ids\":[],\"used_formula_package_ids\":[]}],\"section_id\":\"MA-S3\"}",
+  "schema_version": "1.0",
+  "thinking_chars": 0,
+  "usage": {
+    "completion_tokens": 1226,
+    "prompt_tokens": 27625,
+    "total_tokens": 28851
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "attempt": 1,
+  "blocked_reason": "",
+  "content_digest": "sha256:4e2c51959cc6b788fb6995b74d594371a0ae42656541de111a5f6e9a2e48fe0e",
+  "diagnostics": {
+    "finish_seen": true,
+    "partial_chars": 623,
+    "stream_events": 61,
+    "terminal_status": "finish_seen",
+    "usage_seen": true
+  },
+  "finish_reason": "structured_complete",
+  "invocation_id": "inv:realizer:MA-S1:page:281af1e758001328894fc2f8200e5e244a060ff3eafae98e6dcfb3a428ed052a",
+  "provider_finish_reason": "stop",
+  "request_diagnostics_digest": "sha256:aa424e125fe2d3abe77506209009dc02c4dc9c7b7f086e9c8d80fae935e511ea",
+  "response_digest": "sha256:7080bbac88e579f2c1ce17f1fd3820c708eb345177b7466e5418af78e3372960",
+  "response_text": "{\n  \"draft_markdown\": \"Mechanism MA-S1 is defined by the provided technical payload. No specific detail IDs, formula packages, or atomic targets are mandated for this section. The mechanism header identifies the join structure as 'join:MA-S1' and includes two paragraph identifiers: 'MA-S1:P1' and 'MA-S1:P2'. As there are no required detail witnesses, formula witnesses, or atom witnesses specified in the response contract, the draft preserves the structural integrity of the mechanism without asserting unresolved configuration values.\",\n  \"rendered_detail_ids\": [],\n  \"used_formula_package_ids\": [],\n  \"witnesses\": []\n}",
+  "schema_version": "1.0",
+  "thinking_chars": 0,
+  "usage": {
+    "completion_tokens": 139,
+    "prompt_tokens": 807,
+    "total_tokens": 946
+  }
+}

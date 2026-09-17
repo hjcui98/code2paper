@@ -1,0 +1,615 @@
+{
+  "attempt": 1,
+  "config": {
+    "max_output_tokens": 8192,
+    "model": "qwen38-27b-nvfp4",
+    "reasoning_effort": "low",
+    "role": "method_writer",
+    "seed": 42,
+    "temperature": 0.7,
+    "thinking_token_budget": 1024,
+    "top_k": 20,
+    "top_p": 0.95
+  },
+  "content_digest": "sha256:916c26845f7db64c0618a31291360d4263c2c52445aa7d4a7b15c8d6435d8ccf",
+  "input_payload": {
+    "binding_contract": {
+      "allowed_detail_ids": [],
+      "allowed_formula_obligation_ids": [],
+      "allowed_formula_package_ids": [],
+      "atom_binding": {
+        "instruction": "Do not treat atom witness declarations as completed binding. The deterministic Binder attaches exact atom substrings after the Writer paragraph content is accepted.",
+        "owner": "binder",
+        "required_atom_count": 0
+      },
+      "required_detail_ids": [],
+      "required_rhetorical_moves": []
+    },
+    "candidate_partial_handoff": [
+      {
+        "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+        "missing_fields": [
+          "typed_predicate:SELECT"
+        ],
+        "obligation_id": "O-STAGE-01-039a963a",
+        "post_partial_retry_count": 1,
+        "qualifier": "size is not None; doc['chunk_id'] == query['chunk_id']",
+        "qualifier_clear": true,
+        "semantic_gain_on_retry": null,
+        "unresolved_fields": [
+          {
+            "description": "typed_predicate:SELECT",
+            "field_id": "sha256:5e2fef486867098e8",
+            "field_type": "other"
+          }
+        ],
+        "writer_instruction": "Use repository evidence only for the resolved portion. Treat every missing field as unresolved author specification or explicit uncertainty; do not state it as a repository-verified implementation fact. Preserve the exact qualifier and allowed wording boundary supplied below."
+      }
+    ],
+    "formula_generation_policy": "consume_only",
+    "formula_packages": [],
+    "formula_placeholders_required": false,
+    "heading": "Embedding‑based reranking formulation and overall framework.",
+    "narrative_plan": {
+      "content_digest": "sha256:f1dd1d66ec8b9f311d18ee7eba657e98cd23bd85d7e3c9def5e18149c15318c0",
+      "heading": "Embedding‑based reranking formulation and overall framework.",
+      "mechanism_ids": [],
+      "page_id": "page:0b5cf25648aa7e8de2636240c208848cb98726e935b1def28d73ebf7560ebab9",
+      "page_paragraph_ids": [
+        "MA-S2:P1",
+        "MA-S2:P2"
+      ],
+      "paragraphs": [
+        {
+          "content_digest": "sha256:55a7355363309ab9cc963d02c05d2a8c746d1e4b25a5051d64327d6e08fbbba7",
+          "formula_obligation_ids": [],
+          "formula_package_ids": [],
+          "mechanism_id": "",
+          "optional_detail_ids": [],
+          "paragraph_id": "MA-S2:P1",
+          "reader_goal": "How does this setup realize Embedding‑based reranking formulation and overall framework?",
+          "required_detail_ids": [],
+          "role": "step_sequence",
+          "section_id": "MA-S2",
+          "suggested_depth": "standard",
+          "transition_from": "",
+          "transition_to": "",
+          "witness_contract": {
+            "targets": []
+          }
+        },
+        {
+          "content_digest": "sha256:01a121975a3d40f71e552b5856e9258f66bfe161ad68960675d13b6b123007f8",
+          "formula_obligation_ids": [],
+          "formula_package_ids": [],
+          "mechanism_id": "",
+          "optional_detail_ids": [],
+          "paragraph_id": "MA-S2:P2",
+          "reader_goal": "How does this setup realize Embedding‑based reranking formulation and overall framework?",
+          "required_detail_ids": [],
+          "role": "step_sequence",
+          "section_id": "MA-S2",
+          "suggested_depth": "standard",
+          "transition_from": "MA-S2:P1",
+          "transition_to": "",
+          "witness_contract": {
+            "targets": []
+          }
+        }
+      ],
+      "section_id": "MA-S2"
+    },
+    "output_contract": "PublicationMethodSectionOutputV1",
+    "paragraph_transaction_required": true,
+    "section_id": "MA-S2",
+    "shared_context_metadata": [
+      {
+        "archive_digest": "sha256:02c99eb39cb26038a803846cc19be97619909e93965d9f182c4843ce9438a988",
+        "invocation_max_output_tokens": 8192,
+        "mechanism_id": "header:MA-S2",
+        "page_bytes_digest": "sha256:166c63c2d1535735f07cb5a47a44d4d098426a6baf1cfb5e2f4f184ecca838ac",
+        "page_digest": "sha256:c9d5a9906bc1f05c439d83e6533a35f6084d4de855f4c5b18eeb2ec192f15240",
+        "page_id": "page:0b5cf25648aa7e8de2636240c208848cb98726e935b1def28d73ebf7560ebab9",
+        "page_index": 0,
+        "page_manifest_digest": "sha256:cd0d51ded32e9340e4239cc46198cfc714c85aec1b743a9c5e42a2b301433d49",
+        "section_id": "MA-S2",
+        "task_ids": [
+          "MA-S2"
+        ],
+        "technical_bytes_digest": "sha256:166c63c2d1535735f07cb5a47a44d4d098426a6baf1cfb5e2f4f184ecca838ac",
+        "v2_page_id": "page:0b5cf25648aa7e8de2636240c208848cb98726e935b1def28d73ebf7560ebab9",
+        "writer_invocation_id": "inv:writer:MA-S2:page:0b5cf25648aa7e8de2636240c208848cb98726e935b1def28d73ebf7560ebab9",
+        "writer_prompt_digest": "sha256:a818862558c61a56f9125a10121afb64da87d074a18bf5cb5c50b0fff67ad791"
+      }
+    ],
+    "shared_contexts": [
+      {
+        "archive_digest": "sha256:02c99eb39cb26038a803846cc19be97619909e93965d9f182c4843ce9438a988",
+        "atoms": [],
+        "detail_ids": [],
+        "formula_obligation_ids": [],
+        "formula_package_ids": [],
+        "formula_package_source_detail_ids": {},
+        "mechanism_header": {
+          "mechanism_id": "join:MA-S2",
+          "mechanism_ids": []
+        },
+        "obligation_ids": [
+          "MA-S2"
+        ],
+        "paragraph_ids": [
+          "MA-S2:P1",
+          "MA-S2:P2"
+        ],
+        "projection_proof": {},
+        "section_id": "MA-S2"
+      }
+    ]
+  },
+  "invocation_id": "inv:writer:MA-S2:page:0b5cf25648aa7e8de2636240c208848cb98726e935b1def28d73ebf7560ebab9",
+  "prompt": "You are a publication Method writer, skill publication-method-writer/1.15.\nHard constraints:\nWrite exactly one section from the supplied contracts. Use paragraph_plan as the organization skeleton, writer_view/facet policies for author scope and caveat mode, semantic argument_flow frames for repository facts, and formula_packages only for their bound mathematical expression.\nwriter_view positive_propositions/concepts are repository-supported Method content; caveated propositions/concepts are candidate-only author narrative. Write the author mechanism as Method prose; one natural limitation clause is enough when support is partial.\nimmutable_constraints (or concept_constraints) carry qualifiers, numbers, formulas, conditions, and configurations that must remain exact. They validate wording but are not a sentence template.\nWhen writer_view.technical_propositions is non-empty, those rows are licensed E2/E3 effects: write them as Method sentences, keep polarity, do not emit an empty repository-spec shell, and do not start new research through expository_bridge.\nWhen formula_packages is present, emit the supplied placeholder [[FORMULA:<package_id>]] in the owning paragraph beside the mechanism, explain its symbols at first use, and preserve every material_condition and assumption exactly. Do not type, copy, normalize, or alter a formula block; the harness inserts the stored display-math block verbatim. If formula_packages is non-empty, the supplied formula is the only authorized paper-level mathematical rendering for that mechanism; do not restate the same mechanism as a second inline or display equation. Explain the supplied formula in prose and define its symbols. Candidate may consume author_intent_academic and hybrid_partial packages the same way; they remain ineligible for Verified.\nWhen authoring_packets_v2 is present, it is the sole paragraph organization surface: follow each packet's expected_sentence_range and each Method Unit's reader question, purpose, ordered operations, authority, and formula roles together with ordered_targets, surface_mode, dossier summary, conditions, configuration state, and consumer-scoped formula placeholders. Treat intent_hints as caveated organization context, never as repository evidence. Treat method_unit.surface_mode as binding: repository_statement may state only the supplied code operation; mismatch_statement and author_specification are Candidate author-mechanism narrative, not an audit comparison of observed implementation versus intended design. Expand author_specification from the supplied author statements and purpose into readable Method paragraphs within the sentence budget; one natural limitation clause is enough when support is partial, and the paragraph spine must be the mechanism, not 'has not yet been established'. author_specification must never be phrased as an implemented repository fact. Do not repeat one source operation for separate guard variants: preserve their supplied conditions/guard_variants in one connected sentence or short paragraph. Return the paragraph id and formula placeholders only; the harness sidecar restores facet/field/slot/edge targets and the separate Binder supplies exact witnesses after prose is frozen.\nWhen paragraph_transaction_required is true, return exactly one paragraph transaction for each supplied paragraph_plan row. Put only that paragraph's substantive prose in paragraph_markdown (no H1/H2/H3 heading), leave rendered_from_facet_ids, rendered_field_candidate_ids, rendered_slot_ids, rendered_edge_ids, and used_formula_package_ids empty unless a formula placeholder is present, and let the harness recover internal targets and the separate Binder attach exact witnesses after the prose is frozen.\nWhen writer_section_repair.paragraph_transaction_repairs is present, repair only the listed paragraph(s): use each listed semantic target as a content requirement, preserve correct incumbent siblings, and you may return only the repaired paragraph transaction(s). The Harness merges omitted siblings from the incumbent and re-runs the complete paragraph transaction; do not copy target ids into prose or invent witnesses.\nIf required_qualifier_bindings is present, it is the section-scoped list of academic condition phrases. Repeat the applicable paper phrasing in each factual sentence it qualifies. Do not paste self., self.cfg, or torch. identifiers into Candidate prose.\nMake scientific concepts, representations, transformations, objectives, and outputs the grammatical subjects. Raw code identifiers may appear only as brief implementation bindings; never narrate calls, ranges, shapes, member accesses, IDs, validators, or evidence records.\nWrite substantive Method content. Never replace a candidate proposition with a status label or another promise to discuss it.\nDo not invent rationale, benefits, performance, novelty, mathematics, conditions, or implementation details. Do not turn author intent into repository fact.\nKeep harness and audit vocabulary out of section prose, including audit, callback, sidecar, pending, unverified, validation status, repository evidence, formalization pending, and typed gap. Express limitations as natural academic wording.\nFor a section-level response (when paragraph_transaction_required is false), begin with exactly '## <supplied heading>'. For a paragraph-transaction response, do not emit any heading: the harness supplies the section H2 and assembles paragraph order. In either mode, render each paragraph_plan once, preserve ordered slots and condition/output polarity, and use coherent paragraphs separated by blank lines for distinct procedure steps. State each proposition once, avoid repeated pipeline summaries, and stop when the paragraph budget and supplied author items are exhausted. Do not collapse a multi-step procedure into a single unbroken paragraph.\nIf a required proposition cannot be written, put its exact ID in deferred_proposition_ids and emit a scoped research request when a callback opportunity exists. Do not fabricate prose or a callback.\nReturn only the structured section object. Copy section_id and paragraph_id exactly; use a formula package id only inside its required [[FORMULA:<package_id>]] placeholder. Do not copy facet, field, slot, edge, claim, fact, frame, equation, configuration, argument-unit, or rhetorical-move ids into paragraph or section binding arrays—the harness sidecar and Binder recover those targets after prose is frozen. The prose must never contain audit, callback, sidecar, pending, unverified, validation-status, repository-evidence, formalization-pending, or typed-gap terms.",
+  "prompt_template_id": "unified_writer_page_v2",
+  "request_digest": "sha256:b0042b142ff57ccda8b841adead2bb62a186097769d993de602bbe872d21de3d",
+  "response_schema": {
+    "$defs": {
+      "PublicationContentWitnessV1": {
+        "additionalProperties": false,
+        "description": "Exact textual witness for one paragraph-level binding.",
+        "properties": {
+          "exact_text": {
+            "maxLength": 4000,
+            "minLength": 1,
+            "title": "Exact Text",
+            "type": "string"
+          },
+          "target_id": {
+            "maxLength": 240,
+            "minLength": 1,
+            "title": "Target Id",
+            "type": "string"
+          },
+          "witness_kind": {
+            "enum": [
+              "detail",
+              "atom",
+              "facet",
+              "field",
+              "slot",
+              "edge",
+              "formula",
+              "claim",
+              "equation"
+            ],
+            "title": "Witness Kind",
+            "type": "string"
+          }
+        },
+        "required": [
+          "witness_kind",
+          "target_id",
+          "exact_text"
+        ],
+        "title": "PublicationContentWitnessV1",
+        "type": "object"
+      },
+      "PublicationFormulaDispositionV1": {
+        "additionalProperties": false,
+        "description": "Typed Writer disposition for a formula package it did not consume.",
+        "properties": {
+          "disposition": {
+            "enum": [
+              "consumed",
+              "writer_rejected_not_material",
+              "writer_rejected_conflict",
+              "missing_from_prose"
+            ],
+            "title": "Disposition",
+            "type": "string"
+          },
+          "package_id": {
+            "maxLength": 240,
+            "minLength": 1,
+            "title": "Package Id",
+            "type": "string"
+          },
+          "reason": {
+            "default": "",
+            "maxLength": 800,
+            "title": "Reason",
+            "type": "string"
+          }
+        },
+        "required": [
+          "package_id",
+          "disposition"
+        ],
+        "title": "PublicationFormulaDispositionV1",
+        "type": "object"
+      },
+      "PublicationMethodParagraphOutputV1": {
+        "additionalProperties": false,
+        "description": "Transactional Writer output for exactly one planned paragraph.",
+        "properties": {
+          "deferred_detail_ids": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 64,
+            "title": "Deferred Detail Ids",
+            "type": "array"
+          },
+          "formula_disposition": {
+            "anyOf": [
+              {
+                "enum": [
+                  "consumed",
+                  "writer_rejected_not_material",
+                  "writer_rejected_conflict",
+                  "missing_from_prose"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Formula Disposition"
+          },
+          "formula_disposition_reason": {
+            "default": "",
+            "maxLength": 800,
+            "title": "Formula Disposition Reason",
+            "type": "string"
+          },
+          "formula_dispositions": {
+            "items": {
+              "$ref": "#/$defs/PublicationFormulaDispositionV1"
+            },
+            "maxItems": 16,
+            "title": "Formula Dispositions",
+            "type": "array"
+          },
+          "paragraph_id": {
+            "enum": [
+              "MA-S2:P1",
+              "MA-S2:P2"
+            ],
+            "title": "Paragraph Id",
+            "type": "string"
+          },
+          "paragraph_markdown": {
+            "maxLength": 16000,
+            "minLength": 1,
+            "title": "Paragraph Markdown",
+            "type": "string"
+          },
+          "rendered_detail_ids": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 64,
+            "title": "Rendered Detail Ids",
+            "type": "array"
+          },
+          "rendered_edge_ids": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 32,
+            "title": "Rendered Edge Ids",
+            "type": "array"
+          },
+          "rendered_field_candidate_ids": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 64,
+            "title": "Rendered Field Candidate Ids",
+            "type": "array"
+          },
+          "rendered_from_facet_ids": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 32,
+            "title": "Rendered From Facet Ids",
+            "type": "array"
+          },
+          "rendered_slot_ids": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 64,
+            "title": "Rendered Slot Ids",
+            "type": "array"
+          },
+          "unresolved": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 64,
+            "title": "Unresolved",
+            "type": "array"
+          },
+          "unresolved_points": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 64,
+            "title": "Unresolved Points",
+            "type": "array"
+          },
+          "used_claim_ids": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 64,
+            "title": "Used Claim Ids",
+            "type": "array"
+          },
+          "used_equation_ids": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 32,
+            "title": "Used Equation Ids",
+            "type": "array"
+          },
+          "used_formula_package_ids": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 8,
+            "title": "Used Formula Package Ids",
+            "type": "array"
+          },
+          "witnesses": {
+            "items": {
+              "$ref": "#/$defs/PublicationContentWitnessV1"
+            },
+            "maxItems": 128,
+            "title": "Witnesses",
+            "type": "array"
+          }
+        },
+        "required": [
+          "paragraph_id",
+          "paragraph_markdown"
+        ],
+        "title": "PublicationMethodParagraphOutputV1",
+        "type": "object"
+      },
+      "PublicationUnresolvedPointV1": {
+        "additionalProperties": false,
+        "description": "Typed unresolved point surfaced by the Writer (WP2).",
+        "properties": {
+          "authority_lane": {
+            "default": "",
+            "title": "Authority Lane",
+            "type": "string"
+          },
+          "reason": {
+            "maxLength": 800,
+            "minLength": 1,
+            "title": "Reason",
+            "type": "string"
+          },
+          "slot_kind": {
+            "default": "",
+            "title": "Slot Kind",
+            "type": "string"
+          },
+          "target_concept_key": {
+            "default": "",
+            "title": "Target Concept Key",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reason"
+        ],
+        "title": "PublicationUnresolvedPointV1",
+        "type": "object"
+      }
+    },
+    "additionalProperties": false,
+    "description": "Content-first Writer response; ids are bindings, not prose substitutes.\n\n``section_markdown`` is the only required prose field.  The ``used_*``\nand ``completed_rhetorical_moves`` bindings are auxiliary metadata: the\nWriter may omit them (post-processing binds prose against facts), but it\nmay never invent an id.  ``unresolved_points`` lets the Writer surface\npoints it could not write safely; they become review/callback items.",
+    "properties": {
+      "completed_rhetorical_moves": {
+        "items": {
+          "type": "string"
+        },
+        "title": "Completed Rhetorical Moves",
+        "type": "array"
+      },
+      "deferred_brief_ids": {
+        "items": {
+          "type": "string"
+        },
+        "title": "Deferred Brief Ids",
+        "type": "array"
+      },
+      "deferred_concept_keys": {
+        "items": {
+          "type": "string"
+        },
+        "title": "Deferred Concept Keys",
+        "type": "array"
+      },
+      "deferred_detail_ids": {
+        "items": {
+          "type": "string"
+        },
+        "title": "Deferred Detail Ids",
+        "type": "array"
+      },
+      "deferred_facet_ids": {
+        "items": {
+          "type": "string"
+        },
+        "title": "Deferred Facet Ids",
+        "type": "array"
+      },
+      "deferred_proposition_ids": {
+        "items": {
+          "type": "string"
+        },
+        "title": "Deferred Proposition Ids",
+        "type": "array"
+      },
+      "heading_text": {
+        "default": "",
+        "title": "Heading Text",
+        "type": "string"
+      },
+      "new_research_requests": {
+        "items": {
+          "additionalProperties": true,
+          "type": "object"
+        },
+        "title": "New Research Requests",
+        "type": "array"
+      },
+      "paragraphs": {
+        "items": {
+          "$ref": "#/$defs/PublicationMethodParagraphOutputV1"
+        },
+        "maxItems": 64,
+        "minItems": 1,
+        "title": "Paragraphs",
+        "type": "array"
+      },
+      "rendered_brief_ids": {
+        "items": {
+          "type": "string"
+        },
+        "title": "Rendered Brief Ids",
+        "type": "array"
+      },
+      "rendered_concept_keys": {
+        "items": {
+          "type": "string"
+        },
+        "title": "Rendered Concept Keys",
+        "type": "array"
+      },
+      "rendered_detail_ids": {
+        "items": {
+          "type": "string"
+        },
+        "title": "Rendered Detail Ids",
+        "type": "array"
+      },
+      "rendered_edge_ids": {
+        "items": {
+          "type": "string"
+        },
+        "title": "Rendered Edge Ids",
+        "type": "array"
+      },
+      "rendered_field_candidate_ids": {
+        "items": {
+          "type": "string"
+        },
+        "title": "Rendered Field Candidate Ids",
+        "type": "array"
+      },
+      "rendered_from_facet_ids": {
+        "items": {
+          "type": "string"
+        },
+        "title": "Rendered From Facet Ids",
+        "type": "array"
+      },
+      "rendered_paragraph_ids": {
+        "items": {
+          "type": "string"
+        },
+        "title": "Rendered Paragraph Ids",
+        "type": "array"
+      },
+      "rendered_proposition_ids": {
+        "items": {
+          "type": "string"
+        },
+        "title": "Rendered Proposition Ids",
+        "type": "array"
+      },
+      "rendered_slot_ids": {
+        "items": {
+          "type": "string"
+        },
+        "title": "Rendered Slot Ids",
+        "type": "array"
+      },
+      "section_id": {
+        "const": "MA-S2",
+        "default": "",
+        "title": "Section Id",
+        "type": "string"
+      },
+      "section_markdown": {
+        "default": "",
+        "title": "Section Markdown",
+        "type": "string"
+      },
+      "self_identified_risks": {
+        "items": {
+          "type": "string"
+        },
+        "title": "Self Identified Risks",
+        "type": "array"
+      },
+      "unresolved_points": {
+        "items": {
+          "$ref": "#/$defs/PublicationUnresolvedPointV1"
+        },
+        "title": "Unresolved Points",
+        "type": "array"
+      },
+      "used_argument_unit_ids": {
+        "items": {
+          "type": "string"
+        },
+        "title": "Used Argument Unit Ids",
+        "type": "array"
+      },
+      "used_claim_ids": {
+        "items": {
+          "type": "string"
+        },
+        "title": "Used Claim Ids",
+        "type": "array"
+      },
+      "used_configuration_ids": {
+        "items": {
+          "type": "string"
+        },
+        "title": "Used Configuration Ids",
+        "type": "array"
+      },
+      "used_equation_ids": {
+        "items": {
+          "type": "string"
+        },
+        "title": "Used Equation Ids",
+        "type": "array"
+      },
+      "used_formula_package_ids": {
+        "items": {
+          "type": "string"
+        },
+        "title": "Used Formula Package Ids",
+        "type": "array"
+      }
+    },
+    "required": [
+      "section_id",
+      "paragraphs"
+    ],
+    "title": "PublicationMethodSectionOutputV1",
+    "type": "object"
+  },
+  "schema_version": "1.0"
+}

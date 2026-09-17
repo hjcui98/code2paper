@@ -1,0 +1,15 @@
+{
+  "schema_version": "1.0",
+  "run_id": "ebcar-intent-v4-p7-current-20260916T165846Z",
+  "code_commit_sha": "287506e3e2df30e3c840b8f6398b5010c25111e1",
+  "dirty_manifest_digest": "sha256:b90285d65648299352db0af98d025bc7d50956ff747f3ef850b370f2e3cb952d",
+  "launcher_digest": "sha256:aacd85e1adaa17054fcf94c50ef2b68d30108c33e330ec0cb2bbaeb4d41445d4",
+  "profile_digest": "sha256:a34a35d102eecc635dafd9d72263fdc084899d367a7371fb4274d2222288537c",
+  "model_identity": "LLMProvider.OPENAI:qwen38-27b-nvfp4",
+  "model_identity_digest": "sha256:0ae52623a02c8a983965f94a0ceca815cad67f5d46f81306838dfaae520127e9",
+  "repo_snapshot_id": "repo:9b4f1a34c70f10c2317f024df585e282c9d02371586a629e00ace26d8988c942",
+  "project_tree_hash": "sha256:9b4f1a34c70f10c2317f024df585e282c9d02371586a629e00ace26d8988c942",
+  "symbol_index_digest": "sha256:6c7eadabde8fc4f667fbbbfa5ac516b65dd02ced250570626595f4ad0cedc351",
+  "source_manifest_digest": "sha256:ea4a881f3ffa9b5711e10c575bb4137d1f80304c3e3732dd7a6d840ac0b37078",
+  "content_digest": "sha256:a99b28e6d14ce577df5873a16bba52f78a20c19f3799403101f48007f740919b"
+}

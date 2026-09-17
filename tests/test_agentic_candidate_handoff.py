@@ -235,6 +235,49 @@ def test_candidate_defers_non_core_work_and_rejects_structural_failures() -> Non
     assert "candidate_structural_failure:ownership_ambiguous" in blocked.eligibility_reasons
 
 
+def test_candidate_structural_failure_codes_ignores_supported_and_partial_items() -> None:
+    from code2paper.agentic.research_graph import _candidate_structural_failure_codes
+    import types
+
+    supported_core = ResearchAgendaItemV1(
+        obligation_id="core-supported",
+        priority="must_cover",
+        status="supported",
+        supported_claim_ids=["claim-supported"],
+        missing_information=["ownership:target_candidate_not_found"],
+    )
+    partial_core = ResearchAgendaItemV1(
+        obligation_id="core-partial",
+        priority="must_cover",
+        status="partial",
+        supported_claim_ids=["claim-partial"],
+        missing_information=["ownership:target_candidate_not_found", "typed_predicate:FILTER"],
+    )
+    blocked_core = ResearchAgendaItemV1(
+        obligation_id="core-blocked",
+        priority="must_cover",
+        status="blocked",
+        missing_information=["ownership:target_candidate_not_found"],
+    )
+
+    loop = types.SimpleNamespace(
+        runtime=types.SimpleNamespace(
+            agenda=types.SimpleNamespace(items=[supported_core, partial_core])
+        ),
+        termination_reason="",
+        compile_attempts=[],
+        observation_promotion_ledger=types.SimpleNamespace(records=[]),
+    )
+
+    # Supported and partial items should not leak transient ownership messages into structural failure codes
+    assert _candidate_structural_failure_codes(loop) == ()
+
+    # Blocked item should still report structural failure codes
+    loop.runtime.agenda.items = [supported_core, partial_core, blocked_core]
+    assert _candidate_structural_failure_codes(loop) == ("ownership:target_candidate_not_found",)
+
+
+
 def test_failed_strict_admission_can_allow_candidate_only_with_handoff() -> None:
     strict_admission = build_research_closure_admission(
         run_id="run-candidate",

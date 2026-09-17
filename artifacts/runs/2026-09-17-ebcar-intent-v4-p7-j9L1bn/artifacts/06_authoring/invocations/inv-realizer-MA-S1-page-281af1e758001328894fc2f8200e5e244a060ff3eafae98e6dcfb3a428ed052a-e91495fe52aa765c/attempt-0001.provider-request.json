@@ -1,0 +1,140 @@
+{
+  "attempt": 1,
+  "config": {
+    "max_output_tokens": 8192,
+    "model": "qwen38-27b-nvfp4",
+    "reasoning_effort": "none",
+    "role": "",
+    "seed": null,
+    "temperature": 0.6,
+    "thinking_token_budget": null,
+    "top_k": 20,
+    "top_p": 0.95
+  },
+  "content_digest": "sha256:aa424e125fe2d3abe77506209009dc02c4dc9c7b7f086e9c8d80fae935e511ea",
+  "input_payload": {
+    "consumer_role": "realizer",
+    "is_repair": false,
+    "mechanism_id": "header:MA-S1",
+    "page_id": "page:281af1e758001328894fc2f8200e5e244a060ff3eafae98e6dcfb3a428ed052a",
+    "response_contract": {
+      "allowed_atom_target_ids": [],
+      "atom_witness_rule": "Atom witnesses are optional; if emitted, witness_kind=atom and target_id must be one of allowed_atom_target_ids. Never use a source span ID or graph-operation ID as target_id.",
+      "exact_text_rule": "Every witness exact_text must be copied verbatim from, and be a substring of, draft_markdown.",
+      "format": "json",
+      "required_detail_ids": [],
+      "required_detail_witness_rule": "Emit exactly one witness with witness_kind=detail for every required_detail_id; its target_id must be that exact ID.",
+      "required_formula_package_ids": [],
+      "required_formula_witness_bindings": [],
+      "required_formula_witness_rule": "Emit exactly one witness with witness_kind=formula for every required_formula_package_id; target_id must be that exact package ID. exact_text must be one of the package's listed frozen literal_source_excerpts, copied verbatim into draft_markdown and used as a substring of draft_markdown. Never use the package ID itself as a formula witness or invent a formula excerpt.",
+      "required_top_level_fields": [
+        "draft_markdown",
+        "rendered_detail_ids",
+        "used_formula_package_ids",
+        "witnesses"
+      ],
+      "unresolved_detail_ids": [],
+      "unresolved_detail_rule": "For every unresolved_detail_id, describe only the conditional branch and preserve its unresolved/qualified-partial status; do not assert an active/default configuration value."
+    },
+    "section_id": "MA-S1",
+    "task_ids": [
+      "MA-S1"
+    ],
+    "technical_bytes_digest": "sha256:66c093fd1032975c6a9c1adaa08760b9ad0dbe47d319f05a8146aa6fb2e50cea",
+    "technical_payload": {
+      "archive_digest": "sha256:02c99eb39cb26038a803846cc19be97619909e93965d9f182c4843ce9438a988",
+      "atoms": [],
+      "detail_ids": [],
+      "formula_obligation_ids": [],
+      "formula_package_ids": [],
+      "formula_package_source_detail_ids": {},
+      "mechanism_header": {
+        "mechanism_id": "join:MA-S1",
+        "mechanism_ids": []
+      },
+      "obligation_ids": [
+        "MA-S1"
+      ],
+      "paragraph_ids": [
+        "MA-S1:P1",
+        "MA-S1:P2"
+      ],
+      "projection_proof": {},
+      "section_id": "MA-S1"
+    }
+  },
+  "invocation_id": "inv:realizer:MA-S1:page:281af1e758001328894fc2f8200e5e244a060ff3eafae98e6dcfb3a428ed052a",
+  "prompt": "You are the unified V2 Mechanism Realizer. Read the user JSON payload as the sole technical authority. Return exactly one JSON object matching the supplied response schema and response_contract. Write only evidence-bound draft_markdown; render every required detail ID exactly once and emit every required formula package ID exactly once in used_formula_package_ids; emit exactly one formula witness for each required package, using its exact package ID as target_id and the package's bound frozen literal_source_excerpt from response_contract as exact_text; never use the package ID itself as formula exact_text; use only allowed atom target IDs; every exact_text must be a verbatim substring of draft_markdown. Preserve unresolved conditional branches and never assert an unresolved configuration value.",
+  "prompt_template_id": "unified_realizer_page_v2",
+  "request_digest": "sha256:63f612d46476cc568b2769fed5f1bcde1d132a0c0a81392f6baa187fcad9d359",
+  "response_schema": {
+    "properties": {
+      "draft_markdown": {
+        "type": "string"
+      },
+      "rendered_detail_ids": {
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      },
+      "used_formula_package_ids": {
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      },
+      "witnesses": {
+        "items": {
+          "additionalProperties": false,
+          "description": "Exact textual witness for one paragraph-level binding.",
+          "properties": {
+            "exact_text": {
+              "maxLength": 4000,
+              "minLength": 1,
+              "title": "Exact Text",
+              "type": "string"
+            },
+            "target_id": {
+              "maxLength": 240,
+              "minLength": 1,
+              "title": "Target Id",
+              "type": "string"
+            },
+            "witness_kind": {
+              "enum": [
+                "detail",
+                "atom",
+                "facet",
+                "field",
+                "slot",
+                "edge",
+                "formula",
+                "claim",
+                "equation"
+              ],
+              "title": "Witness Kind",
+              "type": "string"
+            }
+          },
+          "required": [
+            "witness_kind",
+            "target_id",
+            "exact_text"
+          ],
+          "title": "PublicationContentWitnessV1",
+          "type": "object"
+        },
+        "type": "array"
+      }
+    },
+    "required": [
+      "draft_markdown",
+      "rendered_detail_ids",
+      "used_formula_package_ids",
+      "witnesses"
+    ],
+    "type": "object"
+  },
+  "schema_version": "1.0"
+}

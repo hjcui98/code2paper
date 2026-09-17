@@ -1,0 +1,2664 @@
+{
+  "request_cap": 80000,
+  "revisions": [
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S1",
+      "page_id": "page:767d0f98ccaec6a370ce588722145e940f0214bd25be87dabf9f6cc9619e0bcd",
+      "invocation_id": "inv:writer:MA-S1:page:767d0f98ccaec6a370ce588722145e940f0214bd25be87dabf9f6cc9619e0bcd",
+      "paragraph_ids": [
+        "MA-S1:P1"
+      ],
+      "input_tokens": 11201,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S1",
+      "page_id": "page:21eac210d3e7e1f6a226b7b0442db0ee5c0b3e2b44653396e22d3db68d5dbf5e",
+      "invocation_id": "inv:writer:MA-S1:page:21eac210d3e7e1f6a226b7b0442db0ee5c0b3e2b44653396e22d3db68d5dbf5e",
+      "paragraph_ids": [
+        "MA-S1:P2"
+      ],
+      "input_tokens": 11220,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S2",
+      "page_id": "page:40365a8e0e4cecfeb7b6538faab595137d22f0a6d28b93e63ef1932e3ed26c1f",
+      "invocation_id": "inv:writer:MA-S2:page:40365a8e0e4cecfeb7b6538faab595137d22f0a6d28b93e63ef1932e3ed26c1f",
+      "paragraph_ids": [
+        "MA-S2:P1"
+      ],
+      "input_tokens": 11195,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S2",
+      "page_id": "page:92c183a0ad92da970f1cc87ae2ad38ced8c61877a96708afafedfca42b5d0c07",
+      "invocation_id": "inv:writer:MA-S2:page:92c183a0ad92da970f1cc87ae2ad38ced8c61877a96708afafedfca42b5d0c07",
+      "paragraph_ids": [
+        "MA-S2:P2"
+      ],
+      "input_tokens": 11190,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:b67277175348cca8ef4b282e36525739d8b707888581aa45ea8dfccee2f0bed6",
+      "invocation_id": "inv:writer:MA-S3:page:b67277175348cca8ef4b282e36525739d8b707888581aa45ea8dfccee2f0bed6",
+      "paragraph_ids": [
+        "MA-S3:P1"
+      ],
+      "input_tokens": 245899,
+      "fits": false
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:d1fee2cc95b12059fda5352e3390f07ba8ee44448b31f18969ac8bfa25547c53",
+      "invocation_id": "inv:writer:MA-S3:page:d1fee2cc95b12059fda5352e3390f07ba8ee44448b31f18969ac8bfa25547c53",
+      "paragraph_ids": [
+        "MA-S3:P1"
+      ],
+      "input_tokens": 63186,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:25200b9b62987280f7696ee4c55f5c98068e6b0b0c965cf3bba8a6348408150c",
+      "invocation_id": "inv:writer:MA-S3:page:25200b9b62987280f7696ee4c55f5c98068e6b0b0c965cf3bba8a6348408150c",
+      "paragraph_ids": [
+        "MA-S3:P1"
+      ],
+      "input_tokens": 67466,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:28afc8bc95b12e5a8557b0c92e39af15c39b49f26667ac72df492ba9ecb175b0",
+      "invocation_id": "inv:writer:MA-S3:page:28afc8bc95b12e5a8557b0c92e39af15c39b49f26667ac72df492ba9ecb175b0",
+      "paragraph_ids": [
+        "MA-S3:P1"
+      ],
+      "input_tokens": 69841,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:5ce0c38c8732e5537ea22be42db9a5f903bf92af41c5a30e7edce41e9ff10676",
+      "invocation_id": "inv:writer:MA-S3:page:5ce0c38c8732e5537ea22be42db9a5f903bf92af41c5a30e7edce41e9ff10676",
+      "paragraph_ids": [
+        "MA-S3:P1"
+      ],
+      "input_tokens": 71977,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:6c451c3720523b5db8a7518b2e014e40f82d918042bcdc8a00cc717bb594b7ca",
+      "invocation_id": "inv:writer:MA-S3:page:6c451c3720523b5db8a7518b2e014e40f82d918042bcdc8a00cc717bb594b7ca",
+      "paragraph_ids": [
+        "MA-S3:P1"
+      ],
+      "input_tokens": 74379,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:dfea088b8d89d51a4ffb62e3b699a5cb1e6879df083f12da7d9ff4e6eea5fe4e",
+      "invocation_id": "inv:writer:MA-S3:page:dfea088b8d89d51a4ffb62e3b699a5cb1e6879df083f12da7d9ff4e6eea5fe4e",
+      "paragraph_ids": [
+        "MA-S3:P1"
+      ],
+      "input_tokens": 75942,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:1a7c1f2e8631677421b56754a9ff613f9d7238f6ff025115d14efe314f055026",
+      "invocation_id": "inv:writer:MA-S3:page:1a7c1f2e8631677421b56754a9ff613f9d7238f6ff025115d14efe314f055026",
+      "paragraph_ids": [
+        "MA-S3:P1"
+      ],
+      "input_tokens": 78496,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:f5f534fe2571d76bd25579581bbd8d48c967cb85e04551883e27dd1c92befc0d",
+      "invocation_id": "inv:writer:MA-S3:page:f5f534fe2571d76bd25579581bbd8d48c967cb85e04551883e27dd1c92befc0d",
+      "paragraph_ids": [
+        "MA-S3:P1"
+      ],
+      "input_tokens": 82989,
+      "fits": false
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:f8a83f87d39e11a72d2325549bd80093ae0269c7768425142b30af20f5c4194a",
+      "invocation_id": "inv:writer:MA-S3:page:f8a83f87d39e11a72d2325549bd80093ae0269c7768425142b30af20f5c4194a",
+      "paragraph_ids": [
+        "MA-S3:P1"
+      ],
+      "input_tokens": 65862,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:02f9a04f99cd255e70feb03016e79baa757c685da6da15906cf901c4aabbae64",
+      "invocation_id": "inv:writer:MA-S3:page:02f9a04f99cd255e70feb03016e79baa757c685da6da15906cf901c4aabbae64",
+      "paragraph_ids": [
+        "MA-S3:P1"
+      ],
+      "input_tokens": 70384,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:34691e10deaccf6bd06bdebc70b746fbb6f1968d8717a28629752d8001adcbd4",
+      "invocation_id": "inv:writer:MA-S3:page:34691e10deaccf6bd06bdebc70b746fbb6f1968d8717a28629752d8001adcbd4",
+      "paragraph_ids": [
+        "MA-S3:P1"
+      ],
+      "input_tokens": 72027,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:500a27a259ed0bfed0f23133b714e2476364d9a544b1944e08b0848abed0ad4f",
+      "invocation_id": "inv:writer:MA-S3:page:500a27a259ed0bfed0f23133b714e2476364d9a544b1944e08b0848abed0ad4f",
+      "paragraph_ids": [
+        "MA-S3:P1"
+      ],
+      "input_tokens": 74309,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:5f1ec8b18d606927178a1cc6343ea7625af19394bdf323e97eb1beda885ef922",
+      "invocation_id": "inv:writer:MA-S3:page:5f1ec8b18d606927178a1cc6343ea7625af19394bdf323e97eb1beda885ef922",
+      "paragraph_ids": [
+        "MA-S3:P1"
+      ],
+      "input_tokens": 75925,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:b32bcb4504ebdda94940020e7409abdde4829d6cc49764c9e754447258a83b01",
+      "invocation_id": "inv:writer:MA-S3:page:b32bcb4504ebdda94940020e7409abdde4829d6cc49764c9e754447258a83b01",
+      "paragraph_ids": [
+        "MA-S3:P1"
+      ],
+      "input_tokens": 77524,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:69efcfd07d453ac3a61e065b1d81880703f9238f8cd581a63dad77d9c4950d20",
+      "invocation_id": "inv:writer:MA-S3:page:69efcfd07d453ac3a61e065b1d81880703f9238f8cd581a63dad77d9c4950d20",
+      "paragraph_ids": [
+        "MA-S3:P1"
+      ],
+      "input_tokens": 78866,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:da508e6d1af41d296798ae3981babd43c2e8f85a0dc7d87dc53ccc269a208da9",
+      "invocation_id": "inv:writer:MA-S3:page:da508e6d1af41d296798ae3981babd43c2e8f85a0dc7d87dc53ccc269a208da9",
+      "paragraph_ids": [
+        "MA-S3:P1"
+      ],
+      "input_tokens": 80512,
+      "fits": false
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:868393698c0f621b2fc0b23cfce46ed956a3a26c392c956fc0fc342e6d8d0685",
+      "invocation_id": "inv:writer:MA-S3:page:868393698c0f621b2fc0b23cfce46ed956a3a26c392c956fc0fc342e6d8d0685",
+      "paragraph_ids": [
+        "MA-S3:P1"
+      ],
+      "input_tokens": 64128,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:5a5dd63eefb26e9d8fafb4a112dd4798616883daa06c1b4d0d7426b220a2034b",
+      "invocation_id": "inv:writer:MA-S3:page:5a5dd63eefb26e9d8fafb4a112dd4798616883daa06c1b4d0d7426b220a2034b",
+      "paragraph_ids": [
+        "MA-S3:P1"
+      ],
+      "input_tokens": 67077,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:3a04f131ef9d9b51097b0e2699a26bf5c2d5c443531e3deb2b0eeb8822f76776",
+      "invocation_id": "inv:writer:MA-S3:page:3a04f131ef9d9b51097b0e2699a26bf5c2d5c443531e3deb2b0eeb8822f76776",
+      "paragraph_ids": [
+        "MA-S3:P1"
+      ],
+      "input_tokens": 69998,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:aa8c3c7ca1d4c6d8969471ec025098d3c37c4b890ed57bec666e0b9698bbf681",
+      "invocation_id": "inv:writer:MA-S3:page:aa8c3c7ca1d4c6d8969471ec025098d3c37c4b890ed57bec666e0b9698bbf681",
+      "paragraph_ids": [
+        "MA-S3:P1"
+      ],
+      "input_tokens": 76872,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:60675058ac5a86559ae6ca95e1cde1c0f8e2b6e01c71bfa79928adac2c25e9f2",
+      "invocation_id": "inv:writer:MA-S3:page:60675058ac5a86559ae6ca95e1cde1c0f8e2b6e01c71bfa79928adac2c25e9f2",
+      "paragraph_ids": [
+        "MA-S3:P1"
+      ],
+      "input_tokens": 78513,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:ace1cddd63c56ee4ea2169df35c2a1db39f61dc3480db538bd3b64204e18d2c7",
+      "invocation_id": "inv:writer:MA-S3:page:ace1cddd63c56ee4ea2169df35c2a1db39f61dc3480db538bd3b64204e18d2c7",
+      "paragraph_ids": [
+        "MA-S3:P1"
+      ],
+      "input_tokens": 81328,
+      "fits": false
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:b99a4b4b64c4b1de2ac15c0da4a20a92ad69ea36ff3baee950801790a681b91b",
+      "invocation_id": "inv:writer:MA-S3:page:b99a4b4b64c4b1de2ac15c0da4a20a92ad69ea36ff3baee950801790a681b91b",
+      "paragraph_ids": [
+        "MA-S3:P1"
+      ],
+      "input_tokens": 66598,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:add26caf50403d8ff7df14ee67a5f5c69433fb88abab1125e7d803854b44eb73",
+      "invocation_id": "inv:writer:MA-S3:page:add26caf50403d8ff7df14ee67a5f5c69433fb88abab1125e7d803854b44eb73",
+      "paragraph_ids": [
+        "MA-S3:P1"
+      ],
+      "input_tokens": 68216,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:61299bff82771776be66c5ea867c835cd8e4bdc07b64a1f122e1216e8febf040",
+      "invocation_id": "inv:writer:MA-S3:page:61299bff82771776be66c5ea867c835cd8e4bdc07b64a1f122e1216e8febf040",
+      "paragraph_ids": [
+        "MA-S3:P1"
+      ],
+      "input_tokens": 70878,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:7701a278cae1130fe7886078fffce86bd3e24e127d70c64417c34fada9414a20",
+      "invocation_id": "inv:writer:MA-S3:page:7701a278cae1130fe7886078fffce86bd3e24e127d70c64417c34fada9414a20",
+      "paragraph_ids": [
+        "MA-S3:P1"
+      ],
+      "input_tokens": 73442,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:08c3527bc6d31bd73be473247ebbae069c573502ac50ee87440f193996e6a4cc",
+      "invocation_id": "inv:writer:MA-S3:page:08c3527bc6d31bd73be473247ebbae069c573502ac50ee87440f193996e6a4cc",
+      "paragraph_ids": [
+        "MA-S3:P1"
+      ],
+      "input_tokens": 76712,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:8fab5cd77f1f5baac8f972c6c6972e856268b7ca591f891feba705f2fd092e60",
+      "invocation_id": "inv:writer:MA-S3:page:8fab5cd77f1f5baac8f972c6c6972e856268b7ca591f891feba705f2fd092e60",
+      "paragraph_ids": [
+        "MA-S3:P1"
+      ],
+      "input_tokens": 79347,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:701adad622a83d7f112d125efcb2e561ffbd6d3aefa60636a21c352f28d85519",
+      "invocation_id": "inv:writer:MA-S3:page:701adad622a83d7f112d125efcb2e561ffbd6d3aefa60636a21c352f28d85519",
+      "paragraph_ids": [
+        "MA-S3:P1"
+      ],
+      "input_tokens": 81817,
+      "fits": false
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:c56610cded8cad64f6f77fca41bc1e21bd76ff80a465d6b133fe63863001af5d",
+      "invocation_id": "inv:writer:MA-S3:page:c56610cded8cad64f6f77fca41bc1e21bd76ff80a465d6b133fe63863001af5d",
+      "paragraph_ids": [
+        "MA-S3:P1"
+      ],
+      "input_tokens": 63697,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:3333d5fb241af8152a5bad4584c1d858971f8e2d4ae2efea3145fdf3c132de05",
+      "invocation_id": "inv:writer:MA-S3:page:3333d5fb241af8152a5bad4584c1d858971f8e2d4ae2efea3145fdf3c132de05",
+      "paragraph_ids": [
+        "MA-S3:P1"
+      ],
+      "input_tokens": 66823,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:7f32d991f1b2a6165f3fc140cb0c369821a1828a4e19b18cb28b91e316c6ab32",
+      "invocation_id": "inv:writer:MA-S3:page:7f32d991f1b2a6165f3fc140cb0c369821a1828a4e19b18cb28b91e316c6ab32",
+      "paragraph_ids": [
+        "MA-S3:P1"
+      ],
+      "input_tokens": 68467,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:b471f6da3e68ead94239e1b9eca735ce347400832882a03c7205fa68faada698",
+      "invocation_id": "inv:writer:MA-S3:page:b471f6da3e68ead94239e1b9eca735ce347400832882a03c7205fa68faada698",
+      "paragraph_ids": [
+        "MA-S3:P1"
+      ],
+      "input_tokens": 71809,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:167370f7968200ce7cd77cf66da4df662884f2814bc51105d1799b93744a3703",
+      "invocation_id": "inv:writer:MA-S3:page:167370f7968200ce7cd77cf66da4df662884f2814bc51105d1799b93744a3703",
+      "paragraph_ids": [
+        "MA-S3:P1"
+      ],
+      "input_tokens": 73429,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:fd56aae0a88ef751710a4fb96aedef12d1e5a84c1714ba8b8d2f0023adfc43eb",
+      "invocation_id": "inv:writer:MA-S3:page:fd56aae0a88ef751710a4fb96aedef12d1e5a84c1714ba8b8d2f0023adfc43eb",
+      "paragraph_ids": [
+        "MA-S3:P1"
+      ],
+      "input_tokens": 75530,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:663a68a5be4ff3397112e00bed3b160a7f271539c2b16b1a88c9e895d1af108c",
+      "invocation_id": "inv:writer:MA-S3:page:663a68a5be4ff3397112e00bed3b160a7f271539c2b16b1a88c9e895d1af108c",
+      "paragraph_ids": [
+        "MA-S3:P1"
+      ],
+      "input_tokens": 79256,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:1a18634f1ae51ed1db503708819fe13d3839909f42a9f4cc71775db4a32ad2c3",
+      "invocation_id": "inv:writer:MA-S3:page:1a18634f1ae51ed1db503708819fe13d3839909f42a9f4cc71775db4a32ad2c3",
+      "paragraph_ids": [
+        "MA-S3:P1"
+      ],
+      "input_tokens": 80637,
+      "fits": false
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:36431d251efad5e8f8c2d306c1b43d27aa8ddd3f18f29b8aefd8dd1274a31a00",
+      "invocation_id": "inv:writer:MA-S3:page:36431d251efad5e8f8c2d306c1b43d27aa8ddd3f18f29b8aefd8dd1274a31a00",
+      "paragraph_ids": [
+        "MA-S3:P1"
+      ],
+      "input_tokens": 62795,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:3e741cfc6b51718802c13ee80b09dc9e49be16a71b2110c55cc6de633dbb7239",
+      "invocation_id": "inv:writer:MA-S3:page:3e741cfc6b51718802c13ee80b09dc9e49be16a71b2110c55cc6de633dbb7239",
+      "paragraph_ids": [
+        "MA-S3:P1"
+      ],
+      "input_tokens": 64452,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:c241c92ca6017708bea01514afc488ec86c24b0149d60461649d471e4a414edb",
+      "invocation_id": "inv:writer:MA-S3:page:c241c92ca6017708bea01514afc488ec86c24b0149d60461649d471e4a414edb",
+      "paragraph_ids": [
+        "MA-S3:P1"
+      ],
+      "input_tokens": 67217,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:47e1d542ec8230531a595ac264cff0b1fd234aa05fb2fce6e38a844cd5556e45",
+      "invocation_id": "inv:writer:MA-S3:page:47e1d542ec8230531a595ac264cff0b1fd234aa05fb2fce6e38a844cd5556e45",
+      "paragraph_ids": [
+        "MA-S3:P1"
+      ],
+      "input_tokens": 71499,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:0edfb7a3f69bf9fd0e8e7382f40869e6c596241e4c817eb5571f2f3a360d8a0a",
+      "invocation_id": "inv:writer:MA-S3:page:0edfb7a3f69bf9fd0e8e7382f40869e6c596241e4c817eb5571f2f3a360d8a0a",
+      "paragraph_ids": [
+        "MA-S3:P1"
+      ],
+      "input_tokens": 73117,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:c2fa18d98108d21be255529a22bd1e45d038ee6fb69ee3348edabed658b7c372",
+      "invocation_id": "inv:writer:MA-S3:page:c2fa18d98108d21be255529a22bd1e45d038ee6fb69ee3348edabed658b7c372",
+      "paragraph_ids": [
+        "MA-S3:P1"
+      ],
+      "input_tokens": 74479,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:d97a8d980e695340c5278f4ad2faab23acae7e99c1248ea30ea3e207b0e01ce8",
+      "invocation_id": "inv:writer:MA-S3:page:d97a8d980e695340c5278f4ad2faab23acae7e99c1248ea30ea3e207b0e01ce8",
+      "paragraph_ids": [
+        "MA-S3:P1"
+      ],
+      "input_tokens": 76279,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:5d78038026ac822aab8c9f216274d10a5dbecd481ee15475dded8d93c234718a",
+      "invocation_id": "inv:writer:MA-S3:page:5d78038026ac822aab8c9f216274d10a5dbecd481ee15475dded8d93c234718a",
+      "paragraph_ids": [
+        "MA-S3:P1"
+      ],
+      "input_tokens": 77582,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:9df17c157a3e551508af906532d69cf3879a7138fa63f91fa48778357d64cd14",
+      "invocation_id": "inv:writer:MA-S3:page:9df17c157a3e551508af906532d69cf3879a7138fa63f91fa48778357d64cd14",
+      "paragraph_ids": [
+        "MA-S3:P1"
+      ],
+      "input_tokens": 79785,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:2b0ea85d5a480db4d5b2128373e9d1c72dd4836b6ab76481d2403163977570f8",
+      "invocation_id": "inv:writer:MA-S3:page:2b0ea85d5a480db4d5b2128373e9d1c72dd4836b6ab76481d2403163977570f8",
+      "paragraph_ids": [
+        "MA-S3:P1"
+      ],
+      "input_tokens": 80893,
+      "fits": false
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:89cc66c3830c88163db514cf72d9fc9b8454fb443336884574e8be84b8610ac5",
+      "invocation_id": "inv:writer:MA-S3:page:89cc66c3830c88163db514cf72d9fc9b8454fb443336884574e8be84b8610ac5",
+      "paragraph_ids": [
+        "MA-S3:P1"
+      ],
+      "input_tokens": 61773,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:d4322190ae802a6cee6993ce67a59c564b973ea807bba06301a062198d143b50",
+      "invocation_id": "inv:writer:MA-S3:page:d4322190ae802a6cee6993ce67a59c564b973ea807bba06301a062198d143b50",
+      "paragraph_ids": [
+        "MA-S3:P1"
+      ],
+      "input_tokens": 63658,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:28f7bb0fab42027b37395068e0429314c6dbdd084fdaa6d0fb039ebdccede892",
+      "invocation_id": "inv:writer:MA-S3:page:28f7bb0fab42027b37395068e0429314c6dbdd084fdaa6d0fb039ebdccede892",
+      "paragraph_ids": [
+        "MA-S3:P1"
+      ],
+      "input_tokens": 64819,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:5f3c11aa14efc6f9b46e30c4719dd8142f454085d7408748539e2ca456ac600f",
+      "invocation_id": "inv:writer:MA-S3:page:5f3c11aa14efc6f9b46e30c4719dd8142f454085d7408748539e2ca456ac600f",
+      "paragraph_ids": [
+        "MA-S3:P1"
+      ],
+      "input_tokens": 66225,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:204682a4bb3e2bcab828886ab8e546e5cf004c277167f539612aeb1622ba2198",
+      "invocation_id": "inv:writer:MA-S3:page:204682a4bb3e2bcab828886ab8e546e5cf004c277167f539612aeb1622ba2198",
+      "paragraph_ids": [
+        "MA-S3:P1"
+      ],
+      "input_tokens": 68028,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:6c990aea2da4ce112fd392ced09520c0ddc6b4579ea9f77fe3c62e35f54a7067",
+      "invocation_id": "inv:writer:MA-S3:page:6c990aea2da4ce112fd392ced09520c0ddc6b4579ea9f77fe3c62e35f54a7067",
+      "paragraph_ids": [
+        "MA-S3:P1"
+      ],
+      "input_tokens": 72689,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:dd465d53396da7c4c3ace40f0859328deffb84ffcac4437df111847b26495395",
+      "invocation_id": "inv:writer:MA-S3:page:dd465d53396da7c4c3ace40f0859328deffb84ffcac4437df111847b26495395",
+      "paragraph_ids": [
+        "MA-S3:P1"
+      ],
+      "input_tokens": 74024,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:4faf632426f8ed57186217975218bdd476b0db26e915aa9e9e9dada8f72ca8bd",
+      "invocation_id": "inv:writer:MA-S3:page:4faf632426f8ed57186217975218bdd476b0db26e915aa9e9e9dada8f72ca8bd",
+      "paragraph_ids": [
+        "MA-S3:P1"
+      ],
+      "input_tokens": 77201,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:b61f3b800619698f54134cc06e798807e2176da4e67ec6af316fd6e1408191d7",
+      "invocation_id": "inv:writer:MA-S3:page:b61f3b800619698f54134cc06e798807e2176da4e67ec6af316fd6e1408191d7",
+      "paragraph_ids": [
+        "MA-S3:P1"
+      ],
+      "input_tokens": 79959,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:9491377837636d49e3305a0f95ca0e2c365abc7aa77ff279fcfccb9e7df5bdfe",
+      "invocation_id": "inv:writer:MA-S3:page:9491377837636d49e3305a0f95ca0e2c365abc7aa77ff279fcfccb9e7df5bdfe",
+      "paragraph_ids": [
+        "MA-S3:P1"
+      ],
+      "input_tokens": 82386,
+      "fits": false
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:4298baed3698860296e567a063c1bb3c3bfefe84dbec6ec22d02763b793ad399",
+      "invocation_id": "inv:writer:MA-S3:page:4298baed3698860296e567a063c1bb3c3bfefe84dbec6ec22d02763b793ad399",
+      "paragraph_ids": [
+        "MA-S3:P1"
+      ],
+      "input_tokens": 64401,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:afa79bc45fc902cc5a4c1894891aa89c5a7fcdfc05fdeab01321f535e93be04f",
+      "invocation_id": "inv:writer:MA-S3:page:afa79bc45fc902cc5a4c1894891aa89c5a7fcdfc05fdeab01321f535e93be04f",
+      "paragraph_ids": [
+        "MA-S3:P1"
+      ],
+      "input_tokens": 67236,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:cc35a7721062405d9f1754f16bb00c9e2caa5e241a3eadd7cab290f76f1bf965",
+      "invocation_id": "inv:writer:MA-S3:page:cc35a7721062405d9f1754f16bb00c9e2caa5e241a3eadd7cab290f76f1bf965",
+      "paragraph_ids": [
+        "MA-S3:P1"
+      ],
+      "input_tokens": 70104,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:d3a9ba14e3838e895c290d385f8f275bc06f780671d9152e21dbebfcf9c497a5",
+      "invocation_id": "inv:writer:MA-S3:page:d3a9ba14e3838e895c290d385f8f275bc06f780671d9152e21dbebfcf9c497a5",
+      "paragraph_ids": [
+        "MA-S3:P1"
+      ],
+      "input_tokens": 73230,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:2795544072e17e28760b94814e478ea1b07dae89564f740453667b6a5aa4848c",
+      "invocation_id": "inv:writer:MA-S3:page:2795544072e17e28760b94814e478ea1b07dae89564f740453667b6a5aa4848c",
+      "paragraph_ids": [
+        "MA-S3:P1"
+      ],
+      "input_tokens": 75404,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:cd4a1eb47fd792b2b73abc9767da7bed9109bae3150b50127ba27cc1f334f870",
+      "invocation_id": "inv:writer:MA-S3:page:cd4a1eb47fd792b2b73abc9767da7bed9109bae3150b50127ba27cc1f334f870",
+      "paragraph_ids": [
+        "MA-S3:P1"
+      ],
+      "input_tokens": 77840,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:9aa3756f9320cc14c92481420b076dd25f2aae18eac2c3c09716470cfc1f94f9",
+      "invocation_id": "inv:writer:MA-S3:page:9aa3756f9320cc14c92481420b076dd25f2aae18eac2c3c09716470cfc1f94f9",
+      "paragraph_ids": [
+        "MA-S3:P1"
+      ],
+      "input_tokens": 80322,
+      "fits": false
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:ad4be2c1a8abbf736331da5609523135733faf88ec47d0bebd2697cc308a30c0",
+      "invocation_id": "inv:writer:MA-S3:page:ad4be2c1a8abbf736331da5609523135733faf88ec47d0bebd2697cc308a30c0",
+      "paragraph_ids": [
+        "MA-S3:P1"
+      ],
+      "input_tokens": 68946,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:980a17476cffb24faf279224ed0763f595cc08981248026a7045dcd2c5bab4a2",
+      "invocation_id": "inv:writer:MA-S3:page:980a17476cffb24faf279224ed0763f595cc08981248026a7045dcd2c5bab4a2",
+      "paragraph_ids": [
+        "MA-S3:P1"
+      ],
+      "input_tokens": 71036,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:886885539057cb69b616676707bfdd59cb83be4bee99615f31fecfd59bf32c6a",
+      "invocation_id": "inv:writer:MA-S3:page:886885539057cb69b616676707bfdd59cb83be4bee99615f31fecfd59bf32c6a",
+      "paragraph_ids": [
+        "MA-S3:P1"
+      ],
+      "input_tokens": 74232,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:a2f8b45d58f64eebee67f6ca09b1fa3807ce25402ad6f79cf16254942fa2a865",
+      "invocation_id": "inv:writer:MA-S3:page:a2f8b45d58f64eebee67f6ca09b1fa3807ce25402ad6f79cf16254942fa2a865",
+      "paragraph_ids": [
+        "MA-S3:P1"
+      ],
+      "input_tokens": 76918,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:a55bccc637c063d113573239ef81e1361df2eba01c5b477fecada8d09666984f",
+      "invocation_id": "inv:writer:MA-S3:page:a55bccc637c063d113573239ef81e1361df2eba01c5b477fecada8d09666984f",
+      "paragraph_ids": [
+        "MA-S3:P1"
+      ],
+      "input_tokens": 79570,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:0884495f4efd4fd8368ddd4300a8a20a418bccb79c23369b4f44e9ce57080d14",
+      "invocation_id": "inv:writer:MA-S3:page:0884495f4efd4fd8368ddd4300a8a20a418bccb79c23369b4f44e9ce57080d14",
+      "paragraph_ids": [
+        "MA-S3:P1"
+      ],
+      "input_tokens": 82227,
+      "fits": false
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:bd98f4f1bddc1ec3bc99d3c38e317683504977659ef870372941e150eadfa187",
+      "invocation_id": "inv:writer:MA-S3:page:bd98f4f1bddc1ec3bc99d3c38e317683504977659ef870372941e150eadfa187",
+      "paragraph_ids": [
+        "MA-S3:P1"
+      ],
+      "input_tokens": 64806,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:6b5e1b946dda6c78bc154431eaefa7931b961065b130ca7c39da73c2e678b3a5",
+      "invocation_id": "inv:writer:MA-S3:page:6b5e1b946dda6c78bc154431eaefa7931b961065b130ca7c39da73c2e678b3a5",
+      "paragraph_ids": [
+        "MA-S3:P1"
+      ],
+      "input_tokens": 67439,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:b64012ae899173df2d5c8296d16c3018f34a1a4c80b2fa2167dc0794567c2938",
+      "invocation_id": "inv:writer:MA-S3:page:b64012ae899173df2d5c8296d16c3018f34a1a4c80b2fa2167dc0794567c2938",
+      "paragraph_ids": [
+        "MA-S3:P1"
+      ],
+      "input_tokens": 70137,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:5a4150b2969ff92961f96e5d6202807562aad9e832834ef4ae319e215e114122",
+      "invocation_id": "inv:writer:MA-S3:page:5a4150b2969ff92961f96e5d6202807562aad9e832834ef4ae319e215e114122",
+      "paragraph_ids": [
+        "MA-S3:P2"
+      ],
+      "input_tokens": 218154,
+      "fits": false
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:40b553abd23db69d4186eab48299d948e8077db0a00154c5a934bbad4406fc1a",
+      "invocation_id": "inv:writer:MA-S3:page:40b553abd23db69d4186eab48299d948e8077db0a00154c5a934bbad4406fc1a",
+      "paragraph_ids": [
+        "MA-S3:P2"
+      ],
+      "input_tokens": 64430,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:45247b7d22f37f76022c27004e38992e83d7e34252955debf6f5537f685f8f6e",
+      "invocation_id": "inv:writer:MA-S3:page:45247b7d22f37f76022c27004e38992e83d7e34252955debf6f5537f685f8f6e",
+      "paragraph_ids": [
+        "MA-S3:P2"
+      ],
+      "input_tokens": 68715,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:49f13d4f22a6496e1ec8fe3a57f5cfaa71306a92c25fe843d52db761d2f3a314",
+      "invocation_id": "inv:writer:MA-S3:page:49f13d4f22a6496e1ec8fe3a57f5cfaa71306a92c25fe843d52db761d2f3a314",
+      "paragraph_ids": [
+        "MA-S3:P2"
+      ],
+      "input_tokens": 71150,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:39006536048dc126cb2d87ca01b2629975677243aa1e9250cbfddd5dc25d2ed0",
+      "invocation_id": "inv:writer:MA-S3:page:39006536048dc126cb2d87ca01b2629975677243aa1e9250cbfddd5dc25d2ed0",
+      "paragraph_ids": [
+        "MA-S3:P2"
+      ],
+      "input_tokens": 72767,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:f982ae1f93e925b102c95597dbb967fc142d489a061caa8b40504fd3304cbaa9",
+      "invocation_id": "inv:writer:MA-S3:page:f982ae1f93e925b102c95597dbb967fc142d489a061caa8b40504fd3304cbaa9",
+      "paragraph_ids": [
+        "MA-S3:P2"
+      ],
+      "input_tokens": 77410,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:343abbc0ac2edf556fb77ca236cfaeb942554e62f5921383f2b9262fac2c9fa1",
+      "invocation_id": "inv:writer:MA-S3:page:343abbc0ac2edf556fb77ca236cfaeb942554e62f5921383f2b9262fac2c9fa1",
+      "paragraph_ids": [
+        "MA-S3:P2"
+      ],
+      "input_tokens": 79197,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:642050d56f25ab7d304aa9fb13c006e72ec10e243fa99962a5332fdb399340f4",
+      "invocation_id": "inv:writer:MA-S3:page:642050d56f25ab7d304aa9fb13c006e72ec10e243fa99962a5332fdb399340f4",
+      "paragraph_ids": [
+        "MA-S3:P2"
+      ],
+      "input_tokens": 83795,
+      "fits": false
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:cf2de336e7823da84bac05a1ad0162e3477f8c2f544a12a3cf34d3c4c103517f",
+      "invocation_id": "inv:writer:MA-S3:page:cf2de336e7823da84bac05a1ad0162e3477f8c2f544a12a3cf34d3c4c103517f",
+      "paragraph_ids": [
+        "MA-S3:P2"
+      ],
+      "input_tokens": 61941,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:2d6987b8ea31e9e5d4353c627094d95727a44a0400b2f425c153e17c5964fe19",
+      "invocation_id": "inv:writer:MA-S3:page:2d6987b8ea31e9e5d4353c627094d95727a44a0400b2f425c153e17c5964fe19",
+      "paragraph_ids": [
+        "MA-S3:P2"
+      ],
+      "input_tokens": 63599,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:813d12310d563d206fa5fb7a297ec7799a8f02e827249fd9dcd95027597376d8",
+      "invocation_id": "inv:writer:MA-S3:page:813d12310d563d206fa5fb7a297ec7799a8f02e827249fd9dcd95027597376d8",
+      "paragraph_ids": [
+        "MA-S3:P2"
+      ],
+      "input_tokens": 65198,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:fa6d0822cc2943fb6b543ed2b3d2abef5c1cb6ce034b9117e7d49b849cec8c04",
+      "invocation_id": "inv:writer:MA-S3:page:fa6d0822cc2943fb6b543ed2b3d2abef5c1cb6ce034b9117e7d49b849cec8c04",
+      "paragraph_ids": [
+        "MA-S3:P2"
+      ],
+      "input_tokens": 68190,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:8ae9817f045f3fab64eff5cb6675be8eb7d33fca834794dd4630e62831639841",
+      "invocation_id": "inv:writer:MA-S3:page:8ae9817f045f3fab64eff5cb6675be8eb7d33fca834794dd4630e62831639841",
+      "paragraph_ids": [
+        "MA-S3:P2"
+      ],
+      "input_tokens": 71153,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:d8735c6b3c80c176a56546a688c219473db26cf94a50bc4fa56d7312a33d0edd",
+      "invocation_id": "inv:writer:MA-S3:page:d8735c6b3c80c176a56546a688c219473db26cf94a50bc4fa56d7312a33d0edd",
+      "paragraph_ids": [
+        "MA-S3:P2"
+      ],
+      "input_tokens": 72551,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:f50fa413d70472ef5a1d47b296b338838e2991b1d9600861fe76882f70424bf0",
+      "invocation_id": "inv:writer:MA-S3:page:f50fa413d70472ef5a1d47b296b338838e2991b1d9600861fe76882f70424bf0",
+      "paragraph_ids": [
+        "MA-S3:P2"
+      ],
+      "input_tokens": 75075,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:817972d151c050ae6550e8c6a8d239934cc57c2dcd5a548771a2d035878f78fb",
+      "invocation_id": "inv:writer:MA-S3:page:817972d151c050ae6550e8c6a8d239934cc57c2dcd5a548771a2d035878f78fb",
+      "paragraph_ids": [
+        "MA-S3:P2"
+      ],
+      "input_tokens": 79423,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:6900b483388f14d387a5842e20b263b6166551d67c780695430b77b1c6ecef1e",
+      "invocation_id": "inv:writer:MA-S3:page:6900b483388f14d387a5842e20b263b6166551d67c780695430b77b1c6ecef1e",
+      "paragraph_ids": [
+        "MA-S3:P2"
+      ],
+      "input_tokens": 81052,
+      "fits": false
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:8671bd3b22cd05552c00d0706aade36f8260ff0d69b3e9fc5aa1bd9ceca29997",
+      "invocation_id": "inv:writer:MA-S3:page:8671bd3b22cd05552c00d0706aade36f8260ff0d69b3e9fc5aa1bd9ceca29997",
+      "paragraph_ids": [
+        "MA-S3:P2"
+      ],
+      "input_tokens": 59461,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:1ff908af02c54b33c4a6e2bf85161b87c6b992de5de841cf36f00e9ae1d68a46",
+      "invocation_id": "inv:writer:MA-S3:page:1ff908af02c54b33c4a6e2bf85161b87c6b992de5de841cf36f00e9ae1d68a46",
+      "paragraph_ids": [
+        "MA-S3:P2"
+      ],
+      "input_tokens": 61633,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:96cd6ce79dbdfe57f4060e2f59e9dc08c7b49997bda31182327011d7c5b23faf",
+      "invocation_id": "inv:writer:MA-S3:page:96cd6ce79dbdfe57f4060e2f59e9dc08c7b49997bda31182327011d7c5b23faf",
+      "paragraph_ids": [
+        "MA-S3:P2"
+      ],
+      "input_tokens": 64164,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:464548113f5f6f52627597d5cece0dec3264c6b3e9f99565c8adf645ac0107b1",
+      "invocation_id": "inv:writer:MA-S3:page:464548113f5f6f52627597d5cece0dec3264c6b3e9f99565c8adf645ac0107b1",
+      "paragraph_ids": [
+        "MA-S3:P2"
+      ],
+      "input_tokens": 66343,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:5b481242840f5e39af31134c5463de66341628fd4dfad4b95d4448008b48e302",
+      "invocation_id": "inv:writer:MA-S3:page:5b481242840f5e39af31134c5463de66341628fd4dfad4b95d4448008b48e302",
+      "paragraph_ids": [
+        "MA-S3:P2"
+      ],
+      "input_tokens": 68417,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:46700678601378cecb42cfb537f8b322dab1741a9b68b300ed2caac7c8416e9e",
+      "invocation_id": "inv:writer:MA-S3:page:46700678601378cecb42cfb537f8b322dab1741a9b68b300ed2caac7c8416e9e",
+      "paragraph_ids": [
+        "MA-S3:P2"
+      ],
+      "input_tokens": 73063,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:1fd97678890209f1d215f74c4558a708d5af44a4d0098779c3442e731be8ff0b",
+      "invocation_id": "inv:writer:MA-S3:page:1fd97678890209f1d215f74c4558a708d5af44a4d0098779c3442e731be8ff0b",
+      "paragraph_ids": [
+        "MA-S3:P2"
+      ],
+      "input_tokens": 76367,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:08c2585e01ed78f028c56df9017e3b1d11b1b548d5e3285d67c7fe4a0eebe823",
+      "invocation_id": "inv:writer:MA-S3:page:08c2585e01ed78f028c56df9017e3b1d11b1b548d5e3285d67c7fe4a0eebe823",
+      "paragraph_ids": [
+        "MA-S3:P2"
+      ],
+      "input_tokens": 79824,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:a6828e4b9166fb6d93b3c24bcd34c90b75af79ac955e1c39884a03ba8d4953c5",
+      "invocation_id": "inv:writer:MA-S3:page:a6828e4b9166fb6d93b3c24bcd34c90b75af79ac955e1c39884a03ba8d4953c5",
+      "paragraph_ids": [
+        "MA-S3:P2"
+      ],
+      "input_tokens": 81214,
+      "fits": false
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:0eba17e200541d42106d3162a18678eedc7ac2eb6248b6be767daa689cd9955b",
+      "invocation_id": "inv:writer:MA-S3:page:0eba17e200541d42106d3162a18678eedc7ac2eb6248b6be767daa689cd9955b",
+      "paragraph_ids": [
+        "MA-S3:P2"
+      ],
+      "input_tokens": 58890,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:a519599aca7fef5ed30761d678e5fd6590945a0977958250362a05ab1f7514f1",
+      "invocation_id": "inv:writer:MA-S3:page:a519599aca7fef5ed30761d678e5fd6590945a0977958250362a05ab1f7514f1",
+      "paragraph_ids": [
+        "MA-S3:P2"
+      ],
+      "input_tokens": 62372,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:6c065c5fc50e6944dd46725094107fd7bc4548bbadcb312e64fc9d696b321bc9",
+      "invocation_id": "inv:writer:MA-S3:page:6c065c5fc50e6944dd46725094107fd7bc4548bbadcb312e64fc9d696b321bc9",
+      "paragraph_ids": [
+        "MA-S3:P2"
+      ],
+      "input_tokens": 63856,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:a3f0ea84f46ccef798b5bc5ee7498feacdf3692303b16f10cd27338b46ad4b19",
+      "invocation_id": "inv:writer:MA-S3:page:a3f0ea84f46ccef798b5bc5ee7498feacdf3692303b16f10cd27338b46ad4b19",
+      "paragraph_ids": [
+        "MA-S3:P2"
+      ],
+      "input_tokens": 65246,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:6cb5e8ed50cbc456dc19bf6eaf97e3f388e6a736c5d85996e20c6ab9ea0e2bd0",
+      "invocation_id": "inv:writer:MA-S3:page:6cb5e8ed50cbc456dc19bf6eaf97e3f388e6a736c5d85996e20c6ab9ea0e2bd0",
+      "paragraph_ids": [
+        "MA-S3:P2"
+      ],
+      "input_tokens": 67059,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:2712f4bdfb485519676b68723ecbb919ff041533b9c5dc6bfff457257d15ae3f",
+      "invocation_id": "inv:writer:MA-S3:page:2712f4bdfb485519676b68723ecbb919ff041533b9c5dc6bfff457257d15ae3f",
+      "paragraph_ids": [
+        "MA-S3:P2"
+      ],
+      "input_tokens": 68426,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:8252743244127f7861c54560104485eebe25a5ceb00a29cbc682e628c09869f1",
+      "invocation_id": "inv:writer:MA-S3:page:8252743244127f7861c54560104485eebe25a5ceb00a29cbc682e628c09869f1",
+      "paragraph_ids": [
+        "MA-S3:P2"
+      ],
+      "input_tokens": 70843,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:ce2435e08b7e1f0c99e8d035d3f447ef03ad953747b82bb3abb3f5aeb0de6d7a",
+      "invocation_id": "inv:writer:MA-S3:page:ce2435e08b7e1f0c99e8d035d3f447ef03ad953747b82bb3abb3f5aeb0de6d7a",
+      "paragraph_ids": [
+        "MA-S3:P2"
+      ],
+      "input_tokens": 71982,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:e07f135688feaeda0452ea93be6758748337e58125c8b65dd6b993fa5e4f0003",
+      "invocation_id": "inv:writer:MA-S3:page:e07f135688feaeda0452ea93be6758748337e58125c8b65dd6b993fa5e4f0003",
+      "paragraph_ids": [
+        "MA-S3:P2"
+      ],
+      "input_tokens": 73836,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:dbb2b1e5a7c7b51521d1b53ea9b0d5aeff4a648b8f0229175e88c9393441818d",
+      "invocation_id": "inv:writer:MA-S3:page:dbb2b1e5a7c7b51521d1b53ea9b0d5aeff4a648b8f0229175e88c9393441818d",
+      "paragraph_ids": [
+        "MA-S3:P2"
+      ],
+      "input_tokens": 75106,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:8402b745f8256d1cc93c1e4e432ae85a720256285f0f65651fc3079a175041db",
+      "invocation_id": "inv:writer:MA-S3:page:8402b745f8256d1cc93c1e4e432ae85a720256285f0f65651fc3079a175041db",
+      "paragraph_ids": [
+        "MA-S3:P2"
+      ],
+      "input_tokens": 76490,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:4dc3bbbc706275a3f9f89c4840788c7f5ed616b696f51ccbad96338e5078c98d",
+      "invocation_id": "inv:writer:MA-S3:page:4dc3bbbc706275a3f9f89c4840788c7f5ed616b696f51ccbad96338e5078c98d",
+      "paragraph_ids": [
+        "MA-S3:P2"
+      ],
+      "input_tokens": 78318,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:bd9e94dee3995f9230f7cd8d84e22c96dc2a3f886022023c0379ffc0408ca755",
+      "invocation_id": "inv:writer:MA-S3:page:bd9e94dee3995f9230f7cd8d84e22c96dc2a3f886022023c0379ffc0408ca755",
+      "paragraph_ids": [
+        "MA-S3:P2"
+      ],
+      "input_tokens": 82959,
+      "fits": false
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:81a7b187c43883bcca75220aa1ff0aa9884616107b14a642355175ec01215ed9",
+      "invocation_id": "inv:writer:MA-S3:page:81a7b187c43883bcca75220aa1ff0aa9884616107b14a642355175ec01215ed9",
+      "paragraph_ids": [
+        "MA-S3:P2"
+      ],
+      "input_tokens": 61746,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:451984b4ff8e2423bed97a24ae82703fdf42d6eae92e94672ac06fb9a664aad2",
+      "invocation_id": "inv:writer:MA-S3:page:451984b4ff8e2423bed97a24ae82703fdf42d6eae92e94672ac06fb9a664aad2",
+      "paragraph_ids": [
+        "MA-S3:P2"
+      ],
+      "input_tokens": 62917,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:55ebf35340ed36792c5e65668cef368cad112d85cc4f259614ddf6e14f04fdbc",
+      "invocation_id": "inv:writer:MA-S3:page:55ebf35340ed36792c5e65668cef368cad112d85cc4f259614ddf6e14f04fdbc",
+      "paragraph_ids": [
+        "MA-S3:P2"
+      ],
+      "input_tokens": 64296,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:ed4b766d998c01288c2ed5ee6f757a4ffbb9985f4be71a392c3b43a47f64c3e4",
+      "invocation_id": "inv:writer:MA-S3:page:ed4b766d998c01288c2ed5ee6f757a4ffbb9985f4be71a392c3b43a47f64c3e4",
+      "paragraph_ids": [
+        "MA-S3:P2"
+      ],
+      "input_tokens": 67592,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:a35690a4f1cd5f55f03efc59fa7246dfdc9711cf3807c7d5e2f3e9be096eb12c",
+      "invocation_id": "inv:writer:MA-S3:page:a35690a4f1cd5f55f03efc59fa7246dfdc9711cf3807c7d5e2f3e9be096eb12c",
+      "paragraph_ids": [
+        "MA-S3:P2"
+      ],
+      "input_tokens": 69243,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:359e227deec2e9713cbf93501bdaa5f110569a523680eae6caf144f53764f846",
+      "invocation_id": "inv:writer:MA-S3:page:359e227deec2e9713cbf93501bdaa5f110569a523680eae6caf144f53764f846",
+      "paragraph_ids": [
+        "MA-S3:P2"
+      ],
+      "input_tokens": 70659,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:8f2296bc0ff24c6f19c47f1fc30af8bef322de03651c5044bb13fbf6ec5875e8",
+      "invocation_id": "inv:writer:MA-S3:page:8f2296bc0ff24c6f19c47f1fc30af8bef322de03651c5044bb13fbf6ec5875e8",
+      "paragraph_ids": [
+        "MA-S3:P2"
+      ],
+      "input_tokens": 74439,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:37bcbff564e35af5d1ab92279946f6dc47facf1c374880189a3316079fad6a49",
+      "invocation_id": "inv:writer:MA-S3:page:37bcbff564e35af5d1ab92279946f6dc47facf1c374880189a3316079fad6a49",
+      "paragraph_ids": [
+        "MA-S3:P2"
+      ],
+      "input_tokens": 75970,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:7970f22adba6ae049afdb33e3d047fa7c5ea1a6e5b3dda3a28883770b700bf28",
+      "invocation_id": "inv:writer:MA-S3:page:7970f22adba6ae049afdb33e3d047fa7c5ea1a6e5b3dda3a28883770b700bf28",
+      "paragraph_ids": [
+        "MA-S3:P2"
+      ],
+      "input_tokens": 79354,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:1dee02cc6e2e27dce1e2e072dd0e3dd54be3e11737a31b1f0e6122037d6f9278",
+      "invocation_id": "inv:writer:MA-S3:page:1dee02cc6e2e27dce1e2e072dd0e3dd54be3e11737a31b1f0e6122037d6f9278",
+      "paragraph_ids": [
+        "MA-S3:P2"
+      ],
+      "input_tokens": 81586,
+      "fits": false
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:32a413221cba22d5b306f49994b236317c67439277178b9dd6a6b1eedc0a0116",
+      "invocation_id": "inv:writer:MA-S3:page:32a413221cba22d5b306f49994b236317c67439277178b9dd6a6b1eedc0a0116",
+      "paragraph_ids": [
+        "MA-S3:P2"
+      ],
+      "input_tokens": 61005,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:935df7a2855baa16325e0949fec69386782ee7a452ce2f0d70b685cb1eb135f5",
+      "invocation_id": "inv:writer:MA-S3:page:935df7a2855baa16325e0949fec69386782ee7a452ce2f0d70b685cb1eb135f5",
+      "paragraph_ids": [
+        "MA-S3:P2"
+      ],
+      "input_tokens": 62604,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:ecdfa0a4ddee5aea6a86ede11af68f02d4a0eb10031dcb4c12ffaa8ef7713ab9",
+      "invocation_id": "inv:writer:MA-S3:page:ecdfa0a4ddee5aea6a86ede11af68f02d4a0eb10031dcb4c12ffaa8ef7713ab9",
+      "paragraph_ids": [
+        "MA-S3:P2"
+      ],
+      "input_tokens": 64208,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:14634feb66943fa752ad175c08c1e47f876e40286325ef1265eab08c9e0d8ec1",
+      "invocation_id": "inv:writer:MA-S3:page:14634feb66943fa752ad175c08c1e47f876e40286325ef1265eab08c9e0d8ec1",
+      "paragraph_ids": [
+        "MA-S3:P2"
+      ],
+      "input_tokens": 65873,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:a141c3bcc120857b0c283a452d1825c43ab62dcb242773d0bcb73bf9af9b9637",
+      "invocation_id": "inv:writer:MA-S3:page:a141c3bcc120857b0c283a452d1825c43ab62dcb242773d0bcb73bf9af9b9637",
+      "paragraph_ids": [
+        "MA-S3:P2"
+      ],
+      "input_tokens": 67450,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:22d143f6e485d0030d0a484537ecc7e73967262fc42eba4c14bca28ae572442e",
+      "invocation_id": "inv:writer:MA-S3:page:22d143f6e485d0030d0a484537ecc7e73967262fc42eba4c14bca28ae572442e",
+      "paragraph_ids": [
+        "MA-S3:P2"
+      ],
+      "input_tokens": 69404,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:766fd2a332e7833a6a882d6ec2678cbb38a80170037eedf025bb1df41df118be",
+      "invocation_id": "inv:writer:MA-S3:page:766fd2a332e7833a6a882d6ec2678cbb38a80170037eedf025bb1df41df118be",
+      "paragraph_ids": [
+        "MA-S3:P2"
+      ],
+      "input_tokens": 71029,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:5b6d9bfd2bebc8cb6ec3c5698d8d6170a0ad8f0a5457131a57e4c7fb4d9b7057",
+      "invocation_id": "inv:writer:MA-S3:page:5b6d9bfd2bebc8cb6ec3c5698d8d6170a0ad8f0a5457131a57e4c7fb4d9b7057",
+      "paragraph_ids": [
+        "MA-S3:P2"
+      ],
+      "input_tokens": 72649,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:7bc0a050fba07851744cfe5b730dc9c4cbf73673751aea4daf704623b0fbdc8a",
+      "invocation_id": "inv:writer:MA-S3:page:7bc0a050fba07851744cfe5b730dc9c4cbf73673751aea4daf704623b0fbdc8a",
+      "paragraph_ids": [
+        "MA-S3:P2"
+      ],
+      "input_tokens": 73798,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:59ebc7e74a0d21fabfccba8ba3bc91573c7afe20fcf1f16ade4738bb2daa7eb1",
+      "invocation_id": "inv:writer:MA-S3:page:59ebc7e74a0d21fabfccba8ba3bc91573c7afe20fcf1f16ade4738bb2daa7eb1",
+      "paragraph_ids": [
+        "MA-S3:P2"
+      ],
+      "input_tokens": 75667,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:4c374ee72c2efc372fd555a0e2139b6dcfa46ce957e5710e64647123d2cec1fa",
+      "invocation_id": "inv:writer:MA-S3:page:4c374ee72c2efc372fd555a0e2139b6dcfa46ce957e5710e64647123d2cec1fa",
+      "paragraph_ids": [
+        "MA-S3:P2"
+      ],
+      "input_tokens": 77343,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:5420656c10821c3b1aff048ce070a071c10d68888565833ee2fb5410ac43e709",
+      "invocation_id": "inv:writer:MA-S3:page:5420656c10821c3b1aff048ce070a071c10d68888565833ee2fb5410ac43e709",
+      "paragraph_ids": [
+        "MA-S3:P2"
+      ],
+      "input_tokens": 80658,
+      "fits": false
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:01dc444c0e58d3df7aa001a1406f348c2d4a23639ffbd51490ce44590887b64f",
+      "invocation_id": "inv:writer:MA-S3:page:01dc444c0e58d3df7aa001a1406f348c2d4a23639ffbd51490ce44590887b64f",
+      "paragraph_ids": [
+        "MA-S3:P2"
+      ],
+      "input_tokens": 61753,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:2b040ed81eccf6fa4fce133fbfc69258c5139adc55a29896f26532a7c1712dfc",
+      "invocation_id": "inv:writer:MA-S3:page:2b040ed81eccf6fa4fce133fbfc69258c5139adc55a29896f26532a7c1712dfc",
+      "paragraph_ids": [
+        "MA-S3:P2"
+      ],
+      "input_tokens": 64413,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:0846e6d6d18fb4ca5f0015773cafb839ff0598644430acdbe67499f97d859181",
+      "invocation_id": "inv:writer:MA-S3:page:0846e6d6d18fb4ca5f0015773cafb839ff0598644430acdbe67499f97d859181",
+      "paragraph_ids": [
+        "MA-S3:P2"
+      ],
+      "input_tokens": 71515,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:fdc4ac3ab02fc2b2ef0ac376f95af507ac13eb194e416bb0067882731c65ebda",
+      "invocation_id": "inv:writer:MA-S3:page:fdc4ac3ab02fc2b2ef0ac376f95af507ac13eb194e416bb0067882731c65ebda",
+      "paragraph_ids": [
+        "MA-S3:P2"
+      ],
+      "input_tokens": 72659,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:0a9ccdfc1f54b46d02fc6f8b92c713182351460d8c28e2d23bfb69f5594df9cd",
+      "invocation_id": "inv:writer:MA-S3:page:0a9ccdfc1f54b46d02fc6f8b92c713182351460d8c28e2d23bfb69f5594df9cd",
+      "paragraph_ids": [
+        "MA-S3:P2"
+      ],
+      "input_tokens": 74314,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:3be6b82ab05143e3a6c05ca0ed198a92d1207b5b77f50fd2a4133a67c5c76099",
+      "invocation_id": "inv:writer:MA-S3:page:3be6b82ab05143e3a6c05ca0ed198a92d1207b5b77f50fd2a4133a67c5c76099",
+      "paragraph_ids": [
+        "MA-S3:P2"
+      ],
+      "input_tokens": 77255,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:a47b5218fdbe05d2e7822c8a35cb472e7fcc3907ef53ac63cb006e5a6ab2fc7d",
+      "invocation_id": "inv:writer:MA-S3:page:a47b5218fdbe05d2e7822c8a35cb472e7fcc3907ef53ac63cb006e5a6ab2fc7d",
+      "paragraph_ids": [
+        "MA-S3:P2"
+      ],
+      "input_tokens": 78850,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:8715784f87e76ecb44d9d329aeec5c3df618df674c09f3f74306652685ecb3a7",
+      "invocation_id": "inv:writer:MA-S3:page:8715784f87e76ecb44d9d329aeec5c3df618df674c09f3f74306652685ecb3a7",
+      "paragraph_ids": [
+        "MA-S3:P3"
+      ],
+      "input_tokens": 11470,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:f4cc04fa00ab5a2c77977d5466cc856909c0b12f6b5a58bdeeca42a7ad67bf4a",
+      "invocation_id": "inv:writer:MA-S3:page:f4cc04fa00ab5a2c77977d5466cc856909c0b12f6b5a58bdeeca42a7ad67bf4a",
+      "paragraph_ids": [
+        "MA-S3:P4"
+      ],
+      "input_tokens": 11438,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:8a574f5a4ce5a2eebfa80d37a87eb202fbc7fdad4912da3fdb37a1cb5944e77a",
+      "invocation_id": "inv:writer:MA-S3:page:8a574f5a4ce5a2eebfa80d37a87eb202fbc7fdad4912da3fdb37a1cb5944e77a",
+      "paragraph_ids": [
+        "MA-S3:P5"
+      ],
+      "input_tokens": 11443,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:e18ad4006b29b84e6d7ce36cc5048476febcbc39af98bc1890268765369d7bd9",
+      "invocation_id": "inv:writer:MA-S3:page:e18ad4006b29b84e6d7ce36cc5048476febcbc39af98bc1890268765369d7bd9",
+      "paragraph_ids": [
+        "MA-S3:P6"
+      ],
+      "input_tokens": 11440,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:e6a25d946025ec58f5fe119d1fec895353238a77b7fdff047280d421b31a49bc",
+      "invocation_id": "inv:writer:MA-S3:page:e6a25d946025ec58f5fe119d1fec895353238a77b7fdff047280d421b31a49bc",
+      "paragraph_ids": [
+        "MA-S3:P7"
+      ],
+      "input_tokens": 11462,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:da41e771f1f89a7a966bcbe09d0ef1bb88b0a51a06850d4f3de6cfb7385f1147",
+      "invocation_id": "inv:writer:MA-S3:page:da41e771f1f89a7a966bcbe09d0ef1bb88b0a51a06850d4f3de6cfb7385f1147",
+      "paragraph_ids": [
+        "MA-S3:P8"
+      ],
+      "input_tokens": 11470,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:3856408d33b00d477a2746da3dae3fefad064c7883fff523bb6fa410b1f2e69f",
+      "invocation_id": "inv:writer:MA-S3:page:3856408d33b00d477a2746da3dae3fefad064c7883fff523bb6fa410b1f2e69f",
+      "paragraph_ids": [
+        "MA-S3:P9"
+      ],
+      "input_tokens": 11458,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:72e64fd1be13d380b8cff712739b79f8a16848648708fbcaa93b79becb87e279",
+      "invocation_id": "inv:writer:MA-S3:page:72e64fd1be13d380b8cff712739b79f8a16848648708fbcaa93b79becb87e279",
+      "paragraph_ids": [
+        "MA-S3:P10"
+      ],
+      "input_tokens": 11447,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:44012bbd0bd35e48fb8dd905fbf6ebc6312123830aca211883c6b37ed316a251",
+      "invocation_id": "inv:writer:MA-S3:page:44012bbd0bd35e48fb8dd905fbf6ebc6312123830aca211883c6b37ed316a251",
+      "paragraph_ids": [
+        "MA-S3:P11"
+      ],
+      "input_tokens": 11460,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:00e7d2a78682af6e110dd41bcec0a409919b8d3d2b349f58d02a317adf3c132e",
+      "invocation_id": "inv:writer:MA-S3:page:00e7d2a78682af6e110dd41bcec0a409919b8d3d2b349f58d02a317adf3c132e",
+      "paragraph_ids": [
+        "MA-S3:P12"
+      ],
+      "input_tokens": 11465,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:97e71640037d3f245a7e4d3df4f50851235cc41570b77351d5d1a06377cbfa2d",
+      "invocation_id": "inv:writer:MA-S3:page:97e71640037d3f245a7e4d3df4f50851235cc41570b77351d5d1a06377cbfa2d",
+      "paragraph_ids": [
+        "MA-S3:P13"
+      ],
+      "input_tokens": 11484,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:f22951ea9ee40bcd7540799e5c24d0c89ee663f3c1d3460f52fdd70ed29cbf20",
+      "invocation_id": "inv:writer:MA-S3:page:f22951ea9ee40bcd7540799e5c24d0c89ee663f3c1d3460f52fdd70ed29cbf20",
+      "paragraph_ids": [
+        "MA-S3:P14"
+      ],
+      "input_tokens": 11461,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:67f048514a3258c2e586c1f0b37d42576a5306806e11b2801bafff3da2b3a28e",
+      "invocation_id": "inv:writer:MA-S3:page:67f048514a3258c2e586c1f0b37d42576a5306806e11b2801bafff3da2b3a28e",
+      "paragraph_ids": [
+        "MA-S3:P15"
+      ],
+      "input_tokens": 11483,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:4ffcb344e22f61cf1544ab211d943aa5ccd7193aeb4199140287aff45e363ff4",
+      "invocation_id": "inv:writer:MA-S3:page:4ffcb344e22f61cf1544ab211d943aa5ccd7193aeb4199140287aff45e363ff4",
+      "paragraph_ids": [
+        "MA-S3:P16"
+      ],
+      "input_tokens": 11448,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:f276ab8db51ecb1339eee13e2d6c4af991e35dceb4fe5b3b9c2bcd6563c5c7c8",
+      "invocation_id": "inv:writer:MA-S3:page:f276ab8db51ecb1339eee13e2d6c4af991e35dceb4fe5b3b9c2bcd6563c5c7c8",
+      "paragraph_ids": [
+        "MA-S3:P17"
+      ],
+      "input_tokens": 11446,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S4",
+      "page_id": "page:f6f077793883fa48077d4c54bd6a9f94269d8d0dfb99833b0ccf4d93a046ca7c",
+      "invocation_id": "inv:writer:MA-S4:page:f6f077793883fa48077d4c54bd6a9f94269d8d0dfb99833b0ccf4d93a046ca7c",
+      "paragraph_ids": [
+        "MA-S4:P1"
+      ],
+      "input_tokens": 11287,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S4",
+      "page_id": "page:25f0bd09b346d6e7cfc823fb63dd08c1ff77bd9acee67075c140f54c3f97d51f",
+      "invocation_id": "inv:writer:MA-S4:page:25f0bd09b346d6e7cfc823fb63dd08c1ff77bd9acee67075c140f54c3f97d51f",
+      "paragraph_ids": [
+        "MA-S4:P2"
+      ],
+      "input_tokens": 33501,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S4",
+      "page_id": "page:4f74b8fc583f71d99fef89655788d40f67dd6ce8741d0d97e3cf9c490c0e458c",
+      "invocation_id": "inv:writer:MA-S4:page:4f74b8fc583f71d99fef89655788d40f67dd6ce8741d0d97e3cf9c490c0e458c",
+      "paragraph_ids": [
+        "MA-S4:P3"
+      ],
+      "input_tokens": 11299,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S4",
+      "page_id": "page:85cb24605fbe7614b01896c720a9cf4281fb31bb06a430bdf78024fe8bc7d728",
+      "invocation_id": "inv:writer:MA-S4:page:85cb24605fbe7614b01896c720a9cf4281fb31bb06a430bdf78024fe8bc7d728",
+      "paragraph_ids": [
+        "MA-S4:P4"
+      ],
+      "input_tokens": 11282,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S4",
+      "page_id": "page:ef9a792d1bb419d9ccf8d4dbc2695f4388a362b34a6c058104573e1124156b7d",
+      "invocation_id": "inv:writer:MA-S4:page:ef9a792d1bb419d9ccf8d4dbc2695f4388a362b34a6c058104573e1124156b7d",
+      "paragraph_ids": [
+        "MA-S4:P5"
+      ],
+      "input_tokens": 11300,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S4",
+      "page_id": "page:d38f57863893745c7ec3b89adf03de885d3a84f8ee0f04d394bc0617c92ef1e4",
+      "invocation_id": "inv:writer:MA-S4:page:d38f57863893745c7ec3b89adf03de885d3a84f8ee0f04d394bc0617c92ef1e4",
+      "paragraph_ids": [
+        "MA-S4:P6"
+      ],
+      "input_tokens": 11284,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S5",
+      "page_id": "page:c6a423816a0b0805b75671a671032415739eeac40bf9b3809bcbe8a937a862d3",
+      "invocation_id": "inv:writer:MA-S5:page:c6a423816a0b0805b75671a671032415739eeac40bf9b3809bcbe8a937a862d3",
+      "paragraph_ids": [
+        "MA-S5:P1"
+      ],
+      "input_tokens": 11271,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S5",
+      "page_id": "page:cd9e37269114f35abdd2630b1573cc56b46c2ed9d79aaeaae2733d6e46a9aa81",
+      "invocation_id": "inv:writer:MA-S5:page:cd9e37269114f35abdd2630b1573cc56b46c2ed9d79aaeaae2733d6e46a9aa81",
+      "paragraph_ids": [
+        "MA-S5:P2"
+      ],
+      "input_tokens": 36517,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S5",
+      "page_id": "page:c7f76e4c90f5a97f01ea307ffc68d14be4cba75c56d9f89afb442ada1419b29e",
+      "invocation_id": "inv:writer:MA-S5:page:c7f76e4c90f5a97f01ea307ffc68d14be4cba75c56d9f89afb442ada1419b29e",
+      "paragraph_ids": [
+        "MA-S5:P3"
+      ],
+      "input_tokens": 11263,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S5",
+      "page_id": "page:b715d452ec339c658a324d8aba26b15c70a73c1f145502b55f9e04b1c7700c8b",
+      "invocation_id": "inv:writer:MA-S5:page:b715d452ec339c658a324d8aba26b15c70a73c1f145502b55f9e04b1c7700c8b",
+      "paragraph_ids": [
+        "MA-S5:P4"
+      ],
+      "input_tokens": 11280,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:751aa8b5352377a0766e7f7416c05553647380df74d5295f04d695646a47b815",
+      "invocation_id": "inv:writer:MA-S3:page:751aa8b5352377a0766e7f7416c05553647380df74d5295f04d695646a47b815",
+      "paragraph_ids": [
+        "MA-S3:P1__f1"
+      ],
+      "input_tokens": 35298,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:d909e9ab6f78aa0d2d6948cd6b97238b0c5ca47fba4d3b02e69e522e07bd51f0",
+      "invocation_id": "inv:writer:MA-S3:page:d909e9ab6f78aa0d2d6948cd6b97238b0c5ca47fba4d3b02e69e522e07bd51f0",
+      "paragraph_ids": [
+        "MA-S3:P1__f1",
+        "MA-S3:P1__f2"
+      ],
+      "input_tokens": 59974,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:7119f09b0643f1c6274ee4acc867fd2662667a98c173300835e656d5c4cf5ae6",
+      "invocation_id": "inv:writer:MA-S3:page:7119f09b0643f1c6274ee4acc867fd2662667a98c173300835e656d5c4cf5ae6",
+      "paragraph_ids": [
+        "MA-S3:P1__f2"
+      ],
+      "input_tokens": 35996,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:aee9889748b438538eae67b6684d09d9ed492a4ee81e26c8a88b271c21b3d4a8",
+      "invocation_id": "inv:writer:MA-S3:page:aee9889748b438538eae67b6684d09d9ed492a4ee81e26c8a88b271c21b3d4a8",
+      "paragraph_ids": [
+        "MA-S3:P1__f2",
+        "MA-S3:P1__f3"
+      ],
+      "input_tokens": 59401,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:14ab209d0459a9893155b9d6a8f31e210ffab86b670a9b2036c2559a645a084d",
+      "invocation_id": "inv:writer:MA-S3:page:14ab209d0459a9893155b9d6a8f31e210ffab86b670a9b2036c2559a645a084d",
+      "paragraph_ids": [
+        "MA-S3:P1__f3"
+      ],
+      "input_tokens": 34698,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:03c20b1eb35bf4d2a5688da9ea34610853cdaa72227341220ff178f823d7d00a",
+      "invocation_id": "inv:writer:MA-S3:page:03c20b1eb35bf4d2a5688da9ea34610853cdaa72227341220ff178f823d7d00a",
+      "paragraph_ids": [
+        "MA-S3:P1__f3",
+        "MA-S3:P1__f4"
+      ],
+      "input_tokens": 59884,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:881f96e34f95310ed0fad191786b1209f382123d5af851aa8b9c8fe1806c8fb9",
+      "invocation_id": "inv:writer:MA-S3:page:881f96e34f95310ed0fad191786b1209f382123d5af851aa8b9c8fe1806c8fb9",
+      "paragraph_ids": [
+        "MA-S3:P1__f4"
+      ],
+      "input_tokens": 36487,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:8d6a8f9a019502e7e7a600eb546c3b708e6be7654626f538d43f31cc6fb8027c",
+      "invocation_id": "inv:writer:MA-S3:page:8d6a8f9a019502e7e7a600eb546c3b708e6be7654626f538d43f31cc6fb8027c",
+      "paragraph_ids": [
+        "MA-S3:P1__f4",
+        "MA-S3:P1__f5"
+      ],
+      "input_tokens": 61490,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:19d0179f4fbe83880fd5f669b953ecabfb8288da3d585fc8a477654084c80c1c",
+      "invocation_id": "inv:writer:MA-S3:page:19d0179f4fbe83880fd5f669b953ecabfb8288da3d585fc8a477654084c80c1c",
+      "paragraph_ids": [
+        "MA-S3:P1__f5"
+      ],
+      "input_tokens": 36283,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:0f44351020c000ecfd7abbc5a2a5a231bca25ad2428f940f1ba8e3b6323bffe7",
+      "invocation_id": "inv:writer:MA-S3:page:0f44351020c000ecfd7abbc5a2a5a231bca25ad2428f940f1ba8e3b6323bffe7",
+      "paragraph_ids": [
+        "MA-S3:P1__f5",
+        "MA-S3:P1__f6"
+      ],
+      "input_tokens": 61727,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:baf0b6a91335ba96aac3b50d40de7a76588b2483fac50202e4684d2bcdbf38e1",
+      "invocation_id": "inv:writer:MA-S3:page:baf0b6a91335ba96aac3b50d40de7a76588b2483fac50202e4684d2bcdbf38e1",
+      "paragraph_ids": [
+        "MA-S3:P1__f6"
+      ],
+      "input_tokens": 36726,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:4b14da0400472554565ff37f3f8c69a231dfc5e59e28086d647d13174caad672",
+      "invocation_id": "inv:writer:MA-S3:page:4b14da0400472554565ff37f3f8c69a231dfc5e59e28086d647d13174caad672",
+      "paragraph_ids": [
+        "MA-S3:P1__f6",
+        "MA-S3:P1__f7"
+      ],
+      "input_tokens": 62268,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:509596cab22a82c8f70a7dbd877e6bddeaaa539ebc7c8be5f484e0f1abef34b1",
+      "invocation_id": "inv:writer:MA-S3:page:509596cab22a82c8f70a7dbd877e6bddeaaa539ebc7c8be5f484e0f1abef34b1",
+      "paragraph_ids": [
+        "MA-S3:P1__f7"
+      ],
+      "input_tokens": 36795,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:7094a4d67ed4bee02096036fc880af32bfb5bb648b71650ffd33d2b8c62a4c9e",
+      "invocation_id": "inv:writer:MA-S3:page:7094a4d67ed4bee02096036fc880af32bfb5bb648b71650ffd33d2b8c62a4c9e",
+      "paragraph_ids": [
+        "MA-S3:P1__f7",
+        "MA-S3:P1__f8"
+      ],
+      "input_tokens": 60544,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:f8856b7ab9650757bfaf91a062c203a9add0361068ed0a6c6c045ba25eb8e7e8",
+      "invocation_id": "inv:writer:MA-S3:page:f8856b7ab9650757bfaf91a062c203a9add0361068ed0a6c6c045ba25eb8e7e8",
+      "paragraph_ids": [
+        "MA-S3:P1__f8"
+      ],
+      "input_tokens": 35021,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:a04fc2863f28372ff8994c5d40037749f52206725ba969a74209cf4b9b58b074",
+      "invocation_id": "inv:writer:MA-S3:page:a04fc2863f28372ff8994c5d40037749f52206725ba969a74209cf4b9b58b074",
+      "paragraph_ids": [
+        "MA-S3:P1__f8",
+        "MA-S3:P1__f9"
+      ],
+      "input_tokens": 61160,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:f409b976fe235503c66025b8d2c3502fbc5374504bb010369aab41598591888d",
+      "invocation_id": "inv:writer:MA-S3:page:f409b976fe235503c66025b8d2c3502fbc5374504bb010369aab41598591888d",
+      "paragraph_ids": [
+        "MA-S3:P1__f9"
+      ],
+      "input_tokens": 37412,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:9f593df0feed4d367807bcffe418706ee95611c2342ce5f33bb5ce7f9001be20",
+      "invocation_id": "inv:writer:MA-S3:page:9f593df0feed4d367807bcffe418706ee95611c2342ce5f33bb5ce7f9001be20",
+      "paragraph_ids": [
+        "MA-S3:P1__f9",
+        "MA-S3:P1__f10"
+      ],
+      "input_tokens": 51243,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:3a93eb334d7aaf3181a9a81c9483aca883f9660beef4a7b9b5b6a039d01e0bd3",
+      "invocation_id": "inv:writer:MA-S3:page:3a93eb334d7aaf3181a9a81c9483aca883f9660beef4a7b9b5b6a039d01e0bd3",
+      "paragraph_ids": [
+        "MA-S3:P1__f9",
+        "MA-S3:P1__f10",
+        "MA-S3:P2__f1"
+      ],
+      "input_tokens": 82116,
+      "fits": false
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:fd9c44a567a19a03ceeebb26ec0925ee111b58b3385e4e3490cd6b8403fb120d",
+      "invocation_id": "inv:writer:MA-S3:page:fd9c44a567a19a03ceeebb26ec0925ee111b58b3385e4e3490cd6b8403fb120d",
+      "paragraph_ids": [
+        "MA-S3:P2__f1"
+      ],
+      "input_tokens": 42132,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:52bc7169804d536432f9f010d1f669d298652d7f15e6baa9180ad9c3e9999595",
+      "invocation_id": "inv:writer:MA-S3:page:52bc7169804d536432f9f010d1f669d298652d7f15e6baa9180ad9c3e9999595",
+      "paragraph_ids": [
+        "MA-S3:P2__f1",
+        "MA-S3:P2__f2"
+      ],
+      "input_tokens": 72738,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:a7853ad742b4a90d168a0a886b86bf839cace3caec2b11337a9883ca055e68ae",
+      "invocation_id": "inv:writer:MA-S3:page:a7853ad742b4a90d168a0a886b86bf839cace3caec2b11337a9883ca055e68ae",
+      "paragraph_ids": [
+        "MA-S3:P2__f2"
+      ],
+      "input_tokens": 41876,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:789b8b2f3a399f9dd08fa2c402fc7231a269a205761d824603e7798547b8405b",
+      "invocation_id": "inv:writer:MA-S3:page:789b8b2f3a399f9dd08fa2c402fc7231a269a205761d824603e7798547b8405b",
+      "paragraph_ids": [
+        "MA-S3:P2__f2",
+        "MA-S3:P2__f3"
+      ],
+      "input_tokens": 72666,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:d4993f7db022baf71dbb59a35a77a2d5e59b931f0fb48ac01b7dac30ede562fa",
+      "invocation_id": "inv:writer:MA-S3:page:d4993f7db022baf71dbb59a35a77a2d5e59b931f0fb48ac01b7dac30ede562fa",
+      "paragraph_ids": [
+        "MA-S3:P2__f3"
+      ],
+      "input_tokens": 42045,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:841c92103301bb95563ac9f2aa909ae1f4dd2b08b19066c0d950a0c1f4f0ee42",
+      "invocation_id": "inv:writer:MA-S3:page:841c92103301bb95563ac9f2aa909ae1f4dd2b08b19066c0d950a0c1f4f0ee42",
+      "paragraph_ids": [
+        "MA-S3:P2__f3",
+        "MA-S3:P2__f4"
+      ],
+      "input_tokens": 70372,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:7a577e2ce049fd7aec70305dd6b3a04c8382133dda8179689b079624f32581a7",
+      "invocation_id": "inv:writer:MA-S3:page:7a577e2ce049fd7aec70305dd6b3a04c8382133dda8179689b079624f32581a7",
+      "paragraph_ids": [
+        "MA-S3:P2__f4"
+      ],
+      "input_tokens": 39611,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:a57faa122c2585c5a32df3899109c4c5ae0ad669f3003378827c9f73fc87d3e9",
+      "invocation_id": "inv:writer:MA-S3:page:a57faa122c2585c5a32df3899109c4c5ae0ad669f3003378827c9f73fc87d3e9",
+      "paragraph_ids": [
+        "MA-S3:P2__f4",
+        "MA-S3:P2__f5"
+      ],
+      "input_tokens": 69974,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:94cb2b059efbe2855f3c57c719c602ba713950a340dc45e777d034470e7372af",
+      "invocation_id": "inv:writer:MA-S3:page:94cb2b059efbe2855f3c57c719c602ba713950a340dc45e777d034470e7372af",
+      "paragraph_ids": [
+        "MA-S3:P2__f5"
+      ],
+      "input_tokens": 41657,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:ffab9d07982835ca6d1f85c567fecff280030f4ed50eebc838d6c85e8b233030",
+      "invocation_id": "inv:writer:MA-S3:page:ffab9d07982835ca6d1f85c567fecff280030f4ed50eebc838d6c85e8b233030",
+      "paragraph_ids": [
+        "MA-S3:P2__f5",
+        "MA-S3:P2__f6"
+      ],
+      "input_tokens": 68903,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:8c7ae468359f379d3a97eeabd9fb2a560ae9176193119c1f61d7ead54e4bc962",
+      "invocation_id": "inv:writer:MA-S3:page:8c7ae468359f379d3a97eeabd9fb2a560ae9176193119c1f61d7ead54e4bc962",
+      "paragraph_ids": [
+        "MA-S3:P2__f6"
+      ],
+      "input_tokens": 38553,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:dbdc07370ead8442f9d44d4e0d82569b9274ce203ead91d8483b1608e0e6f66a",
+      "invocation_id": "inv:writer:MA-S3:page:dbdc07370ead8442f9d44d4e0d82569b9274ce203ead91d8483b1608e0e6f66a",
+      "paragraph_ids": [
+        "MA-S3:P2__f6",
+        "MA-S3:P2__f7"
+      ],
+      "input_tokens": 68836,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S3",
+      "page_id": "page:2f0edfb7ec40d04d13743030d6f8aeedf8920fe0c049255ad4fb072b81eb7f98",
+      "invocation_id": "inv:writer:MA-S3:page:2f0edfb7ec40d04d13743030d6f8aeedf8920fe0c049255ad4fb072b81eb7f98",
+      "paragraph_ids": [
+        "MA-S3:P2__f7"
+      ],
+      "input_tokens": 41563,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S4",
+      "page_id": "page:deb150313c1572b14530320add69c2d3fc68d162204676501b4ed6b6f9487019",
+      "invocation_id": "inv:writer:MA-S4:page:deb150313c1572b14530320add69c2d3fc68d162204676501b4ed6b6f9487019",
+      "paragraph_ids": [
+        "MA-S4:P2"
+      ],
+      "input_tokens": 33504,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "candidate_page",
+      "section_id": "MA-S5",
+      "page_id": "page:5c2d0db68504d5ae006260b0181541d6dd1d98eb6ec8423956efe075ad43d515",
+      "invocation_id": "inv:writer:MA-S5:page:5c2d0db68504d5ae006260b0181541d6dd1d98eb6ec8423956efe075ad43d515",
+      "paragraph_ids": [
+        "MA-S5:P2"
+      ],
+      "input_tokens": 36520,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "final_page",
+      "section_id": "MA-S1",
+      "page_id": "page:281af1e758001328894fc2f8200e5e244a060ff3eafae98e6dcfb3a428ed052a",
+      "invocation_id": "inv:writer:MA-S1:page:281af1e758001328894fc2f8200e5e244a060ff3eafae98e6dcfb3a428ed052a",
+      "input_tokens": 11412,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "final_page",
+      "section_id": "MA-S2",
+      "page_id": "page:0b5cf25648aa7e8de2636240c208848cb98726e935b1def28d73ebf7560ebab9",
+      "invocation_id": "inv:writer:MA-S2:page:0b5cf25648aa7e8de2636240c208848cb98726e935b1def28d73ebf7560ebab9",
+      "input_tokens": 11393,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "final_page",
+      "section_id": "MA-S3",
+      "page_id": "page:751aa8b5352377a0766e7f7416c05553647380df74d5295f04d695646a47b815",
+      "invocation_id": "inv:writer:MA-S3:page:751aa8b5352377a0766e7f7416c05553647380df74d5295f04d695646a47b815",
+      "input_tokens": 38473,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "final_page",
+      "section_id": "MA-S3",
+      "page_id": "page:7119f09b0643f1c6274ee4acc867fd2662667a98c173300835e656d5c4cf5ae6",
+      "invocation_id": "inv:writer:MA-S3:page:7119f09b0643f1c6274ee4acc867fd2662667a98c173300835e656d5c4cf5ae6",
+      "input_tokens": 35992,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "final_page",
+      "section_id": "MA-S3",
+      "page_id": "page:14ab209d0459a9893155b9d6a8f31e210ffab86b670a9b2036c2559a645a084d",
+      "invocation_id": "inv:writer:MA-S3:page:14ab209d0459a9893155b9d6a8f31e210ffab86b670a9b2036c2559a645a084d",
+      "input_tokens": 34696,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "final_page",
+      "section_id": "MA-S3",
+      "page_id": "page:881f96e34f95310ed0fad191786b1209f382123d5af851aa8b9c8fe1806c8fb9",
+      "invocation_id": "inv:writer:MA-S3:page:881f96e34f95310ed0fad191786b1209f382123d5af851aa8b9c8fe1806c8fb9",
+      "input_tokens": 36481,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "final_page",
+      "section_id": "MA-S3",
+      "page_id": "page:19d0179f4fbe83880fd5f669b953ecabfb8288da3d585fc8a477654084c80c1c",
+      "invocation_id": "inv:writer:MA-S3:page:19d0179f4fbe83880fd5f669b953ecabfb8288da3d585fc8a477654084c80c1c",
+      "input_tokens": 36277,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "final_page",
+      "section_id": "MA-S3",
+      "page_id": "page:baf0b6a91335ba96aac3b50d40de7a76588b2483fac50202e4684d2bcdbf38e1",
+      "invocation_id": "inv:writer:MA-S3:page:baf0b6a91335ba96aac3b50d40de7a76588b2483fac50202e4684d2bcdbf38e1",
+      "input_tokens": 36725,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "final_page",
+      "section_id": "MA-S3",
+      "page_id": "page:509596cab22a82c8f70a7dbd877e6bddeaaa539ebc7c8be5f484e0f1abef34b1",
+      "invocation_id": "inv:writer:MA-S3:page:509596cab22a82c8f70a7dbd877e6bddeaaa539ebc7c8be5f484e0f1abef34b1",
+      "input_tokens": 36790,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "final_page",
+      "section_id": "MA-S3",
+      "page_id": "page:f8856b7ab9650757bfaf91a062c203a9add0361068ed0a6c6c045ba25eb8e7e8",
+      "invocation_id": "inv:writer:MA-S3:page:f8856b7ab9650757bfaf91a062c203a9add0361068ed0a6c6c045ba25eb8e7e8",
+      "input_tokens": 35023,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "final_page",
+      "section_id": "MA-S3",
+      "page_id": "page:9f593df0feed4d367807bcffe418706ee95611c2342ce5f33bb5ce7f9001be20",
+      "invocation_id": "inv:writer:MA-S3:page:9f593df0feed4d367807bcffe418706ee95611c2342ce5f33bb5ce7f9001be20",
+      "input_tokens": 51245,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "final_page",
+      "section_id": "MA-S3",
+      "page_id": "page:fd9c44a567a19a03ceeebb26ec0925ee111b58b3385e4e3490cd6b8403fb120d",
+      "invocation_id": "inv:writer:MA-S3:page:fd9c44a567a19a03ceeebb26ec0925ee111b58b3385e4e3490cd6b8403fb120d",
+      "input_tokens": 42122,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "final_page",
+      "section_id": "MA-S3",
+      "page_id": "page:a7853ad742b4a90d168a0a886b86bf839cace3caec2b11337a9883ca055e68ae",
+      "invocation_id": "inv:writer:MA-S3:page:a7853ad742b4a90d168a0a886b86bf839cace3caec2b11337a9883ca055e68ae",
+      "input_tokens": 41867,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "final_page",
+      "section_id": "MA-S3",
+      "page_id": "page:d4993f7db022baf71dbb59a35a77a2d5e59b931f0fb48ac01b7dac30ede562fa",
+      "invocation_id": "inv:writer:MA-S3:page:d4993f7db022baf71dbb59a35a77a2d5e59b931f0fb48ac01b7dac30ede562fa",
+      "input_tokens": 42043,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "final_page",
+      "section_id": "MA-S3",
+      "page_id": "page:7a577e2ce049fd7aec70305dd6b3a04c8382133dda8179689b079624f32581a7",
+      "invocation_id": "inv:writer:MA-S3:page:7a577e2ce049fd7aec70305dd6b3a04c8382133dda8179689b079624f32581a7",
+      "input_tokens": 39607,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "final_page",
+      "section_id": "MA-S3",
+      "page_id": "page:94cb2b059efbe2855f3c57c719c602ba713950a340dc45e777d034470e7372af",
+      "invocation_id": "inv:writer:MA-S3:page:94cb2b059efbe2855f3c57c719c602ba713950a340dc45e777d034470e7372af",
+      "input_tokens": 41650,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "final_page",
+      "section_id": "MA-S3",
+      "page_id": "page:8c7ae468359f379d3a97eeabd9fb2a560ae9176193119c1f61d7ead54e4bc962",
+      "invocation_id": "inv:writer:MA-S3:page:8c7ae468359f379d3a97eeabd9fb2a560ae9176193119c1f61d7ead54e4bc962",
+      "input_tokens": 38551,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "final_page",
+      "section_id": "MA-S3",
+      "page_id": "page:2f0edfb7ec40d04d13743030d6f8aeedf8920fe0c049255ad4fb072b81eb7f98",
+      "invocation_id": "inv:writer:MA-S3:page:2f0edfb7ec40d04d13743030d6f8aeedf8920fe0c049255ad4fb072b81eb7f98",
+      "input_tokens": 41562,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "final_page",
+      "section_id": "MA-S4",
+      "page_id": "page:deb150313c1572b14530320add69c2d3fc68d162204676501b4ed6b6f9487019",
+      "invocation_id": "inv:writer:MA-S4:page:deb150313c1572b14530320add69c2d3fc68d162204676501b4ed6b6f9487019",
+      "input_tokens": 34482,
+      "fits": true
+    },
+    {
+      "revision": 1,
+      "kind": "final_page",
+      "section_id": "MA-S5",
+      "page_id": "page:5c2d0db68504d5ae006260b0181541d6dd1d98eb6ec8423956efe075ad43d515",
+      "invocation_id": "inv:writer:MA-S5:page:5c2d0db68504d5ae006260b0181541d6dd1d98eb6ec8423956efe075ad43d515",
+      "input_tokens": 37071,
+      "fits": true
+    }
+  ],
+  "final_manifest_digest": "sha256:cd0d51ded32e9340e4239cc46198cfc714c85aec1b743a9c5e42a2b301433d49",
+  "final_invocation_count": 20
+}

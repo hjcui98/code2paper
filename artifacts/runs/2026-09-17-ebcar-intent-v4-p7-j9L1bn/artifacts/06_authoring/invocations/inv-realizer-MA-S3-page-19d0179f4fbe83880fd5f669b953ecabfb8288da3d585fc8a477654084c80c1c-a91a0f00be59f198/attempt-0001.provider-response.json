@@ -1,0 +1,25 @@
+{
+  "attempt": 1,
+  "blocked_reason": "",
+  "content_digest": "sha256:3c1654661ad9cc2e7cf6ef5eb88a3ab479fc01f570514150f4cf8c03b6aee3b9",
+  "diagnostics": {
+    "finish_seen": true,
+    "partial_chars": 2963,
+    "stream_events": 333,
+    "terminal_status": "finish_seen",
+    "usage_seen": true
+  },
+  "finish_reason": "structured_complete",
+  "invocation_id": "inv:realizer:MA-S3:page:19d0179f4fbe83880fd5f669b953ecabfb8288da3d585fc8a477654084c80c1c",
+  "provider_finish_reason": "stop",
+  "request_diagnostics_digest": "sha256:79e83c7cf0cee966f1c8eac62a1a5761a8933ebf2f3ea7c7f2923a88a497dfa1",
+  "response_digest": "sha256:f48be461785b7f95b043fd2c81152f60c066b83767446054598aa1fcb7023c37",
+  "response_text": "{\n  \"draft_markdown\": \"When `self.cfg.use_dedicated_attention` is active, the model executes a loop over `enumerate(temp_document_id)` to construct a dedicated attention mask. For each row and document ID, the mask row is initialized to negative infinity via `dedicated_attention_mask[i, row, :] = -float(\\n                        \\\"inf\\\"\\n                    )  # Set this row to all -inf`. The code then computes `temp_indices = (` by comparing `temp_document_id == doc_id` to identify passages sharing the same document ID. These indices are concatenated with a query indicator using `temp_indices = torch.cat(\\n                        (\\n                            torch.tensor([True], device=self.device),\\n                            temp_indices,\\n                        )  # Always attend to the query\\n                    )  # [num_passages + 1]`. This construction ensures that the query always attends to itself, implemented via `torch.tensor([True], device=self.device),`.\",\n  \"rendered_detail_ids\": [\n    \"detail:mech_sym:f6cf5bdfe2ae16f0:29\",\n    \"detail:mech_sym:f6cf5bdfe2ae16f0:30\",\n    \"detail:mech_sym:f6cf5bdfe2ae16f0:31\",\n    \"detail:mech_sym:f6cf5bdfe2ae16f0:32\",\n    \"detail:mech_sym:f6cf5bdfe2ae16f0:33\",\n    \"detail:mech_sym:f6cf5bdfe2ae16f0:34\",\n    \"detail:mech_sym:f6cf5bdfe2ae16f0:35\",\n    \"detail:mech_sym:f6cf5bdfe2ae16f0:36\"\n  ],\n  \"used_formula_package_ids\": [],\n  \"witnesses\": [\n    {\n      \"exact_text\": \"enumerate(temp_document_id)\",\n      \"target_id\": \"detail:mech_sym:f6cf5bdfe2ae16f0:29\",\n      \"witness_kind\": \"detail\"\n    },\n    {\n      \"exact_text\": \"dedicated_attention_mask[i, row, :] = -float(\",\n      \"target_id\": \"detail:mech_sym:f6cf5bdfe2ae16f0:30\",\n      \"witness_kind\": \"detail\"\n    },\n    {\n      \"exact_text\": \"dedicated_attention_mask[i, row, :] = -float(                        )  # Set this row to all -inf\",\n      \"target_id\": \"detail:mech_sym:f6cf5bdfe2ae16f0:31\",\n      \"witness_kind\": \"detail\"\n    },\n    {\n      \"exact_text\": \"temp_indices = (\",\n      \"target_id\": \"detail:mech_sym:f6cf5bdfe2ae16f0:32\",\n      \"witness_kind\": \"detail\"\n    },\n    {\n      \"exact_text\": \"temp_document_id == doc_id\",\n      \"target_id\": \"detail:mech_sym:f6cf5bdfe2ae16f0:33\",\n      \"witness_kind\": \"detail\"\n    },\n    {\n      \"exact_text\": \"temp_indices = torch.cat(\",\n      \"target_id\": \"detail:mech_sym:f6cf5bdfe2ae16f0:34\",\n      \"witness_kind\": \"detail\"\n    },\n    {\n      \"exact_text\": \"temp_indices = torch.cat(                        (                            torch.tensor([True], device=self.device),                            temp_indices,                        )  # Always attend to the query                    )  # [num_passages + 1]\",\n      \"target_id\": \"detail:mech_sym:f6cf5bdfe2ae16f0:35\",\n      \"witness_kind\": \"detail\"\n    },\n    {\n      \"exact_text\": \"torch.tensor([True], device=self.device),\",\n      \"target_id\": \"detail:mech_sym:f6cf5bdfe2ae16f0:36\",\n      \"witness_kind\": \"detail\"\n    }\n  ]\n}",
+  "schema_version": "1.0",
+  "thinking_chars": 0,
+  "usage": {
+    "completion_tokens": 951,
+    "prompt_tokens": 23103,
+    "total_tokens": 24054
+  }
+}

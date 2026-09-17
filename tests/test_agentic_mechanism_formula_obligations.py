@@ -95,6 +95,24 @@ def test_mechanism_formula_obligation_compiler_paragraph_independence() -> None:
     assert not hasattr(ob, "paragraph_ids")
 
 
+def test_code_shaped_compute_without_formula_source_does_not_create_obligation() -> None:
+    context = _make_context()
+    detail = context.details[0].model_copy(update={
+        "detail_id": "d:code-arithmetic",
+        "role": "transformation",
+        "formalizable": False,
+        "predicate": "COMPUTE",
+        "operands": (
+            "document_id.long() % self.cfg.retrieval.top_k",
+            "document_id.long() // self.cfg.retrieval.top_k",
+        ),
+        "source_equation_ids": (),
+        "source_facet_ids": (),
+    })
+    context = context.model_copy(update={"details": (detail,)})
+    assert compile_mechanism_formula_obligations(context) == ()
+
+
 def test_mechanism_formula_package_v2_and_placement() -> None:
     pkg = MechanismFormulaPackageV2(
         package_id="pkg:infonce",

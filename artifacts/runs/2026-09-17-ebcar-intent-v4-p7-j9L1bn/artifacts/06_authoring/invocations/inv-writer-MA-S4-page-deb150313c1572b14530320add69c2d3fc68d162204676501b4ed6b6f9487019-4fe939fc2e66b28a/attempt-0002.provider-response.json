@@ -1,0 +1,25 @@
+{
+  "attempt": 2,
+  "blocked_reason": "",
+  "content_digest": "sha256:9ec2dcd6a2a79476fe33de67b38d488f2485de7bc49465f379544433595ed451",
+  "diagnostics": {
+    "finish_seen": true,
+    "partial_chars": 1062,
+    "stream_events": 448,
+    "terminal_status": "finish_seen",
+    "usage_seen": true
+  },
+  "finish_reason": "structured_complete",
+  "invocation_id": "inv:writer:MA-S4:page:deb150313c1572b14530320add69c2d3fc68d162204676501b4ed6b6f9487019",
+  "provider_finish_reason": "stop",
+  "request_diagnostics_digest": "sha256:ba4744e000499e49ef0c5f5ea4445936ceb9add809ffbfb5670b64c23bd1f65c",
+  "response_digest": "sha256:f6e14b71f7c4af63831f5b96f1c0baf48bc353a64340b21f47b123ae911c8a70",
+  "response_text": "{\"paragraphs\":[{\"paragraph_id\":\"MA-S4:P2\",\"paragraph_markdown\":\"When the positional-encoding configuration flag is enabled, the model loads the document identity embeddings and adds them to the passage representations, producing the intermediate sum of passages + document_id_embeddings. It then loads the passage identity embeddings and adds them to this intermediate result, yielding the final expression passages + document_id_embeddings + passage_id_embeddings, which replaces the original passages tensor for all downstream contrastive computations. The positive and negative similarity vectors are concatenated into a single similarity tensor of length equal to the sum of the positive and negative counts, forming the contrastive set over which the InfoNCE denominator is evaluated. A guard branch inspects whether the per-sample loss tensor has zero entries; in that case the routine emits diagnostic output for the affected sample. Under normal operation the aggregated loss is returned as the scalar output of the forward pass.\"}],\"section_id\":\"MA-S4\"}",
+  "schema_version": "1.0",
+  "thinking_chars": 0,
+  "usage": {
+    "completion_tokens": 1215,
+    "prompt_tokens": 29900,
+    "total_tokens": 31115
+  }
+}

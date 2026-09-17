@@ -1,0 +1,25 @@
+{
+  "attempt": 1,
+  "blocked_reason": "",
+  "content_digest": "sha256:55327bf3d83297c56be3527d53ae415f55d6d7dc4a67fb8643c3767e0ed00541",
+  "diagnostics": {
+    "finish_seen": true,
+    "partial_chars": 3468,
+    "stream_events": 462,
+    "terminal_status": "finish_seen",
+    "usage_seen": true
+  },
+  "finish_reason": "structured_complete",
+  "invocation_id": "inv:realizer:MA-S3:page:a7853ad742b4a90d168a0a886b86bf839cace3caec2b11337a9883ca055e68ae",
+  "provider_finish_reason": "stop",
+  "request_diagnostics_digest": "sha256:1e53fa36cd44c2cf41c8b38237d18428d46832832bf4e77ac2fd9df0628896d3",
+  "response_digest": "sha256:d454353167ae379a554c352ae563f39db32b2b6c09452ef3fddcc589f6620d09",
+  "response_text": "{\n  \"draft_markdown\": \"In the conditional branch where `self.cfg.add_positional_encoding` is active, the mechanism computes a passage identifier via the call `passage_id.long()` (detail:mech_sym:9773c5add7af1f92:11). This enables the subsequent transformation where `passages = (` is written to incorporate positional information (detail:mech_sym:9773c5add7af1f92:12). The conditional output is then produced by the write operation `passage_id_embeddings = self.passage_id_embedding(` (detail:mech_sym:9773c5add7af1f92:9), which depends on the computation `+ (document_id.long() // self.cfg.retrieval.top_k)` (detail:mech_sym:9773c5add7af1f92:8). In the default active path, the configuration derives `num_passages = passages.shape[1]` (detail:mech_sym:9773c5add7af1f92:14) and `batch_size = passages.shape[0]` (detail:mech_sym:9773c5add7af1f92:15). These dimensions are used to initialize the mask with `dedicated_attention_mask = torch.zeros(` (detail:mech_sym:9773c5add7af1f92:16), specifically calling `dedicated_attention_mask = torch.zeros(\\n            (batch_size, num_passages + 1, num_passages + 1),\\n            device=self.device,\\n        )  # [batch_size, num_passages + 1, num_passages + 1]` (detail:mech_sym:9773c5add7af1f92:17). The formal shape configuration is defined by the tuple `(batch_size, num_passages + 1, num_passages + 1),` (detail:mech_sym:9773c5add7af1f92:18).\",\n  \"rendered_detail_ids\": [\n    \"detail:mech_sym:9773c5add7af1f92:11\",\n    \"detail:mech_sym:9773c5add7af1f92:12\",\n    \"detail:mech_sym:9773c5add7af1f92:14\",\n    \"detail:mech_sym:9773c5add7af1f92:15\",\n    \"detail:mech_sym:9773c5add7af1f92:16\",\n    \"detail:mech_sym:9773c5add7af1f92:17\",\n    \"detail:mech_sym:9773c5add7af1f92:18\",\n    \"detail:mech_sym:9773c5add7af1f92:8\",\n    \"detail:mech_sym:9773c5add7af1f92:9\"\n  ],\n  \"used_formula_package_ids\": [],\n  \"witnesses\": [\n    {\n      \"exact_text\": \"passage_id.long()\",\n      \"target_id\": \"detail:mech_sym:9773c5add7af1f92:11\",\n      \"witness_kind\": \"detail\"\n    },\n    {\n      \"exact_text\": \"passages = (\",\n      \"target_id\": \"detail:mech_sym:9773c5add7af1f92:12\",\n      \"witness_kind\": \"detail\"\n    },\n    {\n      \"exact_text\": \"num_passages = passages.shape[1]\",\n      \"target_id\": \"detail:mech_sym:9773c5add7af1f92:14\",\n      \"witness_kind\": \"detail\"\n    },\n    {\n      \"exact_text\": \"batch_size = passages.shape[0]\",\n      \"target_id\": \"detail:mech_sym:9773c5add7af1f92:15\",\n      \"witness_kind\": \"detail\"\n    },\n    {\n      \"exact_text\": \"dedicated_attention_mask = torch.zeros(\",\n      \"target_id\": \"detail:mech_sym:9773c5add7af1f92:16\",\n      \"witness_kind\": \"detail\"\n    },\n    {\n      \"exact_text\": \"dedicated_attention_mask = torch.zeros(            (batch_size, num_passages + 1, num_passages + 1),            device=self.device,        )  # [batch_size, num_passages + 1, num_passages + 1]\",\n      \"target_id\": \"detail:mech_sym:9773c5add7af1f92:17\",\n      \"witness_kind\": \"detail\"\n    },\n    {\n      \"exact_text\": \"(batch_size, num_passages + 1, num_passages + 1),\",\n      \"target_id\": \"detail:mech_sym:9773c5add7af1f92:18\",\n      \"witness_kind\": \"detail\"\n    },\n    {\n      \"exact_text\": \"+ (document_id.long() // self.cfg.retrieval.top_k)\",\n      \"target_id\": \"detail:mech_sym:9773c5add7af1f92:8\",\n      \"witness_kind\": \"detail\"\n    },\n    {\n      \"exact_text\": \"passage_id_embeddings = self.passage_id_embedding(\",\n      \"target_id\": \"detail:mech_sym:9773c5add7af1f92:9\",\n      \"witness_kind\": \"detail\"\n    }\n  ]\n}",
+  "schema_version": "1.0",
+  "thinking_chars": 0,
+  "usage": {
+    "completion_tokens": 1328,
+    "prompt_tokens": 27847,
+    "total_tokens": 29175
+  }
+}

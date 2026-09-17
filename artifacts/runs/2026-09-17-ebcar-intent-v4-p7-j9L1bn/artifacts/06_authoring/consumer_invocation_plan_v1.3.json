@@ -1,0 +1,450 @@
+{
+  "schema_version": "1.0",
+  "plan_revision": 3,
+  "parent_plan_digest": "sha256:1574681d5f387963065f4c115ff9cfdb38d2d70ba956d834e9c6d027b2e5356e",
+  "phase": "realizer",
+  "archive_digest": "sha256:02c99eb39cb26038a803846cc19be97619909e93965d9f182c4843ce9438a988",
+  "workset_manifest_digest": "sha256:cd0d51ded32e9340e4239cc46198cfc714c85aec1b743a9c5e42a2b301433d49",
+  "envelope_digest": "sha256:4144d472b2f9c1055b56926b7cb9965f0ac886cbf863e6cd4a927a7f99e872ba",
+  "profile_digest": "sha256:70bf30db000d17a96b72489daf26c68bcfa1f7cbf9db2beb975115448e1558d3",
+  "model_identity_digest": "sha256:f3daa7dbeed50de151930dbb664f4b1e544958084740ec5f9338e08707efab8d",
+  "invocations": [
+    {
+      "invocation_id": "inv:realizer:MA-S1:page:281af1e758001328894fc2f8200e5e244a060ff3eafae98e6dcfb3a428ed052a",
+      "role": "realizer",
+      "phase": "realizer",
+      "workset_id": "workset:section:MA-S1",
+      "task_ids": [
+        "MA-S1"
+      ],
+      "mechanism_id": "header:MA-S1",
+      "section_id": "MA-S1",
+      "page_id": "page:281af1e758001328894fc2f8200e5e244a060ff3eafae98e6dcfb3a428ed052a",
+      "expected_technical_bytes_digest": "sha256:66c093fd1032975c6a9c1adaa08760b9ad0dbe47d319f05a8146aa6fb2e50cea",
+      "expected_request_envelope_digest": "sha256:7d4b5b144417b62ef29eb7aec294baa71d65cba5bb8b17ee606246dff1b1cfab",
+      "max_input_tokens": 7258,
+      "max_output_tokens": 8192,
+      "max_attempts": 2,
+      "dependency_invocation_ids": [],
+      "is_repair": false,
+      "repair_obligation_id": "",
+      "content_digest": "sha256:30d42327f8debbbfca267cf0285dbc3d311c4d8a73375abcd7d8c97cc2534369"
+    },
+    {
+      "invocation_id": "inv:realizer:MA-S2:page:0b5cf25648aa7e8de2636240c208848cb98726e935b1def28d73ebf7560ebab9",
+      "role": "realizer",
+      "phase": "realizer",
+      "workset_id": "workset:section:MA-S2",
+      "task_ids": [
+        "MA-S2"
+      ],
+      "mechanism_id": "header:MA-S2",
+      "section_id": "MA-S2",
+      "page_id": "page:0b5cf25648aa7e8de2636240c208848cb98726e935b1def28d73ebf7560ebab9",
+      "expected_technical_bytes_digest": "sha256:166c63c2d1535735f07cb5a47a44d4d098426a6baf1cfb5e2f4f184ecca838ac",
+      "expected_request_envelope_digest": "sha256:f7b37c2a2b1f439c919d6f108ae638ae4343d1ab0bed3844a2b8abc3ecc9bdb7",
+      "max_input_tokens": 7259,
+      "max_output_tokens": 8192,
+      "max_attempts": 2,
+      "dependency_invocation_ids": [],
+      "is_repair": false,
+      "repair_obligation_id": "",
+      "content_digest": "sha256:31ee2e7d6e07ee51de1cab4d2518f83424a1032f9335200f9a410275c8ebe811"
+    },
+    {
+      "invocation_id": "inv:realizer:MA-S3:page:751aa8b5352377a0766e7f7416c05553647380df74d5295f04d695646a47b815",
+      "role": "realizer",
+      "phase": "realizer",
+      "workset_id": "workset:section:MA-S3",
+      "task_ids": [
+        "MA-S3"
+      ],
+      "mechanism_id": "join:MA-S3",
+      "section_id": "MA-S3",
+      "page_id": "page:751aa8b5352377a0766e7f7416c05553647380df74d5295f04d695646a47b815",
+      "expected_technical_bytes_digest": "sha256:be75c3c4b6cb8d9480ed505f15c48ef903acb77cc07632ed22841b13fe04fc6b",
+      "expected_request_envelope_digest": "sha256:d3ec16193e78cc5ba00af23b66937407da588d5bee5ab7383e96e7f3aa8a2dbd",
+      "max_input_tokens": 28733,
+      "max_output_tokens": 8192,
+      "max_attempts": 2,
+      "dependency_invocation_ids": [],
+      "is_repair": false,
+      "repair_obligation_id": "",
+      "content_digest": "sha256:115e2f887601209562b9b15f7f392571cf7cdbd34d1601158f5cad787da63e2f"
+    },
+    {
+      "invocation_id": "inv:realizer:MA-S3:page:7119f09b0643f1c6274ee4acc867fd2662667a98c173300835e656d5c4cf5ae6",
+      "role": "realizer",
+      "phase": "realizer",
+      "workset_id": "workset:section:MA-S3",
+      "task_ids": [
+        "MA-S3"
+      ],
+      "mechanism_id": "join:MA-S3",
+      "section_id": "MA-S3",
+      "page_id": "page:7119f09b0643f1c6274ee4acc867fd2662667a98c173300835e656d5c4cf5ae6",
+      "expected_technical_bytes_digest": "sha256:cd2ea0eb13b11fcce546b2459548ffc60051f272a985f855581ff25a567d4933",
+      "expected_request_envelope_digest": "sha256:d8ae56f79aa44597bc34462d9b0a06947eca306cc55b3a27c326e99d371073c5",
+      "max_input_tokens": 29218,
+      "max_output_tokens": 8192,
+      "max_attempts": 2,
+      "dependency_invocation_ids": [],
+      "is_repair": false,
+      "repair_obligation_id": "",
+      "content_digest": "sha256:6b95c077cead4776309d220c47a06988d5010f6cf5d0b0386134351871b8ab25"
+    },
+    {
+      "invocation_id": "inv:realizer:MA-S3:page:14ab209d0459a9893155b9d6a8f31e210ffab86b670a9b2036c2559a645a084d",
+      "role": "realizer",
+      "phase": "realizer",
+      "workset_id": "workset:section:MA-S3",
+      "task_ids": [
+        "MA-S3"
+      ],
+      "mechanism_id": "join:MA-S3",
+      "section_id": "MA-S3",
+      "page_id": "page:14ab209d0459a9893155b9d6a8f31e210ffab86b670a9b2036c2559a645a084d",
+      "expected_technical_bytes_digest": "sha256:7f5fdb659fa566beb0f6b21ecdb2cdbe66d693b952eed9cd7c25a823323bb2da",
+      "expected_request_envelope_digest": "sha256:5b12e567d9536e7b13f86e6f472cf013d292e1991f80631f2a863c0ba657919d",
+      "max_input_tokens": 28513,
+      "max_output_tokens": 8192,
+      "max_attempts": 2,
+      "dependency_invocation_ids": [],
+      "is_repair": false,
+      "repair_obligation_id": "",
+      "content_digest": "sha256:e2413d6519a3e28c3a7a54bdff2489c382802430d069468618e18d3159cbcf81"
+    },
+    {
+      "invocation_id": "inv:realizer:MA-S3:page:881f96e34f95310ed0fad191786b1209f382123d5af851aa8b9c8fe1806c8fb9",
+      "role": "realizer",
+      "phase": "realizer",
+      "workset_id": "workset:section:MA-S3",
+      "task_ids": [
+        "MA-S3"
+      ],
+      "mechanism_id": "join:MA-S3",
+      "section_id": "MA-S3",
+      "page_id": "page:881f96e34f95310ed0fad191786b1209f382123d5af851aa8b9c8fe1806c8fb9",
+      "expected_technical_bytes_digest": "sha256:d2caafec90c93b83b81881adef337cb566158278fe3b70e8d2270016205a0b6f",
+      "expected_request_envelope_digest": "sha256:bb79b1de38e5691fe14c13237137f3a6d3447508e6ec3c463807fcfd4fd9547e",
+      "max_input_tokens": 29731,
+      "max_output_tokens": 8192,
+      "max_attempts": 2,
+      "dependency_invocation_ids": [],
+      "is_repair": false,
+      "repair_obligation_id": "",
+      "content_digest": "sha256:af305bc67b5ebe366dd633c4bfd24507ac093f6cce2045d3535d602a97937a20"
+    },
+    {
+      "invocation_id": "inv:realizer:MA-S3:page:19d0179f4fbe83880fd5f669b953ecabfb8288da3d585fc8a477654084c80c1c",
+      "role": "realizer",
+      "phase": "realizer",
+      "workset_id": "workset:section:MA-S3",
+      "task_ids": [
+        "MA-S3"
+      ],
+      "mechanism_id": "join:MA-S3",
+      "section_id": "MA-S3",
+      "page_id": "page:19d0179f4fbe83880fd5f669b953ecabfb8288da3d585fc8a477654084c80c1c",
+      "expected_technical_bytes_digest": "sha256:f4f17e283c103c3dda190d844d1a60ef4625f919ba9c5e42f8b2beeb0f7e0142",
+      "expected_request_envelope_digest": "sha256:df24b447afdae12e28bdbbb74496a1415f9f7682f2d8f6278c73514a1ddec14a",
+      "max_input_tokens": 29554,
+      "max_output_tokens": 8192,
+      "max_attempts": 2,
+      "dependency_invocation_ids": [],
+      "is_repair": false,
+      "repair_obligation_id": "",
+      "content_digest": "sha256:4f2e31f4783b089f50b62d9bb45ad3a5f8e260b2e8db8265edb57c95c2c57199"
+    },
+    {
+      "invocation_id": "inv:realizer:MA-S3:page:baf0b6a91335ba96aac3b50d40de7a76588b2483fac50202e4684d2bcdbf38e1",
+      "role": "realizer",
+      "phase": "realizer",
+      "workset_id": "workset:section:MA-S3",
+      "task_ids": [
+        "MA-S3"
+      ],
+      "mechanism_id": "join:MA-S3",
+      "section_id": "MA-S3",
+      "page_id": "page:baf0b6a91335ba96aac3b50d40de7a76588b2483fac50202e4684d2bcdbf38e1",
+      "expected_technical_bytes_digest": "sha256:f3bfa7772b2286fc015237b70d1bb05e0f2ce3b098eea3a6c4f19acdf8c9278a",
+      "expected_request_envelope_digest": "sha256:407c1d3684f3ab621645a5a2eae07d0f266cbc5cbfffeb57470072962917bb58",
+      "max_input_tokens": 29932,
+      "max_output_tokens": 8192,
+      "max_attempts": 2,
+      "dependency_invocation_ids": [],
+      "is_repair": false,
+      "repair_obligation_id": "",
+      "content_digest": "sha256:e7ffe75efefc57d2f1adc40dec6320ada14922a63b8442c63192611319df3e4b"
+    },
+    {
+      "invocation_id": "inv:realizer:MA-S3:page:509596cab22a82c8f70a7dbd877e6bddeaaa539ebc7c8be5f484e0f1abef34b1",
+      "role": "realizer",
+      "phase": "realizer",
+      "workset_id": "workset:section:MA-S3",
+      "task_ids": [
+        "MA-S3"
+      ],
+      "mechanism_id": "join:MA-S3",
+      "section_id": "MA-S3",
+      "page_id": "page:509596cab22a82c8f70a7dbd877e6bddeaaa539ebc7c8be5f484e0f1abef34b1",
+      "expected_technical_bytes_digest": "sha256:2bdfe2dd0bf76d30504503df0017c9d9cdb0e8ef0961c203ba60d794e1df54f3",
+      "expected_request_envelope_digest": "sha256:5396cf645b81b196124fd0890ca1a50e07610c731598c0e53abbaf6bb4ce3703",
+      "max_input_tokens": 30075,
+      "max_output_tokens": 8192,
+      "max_attempts": 2,
+      "dependency_invocation_ids": [],
+      "is_repair": false,
+      "repair_obligation_id": "",
+      "content_digest": "sha256:63f524511a89b49959f2fb8bb82aa616704db2db7f17558f8ba93f22a6f99c43"
+    },
+    {
+      "invocation_id": "inv:realizer:MA-S3:page:f8856b7ab9650757bfaf91a062c203a9add0361068ed0a6c6c045ba25eb8e7e8",
+      "role": "realizer",
+      "phase": "realizer",
+      "workset_id": "workset:section:MA-S3",
+      "task_ids": [
+        "MA-S3"
+      ],
+      "mechanism_id": "join:MA-S3",
+      "section_id": "MA-S3",
+      "page_id": "page:f8856b7ab9650757bfaf91a062c203a9add0361068ed0a6c6c045ba25eb8e7e8",
+      "expected_technical_bytes_digest": "sha256:923c782588fcbf785033c69abd49b0532ed83a990d3251d35ca0a7c8140e0792",
+      "expected_request_envelope_digest": "sha256:011a73bd408e4056f2222b112f36061900b298196c05106aae28f088c27e1339",
+      "max_input_tokens": 28271,
+      "max_output_tokens": 8192,
+      "max_attempts": 2,
+      "dependency_invocation_ids": [],
+      "is_repair": false,
+      "repair_obligation_id": "",
+      "content_digest": "sha256:7ff4d8033472e823e23b946dab2426e3b4bd516ed87754cdc11fdc427369ebb8"
+    },
+    {
+      "invocation_id": "inv:realizer:MA-S3:page:9f593df0feed4d367807bcffe418706ee95611c2342ce5f33bb5ce7f9001be20",
+      "role": "realizer",
+      "phase": "realizer",
+      "workset_id": "workset:section:MA-S3",
+      "task_ids": [
+        "MA-S3"
+      ],
+      "mechanism_id": "join:MA-S3",
+      "section_id": "MA-S3",
+      "page_id": "page:9f593df0feed4d367807bcffe418706ee95611c2342ce5f33bb5ce7f9001be20",
+      "expected_technical_bytes_digest": "sha256:1ed5eab1fe666f1b87600e9e6199f3e59ddad045e43466d0776e0977205ea44b",
+      "expected_request_envelope_digest": "sha256:a514d653ad75c6e07c5e46147ea6a79b96364fdd8ea099e9fa2488459791001f",
+      "max_input_tokens": 42422,
+      "max_output_tokens": 8192,
+      "max_attempts": 2,
+      "dependency_invocation_ids": [],
+      "is_repair": false,
+      "repair_obligation_id": "",
+      "content_digest": "sha256:ba4daabb43658c51be81e234d37032bd9010368f2f1475394ef3e294018a2231"
+    },
+    {
+      "invocation_id": "inv:realizer:MA-S3:page:fd9c44a567a19a03ceeebb26ec0925ee111b58b3385e4e3490cd6b8403fb120d",
+      "role": "realizer",
+      "phase": "realizer",
+      "workset_id": "workset:section:MA-S3",
+      "task_ids": [
+        "MA-S3"
+      ],
+      "mechanism_id": "join:MA-S3",
+      "section_id": "MA-S3",
+      "page_id": "page:fd9c44a567a19a03ceeebb26ec0925ee111b58b3385e4e3490cd6b8403fb120d",
+      "expected_technical_bytes_digest": "sha256:e93639757f6dcf1f0ea8a2e9375151a584fed7bc5c1306244970a7abdd8d4c8e",
+      "expected_request_envelope_digest": "sha256:93bbccb96980017b6ad58aeb4a1987c87e44ba577801b7964d64f0505c951203",
+      "max_input_tokens": 34577,
+      "max_output_tokens": 8192,
+      "max_attempts": 2,
+      "dependency_invocation_ids": [],
+      "is_repair": false,
+      "repair_obligation_id": "",
+      "content_digest": "sha256:5bb00b51fd02bc054156ba78edcca6f529a039a89c64dc972fa29ef1694179a9"
+    },
+    {
+      "invocation_id": "inv:realizer:MA-S3:page:a7853ad742b4a90d168a0a886b86bf839cace3caec2b11337a9883ca055e68ae",
+      "role": "realizer",
+      "phase": "realizer",
+      "workset_id": "workset:section:MA-S3",
+      "task_ids": [
+        "MA-S3"
+      ],
+      "mechanism_id": "join:MA-S3",
+      "section_id": "MA-S3",
+      "page_id": "page:a7853ad742b4a90d168a0a886b86bf839cace3caec2b11337a9883ca055e68ae",
+      "expected_technical_bytes_digest": "sha256:a2a00429b47212e9b12e43af21b3fc181023d0ffcf103a5fe314b580a75fcabc",
+      "expected_request_envelope_digest": "sha256:7b741ea81a4917814b862dd1ba01492e80ccefd129f88415d3bb46759b5ad2d8",
+      "max_input_tokens": 34298,
+      "max_output_tokens": 8192,
+      "max_attempts": 2,
+      "dependency_invocation_ids": [],
+      "is_repair": false,
+      "repair_obligation_id": "",
+      "content_digest": "sha256:c12434f5a07180a66e1579bd55642d91494560eceb982638dd808c1c610f28d4"
+    },
+    {
+      "invocation_id": "inv:realizer:MA-S3:page:d4993f7db022baf71dbb59a35a77a2d5e59b931f0fb48ac01b7dac30ede562fa",
+      "role": "realizer",
+      "phase": "realizer",
+      "workset_id": "workset:section:MA-S3",
+      "task_ids": [
+        "MA-S3"
+      ],
+      "mechanism_id": "join:MA-S3",
+      "section_id": "MA-S3",
+      "page_id": "page:d4993f7db022baf71dbb59a35a77a2d5e59b931f0fb48ac01b7dac30ede562fa",
+      "expected_technical_bytes_digest": "sha256:e5de5c811d1763000e7da60ab5a7673f2eacf45d6b8673c868ab41c65c712923",
+      "expected_request_envelope_digest": "sha256:b92d44f4bfd44eb7e9f57cf3e345ad1ff4955b7e6db8818bf29dd98f4113cf45",
+      "max_input_tokens": 34634,
+      "max_output_tokens": 8192,
+      "max_attempts": 2,
+      "dependency_invocation_ids": [],
+      "is_repair": false,
+      "repair_obligation_id": "",
+      "content_digest": "sha256:5f798b7787c8ada83d522db3e816afaa22bf2de61a7f76c378642dccc4e98fad"
+    },
+    {
+      "invocation_id": "inv:realizer:MA-S3:page:7a577e2ce049fd7aec70305dd6b3a04c8382133dda8179689b079624f32581a7",
+      "role": "realizer",
+      "phase": "realizer",
+      "workset_id": "workset:section:MA-S3",
+      "task_ids": [
+        "MA-S3"
+      ],
+      "mechanism_id": "join:MA-S3",
+      "section_id": "MA-S3",
+      "page_id": "page:7a577e2ce049fd7aec70305dd6b3a04c8382133dda8179689b079624f32581a7",
+      "expected_technical_bytes_digest": "sha256:3fc1039ebe95a7ca86bfdd7537401bdc47626724a0b89f981ccdd77fc6a40cc3",
+      "expected_request_envelope_digest": "sha256:b9f1a6e93380f2df884ab22727a2309426815cdbf60a5057a4a55d45b2eff5f4",
+      "max_input_tokens": 32427,
+      "max_output_tokens": 8192,
+      "max_attempts": 2,
+      "dependency_invocation_ids": [],
+      "is_repair": false,
+      "repair_obligation_id": "",
+      "content_digest": "sha256:df4ce0a66609b8272c7a0513ea4dca79b9560e3a59d8231cb8182de4da0a5556"
+    },
+    {
+      "invocation_id": "inv:realizer:MA-S3:page:94cb2b059efbe2855f3c57c719c602ba713950a340dc45e777d034470e7372af",
+      "role": "realizer",
+      "phase": "realizer",
+      "workset_id": "workset:section:MA-S3",
+      "task_ids": [
+        "MA-S3"
+      ],
+      "mechanism_id": "join:MA-S3",
+      "section_id": "MA-S3",
+      "page_id": "page:94cb2b059efbe2855f3c57c719c602ba713950a340dc45e777d034470e7372af",
+      "expected_technical_bytes_digest": "sha256:17a744b8fd01891f1ed1982147cf91e7009db1f1660d4966902e8fdaa1764c5a",
+      "expected_request_envelope_digest": "sha256:5606934a831e90c1c578f393cefca84f2ae7dab41a768ff8a0e0cd9b3b1eb946",
+      "max_input_tokens": 34123,
+      "max_output_tokens": 8192,
+      "max_attempts": 2,
+      "dependency_invocation_ids": [],
+      "is_repair": false,
+      "repair_obligation_id": "",
+      "content_digest": "sha256:f022ae4651057fe93e0117b6c3203bbb576e178331cdf7729f883608979f24bb"
+    },
+    {
+      "invocation_id": "inv:realizer:MA-S3:page:8c7ae468359f379d3a97eeabd9fb2a560ae9176193119c1f61d7ead54e4bc962",
+      "role": "realizer",
+      "phase": "realizer",
+      "workset_id": "workset:section:MA-S3",
+      "task_ids": [
+        "MA-S3"
+      ],
+      "mechanism_id": "join:MA-S3",
+      "section_id": "MA-S3",
+      "page_id": "page:8c7ae468359f379d3a97eeabd9fb2a560ae9176193119c1f61d7ead54e4bc962",
+      "expected_technical_bytes_digest": "sha256:71888c17627b8073aed4975b4ba35508db382948dcb44dc19eb3b9554e344f53",
+      "expected_request_envelope_digest": "sha256:373e92512a32f7841f53f5f00ee00195a9de117dc77fbbce3068d0a1fde70da7",
+      "max_input_tokens": 31481,
+      "max_output_tokens": 8192,
+      "max_attempts": 2,
+      "dependency_invocation_ids": [],
+      "is_repair": false,
+      "repair_obligation_id": "",
+      "content_digest": "sha256:6048d92eaa61088cf7ead904d9f6ecd50d520c873ca7f1ab564fb1c5b5b1932d"
+    },
+    {
+      "invocation_id": "inv:realizer:MA-S3:page:2f0edfb7ec40d04d13743030d6f8aeedf8920fe0c049255ad4fb072b81eb7f98",
+      "role": "realizer",
+      "phase": "realizer",
+      "workset_id": "workset:section:MA-S3",
+      "task_ids": [
+        "MA-S3"
+      ],
+      "mechanism_id": "join:MA-S3",
+      "section_id": "MA-S3",
+      "page_id": "page:2f0edfb7ec40d04d13743030d6f8aeedf8920fe0c049255ad4fb072b81eb7f98",
+      "expected_technical_bytes_digest": "sha256:fbf7da973a31e9a7f66e7009dd1088238f726523c9d39b75f34613e26a6b7cbf",
+      "expected_request_envelope_digest": "sha256:10bd8443add5b3a1dcd8e82931fd1f02ba507a6306652b224f3138e4cd7d5b2e",
+      "max_input_tokens": 33941,
+      "max_output_tokens": 8192,
+      "max_attempts": 2,
+      "dependency_invocation_ids": [],
+      "is_repair": false,
+      "repair_obligation_id": "",
+      "content_digest": "sha256:e1e931eb47bd22991288c12cca836ce26afdb61ca7ea2c4d5ba0dda9c1f4ef78"
+    },
+    {
+      "invocation_id": "inv:realizer:MA-S4:page:deb150313c1572b14530320add69c2d3fc68d162204676501b4ed6b6f9487019",
+      "role": "realizer",
+      "phase": "realizer",
+      "workset_id": "workset:section:MA-S4",
+      "task_ids": [
+        "MA-S4"
+      ],
+      "mechanism_id": "mech_sym:f6cf5bdfe2ae16f0",
+      "section_id": "MA-S4",
+      "page_id": "page:deb150313c1572b14530320add69c2d3fc68d162204676501b4ed6b6f9487019",
+      "expected_technical_bytes_digest": "sha256:236f0b01d85d89d286a1cf4f6d1c5544532aeadd2cb27b645aba21bdb74a7e16",
+      "expected_request_envelope_digest": "sha256:cb696d3c3b5065f2cf3f601946cb52a7be1945686d6677e6c72f7ae8a862a602",
+      "max_input_tokens": 27086,
+      "max_output_tokens": 8192,
+      "max_attempts": 2,
+      "dependency_invocation_ids": [],
+      "is_repair": false,
+      "repair_obligation_id": "",
+      "content_digest": "sha256:05c79d261b4f27c4e6e41014a867ff3e76f501e34a15ad38efd2109bd919e905"
+    },
+    {
+      "invocation_id": "inv:realizer:MA-S5:page:5c2d0db68504d5ae006260b0181541d6dd1d98eb6ec8423956efe075ad43d515",
+      "role": "realizer",
+      "phase": "realizer",
+      "workset_id": "workset:section:MA-S5",
+      "task_ids": [
+        "MA-S5"
+      ],
+      "mechanism_id": "mech_sym:9773c5add7af1f92",
+      "section_id": "MA-S5",
+      "page_id": "page:5c2d0db68504d5ae006260b0181541d6dd1d98eb6ec8423956efe075ad43d515",
+      "expected_technical_bytes_digest": "sha256:e6ce2920c1c7b0c8e65a4899dadb822689752897985d2c0447249c881cb0c7fa",
+      "expected_request_envelope_digest": "sha256:970f81dcdf2b862364b215eb0aacc6c846482458f4d8d8d44690a4d37bc1d079",
+      "max_input_tokens": 30015,
+      "max_output_tokens": 8192,
+      "max_attempts": 2,
+      "dependency_invocation_ids": [],
+      "is_repair": false,
+      "repair_obligation_id": "",
+      "content_digest": "sha256:3cc1b41e4f44794c1f46ecf714a20573ca9f400635b590dd6fbc7e7418a6006b"
+    }
+  ],
+  "formalizer_repair_call_limit": 0,
+  "planned_calls_by_role": {
+    "realizer": 20
+  },
+  "planned_input_tokens_by_role": {
+    "realizer": 583548
+  },
+  "reserved_calls_by_role": {
+    "writer": 20,
+    "realizer": 20
+  },
+  "reserved_input_tokens_by_role": {
+    "writer": 1123462,
+    "realizer": 833548
+  },
+  "reservation_contract": "atomic_debit_v1",
+  "content_digest": "sha256:31bfbd3f40ad4082047770fbf63df7a7b038f34ffe2c413a4c0937a2d5425501"
+}

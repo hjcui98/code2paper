@@ -1,0 +1,37 @@
+{
+  "schema_version": "1.0",
+  "failure_code": "unified_source_partition_excluded",
+  "excluded_paths": [
+    "conf/dataset/conteb_test_01MLDR.yaml",
+    "conf/dataset/conteb_test_02SQuAD.yaml",
+    "conf/dataset/conteb_test_03NarrativeQA.yaml",
+    "conf/dataset/conteb_test_04COVID_QA.yaml",
+    "conf/dataset/conteb_test_05ESG_Reports.yaml",
+    "conf/dataset/conteb_test_06Football.yaml",
+    "conf/dataset/conteb_test_07Geography.yaml",
+    "conf/dataset/conteb_test_08Insurance.yaml",
+    "conf/dataset/conteb_train.yaml",
+    "conf/dataset/conteb_val.yaml",
+    "conf/dataset/msmarco_v2.yaml",
+    "data/real/ConTEB_test/preprocess.py",
+    "data/real/ConTEB_train/preprocess.py",
+    "data/real/MS_MARCO_v2/preprocess.py"
+  ],
+  "failures": [
+    "unified_source_partition_excluded:conf/dataset/conteb_test_01MLDR.yaml",
+    "unified_source_partition_excluded:conf/dataset/conteb_test_02SQuAD.yaml",
+    "unified_source_partition_excluded:conf/dataset/conteb_test_03NarrativeQA.yaml",
+    "unified_source_partition_excluded:conf/dataset/conteb_test_04COVID_QA.yaml",
+    "unified_source_partition_excluded:conf/dataset/conteb_test_05ESG_Reports.yaml",
+    "unified_source_partition_excluded:conf/dataset/conteb_test_06Football.yaml",
+    "unified_source_partition_excluded:conf/dataset/conteb_test_07Geography.yaml",
+    "unified_source_partition_excluded:conf/dataset/conteb_test_08Insurance.yaml",
+    "unified_source_partition_excluded:conf/dataset/conteb_train.yaml",
+    "unified_source_partition_excluded:conf/dataset/conteb_val.yaml",
+    "unified_source_partition_excluded:conf/dataset/msmarco_v2.yaml",
+    "unified_source_partition_excluded:data/real/ConTEB_test/preprocess.py",
+    "unified_source_partition_excluded:data/real/ConTEB_train/preprocess.py",
+    "unified_source_partition_excluded:data/real/MS_MARCO_v2/preprocess.py"
+  ],
+  "content_digest": "sha256:f84a1db764de44c86e722e9bbc89b22dd348dbd1e37a170fef440d2a7ce6cabc"
+}

@@ -241,28 +241,30 @@ def _assign_story_to_sections(
     return assigned
 
 
-def _details_for_mechanisms(contexts: Any, mechanism_ids: Sequence[str]) -> tuple[list[Any], list[Any]]:
-    by_id = {
-        _text(_get(context, "mechanism_id")): context
-        for context in (_get(contexts, "contexts", ()) or ())
-        if _text(_get(context, "mechanism_id"))
-    }
-    required: list[Any] = []
-    optional: list[Any] = []
-    for mechanism_id in mechanism_ids:
-        context = by_id.get(mechanism_id)
-        if context is None:
-            continue
-        for detail in _get(context, "details", ()) or ():
-            policy = _text(_get(detail, "publication_policy"))
-            status = _text(_get(detail, "active_path_status"))
-            if policy in {"annotated_only", "review_only"} or status in {
-                "inactive_default", "unreachable", "inactive_path", "unknown",
-            }:
-                optional.append(detail)
-            else:
-                required.append(detail)
-    return required, optional
+def _story_handles(node: Any) -> set[str]:
+    return set(_ids(_get(node, "linked_claim_ids"))) | set(_ids(_get(node, "linked_obligation_ids"))) | set(_ids(_get(node, "source_refs")))
+
+
+def _detail_handles(detail: Any) -> set[str]:
+    return set().union(*(
+        set(_ids(_get(detail, field)))
+        for field in (
+            "source_claim_ids", "source_obligation_ids", "source_fact_ids",
+            "source_span_ids", "source_equation_ids", "source_operation_ids",
+        )
+    ))
+
+
+def _detail_is_required(detail: Any) -> bool:
+    return _text(_get(detail, "publication_policy")) not in {"annotated_only", "review_only"} and _text(
+        _get(detail, "active_path_status")
+    ) in {"active_default", "active_selected", "conditional"}
+
+
+def _best_slot(slots: Sequence[dict[str, Any]], handles: set[str]) -> dict[str, Any]:
+    # Stable tie-breaking retains the author's story order. A zero-overlap
+    # assignment is an organizational fallback, never evidence authorization.
+    return max(slots, key=lambda slot: len(handles & slot["story_handles"]))
 
 
 def build_intent_narrative_plan_v4(
@@ -272,6 +274,7 @@ def build_intent_narrative_plan_v4(
     contexts: Any | None = None,
     intent_atoms: Sequence[Any] = (),
     formula_obligation_ids: Sequence[str] = (),
+    formula_packages: Sequence[Any] = (),
 ) -> tuple[IntentNarrativePlanV4, tuple[StoryMechanismBindingV1, ...], dict[str, Any]]:
     """Freeze author section identity, then bind mechanisms as evidence providers."""
 
@@ -299,65 +302,187 @@ def build_intent_narrative_plan_v4(
         if story_id and atom_id:
             atoms_by_story[story_id].append(atom_id)
 
-    units_by_section = {
-        row["section_id"]: tuple(row["argument_unit_ids"])
-        for row in section_rows
+    story_by_id = {
+        _text(_get(node, "story_node_id")): node for node in story_values
+        if _text(_get(node, "story_node_id"))
     }
+    unit_by_id = {
+        _text(_get(unit, "argument_unit_id")): unit
+        for unit in (_get(prior_plan, "argument_units", ()) or ())
+    }
+    slots_by_section: dict[str, list[dict[str, Any]]] = {}
+    slots_by_mechanism: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    mechanism_binding_fallbacks: list[str] = []
+    binding_fallbacks: list[str] = []
+    required_binding_fallbacks: list[str] = []
+    for row in section_rows:
+        section_id = row["section_id"]
+        slots: list[dict[str, Any]] = []
+        story_ids = tuple(dict.fromkeys(assigned_stories.get(section_id, ())))
+        for story_id in story_ids or ("",):
+            binding = binding_by_story.get(story_id)
+            owners = tuple(binding.mechanism_ids) if binding and binding.mechanism_ids else ("",)
+            for owner_index, mechanism_id in enumerate(owners):
+                slot = {
+                    "section_id": section_id,
+                    "story_id": story_id,
+                    "mechanism_id": mechanism_id,
+                    "story_handles": _story_handles(story_by_id.get(story_id)),
+                    "argument_unit_ids": [],
+                    "intent_atom_ids": list(atoms_by_story.get(story_id, ())) if owner_index == 0 else [],
+                    "required_details": [],
+                    "optional_details": [],
+                    "formula_obligation_ids": [],
+                    "formula_package_ids": [],
+                }
+                slots.append(slot)
+                if mechanism_id:
+                    slots_by_mechanism[mechanism_id].append(slot)
+        slots_by_section[section_id] = slots
+        for unit_id in row["argument_unit_ids"]:
+            unit = unit_by_id.get(unit_id)
+            handles = set(_ids(_get(unit, "source_obligation_ids"))) | set(_ids(_get(unit, "claim_ids")))
+            _best_slot(slots, handles)["argument_unit_ids"].append(unit_id)
+
+    packages_by_mechanism: dict[str, list[Any]] = defaultdict(list)
+    for package in formula_packages:
+        packages_by_mechanism[_text(_get(package, "mechanism_id"))].append(package)
+
+    for context in (_get(contexts, "contexts", ()) or ()):
+        mechanism_id = _text(_get(context, "mechanism_id"))
+        details = tuple(_get(context, "details", ()) or ())
+        packages = packages_by_mechanism.pop(mechanism_id, [])
+        if not details and not packages:
+            continue
+        eligible = slots_by_mechanism.get(mechanism_id, ())
+        if not eligible:
+            handles = set().union(*(_detail_handles(detail) for detail in details)) if details else set()
+            section_id = max(
+                slots_by_section,
+                key=lambda candidate: len(handles & set().union(*(
+                    slot["story_handles"] for slot in slots_by_section[candidate]
+                ))),
+            )
+            slot = {
+                "section_id": section_id,
+                "story_id": "",
+                "mechanism_id": mechanism_id,
+                "story_handles": set(),
+                "argument_unit_ids": [],
+                "intent_atom_ids": [],
+                "required_details": [],
+                "optional_details": [],
+                "formula_obligation_ids": [],
+                "formula_package_ids": [],
+            }
+            slots_by_section[section_id].append(slot)
+            slots_by_mechanism[mechanism_id].append(slot)
+            eligible = (slot,)
+            mechanism_binding_fallbacks.append(mechanism_id)
+        detail_by_id = {_text(_get(detail, "detail_id")): detail for detail in details}
+        package_detail_ids = {
+            detail_id
+            for package in packages
+            for detail_id in _ids(_get(package, "source_detail_ids"))
+        }
+        unknown_package_details = package_detail_ids - detail_by_id.keys()
+        if unknown_package_details:
+            raise ValueError(
+                f"intent_plan_v4_formula_unknown_detail:{mechanism_id}:{','.join(sorted(unknown_package_details))}"
+            )
+        # Formula sources must share one paragraph with every package that
+        # consumes them. Other details can follow their own story anchors.
+        package_slot = _best_slot(
+            eligible,
+            set().union(*(_detail_handles(detail_by_id[did]) for did in package_detail_ids))
+            if package_detail_ids else set(),
+        ) if packages else None
+        for detail in details:
+            detail_id = _text(_get(detail, "detail_id"))
+            if not detail_id:
+                raise ValueError(f"intent_plan_v4_empty_detail_id:{mechanism_id}")
+            if _text(_get(detail, "primary_mechanism_id")) not in {"", mechanism_id}:
+                raise ValueError(f"intent_plan_v4_detail_owner_mismatch:{detail_id}:{mechanism_id}")
+            handles = _detail_handles(detail)
+            slot = package_slot if detail_id in package_detail_ids else _best_slot(eligible, handles)
+            if not handles.intersection(slot["story_handles"]):
+                binding_fallbacks.append(detail_id)
+                if _detail_is_required(detail):
+                    required_binding_fallbacks.append(detail_id)
+            slot["required_details" if _detail_is_required(detail) else "optional_details"].append(detail)
+        if package_slot is not None:
+            for package in packages:
+                package_slot["formula_package_ids"].append(_text(_get(package, "package_id")))
+                package_slot["formula_obligation_ids"].extend(_ids(_get(package, "satisfied_obligation_ids")))
+    if packages_by_mechanism:
+        raise ValueError(
+            "intent_plan_v4_formula_unknown_mechanism:"
+            + ",".join(sorted(packages_by_mechanism))
+        )
+    # Legacy callers may provide obligation identities without packages. Keep
+    # each identity once; validation still decides whether it is compiled.
+    placed_obligations = {
+        obligation_id
+        for slots in slots_by_section.values()
+        for slot in slots
+        for obligation_id in slot["formula_obligation_ids"]
+    }
+    for obligation_id in _ids(formula_obligation_ids):
+        if obligation_id not in placed_obligations:
+            owner_slots = next((items for items in slots_by_mechanism.values() if items), ())
+            if not owner_slots:
+                raise ValueError(f"intent_plan_v4_formula_without_mechanism:{obligation_id}")
+            owner_slots[0]["formula_obligation_ids"].append(obligation_id)
+            placed_obligations.add(obligation_id)
+
+    from code2paper.agentic.method_architect import _v3_detail_witness_contract
+
     sections: list[IntentNarrativeSectionV4] = []
     for row in section_rows:
         section_id = row["section_id"]
         story_ids = tuple(dict.fromkeys(assigned_stories.get(section_id, ())))
         mechanism_ids = tuple(dict.fromkeys(
-            mechanism_id
-            for story_id in story_ids
-            for mechanism_id in (binding_by_story.get(story_id).mechanism_ids if story_id in binding_by_story else ())
+            slot["mechanism_id"] for slot in slots_by_section[section_id]
+            if slot["mechanism_id"]
         ))
-        required_details, optional_details = _details_for_mechanisms(contexts, mechanism_ids)
         paragraphs: list[IntentNarrativeParagraphV4] = []
-        if story_ids:
-            for index, story_id in enumerate(story_ids, start=1):
-                binding = binding_by_story.get(story_id)
-                story_mechs = tuple(binding.mechanism_ids) if binding is not None else ()
-                atom_ids = tuple(atoms_by_story.get(story_id, ()))
-                surface = "repository_statement" if story_mechs and binding and binding.binding_status in {"exact", "partial"} else "author_specification"
-                if binding and binding.binding_status == "mismatch":
-                    surface = "mismatch_statement"
-                paragraphs.append(IntentNarrativeParagraphV4(
-                    paragraph_id=f"{section_id}:P{index}",
-                    section_id=section_id,
-                    role="step_sequence",
-                    heading_intent=row["heading_intent"],
-                    reader_goal=row["reader_question"],
-                    ordered_story_node_ids=(story_id,),
-                    ordered_argument_unit_ids=units_by_section.get(section_id, ()),
-                    intent_atom_ids=atom_ids,
-                    mechanism_ids=story_mechs,
-                    required_detail_ids=tuple(
-                        _text(_get(detail, "detail_id"))
-                        for detail in required_details
-                        if not story_mechs or _text(_get(detail, "primary_mechanism_id")) in story_mechs
-                    ),
-                    optional_detail_ids=tuple(
-                        _text(_get(detail, "detail_id"))
-                        for detail in optional_details
-                        if not story_mechs or _text(_get(detail, "primary_mechanism_id")) in story_mechs
-                    ),
-                    required_intent_atom_ids=atom_ids,
-                    required_author_surface_ids=(story_id,) if surface != "repository_statement" else (),
-                    formula_obligation_ids=tuple(formula_obligation_ids),
-                    authority_surface=surface,
-                    transition_from="" if index == 1 else f"{section_id}:P{index - 1}",
-                ))
-        else:
+        for index, slot in enumerate(slots_by_section[section_id], start=1):
+            story_id = slot["story_id"]
+            mechanism_id = slot["mechanism_id"]
+            binding = binding_by_story.get(story_id)
+            surface = "repository_statement" if mechanism_id and (not story_id or binding and binding.binding_status in {"exact", "partial"}) else "author_specification"
+            if binding and binding.binding_status == "mismatch":
+                surface = "mismatch_statement"
+            required_details = slot["required_details"]
+            optional_details = slot["optional_details"]
+            witness_targets = [
+                target for detail in required_details
+                for target in _v3_detail_witness_contract(detail, required=True)
+            ]
+            witness_targets.extend(
+                target for detail in optional_details
+                for target in _v3_detail_witness_contract(detail, required=False)
+            )
             paragraphs.append(IntentNarrativeParagraphV4(
-                paragraph_id=f"{section_id}:P1",
+                paragraph_id=f"{section_id}:P{index}",
                 section_id=section_id,
-                role="overview",
+                role="step_sequence" if story_id else "overview",
                 heading_intent=row["heading_intent"],
                 reader_goal=row["reader_question"],
-                ordered_argument_unit_ids=units_by_section.get(section_id, ()),
-                authority_surface="author_specification",
-                required_author_surface_ids=(section_id,),
+                ordered_story_node_ids=(story_id,) if story_id else (),
+                ordered_argument_unit_ids=tuple(slot["argument_unit_ids"]),
+                intent_atom_ids=tuple(slot["intent_atom_ids"]),
+                mechanism_id=mechanism_id,
+                mechanism_ids=(mechanism_id,) if mechanism_id else (),
+                required_detail_ids=tuple(_text(_get(detail, "detail_id")) for detail in required_details),
+                optional_detail_ids=tuple(_text(_get(detail, "detail_id")) for detail in optional_details),
+                required_intent_atom_ids=tuple(slot["intent_atom_ids"]),
+                required_author_surface_ids=(story_id or section_id,) if surface != "repository_statement" else (),
+                formula_obligation_ids=tuple(dict.fromkeys(slot["formula_obligation_ids"])),
+                formula_package_ids=tuple(dict.fromkeys(slot["formula_package_ids"])),
+                authority_surface=surface,
+                witness_contract={"targets": witness_targets},
+                transition_from="" if index == 1 else f"{section_id}:P{index - 1}",
             ))
         heading = row["heading_intent"]
         if heading_is_internal_identifier(heading):
@@ -368,7 +493,7 @@ def build_intent_narrative_plan_v4(
             heading=heading,
             reader_question=row["reader_question"],
             ordered_story_node_ids=story_ids,
-            ordered_argument_unit_ids=units_by_section.get(section_id, ()),
+            ordered_argument_unit_ids=tuple(row["argument_unit_ids"]),
             mechanism_ids=mechanism_ids,
             paragraphs=tuple(paragraphs),
         ))
@@ -398,37 +523,64 @@ def build_intent_narrative_plan_v4(
             if heading_is_internal_identifier(section.heading)
         ],
         "order_source": order_source,
+        "detail_binding_fallback_count": len(binding_fallbacks),
+        "detail_binding_fallback_ids": binding_fallbacks,
+        "mechanism_binding_fallback_ids": mechanism_binding_fallbacks,
+        "required_detail_binding_fallback_count": len(required_binding_fallbacks),
+        "required_detail_binding_fallback_ids": required_binding_fallbacks,
     }
     return plan, bindings, trace
 
 
 def project_intent_plan_to_narrative_v3(plan: IntentNarrativePlanV4) -> Any:
-    """Duck-typed V3 view: same section/paragraph identities, optional mechanism_id."""
+    """Project V4 plan into NarrativePlanV3 with preserved section/paragraph identities and intent metadata."""
 
-    from types import SimpleNamespace
+    from code2paper.agentic.method_architect import (
+        NarrativeParagraphPlanV3,
+        NarrativeSectionPlanV3,
+        NarrativeUnitV1,
+        NarrativePlanV3,
+    )
+    from code2paper.agentic.formalization_agent import FormulaPlacementV1
 
     sections = []
     units = []
+    placements = []
     for section in plan.sections:
         paragraphs = []
         for paragraph in section.paragraphs:
-            paragraphs.append(SimpleNamespace(
+            paragraphs.append(NarrativeParagraphPlanV3(
                 paragraph_id=paragraph.paragraph_id,
                 section_id=paragraph.section_id,
                 role=paragraph.role,
                 mechanism_id=paragraph.mechanism_id,
-                mechanism_ids=paragraph.mechanism_ids,
                 required_detail_ids=paragraph.required_detail_ids,
                 optional_detail_ids=paragraph.optional_detail_ids,
                 formula_obligation_ids=paragraph.formula_obligation_ids,
+                formula_package_ids=paragraph.formula_package_ids,
+                shared_detail_refs=getattr(paragraph, "shared_detail_refs", ()),
                 witness_contract=paragraph.witness_contract,
                 transition_from=paragraph.transition_from,
                 transition_to=paragraph.transition_to,
                 reader_goal=paragraph.reader_goal,
                 ordered_story_node_ids=paragraph.ordered_story_node_ids,
                 ordered_argument_unit_ids=paragraph.ordered_argument_unit_ids,
+                intent_atom_ids=paragraph.intent_atom_ids,
+                required_intent_atom_ids=paragraph.required_intent_atom_ids,
+                required_author_surface_ids=paragraph.required_author_surface_ids,
+                required_repository_proposition_ids=paragraph.required_repository_proposition_ids,
+                authority_surface=paragraph.authority_surface,
+                mechanism_ids=paragraph.mechanism_ids,
             ))
-        sections.append(SimpleNamespace(
+            placements.extend(
+                FormulaPlacementV1(
+                    package_id=package_id,
+                    section_id=section.section_id,
+                    paragraph_id=paragraph.paragraph_id,
+                )
+                for package_id in paragraph.formula_package_ids
+            )
+        sections.append(NarrativeSectionPlanV3(
             section_id=section.section_id,
             heading=section.heading,
             heading_intent=section.heading_intent,
@@ -438,7 +590,7 @@ def project_intent_plan_to_narrative_v3(plan: IntentNarrativePlanV4) -> Any:
             ordered_story_node_ids=section.ordered_story_node_ids,
             ordered_argument_unit_ids=section.ordered_argument_unit_ids,
         ))
-        units.append(SimpleNamespace(
+        units.append(NarrativeUnitV1(
             unit_id=f"unit:{section.section_id}",
             section_id=section.section_id,
             mechanism_context_ids=section.mechanism_ids,
@@ -462,12 +614,11 @@ def project_intent_plan_to_narrative_v3(plan: IntentNarrativePlanV4) -> Any:
             ),
             suggested_depth="standard",
         ))
-    return SimpleNamespace(
+    return NarrativePlanV3(
         plan_id=plan.plan_id,
         sections=tuple(sections),
         narrative_units=tuple(units),
-        formula_placements=(),
+        formula_placements=tuple(placements),
         context_set_digest="",
-        content_digest=plan.content_digest,
-        schema_version="v4-projected",
+        content_digest="",
     )

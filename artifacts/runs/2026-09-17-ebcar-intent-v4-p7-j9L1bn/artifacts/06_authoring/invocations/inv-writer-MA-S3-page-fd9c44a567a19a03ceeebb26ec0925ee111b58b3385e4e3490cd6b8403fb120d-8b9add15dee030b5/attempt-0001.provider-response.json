@@ -1,0 +1,25 @@
+{
+  "attempt": 1,
+  "blocked_reason": "",
+  "content_digest": "sha256:b57595418ea60adb330028f5c674e866676167229d8f3435bb0e9702dd7c27af",
+  "diagnostics": {
+    "finish_seen": true,
+    "partial_chars": 1067,
+    "stream_events": 480,
+    "terminal_status": "finish_seen",
+    "usage_seen": true
+  },
+  "finish_reason": "structured_complete",
+  "invocation_id": "inv:writer:MA-S3:page:fd9c44a567a19a03ceeebb26ec0925ee111b58b3385e4e3490cd6b8403fb120d",
+  "provider_finish_reason": "stop",
+  "request_diagnostics_digest": "sha256:1b032455c328d1bb283660f694563cd2ac16a21a859a23eb60d7939faf91de0e",
+  "response_digest": "sha256:37f710d6cf283e287272b60e02bcaced34cc7c90aa75ef3ca30c22fd45d71cd4",
+  "response_text": "{\n  \"paragraphs\": [\n    {\n      \"paragraph_id\": \"MA-S3:P2__f1\",\n      \"paragraph_markdown\": \"When positional encoding is enabled, the model enriches passage representations by computing the element-wise sum of passage embeddings, document ID embeddings, and passage ID embeddings. The document ID embedding is obtained by indexing into a learned table with a composite index formed from the document identifier modulo the retrieval top-k parameter plus the document identifier divided by that same top-k value, thereby decomposing each document identifier into a within-batch offset and a batch-level quotient. Before the attention computation, the query vector is reshaped to introduce a sequence dimension, yielding a tensor of shape [batch_size, 1, hidden_size]. After the dedicated attention layer produces per-passage similarity scores, these scores are sorted along the passage dimension in descending order, yielding a pair of relevance scores and their corresponding passage indices.\",\n      \"used_formula_package_ids\": []\n    }\n  ],\n  \"section_id\": \"MA-S3\"\n}",
+  "schema_version": "1.0",
+  "thinking_chars": 0,
+  "usage": {
+    "completion_tokens": 1244,
+    "prompt_tokens": 33755,
+    "total_tokens": 34999
+  }
+}

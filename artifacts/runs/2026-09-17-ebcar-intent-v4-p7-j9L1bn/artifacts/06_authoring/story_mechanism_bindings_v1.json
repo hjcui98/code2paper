@@ -1,0 +1,314 @@
+{
+  "schema_version": "1.0",
+  "bindings": [
+    {
+      "story_node_id": "story:O-METHOD-MAINLINE-01-c8146479",
+      "intent_atom_ids": [],
+      "mechanism_ids": [
+        "mech_sym:f6cf5bdfe2ae16f0",
+        "mech_sym:9773c5add7af1f92"
+      ],
+      "binding_basis_ids": [
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:6daefc8982533bad",
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:7fabddc9286307b4",
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:a48f78c0e1931462",
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:b6468fc08c848936",
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:fd2ce32dbb55ed63",
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-rel:1b2f2e5db0f09696",
+        "l2:math:fact-O-METHOD-MAINLINE-01-c8146479-node:7fabddc9286307b4:weighted_sum",
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:5ff7f276f04b71a8",
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:8e87e1804f77f50f",
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:a6f6c00ca097eeb1",
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:c1802b91f97392cc",
+        "l2:math:fact-O-METHOD-MAINLINE-01-c8146479-node:5ff7f276f04b71a8:weighted_sum",
+        "l2:math:fact-O-METHOD-MAINLINE-01-c8146479-node:a6f6c00ca097eeb1:weighted_sum"
+      ],
+      "binding_status": "partial",
+      "unresolved_atom_ids": [],
+      "content_digest": "sha256:62bac23125214291fdb4475b765283a37ba23dab1be4c7c114100bc23642ff60"
+    },
+    {
+      "story_node_id": "story:O-STAGE-01-039a963a",
+      "intent_atom_ids": [],
+      "mechanism_ids": [],
+      "binding_basis_ids": [],
+      "binding_status": "unresolved",
+      "unresolved_atom_ids": [],
+      "content_digest": "sha256:afbc2a47f80030493f0b4a12e317041ac6ad15ce135f70c8ecbd69f61a9d3948"
+    },
+    {
+      "story_node_id": "story:O-STAGE-02-42e8d68d",
+      "intent_atom_ids": [],
+      "mechanism_ids": [],
+      "binding_basis_ids": [],
+      "binding_status": "unresolved",
+      "unresolved_atom_ids": [],
+      "content_digest": "sha256:c77f069be689e8dd5bd488441656bf4be2298c37d27f4a17999c3156a13eabc1"
+    },
+    {
+      "story_node_id": "story:O-STAGE-03-2c5bd758",
+      "intent_atom_ids": [],
+      "mechanism_ids": [],
+      "binding_basis_ids": [],
+      "binding_status": "unresolved",
+      "unresolved_atom_ids": [],
+      "content_digest": "sha256:5b62794138d70b7f8d2ef75c04d152365c03345006e244da74b9d7ba9a84895f"
+    },
+    {
+      "story_node_id": "story:O-STAGE-04-c50e0bef",
+      "intent_atom_ids": [],
+      "mechanism_ids": [
+        "mech_sym:f6cf5bdfe2ae16f0"
+      ],
+      "binding_basis_ids": [
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:7fabddc9286307b4",
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:a48f78c0e1931462",
+        "claim-O-STAGE-04-c50e0bef-fact-O-STAGE-04-c50e0bef-node:0c0995d424e07399",
+        "claim-O-STAGE-04-c50e0bef-fact-O-STAGE-04-c50e0bef-node:4b560ac114ae99ec",
+        "claim-O-STAGE-04-c50e0bef-fact-O-STAGE-04-c50e0bef-node:93633547c32d9f45",
+        "claim-O-STAGE-04-c50e0bef-fact-O-STAGE-04-c50e0bef-node:a2dae47572460254",
+        "claim-O-STAGE-04-c50e0bef-fact-O-STAGE-04-c50e0bef-node:fd2ce32dbb55ed63"
+      ],
+      "binding_status": "exact",
+      "unresolved_atom_ids": [],
+      "content_digest": "sha256:dcac4ad76915a5e4ca9d14ab5a451e792954aa9a27fc35b6f1ffd3109a02c0ae"
+    },
+    {
+      "story_node_id": "story:O-STAGE-05-5b3d398a",
+      "intent_atom_ids": [],
+      "mechanism_ids": [
+        "mech_sym:9773c5add7af1f92"
+      ],
+      "binding_basis_ids": [
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:8e87e1804f77f50f",
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:c1802b91f97392cc",
+        "claim-O-STAGE-05-5b3d398a-fact-O-STAGE-05-5b3d398a-node:06b37685c9288fb6",
+        "claim-O-STAGE-05-5b3d398a-fact-O-STAGE-05-5b3d398a-node:1077d0d81c820fb0",
+        "claim-O-STAGE-05-5b3d398a-fact-O-STAGE-05-5b3d398a-node:26c1ec766ceee404",
+        "claim-O-STAGE-05-5b3d398a-fact-O-STAGE-05-5b3d398a-node:31075c1f6e053a85",
+        "claim-O-STAGE-05-5b3d398a-fact-O-STAGE-05-5b3d398a-node:856e72eeddb87554",
+        "claim-O-STAGE-05-5b3d398a-fact-O-STAGE-05-5b3d398a-node:a002e187c0346457",
+        "claim-O-STAGE-05-5b3d398a-fact-O-STAGE-05-5b3d398a-rel:caa3e47dda8fdf04"
+      ],
+      "binding_status": "exact",
+      "unresolved_atom_ids": [],
+      "content_digest": "sha256:bed68fc8f6808375f3a891e97f05fca693bfa03cf0341535f9c1c4489508605b"
+    },
+    {
+      "story_node_id": "story:O-COMPONENT-01-c301ecdd",
+      "intent_atom_ids": [],
+      "mechanism_ids": [],
+      "binding_basis_ids": [],
+      "binding_status": "unresolved",
+      "unresolved_atom_ids": [],
+      "content_digest": "sha256:6f085942afdeb46ffdb6bf6af3cb243ab256d0ea0b16eb972ba17410af1bb7c6"
+    },
+    {
+      "story_node_id": "story:O-COMPONENT-01-de6049e3",
+      "intent_atom_ids": [],
+      "mechanism_ids": [],
+      "binding_basis_ids": [],
+      "binding_status": "unresolved",
+      "unresolved_atom_ids": [],
+      "content_digest": "sha256:4879ccd2714875672de7b628dffc1385a79fcba5f7a57c38dc2c8d2f971b5ded"
+    },
+    {
+      "story_node_id": "story:O-COMPONENT-02-2e14379d",
+      "intent_atom_ids": [],
+      "mechanism_ids": [],
+      "binding_basis_ids": [],
+      "binding_status": "unresolved",
+      "unresolved_atom_ids": [],
+      "content_digest": "sha256:0d673182787e0e825ef3cb4d2664f4a687ba259c9ebd52088aacd237797f4d02"
+    },
+    {
+      "story_node_id": "story:O-COMPONENT-03-d8aa8c77",
+      "intent_atom_ids": [],
+      "mechanism_ids": [],
+      "binding_basis_ids": [],
+      "binding_status": "unresolved",
+      "unresolved_atom_ids": [],
+      "content_digest": "sha256:0eb5c4d0aa3566dcd259e625edda7d5cb71ddf001f8e266412aa0c13968f7134"
+    },
+    {
+      "story_node_id": "story:O-COMPONENT-04-b5b6af99",
+      "intent_atom_ids": [],
+      "mechanism_ids": [],
+      "binding_basis_ids": [],
+      "binding_status": "unresolved",
+      "unresolved_atom_ids": [],
+      "content_digest": "sha256:a84b0203a09efe98f3a659e1b12e32ade1c8c3b13bd2db062ae7fb7c2cc7cee9"
+    },
+    {
+      "story_node_id": "story:O-COMPONENT-05-4c3594d2",
+      "intent_atom_ids": [],
+      "mechanism_ids": [],
+      "binding_basis_ids": [],
+      "binding_status": "unresolved",
+      "unresolved_atom_ids": [],
+      "content_digest": "sha256:61210f7e84fff6ece794a90dec887488e5a9b02a768568e34350a8f46c651187"
+    },
+    {
+      "story_node_id": "story:O-COMPONENT-06-34021b88",
+      "intent_atom_ids": [],
+      "mechanism_ids": [],
+      "binding_basis_ids": [],
+      "binding_status": "unresolved",
+      "unresolved_atom_ids": [],
+      "content_digest": "sha256:01e5c51e3c666106212604c947cb8a10a03000b105df107005668a0a460193b2"
+    },
+    {
+      "story_node_id": "story:O-COMPONENT-07-d157b2cc",
+      "intent_atom_ids": [],
+      "mechanism_ids": [],
+      "binding_basis_ids": [],
+      "binding_status": "unresolved",
+      "unresolved_atom_ids": [],
+      "content_digest": "sha256:8e8d50566de192b0b2404cc1e35c2be5e29a2ec9f8d74c0018acde2c0dbd3aa2"
+    },
+    {
+      "story_node_id": "story:O-COMPONENT-08-4aac53dc",
+      "intent_atom_ids": [],
+      "mechanism_ids": [],
+      "binding_basis_ids": [],
+      "binding_status": "unresolved",
+      "unresolved_atom_ids": [],
+      "content_digest": "sha256:bca8e2c16923704706c29cdc5b8b7a901e3824392c8968196241754c190baffd"
+    },
+    {
+      "story_node_id": "story:O-COMPONENT-09-6a8cfd6c",
+      "intent_atom_ids": [],
+      "mechanism_ids": [],
+      "binding_basis_ids": [],
+      "binding_status": "unresolved",
+      "unresolved_atom_ids": [],
+      "content_digest": "sha256:1bd795927ce970a46a82aa24e75ad0ce2781e2799d7f91ae9256245162aecef8"
+    },
+    {
+      "story_node_id": "story:O-COMPONENT-10-dac6250f",
+      "intent_atom_ids": [],
+      "mechanism_ids": [],
+      "binding_basis_ids": [],
+      "binding_status": "unresolved",
+      "unresolved_atom_ids": [],
+      "content_digest": "sha256:e3da82393253ad029f165b5fee4f5c0964551bf70adbcf5f7d1b1f15c9383d79"
+    },
+    {
+      "story_node_id": "story:O-COMPONENT-11-27f310b2",
+      "intent_atom_ids": [],
+      "mechanism_ids": [],
+      "binding_basis_ids": [],
+      "binding_status": "unresolved",
+      "unresolved_atom_ids": [],
+      "content_digest": "sha256:5fd4eefb7e6b6aaa12114f12407c5f3594338f8c051d4adc3d5760914e8cf61c"
+    },
+    {
+      "story_node_id": "story:O-COMPONENT-12-370bd5b2",
+      "intent_atom_ids": [],
+      "mechanism_ids": [],
+      "binding_basis_ids": [],
+      "binding_status": "unresolved",
+      "unresolved_atom_ids": [],
+      "content_digest": "sha256:360f940bf525800f5cffec4b17f050f6eab6b6111193931feab212432e930564"
+    },
+    {
+      "story_node_id": "story:O-ORGANIZATION-01-6b45ad90",
+      "intent_atom_ids": [],
+      "mechanism_ids": [],
+      "binding_basis_ids": [],
+      "binding_status": "unresolved",
+      "unresolved_atom_ids": [],
+      "content_digest": "sha256:32c4f468cd07bcf456e7dc3798129344dacb034c28bd2b4a60dd8cfaa4b34d09"
+    },
+    {
+      "story_node_id": "story:O-ORGANIZATION-02-54911271",
+      "intent_atom_ids": [],
+      "mechanism_ids": [],
+      "binding_basis_ids": [],
+      "binding_status": "unresolved",
+      "unresolved_atom_ids": [],
+      "content_digest": "sha256:50b2483cd1dee1eaa63c13d41daad874d9fb33eba67310145be1df58c18afa70"
+    },
+    {
+      "story_node_id": "story:O-ORGANIZATION-03-2c92c853",
+      "intent_atom_ids": [],
+      "mechanism_ids": [],
+      "binding_basis_ids": [],
+      "binding_status": "unresolved",
+      "unresolved_atom_ids": [],
+      "content_digest": "sha256:a566ababe89d76d57d54b10364e29caac29940ea41ca38eff1ad6f8872974b95"
+    },
+    {
+      "story_node_id": "story:O-ORGANIZATION-04-1dd970df",
+      "intent_atom_ids": [],
+      "mechanism_ids": [],
+      "binding_basis_ids": [],
+      "binding_status": "unresolved",
+      "unresolved_atom_ids": [],
+      "content_digest": "sha256:d3391699f91e15652a4a80812288b5cbec21a5d42218d5657036d93f11dba9c7"
+    },
+    {
+      "story_node_id": "story:O-ORGANIZATION-05-baf0d276",
+      "intent_atom_ids": [],
+      "mechanism_ids": [],
+      "binding_basis_ids": [],
+      "binding_status": "unresolved",
+      "unresolved_atom_ids": [],
+      "content_digest": "sha256:72639b4a51e1b930249c3d4f7109eccb64d1fa4bf2006610b8360b18bc18c39f"
+    },
+    {
+      "story_node_id": "story:O-RATIONALE-CHECK-01-bad20132",
+      "intent_atom_ids": [],
+      "mechanism_ids": [],
+      "binding_basis_ids": [],
+      "binding_status": "unresolved",
+      "unresolved_atom_ids": [],
+      "content_digest": "sha256:6a7307b69fa1a94527a2084628ebf04d18ee19fba6aef240e231f01fe3de9170"
+    },
+    {
+      "story_node_id": "story:O-RATIONALE-CHECK-02-30bb7c0f",
+      "intent_atom_ids": [],
+      "mechanism_ids": [],
+      "binding_basis_ids": [],
+      "binding_status": "unresolved",
+      "unresolved_atom_ids": [],
+      "content_digest": "sha256:e8592ac531420baffa21820f7686254f97b56f902985f6f04f5ba7ffbd6be6ed"
+    },
+    {
+      "story_node_id": "story:O-RATIONALE-CHECK-03-b01101f7",
+      "intent_atom_ids": [],
+      "mechanism_ids": [],
+      "binding_basis_ids": [],
+      "binding_status": "unresolved",
+      "unresolved_atom_ids": [],
+      "content_digest": "sha256:f7fe451ed7bd7b6f6660b0da3287bae4226b931fdfa4aa56a18d50a0548e21a4"
+    },
+    {
+      "story_node_id": "story:O-RATIONALE-CHECK-04-c742a4fc",
+      "intent_atom_ids": [],
+      "mechanism_ids": [],
+      "binding_basis_ids": [],
+      "binding_status": "unresolved",
+      "unresolved_atom_ids": [],
+      "content_digest": "sha256:a16a0aaefcc335f093d1f21e6c8c6b6ae59931e587eb7b53bdea42cd8bea6d0d"
+    },
+    {
+      "story_node_id": "story:O-RATIONALE-CHECK-05-595ac6ff",
+      "intent_atom_ids": [],
+      "mechanism_ids": [],
+      "binding_basis_ids": [],
+      "binding_status": "unresolved",
+      "unresolved_atom_ids": [],
+      "content_digest": "sha256:f754b33db80edf632008a5bc26b5c8d8555fe506feacada4287636065ae98d19"
+    },
+    {
+      "story_node_id": "story:O-RATIONALE-CHECK-06-388166d9",
+      "intent_atom_ids": [],
+      "mechanism_ids": [],
+      "binding_basis_ids": [],
+      "binding_status": "unresolved",
+      "unresolved_atom_ids": [],
+      "content_digest": "sha256:34532ddac5ef2022d5bd8f44ab63c4f151b65353d15e416997c53d7b9e634dba"
+    }
+  ]
+}

@@ -1,0 +1,25 @@
+{
+  "attempt": 1,
+  "blocked_reason": "",
+  "content_digest": "sha256:3563250ac35b0a7c29227e609067d9878edf3aac840a95d9accb6d52eedb61e7",
+  "diagnostics": {
+    "finish_seen": true,
+    "partial_chars": 3645,
+    "stream_events": 394,
+    "terminal_status": "finish_seen",
+    "usage_seen": true
+  },
+  "finish_reason": "structured_complete",
+  "invocation_id": "inv:realizer:MA-S3:page:881f96e34f95310ed0fad191786b1209f382123d5af851aa8b9c8fe1806c8fb9",
+  "provider_finish_reason": "stop",
+  "request_diagnostics_digest": "sha256:5f998bbda6bbdf7402d51568270961bab2a03c319bc70de7faca0723ed68ab34",
+  "response_digest": "sha256:db30168658c6ccec4a6a21148cdec0a5c2cb814101e9bfd98d4d738445e5df3f",
+  "response_text": "{\n  \"draft_markdown\": \"## MA-S3: Dedicated Attention Mask Construction\\n\\nWhen the configuration flag `self.cfg.use_dedicated_attention` is active, the model constructs a dedicated attention mask to enforce document-level attention constraints. This process begins by initializing a zero tensor with shape `(batch_size, num_passages + 1, num_passages + 1)` on the model's device:\\n\\n```python\\ndedicated_attention_mask = torch.zeros(\\n    (batch_size, num_passages + 1, num_passages + 1),\\n    device=self.device,\\n)  # [batch_size, num_heads, num_passages + 1, num_passages + 1]\\n```\\n\\nThe mask dimensions are derived from the batch size and the number of passages, with an additional dimension for the query token. The device is loaded from `self.device` to ensure the tensor resides on the correct computational backend.\\n\\nSubsequently, the mask is populated by iterating over each batch element and passage row. For each batch item `i`, the document IDs are retrieved:\\n\\n```python\\nfor i in range(batch_size):\\n    temp_document_id = document_id[i]  # [num_passages]\\n    for row, doc_id in enumerate(temp_document_id):\\n        dedicated_attention_mask[i, row, :] = -float(\\n            \\\"inf\\\"\\n        )  # Set this row to all -inf\\n        temp_indices = (\\n            temp_document_id == doc_id\\n        )  # Get the indices of the passages that have the same document id as the current passage\\n        temp_indices = torch.cat(\\n            (\\n                torch.tensor([True], device=self.device),\\n                temp_indices,\\n            )  # Always attend to the query\\n        )  # [num_passages + 1]\\n        dedicated_attention_mask[\\n            i, row, temp_indices\\n        ] = 0  # Set the dedicated attention mask to 0 for the passages that have the same document id as the current passage\\n```\\n\\nThis loop sets the attention mask to `-inf` for all positions initially, then sets it to `0` for the query token and all passages belonging to the same document ID as the current passage. This ensures that attention is restricted to the query and passages from the same source document.\",\n  \"rendered_detail_ids\": [\n    \"detail:mech_sym:f6cf5bdfe2ae16f0:22\",\n    \"detail:mech_sym:f6cf5bdfe2ae16f0:23\",\n    \"detail:mech_sym:f6cf5bdfe2ae16f0:24\",\n    \"detail:mech_sym:f6cf5bdfe2ae16f0:25\",\n    \"detail:mech_sym:f6cf5bdfe2ae16f0:26\",\n    \"detail:mech_sym:f6cf5bdfe2ae16f0:27\",\n    \"detail:mech_sym:f6cf5bdfe2ae16f0:28\"\n  ],\n  \"used_formula_package_ids\": [],\n  \"witnesses\": [\n    {\n      \"exact_text\": \"dedicated_attention_mask = torch.zeros(\",\n      \"target_id\": \"detail:mech_sym:f6cf5bdfe2ae16f0:22\",\n      \"witness_kind\": \"detail\"\n    },\n    {\n      \"exact_text\": \"(batch_size, num_passages + 1, num_passages + 1)\",\n      \"target_id\": \"detail:mech_sym:f6cf5bdfe2ae16f0:23\",\n      \"witness_kind\": \"detail\"\n    },\n    {\n      \"exact_text\": \"device=self.device\",\n      \"target_id\": \"detail:mech_sym:f6cf5bdfe2ae16f0:24\",\n      \"witness_kind\": \"detail\"\n    },\n    {\n      \"exact_text\": \"for i in range(batch_size):\",\n      \"target_id\": \"detail:mech_sym:f6cf5bdfe2ae16f0:25\",\n      \"witness_kind\": \"detail\"\n    },\n    {\n      \"exact_text\": \"dedicated_attention_mask[i, row, :] = -float(\",\n      \"target_id\": \"detail:mech_sym:f6cf5bdfe2ae16f0:26\",\n      \"witness_kind\": \"detail\"\n    },\n    {\n      \"exact_text\": \"temp_document_id = document_id[i]\",\n      \"target_id\": \"detail:mech_sym:f6cf5bdfe2ae16f0:27\",\n      \"witness_kind\": \"detail\"\n    },\n    {\n      \"exact_text\": \"for row, doc_id in enumerate(temp_document_id):\",\n      \"target_id\": \"detail:mech_sym:f6cf5bdfe2ae16f0:28\",\n      \"witness_kind\": \"detail\"\n    }\n  ]\n}",
+  "schema_version": "1.0",
+  "thinking_chars": 0,
+  "usage": {
+    "completion_tokens": 1125,
+    "prompt_tokens": 23280,
+    "total_tokens": 24405
+  }
+}

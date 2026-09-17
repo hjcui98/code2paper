@@ -1,0 +1,26 @@
+{
+  "schema_version": "2.0",
+  "plan_digest": "sha256:1574681d5f387963065f4c115ff9cfdb38d2d70ba956d834e9c6d027b2e5356e",
+  "required_section_ids": [
+    "MA-S1",
+    "MA-S2",
+    "MA-S3",
+    "MA-S4",
+    "MA-S5"
+  ],
+  "completed_section_ids": [
+    "MA-S1",
+    "MA-S2",
+    "MA-S4",
+    "MA-S5"
+  ],
+  "all_required_sections_complete": false,
+  "section_receipt_digests": [
+    "sha256:1cd975464d2256c4ec1c79c2eab5f4a2d148e7f74707db272cf649ce87b5bffa",
+    "sha256:18fc566a18abf413dea49d7fe398abc192a19382c052eba7e7d0c37296889ce6",
+    "sha256:744fdcb4ebab96f0f3b1edd8fe8b6bf6f9d09d718f7bbf09a1b29cf599b81eb3",
+    "sha256:c276561aae6521e74b0b01af7b5016384af64abb13eb59b0444b8d708fc24908",
+    "sha256:eecea07a1d5d1e4e6d67c91c85a48f91f5abee1c45e6e819ba05156884344673"
+  ],
+  "content_digest": "sha256:86886737c69be35417c50bfdd10967ff63ed0f814b0b0130a3f9ceb2aeee14cc"
+}

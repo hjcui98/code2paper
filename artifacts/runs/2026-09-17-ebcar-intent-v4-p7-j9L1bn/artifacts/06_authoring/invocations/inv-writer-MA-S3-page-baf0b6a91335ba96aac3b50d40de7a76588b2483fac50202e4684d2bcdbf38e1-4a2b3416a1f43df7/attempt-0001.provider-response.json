@@ -1,0 +1,25 @@
+{
+  "attempt": 1,
+  "blocked_reason": "",
+  "content_digest": "sha256:c22bc24c24fa2911dfb94dca96a4592675174d8c5fdd10153d071900a62af1a3",
+  "diagnostics": {
+    "finish_seen": true,
+    "partial_chars": 1473,
+    "stream_events": 505,
+    "terminal_status": "finish_seen",
+    "usage_seen": true
+  },
+  "finish_reason": "structured_complete",
+  "invocation_id": "inv:writer:MA-S3:page:baf0b6a91335ba96aac3b50d40de7a76588b2483fac50202e4684d2bcdbf38e1",
+  "provider_finish_reason": "stop",
+  "request_diagnostics_digest": "sha256:d592222697f7c95fd060fb30072eb99a696408ba524e81c04db52ea32c257235",
+  "response_digest": "sha256:5ace9d62f162ffaceea8c0b3930b64533f7a4cffefc667bfebb3981d94df8fe7",
+  "response_text": "{\"paragraphs\":[{\"paragraph_id\":\"MA-S3:P1__f6\",\"paragraph_markdown\":\"The dedicated attention mask is constructed in two mutually exclusive branches governed by the configuration flag for dedicated attention. When dedicated attention is enabled, the system identifies, for each passage row, the set of passage indices that share the same document identifier as the current passage; the corresponding entries in the dedicated attention mask at positions (batch, row, indices) are then set to zero, thereby suppressing attention between passages originating from the same document. When dedicated attention is disabled, the dedicated attention mask is instead initialized as a zero tensor of shape (batch_size, num_passages + 1, num_passages + 1) allocated on the model's device, which in effect disables any additional masking beyond the shared full attention. In both cases the mask is subsequently unsqueezed at the head dimension, yielding shape (batch_size, 1, num_passages + 1, num_passages + 1), so that it broadcasts correctly across all attention heads during the forward pass. The concatenated passage embeddings and the resulting dedicated attention mask are then passed jointly to the Transformer encoder, which produces output representations of shape (batch_size, num_passages + 1, hidden_size). The +1 offset in the passage dimension accounts for the appended special token that is concatenated with the passage sequence before encoding.\"}],\"section_id\":\"MA-S3\"}",
+  "schema_version": "1.0",
+  "thinking_chars": 0,
+  "usage": {
+    "completion_tokens": 1312,
+    "prompt_tokens": 28358,
+    "total_tokens": 29670
+  }
+}

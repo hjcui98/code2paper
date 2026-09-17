@@ -1,0 +1,21 @@
+{
+  "schema_version": "1.0",
+  "run_id": "ebcar-intent-v4-p7-current-20260916T165846Z",
+  "attempt_id": "20260917-033042-e82858614bef",
+  "out_root": "/tmp/c2p-p7-ebcar-v4-intent-j9L1bn",
+  "status": "interrupted",
+  "terminal_reason": "external_termination",
+  "exit_type": "external_exit",
+  "returncode": 2,
+  "checkpoint": {},
+  "research": {
+    "status": "incomplete",
+    "termination_reason": "external_termination",
+    "turn_index": 0,
+    "agenda_statuses": {}
+  },
+  "artifacts": {
+    "latest_checkpoint": "",
+    "latest_checkpoint_digest": ""
+  }
+}

@@ -4488,13 +4488,13 @@ def validate_mechanism_context_structural_gates(
     ownerless_seed_ids: set[str] = {
         str(seed_id)
         for seed_id in (getattr(context_set, "unresolved_seed_ids", ()) or ())
-        if str(seed_id).strip()
+        if str(seed_id).strip() and not str(seed_id).startswith("story:")
     }
     for context in context_set.contexts:
         ownerless_seed_ids.update(
             str(seed_id)
             for seed_id in (context.evidence_closure.unresolved_seed_ids or ())
-            if str(seed_id).strip()
+            if str(seed_id).strip() and not str(seed_id).startswith("story:")
         )
         # The primary owner of a mechanism is its resolved owner anchor.  A
         # mechanism whose closure carries operations but no owner anchor is

@@ -1,0 +1,93 @@
+{
+  "attempt": 1,
+  "fragment": {
+    "consumer_role": "realizer",
+    "content_repair_attempt": false,
+    "draft": {
+      "authority_disposition": "repository_verified",
+      "blocked_reason": "",
+      "content_digest": "sha256:1da7116cb8cfc409e66f8b9e0c71867053fde6f8a0ac293070a2bfa6d2330100",
+      "draft_id": "draft:join:MA-S3:p6",
+      "draft_markdown": "When `self.cfg.use_dedicated_attention` is active, the model executes a loop over `enumerate(temp_document_id)` to construct a dedicated attention mask. For each row and document ID, the mask row is initialized to negative infinity via `dedicated_attention_mask[i, row, :] = -float(\n                        \"inf\"\n                    )  # Set this row to all -inf`. The code then computes `temp_indices = (` by comparing `temp_document_id == doc_id` to identify passages sharing the same document ID. These indices are concatenated with a query indicator using `temp_indices = torch.cat(\n                        (\n                            torch.tensor([True], device=self.device),\n                            temp_indices,\n                        )  # Always attend to the query\n                    )  # [num_passages + 1]`. This construction ensures that the query always attends to itself, implemented via `torch.tensor([True], device=self.device),`.",
+      "formula_package_ids": [],
+      "heading": "join:MA-S3",
+      "mechanism_id": "join:MA-S3",
+      "page_index": 6,
+      "realized_detail_ids": [
+        "detail:mech_sym:f6cf5bdfe2ae16f0:29",
+        "detail:mech_sym:f6cf5bdfe2ae16f0:30",
+        "detail:mech_sym:f6cf5bdfe2ae16f0:31",
+        "detail:mech_sym:f6cf5bdfe2ae16f0:32",
+        "detail:mech_sym:f6cf5bdfe2ae16f0:33",
+        "detail:mech_sym:f6cf5bdfe2ae16f0:34",
+        "detail:mech_sym:f6cf5bdfe2ae16f0:35",
+        "detail:mech_sym:f6cf5bdfe2ae16f0:36"
+      ],
+      "repair_feedback": [],
+      "representation_diff_class": "witness_exact_text_repaired+witness_exact_text_whitespace_repaired",
+      "request_digest": "sha256:52be4f0be57973c3675e75de0d431d7bcea0c882ad13ade285fd1c847b0b7e00",
+      "required_detail_ids": [
+        "detail:mech_sym:f6cf5bdfe2ae16f0:29",
+        "detail:mech_sym:f6cf5bdfe2ae16f0:30",
+        "detail:mech_sym:f6cf5bdfe2ae16f0:31",
+        "detail:mech_sym:f6cf5bdfe2ae16f0:32",
+        "detail:mech_sym:f6cf5bdfe2ae16f0:33",
+        "detail:mech_sym:f6cf5bdfe2ae16f0:34",
+        "detail:mech_sym:f6cf5bdfe2ae16f0:35",
+        "detail:mech_sym:f6cf5bdfe2ae16f0:36"
+      ],
+      "status": "accepted",
+      "unresolved_detail_ids": [],
+      "witness_atoms": [],
+      "witnesses": [
+        {
+          "exact_text": "enumerate(temp_document_id)",
+          "target_id": "detail:mech_sym:f6cf5bdfe2ae16f0:29",
+          "witness_kind": "detail"
+        },
+        {
+          "exact_text": "dedicated_attention_mask[i, row, :] = -float(",
+          "target_id": "detail:mech_sym:f6cf5bdfe2ae16f0:30",
+          "witness_kind": "detail"
+        },
+        {
+          "exact_text": "dedicated_attention_mask[i, row, :] = -float(\n                        \"inf\"\n                    )  # Set this row to all -inf",
+          "target_id": "detail:mech_sym:f6cf5bdfe2ae16f0:31",
+          "witness_kind": "detail"
+        },
+        {
+          "exact_text": "temp_indices = (",
+          "target_id": "detail:mech_sym:f6cf5bdfe2ae16f0:32",
+          "witness_kind": "detail"
+        },
+        {
+          "exact_text": "temp_document_id == doc_id",
+          "target_id": "detail:mech_sym:f6cf5bdfe2ae16f0:33",
+          "witness_kind": "detail"
+        },
+        {
+          "exact_text": "temp_indices = torch.cat(",
+          "target_id": "detail:mech_sym:f6cf5bdfe2ae16f0:34",
+          "witness_kind": "detail"
+        },
+        {
+          "exact_text": "temp_indices = torch.cat(\n                        (\n                            torch.tensor([True], device=self.device),\n                            temp_indices,\n                        )  # Always attend to the query\n                    )  # [num_passages + 1]",
+          "target_id": "detail:mech_sym:f6cf5bdfe2ae16f0:35",
+          "witness_kind": "detail"
+        },
+        {
+          "exact_text": "torch.tensor([True], device=self.device),",
+          "target_id": "detail:mech_sym:f6cf5bdfe2ae16f0:36",
+          "witness_kind": "detail"
+        }
+      ]
+    },
+    "page_id": "page:19d0179f4fbe83880fd5f669b953ecabfb8288da3d585fc8a477654084c80c1c",
+    "repair_feedback": [],
+    "response_hash": "sha256:f48be461785b7f95b043fd2c81152f60c066b83767446054598aa1fcb7023c37",
+    "response_text": "{\n  \"draft_markdown\": \"When `self.cfg.use_dedicated_attention` is active, the model executes a loop over `enumerate(temp_document_id)` to construct a dedicated attention mask. For each row and document ID, the mask row is initialized to negative infinity via `dedicated_attention_mask[i, row, :] = -float(\\n                        \\\"inf\\\"\\n                    )  # Set this row to all -inf`. The code then computes `temp_indices = (` by comparing `temp_document_id == doc_id` to identify passages sharing the same document ID. These indices are concatenated with a query indicator using `temp_indices = torch.cat(\\n                        (\\n                            torch.tensor([True], device=self.device),\\n                            temp_indices,\\n                        )  # Always attend to the query\\n                    )  # [num_passages + 1]`. This construction ensures that the query always attends to itself, implemented via `torch.tensor([True], device=self.device),`.\",\n  \"rendered_detail_ids\": [\n    \"detail:mech_sym:f6cf5bdfe2ae16f0:29\",\n    \"detail:mech_sym:f6cf5bdfe2ae16f0:30\",\n    \"detail:mech_sym:f6cf5bdfe2ae16f0:31\",\n    \"detail:mech_sym:f6cf5bdfe2ae16f0:32\",\n    \"detail:mech_sym:f6cf5bdfe2ae16f0:33\",\n    \"detail:mech_sym:f6cf5bdfe2ae16f0:34\",\n    \"detail:mech_sym:f6cf5bdfe2ae16f0:35\",\n    \"detail:mech_sym:f6cf5bdfe2ae16f0:36\"\n  ],\n  \"used_formula_package_ids\": [],\n  \"witnesses\": [\n    {\n      \"exact_text\": \"enumerate(temp_document_id)\",\n      \"target_id\": \"detail:mech_sym:f6cf5bdfe2ae16f0:29\",\n      \"witness_kind\": \"detail\"\n    },\n    {\n      \"exact_text\": \"dedicated_attention_mask[i, row, :] = -float(\",\n      \"target_id\": \"detail:mech_sym:f6cf5bdfe2ae16f0:30\",\n      \"witness_kind\": \"detail\"\n    },\n    {\n      \"exact_text\": \"dedicated_attention_mask[i, row, :] = -float(                        )  # Set this row to all -inf\",\n      \"target_id\": \"detail:mech_sym:f6cf5bdfe2ae16f0:31\",\n      \"witness_kind\": \"detail\"\n    },\n    {\n      \"exact_text\": \"temp_indices = (\",\n      \"target_id\": \"detail:mech_sym:f6cf5bdfe2ae16f0:32\",\n      \"witness_kind\": \"detail\"\n    },\n    {\n      \"exact_text\": \"temp_document_id == doc_id\",\n      \"target_id\": \"detail:mech_sym:f6cf5bdfe2ae16f0:33\",\n      \"witness_kind\": \"detail\"\n    },\n    {\n      \"exact_text\": \"temp_indices = torch.cat(\",\n      \"target_id\": \"detail:mech_sym:f6cf5bdfe2ae16f0:34\",\n      \"witness_kind\": \"detail\"\n    },\n    {\n      \"exact_text\": \"temp_indices = torch.cat(                        (                            torch.tensor([True], device=self.device),                            temp_indices,                        )  # Always attend to the query                    )  # [num_passages + 1]\",\n      \"target_id\": \"detail:mech_sym:f6cf5bdfe2ae16f0:35\",\n      \"witness_kind\": \"detail\"\n    },\n    {\n      \"exact_text\": \"torch.tensor([True], device=self.device),\",\n      \"target_id\": \"detail:mech_sym:f6cf5bdfe2ae16f0:36\",\n      \"witness_kind\": \"detail\"\n    }\n  ]\n}",
+    "section_id": "MA-S3"
+  },
+  "invocation_id": "inv:realizer:MA-S3:page:19d0179f4fbe83880fd5f669b953ecabfb8288da3d585fc8a477654084c80c1c",
+  "schema_version": "2.0"
+}

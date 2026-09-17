@@ -1,0 +1,202 @@
+{
+  "schema_version": "2.0",
+  "canonical_obligations": [
+    {
+      "canonical_formula_obligation_id": "canonical:formula:1bda2a13d17ebed0",
+      "source_author_formula_ids": [
+        "formula:facet:facet-6bc5ee440fdc8329"
+      ],
+      "source_mechanism_obligation_ids": [],
+      "source_intent_atom_ids": [
+        "atom:300092e5e2b2d15d",
+        "atom:6498cbd05711635a"
+      ],
+      "expectation": "required",
+      "source_proof_ids": [],
+      "formula_worthiness": "display",
+      "disposition_reason": "author_formula_expectation_required",
+      "accepted_package_id": "",
+      "consumed_package_ids": [],
+      "committed_paragraph_ids": [],
+      "open": true,
+      "content_digest": "sha256:9a516c19ebe19b7786b71abc8b6af36ebdf84bfd7159900f20f9d70d19498172"
+    },
+    {
+      "canonical_formula_obligation_id": "canonical:formula:c7561f00798fdffa",
+      "source_author_formula_ids": [
+        "formula:facet:facet-71df0ec224b91883"
+      ],
+      "source_mechanism_obligation_ids": [],
+      "source_intent_atom_ids": [
+        "atom:26ee06b7d3724b67"
+      ],
+      "expectation": "required",
+      "source_proof_ids": [],
+      "formula_worthiness": "display",
+      "disposition_reason": "author_formula_expectation_required",
+      "accepted_package_id": "",
+      "consumed_package_ids": [],
+      "committed_paragraph_ids": [],
+      "open": true,
+      "content_digest": "sha256:c7645d7dacd7a04e5a8e0d28868b8d4b7d0e4a81fe4bc9263c98bce0f57d4802"
+    },
+    {
+      "canonical_formula_obligation_id": "canonical:formula:9de0661fe4e804e1",
+      "source_author_formula_ids": [
+        "formula:facet:facet-833638c7783e3952"
+      ],
+      "source_mechanism_obligation_ids": [],
+      "source_intent_atom_ids": [
+        "atom:9e1c0dad508c8b30",
+        "atom:a75f9558318d3277"
+      ],
+      "expectation": "required",
+      "source_proof_ids": [],
+      "formula_worthiness": "display",
+      "disposition_reason": "author_formula_expectation_required",
+      "accepted_package_id": "",
+      "consumed_package_ids": [],
+      "committed_paragraph_ids": [],
+      "open": true,
+      "content_digest": "sha256:17596322aa0a5a6958d723a9022f248921732f352d95d9926221d073d3ed7221"
+    },
+    {
+      "canonical_formula_obligation_id": "canonical:formula:838298fb549dd4ff",
+      "source_author_formula_ids": [
+        "formula:facet:facet-d57e6b007d62768e"
+      ],
+      "source_mechanism_obligation_ids": [],
+      "source_intent_atom_ids": [
+        "atom:4ae9c80bf7941811",
+        "atom:5951551f5dad6745"
+      ],
+      "expectation": "required",
+      "source_proof_ids": [],
+      "formula_worthiness": "display",
+      "disposition_reason": "author_formula_expectation_required",
+      "accepted_package_id": "",
+      "consumed_package_ids": [],
+      "committed_paragraph_ids": [],
+      "open": true,
+      "content_digest": "sha256:4245fa7171460ba1b295477b4dba7e6592970742b5f47536f5abe48952dd41a4"
+    },
+    {
+      "canonical_formula_obligation_id": "canonical:formula:09c5d77982fe7b2a",
+      "source_author_formula_ids": [
+        "formula:section:MA-S3:derivation"
+      ],
+      "source_mechanism_obligation_ids": [],
+      "source_intent_atom_ids": [],
+      "expectation": "required",
+      "source_proof_ids": [],
+      "formula_worthiness": "display",
+      "disposition_reason": "author_formula_expectation_required",
+      "accepted_package_id": "",
+      "consumed_package_ids": [],
+      "committed_paragraph_ids": [],
+      "open": true,
+      "content_digest": "sha256:a4c037bcedf3e7f98700b50523aae8d1931766a86c861b8bab04514482714c04"
+    },
+    {
+      "canonical_formula_obligation_id": "canonical:formula:173449879ef42896",
+      "source_author_formula_ids": [
+        "formula:section:MA-S4:derivation"
+      ],
+      "source_mechanism_obligation_ids": [],
+      "source_intent_atom_ids": [],
+      "expectation": "required",
+      "source_proof_ids": [],
+      "formula_worthiness": "display",
+      "disposition_reason": "author_formula_expectation_required",
+      "accepted_package_id": "",
+      "consumed_package_ids": [],
+      "committed_paragraph_ids": [],
+      "open": true,
+      "content_digest": "sha256:a5a1688d75b3b1d01baf145038e2c31cda47eca8057aa90afcfc1a96cb0e0ffa"
+    },
+    {
+      "canonical_formula_obligation_id": "canonical:formula:f1ff28ea86e3d096",
+      "source_author_formula_ids": [
+        "formula:section:MA-S5:derivation"
+      ],
+      "source_mechanism_obligation_ids": [],
+      "source_intent_atom_ids": [],
+      "expectation": "required",
+      "source_proof_ids": [],
+      "formula_worthiness": "display",
+      "disposition_reason": "author_formula_expectation_required",
+      "accepted_package_id": "",
+      "consumed_package_ids": [],
+      "committed_paragraph_ids": [],
+      "open": true,
+      "content_digest": "sha256:02691e12550e4a53b1c9c1f13f059e01960be05557fcf1b758685d5ce82e556b"
+    }
+  ],
+  "trace": {
+    "schema_version": "2.0",
+    "author_formula_ids": [
+      "formula:facet:facet-6bc5ee440fdc8329",
+      "formula:facet:facet-71df0ec224b91883",
+      "formula:facet:facet-833638c7783e3952",
+      "formula:facet:facet-d57e6b007d62768e",
+      "formula:section:MA-S3:derivation",
+      "formula:section:MA-S4:derivation",
+      "formula:section:MA-S5:derivation"
+    ],
+    "mechanism_obligation_ids": [],
+    "raw_id_intersection": [],
+    "raw_id_intersection_size": 0,
+    "author_ids_without_canonical": [],
+    "mechanism_ids_without_canonical": [],
+    "accepted_package_ids": [],
+    "consumed_package_ids": [],
+    "packages_without_canonical": [],
+    "incidental_or_code_trace_sources": 0,
+    "typed_diffs": [
+      {
+        "kind": "unbridged_author_formula",
+        "source_author_formula_ids": [
+          "formula:facet:facet-6bc5ee440fdc8329"
+        ]
+      },
+      {
+        "kind": "unbridged_author_formula",
+        "source_author_formula_ids": [
+          "formula:facet:facet-71df0ec224b91883"
+        ]
+      },
+      {
+        "kind": "unbridged_author_formula",
+        "source_author_formula_ids": [
+          "formula:facet:facet-833638c7783e3952"
+        ]
+      },
+      {
+        "kind": "unbridged_author_formula",
+        "source_author_formula_ids": [
+          "formula:facet:facet-d57e6b007d62768e"
+        ]
+      },
+      {
+        "kind": "unbridged_author_formula",
+        "source_author_formula_ids": [
+          "formula:section:MA-S3:derivation"
+        ]
+      },
+      {
+        "kind": "unbridged_author_formula",
+        "source_author_formula_ids": [
+          "formula:section:MA-S4:derivation"
+        ]
+      },
+      {
+        "kind": "unbridged_author_formula",
+        "source_author_formula_ids": [
+          "formula:section:MA-S5:derivation"
+        ]
+      }
+    ],
+    "canonical_count": 7
+  },
+  "content_digest": "sha256:b4bd0539193923971afa458e101cbf00ba1ffe6434a500fb2ef1a3a8eb1c6b5e"
+}

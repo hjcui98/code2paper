@@ -1,0 +1,1128 @@
+{
+  "schema_version": "1.0",
+  "handoff_id": "sha256:27a20921d5d1226e6b4bac3c10f9afcf85c6ceaa46e362c576b94b31e7627b2b",
+  "run_id": "ebcar-intent-v4-p7-current-20260916T165846Z",
+  "repo_snapshot_id": "repo:9b4f1a34c70f10c2317f024df585e282c9d02371586a629e00ace26d8988c942",
+  "project_tree_hash": "sha256:9b4f1a34c70f10c2317f024df585e282c9d02371586a629e00ace26d8988c942",
+  "eligible": true,
+  "eligibility_reasons": [],
+  "must_cover_obligation_ids": [
+    "O-METHOD-MAINLINE-01-c8146479",
+    "O-STAGE-01-039a963a",
+    "O-STAGE-02-42e8d68d",
+    "O-STAGE-03-2c5bd758",
+    "O-STAGE-04-c50e0bef",
+    "O-STAGE-05-5b3d398a"
+  ],
+  "supported_obligation_ids": [
+    "O-METHOD-MAINLINE-01-c8146479",
+    "O-STAGE-02-42e8d68d",
+    "O-STAGE-03-2c5bd758",
+    "O-STAGE-04-c50e0bef",
+    "O-STAGE-05-5b3d398a"
+  ],
+  "partial_obligation_ids": [
+    "O-STAGE-01-039a963a"
+  ],
+  "partial_obligations": [
+    {
+      "obligation_id": "O-STAGE-01-039a963a",
+      "promoted_claim_ids": [
+        "claim-O-STAGE-01-039a963a-fact-O-STAGE-01-039a963a-node:2911a2ecfb714992",
+        "claim-O-STAGE-01-039a963a-fact-O-STAGE-01-039a963a-node:4480dac4431aabbe",
+        "claim-O-STAGE-01-039a963a-fact-O-STAGE-01-039a963a-node:4be5b539dce0e4f4",
+        "claim-O-STAGE-01-039a963a-fact-O-STAGE-01-039a963a-node:00757f21e4c9d9f3",
+        "claim-O-STAGE-01-039a963a-fact-O-STAGE-01-039a963a-node:36bd05a333b6a4fc",
+        "claim-O-STAGE-01-039a963a-fact-O-STAGE-01-039a963a-node:c4189835f8e67f5e"
+      ],
+      "missing_fields": [
+        "typed_predicate:SELECT"
+      ],
+      "unresolved_fields": [
+        {
+          "field_id": "sha256:5e2fef486867098e8",
+          "field_type": "other",
+          "description": "typed_predicate:SELECT"
+        }
+      ],
+      "qualifier": "size is not None; doc['chunk_id'] == query['chunk_id']",
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "qualifier_clear": true,
+      "post_partial_retry_count": 1,
+      "semantic_gain_on_retry": null,
+      "review_warning_codes": [
+        "candidate_partial_unresolved:O-STAGE-01-039a963a"
+      ],
+      "promoted_claim_bindings": [
+        {
+          "claim_id": "claim-O-STAGE-01-039a963a-fact-O-STAGE-01-039a963a-node:2911a2ecfb714992",
+          "obligation_id": "O-STAGE-01-039a963a",
+          "canonical_identity": "sha256:49df01761d4ea16bfc07c667a0d8d02683632278f7b5cf210a80872b8998fc4f",
+          "fact_ids": [
+            "fact-O-STAGE-01-039a963a-node:2911a2ecfb714992"
+          ],
+          "direct_evidence_ids": [
+            "span:src/dataset/ebcar_dataset.py:48:55"
+          ],
+          "relation_evidence_ids": [],
+          "required_qualifiers": [
+            "size is not None"
+          ],
+          "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+          "claim_digest": "sha256:0f77293e914d35deb30d7396738c5e92af40f9fcce2e1cfb9f7916c3da72e0ab"
+        },
+        {
+          "claim_id": "claim-O-STAGE-01-039a963a-fact-O-STAGE-01-039a963a-node:4480dac4431aabbe",
+          "obligation_id": "O-STAGE-01-039a963a",
+          "canonical_identity": "sha256:389299c13227a2acf5e66a087afae1baa181a781ca1802b8fc50bea092d9ed58",
+          "fact_ids": [
+            "fact-O-STAGE-01-039a963a-node:4480dac4431aabbe"
+          ],
+          "direct_evidence_ids": [
+            "span:src/dataset/__init__.py:224:227"
+          ],
+          "relation_evidence_ids": [],
+          "required_qualifiers": [
+            "doc['chunk_id'] == query['chunk_id']"
+          ],
+          "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+          "claim_digest": "sha256:4f6a32ff5c37c1a72c8ee04b853ff2ee45dcdf20ad9ca4c34d8e2e614cee0a57"
+        },
+        {
+          "claim_id": "claim-O-STAGE-01-039a963a-fact-O-STAGE-01-039a963a-node:4be5b539dce0e4f4",
+          "obligation_id": "O-STAGE-01-039a963a",
+          "canonical_identity": "sha256:84e64339e26a3f3b82ffba2f23364e52a53408f8c656d20b3377129b0a971218",
+          "fact_ids": [
+            "fact-O-STAGE-01-039a963a-node:4be5b539dce0e4f4"
+          ],
+          "direct_evidence_ids": [
+            "span:src/dataset/__init__.py:226:226"
+          ],
+          "relation_evidence_ids": [],
+          "required_qualifiers": [],
+          "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+          "claim_digest": "sha256:5665da841dc040ef5446e901375fb68cab6ffbcbce83acda0f52bd7b66a710b3"
+        },
+        {
+          "claim_id": "claim-O-STAGE-01-039a963a-fact-O-STAGE-01-039a963a-node:00757f21e4c9d9f3",
+          "obligation_id": "O-STAGE-01-039a963a",
+          "canonical_identity": "sha256:167242f15ce636077cd1121742928a16fa68ab03184d04c5382d53a5f5658688",
+          "fact_ids": [
+            "fact-O-STAGE-01-039a963a-node:00757f21e4c9d9f3"
+          ],
+          "direct_evidence_ids": [
+            "span:src/dataset/__init__.py:260:260"
+          ],
+          "relation_evidence_ids": [],
+          "required_qualifiers": [],
+          "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+          "claim_digest": "sha256:85d1f817f0eb16b8f0fc41207056375fa8addb7500e0a45d87cbe6da7257f23d"
+        },
+        {
+          "claim_id": "claim-O-STAGE-01-039a963a-fact-O-STAGE-01-039a963a-node:36bd05a333b6a4fc",
+          "obligation_id": "O-STAGE-01-039a963a",
+          "canonical_identity": "sha256:d2f66a09c870b79a34ae538329a7d28b0966f4292b60cc0ede23b0f2c2ac1a42",
+          "fact_ids": [
+            "fact-O-STAGE-01-039a963a-node:36bd05a333b6a4fc"
+          ],
+          "direct_evidence_ids": [
+            "span:src/dataset/__init__.py:147:152"
+          ],
+          "relation_evidence_ids": [],
+          "required_qualifiers": [],
+          "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+          "claim_digest": "sha256:b462857115e057680b3f03bec6a9b439f336280430e1a6d5bc07f995568de40d"
+        },
+        {
+          "claim_id": "claim-O-STAGE-01-039a963a-fact-O-STAGE-01-039a963a-node:c4189835f8e67f5e",
+          "obligation_id": "O-STAGE-01-039a963a",
+          "canonical_identity": "sha256:506877cfe0cc70d00b4552a534766d5e55be0fbce434d31f70812e224a410d38",
+          "fact_ids": [
+            "fact-O-STAGE-01-039a963a-node:c4189835f8e67f5e"
+          ],
+          "direct_evidence_ids": [
+            "span:src/dataset/__init__.py:225:225"
+          ],
+          "relation_evidence_ids": [],
+          "required_qualifiers": [],
+          "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+          "claim_digest": "sha256:b07dcad448c1fcdba60e2b1a118e5362bb41e4a3ee3a7fc34ce5625a01e07c17"
+        }
+      ]
+    }
+  ],
+  "deferred_obligation_ids": [
+    "O-COMPONENT-01-c301ecdd",
+    "O-COMPONENT-01-de6049e3",
+    "O-COMPONENT-02-2e14379d",
+    "O-COMPONENT-03-d8aa8c77",
+    "O-COMPONENT-04-b5b6af99",
+    "O-COMPONENT-05-4c3594d2",
+    "O-COMPONENT-06-34021b88",
+    "O-COMPONENT-07-d157b2cc",
+    "O-COMPONENT-08-4aac53dc",
+    "O-COMPONENT-09-6a8cfd6c",
+    "O-COMPONENT-10-dac6250f",
+    "O-COMPONENT-11-27f310b2",
+    "O-COMPONENT-12-370bd5b2",
+    "O-ORGANIZATION-01-6b45ad90",
+    "O-ORGANIZATION-02-54911271",
+    "O-ORGANIZATION-03-2c92c853",
+    "O-ORGANIZATION-04-1dd970df",
+    "O-ORGANIZATION-05-baf0d276",
+    "O-RATIONALE-CHECK-01-bad20132",
+    "O-RATIONALE-CHECK-02-30bb7c0f",
+    "O-RATIONALE-CHECK-03-b01101f7",
+    "O-RATIONALE-CHECK-04-c742a4fc",
+    "O-RATIONALE-CHECK-05-595ac6ff",
+    "O-RATIONALE-CHECK-06-388166d9"
+  ],
+  "structural_failure_codes": [],
+  "warning_codes": [
+    "candidate_deferred:O-COMPONENT-01-c301ecdd",
+    "candidate_deferred:O-COMPONENT-01-de6049e3",
+    "candidate_deferred:O-COMPONENT-02-2e14379d",
+    "candidate_deferred:O-COMPONENT-03-d8aa8c77",
+    "candidate_deferred:O-COMPONENT-04-b5b6af99",
+    "candidate_deferred:O-COMPONENT-05-4c3594d2",
+    "candidate_deferred:O-COMPONENT-06-34021b88",
+    "candidate_deferred:O-COMPONENT-07-d157b2cc",
+    "candidate_deferred:O-COMPONENT-08-4aac53dc",
+    "candidate_deferred:O-COMPONENT-09-6a8cfd6c",
+    "candidate_deferred:O-COMPONENT-10-dac6250f",
+    "candidate_deferred:O-COMPONENT-11-27f310b2",
+    "candidate_deferred:O-COMPONENT-12-370bd5b2",
+    "candidate_deferred:O-ORGANIZATION-01-6b45ad90",
+    "candidate_deferred:O-ORGANIZATION-02-54911271",
+    "candidate_deferred:O-ORGANIZATION-03-2c92c853",
+    "candidate_deferred:O-ORGANIZATION-04-1dd970df",
+    "candidate_deferred:O-ORGANIZATION-05-baf0d276",
+    "candidate_deferred:O-RATIONALE-CHECK-01-bad20132",
+    "candidate_deferred:O-RATIONALE-CHECK-02-30bb7c0f",
+    "candidate_deferred:O-RATIONALE-CHECK-03-b01101f7",
+    "candidate_deferred:O-RATIONALE-CHECK-04-c742a4fc",
+    "candidate_deferred:O-RATIONALE-CHECK-05-595ac6ff",
+    "candidate_deferred:O-RATIONALE-CHECK-06-388166d9",
+    "candidate_partial_unresolved:O-STAGE-01-039a963a"
+  ],
+  "agenda_digest": "sha256:6486ed63746f0c24ec4e8f2ad9f1037ec55886e4d526074de4b17f218a5cfcbf",
+  "promotion_ledger_digest": "sha256:33a0e1d3165ff9b7b87ef6f854a3c92be632fe3922c88a46369e67a75937f777",
+  "retry_ledger_digest": "sha256:3c679acf9fb7ff073f639c9880a7bfd875e6af83ebb142af67318697fc813cac",
+  "revision_id": "",
+  "claim_bindings": [
+    {
+      "claim_id": "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:b6468fc08c848936",
+      "obligation_id": "O-METHOD-MAINLINE-01-c8146479",
+      "canonical_identity": "sha256:afc3ad94eefe5a6efc62ae9a537d49f374a1785e4a1ecec9c3ca2a162a1b5872",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:b6468fc08c848936"
+      ],
+      "direct_evidence_ids": [
+        "span:src/model/ebcar_dedicated_attention_model.py:145:174"
+      ],
+      "relation_evidence_ids": [
+        "rel:83ef85703286c813"
+      ],
+      "required_qualifiers": [
+        "self.cfg.use_dedicated_attention"
+      ],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "claim_digest": "sha256:9d9fd7afeb370fdd0a706585a7e9b02577fda4acf47a5804da671951def57ba7"
+    },
+    {
+      "claim_id": "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:a48f78c0e1931462",
+      "obligation_id": "O-METHOD-MAINLINE-01-c8146479",
+      "canonical_identity": "sha256:eb2e84f1806ef36bb508ad7f84390ab3f88c9ad0a10cda7cb99fa3c18eda2974",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:a48f78c0e1931462"
+      ],
+      "direct_evidence_ids": [
+        "span:src/model/ebcar_dedicated_attention_model.py:135:137"
+      ],
+      "relation_evidence_ids": [],
+      "required_qualifiers": [],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "claim_digest": "sha256:98b89aa43ba16a1be323e9f66691dff7cda5234bcf308ced3bec21cc01c0bb37"
+    },
+    {
+      "claim_id": "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:8e87e1804f77f50f",
+      "obligation_id": "O-METHOD-MAINLINE-01-c8146479",
+      "canonical_identity": "sha256:74921781da949a178d3cfb1822e2ac1e8851c67e6e7c146bba91fbc8fe47ef0f",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:8e87e1804f77f50f"
+      ],
+      "direct_evidence_ids": [
+        "span:src/model/ebcar_dedicated_attention_model.py:334:336"
+      ],
+      "relation_evidence_ids": [],
+      "required_qualifiers": [],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "claim_digest": "sha256:e6977af90814ffd44deee33ca33833a543cf3d1aacfcaf3c75bddefc099e0375"
+    },
+    {
+      "claim_id": "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:fd2ce32dbb55ed63",
+      "obligation_id": "O-METHOD-MAINLINE-01-c8146479",
+      "canonical_identity": "sha256:72ed47b0ebba137ffd69ebcdc3228b468e7caed213d280e7c9f08fd9c452db83",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:fd2ce32dbb55ed63"
+      ],
+      "direct_evidence_ids": [
+        "span:src/model/ebcar_dedicated_attention_model.py:243:243"
+      ],
+      "relation_evidence_ids": [],
+      "required_qualifiers": [],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "claim_digest": "sha256:44dbde3c27bc498ccaa185f3bdb83118b4c71b253689c32c5d3b6b83378804be"
+    },
+    {
+      "claim_id": "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:c1802b91f97392cc",
+      "obligation_id": "O-METHOD-MAINLINE-01-c8146479",
+      "canonical_identity": "sha256:bd05f7eb50e882f555dc1fe333bc97f9dfd49e6f6a0d8027d5849d59cf91cf03",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:c1802b91f97392cc"
+      ],
+      "direct_evidence_ids": [
+        "span:src/model/ebcar_dedicated_attention_model.py:344:344"
+      ],
+      "relation_evidence_ids": [],
+      "required_qualifiers": [],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "claim_digest": "sha256:7f64c01a5104b46e01542d8107cf6f0cbb8d36b658073cc4a501bd5c2ff6946e"
+    },
+    {
+      "claim_id": "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:4c8511d6e8fc4240",
+      "obligation_id": "O-METHOD-MAINLINE-01-c8146479",
+      "canonical_identity": "sha256:320b19bab282b2905d9aff4a6511b53ee61540981d8ba6438ff7f984fac66d58",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:4c8511d6e8fc4240"
+      ],
+      "direct_evidence_ids": [
+        "span:src/model/transformer_encoder_hybrid_attention.py:119:119"
+      ],
+      "relation_evidence_ids": [],
+      "required_qualifiers": [],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "claim_digest": "sha256:18794c007edc0584d110d7a4781782f1e81f3429e24fa0061645871808c40b13"
+    },
+    {
+      "claim_id": "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:5ff7f276f04b71a8",
+      "obligation_id": "O-METHOD-MAINLINE-01-c8146479",
+      "canonical_identity": "sha256:286672a368dbc2ac08372923cefaca39c70126a072a50823a62c009c6b085653",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:5ff7f276f04b71a8"
+      ],
+      "direct_evidence_ids": [
+        "span:src/model/ebcar_dedicated_attention_model.py:276:276"
+      ],
+      "relation_evidence_ids": [],
+      "required_qualifiers": [],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "claim_digest": "sha256:4ad311a54b9b05e5316dc672d38aae2efc7cd0bc90fd999a02803b5b23bb9e7c"
+    },
+    {
+      "claim_id": "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:6daefc8982533bad",
+      "obligation_id": "O-METHOD-MAINLINE-01-c8146479",
+      "canonical_identity": "sha256:dda5d0556f7ae7a89653b7414390d16289155f6e24304d72761d38983737ee38",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:6daefc8982533bad"
+      ],
+      "direct_evidence_ids": [
+        "span:src/model/ebcar_dedicated_attention_model.py:145:145"
+      ],
+      "relation_evidence_ids": [
+        "rel:83ef85703286c813"
+      ],
+      "required_qualifiers": [],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "claim_digest": "sha256:333a402d734efd940a13e44118559705af3170cd0c7cfcefb2677213d9297288"
+    },
+    {
+      "claim_id": "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:7fabddc9286307b4",
+      "obligation_id": "O-METHOD-MAINLINE-01-c8146479",
+      "canonical_identity": "sha256:a0c7831df6c9d891c43c0845584330aec081bbd496f4f722dffa5706410f68b1",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:7fabddc9286307b4"
+      ],
+      "direct_evidence_ids": [
+        "span:src/model/ebcar_dedicated_attention_model.py:232:232"
+      ],
+      "relation_evidence_ids": [],
+      "required_qualifiers": [],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "claim_digest": "sha256:c6ed41d30855544ac99b86dcdd185ffe982ec90fd52a32e92c3d792b19156dbc"
+    },
+    {
+      "claim_id": "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:a6f6c00ca097eeb1",
+      "obligation_id": "O-METHOD-MAINLINE-01-c8146479",
+      "canonical_identity": "sha256:e22a346503b05797cc5f9ef24f42f4df6f50c76fd15b20e665c749c920a550d8",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:a6f6c00ca097eeb1"
+      ],
+      "direct_evidence_ids": [
+        "span:src/model/ebcar_dedicated_attention_model.py:294:294"
+      ],
+      "relation_evidence_ids": [],
+      "required_qualifiers": [],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "claim_digest": "sha256:f4aa14fc4ecf789ce325f9ea5ab055464da93af2f51339a4f71d1a93a00cafe2"
+    },
+    {
+      "claim_id": "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:c8936a17df7bdc83",
+      "obligation_id": "O-METHOD-MAINLINE-01-c8146479",
+      "canonical_identity": "sha256:e5c38702a2cc1978183ca7fda8f842f2c8bd82a945461f6d027c6b7bf6d165f5",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:c8936a17df7bdc83"
+      ],
+      "direct_evidence_ids": [
+        "span:src/model/transformer_encoder_hybrid_attention.py:119:119"
+      ],
+      "relation_evidence_ids": [],
+      "required_qualifiers": [],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "claim_digest": "sha256:dbf58055e696a30f09f4b4b17924ecaec3f1cb072a4b3c384cf7faebc3388a61"
+    },
+    {
+      "claim_id": "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-rel:1b2f2e5db0f09696",
+      "obligation_id": "O-METHOD-MAINLINE-01-c8146479",
+      "canonical_identity": "sha256:466941fd824602428b3a6afac808c150a17b1a76902ee26d9aab3587881eec80",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-rel:1b2f2e5db0f09696"
+      ],
+      "direct_evidence_ids": [
+        "span:src/model/ebcar_dedicated_attention_model.py:145:174",
+        "span:src/model/ebcar_dedicated_attention_model.py:145:145"
+      ],
+      "relation_evidence_ids": [
+        "rel:83ef85703286c813"
+      ],
+      "required_qualifiers": [],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "claim_digest": "sha256:59aab0fcabf960243598983c63cc85af5aa2e6ab00ef661f15f7b392a9aad792"
+    },
+    {
+      "claim_id": "claim-O-METHOD-MAINLINE-01-c8146479-fact-configuration-rel:dc95ead65d3bb047",
+      "obligation_id": "O-METHOD-MAINLINE-01-c8146479",
+      "canonical_identity": "sha256:4878ffc9af095a416ddce4c371c2db89f534f2bb85e6f8ab0a27f3514c36d4e0",
+      "fact_ids": [
+        "fact-configuration-rel:dc95ead65d3bb047"
+      ],
+      "direct_evidence_ids": [
+        "span:conf/config.yaml:19:19"
+      ],
+      "relation_evidence_ids": [],
+      "required_qualifiers": [],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "claim_digest": "sha256:c90a794c588c0b85bf351025142a37fb35e375c304d589553d239b0ee2ca306e"
+    },
+    {
+      "claim_id": "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:3673b2e5dbd63bd0",
+      "obligation_id": "O-METHOD-MAINLINE-01-c8146479",
+      "canonical_identity": "sha256:7d4f6e07a4352caa61bd36af13a890c3d74e810dfa83688e335e902b439dbfc0",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:3673b2e5dbd63bd0"
+      ],
+      "direct_evidence_ids": [
+        "span:src/model/transformer_encoder_hybrid_attention.py:56:56"
+      ],
+      "relation_evidence_ids": [
+        "rel:597477ee05849627"
+      ],
+      "required_qualifiers": [],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "claim_digest": "sha256:889b47018fcd74c4bde158d06ac4f83f2ba801494d3410ac4c593d0820da760f"
+    },
+    {
+      "claim_id": "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:73ea6c8145b47e07",
+      "obligation_id": "O-METHOD-MAINLINE-01-c8146479",
+      "canonical_identity": "sha256:5ec15d22a62e1afb7c0b501e14415cbaaf43b2a1d251a26d5cf21cf884157446",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:73ea6c8145b47e07"
+      ],
+      "direct_evidence_ids": [
+        "span:src/model/transformer_encoder_hybrid_attention.py:51:51"
+      ],
+      "relation_evidence_ids": [
+        "rel:597477ee05849627"
+      ],
+      "required_qualifiers": [],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "claim_digest": "sha256:8ca635995b735f510638e2c6804b54f2921c18d4d665ddd3c1d25ae1d49066aa"
+    },
+    {
+      "claim_id": "l2:math:fact-O-METHOD-MAINLINE-01-c8146479-node:7fabddc9286307b4:weighted_sum",
+      "obligation_id": "O-METHOD-MAINLINE-01-c8146479",
+      "canonical_identity": "sha256:936176d81b8f7f036fa504074b4fef90c8ce53381ed8cd7adb6e57396185b875",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:7fabddc9286307b4"
+      ],
+      "direct_evidence_ids": [
+        "span:src/model/ebcar_dedicated_attention_model.py:232:232"
+      ],
+      "relation_evidence_ids": [],
+      "required_qualifiers": [],
+      "allowed_wording_boundary": "effect interpretation licensed; polarity must match parent comparison units",
+      "claim_digest": "sha256:17c329a6036f487ddd0a76a43986f9e1155beaf7f2ec1c99b28d1116637f4fdf"
+    },
+    {
+      "claim_id": "l2:math:fact-O-METHOD-MAINLINE-01-c8146479-node:5ff7f276f04b71a8:weighted_sum",
+      "obligation_id": "O-METHOD-MAINLINE-01-c8146479",
+      "canonical_identity": "sha256:85ccbd498f387742aad70dd7d793dde6252d24fb64d6a1d7a510e286cb4242fc",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:5ff7f276f04b71a8"
+      ],
+      "direct_evidence_ids": [
+        "span:src/model/ebcar_dedicated_attention_model.py:276:276"
+      ],
+      "relation_evidence_ids": [],
+      "required_qualifiers": [],
+      "allowed_wording_boundary": "effect interpretation licensed; polarity must match parent comparison units",
+      "claim_digest": "sha256:31b23b3ae0a5d2a109f284097217125879eb70484049bc72937292b1b96aaf87"
+    },
+    {
+      "claim_id": "l2:math:fact-O-METHOD-MAINLINE-01-c8146479-node:a6f6c00ca097eeb1:weighted_sum",
+      "obligation_id": "O-METHOD-MAINLINE-01-c8146479",
+      "canonical_identity": "sha256:a241e0cab3fa00e0bbf5a5bacf83a9eb3488b0d11bf86ef8a34c1331ab3b62b3",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:a6f6c00ca097eeb1"
+      ],
+      "direct_evidence_ids": [
+        "span:src/model/ebcar_dedicated_attention_model.py:294:294"
+      ],
+      "relation_evidence_ids": [],
+      "required_qualifiers": [],
+      "allowed_wording_boundary": "effect interpretation licensed; polarity must match parent comparison units",
+      "claim_digest": "sha256:c2efb5c7ba2d501abc3466f7e7d2374e214a6961f63d86c1cff88da74840d83c"
+    },
+    {
+      "claim_id": "l2:math:fact-O-METHOD-MAINLINE-01-c8146479-node:4c8511d6e8fc4240:weighted_sum",
+      "obligation_id": "O-METHOD-MAINLINE-01-c8146479",
+      "canonical_identity": "sha256:e36a2f8288e4ee1d466fca063ccf3313d415bd340bf4cceab3d18ec4f1de8efb",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:4c8511d6e8fc4240"
+      ],
+      "direct_evidence_ids": [
+        "span:src/model/transformer_encoder_hybrid_attention.py:119:119"
+      ],
+      "relation_evidence_ids": [],
+      "required_qualifiers": [],
+      "allowed_wording_boundary": "effect interpretation licensed; polarity must match parent comparison units",
+      "claim_digest": "sha256:406394802fda3ccd3307fa7d94dfd5cc0830fd40173afe827f1b9df61e51b361"
+    },
+    {
+      "claim_id": "l2:math:fact-O-METHOD-MAINLINE-01-c8146479-node:c8936a17df7bdc83:weighted_sum",
+      "obligation_id": "O-METHOD-MAINLINE-01-c8146479",
+      "canonical_identity": "sha256:70245faa122a240457b7983b629bf066ad3de8d6b9d3e90f9a3e7beff008fdb6",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:c8936a17df7bdc83"
+      ],
+      "direct_evidence_ids": [
+        "span:src/model/transformer_encoder_hybrid_attention.py:119:119"
+      ],
+      "relation_evidence_ids": [],
+      "required_qualifiers": [],
+      "allowed_wording_boundary": "effect interpretation licensed; polarity must match parent comparison units",
+      "claim_digest": "sha256:b66b28d165ee0ad89df049fb102d11cb4f516443cde9faa84af362afbcd06f9b"
+    },
+    {
+      "claim_id": "l2:math:fact-O-METHOD-MAINLINE-01-c8146479-node:3673b2e5dbd63bd0:normalize",
+      "obligation_id": "O-METHOD-MAINLINE-01-c8146479",
+      "canonical_identity": "sha256:008629e8053656e14bb664fcdf48cb502fab08bee6bc1cf15cff908345e8fb68",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:3673b2e5dbd63bd0"
+      ],
+      "direct_evidence_ids": [
+        "span:src/model/transformer_encoder_hybrid_attention.py:56:56"
+      ],
+      "relation_evidence_ids": [
+        "rel:597477ee05849627"
+      ],
+      "required_qualifiers": [],
+      "allowed_wording_boundary": "effect interpretation licensed; polarity must match parent comparison units",
+      "claim_digest": "sha256:e956a0925e363a2c19ef5b4af04793581c90a42c9ac60a2cf74e3d9f9d26b1fe"
+    },
+    {
+      "claim_id": "claim-O-STAGE-01-039a963a-fact-O-STAGE-01-039a963a-node:2911a2ecfb714992",
+      "obligation_id": "O-STAGE-01-039a963a",
+      "canonical_identity": "sha256:49df01761d4ea16bfc07c667a0d8d02683632278f7b5cf210a80872b8998fc4f",
+      "fact_ids": [
+        "fact-O-STAGE-01-039a963a-node:2911a2ecfb714992"
+      ],
+      "direct_evidence_ids": [
+        "span:src/dataset/ebcar_dataset.py:48:55"
+      ],
+      "relation_evidence_ids": [],
+      "required_qualifiers": [
+        "size is not None"
+      ],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "claim_digest": "sha256:0f77293e914d35deb30d7396738c5e92af40f9fcce2e1cfb9f7916c3da72e0ab"
+    },
+    {
+      "claim_id": "claim-O-STAGE-01-039a963a-fact-O-STAGE-01-039a963a-node:4480dac4431aabbe",
+      "obligation_id": "O-STAGE-01-039a963a",
+      "canonical_identity": "sha256:389299c13227a2acf5e66a087afae1baa181a781ca1802b8fc50bea092d9ed58",
+      "fact_ids": [
+        "fact-O-STAGE-01-039a963a-node:4480dac4431aabbe"
+      ],
+      "direct_evidence_ids": [
+        "span:src/dataset/__init__.py:224:227"
+      ],
+      "relation_evidence_ids": [],
+      "required_qualifiers": [
+        "doc['chunk_id'] == query['chunk_id']"
+      ],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "claim_digest": "sha256:4f6a32ff5c37c1a72c8ee04b853ff2ee45dcdf20ad9ca4c34d8e2e614cee0a57"
+    },
+    {
+      "claim_id": "claim-O-STAGE-01-039a963a-fact-O-STAGE-01-039a963a-node:4be5b539dce0e4f4",
+      "obligation_id": "O-STAGE-01-039a963a",
+      "canonical_identity": "sha256:84e64339e26a3f3b82ffba2f23364e52a53408f8c656d20b3377129b0a971218",
+      "fact_ids": [
+        "fact-O-STAGE-01-039a963a-node:4be5b539dce0e4f4"
+      ],
+      "direct_evidence_ids": [
+        "span:src/dataset/__init__.py:226:226"
+      ],
+      "relation_evidence_ids": [],
+      "required_qualifiers": [],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "claim_digest": "sha256:5665da841dc040ef5446e901375fb68cab6ffbcbce83acda0f52bd7b66a710b3"
+    },
+    {
+      "claim_id": "claim-O-STAGE-01-039a963a-fact-O-STAGE-01-039a963a-node:00757f21e4c9d9f3",
+      "obligation_id": "O-STAGE-01-039a963a",
+      "canonical_identity": "sha256:167242f15ce636077cd1121742928a16fa68ab03184d04c5382d53a5f5658688",
+      "fact_ids": [
+        "fact-O-STAGE-01-039a963a-node:00757f21e4c9d9f3"
+      ],
+      "direct_evidence_ids": [
+        "span:src/dataset/__init__.py:260:260"
+      ],
+      "relation_evidence_ids": [],
+      "required_qualifiers": [],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "claim_digest": "sha256:85d1f817f0eb16b8f0fc41207056375fa8addb7500e0a45d87cbe6da7257f23d"
+    },
+    {
+      "claim_id": "claim-O-STAGE-01-039a963a-fact-O-STAGE-01-039a963a-node:36bd05a333b6a4fc",
+      "obligation_id": "O-STAGE-01-039a963a",
+      "canonical_identity": "sha256:d2f66a09c870b79a34ae538329a7d28b0966f4292b60cc0ede23b0f2c2ac1a42",
+      "fact_ids": [
+        "fact-O-STAGE-01-039a963a-node:36bd05a333b6a4fc"
+      ],
+      "direct_evidence_ids": [
+        "span:src/dataset/__init__.py:147:152"
+      ],
+      "relation_evidence_ids": [],
+      "required_qualifiers": [],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "claim_digest": "sha256:b462857115e057680b3f03bec6a9b439f336280430e1a6d5bc07f995568de40d"
+    },
+    {
+      "claim_id": "claim-O-STAGE-01-039a963a-fact-O-STAGE-01-039a963a-node:c4189835f8e67f5e",
+      "obligation_id": "O-STAGE-01-039a963a",
+      "canonical_identity": "sha256:506877cfe0cc70d00b4552a534766d5e55be0fbce434d31f70812e224a410d38",
+      "fact_ids": [
+        "fact-O-STAGE-01-039a963a-node:c4189835f8e67f5e"
+      ],
+      "direct_evidence_ids": [
+        "span:src/dataset/__init__.py:225:225"
+      ],
+      "relation_evidence_ids": [],
+      "required_qualifiers": [],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "claim_digest": "sha256:b07dcad448c1fcdba60e2b1a118e5362bb41e4a3ee3a7fc34ce5625a01e07c17"
+    },
+    {
+      "claim_id": "claim-O-STAGE-02-42e8d68d-fact-O-STAGE-02-42e8d68d-node:9a4893d308318488",
+      "obligation_id": "O-STAGE-02-42e8d68d",
+      "canonical_identity": "sha256:98263cdc07e6116d01723d3c6feb2dfde94efa63dfede523906a11b49756d1f2",
+      "fact_ids": [
+        "fact-O-STAGE-02-42e8d68d-node:9a4893d308318488"
+      ],
+      "direct_evidence_ids": [
+        "span:src/model/ebcar_dedicated_attention_model.py:48:50"
+      ],
+      "relation_evidence_ids": [
+        "rel:98ac18e6d68d03c8"
+      ],
+      "required_qualifiers": [],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "claim_digest": "sha256:4a254392f064076efd726f1cce9cb4ea8363015c872e5f734562a88a978270a8"
+    },
+    {
+      "claim_id": "claim-O-STAGE-02-42e8d68d-fact-O-STAGE-02-42e8d68d-node:d643b3469b0df29c",
+      "obligation_id": "O-STAGE-02-42e8d68d",
+      "canonical_identity": "sha256:d48bdcf2d1eca1ef750af5885d4fef9c779c35120ddd632f79553654581d93a8",
+      "fact_ids": [
+        "fact-O-STAGE-02-42e8d68d-node:d643b3469b0df29c"
+      ],
+      "direct_evidence_ids": [
+        "span:src/model/ebcar_dedicated_attention_model.py:43:47"
+      ],
+      "relation_evidence_ids": [
+        "rel:98ac18e6d68d03c8"
+      ],
+      "required_qualifiers": [],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "claim_digest": "sha256:af865d5e3a77ba53dd96fe0842f715f6afb50fbb05adecbd4f4137afca8da13a"
+    },
+    {
+      "claim_id": "claim-O-STAGE-03-2c5bd758-fact-O-STAGE-03-2c5bd758-node:b220afbc1e6023fe",
+      "obligation_id": "O-STAGE-03-2c5bd758",
+      "canonical_identity": "sha256:9305446e4d7539dc569b81dd6863b70e16de618a5475f75c7d801f88fe162532",
+      "fact_ids": [
+        "fact-O-STAGE-03-2c5bd758-node:b220afbc1e6023fe"
+      ],
+      "direct_evidence_ids": [
+        "span:src/model/transformer_encoder_hybrid_attention.py:125:126"
+      ],
+      "relation_evidence_ids": [],
+      "required_qualifiers": [
+        "return_attention"
+      ],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "claim_digest": "sha256:1ed02e71089cfbba2ecc167816bee6a54cb2f44cbf03f452cc1c2fc81b861ba7"
+    },
+    {
+      "claim_id": "claim-O-STAGE-03-2c5bd758-fact-O-STAGE-03-2c5bd758-node:142f7d2a2f9e8288",
+      "obligation_id": "O-STAGE-03-2c5bd758",
+      "canonical_identity": "sha256:b56bb49101800e225faba7977572b0cb55d6b0085e102764d74396122cbff415",
+      "fact_ids": [
+        "fact-O-STAGE-03-2c5bd758-node:142f7d2a2f9e8288"
+      ],
+      "direct_evidence_ids": [
+        "span:src/model/transformer_encoder_hybrid_attention.py:126:126"
+      ],
+      "relation_evidence_ids": [],
+      "required_qualifiers": [],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "claim_digest": "sha256:ce2416219ce34f35a9a6b574fa0f40d9d380acfc19106df19678e6e332d87bfb"
+    },
+    {
+      "claim_id": "claim-O-STAGE-03-2c5bd758-fact-O-STAGE-03-2c5bd758-node:15f8ab428198f369",
+      "obligation_id": "O-STAGE-03-2c5bd758",
+      "canonical_identity": "sha256:cef658d044e7830f3e097489473d93542373f43d120aaaa34c98539097012fce",
+      "fact_ids": [
+        "fact-O-STAGE-03-2c5bd758-node:15f8ab428198f369"
+      ],
+      "direct_evidence_ids": [
+        "span:src/model/transformer_encoder_hybrid_attention.py:123:123"
+      ],
+      "relation_evidence_ids": [
+        "rel:622508515b3080f4"
+      ],
+      "required_qualifiers": [],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "claim_digest": "sha256:70e2863f31e0d58cab9934ba833070af609bfec505baad9f5785612351d64996"
+    },
+    {
+      "claim_id": "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:4c8511d6e8fc4240",
+      "obligation_id": "O-STAGE-03-2c5bd758",
+      "canonical_identity": "sha256:320b19bab282b2905d9aff4a6511b53ee61540981d8ba6438ff7f984fac66d58",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:4c8511d6e8fc4240"
+      ],
+      "direct_evidence_ids": [
+        "span:src/model/transformer_encoder_hybrid_attention.py:119:119"
+      ],
+      "relation_evidence_ids": [],
+      "required_qualifiers": [],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "claim_digest": "sha256:072f85e51d65ce745c51f560aee29bbde066b2dec7c16ec7f9dac88a33714b66"
+    },
+    {
+      "claim_id": "claim-O-STAGE-03-2c5bd758-fact-O-STAGE-03-2c5bd758-node:c8936a17df7bdc83",
+      "obligation_id": "O-STAGE-03-2c5bd758",
+      "canonical_identity": "sha256:347dc2247419499f2de47e014b9d6f9c0df6197fb2eddcb7db7e3851f9ccc285",
+      "fact_ids": [
+        "fact-O-STAGE-03-2c5bd758-node:c8936a17df7bdc83"
+      ],
+      "direct_evidence_ids": [
+        "span:src/model/transformer_encoder_hybrid_attention.py:119:119"
+      ],
+      "relation_evidence_ids": [
+        "rel:622508515b3080f4"
+      ],
+      "required_qualifiers": [],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "claim_digest": "sha256:e5994b0fd89ecb43a4d2b873931a1f61140da362338a3f6e498e515b1263e497"
+    },
+    {
+      "claim_id": "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:3673b2e5dbd63bd0",
+      "obligation_id": "O-STAGE-03-2c5bd758",
+      "canonical_identity": "sha256:7d4f6e07a4352caa61bd36af13a890c3d74e810dfa83688e335e902b439dbfc0",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:3673b2e5dbd63bd0"
+      ],
+      "direct_evidence_ids": [
+        "span:src/model/transformer_encoder_hybrid_attention.py:56:56"
+      ],
+      "relation_evidence_ids": [
+        "rel:597477ee05849627"
+      ],
+      "required_qualifiers": [],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "claim_digest": "sha256:b3e03052580ad888d9b214b1fb82f50980f58d77002cf7570ffd21ccac891338"
+    },
+    {
+      "claim_id": "claim-O-STAGE-03-2c5bd758-fact-O-STAGE-03-2c5bd758-node:4f3a01f0d7880c82",
+      "obligation_id": "O-STAGE-03-2c5bd758",
+      "canonical_identity": "sha256:7cf6358880ccdfa6bee3af4cbb2a3d05a6ea2d8b5b738c44c6ab32db1f182140",
+      "fact_ids": [
+        "fact-O-STAGE-03-2c5bd758-node:4f3a01f0d7880c82"
+      ],
+      "direct_evidence_ids": [
+        "span:src/model/transformer_encoder_hybrid_attention.py:41:41"
+      ],
+      "relation_evidence_ids": [],
+      "required_qualifiers": [],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "claim_digest": "sha256:a35c1498e963dd3f21944b57e96a7e930e45cb527ad2f8e806e590e71ec19270"
+    },
+    {
+      "claim_id": "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:73ea6c8145b47e07",
+      "obligation_id": "O-STAGE-03-2c5bd758",
+      "canonical_identity": "sha256:5ec15d22a62e1afb7c0b501e14415cbaaf43b2a1d251a26d5cf21cf884157446",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:73ea6c8145b47e07"
+      ],
+      "direct_evidence_ids": [
+        "span:src/model/transformer_encoder_hybrid_attention.py:51:51"
+      ],
+      "relation_evidence_ids": [
+        "rel:597477ee05849627"
+      ],
+      "required_qualifiers": [],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "claim_digest": "sha256:2d6349ff9ee1cde3ca4e1c8a28b5c8625da3fad4c2d3e71f3f705c82ba2df221"
+    },
+    {
+      "claim_id": "l2:math:fact-O-METHOD-MAINLINE-01-c8146479-node:4c8511d6e8fc4240:weighted_sum",
+      "obligation_id": "O-STAGE-03-2c5bd758",
+      "canonical_identity": "sha256:e36a2f8288e4ee1d466fca063ccf3313d415bd340bf4cceab3d18ec4f1de8efb",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:4c8511d6e8fc4240"
+      ],
+      "direct_evidence_ids": [
+        "span:src/model/transformer_encoder_hybrid_attention.py:119:119"
+      ],
+      "relation_evidence_ids": [],
+      "required_qualifiers": [],
+      "allowed_wording_boundary": "effect interpretation licensed; polarity must match parent comparison units",
+      "claim_digest": "sha256:dc0e3dcf883da835b0d8c2ce7782151ed45e6857ccea06b244a31ba6db72809f"
+    },
+    {
+      "claim_id": "l2:math:fact-O-STAGE-03-2c5bd758-node:c8936a17df7bdc83:weighted_sum",
+      "obligation_id": "O-STAGE-03-2c5bd758",
+      "canonical_identity": "sha256:7210532289c99ee2d3f2f8d16a2886d49384e8814fea2e5f62cef8dfe19a3f6d",
+      "fact_ids": [
+        "fact-O-STAGE-03-2c5bd758-node:c8936a17df7bdc83"
+      ],
+      "direct_evidence_ids": [
+        "span:src/model/transformer_encoder_hybrid_attention.py:119:119"
+      ],
+      "relation_evidence_ids": [],
+      "required_qualifiers": [],
+      "allowed_wording_boundary": "effect interpretation licensed; polarity must match parent comparison units",
+      "claim_digest": "sha256:3bfa3d7bfcbdaa578a56d240f3014fd13d0ade143205d82ddcc1a83e62b317b1"
+    },
+    {
+      "claim_id": "l2:math:fact-O-METHOD-MAINLINE-01-c8146479-node:3673b2e5dbd63bd0:normalize",
+      "obligation_id": "O-STAGE-03-2c5bd758",
+      "canonical_identity": "sha256:008629e8053656e14bb664fcdf48cb502fab08bee6bc1cf15cff908345e8fb68",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:3673b2e5dbd63bd0"
+      ],
+      "direct_evidence_ids": [
+        "span:src/model/transformer_encoder_hybrid_attention.py:56:56"
+      ],
+      "relation_evidence_ids": [
+        "rel:597477ee05849627"
+      ],
+      "required_qualifiers": [],
+      "allowed_wording_boundary": "effect interpretation licensed; polarity must match parent comparison units",
+      "claim_digest": "sha256:1aad1f3c52a4cd930b064b2ca334dc1c98e85b61ab99cf63c90d23d137dcf68a"
+    },
+    {
+      "claim_id": "claim-O-STAGE-04-c50e0bef-fact-O-STAGE-04-c50e0bef-node:93633547c32d9f45",
+      "obligation_id": "O-STAGE-04-c50e0bef",
+      "canonical_identity": "sha256:6cc5d4f879a07ba8c85b0d4887eb56125260ac81e630c666ee73f5aeb02c4222",
+      "fact_ids": [
+        "fact-O-STAGE-04-c50e0bef-node:93633547c32d9f45"
+      ],
+      "direct_evidence_ids": [
+        "span:src/model/ebcar_dedicated_attention_model.py:234:240"
+      ],
+      "relation_evidence_ids": [],
+      "required_qualifiers": [
+        "loss_i.shape[0] == 0"
+      ],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "claim_digest": "sha256:4000f14ae2a824f5feae8f300067afda6c76fd611956cc7c1adc06c3c2531c59"
+    },
+    {
+      "claim_id": "claim-O-STAGE-04-c50e0bef-fact-O-STAGE-04-c50e0bef-node:a2dae47572460254",
+      "obligation_id": "O-STAGE-04-c50e0bef",
+      "canonical_identity": "sha256:3070811cae1b0837d2a666e5f3792396a212f98c4768bb6d03a900862fd83663",
+      "fact_ids": [
+        "fact-O-STAGE-04-c50e0bef-node:a2dae47572460254"
+      ],
+      "direct_evidence_ids": [
+        "span:src/model/ebcar_dedicated_attention_model.py:231:231"
+      ],
+      "relation_evidence_ids": [],
+      "required_qualifiers": [],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "claim_digest": "sha256:8e075e919a1d7dcbada70ca525e59fec4c8a72cb6ef0ff97e0aecade6df8dcbc"
+    },
+    {
+      "claim_id": "claim-O-STAGE-04-c50e0bef-fact-O-STAGE-04-c50e0bef-node:fd2ce32dbb55ed63",
+      "obligation_id": "O-STAGE-04-c50e0bef",
+      "canonical_identity": "sha256:b96bad24d602fe7d92543fc0f3b360b43565f8aa7ca93b7bd06d265a0695a2d9",
+      "fact_ids": [
+        "fact-O-STAGE-04-c50e0bef-node:fd2ce32dbb55ed63"
+      ],
+      "direct_evidence_ids": [
+        "span:src/model/ebcar_dedicated_attention_model.py:243:243"
+      ],
+      "relation_evidence_ids": [
+        "rel:84af4602b176e7bd"
+      ],
+      "required_qualifiers": [],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "claim_digest": "sha256:f136d272e196d676b952ccfeb4bf9772d204b30d333b67f3758ad83423fd03d3"
+    },
+    {
+      "claim_id": "claim-O-STAGE-04-c50e0bef-fact-O-STAGE-04-c50e0bef-node:0c0995d424e07399",
+      "obligation_id": "O-STAGE-04-c50e0bef",
+      "canonical_identity": "sha256:7a54b6a78047783620b20e83288fcdb83b19d8fdf71d820666543c2f571b910d",
+      "fact_ids": [
+        "fact-O-STAGE-04-c50e0bef-node:0c0995d424e07399"
+      ],
+      "direct_evidence_ids": [
+        "span:src/model/ebcar_dedicated_attention_model.py:244:244"
+      ],
+      "relation_evidence_ids": [
+        "rel:84af4602b176e7bd"
+      ],
+      "required_qualifiers": [],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "claim_digest": "sha256:14441168e22f6692fee8bc51bc6f49ee8676606d049ed389b622e0f596a49c46"
+    },
+    {
+      "claim_id": "claim-O-STAGE-04-c50e0bef-fact-O-STAGE-04-c50e0bef-node:4b560ac114ae99ec",
+      "obligation_id": "O-STAGE-04-c50e0bef",
+      "canonical_identity": "sha256:bd26f2731d55e290b417d2eb6e9fea9770f91c361beaf2baaf4d244060ad7544",
+      "fact_ids": [
+        "fact-O-STAGE-04-c50e0bef-node:4b560ac114ae99ec"
+      ],
+      "direct_evidence_ids": [
+        "span:src/model/ebcar_dedicated_attention_model.py:132:132"
+      ],
+      "relation_evidence_ids": [],
+      "required_qualifiers": [],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "claim_digest": "sha256:bf1dc0356c3af7fddddb036b9be851e278fc5bb36f0190480d7e6276869b228b"
+    },
+    {
+      "claim_id": "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:7fabddc9286307b4",
+      "obligation_id": "O-STAGE-04-c50e0bef",
+      "canonical_identity": "sha256:a0c7831df6c9d891c43c0845584330aec081bbd496f4f722dffa5706410f68b1",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:7fabddc9286307b4"
+      ],
+      "direct_evidence_ids": [
+        "span:src/model/ebcar_dedicated_attention_model.py:232:232"
+      ],
+      "relation_evidence_ids": [],
+      "required_qualifiers": [],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "claim_digest": "sha256:401a7cc81e9e0691fc308f3f01d31b625c3f40030077e33668c16f67f1db4f85"
+    },
+    {
+      "claim_id": "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:a48f78c0e1931462",
+      "obligation_id": "O-STAGE-04-c50e0bef",
+      "canonical_identity": "sha256:eb2e84f1806ef36bb508ad7f84390ab3f88c9ad0a10cda7cb99fa3c18eda2974",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:a48f78c0e1931462"
+      ],
+      "direct_evidence_ids": [
+        "span:src/model/ebcar_dedicated_attention_model.py:135:137"
+      ],
+      "relation_evidence_ids": [],
+      "required_qualifiers": [],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "claim_digest": "sha256:e7d19a1f9105f5dc8b658fd91e4b5d6356b9e79f4011bd4a2129aa1774af86b1"
+    },
+    {
+      "claim_id": "claim-O-STAGE-05-5b3d398a-fact-O-STAGE-05-5b3d398a-node:06b37685c9288fb6",
+      "obligation_id": "O-STAGE-05-5b3d398a",
+      "canonical_identity": "sha256:9ce7f664eec3b656944fa1b4805302eaecae4e9a50eb460a986ed0ee28e32709",
+      "fact_ids": [
+        "fact-O-STAGE-05-5b3d398a-node:06b37685c9288fb6"
+      ],
+      "direct_evidence_ids": [
+        "span:src/model/ebcar_dedicated_attention_model.py:265:277"
+      ],
+      "relation_evidence_ids": [
+        "rel:9812df01436b5f4c",
+        "rel:75d4bb1bf855ff42"
+      ],
+      "required_qualifiers": [
+        "self.cfg.add_positional_encoding"
+      ],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "claim_digest": "sha256:71624260348f3f6b83001fa7443d253115118e8a29353b774adbe949ef8bdd31"
+    },
+    {
+      "claim_id": "claim-O-STAGE-05-5b3d398a-fact-O-STAGE-05-5b3d398a-node:a002e187c0346457",
+      "obligation_id": "O-STAGE-05-5b3d398a",
+      "canonical_identity": "sha256:6bb19fa8562baa34c9f2c00e327bbbb45e942fe8d86eb319a3b4e4a6cc09c272",
+      "fact_ids": [
+        "fact-O-STAGE-05-5b3d398a-node:a002e187c0346457"
+      ],
+      "direct_evidence_ids": [
+        "span:src/model/ebcar_dedicated_attention_model.py:310:310"
+      ],
+      "relation_evidence_ids": [],
+      "required_qualifiers": [],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "claim_digest": "sha256:20bdf1593e3cc6c239c3e68ca1e521a8921479a4fe1b7b56f2d07d5c2fa31c50"
+    },
+    {
+      "claim_id": "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:8e87e1804f77f50f",
+      "obligation_id": "O-STAGE-05-5b3d398a",
+      "canonical_identity": "sha256:74921781da949a178d3cfb1822e2ac1e8851c67e6e7c146bba91fbc8fe47ef0f",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:8e87e1804f77f50f"
+      ],
+      "direct_evidence_ids": [
+        "span:src/model/ebcar_dedicated_attention_model.py:334:336"
+      ],
+      "relation_evidence_ids": [],
+      "required_qualifiers": [],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "claim_digest": "sha256:8f6155c056e2247e55fb0e8f52ea4279710be60cdd05efd899e622d11df8a437"
+    },
+    {
+      "claim_id": "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:c1802b91f97392cc",
+      "obligation_id": "O-STAGE-05-5b3d398a",
+      "canonical_identity": "sha256:bd05f7eb50e882f555dc1fe333bc97f9dfd49e6f6a0d8027d5849d59cf91cf03",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:c1802b91f97392cc"
+      ],
+      "direct_evidence_ids": [
+        "span:src/model/ebcar_dedicated_attention_model.py:344:344"
+      ],
+      "relation_evidence_ids": [],
+      "required_qualifiers": [],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "claim_digest": "sha256:7c1606826795b3cf1325561ce3d54f9933f6a67d7af220ea0931796dca5bf298"
+    },
+    {
+      "claim_id": "claim-O-STAGE-05-5b3d398a-fact-O-STAGE-05-5b3d398a-node:856e72eeddb87554",
+      "obligation_id": "O-STAGE-05-5b3d398a",
+      "canonical_identity": "sha256:c4b4819cbd9ded22e47060a7f3cb5b78fc1688806272f316819549a0db0f5db0",
+      "fact_ids": [
+        "fact-O-STAGE-05-5b3d398a-node:856e72eeddb87554"
+      ],
+      "direct_evidence_ids": [
+        "span:src/model/ebcar_dedicated_attention_model.py:276:276"
+      ],
+      "relation_evidence_ids": [
+        "rel:be1af249e1645ad8"
+      ],
+      "required_qualifiers": [],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "claim_digest": "sha256:ce437612a4922e12d639fcfe1afe938855e316acdd9aa19439371ff8bbb91567"
+    },
+    {
+      "claim_id": "claim-O-STAGE-05-5b3d398a-fact-O-STAGE-05-5b3d398a-node:1077d0d81c820fb0",
+      "obligation_id": "O-STAGE-05-5b3d398a",
+      "canonical_identity": "sha256:8535a71ed34b2ff8216f63f6df9c5fabec8d88f61b0341a2544af146d3dbb7e2",
+      "fact_ids": [
+        "fact-O-STAGE-05-5b3d398a-node:1077d0d81c820fb0"
+      ],
+      "direct_evidence_ids": [
+        "span:src/model/ebcar_dedicated_attention_model.py:267:270"
+      ],
+      "relation_evidence_ids": [
+        "rel:9812df01436b5f4c",
+        "rel:be1af249e1645ad8"
+      ],
+      "required_qualifiers": [
+        "self.cfg.add_positional_encoding"
+      ],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "claim_digest": "sha256:e607538bfd4c72ee45831aca1bdd4d9445e1f6de0466ed08047cdc9bf0a2a5dd"
+    },
+    {
+      "claim_id": "claim-O-STAGE-05-5b3d398a-fact-O-STAGE-05-5b3d398a-node:26c1ec766ceee404",
+      "obligation_id": "O-STAGE-05-5b3d398a",
+      "canonical_identity": "sha256:cdd58d4f00f42010bea7ea3988763de24dd8d39a7b72ff852ad89054ff5ae7ac",
+      "fact_ids": [
+        "fact-O-STAGE-05-5b3d398a-node:26c1ec766ceee404"
+      ],
+      "direct_evidence_ids": [
+        "span:src/model/ebcar_dedicated_attention_model.py:265:265"
+      ],
+      "relation_evidence_ids": [
+        "rel:75d4bb1bf855ff42"
+      ],
+      "required_qualifiers": [],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "claim_digest": "sha256:63080378560872f3e44259d2a9cf028aa53a8a7a3c62d8a7a6a60da25bdc6394"
+    },
+    {
+      "claim_id": "claim-O-STAGE-05-5b3d398a-fact-O-STAGE-05-5b3d398a-node:31075c1f6e053a85",
+      "obligation_id": "O-STAGE-05-5b3d398a",
+      "canonical_identity": "sha256:6583f9308268f758b6aac4882700578400609c7592def38786277650cb360813",
+      "fact_ids": [
+        "fact-O-STAGE-05-5b3d398a-node:31075c1f6e053a85"
+      ],
+      "direct_evidence_ids": [
+        "span:src/model/ebcar_dedicated_attention_model.py:271:273"
+      ],
+      "relation_evidence_ids": [],
+      "required_qualifiers": [],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "claim_digest": "sha256:21eaded5d1913d6a2fa1ba53958da2c401263675a1595599359b1937c0c29e67"
+    },
+    {
+      "claim_id": "claim-O-STAGE-05-5b3d398a-fact-O-STAGE-05-5b3d398a-rel:caa3e47dda8fdf04",
+      "obligation_id": "O-STAGE-05-5b3d398a",
+      "canonical_identity": "sha256:8d72aa0666921ae12f80a69f403ecf1d8d3ee7bba7a00196f68bc6e58bf0f88b",
+      "fact_ids": [
+        "fact-O-STAGE-05-5b3d398a-rel:caa3e47dda8fdf04"
+      ],
+      "direct_evidence_ids": [
+        "span:src/model/ebcar_dedicated_attention_model.py:265:277",
+        "span:src/model/ebcar_dedicated_attention_model.py:265:265"
+      ],
+      "relation_evidence_ids": [
+        "rel:75d4bb1bf855ff42"
+      ],
+      "required_qualifiers": [],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "claim_digest": "sha256:4ce3c5cb5720449198603f014108b5492b2ada9d622d6158859ef3ec788767a3"
+    },
+    {
+      "claim_id": "claim-O-STAGE-05-5b3d398a-fact-configuration-rel:696083475512bfc5",
+      "obligation_id": "O-STAGE-05-5b3d398a",
+      "canonical_identity": "sha256:bc9596d345fb28623e735d8e3d0ad36948c16f8b3a5d8e429b4029a20e8b6a1c",
+      "fact_ids": [
+        "fact-configuration-rel:696083475512bfc5"
+      ],
+      "direct_evidence_ids": [
+        "span:conf/config.yaml:18:18"
+      ],
+      "relation_evidence_ids": [],
+      "required_qualifiers": [],
+      "allowed_wording_boundary": "exact behavior predicate and operands from source span; no quantifier, direction, or effect expansion",
+      "claim_digest": "sha256:8c34af2918a1eb787f586ea60f2d8f32e0200c058de44971aa9e06f3c10a737a"
+    }
+  ],
+  "content_digest": "sha256:4fbb667af84af11fea454e1e9baa42d883b16a8fe409d72ee188445579752513"
+}

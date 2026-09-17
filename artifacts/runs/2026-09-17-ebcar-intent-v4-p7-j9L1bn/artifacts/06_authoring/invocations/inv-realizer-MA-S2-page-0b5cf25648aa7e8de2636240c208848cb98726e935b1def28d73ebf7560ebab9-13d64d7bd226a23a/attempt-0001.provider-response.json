@@ -1,0 +1,25 @@
+{
+  "attempt": 1,
+  "blocked_reason": "",
+  "content_digest": "sha256:e8e77dcdf226e8fd8d5876c3fea27af7b4e5aec0c2e568e0ace22a316afca0e8",
+  "diagnostics": {
+    "finish_seen": true,
+    "partial_chars": 113,
+    "stream_events": 17,
+    "terminal_status": "finish_seen",
+    "usage_seen": true
+  },
+  "finish_reason": "structured_complete",
+  "invocation_id": "inv:realizer:MA-S2:page:0b5cf25648aa7e8de2636240c208848cb98726e935b1def28d73ebf7560ebab9",
+  "provider_finish_reason": "stop",
+  "request_diagnostics_digest": "sha256:205847976f7e97601b1f908560d3555f3e1fedb31dee4eedbdd429d88e46de37",
+  "response_digest": "sha256:e58dd911c7ffebfb9456c5c6ef3a14e89bc1e82cebbc8467d18a02b0b8c306bb",
+  "response_text": "{\n  \"draft_markdown\": \"MA-S2\",\n  \"rendered_detail_ids\": [],\n  \"used_formula_package_ids\": [],\n  \"witnesses\": []\n}",
+  "schema_version": "1.0",
+  "thinking_chars": 0,
+  "usage": {
+    "completion_tokens": 42,
+    "prompt_tokens": 808,
+    "total_tokens": 850
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "attempt": 1,
+  "blocked_reason": "",
+  "content_digest": "sha256:7a493fdd0b06ff624ec87f09f10da28eabbb89706a51b29ab8aa2a56cc1748c3",
+  "diagnostics": {
+    "finish_seen": true,
+    "partial_chars": 1178,
+    "stream_events": 492,
+    "terminal_status": "finish_seen",
+    "usage_seen": true
+  },
+  "finish_reason": "structured_complete",
+  "invocation_id": "inv:writer:MA-S3:page:94cb2b059efbe2855f3c57c719c602ba713950a340dc45e777d034470e7372af",
+  "provider_finish_reason": "stop",
+  "request_diagnostics_digest": "sha256:c761268b26ef0f9370b3467c57bf9d01711cb7158465013b2d9bd3fcb8e4be82",
+  "response_digest": "sha256:2b3325b476a3910f35ad208bd2f0bfb6e7a8018eaf7f12dd99d88250c5323adf",
+  "response_text": "{\"paragraphs\":[{\"paragraph_id\":\"MA-S3:P2__f5\",\"paragraph_markdown\":\"The reranking stage operates on the similarity output produced by the attention mechanism. Similarity scores are first calibrated by division by a temperature parameter drawn from the model configuration, which controls the sharpness of the resulting distribution over candidate passages. The calibrated similarities are then sorted along the passage dimension in descending order, yielding a ranking of relevance scores together with the corresponding index permutation. For each element in the batch, passages are collected in the order prescribed by the sorted indices: the passage text at each ranked position is retrieved and appended to a per-query list, which is accumulated into the final reranked passage sequence. A filtering condition based on chunk identity—where a document's chunk identifier must match the query's chunk identifier and a size constraint is non-null—gates which passages are eligible for inclusion; the precise selection predicate for this gate is not yet fully specified.\",\"rendered_from_facet_ids\":[],\"rendered_slot_ids\":[],\"used_formula_package_ids\":[]}] ,\"section_id\":\"MA-S3\"}",
+  "schema_version": "1.0",
+  "thinking_chars": 0,
+  "usage": {
+    "completion_tokens": 1245,
+    "prompt_tokens": 33283,
+    "total_tokens": 34528
+  }
+}

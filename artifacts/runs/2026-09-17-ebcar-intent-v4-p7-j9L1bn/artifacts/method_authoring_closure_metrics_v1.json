@@ -1,0 +1,72 @@
+{
+  "schema_version": "2.0",
+  "research": {
+    "obligation_candidate_records": 12,
+    "unique_candidate_symbols": 9,
+    "unique_obligations": 6,
+    "must_cover_obligations": 6,
+    "must_cover_intent_atoms": 58,
+    "stage_counts": {
+      "discovered": 12,
+      "read": 11,
+      "behavior": 11,
+      "packet": 10,
+      "fact": 11,
+      "claim": 11,
+      "full_chain": 10
+    },
+    "search_terminal_records": 12,
+    "candidate_surface_complete_atoms": 0,
+    "repository_proof_complete_records": 10,
+    "repository_proof_complete_atoms": 0,
+    "unresolved_acquisition": 0,
+    "acquired_and_compiled": 10,
+    "obligation_rollup": {
+      "at_least_one_exact_full_chain": 6,
+      "only_partial": 0,
+      "mismatch": 0,
+      "bounded_not_found": 0
+    },
+    "full_chain_record_ratio": 0.8333333333333334,
+    "acquired": 10,
+    "explicitly_rejected": 0,
+    "comparand_packet_ratio": 0.5
+  },
+  "alignment": {
+    "atomic_fields": 7,
+    "renderable_fields": 7,
+    "deferred_fields": 20,
+    "deferred_by_failure_reason": {
+      "unspecified": 20
+    },
+    "deferred_by_authority_lane": {
+      "unspecified": 20
+    },
+    "legacy_field_count": 30,
+    "legacy_field_to_atom_trace_coverage": 1.0,
+    "required_field_disposition_coverage": 1.0,
+    "hard_target_from_unresolved": 0
+  },
+  "planning": {
+    "hard_targets": 0,
+    "support_slots": 0,
+    "publication_slots": 0
+  },
+  "formula_identity_path": "/tmp/c2p-p7-ebcar-v4-intent-j9L1bn/artifacts/06_authoring/formula_identity_conservation_v1.json",
+  "writer": {
+    "paragraphs": 0,
+    "witnesses": 0,
+    "valid_required_paragraphs": 0
+  },
+  "formula": {
+    "required": 7,
+    "accepted": 0,
+    "consumed": 0,
+    "duplicate_consumers": 0
+  },
+  "verification": {
+    "rendered_invalid": 0,
+    "repository_verified_nonempty": false,
+    "structural_exit": false
+  }
+}

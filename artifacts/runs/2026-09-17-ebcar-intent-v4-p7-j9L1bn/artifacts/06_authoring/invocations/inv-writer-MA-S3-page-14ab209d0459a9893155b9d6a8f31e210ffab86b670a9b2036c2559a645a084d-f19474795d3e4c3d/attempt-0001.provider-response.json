@@ -1,0 +1,25 @@
+{
+  "attempt": 1,
+  "blocked_reason": "",
+  "content_digest": "sha256:f7834ed1017cb52383886672104a9139215a0f1ef15946cb09c8cfead305c632",
+  "diagnostics": {
+    "finish_seen": true,
+    "partial_chars": 1074,
+    "stream_events": 495,
+    "terminal_status": "finish_seen",
+    "usage_seen": true
+  },
+  "finish_reason": "structured_complete",
+  "invocation_id": "inv:writer:MA-S3:page:14ab209d0459a9893155b9d6a8f31e210ffab86b670a9b2036c2559a645a084d",
+  "provider_finish_reason": "stop",
+  "request_diagnostics_digest": "sha256:68c2916c5fe23f54811d008a774f4c058f55f11a30d9fee039f416f03c2e7296",
+  "response_digest": "sha256:c033a79ff991cc46c1e1bf27c5866a6d1a8d854d33bc5a1597168f17b6a5b81c",
+  "response_text": "{\"paragraphs\":[{\"deferred_detail_ids\":[],\"paragraph_id\":\"MA-S3:P1__f3\",\"paragraph_markdown\":\"The dedicated-attention encoder receives a query vector and a tensor of retrieved passages, from which the batch size and the number of passages are read off the two leading dimensions of the passage tensor. A configuration flag determines whether the dedicated attention mask is constructed or left unrestricted. When the flag is active, the mask is initialized to negative infinity for every passage row in each batch element; for a given row, entries are then set to zero at positions whose document identifier matches the document identifier of the passage occupying that row, and the query position is unconditionally included so that every passage can attend to the query. When the flag is inactive, the mask remains uniformly zero, reducing the dedicated channel to full attention. The resulting dedicated attention mask is written out for use by the attention head that combines it with the shared full-attention path.\",\"used_formula_package_ids\":[]}],\"section_id\":\"MA-S3\"}",
+  "schema_version": "1.0",
+  "thinking_chars": 0,
+  "usage": {
+    "completion_tokens": 1230,
+    "prompt_tokens": 26329,
+    "total_tokens": 27559
+  }
+}

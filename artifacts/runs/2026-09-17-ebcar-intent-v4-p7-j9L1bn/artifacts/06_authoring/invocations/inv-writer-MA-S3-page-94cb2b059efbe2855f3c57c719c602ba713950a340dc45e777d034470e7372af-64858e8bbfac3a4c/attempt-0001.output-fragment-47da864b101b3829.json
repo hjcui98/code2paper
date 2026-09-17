@@ -1,0 +1,13 @@
+{
+  "attempt": 1,
+  "fragment": {
+    "blocked_reason": "",
+    "consumer_role": "writer",
+    "page_id": "page:94cb2b059efbe2855f3c57c719c602ba713950a340dc45e777d034470e7372af",
+    "response_hash": "sha256:2b3325b476a3910f35ad208bd2f0bfb6e7a8018eaf7f12dd99d88250c5323adf",
+    "response_text": "{\"paragraphs\":[{\"paragraph_id\":\"MA-S3:P2__f5\",\"paragraph_markdown\":\"The reranking stage operates on the similarity output produced by the attention mechanism. Similarity scores are first calibrated by division by a temperature parameter drawn from the model configuration, which controls the sharpness of the resulting distribution over candidate passages. The calibrated similarities are then sorted along the passage dimension in descending order, yielding a ranking of relevance scores together with the corresponding index permutation. For each element in the batch, passages are collected in the order prescribed by the sorted indices: the passage text at each ranked position is retrieved and appended to a per-query list, which is accumulated into the final reranked passage sequence. A filtering condition based on chunk identity—where a document's chunk identifier must match the query's chunk identifier and a size constraint is non-null—gates which passages are eligible for inclusion; the precise selection predicate for this gate is not yet fully specified.\",\"rendered_from_facet_ids\":[],\"rendered_slot_ids\":[],\"used_formula_package_ids\":[]}] ,\"section_id\":\"MA-S3\"}",
+    "section_id": "MA-S3"
+  },
+  "invocation_id": "inv:writer:MA-S3:page:94cb2b059efbe2855f3c57c719c602ba713950a340dc45e777d034470e7372af",
+  "schema_version": "2.0"
+}

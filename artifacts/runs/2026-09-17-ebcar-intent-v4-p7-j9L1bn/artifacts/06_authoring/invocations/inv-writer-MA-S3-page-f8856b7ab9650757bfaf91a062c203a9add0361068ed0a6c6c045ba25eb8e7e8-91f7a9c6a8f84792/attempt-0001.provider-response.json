@@ -1,0 +1,25 @@
+{
+  "attempt": 1,
+  "blocked_reason": "",
+  "content_digest": "sha256:8092909d4b7eec9bcf0d36291834b359ac18960ead44f3c455985d1d54a3db45",
+  "diagnostics": {
+    "finish_seen": true,
+    "partial_chars": 1236,
+    "stream_events": 498,
+    "terminal_status": "finish_seen",
+    "usage_seen": true
+  },
+  "finish_reason": "structured_complete",
+  "invocation_id": "inv:writer:MA-S3:page:f8856b7ab9650757bfaf91a062c203a9add0361068ed0a6c6c045ba25eb8e7e8",
+  "provider_finish_reason": "stop",
+  "request_diagnostics_digest": "sha256:57567613a32e66fdf2918ea466a72c61f19288f9f4e407b085864ca7176caef0",
+  "response_digest": "sha256:fa55fcb590ff4b038cc60e2ee71485d675e3a3d7e343127cf8a0c335c2d4754c",
+  "response_text": "{\"paragraphs\":[{\"paragraph_id\":\"MA-S3:P1__f8\",\"paragraph_markdown\":\"Within the dedicated attention branch, the model processes each query's passage set by extracting the per-query similarity vector from the batch-level similarity matrix and the corresponding relevance label vector. A positive mask is formed by comparing the relevance labels against the value one, and a complementary negative mask is formed by comparison against zero. The implementation asserts that exactly one passage carries the positive label, ensuring that the dedicated attention operates on a well-defined contrast between a single relevant passage and the remaining negatives. The positive similarity values are then isolated from the full per-query similarity vector using the positive mask, yielding a reduced representation that feeds the dedicated masked attention sub-layer. This separation of positive and negative similarity signals allows the dedicated attention to attend selectively to the contrastive structure within each query's candidate set, complementing the shared full-attention path that operates over the unmasked passage sequence.\",\"rendered_from_facet_ids\":[],\"rendered_slot_ids\":[],\"used_formula_package_ids\":[]}],\"section_id\":\"MA-S3\"}",
+  "schema_version": "1.0",
+  "thinking_chars": 0,
+  "usage": {
+    "completion_tokens": 1243,
+    "prompt_tokens": 26656,
+    "total_tokens": 27899
+  }
+}

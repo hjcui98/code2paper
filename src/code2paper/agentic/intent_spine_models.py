@@ -91,6 +91,7 @@ class IntentNarrativeParagraphV4(_SpineModel):
     required_author_surface_ids: tuple[str, ...] = ()
     required_repository_proposition_ids: tuple[str, ...] = ()
     formula_obligation_ids: tuple[str, ...] = ()
+    formula_package_ids: tuple[str, ...] = ()
     authority_surface: str = "author_specification"
     witness_contract: dict[str, Any] = Field(default_factory=dict)
     transition_from: str = ""
@@ -120,6 +121,7 @@ class IntentNarrativeParagraphV4(_SpineModel):
             _clean_tuple(self.required_repository_proposition_ids),
         )
         object.__setattr__(self, "formula_obligation_ids", _clean_tuple(self.formula_obligation_ids))
+        object.__setattr__(self, "formula_package_ids", _clean_tuple(self.formula_package_ids))
         if not self.mechanism_id and self.mechanism_ids:
             object.__setattr__(self, "mechanism_id", self.mechanism_ids[0])
         if self.mechanism_id and self.mechanism_id not in self.mechanism_ids:

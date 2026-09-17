@@ -3237,6 +3237,7 @@ def _run_publication_method_writer_impl(
             from code2paper.agentic.method_architect import (
                 NarrativeParagraphPlanV3,
                 NarrativeSectionPlanV3,
+                NarrativePlanV3,
             )
             from code2paper.llm.response_schemas import PUBLICATION_METHOD_SECTION_SCHEMA
             from code2paper.llm.section_writer import build_publication_writer_request
@@ -3339,12 +3340,17 @@ def _run_publication_method_writer_impl(
                     paragraph_models.append(
                         NarrativeParagraphPlanV3.model_validate(payload)
                     )
-                return SimpleNamespace(sections=(NarrativeSectionPlanV3(
-                    section_id=str(section.section_id),
-                    heading=str(section.heading),
-                    mechanism_ids=tuple(section.mechanism_ids),
-                    paragraphs=tuple(paragraph_models),
-                ),), narrative_units=(), formula_placements=())
+                return NarrativePlanV3(
+                    plan_id=f"candidate:{section_id}",
+                    sections=(NarrativeSectionPlanV3(
+                        section_id=str(section.section_id),
+                        heading=str(section.heading),
+                        mechanism_ids=tuple(section.mechanism_ids),
+                        paragraphs=tuple(paragraph_models),
+                    ),),
+                    narrative_units=(),
+                    formula_placements=(),
+                )
 
             def _manifest_with_candidate_page(
                 base_manifest: Any,
@@ -19341,7 +19347,7 @@ def _formalizer_phase_reservation(
         str(invocation.invocation_id): invocation
         for invocation in (getattr(plan, "invocations", ()) or ())
     }
-    if not phase_plan_digest or not plan_invocations:
+    if not phase_plan_digest:
         raise ValueError("formalizer_phase_reservation_plan_invalid")
     durable_receipts = read_all_completed_receipts(
         Path(ledger_root), strict=True
@@ -20307,6 +20313,16 @@ def _run_unified_v2_realizer_phase(
         context = source_contexts[0] if source_contexts else context_by_id.get(mechanism_id)
         if context is None and source_contexts:
             context = source_contexts[0]
+        if context is None and (section is not None or str(mechanism_id).startswith("header:")):
+            context = SimpleNamespace(
+                mechanism_id=mechanism_id,
+                mechanism_name=(
+                    str(page_header.get("mechanism_id") or (getattr(section, "heading", "") if section else "") or section_id)
+                    if isinstance(page_header, Mapping)
+                    else (str(getattr(section, "heading", "") if section else "") or section_id)
+                ),
+                details=(),
+            )
         if context is None or caller is None or llm_config is None:
             traces.append({
                 "invocation_id": invocation.invocation_id,
@@ -20386,13 +20402,13 @@ def _run_unified_v2_realizer_phase(
         # the explicitly declared owners.  It is only a request-local view;
         # no new authority or repository fact is created, and the immutable
         # page remains the source of the request bytes.
-        if len(source_contexts) > 1 or mechanism_id.startswith("join:"):
+        if len(source_contexts) > 1 or mechanism_id.startswith("join:") or not source_contexts:
             context = SimpleNamespace(
                 mechanism_id=mechanism_id,
                 mechanism_name=(
-                    str(page_header.get("mechanism_id") or section_id)
+                    str(page_header.get("mechanism_id") or (getattr(section, "heading", "") if section else "") or section_id)
                     if isinstance(page_header, Mapping)
-                    else section_id
+                    else (str(getattr(section, "heading", "") if section else "") or section_id)
                 ),
                 details=tuple(detail_pool.values()),
             )
@@ -21239,6 +21255,7 @@ def _build_narrative_plan_v3(
                 story_spine=story_spine,
                 prior_plan=prior_plan,
                 contexts=contexts,
+                formula_packages=formula_packages,
             )
             envelope["intent_plan_v4"] = intent_plan.model_dump(mode="json")
             envelope["bindings"] = [
@@ -21246,6 +21263,8 @@ def _build_narrative_plan_v3(
             ]
             envelope["intent_plan_v4_trace"] = intent_trace
         except (TypeError, ValueError):
+            if envelope["selected_plan_version"] == "v4":
+                raise
             envelope["intent_plan_v4_trace"] = {"error": "intent_plan_v4_compile_failed"}
     trace = {
         **trace,
@@ -21281,7 +21300,11 @@ def _writer_section_inputs_v2(
     def _dict(value: Any) -> dict[str, Any]:
         if hasattr(value, "model_dump"):
             return dict(value.model_dump(mode="json"))
-        return dict(value) if isinstance(value, Mapping) else {}
+        if isinstance(value, Mapping):
+            return dict(value)
+        if hasattr(value, "__dict__"):
+            return dict(vars(value))
+        return {}
 
     def _text_id(value: Any) -> str:
         return str(value or "").strip()
@@ -21544,35 +21567,6 @@ def _writer_section_inputs_v2(
                     + ",".join(sorted(missing_required))
                 )
 
-        section_mechanism_ids = {
-            _text_id(value) for value in (getattr(section, "mechanism_ids", ()) or ())
-            if _text_id(value)
-        }
-        section_packages = [
-            item for item in packages
-            if not section_mechanism_ids
-            or _text_id(item.get("mechanism_id")) in section_mechanism_ids
-        ]
-        # Candidate-page budget probes intentionally expose only one page of a
-        # section.  When that page declares its package closed set, do not
-        # route unrelated packages from sibling pages through the temporary
-        # candidate NarrativePlan; they are not part of this request.
-        if explicit_page_formula_scope:
-            section_packages = [
-                item for item in section_packages
-                if _text_id(item.get("package_id")) in page_formula_scope_ids
-            ]
-        section_obligations = [
-            item for item in obligations
-            if not section_mechanism_ids
-            or _text_id(item.get("mechanism_id")) in section_mechanism_ids
-        ]
-        # Formalizer packages are mechanism-scoped and intentionally do not
-        # acquire a paragraph owner until the frozen NarrativePlan places
-        # them.  The low-level Writer placeholder contract is stricter: every
-        # package must carry the exact paragraph that may consume it.  Resolve
-        # that route here, before any request material is measured/frozen;
-        # never let the transport layer guess an owner from page-local bytes.
         paragraphs_by_package_id: dict[str, set[str]] = {}
         paragraphs_by_obligation_id: dict[str, set[str]] = {}
         paragraph_ids = {
@@ -21601,6 +21595,30 @@ def _writer_section_inputs_v2(
                 paragraphs_by_obligation_id.setdefault(obligation_id, set()).add(
                     paragraph_id
                 )
+
+        section_mechanism_ids = {
+            _text_id(value) for value in (getattr(section, "mechanism_ids", ()) or ())
+            if _text_id(value)
+        }
+        section_packages = [
+            item for item in packages
+            if (section_mechanism_ids and _text_id(item.get("mechanism_id")) in section_mechanism_ids)
+            or (_text_id(item.get("package_id")) in paragraphs_by_package_id)
+        ]
+        # Candidate-page budget probes intentionally expose only one page of a
+        # section.  When that page declares its package closed set, do not
+        # route unrelated packages from sibling pages through the temporary
+        # candidate NarrativePlan; they are not part of this request.
+        if explicit_page_formula_scope:
+            section_packages = [
+                item for item in section_packages
+                if _text_id(item.get("package_id")) in page_formula_scope_ids
+            ]
+        section_obligations = [
+            item for item in obligations
+            if (section_mechanism_ids and _text_id(item.get("mechanism_id")) in section_mechanism_ids)
+            or (_text_id(item.get("obligation_id")) in paragraphs_by_obligation_id)
+        ]
 
         routed_section_packages: list[dict[str, Any]] = []
         for package in section_packages:

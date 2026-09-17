@@ -1,0 +1,25 @@
+{
+  "attempt": 1,
+  "blocked_reason": "",
+  "content_digest": "sha256:61c8f785de63b31c604b7dc7bd6ea8ed654bbb458e1748b1af17a60cc2b3bb0c",
+  "diagnostics": {
+    "finish_seen": true,
+    "partial_chars": 2656,
+    "stream_events": 287,
+    "terminal_status": "finish_seen",
+    "usage_seen": true
+  },
+  "finish_reason": "structured_complete",
+  "invocation_id": "inv:realizer:MA-S3:page:fd9c44a567a19a03ceeebb26ec0925ee111b58b3385e4e3490cd6b8403fb120d",
+  "provider_finish_reason": "stop",
+  "request_diagnostics_digest": "sha256:d4e32cfbbb7708989ef1eba035021bdc0c45daa37095960335c7c058005ac030",
+  "response_digest": "sha256:c259172e9e73434520643f0da466887851cf9fc572d568af4f4ee343915e5675",
+  "response_text": "{\"draft_markdown\":\"## Mechanism MA-S3: Sym:9773C5Add7Af1F92\\n\\n### 1. Query Reshape\\nThe query tensor is reshaped to accommodate batch processing:\\n```python\\nquery = query.unsqueeze(1)  # [batch_size, 1, hidden_size]\\n```\\nThis operation transforms the query into a shape of `[batch_size, 1, hidden_size]`.\\n\\n### 2. Document ID Embeddings (Conditional)\\nWhen `self.cfg.add_positional_encoding` is enabled, document ID embeddings are computed:\\n```python\\ndocument_id_embeddings = self.document_id_embedding(\\n    (document_id.long() % self.cfg.retrieval.top_k)\\n    + (document_id.long() // self.cfg.retrieval.top_k)\\n)\\n```\\nThis conditional branch depends on the configuration flag `self.cfg.add_positional_encoding`.\\n\\n### 3. Passage Embeddings Computation (Conditional)\\nIf `self.cfg.add_positional_encoding` is active, passage embeddings are computed by combining document and passage ID embeddings:\\n```python\\npassages + document_id_embeddings + passage_id_embeddings\\n```\\nThis formula integrates positional information into the passage representations.\\n\\n### 4. Relevance Sorting\\nRelevance scores are sorted to rank passages:\\n```python\\nrelevance_scores, indices = torch.sort(\\n    similarities, dim=1, descending=True\\n)  # [batch_size, num_passages]\\n```\\nThis operation sorts the similarity scores in descending order to prioritize the most relevant passages.\",\"rendered_detail_ids\":[\"detail:mech_sym:9773c5add7af1f92:1\",\"detail:mech_sym:9773c5add7af1f92:13\",\"detail:mech_sym:9773c5add7af1f92:4\",\"detail:mech_sym:9773c5add7af1f92:44\",\"detail:mech_sym:9773c5add7af1f92:6\",\"detail:mech_sym:9773c5add7af1f92:7\"],\"used_formula_package_ids\":[],\"witnesses\":[{\"exact_text\":\"query = query.unsqueeze(1)  # [batch_size, 1, hidden_size]\",\"target_id\":\"detail:mech_sym:9773c5add7af1f92:1\",\"witness_kind\":\"detail\"},{\"exact_text\":\"passages + document_id_embeddings + passage_id_embeddings\",\"target_id\":\"detail:mech_sym:9773c5add7af1f92:13\",\"witness_kind\":\"detail\"},{\"exact_text\":\"document_id_embeddings = self.document_id_embedding(\",\"target_id\":\"detail:mech_sym:9773c5add7af1f92:4\",\"witness_kind\":\"detail\"},{\"exact_text\":\"relevance_scores, indices = torch.sort(  similarities, dim=1, descending=True  )  # [batch_size, num_passages]\",\"target_id\":\"detail:mech_sym:9773c5add7af1f92:44\",\"witness_kind\":\"detail\"},{\"exact_text\":\"(document_id.long() % self.cfg.retrieval.top_k)\",\"target_id\":\"detail:mech_sym:9773c5add7af1f92:6\",\"witness_kind\":\"detail\"},{\"exact_text\":\"(document_id.long() % self.cfg.retrieval.top_k)                + (document_id.long() // self.cfg.retrieval.top_k)\",\"target_id\":\"detail:mech_sym:9773c5add7af1f92:7\",\"witness_kind\":\"detail\"}]}",
+  "schema_version": "1.0",
+  "thinking_chars": 0,
+  "usage": {
+    "completion_tokens": 811,
+    "prompt_tokens": 28126,
+    "total_tokens": 28937
+  }
+}

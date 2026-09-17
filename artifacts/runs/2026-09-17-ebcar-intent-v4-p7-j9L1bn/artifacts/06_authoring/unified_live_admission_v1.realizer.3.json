@@ -1,0 +1,110 @@
+{
+  "schema_version": "1.0",
+  "admission_id": "admission:b9d991919f0f0326d7bee8815c553b03dd01174980a7ce9e864b24a877e744a6",
+  "phase": "realizer",
+  "plan_revision": 3,
+  "run_digest": "sha256:02c99eb39cb26038a803846cc19be97619909e93965d9f182c4843ce9438a988",
+  "archive_digest": "sha256:02c99eb39cb26038a803846cc19be97619909e93965d9f182c4843ce9438a988",
+  "workset_manifest_digest": "sha256:cd0d51ded32e9340e4239cc46198cfc714c85aec1b743a9c5e42a2b301433d49",
+  "envelope_digest": "sha256:4144d472b2f9c1055b56926b7cb9965f0ac886cbf863e6cd4a927a7f99e872ba",
+  "plan_digest": "sha256:31bfbd3f40ad4082047770fbf63df7a7b038f34ffe2c413a4c0937a2d5425501",
+  "gates": [
+    {
+      "gate_id": "run_identity",
+      "status": "pass",
+      "failure_codes": [],
+      "evidence_artifact": "",
+      "evidence_digest": "",
+      "content_digest": "sha256:1caa0ea95023301d06f75170e24a35e94a7989b367c6f77e8ec0022d55e47769"
+    },
+    {
+      "gate_id": "source",
+      "status": "pass",
+      "failure_codes": [],
+      "evidence_artifact": "",
+      "evidence_digest": "",
+      "content_digest": "sha256:0fc35f12b50dbc472b524357d8af237a95161f9f37073d93dbcaead8bf198b82"
+    },
+    {
+      "gate_id": "authoring_closed_set",
+      "status": "pass",
+      "failure_codes": [],
+      "evidence_artifact": "",
+      "evidence_digest": "",
+      "content_digest": "sha256:e64ff82eae5fb2469f823535209915f7fd5534b85a562095f93688b9247affd1"
+    },
+    {
+      "gate_id": "research",
+      "status": "pass",
+      "failure_codes": [],
+      "evidence_artifact": "",
+      "evidence_digest": "",
+      "content_digest": "sha256:fde5e1a6079f7f438416e7c73e770e477645dcb84acccad80e5b8e5bd44791d4"
+    },
+    {
+      "gate_id": "mechanism_owner",
+      "status": "pass",
+      "failure_codes": [],
+      "evidence_artifact": "",
+      "evidence_digest": "",
+      "content_digest": "sha256:96d31617dd4efe8efc24dd994c604f2f6bc102146e01ee5fff57478c023eeb14"
+    },
+    {
+      "gate_id": "mechanism_path",
+      "status": "pass",
+      "failure_codes": [],
+      "evidence_artifact": "",
+      "evidence_digest": "",
+      "content_digest": "sha256:2692533839368301c2954efedb898d5a98021657fdf787e022a6636d68f2bff6"
+    },
+    {
+      "gate_id": "workset",
+      "status": "pass",
+      "failure_codes": [],
+      "evidence_artifact": "",
+      "evidence_digest": "",
+      "content_digest": "sha256:022492d4c7a241963998753a5c5f19c4b580df5a3490777f99543bf011c0b281"
+    },
+    {
+      "gate_id": "formula",
+      "status": "pass",
+      "failure_codes": [],
+      "evidence_artifact": "",
+      "evidence_digest": "",
+      "content_digest": "sha256:be518d8df2f983b2e7782ec5a95e91ad45364cfb15faa6cb1ed5a3586833822f"
+    },
+    {
+      "gate_id": "invocation",
+      "status": "pass",
+      "failure_codes": [],
+      "evidence_artifact": "",
+      "evidence_digest": "",
+      "content_digest": "sha256:aa45d83b8564a58993b0c32d1fc7b1db1e5ac085e3085a28c831495f57000e69"
+    },
+    {
+      "gate_id": "resume",
+      "status": "pass",
+      "failure_codes": [],
+      "evidence_artifact": "",
+      "evidence_digest": "",
+      "content_digest": "sha256:28b0030ba7f92ca4f4ecf549d30b24331b0a7ab3462bb93c539c569083fff7e5"
+    }
+  ],
+  "phase_planned_calls_by_role": {
+    "realizer": 20
+  },
+  "phase_planned_input_tokens_by_role": {
+    "realizer": 583548
+  },
+  "run_reserved_calls_by_role": {
+    "writer": 20,
+    "realizer": 20
+  },
+  "run_reserved_input_tokens_by_role": {
+    "writer": 1123462,
+    "realizer": 833548
+  },
+  "status": "pass",
+  "failure_codes": [],
+  "content_digest": "sha256:3132342893364860b320f5fbb6f24e08ccad6c323dd2be0daf845709822c3f55"
+}

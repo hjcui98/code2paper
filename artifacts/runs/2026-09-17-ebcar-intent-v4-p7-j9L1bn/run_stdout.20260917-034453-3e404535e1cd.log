@@ -1,0 +1,4 @@
+[code2paper method-agent] run_id=ebcar-intent-v4-p7-current-20260916T165846Z
+[code2paper method-agent] repo=/data1/users/cuihengjia/code2paper/code_final/EBCAR - Embedding-Based Context-Aware Reranker
+[code2paper method-agent] out_root=/tmp/c2p-p7-ebcar-v4-intent-j9L1bn
+[code2paper method-agent] live_llm=True

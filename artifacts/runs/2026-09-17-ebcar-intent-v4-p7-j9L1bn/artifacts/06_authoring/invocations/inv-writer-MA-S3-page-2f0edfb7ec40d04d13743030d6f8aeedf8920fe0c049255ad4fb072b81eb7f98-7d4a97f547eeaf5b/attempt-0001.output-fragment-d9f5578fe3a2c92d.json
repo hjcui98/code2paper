@@ -1,0 +1,13 @@
+{
+  "attempt": 1,
+  "fragment": {
+    "blocked_reason": "",
+    "consumer_role": "writer",
+    "page_id": "page:2f0edfb7ec40d04d13743030d6f8aeedf8920fe0c049255ad4fb072b81eb7f98",
+    "response_hash": "sha256:6a530848aafe850734f6ee0c8bcc6382ef0770caea2d3f740e394b66381c60c4",
+    "response_text": "{\"paragraphs\":[{\"deferred_detail_ids\":[],\"paragraph_id\":\"MA-S3:P2__f7\",\"paragraph_markdown\":\"The Transformer encoder forward pass operates under a conditional regime governed by the return_attention flag. When return_attention is true, each encoder layer is invoked with the source sequence, attention mask, key-padding mask, and causal mask, requesting attention weights as an additional output; the resulting attention weights are appended to a running collection across successive layers. When return_attention is false, the same layer is invoked without the attention-return request, and only the transformed source is retained for the next layer. Upon completion of all layers, the encoder returns the final source together with the accumulated attention weights when return_attention is true, or the final source alone otherwise. The enrichment of embeddings with document identity is realized through a document chunk selection step in which a chunk is retrieved by matching its chunk identifier against the query chunk identifier and verifying that its size is not None; the precise selection predicate for this lookup is not yet established.\"}],\"section_id\":\"MA-S3\"}",
+    "section_id": "MA-S3"
+  },
+  "invocation_id": "inv:writer:MA-S3:page:2f0edfb7ec40d04d13743030d6f8aeedf8920fe0c049255ad4fb072b81eb7f98",
+  "schema_version": "2.0"
+}

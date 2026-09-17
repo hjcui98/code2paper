@@ -1,0 +1,100 @@
+{
+  "attempt": 1,
+  "fragment": {
+    "consumer_role": "realizer",
+    "content_repair_attempt": false,
+    "draft": {
+      "authority_disposition": "repository_verified",
+      "blocked_reason": "",
+      "content_digest": "sha256:06c7dbffcada1a0afdb4854d70bc4bdb255572c1c69a20bdbd41ad57929ddd0e",
+      "draft_id": "draft:join:MA-S3:p12",
+      "draft_markdown": "In the conditional branch where `self.cfg.add_positional_encoding` is active, the mechanism computes a passage identifier via the call `passage_id.long()` (detail:mech_sym:9773c5add7af1f92:11). This enables the subsequent transformation where `passages = (` is written to incorporate positional information (detail:mech_sym:9773c5add7af1f92:12). The conditional output is then produced by the write operation `passage_id_embeddings = self.passage_id_embedding(` (detail:mech_sym:9773c5add7af1f92:9), which depends on the computation `+ (document_id.long() // self.cfg.retrieval.top_k)` (detail:mech_sym:9773c5add7af1f92:8). In the default active path, the configuration derives `num_passages = passages.shape[1]` (detail:mech_sym:9773c5add7af1f92:14) and `batch_size = passages.shape[0]` (detail:mech_sym:9773c5add7af1f92:15). These dimensions are used to initialize the mask with `dedicated_attention_mask = torch.zeros(` (detail:mech_sym:9773c5add7af1f92:16), specifically calling `dedicated_attention_mask = torch.zeros(\n            (batch_size, num_passages + 1, num_passages + 1),\n            device=self.device,\n        )  # [batch_size, num_passages + 1, num_passages + 1]` (detail:mech_sym:9773c5add7af1f92:17). The formal shape configuration is defined by the tuple `(batch_size, num_passages + 1, num_passages + 1),` (detail:mech_sym:9773c5add7af1f92:18).",
+      "formula_package_ids": [],
+      "heading": "join:MA-S3",
+      "mechanism_id": "join:MA-S3",
+      "page_index": 12,
+      "realized_detail_ids": [
+        "detail:mech_sym:9773c5add7af1f92:11",
+        "detail:mech_sym:9773c5add7af1f92:12",
+        "detail:mech_sym:9773c5add7af1f92:14",
+        "detail:mech_sym:9773c5add7af1f92:15",
+        "detail:mech_sym:9773c5add7af1f92:16",
+        "detail:mech_sym:9773c5add7af1f92:17",
+        "detail:mech_sym:9773c5add7af1f92:18",
+        "detail:mech_sym:9773c5add7af1f92:8",
+        "detail:mech_sym:9773c5add7af1f92:9"
+      ],
+      "repair_feedback": [],
+      "representation_diff_class": "witness_exact_text_whitespace_repaired",
+      "request_digest": "sha256:e4fe1531e35c775aa71e05c1b491e9da46b8e125bc71e70f9d8ca64900f0fd03",
+      "required_detail_ids": [
+        "detail:mech_sym:9773c5add7af1f92:8",
+        "detail:mech_sym:9773c5add7af1f92:9",
+        "detail:mech_sym:9773c5add7af1f92:11",
+        "detail:mech_sym:9773c5add7af1f92:12",
+        "detail:mech_sym:9773c5add7af1f92:14",
+        "detail:mech_sym:9773c5add7af1f92:15",
+        "detail:mech_sym:9773c5add7af1f92:16",
+        "detail:mech_sym:9773c5add7af1f92:17",
+        "detail:mech_sym:9773c5add7af1f92:18"
+      ],
+      "status": "accepted",
+      "unresolved_detail_ids": [],
+      "witness_atoms": [],
+      "witnesses": [
+        {
+          "exact_text": "passage_id.long()",
+          "target_id": "detail:mech_sym:9773c5add7af1f92:11",
+          "witness_kind": "detail"
+        },
+        {
+          "exact_text": "passages = (",
+          "target_id": "detail:mech_sym:9773c5add7af1f92:12",
+          "witness_kind": "detail"
+        },
+        {
+          "exact_text": "num_passages = passages.shape[1]",
+          "target_id": "detail:mech_sym:9773c5add7af1f92:14",
+          "witness_kind": "detail"
+        },
+        {
+          "exact_text": "batch_size = passages.shape[0]",
+          "target_id": "detail:mech_sym:9773c5add7af1f92:15",
+          "witness_kind": "detail"
+        },
+        {
+          "exact_text": "dedicated_attention_mask = torch.zeros(",
+          "target_id": "detail:mech_sym:9773c5add7af1f92:16",
+          "witness_kind": "detail"
+        },
+        {
+          "exact_text": "dedicated_attention_mask = torch.zeros(\n            (batch_size, num_passages + 1, num_passages + 1),\n            device=self.device,\n        )  # [batch_size, num_passages + 1, num_passages + 1]",
+          "target_id": "detail:mech_sym:9773c5add7af1f92:17",
+          "witness_kind": "detail"
+        },
+        {
+          "exact_text": "(batch_size, num_passages + 1, num_passages + 1),",
+          "target_id": "detail:mech_sym:9773c5add7af1f92:18",
+          "witness_kind": "detail"
+        },
+        {
+          "exact_text": "+ (document_id.long() // self.cfg.retrieval.top_k)",
+          "target_id": "detail:mech_sym:9773c5add7af1f92:8",
+          "witness_kind": "detail"
+        },
+        {
+          "exact_text": "passage_id_embeddings = self.passage_id_embedding(",
+          "target_id": "detail:mech_sym:9773c5add7af1f92:9",
+          "witness_kind": "detail"
+        }
+      ]
+    },
+    "page_id": "page:a7853ad742b4a90d168a0a886b86bf839cace3caec2b11337a9883ca055e68ae",
+    "repair_feedback": [],
+    "response_hash": "sha256:d454353167ae379a554c352ae563f39db32b2b6c09452ef3fddcc589f6620d09",
+    "response_text": "{\n  \"draft_markdown\": \"In the conditional branch where `self.cfg.add_positional_encoding` is active, the mechanism computes a passage identifier via the call `passage_id.long()` (detail:mech_sym:9773c5add7af1f92:11). This enables the subsequent transformation where `passages = (` is written to incorporate positional information (detail:mech_sym:9773c5add7af1f92:12). The conditional output is then produced by the write operation `passage_id_embeddings = self.passage_id_embedding(` (detail:mech_sym:9773c5add7af1f92:9), which depends on the computation `+ (document_id.long() // self.cfg.retrieval.top_k)` (detail:mech_sym:9773c5add7af1f92:8). In the default active path, the configuration derives `num_passages = passages.shape[1]` (detail:mech_sym:9773c5add7af1f92:14) and `batch_size = passages.shape[0]` (detail:mech_sym:9773c5add7af1f92:15). These dimensions are used to initialize the mask with `dedicated_attention_mask = torch.zeros(` (detail:mech_sym:9773c5add7af1f92:16), specifically calling `dedicated_attention_mask = torch.zeros(\\n            (batch_size, num_passages + 1, num_passages + 1),\\n            device=self.device,\\n        )  # [batch_size, num_passages + 1, num_passages + 1]` (detail:mech_sym:9773c5add7af1f92:17). The formal shape configuration is defined by the tuple `(batch_size, num_passages + 1, num_passages + 1),` (detail:mech_sym:9773c5add7af1f92:18).\",\n  \"rendered_detail_ids\": [\n    \"detail:mech_sym:9773c5add7af1f92:11\",\n    \"detail:mech_sym:9773c5add7af1f92:12\",\n    \"detail:mech_sym:9773c5add7af1f92:14\",\n    \"detail:mech_sym:9773c5add7af1f92:15\",\n    \"detail:mech_sym:9773c5add7af1f92:16\",\n    \"detail:mech_sym:9773c5add7af1f92:17\",\n    \"detail:mech_sym:9773c5add7af1f92:18\",\n    \"detail:mech_sym:9773c5add7af1f92:8\",\n    \"detail:mech_sym:9773c5add7af1f92:9\"\n  ],\n  \"used_formula_package_ids\": [],\n  \"witnesses\": [\n    {\n      \"exact_text\": \"passage_id.long()\",\n      \"target_id\": \"detail:mech_sym:9773c5add7af1f92:11\",\n      \"witness_kind\": \"detail\"\n    },\n    {\n      \"exact_text\": \"passages = (\",\n      \"target_id\": \"detail:mech_sym:9773c5add7af1f92:12\",\n      \"witness_kind\": \"detail\"\n    },\n    {\n      \"exact_text\": \"num_passages = passages.shape[1]\",\n      \"target_id\": \"detail:mech_sym:9773c5add7af1f92:14\",\n      \"witness_kind\": \"detail\"\n    },\n    {\n      \"exact_text\": \"batch_size = passages.shape[0]\",\n      \"target_id\": \"detail:mech_sym:9773c5add7af1f92:15\",\n      \"witness_kind\": \"detail\"\n    },\n    {\n      \"exact_text\": \"dedicated_attention_mask = torch.zeros(\",\n      \"target_id\": \"detail:mech_sym:9773c5add7af1f92:16\",\n      \"witness_kind\": \"detail\"\n    },\n    {\n      \"exact_text\": \"dedicated_attention_mask = torch.zeros(            (batch_size, num_passages + 1, num_passages + 1),            device=self.device,        )  # [batch_size, num_passages + 1, num_passages + 1]\",\n      \"target_id\": \"detail:mech_sym:9773c5add7af1f92:17\",\n      \"witness_kind\": \"detail\"\n    },\n    {\n      \"exact_text\": \"(batch_size, num_passages + 1, num_passages + 1),\",\n      \"target_id\": \"detail:mech_sym:9773c5add7af1f92:18\",\n      \"witness_kind\": \"detail\"\n    },\n    {\n      \"exact_text\": \"+ (document_id.long() // self.cfg.retrieval.top_k)\",\n      \"target_id\": \"detail:mech_sym:9773c5add7af1f92:8\",\n      \"witness_kind\": \"detail\"\n    },\n    {\n      \"exact_text\": \"passage_id_embeddings = self.passage_id_embedding(\",\n      \"target_id\": \"detail:mech_sym:9773c5add7af1f92:9\",\n      \"witness_kind\": \"detail\"\n    }\n  ]\n}",
+    "section_id": "MA-S3"
+  },
+  "invocation_id": "inv:realizer:MA-S3:page:a7853ad742b4a90d168a0a886b86bf839cace3caec2b11337a9883ca055e68ae",
+  "schema_version": "2.0"
+}

@@ -1,0 +1,25 @@
+{
+  "attempt": 1,
+  "blocked_reason": "",
+  "content_digest": "sha256:f74164fe53797a982dbb62255b6fa1e042729e4b544a20f445406bc9d1776cb1",
+  "diagnostics": {
+    "finish_seen": true,
+    "partial_chars": 1280,
+    "stream_events": 499,
+    "terminal_status": "finish_seen",
+    "usage_seen": true
+  },
+  "finish_reason": "structured_complete",
+  "invocation_id": "inv:writer:MA-S3:page:d4993f7db022baf71dbb59a35a77a2d5e59b931f0fb48ac01b7dac30ede562fa",
+  "provider_finish_reason": "stop",
+  "request_diagnostics_digest": "sha256:f6098dddae0f2aaef59096da559de604b36d55d4901bbbdbfa74c9c769bdb335",
+  "response_digest": "sha256:e9fc1b33e5d0318c351dc534b30f8c442c98d8ff7d7b07ced96aa6dc8f8fa050",
+  "response_text": "{\"paragraphs\":[{\"deferred_detail_ids\":[],\"paragraph_id\":\"MA-S3:P2__f3\",\"paragraph_markdown\":\"The dedicated attention head constructs a document-local mask that restricts each passage's attention to other passages sharing the same document identifier, while the shared full-attention head remains unrestricted. For each batch element, the document ID vector is extracted and iterated passage by passage. Because the query embedding occupies position 0 in the concatenated sequence, each passage row index is offset by one to yield the corresponding mask-row position. The mask row is initialized to negative infinity, blocking all attention contributions. A boolean selection is then computed by comparing the passage's document identifier against every other passage's document identifier within the same batch element; the query position is unconditionally included by prepending a true value to the selection vector. The mask entries at the selected positions are set to zero, permitting attention only to passages from the same document and to the query. This per-passage, per-batch construction yields a dedicated attention pattern in which each passage attends exclusively within its source document, complementing the shared head's global attention.\"}],\"section_id\":\"MA-S3\"}",
+  "schema_version": "1.0",
+  "thinking_chars": 0,
+  "usage": {
+    "completion_tokens": 1260,
+    "prompt_tokens": 33676,
+    "total_tokens": 34936
+  }
+}

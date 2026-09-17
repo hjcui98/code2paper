@@ -1,0 +1,25 @@
+{
+  "attempt": 1,
+  "blocked_reason": "",
+  "content_digest": "sha256:24de1913b7b6da52dae6847816afad9fe6103794792b86df21b2fea6b9a6b881",
+  "diagnostics": {
+    "finish_seen": true,
+    "partial_chars": 2684,
+    "stream_events": 301,
+    "terminal_status": "finish_seen",
+    "usage_seen": true
+  },
+  "finish_reason": "structured_complete",
+  "invocation_id": "inv:realizer:MA-S4:page:deb150313c1572b14530320add69c2d3fc68d162204676501b4ed6b6f9487019",
+  "provider_finish_reason": "stop",
+  "request_diagnostics_digest": "sha256:70ad108699757d7ded38c82f60c37a2d0d805a1912918476a389bcc4d4779eab",
+  "response_digest": "sha256:c719e45833a4d90e2c402fe0a2e6a10e421b444d467eb16afc5f4cb6b3cc5818",
+  "response_text": "{\n  \"draft_markdown\": \"## MA-S4: Mechanism Implementation Details\\n\\nThis section presents the source-grounded implementation details for `mech_sym:f6cf5bdfe2ae16f0`, covering conditional configuration, data concatenation, branching logic, and the final return operation.\\n\\n### 1. Conditional Positional Encoding (Detail 13)\\nWhen the configuration flag `self.cfg.add_positional_encoding` is active, the model computes the formula by consuming `passages`, `document_id_embeddings`, `passages + document_id_embeddings`, and `passage_id_embeddings`. This operation is conditional and relies on the `LOAD` and `COMPUTE` predicates to process the embeddings. The exact expression involved is:\\n\\n`passages + document_id_embeddings + passage_id_embeddings`\\n\\n### 2. Concatenation of Similarities (Detail 65)\\nIn the active default path, the implementation concatenates positive and negative similarities. The operation uses `torch.cat` on the list `[pos_sim, neg_sims]` to produce `all_sims`. The source code snippet is:\\n\\n`all_sims = torch.cat([pos_sim, neg_sims])  # [num_positives + num_negatives]`\\n\\n### 3. Branching on Empty Loss (Detail 69)\\nA conditional branch is executed when `loss_i.shape[0] == 0`. In this case, the model prints diagnostic information. The branch logic is:\\n\\n```\\nif loss_i.shape[0] == 0:\\n                print(\\\"No positive passages found for sample\\\", i)\\n                print(\\\"pos_mask\\\", pos_mask)\\n                print(\\\"neg_mask\\\", neg_mask)\\n                print(\\\"sim_i\\\", sim_i)\\n                print(\\\"labels_i\\\", labels_i)\\n                print(\\\"all_sims\\\", all_sims)\\n```\\n\\n### 4. Return Operation (Detail 77)\\nFinally, the function returns the computed loss. The return operation is:\\n\\n`return loss`\",\n  \"rendered_detail_ids\": [\n    \"detail:mech_sym:f6cf5bdfe2ae16f0:13\",\n    \"detail:mech_sym:f6cf5bdfe2ae16f0:65\",\n    \"detail:mech_sym:f6cf5bdfe2ae16f0:69\",\n    \"detail:mech_sym:f6cf5bdfe2ae16f0:77\"\n  ],\n  \"used_formula_package_ids\": [],\n  \"witnesses\": [\n    {\n      \"exact_text\": \"passages + document_id_embeddings + passage_id_embeddings\",\n      \"target_id\": \"detail:mech_sym:f6cf5bdfe2ae16f0:13\",\n      \"witness_kind\": \"detail\"\n    },\n    {\n      \"exact_text\": \"all_sims = torch.cat([pos_sim, neg_sims])  # [num_positives + num_negatives]\",\n      \"target_id\": \"detail:mech_sym:f6cf5bdfe2ae16f0:65\",\n      \"witness_kind\": \"detail\"\n    },\n    {\n      \"exact_text\": \"if loss_i.shape[0] == 0:\",\n      \"target_id\": \"detail:mech_sym:f6cf5bdfe2ae16f0:69\",\n      \"witness_kind\": \"detail\"\n    },\n    {\n      \"exact_text\": \"return loss\",\n      \"target_id\": \"detail:mech_sym:f6cf5bdfe2ae16f0:77\",\n      \"witness_kind\": \"detail\"\n    }\n  ]\n}",
+  "schema_version": "1.0",
+  "thinking_chars": 0,
+  "usage": {
+    "completion_tokens": 819,
+    "prompt_tokens": 20635,
+    "total_tokens": 21454
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "schema_version": "1.0",
+  "builder_version": "repository_authoring_artifacts_v1",
+  "repo_snapshot_id": "repo:9b4f1a34c70f10c2317f024df585e282c9d02371586a629e00ace26d8988c942",
+  "project_tree_hash": "sha256:9b4f1a34c70f10c2317f024df585e282c9d02371586a629e00ace26d8988c942",
+  "symbol_index_digest": "sha256:6c7eadabde8fc4f667fbbbfa5ac516b65dd02ced250570626595f4ad0cedc351",
+  "implementation_scope_digest": "sha256:8b5a37026c073f42f527e6a7b93d02c0f89e3b9fd306be5d98ea0ad3f875d2b1",
+  "source_manifest_digest": "sha256:ea4a881f3ffa9b5711e10c575bb4137d1f80304c3e3732dd7a6d840ac0b37078",
+  "cross_digest": "sha256:a80623eb7357f6f7e694cd6dfb7d92416d4310836b69fd5db94ffbada8a81971"
+}

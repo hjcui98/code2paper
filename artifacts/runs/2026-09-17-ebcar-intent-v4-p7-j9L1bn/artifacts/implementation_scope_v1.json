@@ -1,0 +1,72 @@
+{
+  "schema_version": "1.0",
+  "target_entry_symbol_ids": [
+    "sym:9773c5add7af1f92",
+    "sym:f6cf5bdfe2ae16f0"
+  ],
+  "target_core_symbol_ids": [
+    "sym:09a8a946c03c7c4e",
+    "sym:138b7727704d3ac1",
+    "sym:1bf392cbfeba8533",
+    "sym:2398741999df2d46",
+    "sym:2b395afb6fbdd872",
+    "sym:2cc645d72c3c9bf0",
+    "sym:398c2b35cf09b2de",
+    "sym:5f68360a35d5f632",
+    "sym:689aa844f51b8cce",
+    "sym:730db54cb4821848",
+    "sym:7690fc91b0f2dce7",
+    "sym:7a70ca6a9334b9bf",
+    "sym:81395e9010d48fdb",
+    "sym:84125bba4b81722f",
+    "sym:861cecdb154fb3b9",
+    "sym:9773c5add7af1f92",
+    "sym:9b11f92186cf270c",
+    "sym:f6cf5bdfe2ae16f0"
+  ],
+  "target_dependency_symbol_ids": [],
+  "comparand_symbol_ids": [],
+  "evaluation_symbol_ids": [
+    "sym:2af4eca0daef58e9",
+    "sym:4da8548429b3fa59",
+    "sym:ec35335f84dc2576"
+  ],
+  "configuration_symbol_ids": [
+    "sym:0c49be2eccc2eefb"
+  ],
+  "unknown_symbol_ids": [
+    "sym:018b1c01cabe7a09",
+    "sym:0ff9a0cb1f2a14f2",
+    "sym:12a01acada534c10",
+    "sym:28206aee9102e05f",
+    "sym:2f2225cc58f1d81f",
+    "sym:308f5b985883faa6",
+    "sym:32d9fcc61a60e214",
+    "sym:4a25fddb242217dc",
+    "sym:4ef3f9facbcbd5b3",
+    "sym:51a352a81088b35b",
+    "sym:528421a86324b19a",
+    "sym:6d7872f2a3dddebf",
+    "sym:74e3346e550a6ef9",
+    "sym:7dd94efafce4f7db",
+    "sym:7ff88d0d30db3be9",
+    "sym:891af521cf814ac4",
+    "sym:8be55f5c15c9b15a",
+    "sym:9a5ca1912bc8d9dc",
+    "sym:ad205f3b3db779ac",
+    "sym:afe46dc845f72f17",
+    "sym:c66d3d6430d8b2c7",
+    "sym:ca499533101ae4c2",
+    "sym:e889346764321ecd",
+    "sym:ee29a2dfb78157bb",
+    "sym:f9d0260a153209a5"
+  ],
+  "ownership_evidence_refs": [
+    "repo:9b4f1a34c70f10c2317f024df585e282c9d02371586a629e00ace26d8988c942",
+    "sha256:9b4f1a34c70f10c2317f024df585e282c9d02371586a629e00ace26d8988c942",
+    "sha256:8a1635f8a5c16473bbfb1c1d685fef7f994a3e3e27008880cf0bb48f450d5a75"
+  ],
+  "entry_inference_status": "explicit",
+  "confidence": 0.9500000000000001,
+  "content_digest": "sha256:8b5a37026c073f42f527e6a7b93d02c0f89e3b9fd306be5d98ea0ad3f875d2b1"
+}

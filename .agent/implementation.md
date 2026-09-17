@@ -2781,3 +2781,14 @@ obligation、未过滤失败 claim、未放宽 span validator。
 - `python -m pytest -q`：exit 0，3584 passed、3 skipped、7 warnings、12 subtests passed，129.60 秒。
 - `python -m compileall -q src tests` 与 `git diff --check`：exit 0。
 - 尚未在这一 changed basis 上执行新的正常入口 live；因此目前只声明修复与静态/真实冻结重放通过，不声明新 Candidate/Verified 已交付。
+
+## 2026-09-17 P7 V4 身份阻塞与公式误入修复
+
+范围：只读分析 `/tmp/c2p-p7-ebcar-v4-w2p9KvoI`（原运行绑定 `287506e`），在当前 `2c290aa` 的 dirty worktree 上增量修复；未重写原产物、未提交、未发起模型请求。原运行先遇到 `NarrativePlanV3` 名称错误，该 import 在本轮开始前的工作树中已有修复；本轮针对随后复现的 `unknown_detail_id` 与公式误入补丁。
+
+- V4 编译器不再给 section 内每个 story 复制全部机制 detail。多机制 story 分成同一作者 section 内单一 mechanism owner 的段落；每个 detail 只分配一次，ownerless 作者段落不承载 repository detail。argument unit 也只分配给一个段落。源 ID 交集用于优先定位，零交集回退有显式 trace，不能用回退证明语义对齐。V3 投影保留空机制的作者段落，不再按单机制 section 偷填 owner；witness、author surface 和公式 placement 同步投影。
+- V4 所选产品路径编译失败时不再静默退回 V3。公式 package 的 source details 同置于一个机制段落，package/obligation/placement 身份守恒。
+- P7 的 Formalizer 实际 2 main + 2 repair 均因把 `document_id.long()`/`self.cfg...` 等代码运算写进公式而被正确拒绝；后续 attempt 触发预发送预算拒绝。公式 worthiness 现在将无 equation/facet 来源、非 formalizable 的代码形 transformation 判为 prose/algorithm，不再为它发机制公式义务。P7 冻结 contexts 的两条此类义务离线复算均消失。此修复不将 7 个未桥接的作者 required 公式改为已完成。
+- P7 冻结 story/prior plan/context 经当前产品 `_build_narrative_plan_v3` → V4 envelope → V3 projection → `validate_narrative_plan` 零模型重放：5 sections、32 paragraphs、28 唯一 argument units、0 validation failures；11 个 required detail 唯一归属，required fallback 为 0；122 个 optional detail 缺少 story 锚点，仍须后续审查，不能当成实现事实授权。
+- 定向回归 `python -m pytest -q tests/test_agentic_intent_spine_authoring.py tests/test_agentic_mechanism_formula_obligations.py tests/test_agentic_candidate_handoff.py tests/test_agentic_publication_method_writer.py tests/test_agentic_unified_context_compiler.py`：221 passed。最终代码上的全量 `python -m pytest -q`：3601 passed、3 skipped、7 warnings、12 subtests passed，exit 0。`python -m compileall -q src tests scripts` 与 `git diff --check`：exit 0。
+- 尚无新 Writer completed、Candidate 或 Verified；原目录属于旧 SHA，且本轮改变了 V4/公式政策，不应把旧 Formalizer receipt 当作新代码的成功。7 个作者 required 公式仍 open、Research partial，P7 §7.2 未验收；必须重新生成新 run 的身份与成果，再检查产品 Writer/Binder/最终门。

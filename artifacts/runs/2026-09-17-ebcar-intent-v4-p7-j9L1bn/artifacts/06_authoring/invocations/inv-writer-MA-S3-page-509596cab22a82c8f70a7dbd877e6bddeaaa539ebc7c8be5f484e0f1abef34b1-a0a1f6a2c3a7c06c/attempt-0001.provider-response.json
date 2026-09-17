@@ -1,0 +1,25 @@
+{
+  "attempt": 1,
+  "blocked_reason": "",
+  "content_digest": "sha256:e3955272ff6abb93bc1d445955a193cc6d03747f8b776c000046cc1673a05c72",
+  "diagnostics": {
+    "finish_seen": true,
+    "partial_chars": 1550,
+    "stream_events": 514,
+    "terminal_status": "finish_seen",
+    "usage_seen": true
+  },
+  "finish_reason": "structured_complete",
+  "invocation_id": "inv:writer:MA-S3:page:509596cab22a82c8f70a7dbd877e6bddeaaa539ebc7c8be5f484e0f1abef34b1",
+  "provider_finish_reason": "stop",
+  "request_diagnostics_digest": "sha256:c0d947da740ded32a771b0da47a79896ff82ef2cb84815b4cdb30ae714ba83cc",
+  "response_digest": "sha256:fd7db24ac63fab4563ff3685e1e4be23633927ddf9562cfc68c0f4b293ecb173",
+  "response_text": "{\"paragraphs\":[{\"paragraph_id\":\"MA-S3:P1__f7\",\"paragraph_markdown\":\"The dedicated-attention encoder consumes concatenated input embeddings together with a dedicated attention mask that confines cross-attention to designated passage positions. The encoder's output tensor is sliced along the sequence dimension to isolate passage-level representations, excluding the leading query position and yielding a tensor of shape [batch_size, num_passages, hidden_size]. Passage similarity scores are then obtained by computing the inner product between the query embedding and the transposed passage embedding matrix, followed by squeezing the singleton sequence dimension to produce a two-dimensional similarity matrix of shape [batch_size, num_passages]. These raw scores are divided by a temperature scalar to calibrate the effective logit scale prior to loss evaluation. The training objective is realized through a per-sample iteration over the batch dimension: for each sample, positive and negative passage similarities are separated via binary label masks, and the InfoNCE loss is computed using the log-sum-exp form for numerical stability, with the per-sample loss equal to the negative positive similarity plus the log-sum-exp over the concatenated positive and negative similarities. The iteration enforces the constraint that exactly one passage per sample carries a positive label, a condition inherited from the dataset loading pipeline.\",\"rendered_from_facet_ids\":[],\"rendered_slot_ids\":[],\"used_formula_package_ids\":[]}],\"section_id\":\"MA-S3\"}",
+  "schema_version": "1.0",
+  "thinking_chars": 0,
+  "usage": {
+    "completion_tokens": 1305,
+    "prompt_tokens": 28423,
+    "total_tokens": 29728
+  }
+}

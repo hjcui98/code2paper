@@ -1,0 +1,1679 @@
+{
+  "schema_version": "1.0",
+  "repo_snapshot_id": "repo:9b4f1a34c70f10c2317f024df585e282c9d02371586a629e00ace26d8988c942",
+  "project_tree_hash": "sha256:9b4f1a34c70f10c2317f024df585e282c9d02371586a629e00ace26d8988c942",
+  "fact_digest": "sha256:9ca7b65fdd0f7287baceed9b0792b0df785c11b13b7ba76c9b90ef7287b22b08",
+  "equation_digest": "sha256:9a5d1d4ea431d6c29bb2745972819daf601fc93650120667fa0433d1d4c8f18b",
+  "symbols": [
+    {
+      "symbol": "EBCarRerankerHybridAttention.forward",
+      "meaning": "operand of concatenates",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:a48f78c0e1931462"
+      ],
+      "source_artifact_ids": [
+        "span:src/model/ebcar_dedicated_attention_model.py:135:137"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "torch.cat",
+      "meaning": "operand of concatenates",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:a48f78c0e1931462"
+      ],
+      "source_artifact_ids": [
+        "span:src/model/ebcar_dedicated_attention_model.py:135:137"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "(query, passages)",
+      "meaning": "operand of concatenates",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:a48f78c0e1931462"
+      ],
+      "source_artifact_ids": [
+        "span:src/model/ebcar_dedicated_attention_model.py:135:137"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "dim=1",
+      "meaning": "operand of concatenates",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:a48f78c0e1931462"
+      ],
+      "source_artifact_ids": [
+        "span:src/model/ebcar_dedicated_attention_model.py:135:137"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "result=concat_embeddings",
+      "meaning": "operand of concatenates",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:a48f78c0e1931462"
+      ],
+      "source_artifact_ids": [
+        "span:src/model/ebcar_dedicated_attention_model.py:135:137"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "self.cfg.use_dedicated_attention",
+      "meaning": "operand of loads_weights",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:6daefc8982533bad"
+      ],
+      "source_artifact_ids": [
+        "span:src/model/ebcar_dedicated_attention_model.py:145:145",
+        "span:src/model/ebcar_dedicated_attention_model.py:145:174",
+        "span:src/model/ebcar_dedicated_attention_model.py:145:145"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "-pos_sim",
+      "meaning": "operand of computes_formula",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:7fabddc9286307b4"
+      ],
+      "source_artifact_ids": [
+        "span:src/model/ebcar_dedicated_attention_model.py:232:232"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "torch.logsumexp(all_sims, dim=0)",
+      "meaning": "operand of computes_formula",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:7fabddc9286307b4"
+      ],
+      "source_artifact_ids": [
+        "span:src/model/ebcar_dedicated_attention_model.py:232:232"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "result=loss_i",
+      "meaning": "operand of computes_formula",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:7fabddc9286307b4"
+      ],
+      "source_artifact_ids": [
+        "span:src/model/ebcar_dedicated_attention_model.py:232:232"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "torch.stack(losses).mean",
+      "meaning": "operand of reduces",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:fd2ce32dbb55ed63"
+      ],
+      "source_artifact_ids": [
+        "span:src/model/ebcar_dedicated_attention_model.py:243:243"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "result=loss",
+      "meaning": "operand of reduces",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:fd2ce32dbb55ed63"
+      ],
+      "source_artifact_ids": [
+        "span:src/model/ebcar_dedicated_attention_model.py:243:243"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "EBCarRerankerHybridAttention.rerank",
+      "meaning": "operand of computes_formula",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:5ff7f276f04b71a8"
+      ],
+      "source_artifact_ids": [
+        "span:src/model/ebcar_dedicated_attention_model.py:276:276"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "passages + document_id_embeddings",
+      "meaning": "operand of computes_formula",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:5ff7f276f04b71a8"
+      ],
+      "source_artifact_ids": [
+        "span:src/model/ebcar_dedicated_attention_model.py:276:276"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "passage_id_embeddings",
+      "meaning": "operand of computes_formula",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:5ff7f276f04b71a8"
+      ],
+      "source_artifact_ids": [
+        "span:src/model/ebcar_dedicated_attention_model.py:276:276"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "result=passages",
+      "meaning": "operand of computes_formula",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:5ff7f276f04b71a8"
+      ],
+      "source_artifact_ids": [
+        "span:src/model/ebcar_dedicated_attention_model.py:276:276"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "row",
+      "meaning": "operand of computes_formula",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:a6f6c00ca097eeb1"
+      ],
+      "source_artifact_ids": [
+        "span:src/model/ebcar_dedicated_attention_model.py:294:294"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "1",
+      "meaning": "operand of computes_formula",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:a6f6c00ca097eeb1"
+      ],
+      "source_artifact_ids": [
+        "span:src/model/ebcar_dedicated_attention_model.py:294:294"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "result=mask_row",
+      "meaning": "operand of computes_formula",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:a6f6c00ca097eeb1"
+      ],
+      "source_artifact_ids": [
+        "span:src/model/ebcar_dedicated_attention_model.py:294:294"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "torch.sort",
+      "meaning": "operand of sorts_by",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:8e87e1804f77f50f"
+      ],
+      "source_artifact_ids": [
+        "span:src/model/ebcar_dedicated_attention_model.py:334:336"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "similarities",
+      "meaning": "operand of sorts_by",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:8e87e1804f77f50f"
+      ],
+      "source_artifact_ids": [
+        "span:src/model/ebcar_dedicated_attention_model.py:334:336"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "descending=True",
+      "meaning": "operand of sorts_by",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:8e87e1804f77f50f"
+      ],
+      "source_artifact_ids": [
+        "span:src/model/ebcar_dedicated_attention_model.py:334:336"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "result=(relevance_scores, indices)",
+      "meaning": "operand of sorts_by",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:8e87e1804f77f50f"
+      ],
+      "source_artifact_ids": [
+        "span:src/model/ebcar_dedicated_attention_model.py:334:336"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "(reranked_passages, relevance_scores)",
+      "meaning": "operand of returns",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:c1802b91f97392cc"
+      ],
+      "source_artifact_ids": [
+        "span:src/model/ebcar_dedicated_attention_model.py:344:344"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "TransformerEncoderLayerHybridAttention.forward",
+      "meaning": "operand of calls",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:263526f0644479db"
+      ],
+      "source_artifact_ids": [
+        "span:src/model/transformer_encoder_hybrid_attention.py:100:102"
+      ],
+      "conditions": [
+        "return_attention"
+      ]
+    },
+    {
+      "symbol": "self.shared_attn",
+      "meaning": "operand of calls",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:263526f0644479db"
+      ],
+      "source_artifact_ids": [
+        "span:src/model/transformer_encoder_hybrid_attention.py:100:102"
+      ],
+      "conditions": [
+        "return_attention"
+      ]
+    },
+    {
+      "symbol": "src2",
+      "meaning": "operand of calls",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:263526f0644479db"
+      ],
+      "source_artifact_ids": [
+        "span:src/model/transformer_encoder_hybrid_attention.py:100:102"
+      ],
+      "conditions": [
+        "return_attention"
+      ]
+    },
+    {
+      "symbol": "None",
+      "meaning": "operand of calls",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:263526f0644479db"
+      ],
+      "source_artifact_ids": [
+        "span:src/model/transformer_encoder_hybrid_attention.py:100:102"
+      ],
+      "conditions": [
+        "return_attention"
+      ]
+    },
+    {
+      "symbol": "key_padding_mask",
+      "meaning": "operand of calls",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:263526f0644479db"
+      ],
+      "source_artifact_ids": [
+        "span:src/model/transformer_encoder_hybrid_attention.py:100:102"
+      ],
+      "conditions": [
+        "return_attention"
+      ]
+    },
+    {
+      "symbol": "causal_mask",
+      "meaning": "operand of calls",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:263526f0644479db"
+      ],
+      "source_artifact_ids": [
+        "span:src/model/transformer_encoder_hybrid_attention.py:100:102"
+      ],
+      "conditions": [
+        "return_attention"
+      ]
+    },
+    {
+      "symbol": "return_attention=True",
+      "meaning": "operand of calls",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:263526f0644479db"
+      ],
+      "source_artifact_ids": [
+        "span:src/model/transformer_encoder_hybrid_attention.py:100:102"
+      ],
+      "conditions": [
+        "return_attention"
+      ]
+    },
+    {
+      "symbol": "result=(shared_out, shared_attn_weights)",
+      "meaning": "operand of calls",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:263526f0644479db"
+      ],
+      "source_artifact_ids": [
+        "span:src/model/transformer_encoder_hybrid_attention.py:100:102"
+      ],
+      "conditions": [
+        "return_attention"
+      ]
+    },
+    {
+      "symbol": "shared_out",
+      "meaning": "operand of computes_formula",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:4c8511d6e8fc4240"
+      ],
+      "source_artifact_ids": [
+        "span:src/model/transformer_encoder_hybrid_attention.py:119:119"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "dedicated_out",
+      "meaning": "operand of computes_formula",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:4c8511d6e8fc4240"
+      ],
+      "source_artifact_ids": [
+        "span:src/model/transformer_encoder_hybrid_attention.py:119:119"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "src",
+      "meaning": "operand of computes_formula",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:c8936a17df7bdc83"
+      ],
+      "source_artifact_ids": [
+        "span:src/model/transformer_encoder_hybrid_attention.py:119:119"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "self.dropout1(shared_out + dedicated_out)",
+      "meaning": "operand of computes_formula",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:c8936a17df7bdc83"
+      ],
+      "source_artifact_ids": [
+        "span:src/model/transformer_encoder_hybrid_attention.py:119:119"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "result=src",
+      "meaning": "operand of computes_formula",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:c8936a17df7bdc83"
+      ],
+      "source_artifact_ids": [
+        "span:src/model/transformer_encoder_hybrid_attention.py:119:119"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "true",
+      "meaning": "operand of configured_by",
+      "fact_ids": [
+        "fact-configuration-rel:dc95ead65d3bb047"
+      ],
+      "source_artifact_ids": [
+        "span:conf/config.yaml:19:19"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "MultiheadAttention.forward",
+      "meaning": "operand of constructs_mask",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:73ea6c8145b47e07"
+      ],
+      "source_artifact_ids": [
+        "span:src/model/transformer_encoder_hybrid_attention.py:51:51",
+        "span:src/model/transformer_encoder_hybrid_attention.py:51:51",
+        "span:src/model/transformer_encoder_hybrid_attention.py:56:56"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "attn_logits.masked_fill",
+      "meaning": "operand of constructs_mask",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:73ea6c8145b47e07"
+      ],
+      "source_artifact_ids": [
+        "span:src/model/transformer_encoder_hybrid_attention.py:51:51",
+        "span:src/model/transformer_encoder_hybrid_attention.py:51:51",
+        "span:src/model/transformer_encoder_hybrid_attention.py:56:56"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "padding_mask",
+      "meaning": "operand of constructs_mask",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:73ea6c8145b47e07"
+      ],
+      "source_artifact_ids": [
+        "span:src/model/transformer_encoder_hybrid_attention.py:51:51",
+        "span:src/model/transformer_encoder_hybrid_attention.py:51:51",
+        "span:src/model/transformer_encoder_hybrid_attention.py:56:56"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "float('-inf')",
+      "meaning": "operand of constructs_mask",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:73ea6c8145b47e07"
+      ],
+      "source_artifact_ids": [
+        "span:src/model/transformer_encoder_hybrid_attention.py:51:51",
+        "span:src/model/transformer_encoder_hybrid_attention.py:51:51",
+        "span:src/model/transformer_encoder_hybrid_attention.py:56:56"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "result=attn_logits",
+      "meaning": "operand of constructs_mask",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:73ea6c8145b47e07"
+      ],
+      "source_artifact_ids": [
+        "span:src/model/transformer_encoder_hybrid_attention.py:51:51",
+        "span:src/model/transformer_encoder_hybrid_attention.py:51:51",
+        "span:src/model/transformer_encoder_hybrid_attention.py:56:56"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "F.softmax",
+      "meaning": "operand of normalizes",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:3673b2e5dbd63bd0"
+      ],
+      "source_artifact_ids": [
+        "span:src/model/transformer_encoder_hybrid_attention.py:56:56",
+        "span:src/model/transformer_encoder_hybrid_attention.py:51:51",
+        "span:src/model/transformer_encoder_hybrid_attention.py:56:56"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "attn_logits",
+      "meaning": "operand of normalizes",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:3673b2e5dbd63bd0"
+      ],
+      "source_artifact_ids": [
+        "span:src/model/transformer_encoder_hybrid_attention.py:56:56",
+        "span:src/model/transformer_encoder_hybrid_attention.py:51:51",
+        "span:src/model/transformer_encoder_hybrid_attention.py:56:56"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "dim=-1",
+      "meaning": "operand of normalizes",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:3673b2e5dbd63bd0"
+      ],
+      "source_artifact_ids": [
+        "span:src/model/transformer_encoder_hybrid_attention.py:56:56",
+        "span:src/model/transformer_encoder_hybrid_attention.py:51:51",
+        "span:src/model/transformer_encoder_hybrid_attention.py:56:56"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "result=attn_weights",
+      "meaning": "operand of normalizes",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:3673b2e5dbd63bd0"
+      ],
+      "source_artifact_ids": [
+        "span:src/model/transformer_encoder_hybrid_attention.py:56:56",
+        "span:src/model/transformer_encoder_hybrid_attention.py:51:51",
+        "span:src/model/transformer_encoder_hybrid_attention.py:56:56"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "EBCARDatasetReal.__init__",
+      "meaning": "operand of reads",
+      "fact_ids": [
+        "fact-O-STAGE-01-039a963a-node:32aefbb96ff8fa11"
+      ],
+      "source_artifact_ids": [
+        "span:src/dataset/ebcar_dataset.py:27:27"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "size=None",
+      "meaning": "operand of reads",
+      "fact_ids": [
+        "fact-O-STAGE-01-039a963a-node:32aefbb96ff8fa11"
+      ],
+      "source_artifact_ids": [
+        "span:src/dataset/ebcar_dataset.py:27:27"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "size is not None",
+      "meaning": "operand of branches_on",
+      "fact_ids": [
+        "fact-O-STAGE-01-039a963a-node:2911a2ecfb714992"
+      ],
+      "source_artifact_ids": [
+        "span:src/dataset/ebcar_dataset.py:48:55"
+      ],
+      "conditions": [
+        "size is not None"
+      ]
+    },
+    {
+      "symbol": "load_conteb_dataset",
+      "meaning": "operand of calls",
+      "fact_ids": [
+        "fact-O-STAGE-01-039a963a-node:36bd05a333b6a4fc"
+      ],
+      "source_artifact_ids": [
+        "span:src/dataset/__init__.py:147:152"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "HuggingFaceEmbeddings",
+      "meaning": "operand of calls",
+      "fact_ids": [
+        "fact-O-STAGE-01-039a963a-node:36bd05a333b6a4fc"
+      ],
+      "source_artifact_ids": [
+        "span:src/dataset/__init__.py:147:152"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "model_name=model_name",
+      "meaning": "operand of calls",
+      "fact_ids": [
+        "fact-O-STAGE-01-039a963a-node:36bd05a333b6a4fc"
+      ],
+      "source_artifact_ids": [
+        "span:src/dataset/__init__.py:147:152"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "model_kwargs=model_kwargs",
+      "meaning": "operand of calls",
+      "fact_ids": [
+        "fact-O-STAGE-01-039a963a-node:36bd05a333b6a4fc"
+      ],
+      "source_artifact_ids": [
+        "span:src/dataset/__init__.py:147:152"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "encode_kwargs=encode_kwargs",
+      "meaning": "operand of calls",
+      "fact_ids": [
+        "fact-O-STAGE-01-039a963a-node:36bd05a333b6a4fc"
+      ],
+      "source_artifact_ids": [
+        "span:src/dataset/__init__.py:147:152"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "show_progress=True",
+      "meaning": "operand of calls",
+      "fact_ids": [
+        "fact-O-STAGE-01-039a963a-node:36bd05a333b6a4fc"
+      ],
+      "source_artifact_ids": [
+        "span:src/dataset/__init__.py:147:152"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "result=hf",
+      "meaning": "operand of calls",
+      "fact_ids": [
+        "fact-O-STAGE-01-039a963a-node:36bd05a333b6a4fc"
+      ],
+      "source_artifact_ids": [
+        "span:src/dataset/__init__.py:147:152"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "doc['chunk_id'] == query['chunk_id']",
+      "meaning": "operand of branches_on",
+      "fact_ids": [
+        "fact-O-STAGE-01-039a963a-node:4480dac4431aabbe"
+      ],
+      "source_artifact_ids": [
+        "span:src/dataset/__init__.py:224:227"
+      ],
+      "conditions": [
+        "doc['chunk_id'] == query['chunk_id']"
+      ]
+    },
+    {
+      "symbol": "[doc['chunk']]",
+      "meaning": "operand of concatenates",
+      "fact_ids": [
+        "fact-O-STAGE-01-039a963a-node:c4189835f8e67f5e"
+      ],
+      "source_artifact_ids": [
+        "span:src/dataset/__init__.py:225:225"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "documents[:-1]",
+      "meaning": "operand of concatenates",
+      "fact_ids": [
+        "fact-O-STAGE-01-039a963a-node:c4189835f8e67f5e"
+      ],
+      "source_artifact_ids": [
+        "span:src/dataset/__init__.py:225:225"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "result=documents",
+      "meaning": "operand of concatenates",
+      "fact_ids": [
+        "fact-O-STAGE-01-039a963a-node:c4189835f8e67f5e"
+      ],
+      "source_artifact_ids": [
+        "span:src/dataset/__init__.py:225:225"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "[1]",
+      "meaning": "operand of concatenates",
+      "fact_ids": [
+        "fact-O-STAGE-01-039a963a-node:4be5b539dce0e4f4"
+      ],
+      "source_artifact_ids": [
+        "span:src/dataset/__init__.py:226:226"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "temp_label_list[:-1]",
+      "meaning": "operand of concatenates",
+      "fact_ids": [
+        "fact-O-STAGE-01-039a963a-node:4be5b539dce0e4f4"
+      ],
+      "source_artifact_ids": [
+        "span:src/dataset/__init__.py:226:226"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "result=temp_label_list",
+      "meaning": "operand of concatenates",
+      "fact_ids": [
+        "fact-O-STAGE-01-039a963a-node:4be5b539dce0e4f4"
+      ],
+      "source_artifact_ids": [
+        "span:src/dataset/__init__.py:226:226"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "processed_count",
+      "meaning": "operand of computes_formula",
+      "fact_ids": [
+        "fact-O-STAGE-01-039a963a-node:00757f21e4c9d9f3"
+      ],
+      "source_artifact_ids": [
+        "span:src/dataset/__init__.py:260:260"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "save_interval",
+      "meaning": "operand of computes_formula",
+      "fact_ids": [
+        "fact-O-STAGE-01-039a963a-node:00757f21e4c9d9f3"
+      ],
+      "source_artifact_ids": [
+        "span:src/dataset/__init__.py:260:260"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "EBCarRerankerHybridAttention.__init__",
+      "meaning": "operand of reshapes",
+      "fact_ids": [
+        "fact-O-STAGE-02-42e8d68d-node:d643b3469b0df29c"
+      ],
+      "source_artifact_ids": [
+        "span:src/model/ebcar_dedicated_attention_model.py:43:47",
+        "span:src/model/ebcar_dedicated_attention_model.py:43:47",
+        "span:src/model/ebcar_dedicated_attention_model.py:48:50"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "self.get_passage_positional_encoding(torch.tensor([list(range(5000))], device=device)).squeeze",
+      "meaning": "operand of reshapes",
+      "fact_ids": [
+        "fact-O-STAGE-02-42e8d68d-node:d643b3469b0df29c"
+      ],
+      "source_artifact_ids": [
+        "span:src/model/ebcar_dedicated_attention_model.py:43:47",
+        "span:src/model/ebcar_dedicated_attention_model.py:43:47",
+        "span:src/model/ebcar_dedicated_attention_model.py:48:50"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "0",
+      "meaning": "operand of reshapes",
+      "fact_ids": [
+        "fact-O-STAGE-02-42e8d68d-node:d643b3469b0df29c"
+      ],
+      "source_artifact_ids": [
+        "span:src/model/ebcar_dedicated_attention_model.py:43:47",
+        "span:src/model/ebcar_dedicated_attention_model.py:43:47",
+        "span:src/model/ebcar_dedicated_attention_model.py:48:50"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "result=passage_id_embedding",
+      "meaning": "operand of reshapes",
+      "fact_ids": [
+        "fact-O-STAGE-02-42e8d68d-node:d643b3469b0df29c"
+      ],
+      "source_artifact_ids": [
+        "span:src/model/ebcar_dedicated_attention_model.py:43:47",
+        "span:src/model/ebcar_dedicated_attention_model.py:43:47",
+        "span:src/model/ebcar_dedicated_attention_model.py:48:50"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "nn.Embedding.from_pretrained",
+      "meaning": "operand of calls",
+      "fact_ids": [
+        "fact-O-STAGE-02-42e8d68d-node:9a4893d308318488"
+      ],
+      "source_artifact_ids": [
+        "span:src/model/ebcar_dedicated_attention_model.py:48:50",
+        "span:src/model/ebcar_dedicated_attention_model.py:43:47",
+        "span:src/model/ebcar_dedicated_attention_model.py:48:50"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "passage_id_embedding",
+      "meaning": "operand of calls",
+      "fact_ids": [
+        "fact-O-STAGE-02-42e8d68d-node:9a4893d308318488"
+      ],
+      "source_artifact_ids": [
+        "span:src/model/ebcar_dedicated_attention_model.py:48:50",
+        "span:src/model/ebcar_dedicated_attention_model.py:43:47",
+        "span:src/model/ebcar_dedicated_attention_model.py:48:50"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "freeze=True",
+      "meaning": "operand of calls",
+      "fact_ids": [
+        "fact-O-STAGE-02-42e8d68d-node:9a4893d308318488"
+      ],
+      "source_artifact_ids": [
+        "span:src/model/ebcar_dedicated_attention_model.py:48:50",
+        "span:src/model/ebcar_dedicated_attention_model.py:43:47",
+        "span:src/model/ebcar_dedicated_attention_model.py:48:50"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "result=self.passage_id_embedding",
+      "meaning": "operand of calls",
+      "fact_ids": [
+        "fact-O-STAGE-02-42e8d68d-node:9a4893d308318488"
+      ],
+      "source_artifact_ids": [
+        "span:src/model/ebcar_dedicated_attention_model.py:48:50",
+        "span:src/model/ebcar_dedicated_attention_model.py:43:47",
+        "span:src/model/ebcar_dedicated_attention_model.py:48:50"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "self.dropout2(src2)",
+      "meaning": "operand of computes_formula",
+      "fact_ids": [
+        "fact-O-STAGE-03-2c5bd758-node:15f8ab428198f369"
+      ],
+      "source_artifact_ids": [
+        "span:src/model/transformer_encoder_hybrid_attention.py:123:123",
+        "span:src/model/transformer_encoder_hybrid_attention.py:119:119",
+        "span:src/model/transformer_encoder_hybrid_attention.py:123:123"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "return_attention",
+      "meaning": "operand of branches_on",
+      "fact_ids": [
+        "fact-O-STAGE-03-2c5bd758-node:b220afbc1e6023fe"
+      ],
+      "source_artifact_ids": [
+        "span:src/model/transformer_encoder_hybrid_attention.py:125:126"
+      ],
+      "conditions": [
+        "return_attention"
+      ]
+    },
+    {
+      "symbol": "(src, (shared_attn_weights, dedicated_attn_weights))",
+      "meaning": "operand of returns",
+      "fact_ids": [
+        "fact-O-STAGE-03-2c5bd758-node:142f7d2a2f9e8288"
+      ],
+      "source_artifact_ids": [
+        "span:src/model/transformer_encoder_hybrid_attention.py:126:126"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "torch.matmul",
+      "meaning": "operand of computes_formula",
+      "fact_ids": [
+        "fact-O-STAGE-03-2c5bd758-node:4f3a01f0d7880c82"
+      ],
+      "source_artifact_ids": [
+        "span:src/model/transformer_encoder_hybrid_attention.py:41:41"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "Q",
+      "meaning": "operand of computes_formula",
+      "fact_ids": [
+        "fact-O-STAGE-03-2c5bd758-node:4f3a01f0d7880c82"
+      ],
+      "source_artifact_ids": [
+        "span:src/model/transformer_encoder_hybrid_attention.py:41:41"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "K.transpose(-2, -1)",
+      "meaning": "operand of computes_formula",
+      "fact_ids": [
+        "fact-O-STAGE-03-2c5bd758-node:4f3a01f0d7880c82"
+      ],
+      "source_artifact_ids": [
+        "span:src/model/transformer_encoder_hybrid_attention.py:41:41"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "passages",
+      "meaning": "operand of computes_formula",
+      "fact_ids": [
+        "fact-O-STAGE-04-c50e0bef-node:4b560ac114ae99ec"
+      ],
+      "source_artifact_ids": [
+        "span:src/model/ebcar_dedicated_attention_model.py:132:132"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "document_id_embeddings",
+      "meaning": "operand of computes_formula",
+      "fact_ids": [
+        "fact-O-STAGE-04-c50e0bef-node:4b560ac114ae99ec"
+      ],
+      "source_artifact_ids": [
+        "span:src/model/ebcar_dedicated_attention_model.py:132:132"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "[pos_sim, neg_sims]",
+      "meaning": "operand of concatenates",
+      "fact_ids": [
+        "fact-O-STAGE-04-c50e0bef-node:a2dae47572460254"
+      ],
+      "source_artifact_ids": [
+        "span:src/model/ebcar_dedicated_attention_model.py:231:231"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "result=all_sims",
+      "meaning": "operand of concatenates",
+      "fact_ids": [
+        "fact-O-STAGE-04-c50e0bef-node:a2dae47572460254"
+      ],
+      "source_artifact_ids": [
+        "span:src/model/ebcar_dedicated_attention_model.py:231:231"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "loss_i.shape[0] == 0",
+      "meaning": "operand of branches_on",
+      "fact_ids": [
+        "fact-O-STAGE-04-c50e0bef-node:93633547c32d9f45"
+      ],
+      "source_artifact_ids": [
+        "span:src/model/ebcar_dedicated_attention_model.py:234:240"
+      ],
+      "conditions": [
+        "loss_i.shape[0] == 0"
+      ]
+    },
+    {
+      "symbol": "loss",
+      "meaning": "operand of returns",
+      "fact_ids": [
+        "fact-O-STAGE-04-c50e0bef-node:0c0995d424e07399"
+      ],
+      "source_artifact_ids": [
+        "span:src/model/ebcar_dedicated_attention_model.py:244:244",
+        "span:src/model/ebcar_dedicated_attention_model.py:243:243",
+        "span:src/model/ebcar_dedicated_attention_model.py:244:244"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "self.cfg.add_positional_encoding",
+      "meaning": "operand of loads_weights",
+      "fact_ids": [
+        "fact-O-STAGE-05-5b3d398a-node:26c1ec766ceee404"
+      ],
+      "source_artifact_ids": [
+        "span:src/model/ebcar_dedicated_attention_model.py:265:265",
+        "span:src/model/ebcar_dedicated_attention_model.py:265:277",
+        "span:src/model/ebcar_dedicated_attention_model.py:265:265"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "self.document_id_embedding",
+      "meaning": "operand of calls",
+      "fact_ids": [
+        "fact-O-STAGE-05-5b3d398a-node:1077d0d81c820fb0"
+      ],
+      "source_artifact_ids": [
+        "span:src/model/ebcar_dedicated_attention_model.py:267:270",
+        "span:src/model/ebcar_dedicated_attention_model.py:265:277",
+        "span:src/model/ebcar_dedicated_attention_model.py:267:270",
+        "span:src/model/ebcar_dedicated_attention_model.py:276:276"
+      ],
+      "conditions": [
+        "self.cfg.add_positional_encoding"
+      ]
+    },
+    {
+      "symbol": "document_id.long() % self.cfg.retrieval.top_k + document_id.long() // self.cfg.retrieval.top_k",
+      "meaning": "operand of calls",
+      "fact_ids": [
+        "fact-O-STAGE-05-5b3d398a-node:1077d0d81c820fb0"
+      ],
+      "source_artifact_ids": [
+        "span:src/model/ebcar_dedicated_attention_model.py:267:270",
+        "span:src/model/ebcar_dedicated_attention_model.py:265:277",
+        "span:src/model/ebcar_dedicated_attention_model.py:267:270",
+        "span:src/model/ebcar_dedicated_attention_model.py:276:276"
+      ],
+      "conditions": [
+        "self.cfg.add_positional_encoding"
+      ]
+    },
+    {
+      "symbol": "result=document_id_embeddings",
+      "meaning": "operand of calls",
+      "fact_ids": [
+        "fact-O-STAGE-05-5b3d398a-node:1077d0d81c820fb0"
+      ],
+      "source_artifact_ids": [
+        "span:src/model/ebcar_dedicated_attention_model.py:267:270",
+        "span:src/model/ebcar_dedicated_attention_model.py:265:277",
+        "span:src/model/ebcar_dedicated_attention_model.py:267:270",
+        "span:src/model/ebcar_dedicated_attention_model.py:276:276"
+      ],
+      "conditions": [
+        "self.cfg.add_positional_encoding"
+      ]
+    },
+    {
+      "symbol": "self.passage_id_embedding",
+      "meaning": "operand of calls",
+      "fact_ids": [
+        "fact-O-STAGE-05-5b3d398a-node:31075c1f6e053a85"
+      ],
+      "source_artifact_ids": [
+        "span:src/model/ebcar_dedicated_attention_model.py:271:273"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "passage_id.long()",
+      "meaning": "operand of calls",
+      "fact_ids": [
+        "fact-O-STAGE-05-5b3d398a-node:31075c1f6e053a85"
+      ],
+      "source_artifact_ids": [
+        "span:src/model/ebcar_dedicated_attention_model.py:271:273"
+      ],
+      "conditions": []
+    },
+    {
+      "symbol": "result=passage_id_embeddings",
+      "meaning": "operand of calls",
+      "fact_ids": [
+        "fact-O-STAGE-05-5b3d398a-node:31075c1f6e053a85"
+      ],
+      "source_artifact_ids": [
+        "span:src/model/ebcar_dedicated_attention_model.py:271:273"
+      ],
+      "conditions": []
+    }
+  ],
+  "equations": [
+    {
+      "equation_id": "equation:fact-O-METHOD-MAINLINE-01-c8146479-node:7fabddc9286307b4",
+      "expression": "x + y",
+      "prose_claim_id": "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:7fabddc9286307b4",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:7fabddc9286307b4"
+      ],
+      "symbol_bindings": [
+        {
+          "symbol": "x",
+          "fact_id": "fact-O-METHOD-MAINLINE-01-c8146479-node:7fabddc9286307b4",
+          "operand_role": "object",
+          "operand_value": "-pos_sim"
+        },
+        {
+          "symbol": "y",
+          "fact_id": "fact-O-METHOD-MAINLINE-01-c8146479-node:7fabddc9286307b4",
+          "operand_role": "object",
+          "operand_value": "torch.logsumexp(all_sims, dim=0)"
+        }
+      ],
+      "conditions": [],
+      "operation_predicates": [
+        "computes_formula"
+      ],
+      "operation_descriptors": [
+        "loss_i",
+        "add",
+        "computes_formula"
+      ],
+      "relation_evidence_ids": [],
+      "exact_source_digests": [
+        "sha256:8e6632c27ec31b1ea01afe61e262ab7f7ecd196e7fac48a9e206e9a032bbf2cf"
+      ],
+      "formula_role": "incidental",
+      "canonical_identity": "sha256:bdadca19d0a1e54f888a9c39d8f443a0cdab9d569e4bd7ad90f2ec3c9387045b",
+      "validation_status": "supported",
+      "validation_failures": []
+    },
+    {
+      "equation_id": "equation:fact-O-METHOD-MAINLINE-01-c8146479-node:5ff7f276f04b71a8",
+      "expression": "x + y",
+      "prose_claim_id": "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:5ff7f276f04b71a8",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:5ff7f276f04b71a8"
+      ],
+      "symbol_bindings": [
+        {
+          "symbol": "x",
+          "fact_id": "fact-O-METHOD-MAINLINE-01-c8146479-node:5ff7f276f04b71a8",
+          "operand_role": "object",
+          "operand_value": "passages + document_id_embeddings"
+        },
+        {
+          "symbol": "y",
+          "fact_id": "fact-O-METHOD-MAINLINE-01-c8146479-node:5ff7f276f04b71a8",
+          "operand_role": "object",
+          "operand_value": "passage_id_embeddings"
+        }
+      ],
+      "conditions": [],
+      "operation_predicates": [
+        "computes_formula"
+      ],
+      "operation_descriptors": [
+        "passages + document_id_embeddings",
+        "passage_id_embeddings",
+        "add",
+        "computes_formula"
+      ],
+      "relation_evidence_ids": [],
+      "exact_source_digests": [
+        "sha256:a474de6ee134c2e47b5234122a786e58c7ca6d46210f744022b14e8609830923"
+      ],
+      "formula_role": "incidental",
+      "canonical_identity": "sha256:cea637c14f002eace2b7019a3ee34d6173119abc1d186501f3ce56020807a549",
+      "validation_status": "supported",
+      "validation_failures": []
+    },
+    {
+      "equation_id": "equation:fact-O-METHOD-MAINLINE-01-c8146479-node:a6f6c00ca097eeb1",
+      "expression": "x + y",
+      "prose_claim_id": "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:a6f6c00ca097eeb1",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:a6f6c00ca097eeb1"
+      ],
+      "symbol_bindings": [
+        {
+          "symbol": "x",
+          "fact_id": "fact-O-METHOD-MAINLINE-01-c8146479-node:a6f6c00ca097eeb1",
+          "operand_role": "object",
+          "operand_value": "row"
+        },
+        {
+          "symbol": "y",
+          "fact_id": "fact-O-METHOD-MAINLINE-01-c8146479-node:a6f6c00ca097eeb1",
+          "operand_role": "object",
+          "operand_value": "1"
+        }
+      ],
+      "conditions": [],
+      "operation_predicates": [
+        "computes_formula"
+      ],
+      "operation_descriptors": [
+        "mask_row",
+        "add",
+        "computes_formula"
+      ],
+      "relation_evidence_ids": [],
+      "exact_source_digests": [
+        "sha256:63f1f8d6d312d9ca213e9dcbc3d9895f0847fd0d64577a1e21c8d09e140246c9"
+      ],
+      "formula_role": "incidental",
+      "canonical_identity": "sha256:9d4cb22dd9da1ea72ab37f17ef5c2004f9d9039fb0e9baab526a22a253316bfe",
+      "validation_status": "supported",
+      "validation_failures": []
+    },
+    {
+      "equation_id": "equation:fact-O-METHOD-MAINLINE-01-c8146479-node:4c8511d6e8fc4240",
+      "expression": "x + y",
+      "prose_claim_id": "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:4c8511d6e8fc4240",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:4c8511d6e8fc4240"
+      ],
+      "symbol_bindings": [
+        {
+          "symbol": "x",
+          "fact_id": "fact-O-METHOD-MAINLINE-01-c8146479-node:4c8511d6e8fc4240",
+          "operand_role": "object",
+          "operand_value": "shared_out"
+        },
+        {
+          "symbol": "y",
+          "fact_id": "fact-O-METHOD-MAINLINE-01-c8146479-node:4c8511d6e8fc4240",
+          "operand_role": "object",
+          "operand_value": "dedicated_out"
+        }
+      ],
+      "conditions": [],
+      "operation_predicates": [
+        "computes_formula"
+      ],
+      "operation_descriptors": [
+        "add",
+        "computes_formula"
+      ],
+      "relation_evidence_ids": [],
+      "exact_source_digests": [
+        "sha256:a3a52dcbfa9bb9789f402bdfe0f12c6ad393b9cb7d2d897d445684cab26566c3"
+      ],
+      "formula_role": "incidental",
+      "canonical_identity": "sha256:24ae7e849c80d5a510c50a3eadcaea305e4563c1cf7e631d313a664eb6ea8ffd",
+      "validation_status": "supported",
+      "validation_failures": []
+    },
+    {
+      "equation_id": "equation:fact-O-METHOD-MAINLINE-01-c8146479-node:c8936a17df7bdc83",
+      "expression": "x + y",
+      "prose_claim_id": "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:c8936a17df7bdc83",
+      "fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:c8936a17df7bdc83"
+      ],
+      "symbol_bindings": [
+        {
+          "symbol": "x",
+          "fact_id": "fact-O-METHOD-MAINLINE-01-c8146479-node:c8936a17df7bdc83",
+          "operand_role": "object",
+          "operand_value": "src"
+        },
+        {
+          "symbol": "y",
+          "fact_id": "fact-O-METHOD-MAINLINE-01-c8146479-node:c8936a17df7bdc83",
+          "operand_role": "object",
+          "operand_value": "self.dropout1(shared_out + dedicated_out)"
+        }
+      ],
+      "conditions": [],
+      "operation_predicates": [
+        "computes_formula"
+      ],
+      "operation_descriptors": [
+        "add",
+        "computes_formula"
+      ],
+      "relation_evidence_ids": [],
+      "exact_source_digests": [
+        "sha256:a3a52dcbfa9bb9789f402bdfe0f12c6ad393b9cb7d2d897d445684cab26566c3"
+      ],
+      "formula_role": "incidental",
+      "canonical_identity": "sha256:6da3417b8b30d58b0bb50476a075e2b385dc961266907dec92844507702658a4",
+      "validation_status": "supported",
+      "validation_failures": []
+    },
+    {
+      "equation_id": "equation:fact-O-STAGE-01-039a963a-node:00757f21e4c9d9f3",
+      "expression": "x % y",
+      "prose_claim_id": "claim-O-STAGE-01-039a963a-fact-O-STAGE-01-039a963a-node:00757f21e4c9d9f3",
+      "fact_ids": [
+        "fact-O-STAGE-01-039a963a-node:00757f21e4c9d9f3"
+      ],
+      "symbol_bindings": [
+        {
+          "symbol": "x",
+          "fact_id": "fact-O-STAGE-01-039a963a-node:00757f21e4c9d9f3",
+          "operand_role": "object",
+          "operand_value": "processed_count"
+        },
+        {
+          "symbol": "y",
+          "fact_id": "fact-O-STAGE-01-039a963a-node:00757f21e4c9d9f3",
+          "operand_role": "object",
+          "operand_value": "save_interval"
+        }
+      ],
+      "conditions": [],
+      "operation_predicates": [
+        "computes_formula"
+      ],
+      "operation_descriptors": [
+        "mod",
+        "computes_formula"
+      ],
+      "relation_evidence_ids": [],
+      "exact_source_digests": [
+        "sha256:692c794aa9370f3483930496f003e62e359e396270bce81a1e0441ed92bae6e2"
+      ],
+      "formula_role": "incidental",
+      "canonical_identity": "sha256:ef653bad690f7986a437d1b2ae17ad17b2bb860892500a1439c127359d891de0",
+      "validation_status": "supported",
+      "validation_failures": []
+    },
+    {
+      "equation_id": "equation:fact-O-STAGE-03-2c5bd758-node:c8936a17df7bdc83",
+      "expression": "x + y",
+      "prose_claim_id": "claim-O-STAGE-03-2c5bd758-fact-O-STAGE-03-2c5bd758-node:c8936a17df7bdc83",
+      "fact_ids": [
+        "fact-O-STAGE-03-2c5bd758-node:c8936a17df7bdc83"
+      ],
+      "symbol_bindings": [
+        {
+          "symbol": "x",
+          "fact_id": "fact-O-STAGE-03-2c5bd758-node:c8936a17df7bdc83",
+          "operand_role": "object",
+          "operand_value": "src"
+        },
+        {
+          "symbol": "y",
+          "fact_id": "fact-O-STAGE-03-2c5bd758-node:c8936a17df7bdc83",
+          "operand_role": "object",
+          "operand_value": "self.dropout1(shared_out + dedicated_out)"
+        }
+      ],
+      "conditions": [],
+      "operation_predicates": [
+        "computes_formula"
+      ],
+      "operation_descriptors": [
+        "add",
+        "computes_formula"
+      ],
+      "relation_evidence_ids": [
+        "rel:622508515b3080f4"
+      ],
+      "exact_source_digests": [
+        "sha256:cbd8bfdba9f2cd35105c071783c979f9a07c6b68f0b1f230bbfdb2c2682aa232"
+      ],
+      "formula_role": "incidental",
+      "canonical_identity": "sha256:6a1bd4c8a738526591fe234bf65e74b837d80ef1aad6cbbcabda611aefbda6db",
+      "validation_status": "supported",
+      "validation_failures": []
+    },
+    {
+      "equation_id": "equation:fact-O-STAGE-03-2c5bd758-node:15f8ab428198f369",
+      "expression": "x + y",
+      "prose_claim_id": "claim-O-STAGE-03-2c5bd758-fact-O-STAGE-03-2c5bd758-node:15f8ab428198f369",
+      "fact_ids": [
+        "fact-O-STAGE-03-2c5bd758-node:15f8ab428198f369"
+      ],
+      "symbol_bindings": [
+        {
+          "symbol": "x",
+          "fact_id": "fact-O-STAGE-03-2c5bd758-node:15f8ab428198f369",
+          "operand_role": "object",
+          "operand_value": "src"
+        },
+        {
+          "symbol": "y",
+          "fact_id": "fact-O-STAGE-03-2c5bd758-node:15f8ab428198f369",
+          "operand_role": "object",
+          "operand_value": "self.dropout2(src2)"
+        }
+      ],
+      "conditions": [],
+      "operation_predicates": [
+        "computes_formula"
+      ],
+      "operation_descriptors": [
+        "add",
+        "computes_formula"
+      ],
+      "relation_evidence_ids": [
+        "rel:622508515b3080f4"
+      ],
+      "exact_source_digests": [
+        "sha256:9aabd9b2923135df97086b3fb73c03ccdb1ad7dcf9af4c1c72101ee14ab3917f"
+      ],
+      "formula_role": "incidental",
+      "canonical_identity": "sha256:f4907e253f650e46a1025b7ea2a7c274f402b95bac0230be74bed753dde9ab9b",
+      "validation_status": "supported",
+      "validation_failures": []
+    },
+    {
+      "equation_id": "equation:fact-O-STAGE-04-c50e0bef-node:4b560ac114ae99ec",
+      "expression": "x + y",
+      "prose_claim_id": "claim-O-STAGE-04-c50e0bef-fact-O-STAGE-04-c50e0bef-node:4b560ac114ae99ec",
+      "fact_ids": [
+        "fact-O-STAGE-04-c50e0bef-node:4b560ac114ae99ec"
+      ],
+      "symbol_bindings": [
+        {
+          "symbol": "x",
+          "fact_id": "fact-O-STAGE-04-c50e0bef-node:4b560ac114ae99ec",
+          "operand_role": "object",
+          "operand_value": "passages"
+        },
+        {
+          "symbol": "y",
+          "fact_id": "fact-O-STAGE-04-c50e0bef-node:4b560ac114ae99ec",
+          "operand_role": "object",
+          "operand_value": "document_id_embeddings"
+        }
+      ],
+      "conditions": [],
+      "operation_predicates": [
+        "computes_formula"
+      ],
+      "operation_descriptors": [
+        "document_id_embeddings",
+        "add",
+        "computes_formula"
+      ],
+      "relation_evidence_ids": [],
+      "exact_source_digests": [
+        "sha256:26a5635ec4f2d1dc91895f17742349e9a47c3019353fffcd39ca4679ead9596a"
+      ],
+      "formula_role": "incidental",
+      "canonical_identity": "sha256:e33c9d3977b9b7fc231df4e10676c66ae5679c269d90cc5ce95399e89ca6f982",
+      "validation_status": "supported",
+      "validation_failures": []
+    },
+    {
+      "equation_id": "equation:fact-O-STAGE-05-5b3d398a-node:856e72eeddb87554",
+      "expression": "x + y",
+      "prose_claim_id": "claim-O-STAGE-05-5b3d398a-fact-O-STAGE-05-5b3d398a-node:856e72eeddb87554",
+      "fact_ids": [
+        "fact-O-STAGE-05-5b3d398a-node:856e72eeddb87554"
+      ],
+      "symbol_bindings": [
+        {
+          "symbol": "x",
+          "fact_id": "fact-O-STAGE-05-5b3d398a-node:856e72eeddb87554",
+          "operand_role": "object",
+          "operand_value": "passages"
+        },
+        {
+          "symbol": "y",
+          "fact_id": "fact-O-STAGE-05-5b3d398a-node:856e72eeddb87554",
+          "operand_role": "object",
+          "operand_value": "document_id_embeddings"
+        }
+      ],
+      "conditions": [],
+      "operation_predicates": [
+        "computes_formula"
+      ],
+      "operation_descriptors": [
+        "document_id_embeddings",
+        "add",
+        "computes_formula"
+      ],
+      "relation_evidence_ids": [
+        "rel:be1af249e1645ad8"
+      ],
+      "exact_source_digests": [
+        "sha256:15bad1fef3788209758122fc77f1398fff3799b733c2fe1565daca438e19b4a8"
+      ],
+      "formula_role": "incidental",
+      "canonical_identity": "sha256:74d9b5de13611e6c40426ab9ffd5ce888fbfc7f6a1ac913a978b64b2ab884128",
+      "validation_status": "supported",
+      "validation_failures": []
+    }
+  ],
+  "proof_obligations": [
+    {
+      "proof_obligation_id": "proof:equation:fact-O-METHOD-MAINLINE-01-c8146479-node:7fabddc9286307b4",
+      "statement": "The displayed expression is equivalent to the selected code operations for equation:fact-O-METHOD-MAINLINE-01-c8146479-node:7fabddc9286307b4.",
+      "assumptions": [],
+      "conclusion": "x + y",
+      "supporting_fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:7fabddc9286307b4"
+      ],
+      "derivation_steps": [
+        "Bind x to -pos_sim from fact-O-METHOD-MAINLINE-01-c8146479-node:7fabddc9286307b4.",
+        "Bind y to torch.logsumexp(all_sims, dim=0) from fact-O-METHOD-MAINLINE-01-c8146479-node:7fabddc9286307b4."
+      ],
+      "status": "supported",
+      "authority_lane": "formal_derivation",
+      "limitations": [],
+      "content_digest": "sha256:e78abb7db49de59d9b49269096cbc91a9b175083390c372f447325548d79417e"
+    },
+    {
+      "proof_obligation_id": "proof:equation:fact-O-METHOD-MAINLINE-01-c8146479-node:5ff7f276f04b71a8",
+      "statement": "The displayed expression is equivalent to the selected code operations for equation:fact-O-METHOD-MAINLINE-01-c8146479-node:5ff7f276f04b71a8.",
+      "assumptions": [],
+      "conclusion": "x + y",
+      "supporting_fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:5ff7f276f04b71a8"
+      ],
+      "derivation_steps": [
+        "Bind x to passages + document_id_embeddings from fact-O-METHOD-MAINLINE-01-c8146479-node:5ff7f276f04b71a8.",
+        "Bind y to passage_id_embeddings from fact-O-METHOD-MAINLINE-01-c8146479-node:5ff7f276f04b71a8."
+      ],
+      "status": "supported",
+      "authority_lane": "formal_derivation",
+      "limitations": [],
+      "content_digest": "sha256:cc216b5304cc3d06cfa79593ea1b9c88abb43fbe1968ad84013de888b6987733"
+    },
+    {
+      "proof_obligation_id": "proof:equation:fact-O-METHOD-MAINLINE-01-c8146479-node:a6f6c00ca097eeb1",
+      "statement": "The displayed expression is equivalent to the selected code operations for equation:fact-O-METHOD-MAINLINE-01-c8146479-node:a6f6c00ca097eeb1.",
+      "assumptions": [],
+      "conclusion": "x + y",
+      "supporting_fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:a6f6c00ca097eeb1"
+      ],
+      "derivation_steps": [
+        "Bind x to row from fact-O-METHOD-MAINLINE-01-c8146479-node:a6f6c00ca097eeb1.",
+        "Bind y to 1 from fact-O-METHOD-MAINLINE-01-c8146479-node:a6f6c00ca097eeb1."
+      ],
+      "status": "supported",
+      "authority_lane": "formal_derivation",
+      "limitations": [],
+      "content_digest": "sha256:33f407f23ce08f64409bd4473111160eb3e85aac4be1a05c44d8a0914101c007"
+    },
+    {
+      "proof_obligation_id": "proof:equation:fact-O-METHOD-MAINLINE-01-c8146479-node:4c8511d6e8fc4240",
+      "statement": "The displayed expression is equivalent to the selected code operations for equation:fact-O-METHOD-MAINLINE-01-c8146479-node:4c8511d6e8fc4240.",
+      "assumptions": [],
+      "conclusion": "x + y",
+      "supporting_fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:4c8511d6e8fc4240"
+      ],
+      "derivation_steps": [
+        "Bind x to shared_out from fact-O-METHOD-MAINLINE-01-c8146479-node:4c8511d6e8fc4240.",
+        "Bind y to dedicated_out from fact-O-METHOD-MAINLINE-01-c8146479-node:4c8511d6e8fc4240."
+      ],
+      "status": "supported",
+      "authority_lane": "formal_derivation",
+      "limitations": [],
+      "content_digest": "sha256:00c9d6cadd8871e41541597d31f28e4a0cce31772305a858e05b4b3edd3e6836"
+    },
+    {
+      "proof_obligation_id": "proof:equation:fact-O-METHOD-MAINLINE-01-c8146479-node:c8936a17df7bdc83",
+      "statement": "The displayed expression is equivalent to the selected code operations for equation:fact-O-METHOD-MAINLINE-01-c8146479-node:c8936a17df7bdc83.",
+      "assumptions": [],
+      "conclusion": "x + y",
+      "supporting_fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:c8936a17df7bdc83"
+      ],
+      "derivation_steps": [
+        "Bind x to src from fact-O-METHOD-MAINLINE-01-c8146479-node:c8936a17df7bdc83.",
+        "Bind y to self.dropout1(shared_out + dedicated_out) from fact-O-METHOD-MAINLINE-01-c8146479-node:c8936a17df7bdc83."
+      ],
+      "status": "supported",
+      "authority_lane": "formal_derivation",
+      "limitations": [],
+      "content_digest": "sha256:e71a8c2bda06ec3b1e253c6b0b70143371d9ea01aea833486d1e15a9805ca1c7"
+    },
+    {
+      "proof_obligation_id": "proof:equation:fact-O-STAGE-01-039a963a-node:00757f21e4c9d9f3",
+      "statement": "The displayed expression is equivalent to the selected code operations for equation:fact-O-STAGE-01-039a963a-node:00757f21e4c9d9f3.",
+      "assumptions": [],
+      "conclusion": "x % y",
+      "supporting_fact_ids": [
+        "fact-O-STAGE-01-039a963a-node:00757f21e4c9d9f3"
+      ],
+      "derivation_steps": [
+        "Bind x to processed_count from fact-O-STAGE-01-039a963a-node:00757f21e4c9d9f3.",
+        "Bind y to save_interval from fact-O-STAGE-01-039a963a-node:00757f21e4c9d9f3."
+      ],
+      "status": "supported",
+      "authority_lane": "formal_derivation",
+      "limitations": [],
+      "content_digest": "sha256:e06c71ac536abd5d612c1b07d003dcc72b9c1b5af4c0ff0b596555d6c5518456"
+    },
+    {
+      "proof_obligation_id": "proof:equation:fact-O-STAGE-03-2c5bd758-node:c8936a17df7bdc83",
+      "statement": "The displayed expression is equivalent to the selected code operations for equation:fact-O-STAGE-03-2c5bd758-node:c8936a17df7bdc83.",
+      "assumptions": [],
+      "conclusion": "x + y",
+      "supporting_fact_ids": [
+        "fact-O-STAGE-03-2c5bd758-node:c8936a17df7bdc83"
+      ],
+      "derivation_steps": [
+        "Bind x to src from fact-O-STAGE-03-2c5bd758-node:c8936a17df7bdc83.",
+        "Bind y to self.dropout1(shared_out + dedicated_out) from fact-O-STAGE-03-2c5bd758-node:c8936a17df7bdc83."
+      ],
+      "status": "supported",
+      "authority_lane": "formal_derivation",
+      "limitations": [],
+      "content_digest": "sha256:79d7c4156bec36161e445630ef69657f528554e93161fd0c1a33a23c12d3414c"
+    },
+    {
+      "proof_obligation_id": "proof:equation:fact-O-STAGE-03-2c5bd758-node:15f8ab428198f369",
+      "statement": "The displayed expression is equivalent to the selected code operations for equation:fact-O-STAGE-03-2c5bd758-node:15f8ab428198f369.",
+      "assumptions": [],
+      "conclusion": "x + y",
+      "supporting_fact_ids": [
+        "fact-O-STAGE-03-2c5bd758-node:15f8ab428198f369"
+      ],
+      "derivation_steps": [
+        "Bind x to src from fact-O-STAGE-03-2c5bd758-node:15f8ab428198f369.",
+        "Bind y to self.dropout2(src2) from fact-O-STAGE-03-2c5bd758-node:15f8ab428198f369."
+      ],
+      "status": "supported",
+      "authority_lane": "formal_derivation",
+      "limitations": [],
+      "content_digest": "sha256:f39fb451cb6103cbba6411050a68407e7cd0a6b1557c0170778282bebb8d7116"
+    },
+    {
+      "proof_obligation_id": "proof:equation:fact-O-STAGE-04-c50e0bef-node:4b560ac114ae99ec",
+      "statement": "The displayed expression is equivalent to the selected code operations for equation:fact-O-STAGE-04-c50e0bef-node:4b560ac114ae99ec.",
+      "assumptions": [],
+      "conclusion": "x + y",
+      "supporting_fact_ids": [
+        "fact-O-STAGE-04-c50e0bef-node:4b560ac114ae99ec"
+      ],
+      "derivation_steps": [
+        "Bind x to passages from fact-O-STAGE-04-c50e0bef-node:4b560ac114ae99ec.",
+        "Bind y to document_id_embeddings from fact-O-STAGE-04-c50e0bef-node:4b560ac114ae99ec."
+      ],
+      "status": "supported",
+      "authority_lane": "formal_derivation",
+      "limitations": [],
+      "content_digest": "sha256:eff60d03cbc7fbba6e87ab1251e1613a90f216972c90d1e764a764632de46455"
+    },
+    {
+      "proof_obligation_id": "proof:equation:fact-O-STAGE-05-5b3d398a-node:856e72eeddb87554",
+      "statement": "The displayed expression is equivalent to the selected code operations for equation:fact-O-STAGE-05-5b3d398a-node:856e72eeddb87554.",
+      "assumptions": [],
+      "conclusion": "x + y",
+      "supporting_fact_ids": [
+        "fact-O-STAGE-05-5b3d398a-node:856e72eeddb87554"
+      ],
+      "derivation_steps": [
+        "Bind x to passages from fact-O-STAGE-05-5b3d398a-node:856e72eeddb87554.",
+        "Bind y to document_id_embeddings from fact-O-STAGE-05-5b3d398a-node:856e72eeddb87554."
+      ],
+      "status": "supported",
+      "authority_lane": "formal_derivation",
+      "limitations": [],
+      "content_digest": "sha256:e0fafdc0bdb489afc4a40f1313755e2bec64d23e7116b5725f11c53e0d8c7d09"
+    }
+  ],
+  "risks": [
+    {
+      "risk_id": "risk:missing_assumptions",
+      "kind": "missing_assumptions",
+      "message": "A formal expression is available, but no independent assumptions were supplied.",
+      "fact_ids": [],
+      "blocking": false
+    }
+  ],
+  "proposal_items": [],
+  "content_digest": "sha256:6e0b6aba63d6d081ee7e177306210086258a656b6de59148432c220f90c375f6"
+}

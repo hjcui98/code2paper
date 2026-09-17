@@ -1,0 +1,25 @@
+{
+  "accepted": false,
+  "attempt": 3,
+  "content_acceptance_status": "rejected",
+  "content_digest": "sha256:aa48ede9120dac6a8001f00f1e0ef9cd6d8b9a578d5db1c4038f01db7b4b8959",
+  "failures": [
+    "transaction_metadata_missing",
+    "invalid_count",
+    "invalid_witness_count",
+    "authority_violation_count",
+    "unified_actual_request_rejected:attempt_limit_exhausted:inv:writer:MA-S3:page:751aa8b5352377a0766e7f7416c05553647380df74d5295f04d695646a47b815:3>2",
+    "paragraph_metadata_missing"
+  ],
+  "invocation_id": "inv:writer:MA-S3:page:751aa8b5352377a0766e7f7416c05553647380df74d5295f04d695646a47b815",
+  "plan_digest": "sha256:1574681d5f387963065f4c115ff9cfdb38d2d70ba956d834e9c6d027b2e5356e",
+  "receipt_digest": "sha256:15ca5fee77b1631b49566bda8eee1b6eabae925f49185216b8b05f11e4ce6f41",
+  "repair_committed": false,
+  "response_text": "",
+  "resume_eligible": false,
+  "schema_version": "1.0",
+  "transport_response_status": "empty",
+  "transport_status": "rejected",
+  "transport_task_status": "failed",
+  "validator": "writer-paragraph-transaction-v1"
+}

@@ -1,0 +1,13 @@
+{
+  "attempt": 1,
+  "fragment": {
+    "blocked_reason": "",
+    "consumer_role": "writer",
+    "page_id": "page:9f593df0feed4d367807bcffe418706ee95611c2342ce5f33bb5ce7f9001be20",
+    "response_hash": "sha256:aad70190e33e3f921e3fad0fef356b4ac5630d367ee4319e09cde83325309262",
+    "response_text": "{\n  \"paragraphs\": [\n    {\n      \"paragraph_id\": \"MA-S3:P1__f9\",\n      \"paragraph_markdown\": \"The per-sample similarity vector is indexed by a negative mask to isolate the similarity scores corresponding to negative passages. The per-sample contrastive loss is then computed as the negative of the positive similarity score added to the log-sum-exp of the full similarity set along its first dimension, yielding the InfoNCE-style objective for each sample. Each resulting loss value is accumulated into a running collection across samples. A guard condition checks whether the loss tensor for the current sample contains zero elements; when this condition holds, a diagnostic message is emitted indicating that no positive passages were found for that sample, and the positive mask is printed for inspection.\"\n    },\n    {\n      \"paragraph_id\": \"MA-S3:P1__f10\",\n      \"paragraph_markdown\": \"Under the same zero-element guard condition, additional diagnostic output is produced: the negative mask, the per-sample similarity vector, the per-sample label tensor, and the full similarity matrix are each printed to the standard output stream, facilitating inspection of the intermediate quantities that contributed to the empty loss.\"\n    }\n  ],\n  \"section_id\": \"MA-S3\"\n}",
+    "section_id": "MA-S3"
+  },
+  "invocation_id": "inv:writer:MA-S3:page:9f593df0feed4d367807bcffe418706ee95611c2342ce5f33bb5ce7f9001be20",
+  "schema_version": "2.0"
+}

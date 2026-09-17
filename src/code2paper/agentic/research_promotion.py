@@ -589,7 +589,11 @@ def _apply_terminal_promotion_dispositions(
             for node_id in record.behavior_node_ids
             if node_span_ids.get(node_id) in lineage["span_ids"]
         }
-        if record.fact_ids and set(record.fact_ids) & lineage["fact_ids"]:
+        if (
+            record.behavior_node_ids
+            and record.fact_ids
+            and set(record.fact_ids) & lineage["fact_ids"]
+        ):
             matched_claim_ids = tuple(dict.fromkeys(
                 claim_id
                 for fact_id in record.fact_ids

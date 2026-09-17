@@ -1,0 +1,3363 @@
+{
+  "plan_id": "intent-narrative-v4",
+  "method_name": "",
+  "sections": [
+    {
+      "section_id": "MA-S1",
+      "heading": "Motivation: efficiency and cross‑passage inference challenges in existing rerankers.",
+      "reader_question": "How does this setup realize Motivation: efficiency and cross‑passage inference challenges in existing rerankers?",
+      "argument_unit_ids": [
+        "MA-S1:unit-1",
+        "MA-S1:unit-2"
+      ],
+      "moves": [],
+      "paragraphs": [
+        {
+          "paragraph_id": "MA-S1:P1",
+          "paragraph_role": "step_sequence",
+          "argument_unit_ids": [],
+          "required_facet_ids": [],
+          "required_field_candidate_ids": [],
+          "support_slot_ids": [],
+          "required_publication_slot_ids": [],
+          "ordered_semantic_slot_ids": [],
+          "required_edge_ids": [],
+          "formula_obligation_ids": [],
+          "expected_sentence_range": [
+            1,
+            4
+          ],
+          "transition_from": "",
+          "transition_to": "",
+          "witness_contract": {
+            "schema_version": "1.0",
+            "paragraph_id": "MA-S1:P1",
+            "rhetorical_goal": "",
+            "targets": [],
+            "content_digest": "sha256:bc91343e57be4d9bb7dcfbc37bf1f7d8bd7df4cbff627d3a5cb72b4c195ca01d"
+          },
+          "content_digest": "sha256:b8e767c249630d0fe7b93dbfd145d6e2fda9bc22736d06ae8e6a579b56c2d2f8"
+        },
+        {
+          "paragraph_id": "MA-S1:P2",
+          "paragraph_role": "step_sequence",
+          "argument_unit_ids": [],
+          "required_facet_ids": [],
+          "required_field_candidate_ids": [],
+          "support_slot_ids": [],
+          "required_publication_slot_ids": [],
+          "ordered_semantic_slot_ids": [],
+          "required_edge_ids": [],
+          "formula_obligation_ids": [],
+          "expected_sentence_range": [
+            1,
+            4
+          ],
+          "transition_from": "MA-S1:P1",
+          "transition_to": "",
+          "witness_contract": {
+            "schema_version": "1.0",
+            "paragraph_id": "MA-S1:P2",
+            "rhetorical_goal": "",
+            "targets": [],
+            "content_digest": "sha256:69525be12a24b0569a3b3dba271f09c4acb95e599f73fe222ecda59a100555dc"
+          },
+          "content_digest": "sha256:1c8e242c9402745b3153a54a6e6cd7ad128a0d3fe2a4794e53248080c0108918"
+        }
+      ],
+      "dependencies": [],
+      "unresolved_inputs": [],
+      "depth_budget": 2,
+      "page_budget": 2.0,
+      "incomplete": false,
+      "story_node_ids": [],
+      "heading_constraints": [],
+      "primary_concept_keys": [],
+      "supporting_concept_keys": [],
+      "audit_only_concept_keys": [],
+      "primary_brief_ids": [],
+      "supporting_brief_ids": [],
+      "required_dataflow_relation_ids": [],
+      "formula_obligation_ids": [],
+      "formula_not_applicable": false,
+      "formula_not_applicable_reason": "",
+      "open_slots": [],
+      "content_digest": "sha256:94c799d97c9b4c03b5330965d2800ab2cbbc23a42a80218411fae2296e071d6d"
+    },
+    {
+      "section_id": "MA-S2",
+      "heading": "Embedding‑based reranking formulation and overall framework.",
+      "reader_question": "How does this setup realize Embedding‑based reranking formulation and overall framework?",
+      "argument_unit_ids": [
+        "MA-S2:unit"
+      ],
+      "moves": [],
+      "paragraphs": [
+        {
+          "paragraph_id": "MA-S2:P1",
+          "paragraph_role": "step_sequence",
+          "argument_unit_ids": [],
+          "required_facet_ids": [],
+          "required_field_candidate_ids": [],
+          "support_slot_ids": [],
+          "required_publication_slot_ids": [],
+          "ordered_semantic_slot_ids": [],
+          "required_edge_ids": [],
+          "formula_obligation_ids": [],
+          "expected_sentence_range": [
+            1,
+            4
+          ],
+          "transition_from": "",
+          "transition_to": "",
+          "witness_contract": {
+            "schema_version": "1.0",
+            "paragraph_id": "MA-S2:P1",
+            "rhetorical_goal": "",
+            "targets": [],
+            "content_digest": "sha256:3fad2446bfcdac5e4b5d4f5daa788e7d91d0ddf8a993c6deb5142f648d6a89e7"
+          },
+          "content_digest": "sha256:bb8ceec1860e3bb8055b0caf1af35c4173ee2c7edef9c723287540b136e27986"
+        },
+        {
+          "paragraph_id": "MA-S2:P2",
+          "paragraph_role": "step_sequence",
+          "argument_unit_ids": [],
+          "required_facet_ids": [],
+          "required_field_candidate_ids": [],
+          "support_slot_ids": [],
+          "required_publication_slot_ids": [],
+          "ordered_semantic_slot_ids": [],
+          "required_edge_ids": [],
+          "formula_obligation_ids": [],
+          "expected_sentence_range": [
+            1,
+            4
+          ],
+          "transition_from": "MA-S2:P1",
+          "transition_to": "",
+          "witness_contract": {
+            "schema_version": "1.0",
+            "paragraph_id": "MA-S2:P2",
+            "rhetorical_goal": "",
+            "targets": [],
+            "content_digest": "sha256:84b8a18f80b2d08f446b4973580be5a7e1b9faff9baa104bccb3c4b51b2c9c6f"
+          },
+          "content_digest": "sha256:9efa2096cbad1c93ea82616c106eb0ec876101f572fbd4d44c308662e7f4c0cb"
+        }
+      ],
+      "dependencies": [],
+      "unresolved_inputs": [],
+      "depth_budget": 2,
+      "page_budget": 2.0,
+      "incomplete": false,
+      "story_node_ids": [],
+      "heading_constraints": [],
+      "primary_concept_keys": [],
+      "supporting_concept_keys": [],
+      "audit_only_concept_keys": [],
+      "primary_brief_ids": [],
+      "supporting_brief_ids": [],
+      "required_dataflow_relation_ids": [],
+      "formula_obligation_ids": [],
+      "formula_not_applicable": false,
+      "formula_not_applicable_reason": "",
+      "open_slots": [],
+      "content_digest": "sha256:94c122621afee81ff2eaea6f06e280945618d0e147fabdda75d01801acee7ea3"
+    },
+    {
+      "section_id": "MA-S3",
+      "heading": "Architecture details: enriching embeddings with document ID and position",
+      "reader_question": "How does this setup realize Architecture details: enriching embeddings with document ID and position, the Transformer encoder with hybrid attention (shared full + dedicated masked)?",
+      "argument_unit_ids": [
+        "MA-S3:unit-1",
+        "MA-S3:unit-2",
+        "MA-S3:unit-3",
+        "MA-S3:unit-4",
+        "MA-S3:unit-5",
+        "MA-S3:unit-6",
+        "MA-S3:unit-7",
+        "MA-S3:unit-8",
+        "MA-S3:unit-9",
+        "MA-S3:unit-10",
+        "MA-S3:unit-11",
+        "MA-S3:unit-12",
+        "MA-S3:unit-13",
+        "MA-S3:unit-14",
+        "MA-S3:unit-15"
+      ],
+      "moves": [],
+      "paragraphs": [
+        {
+          "paragraph_id": "MA-S3:P1__f1",
+          "paragraph_role": "step_sequence",
+          "argument_unit_ids": [],
+          "required_facet_ids": [],
+          "required_field_candidate_ids": [],
+          "support_slot_ids": [],
+          "required_publication_slot_ids": [],
+          "ordered_semantic_slot_ids": [],
+          "required_edge_ids": [],
+          "formula_obligation_ids": [],
+          "expected_sentence_range": [
+            1,
+            4
+          ],
+          "transition_from": "",
+          "transition_to": "",
+          "witness_contract": null,
+          "content_digest": "sha256:2ca91a4c4d442ff745e82126221313d7c6e81af6dcdee341b5f23a89b85461c0"
+        },
+        {
+          "paragraph_id": "MA-S3:P1__f2",
+          "paragraph_role": "step_sequence",
+          "argument_unit_ids": [],
+          "required_facet_ids": [],
+          "required_field_candidate_ids": [],
+          "support_slot_ids": [],
+          "required_publication_slot_ids": [],
+          "ordered_semantic_slot_ids": [],
+          "required_edge_ids": [],
+          "formula_obligation_ids": [],
+          "expected_sentence_range": [
+            1,
+            4
+          ],
+          "transition_from": "",
+          "transition_to": "",
+          "witness_contract": null,
+          "content_digest": "sha256:ba2830e929da32aa8cd1530100fec61a92bf76d8eae9759aed8e80eab05329e4"
+        },
+        {
+          "paragraph_id": "MA-S3:P1__f3",
+          "paragraph_role": "step_sequence",
+          "argument_unit_ids": [],
+          "required_facet_ids": [],
+          "required_field_candidate_ids": [],
+          "support_slot_ids": [],
+          "required_publication_slot_ids": [],
+          "ordered_semantic_slot_ids": [],
+          "required_edge_ids": [],
+          "formula_obligation_ids": [],
+          "expected_sentence_range": [
+            1,
+            4
+          ],
+          "transition_from": "",
+          "transition_to": "",
+          "witness_contract": null,
+          "content_digest": "sha256:c83f902d9f9ba342aedcba9d03278a376784a1a3b37e1073258b5376900725c7"
+        },
+        {
+          "paragraph_id": "MA-S3:P1__f4",
+          "paragraph_role": "step_sequence",
+          "argument_unit_ids": [],
+          "required_facet_ids": [],
+          "required_field_candidate_ids": [],
+          "support_slot_ids": [],
+          "required_publication_slot_ids": [],
+          "ordered_semantic_slot_ids": [],
+          "required_edge_ids": [],
+          "formula_obligation_ids": [],
+          "expected_sentence_range": [
+            1,
+            4
+          ],
+          "transition_from": "",
+          "transition_to": "",
+          "witness_contract": null,
+          "content_digest": "sha256:f43c28ad6d22887a78f6963328955771e7a509e2b4fa877f23dbf1d9aa6bede1"
+        },
+        {
+          "paragraph_id": "MA-S3:P1__f5",
+          "paragraph_role": "step_sequence",
+          "argument_unit_ids": [],
+          "required_facet_ids": [],
+          "required_field_candidate_ids": [],
+          "support_slot_ids": [],
+          "required_publication_slot_ids": [],
+          "ordered_semantic_slot_ids": [],
+          "required_edge_ids": [],
+          "formula_obligation_ids": [],
+          "expected_sentence_range": [
+            1,
+            4
+          ],
+          "transition_from": "",
+          "transition_to": "",
+          "witness_contract": null,
+          "content_digest": "sha256:5ca22733581398d07a42327135ceedb94085619cb844ddfdca922f22dad8018e"
+        },
+        {
+          "paragraph_id": "MA-S3:P1__f6",
+          "paragraph_role": "step_sequence",
+          "argument_unit_ids": [],
+          "required_facet_ids": [],
+          "required_field_candidate_ids": [],
+          "support_slot_ids": [],
+          "required_publication_slot_ids": [],
+          "ordered_semantic_slot_ids": [],
+          "required_edge_ids": [],
+          "formula_obligation_ids": [],
+          "expected_sentence_range": [
+            1,
+            4
+          ],
+          "transition_from": "",
+          "transition_to": "",
+          "witness_contract": null,
+          "content_digest": "sha256:6a7f046cf28db113fdd3e40843f766344a0e8352885a3d4dd00ec0ae0682cea9"
+        },
+        {
+          "paragraph_id": "MA-S3:P1__f7",
+          "paragraph_role": "step_sequence",
+          "argument_unit_ids": [],
+          "required_facet_ids": [],
+          "required_field_candidate_ids": [],
+          "support_slot_ids": [],
+          "required_publication_slot_ids": [],
+          "ordered_semantic_slot_ids": [],
+          "required_edge_ids": [],
+          "formula_obligation_ids": [],
+          "expected_sentence_range": [
+            1,
+            4
+          ],
+          "transition_from": "",
+          "transition_to": "",
+          "witness_contract": null,
+          "content_digest": "sha256:1ab6e1689f9bbe8b3427b3040fef7022c85e4144beef146569eabc29b094d4fa"
+        },
+        {
+          "paragraph_id": "MA-S3:P1__f8",
+          "paragraph_role": "step_sequence",
+          "argument_unit_ids": [],
+          "required_facet_ids": [],
+          "required_field_candidate_ids": [],
+          "support_slot_ids": [],
+          "required_publication_slot_ids": [],
+          "ordered_semantic_slot_ids": [],
+          "required_edge_ids": [],
+          "formula_obligation_ids": [],
+          "expected_sentence_range": [
+            1,
+            4
+          ],
+          "transition_from": "",
+          "transition_to": "",
+          "witness_contract": null,
+          "content_digest": "sha256:7fcf87f87bebdfe5caa5bb2840d3ce49ad1d8707fcd736081f0120de60dbfabc"
+        },
+        {
+          "paragraph_id": "MA-S3:P1__f9",
+          "paragraph_role": "step_sequence",
+          "argument_unit_ids": [],
+          "required_facet_ids": [],
+          "required_field_candidate_ids": [],
+          "support_slot_ids": [],
+          "required_publication_slot_ids": [],
+          "ordered_semantic_slot_ids": [],
+          "required_edge_ids": [],
+          "formula_obligation_ids": [],
+          "expected_sentence_range": [
+            1,
+            4
+          ],
+          "transition_from": "",
+          "transition_to": "",
+          "witness_contract": null,
+          "content_digest": "sha256:771b0d12f4b5aae0f0b9035d64df61a9d67872ba5ac497a31522286d441bf4a3"
+        },
+        {
+          "paragraph_id": "MA-S3:P1__f10",
+          "paragraph_role": "step_sequence",
+          "argument_unit_ids": [],
+          "required_facet_ids": [],
+          "required_field_candidate_ids": [],
+          "support_slot_ids": [],
+          "required_publication_slot_ids": [],
+          "ordered_semantic_slot_ids": [],
+          "required_edge_ids": [],
+          "formula_obligation_ids": [],
+          "expected_sentence_range": [
+            1,
+            4
+          ],
+          "transition_from": "",
+          "transition_to": "",
+          "witness_contract": null,
+          "content_digest": "sha256:00d12bf9c92d4944e49bfb9107a8737a1d16b83c84e821724b964b8457ac7bbd"
+        },
+        {
+          "paragraph_id": "MA-S3:P2__f1",
+          "paragraph_role": "step_sequence",
+          "argument_unit_ids": [],
+          "required_facet_ids": [],
+          "required_field_candidate_ids": [],
+          "support_slot_ids": [],
+          "required_publication_slot_ids": [],
+          "ordered_semantic_slot_ids": [],
+          "required_edge_ids": [],
+          "formula_obligation_ids": [],
+          "expected_sentence_range": [
+            1,
+            4
+          ],
+          "transition_from": "MA-S3:P1",
+          "transition_to": "",
+          "witness_contract": null,
+          "content_digest": "sha256:1d7b05bf9e101830cf24776b0ddedcd5931d1b1f3812f55a1968a69ce33b403c"
+        },
+        {
+          "paragraph_id": "MA-S3:P2__f2",
+          "paragraph_role": "step_sequence",
+          "argument_unit_ids": [],
+          "required_facet_ids": [],
+          "required_field_candidate_ids": [],
+          "support_slot_ids": [],
+          "required_publication_slot_ids": [],
+          "ordered_semantic_slot_ids": [],
+          "required_edge_ids": [],
+          "formula_obligation_ids": [],
+          "expected_sentence_range": [
+            1,
+            4
+          ],
+          "transition_from": "",
+          "transition_to": "",
+          "witness_contract": null,
+          "content_digest": "sha256:41ed1d2cb93ad98e339205d9070b3c276c2b9d82360c40d72d9638e4f021ae8d"
+        },
+        {
+          "paragraph_id": "MA-S3:P2__f3",
+          "paragraph_role": "step_sequence",
+          "argument_unit_ids": [],
+          "required_facet_ids": [],
+          "required_field_candidate_ids": [],
+          "support_slot_ids": [],
+          "required_publication_slot_ids": [],
+          "ordered_semantic_slot_ids": [],
+          "required_edge_ids": [],
+          "formula_obligation_ids": [],
+          "expected_sentence_range": [
+            1,
+            4
+          ],
+          "transition_from": "",
+          "transition_to": "",
+          "witness_contract": null,
+          "content_digest": "sha256:3e71a0d54e2accb01572e19678f6dacace14ab0bc4a5dae0a11cdc10bd9a45b1"
+        },
+        {
+          "paragraph_id": "MA-S3:P2__f4",
+          "paragraph_role": "step_sequence",
+          "argument_unit_ids": [],
+          "required_facet_ids": [],
+          "required_field_candidate_ids": [],
+          "support_slot_ids": [],
+          "required_publication_slot_ids": [],
+          "ordered_semantic_slot_ids": [],
+          "required_edge_ids": [],
+          "formula_obligation_ids": [],
+          "expected_sentence_range": [
+            1,
+            4
+          ],
+          "transition_from": "",
+          "transition_to": "",
+          "witness_contract": null,
+          "content_digest": "sha256:d4cc9836d52b918af6b59b9ef34bb6d2b396134dfdf6cb12a5f19e75a5a37c05"
+        },
+        {
+          "paragraph_id": "MA-S3:P2__f5",
+          "paragraph_role": "step_sequence",
+          "argument_unit_ids": [],
+          "required_facet_ids": [],
+          "required_field_candidate_ids": [],
+          "support_slot_ids": [],
+          "required_publication_slot_ids": [],
+          "ordered_semantic_slot_ids": [],
+          "required_edge_ids": [],
+          "formula_obligation_ids": [],
+          "expected_sentence_range": [
+            1,
+            4
+          ],
+          "transition_from": "",
+          "transition_to": "",
+          "witness_contract": null,
+          "content_digest": "sha256:450552f4132f41b96444d018ec83d04e24eedbcee3071ea3a7a8d44100937fd7"
+        },
+        {
+          "paragraph_id": "MA-S3:P2__f6",
+          "paragraph_role": "step_sequence",
+          "argument_unit_ids": [],
+          "required_facet_ids": [],
+          "required_field_candidate_ids": [],
+          "support_slot_ids": [],
+          "required_publication_slot_ids": [],
+          "ordered_semantic_slot_ids": [],
+          "required_edge_ids": [],
+          "formula_obligation_ids": [],
+          "expected_sentence_range": [
+            1,
+            4
+          ],
+          "transition_from": "",
+          "transition_to": "",
+          "witness_contract": null,
+          "content_digest": "sha256:4c027ea8c5f5f0e8f0fe9cd3fa24880c6e178433a2a7c37becb9eda2b96e432d"
+        },
+        {
+          "paragraph_id": "MA-S3:P2__f7",
+          "paragraph_role": "step_sequence",
+          "argument_unit_ids": [],
+          "required_facet_ids": [],
+          "required_field_candidate_ids": [],
+          "support_slot_ids": [],
+          "required_publication_slot_ids": [],
+          "ordered_semantic_slot_ids": [],
+          "required_edge_ids": [],
+          "formula_obligation_ids": [],
+          "expected_sentence_range": [
+            1,
+            4
+          ],
+          "transition_from": "",
+          "transition_to": "",
+          "witness_contract": null,
+          "content_digest": "sha256:17606e271b317edfbb7957dca07fa09eb72b354aa47c54972ce539be4e7bb223"
+        },
+        {
+          "paragraph_id": "MA-S3:P3",
+          "paragraph_role": "step_sequence",
+          "argument_unit_ids": [],
+          "required_facet_ids": [],
+          "required_field_candidate_ids": [],
+          "support_slot_ids": [],
+          "required_publication_slot_ids": [],
+          "ordered_semantic_slot_ids": [],
+          "required_edge_ids": [],
+          "formula_obligation_ids": [],
+          "expected_sentence_range": [
+            1,
+            4
+          ],
+          "transition_from": "MA-S3:P2",
+          "transition_to": "",
+          "witness_contract": {
+            "schema_version": "1.0",
+            "paragraph_id": "MA-S3:P3",
+            "rhetorical_goal": "",
+            "targets": [],
+            "content_digest": "sha256:d313a3a7784e9bc01ac682543e01576e049f5e93111c4e0e55c87f3192a3e2f3"
+          },
+          "content_digest": "sha256:2e3c8bc3a3cbdad48aeaf570edebab9abfc75c35b95bafa1fdb990972fe3ada5"
+        },
+        {
+          "paragraph_id": "MA-S3:P4",
+          "paragraph_role": "step_sequence",
+          "argument_unit_ids": [],
+          "required_facet_ids": [],
+          "required_field_candidate_ids": [],
+          "support_slot_ids": [],
+          "required_publication_slot_ids": [],
+          "ordered_semantic_slot_ids": [],
+          "required_edge_ids": [],
+          "formula_obligation_ids": [],
+          "expected_sentence_range": [
+            1,
+            4
+          ],
+          "transition_from": "MA-S3:P3",
+          "transition_to": "",
+          "witness_contract": {
+            "schema_version": "1.0",
+            "paragraph_id": "MA-S3:P4",
+            "rhetorical_goal": "",
+            "targets": [],
+            "content_digest": "sha256:cd626b6bf2846d192d71c0cf3f70c0e29a69fabc6b4bd766cf03e8a0d49b4257"
+          },
+          "content_digest": "sha256:d51a574ebce6c4800bc8cc4016272228c60bad5301799f06cfd8e7b0027f6a93"
+        },
+        {
+          "paragraph_id": "MA-S3:P5",
+          "paragraph_role": "step_sequence",
+          "argument_unit_ids": [],
+          "required_facet_ids": [],
+          "required_field_candidate_ids": [],
+          "support_slot_ids": [],
+          "required_publication_slot_ids": [],
+          "ordered_semantic_slot_ids": [],
+          "required_edge_ids": [],
+          "formula_obligation_ids": [],
+          "expected_sentence_range": [
+            1,
+            4
+          ],
+          "transition_from": "MA-S3:P4",
+          "transition_to": "",
+          "witness_contract": {
+            "schema_version": "1.0",
+            "paragraph_id": "MA-S3:P5",
+            "rhetorical_goal": "",
+            "targets": [],
+            "content_digest": "sha256:461774ba66f5ba2581ab28faf2eae3f576056a669a8a48d27b0d44730bc3606f"
+          },
+          "content_digest": "sha256:acd3c38cf5cef6dc1f67eb1f99e576f8ae5020a676afd6fd0db4c27f00ef56e5"
+        },
+        {
+          "paragraph_id": "MA-S3:P6",
+          "paragraph_role": "step_sequence",
+          "argument_unit_ids": [],
+          "required_facet_ids": [],
+          "required_field_candidate_ids": [],
+          "support_slot_ids": [],
+          "required_publication_slot_ids": [],
+          "ordered_semantic_slot_ids": [],
+          "required_edge_ids": [],
+          "formula_obligation_ids": [],
+          "expected_sentence_range": [
+            1,
+            4
+          ],
+          "transition_from": "MA-S3:P5",
+          "transition_to": "",
+          "witness_contract": {
+            "schema_version": "1.0",
+            "paragraph_id": "MA-S3:P6",
+            "rhetorical_goal": "",
+            "targets": [],
+            "content_digest": "sha256:85c9cb6e86736d7d47d81c8c10b550760789b099ecba22caba65bfa5ad5bd5d1"
+          },
+          "content_digest": "sha256:5a2ac4f3f13711af5bd0b324a0c2124be67f48c983a6c28a8e271a17e5e4c80b"
+        },
+        {
+          "paragraph_id": "MA-S3:P7",
+          "paragraph_role": "step_sequence",
+          "argument_unit_ids": [],
+          "required_facet_ids": [],
+          "required_field_candidate_ids": [],
+          "support_slot_ids": [],
+          "required_publication_slot_ids": [],
+          "ordered_semantic_slot_ids": [],
+          "required_edge_ids": [],
+          "formula_obligation_ids": [],
+          "expected_sentence_range": [
+            1,
+            4
+          ],
+          "transition_from": "MA-S3:P6",
+          "transition_to": "",
+          "witness_contract": {
+            "schema_version": "1.0",
+            "paragraph_id": "MA-S3:P7",
+            "rhetorical_goal": "",
+            "targets": [],
+            "content_digest": "sha256:0b302570c35b94bed3df0d3749387df1f662c10c134973d9523975d35230f345"
+          },
+          "content_digest": "sha256:b3a9570f535d17ac08c249b335650ad4399839cb8d5faffd615cfa953a516872"
+        },
+        {
+          "paragraph_id": "MA-S3:P8",
+          "paragraph_role": "step_sequence",
+          "argument_unit_ids": [],
+          "required_facet_ids": [],
+          "required_field_candidate_ids": [],
+          "support_slot_ids": [],
+          "required_publication_slot_ids": [],
+          "ordered_semantic_slot_ids": [],
+          "required_edge_ids": [],
+          "formula_obligation_ids": [],
+          "expected_sentence_range": [
+            1,
+            4
+          ],
+          "transition_from": "MA-S3:P7",
+          "transition_to": "",
+          "witness_contract": {
+            "schema_version": "1.0",
+            "paragraph_id": "MA-S3:P8",
+            "rhetorical_goal": "",
+            "targets": [],
+            "content_digest": "sha256:38d902ff2cd9da70cb4bbacac93d7d257900c4ffaf2f217da558d86b36f8fdcb"
+          },
+          "content_digest": "sha256:4009b0f19432268d85245364bf85f738958647635138224605ea06967ca06016"
+        },
+        {
+          "paragraph_id": "MA-S3:P9",
+          "paragraph_role": "step_sequence",
+          "argument_unit_ids": [],
+          "required_facet_ids": [],
+          "required_field_candidate_ids": [],
+          "support_slot_ids": [],
+          "required_publication_slot_ids": [],
+          "ordered_semantic_slot_ids": [],
+          "required_edge_ids": [],
+          "formula_obligation_ids": [],
+          "expected_sentence_range": [
+            1,
+            4
+          ],
+          "transition_from": "MA-S3:P8",
+          "transition_to": "",
+          "witness_contract": {
+            "schema_version": "1.0",
+            "paragraph_id": "MA-S3:P9",
+            "rhetorical_goal": "",
+            "targets": [],
+            "content_digest": "sha256:6431181e06a224d8e83f22af7031ea3ef5c6721eb04781a35c487bbf8f3be6aa"
+          },
+          "content_digest": "sha256:5fb13b373b542e88c56d8fa2170a95379ae9aafc2ece105333e297ce789ba977"
+        },
+        {
+          "paragraph_id": "MA-S3:P10",
+          "paragraph_role": "step_sequence",
+          "argument_unit_ids": [],
+          "required_facet_ids": [],
+          "required_field_candidate_ids": [],
+          "support_slot_ids": [],
+          "required_publication_slot_ids": [],
+          "ordered_semantic_slot_ids": [],
+          "required_edge_ids": [],
+          "formula_obligation_ids": [],
+          "expected_sentence_range": [
+            1,
+            4
+          ],
+          "transition_from": "MA-S3:P9",
+          "transition_to": "",
+          "witness_contract": {
+            "schema_version": "1.0",
+            "paragraph_id": "MA-S3:P10",
+            "rhetorical_goal": "",
+            "targets": [],
+            "content_digest": "sha256:d8b027e93470a572a892c5b7e13ed2a2f666e3d2f227b157dbe7722aec66df23"
+          },
+          "content_digest": "sha256:8130e275f6c8bb62deca96fffdf5dce136fc60a4083ef41f80bf395621a93726"
+        },
+        {
+          "paragraph_id": "MA-S3:P11",
+          "paragraph_role": "step_sequence",
+          "argument_unit_ids": [],
+          "required_facet_ids": [],
+          "required_field_candidate_ids": [],
+          "support_slot_ids": [],
+          "required_publication_slot_ids": [],
+          "ordered_semantic_slot_ids": [],
+          "required_edge_ids": [],
+          "formula_obligation_ids": [],
+          "expected_sentence_range": [
+            1,
+            4
+          ],
+          "transition_from": "MA-S3:P10",
+          "transition_to": "",
+          "witness_contract": {
+            "schema_version": "1.0",
+            "paragraph_id": "MA-S3:P11",
+            "rhetorical_goal": "",
+            "targets": [],
+            "content_digest": "sha256:5228ed3daef19846a942facdd55a9a3c070f68f4e1376e880be8f8bffee89a19"
+          },
+          "content_digest": "sha256:8491f8bdcd13ecc041ab99fe4b32ca0a16faa24f921ef279785540c563f065e6"
+        },
+        {
+          "paragraph_id": "MA-S3:P12",
+          "paragraph_role": "step_sequence",
+          "argument_unit_ids": [],
+          "required_facet_ids": [],
+          "required_field_candidate_ids": [],
+          "support_slot_ids": [],
+          "required_publication_slot_ids": [],
+          "ordered_semantic_slot_ids": [],
+          "required_edge_ids": [],
+          "formula_obligation_ids": [],
+          "expected_sentence_range": [
+            1,
+            4
+          ],
+          "transition_from": "MA-S3:P11",
+          "transition_to": "",
+          "witness_contract": {
+            "schema_version": "1.0",
+            "paragraph_id": "MA-S3:P12",
+            "rhetorical_goal": "",
+            "targets": [],
+            "content_digest": "sha256:dd855096d96e684c68ecc14455498f2f1e413f6dd4b222254dfad6242078bb15"
+          },
+          "content_digest": "sha256:99cfc9014647db373ca149e47b147bed762b2a2718c1acc5cebdc4f66033d040"
+        },
+        {
+          "paragraph_id": "MA-S3:P13",
+          "paragraph_role": "step_sequence",
+          "argument_unit_ids": [],
+          "required_facet_ids": [],
+          "required_field_candidate_ids": [],
+          "support_slot_ids": [],
+          "required_publication_slot_ids": [],
+          "ordered_semantic_slot_ids": [],
+          "required_edge_ids": [],
+          "formula_obligation_ids": [],
+          "expected_sentence_range": [
+            1,
+            4
+          ],
+          "transition_from": "MA-S3:P12",
+          "transition_to": "",
+          "witness_contract": {
+            "schema_version": "1.0",
+            "paragraph_id": "MA-S3:P13",
+            "rhetorical_goal": "",
+            "targets": [],
+            "content_digest": "sha256:abb9a3c02652a3e6155243c4fd1c2c4b082f1239c8977df18e9586a11d4f1086"
+          },
+          "content_digest": "sha256:ff3c6f71d78fc964e83bb477fa19492a419de6f8abbb5a5609ab57985b87475e"
+        },
+        {
+          "paragraph_id": "MA-S3:P14",
+          "paragraph_role": "step_sequence",
+          "argument_unit_ids": [],
+          "required_facet_ids": [],
+          "required_field_candidate_ids": [],
+          "support_slot_ids": [],
+          "required_publication_slot_ids": [],
+          "ordered_semantic_slot_ids": [],
+          "required_edge_ids": [],
+          "formula_obligation_ids": [],
+          "expected_sentence_range": [
+            1,
+            4
+          ],
+          "transition_from": "MA-S3:P13",
+          "transition_to": "",
+          "witness_contract": {
+            "schema_version": "1.0",
+            "paragraph_id": "MA-S3:P14",
+            "rhetorical_goal": "",
+            "targets": [],
+            "content_digest": "sha256:e473c0276478d67bf9d85d830b7db93e3b6f44d776eddeef258ab20b378a9fbc"
+          },
+          "content_digest": "sha256:59128bb0a177cba41f409c060d961c397783429d37743087a517c95b9d567032"
+        },
+        {
+          "paragraph_id": "MA-S3:P15",
+          "paragraph_role": "step_sequence",
+          "argument_unit_ids": [],
+          "required_facet_ids": [],
+          "required_field_candidate_ids": [],
+          "support_slot_ids": [],
+          "required_publication_slot_ids": [],
+          "ordered_semantic_slot_ids": [],
+          "required_edge_ids": [],
+          "formula_obligation_ids": [],
+          "expected_sentence_range": [
+            1,
+            4
+          ],
+          "transition_from": "MA-S3:P14",
+          "transition_to": "",
+          "witness_contract": {
+            "schema_version": "1.0",
+            "paragraph_id": "MA-S3:P15",
+            "rhetorical_goal": "",
+            "targets": [],
+            "content_digest": "sha256:040700ac7f793d8ad89e3ac4f3508f2b5fa02654031e58382c8d527ce9ffa664"
+          },
+          "content_digest": "sha256:c1e979007b4ac059c3d4d84afe34a6987fd3c6327fa0e7d40ac0d1541c6cb073"
+        },
+        {
+          "paragraph_id": "MA-S3:P16",
+          "paragraph_role": "step_sequence",
+          "argument_unit_ids": [],
+          "required_facet_ids": [],
+          "required_field_candidate_ids": [],
+          "support_slot_ids": [],
+          "required_publication_slot_ids": [],
+          "ordered_semantic_slot_ids": [],
+          "required_edge_ids": [],
+          "formula_obligation_ids": [],
+          "expected_sentence_range": [
+            1,
+            4
+          ],
+          "transition_from": "MA-S3:P15",
+          "transition_to": "",
+          "witness_contract": {
+            "schema_version": "1.0",
+            "paragraph_id": "MA-S3:P16",
+            "rhetorical_goal": "",
+            "targets": [],
+            "content_digest": "sha256:e423fabf946eb2f8cb4a52883529223d150eaa521d4339c2825615ba8111e198"
+          },
+          "content_digest": "sha256:42aa54372181ccacf6b7f06318f1e3028fcc797d3f886306e78e8eb39fea570b"
+        },
+        {
+          "paragraph_id": "MA-S3:P17",
+          "paragraph_role": "step_sequence",
+          "argument_unit_ids": [],
+          "required_facet_ids": [],
+          "required_field_candidate_ids": [],
+          "support_slot_ids": [],
+          "required_publication_slot_ids": [],
+          "ordered_semantic_slot_ids": [],
+          "required_edge_ids": [],
+          "formula_obligation_ids": [],
+          "expected_sentence_range": [
+            1,
+            4
+          ],
+          "transition_from": "MA-S3:P16",
+          "transition_to": "",
+          "witness_contract": {
+            "schema_version": "1.0",
+            "paragraph_id": "MA-S3:P17",
+            "rhetorical_goal": "",
+            "targets": [],
+            "content_digest": "sha256:c9106bdde2d5a2deae71417f4a2b1d36d6c2caa09c56ba4060fa5d3e19c322b4"
+          },
+          "content_digest": "sha256:b66a9cd510f5c3f0430ab9be4f145e1d75ae1a591965e16f7b7bd07db837fd88"
+        }
+      ],
+      "dependencies": [],
+      "unresolved_inputs": [],
+      "depth_budget": 32,
+      "page_budget": 32.0,
+      "incomplete": false,
+      "story_node_ids": [],
+      "heading_constraints": [],
+      "primary_concept_keys": [],
+      "supporting_concept_keys": [],
+      "audit_only_concept_keys": [],
+      "primary_brief_ids": [],
+      "supporting_brief_ids": [],
+      "required_dataflow_relation_ids": [],
+      "formula_obligation_ids": [],
+      "formula_not_applicable": false,
+      "formula_not_applicable_reason": "",
+      "open_slots": [],
+      "content_digest": "sha256:b1618f751dff228d9434d620980b528a1755c76bbee9789b3dc81dde12e5048f"
+    },
+    {
+      "section_id": "MA-S4",
+      "heading": "Training objective: InfoNCE loss with fixed query anchor.",
+      "reader_question": "How does this setup realize Training objective: InfoNCE loss with fixed query anchor?",
+      "argument_unit_ids": [
+        "MA-S4:unit-1",
+        "MA-S4:unit-2",
+        "MA-S4:unit-3",
+        "MA-S4:unit-4",
+        "MA-S4:unit-5",
+        "MA-S4:unit-6"
+      ],
+      "moves": [],
+      "paragraphs": [
+        {
+          "paragraph_id": "MA-S4:P1",
+          "paragraph_role": "step_sequence",
+          "argument_unit_ids": [],
+          "required_facet_ids": [],
+          "required_field_candidate_ids": [],
+          "support_slot_ids": [],
+          "required_publication_slot_ids": [],
+          "ordered_semantic_slot_ids": [],
+          "required_edge_ids": [],
+          "formula_obligation_ids": [],
+          "expected_sentence_range": [
+            1,
+            4
+          ],
+          "transition_from": "",
+          "transition_to": "",
+          "witness_contract": {
+            "schema_version": "1.0",
+            "paragraph_id": "MA-S4:P1",
+            "rhetorical_goal": "",
+            "targets": [],
+            "content_digest": "sha256:f72f087731234309cb41daab609fdf3d34f678ed100b037109e26caf67bcbc87"
+          },
+          "content_digest": "sha256:1ead25a9e8309684b2139c76e8971cc8400209bc0624ec66b7fc144f2a4e68e6"
+        },
+        {
+          "paragraph_id": "MA-S4:P2",
+          "paragraph_role": "step_sequence",
+          "argument_unit_ids": [],
+          "required_facet_ids": [],
+          "required_field_candidate_ids": [],
+          "support_slot_ids": [],
+          "required_publication_slot_ids": [],
+          "ordered_semantic_slot_ids": [],
+          "required_edge_ids": [],
+          "formula_obligation_ids": [],
+          "expected_sentence_range": [
+            1,
+            4
+          ],
+          "transition_from": "MA-S4:P1",
+          "transition_to": "",
+          "witness_contract": null,
+          "content_digest": "sha256:78e42122fe4bf21bc3acd898ce5db631e50f81fdd4bc4540072e81f9716d9169"
+        },
+        {
+          "paragraph_id": "MA-S4:P3",
+          "paragraph_role": "step_sequence",
+          "argument_unit_ids": [],
+          "required_facet_ids": [],
+          "required_field_candidate_ids": [],
+          "support_slot_ids": [],
+          "required_publication_slot_ids": [],
+          "ordered_semantic_slot_ids": [],
+          "required_edge_ids": [],
+          "formula_obligation_ids": [],
+          "expected_sentence_range": [
+            1,
+            4
+          ],
+          "transition_from": "MA-S4:P2",
+          "transition_to": "",
+          "witness_contract": {
+            "schema_version": "1.0",
+            "paragraph_id": "MA-S4:P3",
+            "rhetorical_goal": "",
+            "targets": [],
+            "content_digest": "sha256:a9faf3b9b27ea4bbc16dd2b6a05c9d40e459a5144bef3a093fcb568ab06ab280"
+          },
+          "content_digest": "sha256:3ffad8de0f8c136ce35ae915f7372e4fe79c4d5237384982debb356ccf0c53ab"
+        },
+        {
+          "paragraph_id": "MA-S4:P4",
+          "paragraph_role": "step_sequence",
+          "argument_unit_ids": [],
+          "required_facet_ids": [],
+          "required_field_candidate_ids": [],
+          "support_slot_ids": [],
+          "required_publication_slot_ids": [],
+          "ordered_semantic_slot_ids": [],
+          "required_edge_ids": [],
+          "formula_obligation_ids": [],
+          "expected_sentence_range": [
+            1,
+            4
+          ],
+          "transition_from": "MA-S4:P3",
+          "transition_to": "",
+          "witness_contract": {
+            "schema_version": "1.0",
+            "paragraph_id": "MA-S4:P4",
+            "rhetorical_goal": "",
+            "targets": [],
+            "content_digest": "sha256:b9532b19a70171f26f213a01c1d9f1cfc81156b32f71fbac3be82ffe9d5eaf37"
+          },
+          "content_digest": "sha256:eeb38ca803cd86c46877c950e16b43a01925d0cbedf440248587dd74ffbe62ba"
+        },
+        {
+          "paragraph_id": "MA-S4:P5",
+          "paragraph_role": "step_sequence",
+          "argument_unit_ids": [],
+          "required_facet_ids": [],
+          "required_field_candidate_ids": [],
+          "support_slot_ids": [],
+          "required_publication_slot_ids": [],
+          "ordered_semantic_slot_ids": [],
+          "required_edge_ids": [],
+          "formula_obligation_ids": [],
+          "expected_sentence_range": [
+            1,
+            4
+          ],
+          "transition_from": "MA-S4:P4",
+          "transition_to": "",
+          "witness_contract": {
+            "schema_version": "1.0",
+            "paragraph_id": "MA-S4:P5",
+            "rhetorical_goal": "",
+            "targets": [],
+            "content_digest": "sha256:ae47d1cf1ccfc40d9168d3aa6b32600ff5573a1e18caa5a122216e32af6c5c9d"
+          },
+          "content_digest": "sha256:9577647dc95b4f1f9f39a1f588a6379196bc90a80e213092796348cc2873c0be"
+        },
+        {
+          "paragraph_id": "MA-S4:P6",
+          "paragraph_role": "step_sequence",
+          "argument_unit_ids": [],
+          "required_facet_ids": [],
+          "required_field_candidate_ids": [],
+          "support_slot_ids": [],
+          "required_publication_slot_ids": [],
+          "ordered_semantic_slot_ids": [],
+          "required_edge_ids": [],
+          "formula_obligation_ids": [],
+          "expected_sentence_range": [
+            1,
+            4
+          ],
+          "transition_from": "MA-S4:P5",
+          "transition_to": "",
+          "witness_contract": {
+            "schema_version": "1.0",
+            "paragraph_id": "MA-S4:P6",
+            "rhetorical_goal": "",
+            "targets": [],
+            "content_digest": "sha256:e3ad602cda1d56a3c9ce1334dc1e99b43dc0572c13d3217fe04fae054f352f9a"
+          },
+          "content_digest": "sha256:f716fa9439ac48d70bc2c30c37618e7dfd6f98315ba378b5b733fe20b8cf1bf6"
+        }
+      ],
+      "dependencies": [],
+      "unresolved_inputs": [],
+      "depth_budget": 6,
+      "page_budget": 6.0,
+      "incomplete": false,
+      "story_node_ids": [],
+      "heading_constraints": [],
+      "primary_concept_keys": [],
+      "supporting_concept_keys": [],
+      "audit_only_concept_keys": [],
+      "primary_brief_ids": [],
+      "supporting_brief_ids": [],
+      "required_dataflow_relation_ids": [],
+      "formula_obligation_ids": [],
+      "formula_not_applicable": false,
+      "formula_not_applicable_reason": "",
+      "open_slots": [],
+      "content_digest": "sha256:f0a9fe78181f6510ddb8b4a3ac4d0a1a6830396c841d5bd7547a4e9698683d7d"
+    },
+    {
+      "section_id": "MA-S5",
+      "heading": "Inference procedure.",
+      "reader_question": "How does this setup realize Inference procedure?",
+      "argument_unit_ids": [
+        "MA-S5:unit-1",
+        "MA-S5:unit-2",
+        "MA-S5:unit-3",
+        "MA-S5:unit-4"
+      ],
+      "moves": [],
+      "paragraphs": [
+        {
+          "paragraph_id": "MA-S5:P1",
+          "paragraph_role": "step_sequence",
+          "argument_unit_ids": [],
+          "required_facet_ids": [],
+          "required_field_candidate_ids": [],
+          "support_slot_ids": [],
+          "required_publication_slot_ids": [],
+          "ordered_semantic_slot_ids": [],
+          "required_edge_ids": [],
+          "formula_obligation_ids": [],
+          "expected_sentence_range": [
+            1,
+            4
+          ],
+          "transition_from": "",
+          "transition_to": "",
+          "witness_contract": {
+            "schema_version": "1.0",
+            "paragraph_id": "MA-S5:P1",
+            "rhetorical_goal": "",
+            "targets": [],
+            "content_digest": "sha256:f342082507b682c8f3bc86eda031f9321776f840d348b30f321ae45f308ca443"
+          },
+          "content_digest": "sha256:6d63c5c736fb327a215f52d531e6129ab7cda4a03f4f831098d27ea70aa2464c"
+        },
+        {
+          "paragraph_id": "MA-S5:P2",
+          "paragraph_role": "step_sequence",
+          "argument_unit_ids": [],
+          "required_facet_ids": [],
+          "required_field_candidate_ids": [],
+          "support_slot_ids": [],
+          "required_publication_slot_ids": [],
+          "ordered_semantic_slot_ids": [],
+          "required_edge_ids": [],
+          "formula_obligation_ids": [],
+          "expected_sentence_range": [
+            1,
+            4
+          ],
+          "transition_from": "MA-S5:P1",
+          "transition_to": "",
+          "witness_contract": null,
+          "content_digest": "sha256:c628982829e51f3b8378664c2109d4b69e08f40ff3aa39e167ef426301eb7861"
+        },
+        {
+          "paragraph_id": "MA-S5:P3",
+          "paragraph_role": "step_sequence",
+          "argument_unit_ids": [],
+          "required_facet_ids": [],
+          "required_field_candidate_ids": [],
+          "support_slot_ids": [],
+          "required_publication_slot_ids": [],
+          "ordered_semantic_slot_ids": [],
+          "required_edge_ids": [],
+          "formula_obligation_ids": [],
+          "expected_sentence_range": [
+            1,
+            4
+          ],
+          "transition_from": "MA-S5:P2",
+          "transition_to": "",
+          "witness_contract": {
+            "schema_version": "1.0",
+            "paragraph_id": "MA-S5:P3",
+            "rhetorical_goal": "",
+            "targets": [],
+            "content_digest": "sha256:9b884a40e4a03f878d5078aa1cb463589aaeae75abcffcbac70d13caf0a29980"
+          },
+          "content_digest": "sha256:4942cc9f9deddde5d465053daed3f7c74d5f43afd99fbdb7333e5edef9177ebb"
+        },
+        {
+          "paragraph_id": "MA-S5:P4",
+          "paragraph_role": "step_sequence",
+          "argument_unit_ids": [],
+          "required_facet_ids": [],
+          "required_field_candidate_ids": [],
+          "support_slot_ids": [],
+          "required_publication_slot_ids": [],
+          "ordered_semantic_slot_ids": [],
+          "required_edge_ids": [],
+          "formula_obligation_ids": [],
+          "expected_sentence_range": [
+            1,
+            4
+          ],
+          "transition_from": "MA-S5:P3",
+          "transition_to": "",
+          "witness_contract": {
+            "schema_version": "1.0",
+            "paragraph_id": "MA-S5:P4",
+            "rhetorical_goal": "",
+            "targets": [],
+            "content_digest": "sha256:16ba54765a8730d8564d48b35c42ce804a6ee7636eefad454329cd76909ec0ae"
+          },
+          "content_digest": "sha256:3352730d636ada031016d6d0877ea950abe26beaa66593d5c75fd1443a7f7485"
+        }
+      ],
+      "dependencies": [],
+      "unresolved_inputs": [],
+      "depth_budget": 4,
+      "page_budget": 4.0,
+      "incomplete": false,
+      "story_node_ids": [],
+      "heading_constraints": [],
+      "primary_concept_keys": [],
+      "supporting_concept_keys": [],
+      "audit_only_concept_keys": [],
+      "primary_brief_ids": [],
+      "supporting_brief_ids": [],
+      "required_dataflow_relation_ids": [],
+      "formula_obligation_ids": [],
+      "formula_not_applicable": false,
+      "formula_not_applicable_reason": "",
+      "open_slots": [],
+      "content_digest": "sha256:881e5a4d0e33a4561a3b4a0fb0decc99748044ba009dd1e31c443450b6098ead"
+    }
+  ],
+  "argument_units": [
+    {
+      "argument_unit_id": "MA-S1:unit-1",
+      "section_role": "inference",
+      "research_question": "Motivation: efficiency and cross‑passage inference challenges in existing rerankers.",
+      "design_objective": "Motivation: efficiency and cross‑passage inference challenges in existing rerankers.",
+      "proposition_ids": [],
+      "positive_proposition_ids": [],
+      "caveated_proposition_ids": [],
+      "proposition_order": [],
+      "proposition_dependencies": [],
+      "concept_card_ids": [],
+      "verified_concept_card_ids": [],
+      "caveated_concept_card_ids": [],
+      "concept_card_order": [],
+      "brief_ids": [
+        "brief:story:O-ORGANIZATION-01-6b45ad90"
+      ],
+      "verified_brief_ids": [],
+      "caveated_brief_ids": [
+        "brief:story:O-ORGANIZATION-01-6b45ad90"
+      ],
+      "brief_order": [
+        "brief:story:O-ORGANIZATION-01-6b45ad90"
+      ],
+      "claim_ids": [],
+      "equation_ids": [],
+      "configuration_ids": [],
+      "author_rationale_ids": [],
+      "empirical_ids": [],
+      "literature_ids": [],
+      "behavior_relation_ids": [],
+      "allowed_expository_moves": [
+        "problem_or_local_context",
+        "design_objective",
+        "limitations_or_mismatch",
+        "transition_to_next_section"
+      ],
+      "unresolved_inputs": [
+        "O-ORGANIZATION-01-6b45ad90:partially_supported_by_repository"
+      ],
+      "authority_lanes": [
+        "executable_hard"
+      ],
+      "source_artifact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:c1802b91f97392cc",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:263526f0644479db",
+        "fact-O-STAGE-01-039a963a-node:36bd05a333b6a4fc",
+        "fact-O-STAGE-02-42e8d68d-node:9a4893d308318488",
+        "fact-O-STAGE-03-2c5bd758-node:142f7d2a2f9e8288",
+        "fact-O-STAGE-04-c50e0bef-node:0c0995d424e07399",
+        "fact-O-STAGE-05-5b3d398a-node:1077d0d81c820fb0",
+        "fact-O-STAGE-05-5b3d398a-node:31075c1f6e053a85"
+      ],
+      "source_obligation_ids": [
+        "O-ORGANIZATION-01-6b45ad90"
+      ],
+      "supported": false,
+      "information_weight": 1.0,
+      "semantic_frame": null,
+      "obligation_assignments": [],
+      "content_digest": "sha256:c7c34d3397db28a7de1adc243c0d9dd02814ab09e05d1f49f1e7e85205947610"
+    },
+    {
+      "argument_unit_id": "MA-S1:unit-2",
+      "section_role": "inference",
+      "research_question": "ConTEB benchmark: Evaluation suite that tests rerankers on challenging tasks requiring cross‑passage inference",
+      "design_objective": "ConTEB benchmark: Evaluation suite that tests rerankers on challenging tasks requiring cross‑passage inference, document‑wide context, and structural reasoning.",
+      "proposition_ids": [],
+      "positive_proposition_ids": [],
+      "caveated_proposition_ids": [],
+      "proposition_order": [],
+      "proposition_dependencies": [],
+      "concept_card_ids": [],
+      "verified_concept_card_ids": [],
+      "caveated_concept_card_ids": [],
+      "concept_card_order": [],
+      "brief_ids": [
+        "brief:story:O-COMPONENT-11-27f310b2"
+      ],
+      "verified_brief_ids": [],
+      "caveated_brief_ids": [
+        "brief:story:O-COMPONENT-11-27f310b2"
+      ],
+      "brief_order": [
+        "brief:story:O-COMPONENT-11-27f310b2"
+      ],
+      "claim_ids": [],
+      "equation_ids": [],
+      "configuration_ids": [],
+      "author_rationale_ids": [],
+      "empirical_ids": [],
+      "literature_ids": [],
+      "behavior_relation_ids": [],
+      "allowed_expository_moves": [
+        "problem_or_local_context",
+        "design_objective",
+        "limitations_or_mismatch",
+        "transition_to_next_section"
+      ],
+      "unresolved_inputs": [
+        "O-COMPONENT-11-27f310b2:partially_supported_by_repository"
+      ],
+      "authority_lanes": [
+        "executable_hard"
+      ],
+      "source_artifact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:c1802b91f97392cc",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:263526f0644479db",
+        "fact-O-STAGE-01-039a963a-node:36bd05a333b6a4fc",
+        "fact-O-STAGE-02-42e8d68d-node:9a4893d308318488",
+        "fact-O-STAGE-03-2c5bd758-node:142f7d2a2f9e8288",
+        "fact-O-STAGE-04-c50e0bef-node:0c0995d424e07399",
+        "fact-O-STAGE-05-5b3d398a-node:1077d0d81c820fb0",
+        "fact-O-STAGE-05-5b3d398a-node:31075c1f6e053a85"
+      ],
+      "source_obligation_ids": [
+        "O-COMPONENT-11-27f310b2"
+      ],
+      "supported": false,
+      "information_weight": 1.0,
+      "semantic_frame": null,
+      "obligation_assignments": [],
+      "content_digest": "sha256:eec827af0b2a358f0187666ff70574cb091d20ab3a9d036ddf71784e51d8e3e7"
+    },
+    {
+      "argument_unit_id": "MA-S2:unit",
+      "section_role": "feature",
+      "research_question": "Embedding‑based reranking formulation and overall framework.",
+      "design_objective": "Embedding‑based reranking formulation and overall framework.",
+      "proposition_ids": [],
+      "positive_proposition_ids": [],
+      "caveated_proposition_ids": [],
+      "proposition_order": [],
+      "proposition_dependencies": [],
+      "concept_card_ids": [],
+      "verified_concept_card_ids": [],
+      "caveated_concept_card_ids": [],
+      "concept_card_order": [],
+      "brief_ids": [
+        "brief:story:O-ORGANIZATION-02-54911271"
+      ],
+      "verified_brief_ids": [],
+      "caveated_brief_ids": [
+        "brief:story:O-ORGANIZATION-02-54911271"
+      ],
+      "brief_order": [
+        "brief:story:O-ORGANIZATION-02-54911271"
+      ],
+      "claim_ids": [],
+      "equation_ids": [],
+      "configuration_ids": [],
+      "author_rationale_ids": [],
+      "empirical_ids": [],
+      "literature_ids": [],
+      "behavior_relation_ids": [],
+      "allowed_expository_moves": [
+        "problem_or_local_context",
+        "design_objective",
+        "limitations_or_mismatch",
+        "transition_to_next_section"
+      ],
+      "unresolved_inputs": [
+        "O-ORGANIZATION-02-54911271:partially_supported_by_repository"
+      ],
+      "authority_lanes": [
+        "executable_hard"
+      ],
+      "source_artifact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:a48f78c0e1931462",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:6daefc8982533bad",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:7fabddc9286307b4",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:5ff7f276f04b71a8",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:a6f6c00ca097eeb1",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:263526f0644479db",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:4c8511d6e8fc4240",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:c8936a17df7bdc83",
+        "fact-O-STAGE-01-039a963a-node:32aefbb96ff8fa11",
+        "fact-O-STAGE-01-039a963a-node:36bd05a333b6a4fc",
+        "fact-O-STAGE-01-039a963a-node:c4189835f8e67f5e",
+        "fact-O-STAGE-01-039a963a-node:4be5b539dce0e4f4",
+        "fact-O-STAGE-01-039a963a-node:00757f21e4c9d9f3",
+        "fact-O-STAGE-02-42e8d68d-node:9a4893d308318488",
+        "fact-O-STAGE-03-2c5bd758-node:c8936a17df7bdc83",
+        "fact-O-STAGE-03-2c5bd758-node:15f8ab428198f369",
+        "fact-O-STAGE-03-2c5bd758-node:4f3a01f0d7880c82",
+        "fact-O-STAGE-04-c50e0bef-node:4b560ac114ae99ec",
+        "fact-O-STAGE-04-c50e0bef-node:a2dae47572460254",
+        "fact-O-STAGE-05-5b3d398a-node:26c1ec766ceee404",
+        "fact-O-STAGE-05-5b3d398a-node:1077d0d81c820fb0",
+        "fact-O-STAGE-05-5b3d398a-node:31075c1f6e053a85",
+        "fact-O-STAGE-05-5b3d398a-node:856e72eeddb87554",
+        "fact-O-STAGE-05-5b3d398a-node:a002e187c0346457"
+      ],
+      "source_obligation_ids": [
+        "O-ORGANIZATION-02-54911271"
+      ],
+      "supported": false,
+      "information_weight": 1.0,
+      "semantic_frame": null,
+      "obligation_assignments": [],
+      "content_digest": "sha256:a3e11f6013bd9bcc2a7f397190bdfd253f47abba878cc840a8ef97980693c9e8"
+    },
+    {
+      "argument_unit_id": "MA-S3:unit-1",
+      "section_role": "filter",
+      "research_question": "Architecture details: enriching embeddings with document ID and position, the Transformer encoder with hybrid attention",
+      "design_objective": "Architecture details: enriching embeddings with document ID and position, the Transformer encoder with hybrid attention (shared full + dedicated masked).",
+      "proposition_ids": [],
+      "positive_proposition_ids": [],
+      "caveated_proposition_ids": [],
+      "proposition_order": [],
+      "proposition_dependencies": [],
+      "concept_card_ids": [],
+      "verified_concept_card_ids": [],
+      "caveated_concept_card_ids": [],
+      "concept_card_order": [],
+      "brief_ids": [
+        "brief:story:O-ORGANIZATION-03-2c92c853"
+      ],
+      "verified_brief_ids": [],
+      "caveated_brief_ids": [
+        "brief:story:O-ORGANIZATION-03-2c92c853"
+      ],
+      "brief_order": [
+        "brief:story:O-ORGANIZATION-03-2c92c853"
+      ],
+      "claim_ids": [],
+      "equation_ids": [],
+      "configuration_ids": [],
+      "author_rationale_ids": [],
+      "empirical_ids": [],
+      "literature_ids": [],
+      "behavior_relation_ids": [],
+      "allowed_expository_moves": [
+        "problem_or_local_context",
+        "design_objective",
+        "implementation_realization",
+        "limitations_or_mismatch",
+        "transition_to_next_section"
+      ],
+      "unresolved_inputs": [
+        "O-ORGANIZATION-03-2c92c853:partially_supported_by_repository"
+      ],
+      "authority_lanes": [
+        "executable_hard"
+      ],
+      "source_artifact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:73ea6c8145b47e07",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:7fabddc9286307b4",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:5ff7f276f04b71a8",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:a6f6c00ca097eeb1",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:4c8511d6e8fc4240",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:c8936a17df7bdc83",
+        "fact-O-STAGE-01-039a963a-node:00757f21e4c9d9f3",
+        "fact-O-STAGE-03-2c5bd758-node:c8936a17df7bdc83",
+        "fact-O-STAGE-03-2c5bd758-node:15f8ab428198f369",
+        "fact-O-STAGE-03-2c5bd758-node:4f3a01f0d7880c82",
+        "fact-O-STAGE-04-c50e0bef-node:4b560ac114ae99ec",
+        "fact-O-STAGE-05-5b3d398a-node:856e72eeddb87554"
+      ],
+      "source_obligation_ids": [
+        "O-ORGANIZATION-03-2c92c853"
+      ],
+      "supported": false,
+      "information_weight": 1.0,
+      "semantic_frame": null,
+      "obligation_assignments": [],
+      "content_digest": "sha256:e18199488fc606b6718ffc1d098b347220190384195d4e9aca1e58add480e3c9"
+    },
+    {
+      "argument_unit_id": "MA-S3:unit-2",
+      "section_role": "stage",
+      "research_question": "Hybrid‑attention encoding: Feed the query and augmented passage embeddings into a Transformer encoder that applies shared full attention (global interactions) and dedicated masked attention (intra‑document interactions) in every layer, producing contextualized passage embeddings.",
+      "design_objective": "Hybrid‑attention encoding: Feed the query and augmented passage embeddings into a Transformer encoder that applies shared full attention (global interactions) and dedicated masked attention (intra‑document interactions) in every layer, producing contextualized passage embeddings.",
+      "proposition_ids": [],
+      "positive_proposition_ids": [],
+      "caveated_proposition_ids": [],
+      "proposition_order": [],
+      "proposition_dependencies": [],
+      "concept_card_ids": [],
+      "verified_concept_card_ids": [],
+      "caveated_concept_card_ids": [],
+      "concept_card_order": [],
+      "brief_ids": [
+        "brief:story:O-METHOD-MAINLINE-01-c8146479",
+        "brief:story:O-STAGE-03-2c5bd758"
+      ],
+      "verified_brief_ids": [
+        "brief:story:O-STAGE-03-2c5bd758"
+      ],
+      "caveated_brief_ids": [
+        "brief:story:O-METHOD-MAINLINE-01-c8146479"
+      ],
+      "brief_order": [
+        "brief:story:O-METHOD-MAINLINE-01-c8146479",
+        "brief:story:O-STAGE-03-2c5bd758"
+      ],
+      "claim_ids": [
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:4c8511d6e8fc4240",
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:3673b2e5dbd63bd0",
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:73ea6c8145b47e07",
+        "l2:math:fact-O-METHOD-MAINLINE-01-c8146479-node:4c8511d6e8fc4240:weighted_sum",
+        "l2:math:fact-O-METHOD-MAINLINE-01-c8146479-node:3673b2e5dbd63bd0:normalize",
+        "claim-O-STAGE-03-2c5bd758-fact-O-STAGE-03-2c5bd758-node:b220afbc1e6023fe",
+        "claim-O-STAGE-03-2c5bd758-fact-O-STAGE-03-2c5bd758-node:142f7d2a2f9e8288",
+        "claim-O-STAGE-03-2c5bd758-fact-O-STAGE-03-2c5bd758-node:15f8ab428198f369",
+        "claim-O-STAGE-03-2c5bd758-fact-O-STAGE-03-2c5bd758-node:c8936a17df7bdc83",
+        "claim-O-STAGE-03-2c5bd758-fact-O-STAGE-03-2c5bd758-node:4f3a01f0d7880c82",
+        "l2:math:fact-O-STAGE-03-2c5bd758-node:c8936a17df7bdc83:weighted_sum",
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:c8936a17df7bdc83",
+        "l2:math:fact-O-METHOD-MAINLINE-01-c8146479-node:c8936a17df7bdc83:weighted_sum",
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:6daefc8982533bad",
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:b6468fc08c848936",
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-rel:1b2f2e5db0f09696",
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-configuration-rel:dc95ead65d3bb047"
+      ],
+      "equation_ids": [
+        "equation:fact-O-METHOD-MAINLINE-01-c8146479-node:4c8511d6e8fc4240",
+        "equation:fact-O-STAGE-03-2c5bd758-node:15f8ab428198f369",
+        "equation:fact-O-STAGE-03-2c5bd758-node:c8936a17df7bdc83",
+        "equation:fact-O-METHOD-MAINLINE-01-c8146479-node:c8936a17df7bdc83"
+      ],
+      "configuration_ids": [
+        "config:sha256:579ebf0b6e60c"
+      ],
+      "author_rationale_ids": [],
+      "empirical_ids": [],
+      "literature_ids": [],
+      "behavior_relation_ids": [
+        "rel:597477ee05849627",
+        "rel:597477ee05849627",
+        "rel:597477ee05849627",
+        "rel:622508515b3080f4",
+        "rel:622508515b3080f4",
+        "rel:83ef85703286c813",
+        "rel:83ef85703286c813",
+        "rel:83ef85703286c813"
+      ],
+      "allowed_expository_moves": [
+        "problem_or_local_context",
+        "design_objective",
+        "mechanism_overview",
+        "formal_objects_and_notation",
+        "equation_or_derivation",
+        "algorithm_or_data_flow",
+        "implementation_realization",
+        "configuration_and_branches",
+        "inference_and_output",
+        "transition_to_next_section"
+      ],
+      "unresolved_inputs": [
+        "O-METHOD-MAINLINE-01-c8146479:partially_supported_by_repository"
+      ],
+      "authority_lanes": [
+        "executable_hard",
+        "formal_derivation",
+        "configuration_resolved"
+      ],
+      "source_artifact_ids": [
+        "span:src/model/transformer_encoder_hybrid_attention.py:119:119",
+        "span:src/model/transformer_encoder_hybrid_attention.py:56:56",
+        "rel:597477ee05849627",
+        "span:src/model/transformer_encoder_hybrid_attention.py:51:51",
+        "rel:597477ee05849627",
+        "span:src/model/transformer_encoder_hybrid_attention.py:119:119",
+        "span:src/model/transformer_encoder_hybrid_attention.py:56:56",
+        "rel:597477ee05849627",
+        "span:src/model/transformer_encoder_hybrid_attention.py:125:126",
+        "span:src/model/transformer_encoder_hybrid_attention.py:126:126",
+        "span:src/model/transformer_encoder_hybrid_attention.py:123:123",
+        "rel:622508515b3080f4",
+        "span:src/model/transformer_encoder_hybrid_attention.py:119:119",
+        "rel:622508515b3080f4",
+        "span:src/model/transformer_encoder_hybrid_attention.py:41:41",
+        "span:src/model/transformer_encoder_hybrid_attention.py:119:119",
+        "span:src/model/transformer_encoder_hybrid_attention.py:119:119",
+        "span:src/model/transformer_encoder_hybrid_attention.py:119:119",
+        "span:src/model/ebcar_dedicated_attention_model.py:145:145",
+        "rel:83ef85703286c813",
+        "span:src/model/ebcar_dedicated_attention_model.py:145:174",
+        "rel:83ef85703286c813",
+        "span:src/model/ebcar_dedicated_attention_model.py:145:174",
+        "span:src/model/ebcar_dedicated_attention_model.py:145:145",
+        "rel:83ef85703286c813",
+        "span:conf/config.yaml:19:19"
+      ],
+      "source_obligation_ids": [
+        "O-STAGE-03-2c5bd758",
+        "O-METHOD-MAINLINE-01-c8146479"
+      ],
+      "supported": false,
+      "information_weight": 20.5,
+      "semantic_frame": null,
+      "obligation_assignments": [],
+      "content_digest": "sha256:56f634deeba2f53787db2d9a14b2004ee5a1ac0e338c990910f58bb50a2d9368"
+    },
+    {
+      "argument_unit_id": "MA-S3:unit-3",
+      "section_role": "attention",
+      "research_question": "shared full attention module: Standard multi‑head attention allowing query and all passages to attend to each other;",
+      "design_objective": "shared full attention module: Standard multi‑head attention allowing query and all passages to attend to each other; captures global relevance and cross‑document relationships.",
+      "proposition_ids": [],
+      "positive_proposition_ids": [],
+      "caveated_proposition_ids": [],
+      "proposition_order": [],
+      "proposition_dependencies": [],
+      "concept_card_ids": [],
+      "verified_concept_card_ids": [],
+      "caveated_concept_card_ids": [],
+      "concept_card_order": [],
+      "brief_ids": [
+        "brief:story:O-COMPONENT-06-34021b88"
+      ],
+      "verified_brief_ids": [],
+      "caveated_brief_ids": [
+        "brief:story:O-COMPONENT-06-34021b88"
+      ],
+      "brief_order": [
+        "brief:story:O-COMPONENT-06-34021b88"
+      ],
+      "claim_ids": [],
+      "equation_ids": [],
+      "configuration_ids": [],
+      "author_rationale_ids": [],
+      "empirical_ids": [],
+      "literature_ids": [],
+      "behavior_relation_ids": [],
+      "allowed_expository_moves": [
+        "problem_or_local_context",
+        "design_objective",
+        "implementation_realization",
+        "limitations_or_mismatch",
+        "transition_to_next_section"
+      ],
+      "unresolved_inputs": [
+        "O-COMPONENT-06-34021b88:partially_supported_by_repository"
+      ],
+      "authority_lanes": [
+        "executable_hard"
+      ],
+      "source_artifact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:7fabddc9286307b4",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:5ff7f276f04b71a8",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:a6f6c00ca097eeb1",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:4c8511d6e8fc4240",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:c8936a17df7bdc83",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:73ea6c8145b47e07",
+        "fact-O-STAGE-01-039a963a-node:00757f21e4c9d9f3",
+        "fact-O-STAGE-03-2c5bd758-node:c8936a17df7bdc83",
+        "fact-O-STAGE-03-2c5bd758-node:15f8ab428198f369",
+        "fact-O-STAGE-03-2c5bd758-node:4f3a01f0d7880c82",
+        "fact-O-STAGE-04-c50e0bef-node:4b560ac114ae99ec",
+        "fact-O-STAGE-05-5b3d398a-node:856e72eeddb87554",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:c1802b91f97392cc",
+        "fact-O-STAGE-03-2c5bd758-node:142f7d2a2f9e8288",
+        "fact-O-STAGE-04-c50e0bef-node:0c0995d424e07399"
+      ],
+      "source_obligation_ids": [
+        "O-COMPONENT-06-34021b88"
+      ],
+      "supported": false,
+      "information_weight": 1.0,
+      "semantic_frame": null,
+      "obligation_assignments": [],
+      "content_digest": "sha256:1bd9b74fb23f604551f848d2ce4cefa96be65eca13534bb80c2c8bb71f2da344"
+    },
+    {
+      "argument_unit_id": "MA-S3:unit-4",
+      "section_role": "feature",
+      "research_question": "Transformer encoder stack: Layers that process the combined sequence to produce contextualized passage embeddings.",
+      "design_objective": "Transformer encoder stack: Layers that process the combined sequence to produce contextualized passage embeddings.",
+      "proposition_ids": [],
+      "positive_proposition_ids": [],
+      "caveated_proposition_ids": [],
+      "proposition_order": [],
+      "proposition_dependencies": [],
+      "concept_card_ids": [],
+      "verified_concept_card_ids": [],
+      "caveated_concept_card_ids": [],
+      "concept_card_order": [],
+      "brief_ids": [
+        "brief:story:O-COMPONENT-08-4aac53dc"
+      ],
+      "verified_brief_ids": [],
+      "caveated_brief_ids": [
+        "brief:story:O-COMPONENT-08-4aac53dc"
+      ],
+      "brief_order": [
+        "brief:story:O-COMPONENT-08-4aac53dc"
+      ],
+      "claim_ids": [],
+      "equation_ids": [],
+      "configuration_ids": [],
+      "author_rationale_ids": [],
+      "empirical_ids": [],
+      "literature_ids": [],
+      "behavior_relation_ids": [],
+      "allowed_expository_moves": [
+        "problem_or_local_context",
+        "design_objective",
+        "implementation_realization",
+        "limitations_or_mismatch",
+        "transition_to_next_section"
+      ],
+      "unresolved_inputs": [
+        "O-COMPONENT-08-4aac53dc:partially_supported_by_repository"
+      ],
+      "authority_lanes": [
+        "executable_hard"
+      ],
+      "source_artifact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:a48f78c0e1931462",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:7fabddc9286307b4",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:fd2ce32dbb55ed63",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:5ff7f276f04b71a8",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:a6f6c00ca097eeb1",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:263526f0644479db",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:4c8511d6e8fc4240",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:c8936a17df7bdc83",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:3673b2e5dbd63bd0",
+        "fact-O-STAGE-01-039a963a-node:36bd05a333b6a4fc",
+        "fact-O-STAGE-01-039a963a-node:c4189835f8e67f5e",
+        "fact-O-STAGE-01-039a963a-node:4be5b539dce0e4f4",
+        "fact-O-STAGE-01-039a963a-node:00757f21e4c9d9f3",
+        "fact-O-STAGE-02-42e8d68d-node:d643b3469b0df29c",
+        "fact-O-STAGE-02-42e8d68d-node:9a4893d308318488",
+        "fact-O-STAGE-03-2c5bd758-node:c8936a17df7bdc83",
+        "fact-O-STAGE-03-2c5bd758-node:15f8ab428198f369",
+        "fact-O-STAGE-03-2c5bd758-node:4f3a01f0d7880c82",
+        "fact-O-STAGE-04-c50e0bef-node:4b560ac114ae99ec",
+        "fact-O-STAGE-04-c50e0bef-node:a2dae47572460254",
+        "fact-O-STAGE-04-c50e0bef-node:fd2ce32dbb55ed63",
+        "fact-O-STAGE-05-5b3d398a-node:1077d0d81c820fb0",
+        "fact-O-STAGE-05-5b3d398a-node:31075c1f6e053a85",
+        "fact-O-STAGE-05-5b3d398a-node:856e72eeddb87554",
+        "fact-O-STAGE-05-5b3d398a-node:a002e187c0346457"
+      ],
+      "source_obligation_ids": [
+        "O-COMPONENT-08-4aac53dc"
+      ],
+      "supported": false,
+      "information_weight": 1.0,
+      "semantic_frame": null,
+      "obligation_assignments": [],
+      "content_digest": "sha256:da0a32008fbf7e66602c2249ee62c5d75d7bc14c6d12c8b83e73a49044ff4882"
+    },
+    {
+      "argument_unit_id": "MA-S3:unit-5",
+      "section_role": "training",
+      "research_question": "Train on ConTEB datasets that explicitly require cross‑passage reasoning.",
+      "design_objective": "Train on ConTEB datasets that explicitly require cross‑passage reasoning.",
+      "proposition_ids": [],
+      "positive_proposition_ids": [],
+      "caveated_proposition_ids": [],
+      "proposition_order": [],
+      "proposition_dependencies": [],
+      "concept_card_ids": [],
+      "verified_concept_card_ids": [],
+      "caveated_concept_card_ids": [],
+      "concept_card_order": [],
+      "brief_ids": [
+        "brief:story:O-RATIONALE-CHECK-06-388166d9"
+      ],
+      "verified_brief_ids": [],
+      "caveated_brief_ids": [
+        "brief:story:O-RATIONALE-CHECK-06-388166d9"
+      ],
+      "brief_order": [
+        "brief:story:O-RATIONALE-CHECK-06-388166d9"
+      ],
+      "claim_ids": [],
+      "equation_ids": [],
+      "configuration_ids": [],
+      "author_rationale_ids": [],
+      "empirical_ids": [],
+      "literature_ids": [],
+      "behavior_relation_ids": [],
+      "allowed_expository_moves": [
+        "problem_or_local_context",
+        "design_objective",
+        "implementation_realization",
+        "training_objective",
+        "limitations_or_mismatch",
+        "transition_to_next_section"
+      ],
+      "unresolved_inputs": [
+        "O-RATIONALE-CHECK-06-388166d9:partially_supported_by_repository"
+      ],
+      "authority_lanes": [
+        "executable_hard"
+      ],
+      "source_artifact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:a48f78c0e1931462",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:7fabddc9286307b4",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:fd2ce32dbb55ed63",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:5ff7f276f04b71a8",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:a6f6c00ca097eeb1",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:4c8511d6e8fc4240",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:c8936a17df7bdc83",
+        "fact-O-STAGE-01-039a963a-node:c4189835f8e67f5e",
+        "fact-O-STAGE-01-039a963a-node:4be5b539dce0e4f4",
+        "fact-O-STAGE-01-039a963a-node:00757f21e4c9d9f3",
+        "fact-O-STAGE-03-2c5bd758-node:c8936a17df7bdc83",
+        "fact-O-STAGE-03-2c5bd758-node:15f8ab428198f369",
+        "fact-O-STAGE-03-2c5bd758-node:4f3a01f0d7880c82",
+        "fact-O-STAGE-04-c50e0bef-node:4b560ac114ae99ec",
+        "fact-O-STAGE-04-c50e0bef-node:a2dae47572460254",
+        "fact-O-STAGE-04-c50e0bef-node:fd2ce32dbb55ed63",
+        "fact-O-STAGE-05-5b3d398a-node:856e72eeddb87554",
+        "fact-O-STAGE-05-5b3d398a-node:a002e187c0346457"
+      ],
+      "source_obligation_ids": [
+        "O-RATIONALE-CHECK-06-388166d9"
+      ],
+      "supported": false,
+      "information_weight": 1.0,
+      "semantic_frame": null,
+      "obligation_assignments": [],
+      "content_digest": "sha256:fc71784d70aa9886aec158711217d72641467885b4b349ed9966075cb94a0db1"
+    },
+    {
+      "argument_unit_id": "MA-S3:unit-6",
+      "section_role": "stage",
+      "research_question": "Retrieval and embedding preparation: Use a dense retriever (Contriever) to fetch top‑k candidate passages and their pre‑computed embeddings; encode the query with the same model.",
+      "design_objective": "Retrieval and embedding preparation: Use a dense retriever (Contriever) to fetch top‑k candidate passages and their pre‑computed embeddings; encode the query with the same model.",
+      "proposition_ids": [],
+      "positive_proposition_ids": [],
+      "caveated_proposition_ids": [],
+      "proposition_order": [],
+      "proposition_dependencies": [],
+      "concept_card_ids": [],
+      "verified_concept_card_ids": [],
+      "caveated_concept_card_ids": [],
+      "concept_card_order": [],
+      "brief_ids": [
+        "brief:story:O-STAGE-01-039a963a"
+      ],
+      "verified_brief_ids": [],
+      "caveated_brief_ids": [
+        "brief:story:O-STAGE-01-039a963a"
+      ],
+      "brief_order": [
+        "brief:story:O-STAGE-01-039a963a"
+      ],
+      "claim_ids": [
+        "claim-O-STAGE-01-039a963a-fact-O-STAGE-01-039a963a-node:2911a2ecfb714992",
+        "claim-O-STAGE-01-039a963a-fact-O-STAGE-01-039a963a-node:4480dac4431aabbe",
+        "claim-O-STAGE-01-039a963a-fact-O-STAGE-01-039a963a-node:4be5b539dce0e4f4",
+        "claim-O-STAGE-01-039a963a-fact-O-STAGE-01-039a963a-node:00757f21e4c9d9f3",
+        "claim-O-STAGE-01-039a963a-fact-O-STAGE-01-039a963a-node:36bd05a333b6a4fc",
+        "claim-O-STAGE-01-039a963a-fact-O-STAGE-01-039a963a-node:c4189835f8e67f5e"
+      ],
+      "equation_ids": [
+        "equation:fact-O-STAGE-01-039a963a-node:00757f21e4c9d9f3"
+      ],
+      "configuration_ids": [],
+      "author_rationale_ids": [],
+      "empirical_ids": [],
+      "literature_ids": [],
+      "behavior_relation_ids": [],
+      "allowed_expository_moves": [
+        "problem_or_local_context",
+        "design_objective",
+        "mechanism_overview",
+        "formal_objects_and_notation",
+        "equation_or_derivation",
+        "algorithm_or_data_flow",
+        "implementation_realization",
+        "configuration_and_branches",
+        "transition_to_next_section"
+      ],
+      "unresolved_inputs": [],
+      "authority_lanes": [
+        "executable_hard",
+        "formal_derivation"
+      ],
+      "source_artifact_ids": [
+        "span:src/dataset/ebcar_dataset.py:48:55",
+        "span:src/dataset/__init__.py:224:227",
+        "span:src/dataset/__init__.py:226:226",
+        "span:src/dataset/__init__.py:260:260",
+        "span:src/dataset/__init__.py:147:152",
+        "span:src/dataset/__init__.py:225:225"
+      ],
+      "source_obligation_ids": [
+        "O-STAGE-01-039a963a"
+      ],
+      "supported": true,
+      "information_weight": 6.75,
+      "semantic_frame": null,
+      "obligation_assignments": [],
+      "content_digest": "sha256:8b00a5dc0bb98cf6d4e4d6ce2ccf8606a1ac14dfed7ab19cac12bf7bf2cffd23"
+    },
+    {
+      "argument_unit_id": "MA-S3:unit-7",
+      "section_role": "ranking",
+      "research_question": "Contriever: Dense retriever that provides initial passage embeddings and top‑k retrieval.",
+      "design_objective": "Contriever: Dense retriever that provides initial passage embeddings and top‑k retrieval.",
+      "proposition_ids": [],
+      "positive_proposition_ids": [],
+      "caveated_proposition_ids": [],
+      "proposition_order": [],
+      "proposition_dependencies": [],
+      "concept_card_ids": [],
+      "verified_concept_card_ids": [],
+      "caveated_concept_card_ids": [],
+      "concept_card_order": [],
+      "brief_ids": [
+        "brief:story:O-COMPONENT-01-de6049e3"
+      ],
+      "verified_brief_ids": [],
+      "caveated_brief_ids": [
+        "brief:story:O-COMPONENT-01-de6049e3"
+      ],
+      "brief_order": [
+        "brief:story:O-COMPONENT-01-de6049e3"
+      ],
+      "claim_ids": [],
+      "equation_ids": [],
+      "configuration_ids": [],
+      "author_rationale_ids": [],
+      "empirical_ids": [],
+      "literature_ids": [],
+      "behavior_relation_ids": [],
+      "allowed_expository_moves": [
+        "problem_or_local_context",
+        "design_objective",
+        "implementation_realization",
+        "limitations_or_mismatch",
+        "transition_to_next_section"
+      ],
+      "unresolved_inputs": [
+        "O-COMPONENT-01-de6049e3:partially_supported_by_repository"
+      ],
+      "authority_lanes": [
+        "executable_hard"
+      ],
+      "source_artifact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:8e87e1804f77f50f"
+      ],
+      "source_obligation_ids": [
+        "O-COMPONENT-01-de6049e3"
+      ],
+      "supported": false,
+      "information_weight": 1.0,
+      "semantic_frame": null,
+      "obligation_assignments": [],
+      "content_digest": "sha256:4c9e4e8d8e71c4907721ac4bbb6e3110dbef8f60a1503a359c3580f7ca04685c"
+    },
+    {
+      "argument_unit_id": "MA-S3:unit-8",
+      "section_role": "stage",
+      "research_question": "Structural augmentation: For each retrieved passage, add a dynamic document ID embedding and a sinusoidal passage‑position encoding to its original embedding to inject document‑identity and ordering signals.",
+      "design_objective": "Structural augmentation: For each retrieved passage, add a dynamic document ID embedding and a sinusoidal passage‑position encoding to its original embedding to inject document‑identity and ordering signals.",
+      "proposition_ids": [],
+      "positive_proposition_ids": [],
+      "caveated_proposition_ids": [],
+      "proposition_order": [],
+      "proposition_dependencies": [],
+      "concept_card_ids": [],
+      "verified_concept_card_ids": [],
+      "caveated_concept_card_ids": [],
+      "concept_card_order": [],
+      "brief_ids": [
+        "brief:story:O-STAGE-02-42e8d68d"
+      ],
+      "verified_brief_ids": [
+        "brief:story:O-STAGE-02-42e8d68d"
+      ],
+      "caveated_brief_ids": [],
+      "brief_order": [
+        "brief:story:O-STAGE-02-42e8d68d"
+      ],
+      "claim_ids": [
+        "claim-O-STAGE-02-42e8d68d-fact-O-STAGE-02-42e8d68d-node:9a4893d308318488",
+        "claim-O-STAGE-02-42e8d68d-fact-O-STAGE-02-42e8d68d-node:d643b3469b0df29c"
+      ],
+      "equation_ids": [],
+      "configuration_ids": [],
+      "author_rationale_ids": [],
+      "empirical_ids": [],
+      "literature_ids": [],
+      "behavior_relation_ids": [
+        "rel:98ac18e6d68d03c8",
+        "rel:98ac18e6d68d03c8"
+      ],
+      "allowed_expository_moves": [
+        "problem_or_local_context",
+        "design_objective",
+        "mechanism_overview",
+        "implementation_realization",
+        "transition_to_next_section"
+      ],
+      "unresolved_inputs": [],
+      "authority_lanes": [
+        "executable_hard"
+      ],
+      "source_artifact_ids": [
+        "span:src/model/ebcar_dedicated_attention_model.py:48:50",
+        "rel:98ac18e6d68d03c8",
+        "span:src/model/ebcar_dedicated_attention_model.py:43:47",
+        "rel:98ac18e6d68d03c8"
+      ],
+      "source_obligation_ids": [
+        "O-STAGE-02-42e8d68d"
+      ],
+      "supported": true,
+      "information_weight": 2.0,
+      "semantic_frame": null,
+      "obligation_assignments": [],
+      "content_digest": "sha256:926b6083a222fb05df8f828c0ec8faefa8de10f6fbc2f9f6b0d56b3b5bd8600f"
+    },
+    {
+      "argument_unit_id": "MA-S3:unit-9",
+      "section_role": "feature",
+      "research_question": "passage position encoding (sinusoidal): Encodes the position of a passage within its original document, providing",
+      "design_objective": "passage position encoding (sinusoidal): Encodes the position of a passage within its original document, providing structural order cues.",
+      "proposition_ids": [],
+      "positive_proposition_ids": [],
+      "caveated_proposition_ids": [],
+      "proposition_order": [],
+      "proposition_dependencies": [],
+      "concept_card_ids": [],
+      "verified_concept_card_ids": [],
+      "caveated_concept_card_ids": [],
+      "concept_card_order": [],
+      "brief_ids": [
+        "brief:story:O-COMPONENT-04-b5b6af99"
+      ],
+      "verified_brief_ids": [],
+      "caveated_brief_ids": [
+        "brief:story:O-COMPONENT-04-b5b6af99"
+      ],
+      "brief_order": [
+        "brief:story:O-COMPONENT-04-b5b6af99"
+      ],
+      "claim_ids": [],
+      "equation_ids": [],
+      "configuration_ids": [],
+      "author_rationale_ids": [],
+      "empirical_ids": [],
+      "literature_ids": [],
+      "behavior_relation_ids": [],
+      "allowed_expository_moves": [
+        "problem_or_local_context",
+        "design_objective",
+        "implementation_realization",
+        "limitations_or_mismatch",
+        "transition_to_next_section"
+      ],
+      "unresolved_inputs": [
+        "O-COMPONENT-04-b5b6af99:partially_supported_by_repository"
+      ],
+      "authority_lanes": [
+        "executable_hard"
+      ],
+      "source_artifact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:a48f78c0e1931462",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:7fabddc9286307b4",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:5ff7f276f04b71a8",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:a6f6c00ca097eeb1",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:4c8511d6e8fc4240",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:c8936a17df7bdc83",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:3673b2e5dbd63bd0",
+        "fact-O-STAGE-01-039a963a-node:c4189835f8e67f5e",
+        "fact-O-STAGE-01-039a963a-node:4be5b539dce0e4f4",
+        "fact-O-STAGE-01-039a963a-node:00757f21e4c9d9f3",
+        "fact-O-STAGE-02-42e8d68d-node:d643b3469b0df29c",
+        "fact-O-STAGE-03-2c5bd758-node:c8936a17df7bdc83",
+        "fact-O-STAGE-03-2c5bd758-node:15f8ab428198f369",
+        "fact-O-STAGE-03-2c5bd758-node:4f3a01f0d7880c82",
+        "fact-O-STAGE-04-c50e0bef-node:4b560ac114ae99ec",
+        "fact-O-STAGE-04-c50e0bef-node:a2dae47572460254",
+        "fact-O-STAGE-05-5b3d398a-node:856e72eeddb87554",
+        "fact-O-STAGE-05-5b3d398a-node:a002e187c0346457"
+      ],
+      "source_obligation_ids": [
+        "O-COMPONENT-04-b5b6af99"
+      ],
+      "supported": false,
+      "information_weight": 1.0,
+      "semantic_frame": null,
+      "obligation_assignments": [],
+      "content_digest": "sha256:291ca97e0e413c93beb78e0ef658ece5a7a0a0312b629e273de19c751b54af1c"
+    },
+    {
+      "argument_unit_id": "MA-S3:unit-10",
+      "section_role": "inference",
+      "research_question": "Inject document‑level structural knowledge into passage embeddings to support cross‑passage inference.",
+      "design_objective": "Inject document‑level structural knowledge into passage embeddings to support cross‑passage inference.",
+      "proposition_ids": [],
+      "positive_proposition_ids": [],
+      "caveated_proposition_ids": [],
+      "proposition_order": [],
+      "proposition_dependencies": [],
+      "concept_card_ids": [],
+      "verified_concept_card_ids": [],
+      "caveated_concept_card_ids": [],
+      "concept_card_order": [],
+      "brief_ids": [
+        "brief:story:O-RATIONALE-CHECK-02-30bb7c0f"
+      ],
+      "verified_brief_ids": [],
+      "caveated_brief_ids": [
+        "brief:story:O-RATIONALE-CHECK-02-30bb7c0f"
+      ],
+      "brief_order": [
+        "brief:story:O-RATIONALE-CHECK-02-30bb7c0f"
+      ],
+      "claim_ids": [],
+      "equation_ids": [],
+      "configuration_ids": [],
+      "author_rationale_ids": [],
+      "empirical_ids": [],
+      "literature_ids": [],
+      "behavior_relation_ids": [],
+      "allowed_expository_moves": [
+        "problem_or_local_context",
+        "design_objective",
+        "implementation_realization",
+        "inference_and_output",
+        "limitations_or_mismatch",
+        "transition_to_next_section"
+      ],
+      "unresolved_inputs": [
+        "O-RATIONALE-CHECK-02-30bb7c0f:partially_supported_by_repository"
+      ],
+      "authority_lanes": [
+        "executable_hard"
+      ],
+      "source_artifact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:c1802b91f97392cc",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:263526f0644479db",
+        "fact-O-STAGE-01-039a963a-node:36bd05a333b6a4fc",
+        "fact-O-STAGE-02-42e8d68d-node:9a4893d308318488",
+        "fact-O-STAGE-03-2c5bd758-node:142f7d2a2f9e8288",
+        "fact-O-STAGE-04-c50e0bef-node:0c0995d424e07399",
+        "fact-O-STAGE-05-5b3d398a-node:1077d0d81c820fb0",
+        "fact-O-STAGE-05-5b3d398a-node:31075c1f6e053a85"
+      ],
+      "source_obligation_ids": [
+        "O-RATIONALE-CHECK-02-30bb7c0f"
+      ],
+      "supported": false,
+      "information_weight": 1.0,
+      "semantic_frame": null,
+      "obligation_assignments": [],
+      "content_digest": "sha256:aebb0461e7e3245c31bc7c3b1a32b83b9fdef8546291afed1256dd50780eb93c"
+    },
+    {
+      "argument_unit_id": "MA-S3:unit-11",
+      "section_role": "rationale_check",
+      "research_question": "Use relative, dynamic document ID assignments rather than global corpus‑level IDs.",
+      "design_objective": "Use relative, dynamic document ID assignments rather than global corpus‑level IDs.",
+      "proposition_ids": [],
+      "positive_proposition_ids": [],
+      "caveated_proposition_ids": [],
+      "proposition_order": [],
+      "proposition_dependencies": [],
+      "concept_card_ids": [],
+      "verified_concept_card_ids": [],
+      "caveated_concept_card_ids": [],
+      "concept_card_order": [],
+      "brief_ids": [
+        "brief:story:O-RATIONALE-CHECK-04-c742a4fc"
+      ],
+      "verified_brief_ids": [],
+      "caveated_brief_ids": [
+        "brief:story:O-RATIONALE-CHECK-04-c742a4fc"
+      ],
+      "brief_order": [
+        "brief:story:O-RATIONALE-CHECK-04-c742a4fc"
+      ],
+      "claim_ids": [],
+      "equation_ids": [],
+      "configuration_ids": [],
+      "author_rationale_ids": [],
+      "empirical_ids": [],
+      "literature_ids": [],
+      "behavior_relation_ids": [],
+      "allowed_expository_moves": [
+        "problem_or_local_context",
+        "design_objective",
+        "limitations_or_mismatch",
+        "transition_to_next_section"
+      ],
+      "unresolved_inputs": [
+        "O-RATIONALE-CHECK-04-c742a4fc:author_confirmation_required"
+      ],
+      "authority_lanes": [
+        "author_attested"
+      ],
+      "source_artifact_ids": [],
+      "source_obligation_ids": [
+        "O-RATIONALE-CHECK-04-c742a4fc"
+      ],
+      "supported": false,
+      "information_weight": 1.0,
+      "semantic_frame": null,
+      "obligation_assignments": [],
+      "content_digest": "sha256:dad9b9da328460ce2c209e606de45306d4da3c09a4b0b18f42b3ebb972c270d9"
+    },
+    {
+      "argument_unit_id": "MA-S3:unit-12",
+      "section_role": "feature",
+      "research_question": "document ID embedding table: Learned relative document‑identity embeddings assigned dynamically to unique documents in",
+      "design_objective": "document ID embedding table: Learned relative document‑identity embeddings assigned dynamically to unique documents in the candidate set, enabling the model to recognize which passages belong together.",
+      "proposition_ids": [],
+      "positive_proposition_ids": [],
+      "caveated_proposition_ids": [],
+      "proposition_order": [],
+      "proposition_dependencies": [],
+      "concept_card_ids": [],
+      "verified_concept_card_ids": [],
+      "caveated_concept_card_ids": [],
+      "concept_card_order": [],
+      "brief_ids": [
+        "brief:story:O-COMPONENT-03-d8aa8c77"
+      ],
+      "verified_brief_ids": [],
+      "caveated_brief_ids": [
+        "brief:story:O-COMPONENT-03-d8aa8c77"
+      ],
+      "brief_order": [
+        "brief:story:O-COMPONENT-03-d8aa8c77"
+      ],
+      "claim_ids": [],
+      "equation_ids": [],
+      "configuration_ids": [],
+      "author_rationale_ids": [],
+      "empirical_ids": [],
+      "literature_ids": [],
+      "behavior_relation_ids": [],
+      "allowed_expository_moves": [
+        "problem_or_local_context",
+        "design_objective",
+        "implementation_realization",
+        "limitations_or_mismatch",
+        "transition_to_next_section"
+      ],
+      "unresolved_inputs": [
+        "O-COMPONENT-03-d8aa8c77:partially_supported_by_repository"
+      ],
+      "authority_lanes": [
+        "executable_hard"
+      ],
+      "source_artifact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:a48f78c0e1931462",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:6daefc8982533bad",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:7fabddc9286307b4",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:5ff7f276f04b71a8",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:a6f6c00ca097eeb1",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:263526f0644479db",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:4c8511d6e8fc4240",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:c8936a17df7bdc83",
+        "fact-O-STAGE-01-039a963a-node:32aefbb96ff8fa11",
+        "fact-O-STAGE-01-039a963a-node:36bd05a333b6a4fc",
+        "fact-O-STAGE-01-039a963a-node:c4189835f8e67f5e",
+        "fact-O-STAGE-01-039a963a-node:4be5b539dce0e4f4",
+        "fact-O-STAGE-01-039a963a-node:00757f21e4c9d9f3",
+        "fact-O-STAGE-02-42e8d68d-node:9a4893d308318488",
+        "fact-O-STAGE-03-2c5bd758-node:c8936a17df7bdc83",
+        "fact-O-STAGE-03-2c5bd758-node:15f8ab428198f369",
+        "fact-O-STAGE-03-2c5bd758-node:4f3a01f0d7880c82",
+        "fact-O-STAGE-04-c50e0bef-node:4b560ac114ae99ec",
+        "fact-O-STAGE-04-c50e0bef-node:a2dae47572460254",
+        "fact-O-STAGE-05-5b3d398a-node:26c1ec766ceee404",
+        "fact-O-STAGE-05-5b3d398a-node:1077d0d81c820fb0",
+        "fact-O-STAGE-05-5b3d398a-node:31075c1f6e053a85",
+        "fact-O-STAGE-05-5b3d398a-node:856e72eeddb87554",
+        "fact-O-STAGE-05-5b3d398a-node:a002e187c0346457",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:fd2ce32dbb55ed63",
+        "fact-O-STAGE-04-c50e0bef-node:fd2ce32dbb55ed63"
+      ],
+      "source_obligation_ids": [
+        "O-COMPONENT-03-d8aa8c77"
+      ],
+      "supported": false,
+      "information_weight": 1.0,
+      "semantic_frame": null,
+      "obligation_assignments": [],
+      "content_digest": "sha256:7c0739c30bb0a2ad40f225c7296a76399baee922639bbd0610f7262fb0f186c6"
+    },
+    {
+      "argument_unit_id": "MA-S3:unit-13",
+      "section_role": "feature",
+      "research_question": "hybrid attention mechanism: Combines shared full attention (global cross‑passage) and dedicated masked attention",
+      "design_objective": "hybrid attention mechanism: Combines shared full attention (global cross‑passage) and dedicated masked attention (intra‑document) in each Transformer layer to jointly model inter‑ and intra‑document dependencies.",
+      "proposition_ids": [],
+      "positive_proposition_ids": [],
+      "caveated_proposition_ids": [],
+      "proposition_order": [],
+      "proposition_dependencies": [],
+      "concept_card_ids": [],
+      "verified_concept_card_ids": [],
+      "caveated_concept_card_ids": [],
+      "concept_card_order": [],
+      "brief_ids": [
+        "brief:story:O-COMPONENT-05-4c3594d2"
+      ],
+      "verified_brief_ids": [],
+      "caveated_brief_ids": [
+        "brief:story:O-COMPONENT-05-4c3594d2"
+      ],
+      "brief_order": [
+        "brief:story:O-COMPONENT-05-4c3594d2"
+      ],
+      "claim_ids": [],
+      "equation_ids": [],
+      "configuration_ids": [],
+      "author_rationale_ids": [],
+      "empirical_ids": [],
+      "literature_ids": [],
+      "behavior_relation_ids": [],
+      "allowed_expository_moves": [
+        "problem_or_local_context",
+        "design_objective",
+        "implementation_realization",
+        "limitations_or_mismatch",
+        "transition_to_next_section"
+      ],
+      "unresolved_inputs": [
+        "O-COMPONENT-05-4c3594d2:partially_supported_by_repository"
+      ],
+      "authority_lanes": [
+        "executable_hard"
+      ],
+      "source_artifact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:a48f78c0e1931462",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:7fabddc9286307b4",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:fd2ce32dbb55ed63",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:5ff7f276f04b71a8",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:a6f6c00ca097eeb1",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:263526f0644479db",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:4c8511d6e8fc4240",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:c8936a17df7bdc83",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:3673b2e5dbd63bd0",
+        "fact-O-STAGE-01-039a963a-node:36bd05a333b6a4fc",
+        "fact-O-STAGE-01-039a963a-node:c4189835f8e67f5e",
+        "fact-O-STAGE-01-039a963a-node:4be5b539dce0e4f4",
+        "fact-O-STAGE-01-039a963a-node:00757f21e4c9d9f3",
+        "fact-O-STAGE-02-42e8d68d-node:d643b3469b0df29c",
+        "fact-O-STAGE-02-42e8d68d-node:9a4893d308318488",
+        "fact-O-STAGE-03-2c5bd758-node:c8936a17df7bdc83",
+        "fact-O-STAGE-03-2c5bd758-node:15f8ab428198f369",
+        "fact-O-STAGE-03-2c5bd758-node:4f3a01f0d7880c82",
+        "fact-O-STAGE-04-c50e0bef-node:4b560ac114ae99ec",
+        "fact-O-STAGE-04-c50e0bef-node:a2dae47572460254",
+        "fact-O-STAGE-04-c50e0bef-node:fd2ce32dbb55ed63",
+        "fact-O-STAGE-05-5b3d398a-node:1077d0d81c820fb0",
+        "fact-O-STAGE-05-5b3d398a-node:31075c1f6e053a85",
+        "fact-O-STAGE-05-5b3d398a-node:856e72eeddb87554",
+        "fact-O-STAGE-05-5b3d398a-node:a002e187c0346457",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:73ea6c8145b47e07"
+      ],
+      "source_obligation_ids": [
+        "O-COMPONENT-05-4c3594d2"
+      ],
+      "supported": false,
+      "information_weight": 1.0,
+      "semantic_frame": null,
+      "obligation_assignments": [],
+      "content_digest": "sha256:308717a68e3a880ad5b3aef6790cfc686cf133a199a6b54a962544d14878d28e"
+    },
+    {
+      "argument_unit_id": "MA-S3:unit-14",
+      "section_role": "filter",
+      "research_question": "dedicated masked attention module: Masked multi‑head attention that restricts a passage to attend only to the query and",
+      "design_objective": "dedicated masked attention module: Masked multi‑head attention that restricts a passage to attend only to the query and to other passages from the same document, enabling fine‑grained coreference resolution and local coherence.",
+      "proposition_ids": [],
+      "positive_proposition_ids": [],
+      "caveated_proposition_ids": [],
+      "proposition_order": [],
+      "proposition_dependencies": [],
+      "concept_card_ids": [],
+      "verified_concept_card_ids": [],
+      "caveated_concept_card_ids": [],
+      "concept_card_order": [],
+      "brief_ids": [
+        "brief:story:O-COMPONENT-07-d157b2cc"
+      ],
+      "verified_brief_ids": [],
+      "caveated_brief_ids": [
+        "brief:story:O-COMPONENT-07-d157b2cc"
+      ],
+      "brief_order": [
+        "brief:story:O-COMPONENT-07-d157b2cc"
+      ],
+      "claim_ids": [],
+      "equation_ids": [],
+      "configuration_ids": [],
+      "author_rationale_ids": [],
+      "empirical_ids": [],
+      "literature_ids": [],
+      "behavior_relation_ids": [],
+      "allowed_expository_moves": [
+        "problem_or_local_context",
+        "design_objective",
+        "implementation_realization",
+        "limitations_or_mismatch",
+        "transition_to_next_section"
+      ],
+      "unresolved_inputs": [
+        "O-COMPONENT-07-d157b2cc:partially_supported_by_repository"
+      ],
+      "authority_lanes": [
+        "executable_hard"
+      ],
+      "source_artifact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:73ea6c8145b47e07",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:7fabddc9286307b4",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:5ff7f276f04b71a8",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:a6f6c00ca097eeb1",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:4c8511d6e8fc4240",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:c8936a17df7bdc83",
+        "fact-O-STAGE-01-039a963a-node:00757f21e4c9d9f3",
+        "fact-O-STAGE-03-2c5bd758-node:c8936a17df7bdc83",
+        "fact-O-STAGE-03-2c5bd758-node:15f8ab428198f369",
+        "fact-O-STAGE-03-2c5bd758-node:4f3a01f0d7880c82",
+        "fact-O-STAGE-04-c50e0bef-node:4b560ac114ae99ec",
+        "fact-O-STAGE-05-5b3d398a-node:856e72eeddb87554",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:c1802b91f97392cc",
+        "fact-O-STAGE-03-2c5bd758-node:142f7d2a2f9e8288",
+        "fact-O-STAGE-04-c50e0bef-node:0c0995d424e07399"
+      ],
+      "source_obligation_ids": [
+        "O-COMPONENT-07-d157b2cc"
+      ],
+      "supported": false,
+      "information_weight": 1.0,
+      "semantic_frame": null,
+      "obligation_assignments": [],
+      "content_digest": "sha256:d549dbd2b0c7ad29e8bb0c49af1121f77f0dd0f6cce8b5f2a5cd396ab83d4d83"
+    },
+    {
+      "argument_unit_id": "MA-S3:unit-15",
+      "section_role": "attention",
+      "research_question": "Design two complementary attention patterns that co‑exist in each layer: global and document‑local.",
+      "design_objective": "Design two complementary attention patterns that co‑exist in each layer: global and document‑local.",
+      "proposition_ids": [],
+      "positive_proposition_ids": [],
+      "caveated_proposition_ids": [],
+      "proposition_order": [],
+      "proposition_dependencies": [],
+      "concept_card_ids": [],
+      "verified_concept_card_ids": [],
+      "caveated_concept_card_ids": [],
+      "concept_card_order": [],
+      "brief_ids": [
+        "brief:story:O-RATIONALE-CHECK-03-b01101f7"
+      ],
+      "verified_brief_ids": [],
+      "caveated_brief_ids": [
+        "brief:story:O-RATIONALE-CHECK-03-b01101f7"
+      ],
+      "brief_order": [
+        "brief:story:O-RATIONALE-CHECK-03-b01101f7"
+      ],
+      "claim_ids": [],
+      "equation_ids": [],
+      "configuration_ids": [],
+      "author_rationale_ids": [],
+      "empirical_ids": [],
+      "literature_ids": [],
+      "behavior_relation_ids": [],
+      "allowed_expository_moves": [
+        "problem_or_local_context",
+        "design_objective",
+        "implementation_realization",
+        "limitations_or_mismatch",
+        "transition_to_next_section"
+      ],
+      "unresolved_inputs": [
+        "O-RATIONALE-CHECK-03-b01101f7:partially_supported_by_repository"
+      ],
+      "authority_lanes": [
+        "executable_hard"
+      ],
+      "source_artifact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:7fabddc9286307b4",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:5ff7f276f04b71a8",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:a6f6c00ca097eeb1",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:4c8511d6e8fc4240",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:c8936a17df7bdc83",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:73ea6c8145b47e07",
+        "fact-O-STAGE-01-039a963a-node:00757f21e4c9d9f3",
+        "fact-O-STAGE-03-2c5bd758-node:c8936a17df7bdc83",
+        "fact-O-STAGE-03-2c5bd758-node:15f8ab428198f369",
+        "fact-O-STAGE-03-2c5bd758-node:4f3a01f0d7880c82",
+        "fact-O-STAGE-04-c50e0bef-node:4b560ac114ae99ec",
+        "fact-O-STAGE-05-5b3d398a-node:856e72eeddb87554"
+      ],
+      "source_obligation_ids": [
+        "O-RATIONALE-CHECK-03-b01101f7"
+      ],
+      "supported": false,
+      "information_weight": 1.0,
+      "semantic_frame": null,
+      "obligation_assignments": [],
+      "content_digest": "sha256:3a32fc4c748e974d2e12d6e0999a2b440085a5194bf8e65adc9635312764c606"
+    },
+    {
+      "argument_unit_id": "MA-S4:unit-1",
+      "section_role": "training",
+      "research_question": "Training objective: InfoNCE loss with fixed query anchor.",
+      "design_objective": "Training objective: InfoNCE loss with fixed query anchor.",
+      "proposition_ids": [],
+      "positive_proposition_ids": [],
+      "caveated_proposition_ids": [],
+      "proposition_order": [],
+      "proposition_dependencies": [],
+      "concept_card_ids": [],
+      "verified_concept_card_ids": [],
+      "caveated_concept_card_ids": [],
+      "concept_card_order": [],
+      "brief_ids": [
+        "brief:story:O-ORGANIZATION-04-1dd970df"
+      ],
+      "verified_brief_ids": [],
+      "caveated_brief_ids": [
+        "brief:story:O-ORGANIZATION-04-1dd970df"
+      ],
+      "brief_order": [
+        "brief:story:O-ORGANIZATION-04-1dd970df"
+      ],
+      "claim_ids": [],
+      "equation_ids": [],
+      "configuration_ids": [],
+      "author_rationale_ids": [],
+      "empirical_ids": [],
+      "literature_ids": [],
+      "behavior_relation_ids": [],
+      "allowed_expository_moves": [
+        "problem_or_local_context",
+        "design_objective",
+        "implementation_realization",
+        "training_objective",
+        "limitations_or_mismatch",
+        "transition_to_next_section"
+      ],
+      "unresolved_inputs": [
+        "O-ORGANIZATION-04-1dd970df:partially_supported_by_repository"
+      ],
+      "authority_lanes": [
+        "executable_hard"
+      ],
+      "source_artifact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:a48f78c0e1931462",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:7fabddc9286307b4",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:fd2ce32dbb55ed63",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:5ff7f276f04b71a8",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:a6f6c00ca097eeb1",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:4c8511d6e8fc4240",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:c8936a17df7bdc83",
+        "fact-O-STAGE-01-039a963a-node:c4189835f8e67f5e",
+        "fact-O-STAGE-01-039a963a-node:4be5b539dce0e4f4",
+        "fact-O-STAGE-01-039a963a-node:00757f21e4c9d9f3",
+        "fact-O-STAGE-03-2c5bd758-node:c8936a17df7bdc83",
+        "fact-O-STAGE-03-2c5bd758-node:15f8ab428198f369",
+        "fact-O-STAGE-03-2c5bd758-node:4f3a01f0d7880c82",
+        "fact-O-STAGE-04-c50e0bef-node:4b560ac114ae99ec",
+        "fact-O-STAGE-04-c50e0bef-node:a2dae47572460254",
+        "fact-O-STAGE-04-c50e0bef-node:fd2ce32dbb55ed63",
+        "fact-O-STAGE-05-5b3d398a-node:856e72eeddb87554",
+        "fact-O-STAGE-05-5b3d398a-node:a002e187c0346457"
+      ],
+      "source_obligation_ids": [
+        "O-ORGANIZATION-04-1dd970df"
+      ],
+      "supported": false,
+      "information_weight": 1.0,
+      "semantic_frame": null,
+      "obligation_assignments": [],
+      "content_digest": "sha256:5513a023289d5abb776c0b6e90043fbadfc26504a2bd35fbd1ebba3144893566"
+    },
+    {
+      "argument_unit_id": "MA-S4:unit-2",
+      "section_role": "stage",
+      "research_question": "Contrastive training: Using a contrastive InfoNCE loss, pull the updated positive passage embedding toward the fixed query embedding and push negative passage embeddings away.",
+      "design_objective": "Contrastive training: Using a contrastive InfoNCE loss, pull the updated positive passage embedding toward the fixed query embedding and push negative passage embeddings away.",
+      "proposition_ids": [],
+      "positive_proposition_ids": [],
+      "caveated_proposition_ids": [],
+      "proposition_order": [],
+      "proposition_dependencies": [],
+      "concept_card_ids": [],
+      "verified_concept_card_ids": [],
+      "caveated_concept_card_ids": [],
+      "concept_card_order": [],
+      "brief_ids": [
+        "brief:story:O-STAGE-04-c50e0bef"
+      ],
+      "verified_brief_ids": [
+        "brief:story:O-STAGE-04-c50e0bef"
+      ],
+      "caveated_brief_ids": [],
+      "brief_order": [
+        "brief:story:O-STAGE-04-c50e0bef"
+      ],
+      "claim_ids": [
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:a48f78c0e1931462",
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:7fabddc9286307b4",
+        "claim-O-STAGE-04-c50e0bef-fact-O-STAGE-04-c50e0bef-node:93633547c32d9f45",
+        "claim-O-STAGE-04-c50e0bef-fact-O-STAGE-04-c50e0bef-node:a2dae47572460254",
+        "claim-O-STAGE-04-c50e0bef-fact-O-STAGE-04-c50e0bef-node:fd2ce32dbb55ed63",
+        "claim-O-STAGE-04-c50e0bef-fact-O-STAGE-04-c50e0bef-node:0c0995d424e07399",
+        "claim-O-STAGE-04-c50e0bef-fact-O-STAGE-04-c50e0bef-node:4b560ac114ae99ec",
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:fd2ce32dbb55ed63",
+        "l2:math:fact-O-METHOD-MAINLINE-01-c8146479-node:7fabddc9286307b4:weighted_sum"
+      ],
+      "equation_ids": [
+        "equation:fact-O-METHOD-MAINLINE-01-c8146479-node:7fabddc9286307b4",
+        "equation:fact-O-STAGE-04-c50e0bef-node:4b560ac114ae99ec"
+      ],
+      "configuration_ids": [],
+      "author_rationale_ids": [],
+      "empirical_ids": [],
+      "literature_ids": [],
+      "behavior_relation_ids": [
+        "rel:84af4602b176e7bd",
+        "rel:84af4602b176e7bd"
+      ],
+      "allowed_expository_moves": [
+        "problem_or_local_context",
+        "design_objective",
+        "mechanism_overview",
+        "formal_objects_and_notation",
+        "equation_or_derivation",
+        "algorithm_or_data_flow",
+        "configuration_and_branches",
+        "training_objective",
+        "inference_and_output",
+        "transition_to_next_section"
+      ],
+      "unresolved_inputs": [
+        "O-METHOD-MAINLINE-01-c8146479:partially_supported_by_repository"
+      ],
+      "authority_lanes": [
+        "executable_hard",
+        "formal_derivation"
+      ],
+      "source_artifact_ids": [
+        "span:src/model/ebcar_dedicated_attention_model.py:135:137",
+        "span:src/model/ebcar_dedicated_attention_model.py:232:232",
+        "span:src/model/ebcar_dedicated_attention_model.py:234:240",
+        "span:src/model/ebcar_dedicated_attention_model.py:231:231",
+        "span:src/model/ebcar_dedicated_attention_model.py:243:243",
+        "rel:84af4602b176e7bd",
+        "span:src/model/ebcar_dedicated_attention_model.py:244:244",
+        "rel:84af4602b176e7bd",
+        "span:src/model/ebcar_dedicated_attention_model.py:132:132",
+        "span:src/model/ebcar_dedicated_attention_model.py:243:243",
+        "span:src/model/ebcar_dedicated_attention_model.py:232:232"
+      ],
+      "source_obligation_ids": [
+        "O-STAGE-04-c50e0bef",
+        "O-METHOD-MAINLINE-01-c8146479"
+      ],
+      "supported": false,
+      "information_weight": 10.5,
+      "semantic_frame": null,
+      "obligation_assignments": [],
+      "content_digest": "sha256:e7f518fa7b4fdb7be664e53da41deffe3a1d02749487b19663d362967e473df3"
+    },
+    {
+      "argument_unit_id": "MA-S4:unit-3",
+      "section_role": "feature",
+      "research_question": "Keep the query embedding fixed during training and inference while updating passage embeddings.",
+      "design_objective": "Keep the query embedding fixed during training and inference while updating passage embeddings.",
+      "proposition_ids": [],
+      "positive_proposition_ids": [],
+      "caveated_proposition_ids": [],
+      "proposition_order": [],
+      "proposition_dependencies": [],
+      "concept_card_ids": [],
+      "verified_concept_card_ids": [],
+      "caveated_concept_card_ids": [],
+      "concept_card_order": [],
+      "brief_ids": [
+        "brief:story:O-RATIONALE-CHECK-05-595ac6ff"
+      ],
+      "verified_brief_ids": [],
+      "caveated_brief_ids": [
+        "brief:story:O-RATIONALE-CHECK-05-595ac6ff"
+      ],
+      "brief_order": [
+        "brief:story:O-RATIONALE-CHECK-05-595ac6ff"
+      ],
+      "claim_ids": [],
+      "equation_ids": [],
+      "configuration_ids": [],
+      "author_rationale_ids": [],
+      "empirical_ids": [],
+      "literature_ids": [],
+      "behavior_relation_ids": [],
+      "allowed_expository_moves": [
+        "problem_or_local_context",
+        "design_objective",
+        "implementation_realization",
+        "limitations_or_mismatch",
+        "transition_to_next_section"
+      ],
+      "unresolved_inputs": [
+        "O-RATIONALE-CHECK-05-595ac6ff:partially_supported_by_repository"
+      ],
+      "authority_lanes": [
+        "executable_hard"
+      ],
+      "source_artifact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:a48f78c0e1931462",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:6daefc8982533bad",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:7fabddc9286307b4",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:5ff7f276f04b71a8",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:a6f6c00ca097eeb1",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:263526f0644479db",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:4c8511d6e8fc4240",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:c8936a17df7bdc83",
+        "fact-O-STAGE-01-039a963a-node:32aefbb96ff8fa11",
+        "fact-O-STAGE-01-039a963a-node:36bd05a333b6a4fc",
+        "fact-O-STAGE-01-039a963a-node:c4189835f8e67f5e",
+        "fact-O-STAGE-01-039a963a-node:4be5b539dce0e4f4",
+        "fact-O-STAGE-01-039a963a-node:00757f21e4c9d9f3",
+        "fact-O-STAGE-02-42e8d68d-node:9a4893d308318488",
+        "fact-O-STAGE-03-2c5bd758-node:c8936a17df7bdc83",
+        "fact-O-STAGE-03-2c5bd758-node:15f8ab428198f369",
+        "fact-O-STAGE-03-2c5bd758-node:4f3a01f0d7880c82",
+        "fact-O-STAGE-04-c50e0bef-node:4b560ac114ae99ec",
+        "fact-O-STAGE-04-c50e0bef-node:a2dae47572460254",
+        "fact-O-STAGE-05-5b3d398a-node:26c1ec766ceee404",
+        "fact-O-STAGE-05-5b3d398a-node:1077d0d81c820fb0",
+        "fact-O-STAGE-05-5b3d398a-node:31075c1f6e053a85",
+        "fact-O-STAGE-05-5b3d398a-node:856e72eeddb87554",
+        "fact-O-STAGE-05-5b3d398a-node:a002e187c0346457",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:73ea6c8145b47e07",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:fd2ce32dbb55ed63",
+        "fact-O-STAGE-04-c50e0bef-node:fd2ce32dbb55ed63",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:c1802b91f97392cc",
+        "fact-O-STAGE-03-2c5bd758-node:142f7d2a2f9e8288",
+        "fact-O-STAGE-04-c50e0bef-node:0c0995d424e07399"
+      ],
+      "source_obligation_ids": [
+        "O-RATIONALE-CHECK-05-595ac6ff"
+      ],
+      "supported": false,
+      "information_weight": 1.0,
+      "semantic_frame": null,
+      "obligation_assignments": [],
+      "content_digest": "sha256:fe434a599b0f6f200352b462c435dc9a85e9b3949b5212f212dc6b2340e5f23c"
+    },
+    {
+      "argument_unit_id": "MA-S4:unit-4",
+      "section_role": "feature",
+      "research_question": "InfoNCE contrastive loss: Objective that encourages the updated positive passage embedding to align with the fixed query",
+      "design_objective": "InfoNCE contrastive loss: Objective that encourages the updated positive passage embedding to align with the fixed query embedding while separating negatives.",
+      "proposition_ids": [],
+      "positive_proposition_ids": [],
+      "caveated_proposition_ids": [],
+      "proposition_order": [],
+      "proposition_dependencies": [],
+      "concept_card_ids": [],
+      "verified_concept_card_ids": [],
+      "caveated_concept_card_ids": [],
+      "concept_card_order": [],
+      "brief_ids": [
+        "brief:story:O-COMPONENT-09-6a8cfd6c"
+      ],
+      "verified_brief_ids": [],
+      "caveated_brief_ids": [
+        "brief:story:O-COMPONENT-09-6a8cfd6c"
+      ],
+      "brief_order": [
+        "brief:story:O-COMPONENT-09-6a8cfd6c"
+      ],
+      "claim_ids": [],
+      "equation_ids": [],
+      "configuration_ids": [],
+      "author_rationale_ids": [],
+      "empirical_ids": [],
+      "literature_ids": [],
+      "behavior_relation_ids": [],
+      "allowed_expository_moves": [
+        "problem_or_local_context",
+        "design_objective",
+        "implementation_realization",
+        "limitations_or_mismatch",
+        "transition_to_next_section"
+      ],
+      "unresolved_inputs": [
+        "O-COMPONENT-09-6a8cfd6c:partially_supported_by_repository"
+      ],
+      "authority_lanes": [
+        "executable_hard"
+      ],
+      "source_artifact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:a48f78c0e1931462",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:6daefc8982533bad",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:7fabddc9286307b4",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:5ff7f276f04b71a8",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:a6f6c00ca097eeb1",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:263526f0644479db",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:4c8511d6e8fc4240",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:c8936a17df7bdc83",
+        "fact-O-STAGE-01-039a963a-node:32aefbb96ff8fa11",
+        "fact-O-STAGE-01-039a963a-node:36bd05a333b6a4fc",
+        "fact-O-STAGE-01-039a963a-node:c4189835f8e67f5e",
+        "fact-O-STAGE-01-039a963a-node:4be5b539dce0e4f4",
+        "fact-O-STAGE-01-039a963a-node:00757f21e4c9d9f3",
+        "fact-O-STAGE-02-42e8d68d-node:9a4893d308318488",
+        "fact-O-STAGE-03-2c5bd758-node:c8936a17df7bdc83",
+        "fact-O-STAGE-03-2c5bd758-node:15f8ab428198f369",
+        "fact-O-STAGE-03-2c5bd758-node:4f3a01f0d7880c82",
+        "fact-O-STAGE-04-c50e0bef-node:4b560ac114ae99ec",
+        "fact-O-STAGE-04-c50e0bef-node:a2dae47572460254",
+        "fact-O-STAGE-05-5b3d398a-node:26c1ec766ceee404",
+        "fact-O-STAGE-05-5b3d398a-node:1077d0d81c820fb0",
+        "fact-O-STAGE-05-5b3d398a-node:31075c1f6e053a85",
+        "fact-O-STAGE-05-5b3d398a-node:856e72eeddb87554",
+        "fact-O-STAGE-05-5b3d398a-node:a002e187c0346457",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:fd2ce32dbb55ed63",
+        "fact-O-STAGE-04-c50e0bef-node:fd2ce32dbb55ed63"
+      ],
+      "source_obligation_ids": [
+        "O-COMPONENT-09-6a8cfd6c"
+      ],
+      "supported": false,
+      "information_weight": 1.0,
+      "semantic_frame": null,
+      "obligation_assignments": [],
+      "content_digest": "sha256:ecac4eb0effdfecbc9b4c3595f7d741a58f78b71bd750ccf1a492e3ba7b4acd3"
+    },
+    {
+      "argument_unit_id": "MA-S4:unit-5",
+      "section_role": "feature",
+      "research_question": "fixed query anchor: The original query embedding remains unchanged during training/inference to serve as a stable",
+      "design_objective": "fixed query anchor: The original query embedding remains unchanged during training/inference to serve as a stable reference in the contrastive objective.",
+      "proposition_ids": [],
+      "positive_proposition_ids": [],
+      "caveated_proposition_ids": [],
+      "proposition_order": [],
+      "proposition_dependencies": [],
+      "concept_card_ids": [],
+      "verified_concept_card_ids": [],
+      "caveated_concept_card_ids": [],
+      "concept_card_order": [],
+      "brief_ids": [
+        "brief:story:O-COMPONENT-10-dac6250f"
+      ],
+      "verified_brief_ids": [],
+      "caveated_brief_ids": [
+        "brief:story:O-COMPONENT-10-dac6250f"
+      ],
+      "brief_order": [
+        "brief:story:O-COMPONENT-10-dac6250f"
+      ],
+      "claim_ids": [],
+      "equation_ids": [],
+      "configuration_ids": [],
+      "author_rationale_ids": [],
+      "empirical_ids": [],
+      "literature_ids": [],
+      "behavior_relation_ids": [],
+      "allowed_expository_moves": [
+        "problem_or_local_context",
+        "design_objective",
+        "implementation_realization",
+        "limitations_or_mismatch",
+        "transition_to_next_section"
+      ],
+      "unresolved_inputs": [
+        "O-COMPONENT-10-dac6250f:partially_supported_by_repository"
+      ],
+      "authority_lanes": [
+        "executable_hard"
+      ],
+      "source_artifact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:a48f78c0e1931462",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:6daefc8982533bad",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:7fabddc9286307b4",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:5ff7f276f04b71a8",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:a6f6c00ca097eeb1",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:263526f0644479db",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:4c8511d6e8fc4240",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:c8936a17df7bdc83",
+        "fact-O-STAGE-01-039a963a-node:32aefbb96ff8fa11",
+        "fact-O-STAGE-01-039a963a-node:36bd05a333b6a4fc",
+        "fact-O-STAGE-01-039a963a-node:c4189835f8e67f5e",
+        "fact-O-STAGE-01-039a963a-node:4be5b539dce0e4f4",
+        "fact-O-STAGE-01-039a963a-node:00757f21e4c9d9f3",
+        "fact-O-STAGE-02-42e8d68d-node:9a4893d308318488",
+        "fact-O-STAGE-03-2c5bd758-node:c8936a17df7bdc83",
+        "fact-O-STAGE-03-2c5bd758-node:15f8ab428198f369",
+        "fact-O-STAGE-03-2c5bd758-node:4f3a01f0d7880c82",
+        "fact-O-STAGE-04-c50e0bef-node:4b560ac114ae99ec",
+        "fact-O-STAGE-04-c50e0bef-node:a2dae47572460254",
+        "fact-O-STAGE-05-5b3d398a-node:26c1ec766ceee404",
+        "fact-O-STAGE-05-5b3d398a-node:1077d0d81c820fb0",
+        "fact-O-STAGE-05-5b3d398a-node:31075c1f6e053a85",
+        "fact-O-STAGE-05-5b3d398a-node:856e72eeddb87554",
+        "fact-O-STAGE-05-5b3d398a-node:a002e187c0346457",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:fd2ce32dbb55ed63",
+        "fact-O-STAGE-04-c50e0bef-node:fd2ce32dbb55ed63",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:c1802b91f97392cc",
+        "fact-O-STAGE-03-2c5bd758-node:142f7d2a2f9e8288",
+        "fact-O-STAGE-04-c50e0bef-node:0c0995d424e07399"
+      ],
+      "source_obligation_ids": [
+        "O-COMPONENT-10-dac6250f"
+      ],
+      "supported": false,
+      "information_weight": 1.0,
+      "semantic_frame": null,
+      "obligation_assignments": [],
+      "content_digest": "sha256:ea8e7c148d9b6da5de08666d272663e4705d1b5185bb717563c5dd1cfb4487d9"
+    },
+    {
+      "argument_unit_id": "MA-S4:unit-6",
+      "section_role": "training",
+      "research_question": "MLDR, SQuAD, NarrativeQA (training sets): Three ConTEB datasets used for training EBCAR, covering entity disambiguation",
+      "design_objective": "MLDR, SQuAD, NarrativeQA (training sets): Three ConTEB datasets used for training EBCAR, covering entity disambiguation, span matching, and narrative comprehension.",
+      "proposition_ids": [],
+      "positive_proposition_ids": [],
+      "caveated_proposition_ids": [],
+      "proposition_order": [],
+      "proposition_dependencies": [],
+      "concept_card_ids": [],
+      "verified_concept_card_ids": [],
+      "caveated_concept_card_ids": [],
+      "concept_card_order": [],
+      "brief_ids": [
+        "brief:story:O-COMPONENT-12-370bd5b2"
+      ],
+      "verified_brief_ids": [],
+      "caveated_brief_ids": [
+        "brief:story:O-COMPONENT-12-370bd5b2"
+      ],
+      "brief_order": [
+        "brief:story:O-COMPONENT-12-370bd5b2"
+      ],
+      "claim_ids": [],
+      "equation_ids": [],
+      "configuration_ids": [],
+      "author_rationale_ids": [],
+      "empirical_ids": [],
+      "literature_ids": [],
+      "behavior_relation_ids": [],
+      "allowed_expository_moves": [
+        "problem_or_local_context",
+        "design_objective",
+        "implementation_realization",
+        "training_objective",
+        "limitations_or_mismatch",
+        "transition_to_next_section"
+      ],
+      "unresolved_inputs": [
+        "O-COMPONENT-12-370bd5b2:partially_supported_by_repository"
+      ],
+      "authority_lanes": [
+        "executable_hard"
+      ],
+      "source_artifact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:a48f78c0e1931462",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:7fabddc9286307b4",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:fd2ce32dbb55ed63",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:5ff7f276f04b71a8",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:a6f6c00ca097eeb1",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:4c8511d6e8fc4240",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:c8936a17df7bdc83",
+        "fact-O-STAGE-01-039a963a-node:c4189835f8e67f5e",
+        "fact-O-STAGE-01-039a963a-node:4be5b539dce0e4f4",
+        "fact-O-STAGE-01-039a963a-node:00757f21e4c9d9f3",
+        "fact-O-STAGE-03-2c5bd758-node:c8936a17df7bdc83",
+        "fact-O-STAGE-03-2c5bd758-node:15f8ab428198f369",
+        "fact-O-STAGE-03-2c5bd758-node:4f3a01f0d7880c82",
+        "fact-O-STAGE-04-c50e0bef-node:4b560ac114ae99ec",
+        "fact-O-STAGE-04-c50e0bef-node:a2dae47572460254",
+        "fact-O-STAGE-04-c50e0bef-node:fd2ce32dbb55ed63",
+        "fact-O-STAGE-05-5b3d398a-node:856e72eeddb87554",
+        "fact-O-STAGE-05-5b3d398a-node:a002e187c0346457"
+      ],
+      "source_obligation_ids": [
+        "O-COMPONENT-12-370bd5b2"
+      ],
+      "supported": false,
+      "information_weight": 1.0,
+      "semantic_frame": null,
+      "obligation_assignments": [],
+      "content_digest": "sha256:8ba4c742d7de6d1e06a8d5dc71ec75ffa8c6a8ee5aea647a1d80eb2eafcbc2ae"
+    },
+    {
+      "argument_unit_id": "MA-S5:unit-1",
+      "section_role": "inference",
+      "research_question": "Inference procedure.",
+      "design_objective": "Inference procedure.",
+      "proposition_ids": [],
+      "positive_proposition_ids": [],
+      "caveated_proposition_ids": [],
+      "proposition_order": [],
+      "proposition_dependencies": [],
+      "concept_card_ids": [],
+      "verified_concept_card_ids": [],
+      "caveated_concept_card_ids": [],
+      "concept_card_order": [],
+      "brief_ids": [
+        "brief:story:O-ORGANIZATION-05-baf0d276"
+      ],
+      "verified_brief_ids": [],
+      "caveated_brief_ids": [
+        "brief:story:O-ORGANIZATION-05-baf0d276"
+      ],
+      "brief_order": [
+        "brief:story:O-ORGANIZATION-05-baf0d276"
+      ],
+      "claim_ids": [],
+      "equation_ids": [],
+      "configuration_ids": [],
+      "author_rationale_ids": [],
+      "empirical_ids": [],
+      "literature_ids": [],
+      "behavior_relation_ids": [],
+      "allowed_expository_moves": [
+        "problem_or_local_context",
+        "design_objective",
+        "implementation_realization",
+        "inference_and_output",
+        "limitations_or_mismatch",
+        "transition_to_next_section"
+      ],
+      "unresolved_inputs": [
+        "O-ORGANIZATION-05-baf0d276:partially_supported_by_repository"
+      ],
+      "authority_lanes": [
+        "executable_hard"
+      ],
+      "source_artifact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:c1802b91f97392cc",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:263526f0644479db",
+        "fact-O-STAGE-01-039a963a-node:36bd05a333b6a4fc",
+        "fact-O-STAGE-02-42e8d68d-node:9a4893d308318488",
+        "fact-O-STAGE-03-2c5bd758-node:142f7d2a2f9e8288",
+        "fact-O-STAGE-04-c50e0bef-node:0c0995d424e07399",
+        "fact-O-STAGE-05-5b3d398a-node:1077d0d81c820fb0",
+        "fact-O-STAGE-05-5b3d398a-node:31075c1f6e053a85"
+      ],
+      "source_obligation_ids": [
+        "O-ORGANIZATION-05-baf0d276"
+      ],
+      "supported": false,
+      "information_weight": 1.0,
+      "semantic_frame": null,
+      "obligation_assignments": [],
+      "content_digest": "sha256:01941a2a94dfc99ea9efac657ee756d1cb630ff953dd489f7525966b9e30f698"
+    },
+    {
+      "argument_unit_id": "MA-S5:unit-2",
+      "section_role": "stage",
+      "research_question": "Inference scoring and ranking: Compute dot‑product similarities between the unchanged query embedding and the contextualized passage embeddings, then sort passages by descending score.",
+      "design_objective": "Inference scoring and ranking: Compute dot‑product similarities between the unchanged query embedding and the contextualized passage embeddings, then sort passages by descending score.",
+      "proposition_ids": [],
+      "positive_proposition_ids": [],
+      "caveated_proposition_ids": [],
+      "proposition_order": [],
+      "proposition_dependencies": [],
+      "concept_card_ids": [],
+      "verified_concept_card_ids": [],
+      "caveated_concept_card_ids": [],
+      "concept_card_order": [],
+      "brief_ids": [
+        "brief:story:O-STAGE-05-5b3d398a"
+      ],
+      "verified_brief_ids": [],
+      "caveated_brief_ids": [
+        "brief:story:O-STAGE-05-5b3d398a"
+      ],
+      "brief_order": [
+        "brief:story:O-STAGE-05-5b3d398a"
+      ],
+      "claim_ids": [
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:8e87e1804f77f50f",
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:c1802b91f97392cc",
+        "claim-O-STAGE-05-5b3d398a-fact-O-STAGE-05-5b3d398a-node:06b37685c9288fb6",
+        "claim-O-STAGE-05-5b3d398a-fact-O-STAGE-05-5b3d398a-node:a002e187c0346457",
+        "claim-O-STAGE-05-5b3d398a-fact-O-STAGE-05-5b3d398a-node:856e72eeddb87554",
+        "claim-O-STAGE-05-5b3d398a-fact-O-STAGE-05-5b3d398a-node:1077d0d81c820fb0",
+        "claim-O-STAGE-05-5b3d398a-fact-O-STAGE-05-5b3d398a-node:26c1ec766ceee404",
+        "claim-O-STAGE-05-5b3d398a-fact-O-STAGE-05-5b3d398a-node:31075c1f6e053a85",
+        "claim-O-STAGE-05-5b3d398a-fact-O-STAGE-05-5b3d398a-rel:caa3e47dda8fdf04",
+        "claim-O-STAGE-05-5b3d398a-fact-configuration-rel:696083475512bfc5",
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:5ff7f276f04b71a8",
+        "l2:math:fact-O-METHOD-MAINLINE-01-c8146479-node:5ff7f276f04b71a8:weighted_sum",
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:a6f6c00ca097eeb1",
+        "l2:math:fact-O-METHOD-MAINLINE-01-c8146479-node:a6f6c00ca097eeb1:weighted_sum"
+      ],
+      "equation_ids": [
+        "equation:fact-O-STAGE-05-5b3d398a-node:856e72eeddb87554",
+        "equation:fact-O-METHOD-MAINLINE-01-c8146479-node:5ff7f276f04b71a8",
+        "equation:fact-O-METHOD-MAINLINE-01-c8146479-node:a6f6c00ca097eeb1"
+      ],
+      "configuration_ids": [
+        "config:sha256:5102d9838cd7f"
+      ],
+      "author_rationale_ids": [],
+      "empirical_ids": [],
+      "literature_ids": [],
+      "behavior_relation_ids": [
+        "rel:9812df01436b5f4c",
+        "rel:75d4bb1bf855ff42",
+        "rel:be1af249e1645ad8",
+        "rel:9812df01436b5f4c",
+        "rel:be1af249e1645ad8",
+        "rel:75d4bb1bf855ff42",
+        "rel:75d4bb1bf855ff42"
+      ],
+      "allowed_expository_moves": [
+        "problem_or_local_context",
+        "design_objective",
+        "mechanism_overview",
+        "formal_objects_and_notation",
+        "equation_or_derivation",
+        "algorithm_or_data_flow",
+        "implementation_realization",
+        "configuration_and_branches",
+        "inference_and_output",
+        "transition_to_next_section"
+      ],
+      "unresolved_inputs": [
+        "O-STAGE-05-5b3d398a:partially_supported_by_repository",
+        "O-METHOD-MAINLINE-01-c8146479:partially_supported_by_repository"
+      ],
+      "authority_lanes": [
+        "executable_hard",
+        "formal_derivation",
+        "configuration_resolved"
+      ],
+      "source_artifact_ids": [
+        "span:src/model/ebcar_dedicated_attention_model.py:334:336",
+        "span:src/model/ebcar_dedicated_attention_model.py:344:344",
+        "span:src/model/ebcar_dedicated_attention_model.py:265:277",
+        "rel:9812df01436b5f4c",
+        "rel:75d4bb1bf855ff42",
+        "span:src/model/ebcar_dedicated_attention_model.py:310:310",
+        "span:src/model/ebcar_dedicated_attention_model.py:276:276",
+        "rel:be1af249e1645ad8",
+        "span:src/model/ebcar_dedicated_attention_model.py:267:270",
+        "rel:9812df01436b5f4c",
+        "rel:be1af249e1645ad8",
+        "span:src/model/ebcar_dedicated_attention_model.py:265:265",
+        "rel:75d4bb1bf855ff42",
+        "span:src/model/ebcar_dedicated_attention_model.py:271:273",
+        "span:src/model/ebcar_dedicated_attention_model.py:265:277",
+        "span:src/model/ebcar_dedicated_attention_model.py:265:265",
+        "rel:75d4bb1bf855ff42",
+        "span:conf/config.yaml:18:18",
+        "span:src/model/ebcar_dedicated_attention_model.py:276:276",
+        "span:src/model/ebcar_dedicated_attention_model.py:276:276",
+        "span:src/model/ebcar_dedicated_attention_model.py:294:294",
+        "span:src/model/ebcar_dedicated_attention_model.py:294:294"
+      ],
+      "source_obligation_ids": [
+        "O-STAGE-05-5b3d398a",
+        "O-METHOD-MAINLINE-01-c8146479"
+      ],
+      "supported": false,
+      "information_weight": 16.75,
+      "semantic_frame": null,
+      "obligation_assignments": [],
+      "content_digest": "sha256:d0cb3d493070dd6571092610ed0c03ca64a6ac1f076b50366feebdfdfab5109a"
+    },
+    {
+      "argument_unit_id": "MA-S5:unit-3",
+      "section_role": "inference",
+      "research_question": "Improve reranking in retrieval-augmented generation (RAG) systems by addressing both inference efficiency and the need",
+      "design_objective": "Improve reranking in retrieval-augmented generation (RAG) systems by addressing both inference efficiency and the need for cross-passage reasoning, especially when evidence is scattered across passages and requires resolving coreference or structural context.",
+      "proposition_ids": [],
+      "positive_proposition_ids": [],
+      "caveated_proposition_ids": [],
+      "proposition_order": [],
+      "proposition_dependencies": [],
+      "concept_card_ids": [],
+      "verified_concept_card_ids": [],
+      "caveated_concept_card_ids": [],
+      "concept_card_order": [],
+      "brief_ids": [
+        "brief:story:O-COMPONENT-01-c301ecdd"
+      ],
+      "verified_brief_ids": [],
+      "caveated_brief_ids": [
+        "brief:story:O-COMPONENT-01-c301ecdd"
+      ],
+      "brief_order": [
+        "brief:story:O-COMPONENT-01-c301ecdd"
+      ],
+      "claim_ids": [],
+      "equation_ids": [],
+      "configuration_ids": [],
+      "author_rationale_ids": [],
+      "empirical_ids": [],
+      "literature_ids": [],
+      "behavior_relation_ids": [],
+      "allowed_expository_moves": [
+        "problem_or_local_context",
+        "design_objective",
+        "implementation_realization",
+        "inference_and_output",
+        "limitations_or_mismatch",
+        "transition_to_next_section"
+      ],
+      "unresolved_inputs": [
+        "O-COMPONENT-01-c301ecdd:partially_supported_by_repository"
+      ],
+      "authority_lanes": [
+        "executable_hard"
+      ],
+      "source_artifact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:c1802b91f97392cc",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:263526f0644479db",
+        "fact-O-STAGE-01-039a963a-node:36bd05a333b6a4fc",
+        "fact-O-STAGE-02-42e8d68d-node:9a4893d308318488",
+        "fact-O-STAGE-03-2c5bd758-node:142f7d2a2f9e8288",
+        "fact-O-STAGE-04-c50e0bef-node:0c0995d424e07399",
+        "fact-O-STAGE-05-5b3d398a-node:1077d0d81c820fb0",
+        "fact-O-STAGE-05-5b3d398a-node:31075c1f6e053a85"
+      ],
+      "source_obligation_ids": [
+        "O-COMPONENT-01-c301ecdd"
+      ],
+      "supported": false,
+      "information_weight": 1.0,
+      "semantic_frame": null,
+      "obligation_assignments": [],
+      "content_digest": "sha256:0cd84591d76bc1597ef5fb5156c0f231ba8462681aa23591a94ef5924ae03222"
+    },
+    {
+      "argument_unit_id": "MA-S5:unit-4",
+      "section_role": "inference",
+      "research_question": "Avoid full‑text processing and autoregressive generation to reduce inference latency.",
+      "design_objective": "Avoid full‑text processing and autoregressive generation to reduce inference latency.",
+      "proposition_ids": [],
+      "positive_proposition_ids": [],
+      "caveated_proposition_ids": [],
+      "proposition_order": [],
+      "proposition_dependencies": [],
+      "concept_card_ids": [],
+      "verified_concept_card_ids": [],
+      "caveated_concept_card_ids": [],
+      "concept_card_order": [],
+      "brief_ids": [
+        "brief:story:O-RATIONALE-CHECK-01-bad20132"
+      ],
+      "verified_brief_ids": [],
+      "caveated_brief_ids": [
+        "brief:story:O-RATIONALE-CHECK-01-bad20132"
+      ],
+      "brief_order": [
+        "brief:story:O-RATIONALE-CHECK-01-bad20132"
+      ],
+      "claim_ids": [],
+      "equation_ids": [],
+      "configuration_ids": [],
+      "author_rationale_ids": [],
+      "empirical_ids": [],
+      "literature_ids": [],
+      "behavior_relation_ids": [],
+      "allowed_expository_moves": [
+        "problem_or_local_context",
+        "design_objective",
+        "implementation_realization",
+        "inference_and_output",
+        "limitations_or_mismatch",
+        "transition_to_next_section"
+      ],
+      "unresolved_inputs": [
+        "O-RATIONALE-CHECK-01-bad20132:partially_supported_by_repository"
+      ],
+      "authority_lanes": [
+        "executable_hard"
+      ],
+      "source_artifact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:c1802b91f97392cc",
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:263526f0644479db",
+        "fact-O-STAGE-01-039a963a-node:36bd05a333b6a4fc",
+        "fact-O-STAGE-02-42e8d68d-node:9a4893d308318488",
+        "fact-O-STAGE-03-2c5bd758-node:142f7d2a2f9e8288",
+        "fact-O-STAGE-04-c50e0bef-node:0c0995d424e07399",
+        "fact-O-STAGE-05-5b3d398a-node:1077d0d81c820fb0",
+        "fact-O-STAGE-05-5b3d398a-node:31075c1f6e053a85"
+      ],
+      "source_obligation_ids": [
+        "O-RATIONALE-CHECK-01-bad20132"
+      ],
+      "supported": false,
+      "information_weight": 1.0,
+      "semantic_frame": null,
+      "obligation_assignments": [],
+      "content_digest": "sha256:60177acb22b60751c34ec755b8d79f304c321eafd40b894541d9e906223ab57a"
+    }
+  ],
+  "method_units": [],
+  "venue": "",
+  "audience": "method readers",
+  "total_page_budget": 46.0,
+  "incomplete_sections": [],
+  "obligation_assignments": [],
+  "move_authority_proofs": [],
+  "critical_high_obligation_ids": [],
+  "completeness_digest": "",
+  "content_digest": "sha256:39472136b1dee572b8956755458301c3381c023bb9d925946dd0ff91fc06c720"
+}

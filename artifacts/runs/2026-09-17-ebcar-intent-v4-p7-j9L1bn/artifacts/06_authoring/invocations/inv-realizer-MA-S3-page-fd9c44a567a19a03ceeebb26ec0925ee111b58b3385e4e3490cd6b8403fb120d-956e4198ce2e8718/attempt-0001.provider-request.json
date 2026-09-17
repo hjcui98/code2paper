@@ -1,0 +1,2151 @@
+{
+  "attempt": 1,
+  "config": {
+    "max_output_tokens": 8192,
+    "model": "qwen38-27b-nvfp4",
+    "reasoning_effort": "none",
+    "role": "",
+    "seed": null,
+    "temperature": 0.6,
+    "thinking_token_budget": null,
+    "top_k": 20,
+    "top_p": 0.95
+  },
+  "content_digest": "sha256:d4e32cfbbb7708989ef1eba035021bdc0c45daa37095960335c7c058005ac030",
+  "input_payload": {
+    "consumer_role": "realizer",
+    "is_repair": false,
+    "mechanism_id": "join:MA-S3",
+    "page_id": "page:fd9c44a567a19a03ceeebb26ec0925ee111b58b3385e4e3490cd6b8403fb120d",
+    "response_contract": {
+      "allowed_atom_target_ids": [
+        "atom:detail:mech_sym:9773c5add7af1f92:13:condition:fact-operation:fact-O-METHOD-MAINLINE-01-c8146479-node:5ff7f276f04b71a8",
+        "atom:detail:mech_sym:9773c5add7af1f92:13:condition:fact-operation:fact-O-STAGE-05-5b3d398a-node:856e72eeddb87554",
+        "atom:detail:mech_sym:9773c5add7af1f92:13:condition:graph-operation:node:10d46b392345ef23",
+        "atom:detail:mech_sym:9773c5add7af1f92:13:condition:graph-operation:node:1e049bf759b0f8df",
+        "atom:detail:mech_sym:9773c5add7af1f92:13:condition:graph-operation:node:a0f8d97ffc7d8cd5",
+        "atom:detail:mech_sym:9773c5add7af1f92:13:condition:graph-operation:node:ed2633a60afe19d0",
+        "atom:detail:mech_sym:9773c5add7af1f92:13:condition:graph-operation:node:fafbec46bf553ba0",
+        "atom:detail:mech_sym:9773c5add7af1f92:13:formal:graph-operation:node:10d46b392345ef23",
+        "atom:detail:mech_sym:9773c5add7af1f92:13:formal:graph-operation:node:1e049bf759b0f8df",
+        "atom:detail:mech_sym:9773c5add7af1f92:13:operand:fact-operation:fact-O-METHOD-MAINLINE-01-c8146479-node:5ff7f276f04b71a8:0",
+        "atom:detail:mech_sym:9773c5add7af1f92:13:operand:fact-operation:fact-O-METHOD-MAINLINE-01-c8146479-node:5ff7f276f04b71a8:1",
+        "atom:detail:mech_sym:9773c5add7af1f92:13:operand:fact-operation:fact-O-STAGE-05-5b3d398a-node:856e72eeddb87554:0",
+        "atom:detail:mech_sym:9773c5add7af1f92:13:operand:fact-operation:fact-O-STAGE-05-5b3d398a-node:856e72eeddb87554:1",
+        "atom:detail:mech_sym:9773c5add7af1f92:13:operand:graph-operation:node:10d46b392345ef23:0",
+        "atom:detail:mech_sym:9773c5add7af1f92:13:operand:graph-operation:node:10d46b392345ef23:1",
+        "atom:detail:mech_sym:9773c5add7af1f92:13:operand:graph-operation:node:1e049bf759b0f8df:0",
+        "atom:detail:mech_sym:9773c5add7af1f92:13:operand:graph-operation:node:1e049bf759b0f8df:1",
+        "atom:detail:mech_sym:9773c5add7af1f92:13:operand:graph-operation:node:a0f8d97ffc7d8cd5:0",
+        "atom:detail:mech_sym:9773c5add7af1f92:13:operand:graph-operation:node:ed2633a60afe19d0:0",
+        "atom:detail:mech_sym:9773c5add7af1f92:13:operand:graph-operation:node:fafbec46bf553ba0:0",
+        "atom:detail:mech_sym:9773c5add7af1f92:13:operation:fact-operation:fact-O-METHOD-MAINLINE-01-c8146479-node:5ff7f276f04b71a8",
+        "atom:detail:mech_sym:9773c5add7af1f92:13:operation:fact-operation:fact-O-STAGE-05-5b3d398a-node:856e72eeddb87554",
+        "atom:detail:mech_sym:9773c5add7af1f92:13:operation:graph-operation:node:10d46b392345ef23",
+        "atom:detail:mech_sym:9773c5add7af1f92:13:operation:graph-operation:node:1e049bf759b0f8df",
+        "atom:detail:mech_sym:9773c5add7af1f92:13:operation:graph-operation:node:a0f8d97ffc7d8cd5",
+        "atom:detail:mech_sym:9773c5add7af1f92:13:operation:graph-operation:node:ed2633a60afe19d0",
+        "atom:detail:mech_sym:9773c5add7af1f92:13:operation:graph-operation:node:fafbec46bf553ba0",
+        "atom:detail:mech_sym:9773c5add7af1f92:13:output:fact-operation:fact-O-METHOD-MAINLINE-01-c8146479-node:5ff7f276f04b71a8",
+        "atom:detail:mech_sym:9773c5add7af1f92:13:output:graph-operation:node:1e049bf759b0f8df",
+        "atom:detail:mech_sym:9773c5add7af1f92:1:operand:graph-operation:node:01c48057a61c367a:0",
+        "atom:detail:mech_sym:9773c5add7af1f92:1:operand:graph-operation:node:01c48057a61c367a:1",
+        "atom:detail:mech_sym:9773c5add7af1f92:1:operand:graph-operation:node:36dbb918ff1e8cb7:0",
+        "atom:detail:mech_sym:9773c5add7af1f92:1:operation:graph-operation:node:01c48057a61c367a",
+        "atom:detail:mech_sym:9773c5add7af1f92:1:operation:graph-operation:node:36dbb918ff1e8cb7",
+        "atom:detail:mech_sym:9773c5add7af1f92:1:output:graph-operation:node:01c48057a61c367a",
+        "atom:detail:mech_sym:9773c5add7af1f92:1:output:graph-operation:node:36dbb918ff1e8cb7",
+        "atom:detail:mech_sym:9773c5add7af1f92:44:operand:fact-operation:fact-O-METHOD-MAINLINE-01-c8146479-node:8e87e1804f77f50f:0",
+        "atom:detail:mech_sym:9773c5add7af1f92:44:operand:fact-operation:fact-O-METHOD-MAINLINE-01-c8146479-node:8e87e1804f77f50f:1",
+        "atom:detail:mech_sym:9773c5add7af1f92:44:operand:fact-operation:fact-O-METHOD-MAINLINE-01-c8146479-node:8e87e1804f77f50f:2",
+        "atom:detail:mech_sym:9773c5add7af1f92:44:operand:fact-operation:fact-O-METHOD-MAINLINE-01-c8146479-node:8e87e1804f77f50f:3",
+        "atom:detail:mech_sym:9773c5add7af1f92:44:operand:graph-operation:node:2abf1a551ec8d545:0",
+        "atom:detail:mech_sym:9773c5add7af1f92:44:operand:graph-operation:node:2abf1a551ec8d545:1",
+        "atom:detail:mech_sym:9773c5add7af1f92:44:operand:graph-operation:node:2abf1a551ec8d545:2",
+        "atom:detail:mech_sym:9773c5add7af1f92:44:operand:graph-operation:node:2abf1a551ec8d545:3",
+        "atom:detail:mech_sym:9773c5add7af1f92:44:operation:fact-operation:fact-O-METHOD-MAINLINE-01-c8146479-node:8e87e1804f77f50f",
+        "atom:detail:mech_sym:9773c5add7af1f92:44:operation:graph-operation:node:2abf1a551ec8d545",
+        "atom:detail:mech_sym:9773c5add7af1f92:44:output:fact-operation:fact-O-METHOD-MAINLINE-01-c8146479-node:8e87e1804f77f50f",
+        "atom:detail:mech_sym:9773c5add7af1f92:44:output:graph-operation:node:2abf1a551ec8d545",
+        "atom:detail:mech_sym:9773c5add7af1f92:4:condition:graph-operation:node:146c2de7b2bcb87a",
+        "atom:detail:mech_sym:9773c5add7af1f92:4:operand:graph-operation:node:146c2de7b2bcb87a:0",
+        "atom:detail:mech_sym:9773c5add7af1f92:4:operation:graph-operation:node:146c2de7b2bcb87a",
+        "atom:detail:mech_sym:9773c5add7af1f92:4:output:graph-operation:node:146c2de7b2bcb87a",
+        "atom:detail:mech_sym:9773c5add7af1f92:6:formal:graph-operation:node:6d081e44ae03c2aa",
+        "atom:detail:mech_sym:9773c5add7af1f92:6:interface:graph-operation:node:cc7664031e56503e",
+        "atom:detail:mech_sym:9773c5add7af1f92:6:operand:graph-operation:node:40010824c77665c6:0",
+        "atom:detail:mech_sym:9773c5add7af1f92:6:operand:graph-operation:node:4a32ad700aef7e9d:0",
+        "atom:detail:mech_sym:9773c5add7af1f92:6:operand:graph-operation:node:59b6fc4a40c249e6:0",
+        "atom:detail:mech_sym:9773c5add7af1f92:6:operand:graph-operation:node:59f0c526bf925076:0",
+        "atom:detail:mech_sym:9773c5add7af1f92:6:operand:graph-operation:node:6d081e44ae03c2aa:0",
+        "atom:detail:mech_sym:9773c5add7af1f92:6:operand:graph-operation:node:6d081e44ae03c2aa:1",
+        "atom:detail:mech_sym:9773c5add7af1f92:6:operand:graph-operation:node:cc7664031e56503e:0",
+        "atom:detail:mech_sym:9773c5add7af1f92:6:operation:graph-operation:node:40010824c77665c6",
+        "atom:detail:mech_sym:9773c5add7af1f92:6:operation:graph-operation:node:4a32ad700aef7e9d",
+        "atom:detail:mech_sym:9773c5add7af1f92:6:operation:graph-operation:node:59b6fc4a40c249e6",
+        "atom:detail:mech_sym:9773c5add7af1f92:6:operation:graph-operation:node:59f0c526bf925076",
+        "atom:detail:mech_sym:9773c5add7af1f92:6:operation:graph-operation:node:6d081e44ae03c2aa",
+        "atom:detail:mech_sym:9773c5add7af1f92:6:operation:graph-operation:node:cc7664031e56503e",
+        "atom:detail:mech_sym:9773c5add7af1f92:7:formal:graph-operation:node:775cc984406f25f7",
+        "atom:detail:mech_sym:9773c5add7af1f92:7:operand:graph-operation:node:775cc984406f25f7:0",
+        "atom:detail:mech_sym:9773c5add7af1f92:7:operand:graph-operation:node:775cc984406f25f7:1",
+        "atom:detail:mech_sym:9773c5add7af1f92:7:operation:graph-operation:node:775cc984406f25f7"
+      ],
+      "atom_witness_rule": "Atom witnesses are optional; if emitted, witness_kind=atom and target_id must be one of allowed_atom_target_ids. Never use a source span ID or graph-operation ID as target_id.",
+      "exact_text_rule": "Every witness exact_text must be copied verbatim from, and be a substring of, draft_markdown.",
+      "format": "json",
+      "required_detail_ids": [
+        "detail:mech_sym:9773c5add7af1f92:1",
+        "detail:mech_sym:9773c5add7af1f92:13",
+        "detail:mech_sym:9773c5add7af1f92:4",
+        "detail:mech_sym:9773c5add7af1f92:44",
+        "detail:mech_sym:9773c5add7af1f92:6",
+        "detail:mech_sym:9773c5add7af1f92:7"
+      ],
+      "required_detail_witness_rule": "Emit exactly one witness with witness_kind=detail for every required_detail_id; its target_id must be that exact ID.",
+      "required_formula_package_ids": [],
+      "required_formula_witness_bindings": [],
+      "required_formula_witness_rule": "Emit exactly one witness with witness_kind=formula for every required_formula_package_id; target_id must be that exact package ID. exact_text must be one of the package's listed frozen literal_source_excerpts, copied verbatim into draft_markdown and used as a substring of draft_markdown. Never use the package ID itself as a formula witness or invent a formula excerpt.",
+      "required_top_level_fields": [
+        "draft_markdown",
+        "rendered_detail_ids",
+        "used_formula_package_ids",
+        "witnesses"
+      ],
+      "unresolved_detail_ids": [],
+      "unresolved_detail_rule": "For every unresolved_detail_id, describe only the conditional branch and preserve its unresolved/qualified-partial status; do not assert an active/default configuration value."
+    },
+    "section_id": "MA-S3",
+    "task_ids": [
+      "MA-S3"
+    ],
+    "technical_bytes_digest": "sha256:e93639757f6dcf1f0ea8a2e9375151a584fed7bc5c1306244970a7abdd8d4c8e",
+    "technical_payload": {
+      "archive_digest": "sha256:02c99eb39cb26038a803846cc19be97619909e93965d9f182c4843ce9438a988",
+      "atoms": [
+        {
+          "_atom_id": "detail:mech_sym:9773c5add7af1f92:1",
+          "_atom_kind": "detail",
+          "activation_basis_ids": [],
+          "active_path_status": "active_default",
+          "author_statements": [],
+          "claim_kind": "implementation",
+          "conditions": [],
+          "content_digest": "sha256:67551ac626af105b7d97b7610cb14701073ee97d0436542ab9bff3e70b286845",
+          "detail_id": "detail:mech_sym:9773c5add7af1f92:1",
+          "evidence_authority": "repository_verified",
+          "exact_excerpts": [
+            "query = query.unsqueeze(1)  # [batch_size, 1, hidden_size]"
+          ],
+          "formalizable": true,
+          "formalizable_signatures": [
+            {
+              "conditions": [],
+              "operands": [
+                "query.unsqueeze",
+                "1"
+              ],
+              "operation_id": "graph-operation:node:01c48057a61c367a",
+              "predicate": "RESHAPE",
+              "result": "query"
+            },
+            {
+              "conditions": [],
+              "operands": [
+                "query"
+              ],
+              "operation_id": "graph-operation:node:36dbb918ff1e8cb7",
+              "predicate": "WRITE",
+              "result": "query"
+            }
+          ],
+          "formula_role": "operation_atom",
+          "importance": "supporting",
+          "mismatch_reason": "",
+          "operands": [
+            "query.unsqueeze",
+            "1",
+            "query"
+          ],
+          "order_index": 0,
+          "polarity": "positive",
+          "predecessor_detail_ids": [],
+          "predicate": "RESHAPE -> WRITE",
+          "primary_mechanism_id": "mech_sym:9773c5add7af1f92",
+          "publication_policy": "annotated_only",
+          "result": "query",
+          "role": "output",
+          "semantic_atom": "output: RESHAPE transforms query.unsqueeze, 1, query into query",
+          "shape_or_type_hints": [],
+          "shared_with_mechanism_ids": [],
+          "source_brief_ids": [],
+          "source_claim_ids": [],
+          "source_equation_ids": [],
+          "source_facet_ids": [],
+          "source_fact_ids": [],
+          "source_kind": "first_party_executable",
+          "source_obligation_ids": [],
+          "source_operation_ids": [
+            "graph-operation:node:01c48057a61c367a",
+            "graph-operation:node:36dbb918ff1e8cb7"
+          ],
+          "source_span_ids": [
+            "span:src/model/ebcar_dedicated_attention_model.py:262:262"
+          ],
+          "subject": "sym:9773c5add7af1f92",
+          "successor_detail_ids": [
+            "detail:mech_sym:9773c5add7af1f92:2"
+          ],
+          "witness_atoms": [
+            {
+              "atom_id": "atom:detail:mech_sym:9773c5add7af1f92:1:operation:graph-operation:node:01c48057a61c367a",
+              "atom_kind": "operation",
+              "content_digest": "sha256:a7075053c2fe9933f11c9c537671194ccd4c7ba4254206359660b2893efaea65",
+              "exact_excerpts": [
+                "query = query.unsqueeze(1)  # [batch_size, 1, hidden_size]"
+              ],
+              "required": true,
+              "required_conditions": [],
+              "required_polarity": "positive",
+              "semantic_anchor": "RESHAPE operation",
+              "source_anchor_ids": [
+                "span:src/model/ebcar_dedicated_attention_model.py:262:262"
+              ],
+              "source_operation_ids": [
+                "graph-operation:node:01c48057a61c367a"
+              ]
+            },
+            {
+              "atom_id": "atom:detail:mech_sym:9773c5add7af1f92:1:operand:graph-operation:node:01c48057a61c367a:0",
+              "atom_kind": "operand",
+              "content_digest": "sha256:2db03c02365e7e574e15e4d15db9c60fa162be0369c465c0c6e1581415833690",
+              "exact_excerpts": [
+                "query = query.unsqueeze(1)  # [batch_size, 1, hidden_size]"
+              ],
+              "required": true,
+              "required_conditions": [],
+              "required_polarity": "unknown",
+              "semantic_anchor": "query.unsqueeze",
+              "source_anchor_ids": [
+                "span:src/model/ebcar_dedicated_attention_model.py:262:262"
+              ],
+              "source_operation_ids": [
+                "graph-operation:node:01c48057a61c367a"
+              ]
+            },
+            {
+              "atom_id": "atom:detail:mech_sym:9773c5add7af1f92:1:operand:graph-operation:node:01c48057a61c367a:1",
+              "atom_kind": "operand",
+              "content_digest": "sha256:7d5002903e4160a39e3e5e0825f7a44a3661d6c7796b99bc21e1fe59af2fd280",
+              "exact_excerpts": [
+                "query = query.unsqueeze(1)  # [batch_size, 1, hidden_size]"
+              ],
+              "required": true,
+              "required_conditions": [],
+              "required_polarity": "unknown",
+              "semantic_anchor": "1",
+              "source_anchor_ids": [
+                "span:src/model/ebcar_dedicated_attention_model.py:262:262"
+              ],
+              "source_operation_ids": [
+                "graph-operation:node:01c48057a61c367a"
+              ]
+            },
+            {
+              "atom_id": "atom:detail:mech_sym:9773c5add7af1f92:1:output:graph-operation:node:01c48057a61c367a",
+              "atom_kind": "output",
+              "content_digest": "sha256:e368fac807fc9f3909388214314f6bca2d7fd84da4c9cb1afbd99d456c467cd9",
+              "exact_excerpts": [
+                "query = query.unsqueeze(1)  # [batch_size, 1, hidden_size]"
+              ],
+              "required": true,
+              "required_conditions": [],
+              "required_polarity": "unknown",
+              "semantic_anchor": "query",
+              "source_anchor_ids": [
+                "span:src/model/ebcar_dedicated_attention_model.py:262:262"
+              ],
+              "source_operation_ids": [
+                "graph-operation:node:01c48057a61c367a"
+              ]
+            },
+            {
+              "atom_id": "atom:detail:mech_sym:9773c5add7af1f92:1:operation:graph-operation:node:36dbb918ff1e8cb7",
+              "atom_kind": "operation",
+              "content_digest": "sha256:13643d1138bc7d00bd7d8d5af1f111cbcb6ede4ec276f675322d9cace0d24524",
+              "exact_excerpts": [
+                "query = query.unsqueeze(1)  # [batch_size, 1, hidden_size]"
+              ],
+              "required": true,
+              "required_conditions": [],
+              "required_polarity": "positive",
+              "semantic_anchor": "WRITE operation",
+              "source_anchor_ids": [
+                "span:src/model/ebcar_dedicated_attention_model.py:262:262"
+              ],
+              "source_operation_ids": [
+                "graph-operation:node:36dbb918ff1e8cb7"
+              ]
+            },
+            {
+              "atom_id": "atom:detail:mech_sym:9773c5add7af1f92:1:operand:graph-operation:node:36dbb918ff1e8cb7:0",
+              "atom_kind": "operand",
+              "content_digest": "sha256:0542d7f6ac6cfe7094ae8959e8b10942496f6d8ceed904a7d9cfa0dc2a9769ec",
+              "exact_excerpts": [
+                "query = query.unsqueeze(1)  # [batch_size, 1, hidden_size]"
+              ],
+              "required": true,
+              "required_conditions": [],
+              "required_polarity": "unknown",
+              "semantic_anchor": "query",
+              "source_anchor_ids": [
+                "span:src/model/ebcar_dedicated_attention_model.py:262:262"
+              ],
+              "source_operation_ids": [
+                "graph-operation:node:36dbb918ff1e8cb7"
+              ]
+            },
+            {
+              "atom_id": "atom:detail:mech_sym:9773c5add7af1f92:1:output:graph-operation:node:36dbb918ff1e8cb7",
+              "atom_kind": "output",
+              "content_digest": "sha256:134d75ae6a8adf10c1647117450cbfd366709f01a28f9b272fb1f4d41f3f434c",
+              "exact_excerpts": [
+                "query = query.unsqueeze(1)  # [batch_size, 1, hidden_size]"
+              ],
+              "required": true,
+              "required_conditions": [],
+              "required_polarity": "unknown",
+              "semantic_anchor": "query",
+              "source_anchor_ids": [
+                "span:src/model/ebcar_dedicated_attention_model.py:262:262"
+              ],
+              "source_operation_ids": [
+                "graph-operation:node:36dbb918ff1e8cb7"
+              ]
+            }
+          ]
+        },
+        {
+          "_atom_id": "detail:mech_sym:9773c5add7af1f92:13",
+          "_atom_kind": "detail",
+          "activation_basis_ids": [
+            "same_span_dominance:span:src/model/ebcar_dedicated_attention_model.py:276:276",
+            "rel:12a2b6b257119ed0",
+            "rel:9a4254f9dfaeb89f",
+            "rel:f2b96b860de648a4",
+            "rel:d02f300fb445b8ba",
+            "rel:af29077512c9e482"
+          ],
+          "active_path_status": "conditional",
+          "author_statements": [],
+          "claim_kind": "formalization",
+          "conditions": [
+            "self.cfg.add_positional_encoding"
+          ],
+          "content_digest": "sha256:02092cade0876d7be384d15499ebc291da808eb0f075040c25c5d8ea9b108e4b",
+          "detail_id": "detail:mech_sym:9773c5add7af1f92:13",
+          "evidence_authority": "repository_verified",
+          "exact_excerpts": [
+            "passages + document_id_embeddings + passage_id_embeddings"
+          ],
+          "formalizable": true,
+          "formalizable_signatures": [
+            {
+              "conditions": [
+                "self.cfg.add_positional_encoding"
+              ],
+              "operands": [
+                "passages + document_id_embeddings",
+                "passage_id_embeddings"
+              ],
+              "operation_id": "fact-operation:fact-O-METHOD-MAINLINE-01-c8146479-node:5ff7f276f04b71a8",
+              "predicate": "computes_formula",
+              "result": "passages"
+            },
+            {
+              "conditions": [
+                "self.cfg.add_positional_encoding"
+              ],
+              "operands": [
+                "passages",
+                "document_id_embeddings"
+              ],
+              "operation_id": "fact-operation:fact-O-STAGE-05-5b3d398a-node:856e72eeddb87554",
+              "predicate": "computes_formula",
+              "result": ""
+            },
+            {
+              "conditions": [
+                "self.cfg.add_positional_encoding"
+              ],
+              "operands": [
+                "passages",
+                "document_id_embeddings"
+              ],
+              "operation_id": "graph-operation:node:10d46b392345ef23",
+              "predicate": "COMPUTE",
+              "result": ""
+            },
+            {
+              "conditions": [
+                "self.cfg.add_positional_encoding"
+              ],
+              "operands": [
+                "passages + document_id_embeddings",
+                "passage_id_embeddings"
+              ],
+              "operation_id": "graph-operation:node:1e049bf759b0f8df",
+              "predicate": "COMPUTE",
+              "result": "passages"
+            },
+            {
+              "conditions": [
+                "self.cfg.add_positional_encoding"
+              ],
+              "operands": [
+                "document_id_embeddings"
+              ],
+              "operation_id": "graph-operation:node:a0f8d97ffc7d8cd5",
+              "predicate": "LOAD",
+              "result": ""
+            },
+            {
+              "conditions": [
+                "self.cfg.add_positional_encoding"
+              ],
+              "operands": [
+                "passages"
+              ],
+              "operation_id": "graph-operation:node:ed2633a60afe19d0",
+              "predicate": "LOAD",
+              "result": ""
+            },
+            {
+              "conditions": [
+                "self.cfg.add_positional_encoding"
+              ],
+              "operands": [
+                "passage_id_embeddings"
+              ],
+              "operation_id": "graph-operation:node:fafbec46bf553ba0",
+              "predicate": "LOAD",
+              "result": ""
+            }
+          ],
+          "formula_role": "operation_atom",
+          "importance": "core",
+          "mismatch_reason": "",
+          "operands": [
+            "passages + document_id_embeddings",
+            "passage_id_embeddings",
+            "passages",
+            "document_id_embeddings"
+          ],
+          "order_index": 12,
+          "polarity": "conditional",
+          "predecessor_detail_ids": [
+            "detail:mech_sym:9773c5add7af1f92:12"
+          ],
+          "predicate": "computes_formula -> COMPUTE -> LOAD",
+          "primary_mechanism_id": "mech_sym:9773c5add7af1f92",
+          "publication_policy": "clean_candidate",
+          "result": "passages",
+          "role": "configuration",
+          "semantic_atom": "configuration: computes formula consumes passages + document_id_embeddings, passage_id_embeddings, passages, document_id_embeddings",
+          "shape_or_type_hints": [],
+          "shared_with_mechanism_ids": [],
+          "source_brief_ids": [],
+          "source_claim_ids": [
+            "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:5ff7f276f04b71a8",
+            "l2:math:fact-O-METHOD-MAINLINE-01-c8146479-node:5ff7f276f04b71a8:weighted_sum",
+            "claim-O-STAGE-05-5b3d398a-fact-O-STAGE-05-5b3d398a-node:856e72eeddb87554",
+            "l2:math:fact-O-STAGE-05-5b3d398a-node:856e72eeddb87554:weighted_sum"
+          ],
+          "source_equation_ids": [
+            "equation:fact-O-METHOD-MAINLINE-01-c8146479-node:5ff7f276f04b71a8",
+            "equation:fact-O-STAGE-05-5b3d398a-node:856e72eeddb87554"
+          ],
+          "source_facet_ids": [],
+          "source_fact_ids": [
+            "fact-O-METHOD-MAINLINE-01-c8146479-node:5ff7f276f04b71a8",
+            "fact-O-STAGE-05-5b3d398a-node:856e72eeddb87554"
+          ],
+          "source_kind": "first_party_executable",
+          "source_obligation_ids": [],
+          "source_operation_ids": [
+            "fact-operation:fact-O-METHOD-MAINLINE-01-c8146479-node:5ff7f276f04b71a8",
+            "fact-operation:fact-O-STAGE-05-5b3d398a-node:856e72eeddb87554",
+            "graph-operation:node:10d46b392345ef23",
+            "graph-operation:node:1e049bf759b0f8df",
+            "graph-operation:node:a0f8d97ffc7d8cd5",
+            "graph-operation:node:ed2633a60afe19d0",
+            "graph-operation:node:fafbec46bf553ba0"
+          ],
+          "source_span_ids": [
+            "span:src/model/ebcar_dedicated_attention_model.py:276:276"
+          ],
+          "subject": "sym:9773c5add7af1f92",
+          "successor_detail_ids": [
+            "detail:mech_sym:9773c5add7af1f92:14"
+          ],
+          "witness_atoms": [
+            {
+              "atom_id": "atom:detail:mech_sym:9773c5add7af1f92:13:operation:fact-operation:fact-O-METHOD-MAINLINE-01-c8146479-node:5ff7f276f04b71a8",
+              "atom_kind": "operation",
+              "content_digest": "sha256:336ab765fdde71eb192cfcd3665bbe1ef7d3c585f34b5a0fd3d8ef3a8f374596",
+              "exact_excerpts": [
+                "passages + document_id_embeddings + passage_id_embeddings"
+              ],
+              "required": true,
+              "required_conditions": [],
+              "required_polarity": "positive",
+              "semantic_anchor": "computes_formula operation",
+              "source_anchor_ids": [
+                "span:src/model/ebcar_dedicated_attention_model.py:276:276"
+              ],
+              "source_operation_ids": [
+                "fact-operation:fact-O-METHOD-MAINLINE-01-c8146479-node:5ff7f276f04b71a8"
+              ]
+            },
+            {
+              "atom_id": "atom:detail:mech_sym:9773c5add7af1f92:13:operand:fact-operation:fact-O-METHOD-MAINLINE-01-c8146479-node:5ff7f276f04b71a8:0",
+              "atom_kind": "operand",
+              "content_digest": "sha256:79f1d98ed157e55240e7a52a00b198af5f985a0dbff545c7a3a6f79ce1ab1d36",
+              "exact_excerpts": [
+                "passages + document_id_embeddings + passage_id_embeddings"
+              ],
+              "required": true,
+              "required_conditions": [],
+              "required_polarity": "unknown",
+              "semantic_anchor": "passages + document_id_embeddings",
+              "source_anchor_ids": [
+                "span:src/model/ebcar_dedicated_attention_model.py:276:276"
+              ],
+              "source_operation_ids": [
+                "fact-operation:fact-O-METHOD-MAINLINE-01-c8146479-node:5ff7f276f04b71a8"
+              ]
+            },
+            {
+              "atom_id": "atom:detail:mech_sym:9773c5add7af1f92:13:operand:fact-operation:fact-O-METHOD-MAINLINE-01-c8146479-node:5ff7f276f04b71a8:1",
+              "atom_kind": "operand",
+              "content_digest": "sha256:bd5925fe5f875712aee2ffa17e5a9c914fc0327674b48cd060ede2b55241a771",
+              "exact_excerpts": [
+                "passages + document_id_embeddings + passage_id_embeddings"
+              ],
+              "required": true,
+              "required_conditions": [],
+              "required_polarity": "unknown",
+              "semantic_anchor": "passage_id_embeddings",
+              "source_anchor_ids": [
+                "span:src/model/ebcar_dedicated_attention_model.py:276:276"
+              ],
+              "source_operation_ids": [
+                "fact-operation:fact-O-METHOD-MAINLINE-01-c8146479-node:5ff7f276f04b71a8"
+              ]
+            },
+            {
+              "atom_id": "atom:detail:mech_sym:9773c5add7af1f92:13:output:fact-operation:fact-O-METHOD-MAINLINE-01-c8146479-node:5ff7f276f04b71a8",
+              "atom_kind": "output",
+              "content_digest": "sha256:d7e02c358643228a4c6ed5d6666267ed4c3223a8f56779520c93b317273c0b1c",
+              "exact_excerpts": [
+                "passages + document_id_embeddings + passage_id_embeddings"
+              ],
+              "required": true,
+              "required_conditions": [],
+              "required_polarity": "unknown",
+              "semantic_anchor": "passages",
+              "source_anchor_ids": [
+                "span:src/model/ebcar_dedicated_attention_model.py:276:276"
+              ],
+              "source_operation_ids": [
+                "fact-operation:fact-O-METHOD-MAINLINE-01-c8146479-node:5ff7f276f04b71a8"
+              ]
+            },
+            {
+              "atom_id": "atom:detail:mech_sym:9773c5add7af1f92:13:condition:fact-operation:fact-O-METHOD-MAINLINE-01-c8146479-node:5ff7f276f04b71a8",
+              "atom_kind": "condition",
+              "content_digest": "sha256:261f13e12196d600138cdc9d817e6830c6c0e64eb74528c53b4f650d029dbec9",
+              "exact_excerpts": [
+                "passages + document_id_embeddings + passage_id_embeddings"
+              ],
+              "required": true,
+              "required_conditions": [
+                "self.cfg.add_positional_encoding"
+              ],
+              "required_polarity": "conditional",
+              "semantic_anchor": "self.cfg.add_positional_encoding",
+              "source_anchor_ids": [
+                "span:src/model/ebcar_dedicated_attention_model.py:276:276"
+              ],
+              "source_operation_ids": [
+                "fact-operation:fact-O-METHOD-MAINLINE-01-c8146479-node:5ff7f276f04b71a8"
+              ]
+            },
+            {
+              "atom_id": "atom:detail:mech_sym:9773c5add7af1f92:13:operation:fact-operation:fact-O-STAGE-05-5b3d398a-node:856e72eeddb87554",
+              "atom_kind": "operation",
+              "content_digest": "sha256:d7439a913172d05e44470210498fea2319c4720e37e858362f077db30d2d35f8",
+              "exact_excerpts": [
+                "passages + document_id_embeddings + passage_id_embeddings"
+              ],
+              "required": true,
+              "required_conditions": [],
+              "required_polarity": "positive",
+              "semantic_anchor": "computes_formula operation",
+              "source_anchor_ids": [
+                "span:src/model/ebcar_dedicated_attention_model.py:276:276"
+              ],
+              "source_operation_ids": [
+                "fact-operation:fact-O-STAGE-05-5b3d398a-node:856e72eeddb87554"
+              ]
+            },
+            {
+              "atom_id": "atom:detail:mech_sym:9773c5add7af1f92:13:operand:fact-operation:fact-O-STAGE-05-5b3d398a-node:856e72eeddb87554:0",
+              "atom_kind": "operand",
+              "content_digest": "sha256:51d19903b8b8f3e754d492d924e14b5fb9209fb16e6b08b4bf3043ae58a03679",
+              "exact_excerpts": [
+                "passages + document_id_embeddings + passage_id_embeddings"
+              ],
+              "required": true,
+              "required_conditions": [],
+              "required_polarity": "unknown",
+              "semantic_anchor": "passages",
+              "source_anchor_ids": [
+                "span:src/model/ebcar_dedicated_attention_model.py:276:276"
+              ],
+              "source_operation_ids": [
+                "fact-operation:fact-O-STAGE-05-5b3d398a-node:856e72eeddb87554"
+              ]
+            },
+            {
+              "atom_id": "atom:detail:mech_sym:9773c5add7af1f92:13:operand:fact-operation:fact-O-STAGE-05-5b3d398a-node:856e72eeddb87554:1",
+              "atom_kind": "operand",
+              "content_digest": "sha256:0b7539cb7dc42aa0d35e95e27a6b0e4b143157be4093b863d91ff4124bd0c231",
+              "exact_excerpts": [
+                "passages + document_id_embeddings + passage_id_embeddings"
+              ],
+              "required": true,
+              "required_conditions": [],
+              "required_polarity": "unknown",
+              "semantic_anchor": "document_id_embeddings",
+              "source_anchor_ids": [
+                "span:src/model/ebcar_dedicated_attention_model.py:276:276"
+              ],
+              "source_operation_ids": [
+                "fact-operation:fact-O-STAGE-05-5b3d398a-node:856e72eeddb87554"
+              ]
+            },
+            {
+              "atom_id": "atom:detail:mech_sym:9773c5add7af1f92:13:condition:fact-operation:fact-O-STAGE-05-5b3d398a-node:856e72eeddb87554",
+              "atom_kind": "condition",
+              "content_digest": "sha256:689c83f37cd16e90b3e436b6b98b59d1f754106c50024e73e6f1a3bd9cc403f9",
+              "exact_excerpts": [
+                "passages + document_id_embeddings + passage_id_embeddings"
+              ],
+              "required": true,
+              "required_conditions": [
+                "self.cfg.add_positional_encoding"
+              ],
+              "required_polarity": "conditional",
+              "semantic_anchor": "self.cfg.add_positional_encoding",
+              "source_anchor_ids": [
+                "span:src/model/ebcar_dedicated_attention_model.py:276:276"
+              ],
+              "source_operation_ids": [
+                "fact-operation:fact-O-STAGE-05-5b3d398a-node:856e72eeddb87554"
+              ]
+            },
+            {
+              "atom_id": "atom:detail:mech_sym:9773c5add7af1f92:13:operation:graph-operation:node:10d46b392345ef23",
+              "atom_kind": "operation",
+              "content_digest": "sha256:2dc7dffc1c7e341fe068c41a4ca7dd371f5de9d5d5db7c207ab92b1a831a7c8f",
+              "exact_excerpts": [
+                "passages + document_id_embeddings + passage_id_embeddings"
+              ],
+              "required": true,
+              "required_conditions": [],
+              "required_polarity": "positive",
+              "semantic_anchor": "COMPUTE operation",
+              "source_anchor_ids": [
+                "span:src/model/ebcar_dedicated_attention_model.py:276:276"
+              ],
+              "source_operation_ids": [
+                "graph-operation:node:10d46b392345ef23"
+              ]
+            },
+            {
+              "atom_id": "atom:detail:mech_sym:9773c5add7af1f92:13:operand:graph-operation:node:10d46b392345ef23:0",
+              "atom_kind": "operand",
+              "content_digest": "sha256:e557c84145a47e48b275a49d1e49c60f93dd34c8f0b5081ead3987721976bbba",
+              "exact_excerpts": [
+                "passages + document_id_embeddings + passage_id_embeddings"
+              ],
+              "required": true,
+              "required_conditions": [],
+              "required_polarity": "unknown",
+              "semantic_anchor": "passages",
+              "source_anchor_ids": [
+                "span:src/model/ebcar_dedicated_attention_model.py:276:276"
+              ],
+              "source_operation_ids": [
+                "graph-operation:node:10d46b392345ef23"
+              ]
+            },
+            {
+              "atom_id": "atom:detail:mech_sym:9773c5add7af1f92:13:operand:graph-operation:node:10d46b392345ef23:1",
+              "atom_kind": "operand",
+              "content_digest": "sha256:1a82ef4fbb610b18fd862d482fad4e682ed5b67d3bfc11a94e0231f2029475c8",
+              "exact_excerpts": [
+                "passages + document_id_embeddings + passage_id_embeddings"
+              ],
+              "required": true,
+              "required_conditions": [],
+              "required_polarity": "unknown",
+              "semantic_anchor": "document_id_embeddings",
+              "source_anchor_ids": [
+                "span:src/model/ebcar_dedicated_attention_model.py:276:276"
+              ],
+              "source_operation_ids": [
+                "graph-operation:node:10d46b392345ef23"
+              ]
+            },
+            {
+              "atom_id": "atom:detail:mech_sym:9773c5add7af1f92:13:condition:graph-operation:node:10d46b392345ef23",
+              "atom_kind": "condition",
+              "content_digest": "sha256:437fe0b3c98628f19c76f0c0b76ab38489d9129087e6abdfbd28c0a7f0b47e98",
+              "exact_excerpts": [
+                "passages + document_id_embeddings + passage_id_embeddings"
+              ],
+              "required": true,
+              "required_conditions": [
+                "self.cfg.add_positional_encoding"
+              ],
+              "required_polarity": "conditional",
+              "semantic_anchor": "self.cfg.add_positional_encoding",
+              "source_anchor_ids": [
+                "span:src/model/ebcar_dedicated_attention_model.py:276:276"
+              ],
+              "source_operation_ids": [
+                "graph-operation:node:10d46b392345ef23"
+              ]
+            },
+            {
+              "atom_id": "atom:detail:mech_sym:9773c5add7af1f92:13:formal:graph-operation:node:10d46b392345ef23",
+              "atom_kind": "formal_relation",
+              "content_digest": "sha256:00b5c52376ee2363e62eca11a91b8b8d3d28e233cceefddf3d9e72ca48f148bd",
+              "exact_excerpts": [
+                "passages + document_id_embeddings + passage_id_embeddings"
+              ],
+              "required": true,
+              "required_conditions": [],
+              "required_polarity": "unknown",
+              "semantic_anchor": "COMPUTE",
+              "source_anchor_ids": [
+                "span:src/model/ebcar_dedicated_attention_model.py:276:276"
+              ],
+              "source_operation_ids": [
+                "graph-operation:node:10d46b392345ef23"
+              ]
+            },
+            {
+              "atom_id": "atom:detail:mech_sym:9773c5add7af1f92:13:operation:graph-operation:node:1e049bf759b0f8df",
+              "atom_kind": "operation",
+              "content_digest": "sha256:1a5e7e0acc4bb3b3e29edf0373311c565bb504c65055af1194983de325615f63",
+              "exact_excerpts": [
+                "passages + document_id_embeddings + passage_id_embeddings"
+              ],
+              "required": true,
+              "required_conditions": [],
+              "required_polarity": "positive",
+              "semantic_anchor": "COMPUTE operation",
+              "source_anchor_ids": [
+                "span:src/model/ebcar_dedicated_attention_model.py:276:276"
+              ],
+              "source_operation_ids": [
+                "graph-operation:node:1e049bf759b0f8df"
+              ]
+            },
+            {
+              "atom_id": "atom:detail:mech_sym:9773c5add7af1f92:13:operand:graph-operation:node:1e049bf759b0f8df:0",
+              "atom_kind": "operand",
+              "content_digest": "sha256:40c280aa2ad13f0902c1a8fcc97a82c44e9156c0ef573b887a9cd4cf58f86c8c",
+              "exact_excerpts": [
+                "passages + document_id_embeddings + passage_id_embeddings"
+              ],
+              "required": true,
+              "required_conditions": [],
+              "required_polarity": "unknown",
+              "semantic_anchor": "passages + document_id_embeddings",
+              "source_anchor_ids": [
+                "span:src/model/ebcar_dedicated_attention_model.py:276:276"
+              ],
+              "source_operation_ids": [
+                "graph-operation:node:1e049bf759b0f8df"
+              ]
+            },
+            {
+              "atom_id": "atom:detail:mech_sym:9773c5add7af1f92:13:operand:graph-operation:node:1e049bf759b0f8df:1",
+              "atom_kind": "operand",
+              "content_digest": "sha256:3726c6942055285e906f3e5548bca7d3efc8f1e60eb6c328653c8ae9cce54653",
+              "exact_excerpts": [
+                "passages + document_id_embeddings + passage_id_embeddings"
+              ],
+              "required": true,
+              "required_conditions": [],
+              "required_polarity": "unknown",
+              "semantic_anchor": "passage_id_embeddings",
+              "source_anchor_ids": [
+                "span:src/model/ebcar_dedicated_attention_model.py:276:276"
+              ],
+              "source_operation_ids": [
+                "graph-operation:node:1e049bf759b0f8df"
+              ]
+            },
+            {
+              "atom_id": "atom:detail:mech_sym:9773c5add7af1f92:13:output:graph-operation:node:1e049bf759b0f8df",
+              "atom_kind": "output",
+              "content_digest": "sha256:ed9b1885469501bc5ac5cfa1258f88332b136de57753156569f1ce2a3574c3bd",
+              "exact_excerpts": [
+                "passages + document_id_embeddings + passage_id_embeddings"
+              ],
+              "required": true,
+              "required_conditions": [],
+              "required_polarity": "unknown",
+              "semantic_anchor": "passages",
+              "source_anchor_ids": [
+                "span:src/model/ebcar_dedicated_attention_model.py:276:276"
+              ],
+              "source_operation_ids": [
+                "graph-operation:node:1e049bf759b0f8df"
+              ]
+            },
+            {
+              "atom_id": "atom:detail:mech_sym:9773c5add7af1f92:13:condition:graph-operation:node:1e049bf759b0f8df",
+              "atom_kind": "condition",
+              "content_digest": "sha256:e47a563037d100b960b1e08c670d9c9bcfd295add3db21c4b1ad071d2a6ba1fe",
+              "exact_excerpts": [
+                "passages + document_id_embeddings + passage_id_embeddings"
+              ],
+              "required": true,
+              "required_conditions": [
+                "self.cfg.add_positional_encoding"
+              ],
+              "required_polarity": "conditional",
+              "semantic_anchor": "self.cfg.add_positional_encoding",
+              "source_anchor_ids": [
+                "span:src/model/ebcar_dedicated_attention_model.py:276:276"
+              ],
+              "source_operation_ids": [
+                "graph-operation:node:1e049bf759b0f8df"
+              ]
+            },
+            {
+              "atom_id": "atom:detail:mech_sym:9773c5add7af1f92:13:formal:graph-operation:node:1e049bf759b0f8df",
+              "atom_kind": "formal_relation",
+              "content_digest": "sha256:24bd8e8a75826626d263529a8bcb4f5e7faa0cb800ffc966ec2d8c0de65f8281",
+              "exact_excerpts": [
+                "passages + document_id_embeddings + passage_id_embeddings"
+              ],
+              "required": true,
+              "required_conditions": [],
+              "required_polarity": "unknown",
+              "semantic_anchor": "passages",
+              "source_anchor_ids": [
+                "span:src/model/ebcar_dedicated_attention_model.py:276:276"
+              ],
+              "source_operation_ids": [
+                "graph-operation:node:1e049bf759b0f8df"
+              ]
+            },
+            {
+              "atom_id": "atom:detail:mech_sym:9773c5add7af1f92:13:operation:graph-operation:node:a0f8d97ffc7d8cd5",
+              "atom_kind": "operation",
+              "content_digest": "sha256:76441070bbdc1e1adf5affb41504d268dc514713435a4ce7a7ea5750a0d8c0c1",
+              "exact_excerpts": [
+                "passages + document_id_embeddings + passage_id_embeddings"
+              ],
+              "required": true,
+              "required_conditions": [],
+              "required_polarity": "positive",
+              "semantic_anchor": "LOAD operation",
+              "source_anchor_ids": [
+                "span:src/model/ebcar_dedicated_attention_model.py:276:276"
+              ],
+              "source_operation_ids": [
+                "graph-operation:node:a0f8d97ffc7d8cd5"
+              ]
+            },
+            {
+              "atom_id": "atom:detail:mech_sym:9773c5add7af1f92:13:operand:graph-operation:node:a0f8d97ffc7d8cd5:0",
+              "atom_kind": "operand",
+              "content_digest": "sha256:06b657d5fb37cfefa988f219cf3482c5dc43463a900139f0b8dac7b8c0ecf8c8",
+              "exact_excerpts": [
+                "passages + document_id_embeddings + passage_id_embeddings"
+              ],
+              "required": true,
+              "required_conditions": [],
+              "required_polarity": "unknown",
+              "semantic_anchor": "document_id_embeddings",
+              "source_anchor_ids": [
+                "span:src/model/ebcar_dedicated_attention_model.py:276:276"
+              ],
+              "source_operation_ids": [
+                "graph-operation:node:a0f8d97ffc7d8cd5"
+              ]
+            },
+            {
+              "atom_id": "atom:detail:mech_sym:9773c5add7af1f92:13:condition:graph-operation:node:a0f8d97ffc7d8cd5",
+              "atom_kind": "condition",
+              "content_digest": "sha256:7e81d3fec66e5cf40a37e04c3ed1db060c429f773eea8b1de424fb16b62ca711",
+              "exact_excerpts": [
+                "passages + document_id_embeddings + passage_id_embeddings"
+              ],
+              "required": true,
+              "required_conditions": [
+                "self.cfg.add_positional_encoding"
+              ],
+              "required_polarity": "conditional",
+              "semantic_anchor": "self.cfg.add_positional_encoding",
+              "source_anchor_ids": [
+                "span:src/model/ebcar_dedicated_attention_model.py:276:276"
+              ],
+              "source_operation_ids": [
+                "graph-operation:node:a0f8d97ffc7d8cd5"
+              ]
+            },
+            {
+              "atom_id": "atom:detail:mech_sym:9773c5add7af1f92:13:operation:graph-operation:node:ed2633a60afe19d0",
+              "atom_kind": "operation",
+              "content_digest": "sha256:9d2fdd3d4b318529da4127cad065e707f6665de6ab9492039e52a742d2fccf15",
+              "exact_excerpts": [
+                "passages + document_id_embeddings + passage_id_embeddings"
+              ],
+              "required": true,
+              "required_conditions": [],
+              "required_polarity": "positive",
+              "semantic_anchor": "LOAD operation",
+              "source_anchor_ids": [
+                "span:src/model/ebcar_dedicated_attention_model.py:276:276"
+              ],
+              "source_operation_ids": [
+                "graph-operation:node:ed2633a60afe19d0"
+              ]
+            },
+            {
+              "atom_id": "atom:detail:mech_sym:9773c5add7af1f92:13:operand:graph-operation:node:ed2633a60afe19d0:0",
+              "atom_kind": "operand",
+              "content_digest": "sha256:fb76cd337e08e758aa7b2debe567b10bd5d27fc985ae38d19d361774e4f02e1a",
+              "exact_excerpts": [
+                "passages + document_id_embeddings + passage_id_embeddings"
+              ],
+              "required": true,
+              "required_conditions": [],
+              "required_polarity": "unknown",
+              "semantic_anchor": "passages",
+              "source_anchor_ids": [
+                "span:src/model/ebcar_dedicated_attention_model.py:276:276"
+              ],
+              "source_operation_ids": [
+                "graph-operation:node:ed2633a60afe19d0"
+              ]
+            },
+            {
+              "atom_id": "atom:detail:mech_sym:9773c5add7af1f92:13:condition:graph-operation:node:ed2633a60afe19d0",
+              "atom_kind": "condition",
+              "content_digest": "sha256:be7d6a3e561f22eae81decf36c332db5731579fc3cc36fcfa9474d3e5c28420d",
+              "exact_excerpts": [
+                "passages + document_id_embeddings + passage_id_embeddings"
+              ],
+              "required": true,
+              "required_conditions": [
+                "self.cfg.add_positional_encoding"
+              ],
+              "required_polarity": "conditional",
+              "semantic_anchor": "self.cfg.add_positional_encoding",
+              "source_anchor_ids": [
+                "span:src/model/ebcar_dedicated_attention_model.py:276:276"
+              ],
+              "source_operation_ids": [
+                "graph-operation:node:ed2633a60afe19d0"
+              ]
+            },
+            {
+              "atom_id": "atom:detail:mech_sym:9773c5add7af1f92:13:operation:graph-operation:node:fafbec46bf553ba0",
+              "atom_kind": "operation",
+              "content_digest": "sha256:b822009c5650aab73b292cd06beabc642bbdab781391596c1917e3c4d4c464ff",
+              "exact_excerpts": [
+                "passages + document_id_embeddings + passage_id_embeddings"
+              ],
+              "required": true,
+              "required_conditions": [],
+              "required_polarity": "positive",
+              "semantic_anchor": "LOAD operation",
+              "source_anchor_ids": [
+                "span:src/model/ebcar_dedicated_attention_model.py:276:276"
+              ],
+              "source_operation_ids": [
+                "graph-operation:node:fafbec46bf553ba0"
+              ]
+            },
+            {
+              "atom_id": "atom:detail:mech_sym:9773c5add7af1f92:13:operand:graph-operation:node:fafbec46bf553ba0:0",
+              "atom_kind": "operand",
+              "content_digest": "sha256:c9f90e3edd34e441e7561adb8ffb1bff94e5858deca4dc17a1ff58ee9337e3a0",
+              "exact_excerpts": [
+                "passages + document_id_embeddings + passage_id_embeddings"
+              ],
+              "required": true,
+              "required_conditions": [],
+              "required_polarity": "unknown",
+              "semantic_anchor": "passage_id_embeddings",
+              "source_anchor_ids": [
+                "span:src/model/ebcar_dedicated_attention_model.py:276:276"
+              ],
+              "source_operation_ids": [
+                "graph-operation:node:fafbec46bf553ba0"
+              ]
+            },
+            {
+              "atom_id": "atom:detail:mech_sym:9773c5add7af1f92:13:condition:graph-operation:node:fafbec46bf553ba0",
+              "atom_kind": "condition",
+              "content_digest": "sha256:bbf6703c2fe0fc067e14c2d13db8451819325c39526dc411690d220a850dc0be",
+              "exact_excerpts": [
+                "passages + document_id_embeddings + passage_id_embeddings"
+              ],
+              "required": true,
+              "required_conditions": [
+                "self.cfg.add_positional_encoding"
+              ],
+              "required_polarity": "conditional",
+              "semantic_anchor": "self.cfg.add_positional_encoding",
+              "source_anchor_ids": [
+                "span:src/model/ebcar_dedicated_attention_model.py:276:276"
+              ],
+              "source_operation_ids": [
+                "graph-operation:node:fafbec46bf553ba0"
+              ]
+            }
+          ]
+        },
+        {
+          "_atom_id": "detail:mech_sym:9773c5add7af1f92:4",
+          "_atom_kind": "detail",
+          "activation_basis_ids": [
+            "rel:16c57ed7aab208ef"
+          ],
+          "active_path_status": "conditional",
+          "author_statements": [],
+          "claim_kind": "implementation",
+          "conditions": [
+            "self.cfg.add_positional_encoding"
+          ],
+          "content_digest": "sha256:c2409eb5064b1aa4c481dfe70404b0a6e2b432e635e639e4fae38b9f0542fce8",
+          "detail_id": "detail:mech_sym:9773c5add7af1f92:4",
+          "evidence_authority": "repository_verified",
+          "exact_excerpts": [
+            "document_id_embeddings = self.document_id_embedding("
+          ],
+          "formalizable": true,
+          "formalizable_signatures": [
+            {
+              "conditions": [
+                "self.cfg.add_positional_encoding"
+              ],
+              "operands": [
+                "document_id_embeddings"
+              ],
+              "operation_id": "graph-operation:node:146c2de7b2bcb87a",
+              "predicate": "WRITE",
+              "result": "document_id_embeddings"
+            }
+          ],
+          "formula_role": "operation_atom",
+          "importance": "supporting",
+          "mismatch_reason": "",
+          "operands": [
+            "document_id_embeddings"
+          ],
+          "order_index": 3,
+          "polarity": "conditional",
+          "predecessor_detail_ids": [
+            "detail:mech_sym:9773c5add7af1f92:3"
+          ],
+          "predicate": "WRITE",
+          "primary_mechanism_id": "mech_sym:9773c5add7af1f92",
+          "publication_policy": "annotated_only",
+          "result": "document_id_embeddings",
+          "role": "output",
+          "semantic_atom": "output: WRITE transforms document_id_embeddings into document_id_embeddings",
+          "shape_or_type_hints": [],
+          "shared_with_mechanism_ids": [],
+          "source_brief_ids": [],
+          "source_claim_ids": [],
+          "source_equation_ids": [],
+          "source_facet_ids": [],
+          "source_fact_ids": [],
+          "source_kind": "first_party_executable",
+          "source_obligation_ids": [],
+          "source_operation_ids": [
+            "graph-operation:node:146c2de7b2bcb87a"
+          ],
+          "source_span_ids": [
+            "span:src/model/ebcar_dedicated_attention_model.py:267:267"
+          ],
+          "subject": "sym:9773c5add7af1f92",
+          "successor_detail_ids": [
+            "detail:mech_sym:9773c5add7af1f92:5"
+          ],
+          "witness_atoms": [
+            {
+              "atom_id": "atom:detail:mech_sym:9773c5add7af1f92:4:operation:graph-operation:node:146c2de7b2bcb87a",
+              "atom_kind": "operation",
+              "content_digest": "sha256:5d589a4a3d83f6c9e86d571c690634618da1d470260f4a95929914977b0ca4f3",
+              "exact_excerpts": [
+                "document_id_embeddings = self.document_id_embedding("
+              ],
+              "required": true,
+              "required_conditions": [],
+              "required_polarity": "positive",
+              "semantic_anchor": "WRITE operation",
+              "source_anchor_ids": [
+                "span:src/model/ebcar_dedicated_attention_model.py:267:267"
+              ],
+              "source_operation_ids": [
+                "graph-operation:node:146c2de7b2bcb87a"
+              ]
+            },
+            {
+              "atom_id": "atom:detail:mech_sym:9773c5add7af1f92:4:operand:graph-operation:node:146c2de7b2bcb87a:0",
+              "atom_kind": "operand",
+              "content_digest": "sha256:4a8d1579c670fa681b10a51ddf66098ebe827f722bd18a5899b99f6b40433519",
+              "exact_excerpts": [
+                "document_id_embeddings = self.document_id_embedding("
+              ],
+              "required": true,
+              "required_conditions": [],
+              "required_polarity": "unknown",
+              "semantic_anchor": "document_id_embeddings",
+              "source_anchor_ids": [
+                "span:src/model/ebcar_dedicated_attention_model.py:267:267"
+              ],
+              "source_operation_ids": [
+                "graph-operation:node:146c2de7b2bcb87a"
+              ]
+            },
+            {
+              "atom_id": "atom:detail:mech_sym:9773c5add7af1f92:4:output:graph-operation:node:146c2de7b2bcb87a",
+              "atom_kind": "output",
+              "content_digest": "sha256:05c96bb7186479a8801b298e1570fedaa840f28eaea5db2f6a3b677c5c433456",
+              "exact_excerpts": [
+                "document_id_embeddings = self.document_id_embedding("
+              ],
+              "required": true,
+              "required_conditions": [],
+              "required_polarity": "unknown",
+              "semantic_anchor": "document_id_embeddings",
+              "source_anchor_ids": [
+                "span:src/model/ebcar_dedicated_attention_model.py:267:267"
+              ],
+              "source_operation_ids": [
+                "graph-operation:node:146c2de7b2bcb87a"
+              ]
+            },
+            {
+              "atom_id": "atom:detail:mech_sym:9773c5add7af1f92:4:condition:graph-operation:node:146c2de7b2bcb87a",
+              "atom_kind": "condition",
+              "content_digest": "sha256:7434dcb18e5631123aa6946729fe5f51a4b3b47aeba2030041fb6064831c7b9b",
+              "exact_excerpts": [
+                "document_id_embeddings = self.document_id_embedding("
+              ],
+              "required": true,
+              "required_conditions": [
+                "self.cfg.add_positional_encoding"
+              ],
+              "required_polarity": "conditional",
+              "semantic_anchor": "self.cfg.add_positional_encoding",
+              "source_anchor_ids": [
+                "span:src/model/ebcar_dedicated_attention_model.py:267:267"
+              ],
+              "source_operation_ids": [
+                "graph-operation:node:146c2de7b2bcb87a"
+              ]
+            }
+          ]
+        },
+        {
+          "_atom_id": "detail:mech_sym:9773c5add7af1f92:44",
+          "_atom_kind": "detail",
+          "activation_basis_ids": [],
+          "active_path_status": "active_default",
+          "author_statements": [],
+          "claim_kind": "implementation",
+          "conditions": [],
+          "content_digest": "sha256:d18ab41196bed8ac74ea576907252648c77eb772bc72f2d59b9873689b3bb078",
+          "detail_id": "detail:mech_sym:9773c5add7af1f92:44",
+          "evidence_authority": "repository_verified",
+          "exact_excerpts": [
+            "relevance_scores, indices = torch.sort(\n            similarities, dim=1, descending=True\n        )  # [batch_size, num_passages]"
+          ],
+          "formalizable": true,
+          "formalizable_signatures": [
+            {
+              "conditions": [],
+              "operands": [
+                "torch.sort",
+                "similarities",
+                "dim=1",
+                "descending=True"
+              ],
+              "operation_id": "fact-operation:fact-O-METHOD-MAINLINE-01-c8146479-node:8e87e1804f77f50f",
+              "predicate": "sorts_by",
+              "result": "(relevance_scores, indices)"
+            },
+            {
+              "conditions": [],
+              "operands": [
+                "torch.sort",
+                "similarities",
+                "dim=1",
+                "descending=True"
+              ],
+              "operation_id": "graph-operation:node:2abf1a551ec8d545",
+              "predicate": "SORT",
+              "result": "(relevance_scores, indices)"
+            }
+          ],
+          "formula_role": "operation_atom",
+          "importance": "core",
+          "mismatch_reason": "",
+          "operands": [
+            "torch.sort",
+            "similarities",
+            "dim=1",
+            "descending=True"
+          ],
+          "order_index": 43,
+          "polarity": "positive",
+          "predecessor_detail_ids": [
+            "detail:mech_sym:9773c5add7af1f92:43"
+          ],
+          "predicate": "sorts_by -> SORT",
+          "primary_mechanism_id": "mech_sym:9773c5add7af1f92",
+          "publication_policy": "clean_candidate",
+          "result": "(relevance_scores, indices)",
+          "role": "transformation",
+          "semantic_atom": "transformation: sorts by transforms torch.sort, similarities, dim=1, descending=True into (relevance_scores, indices)",
+          "shape_or_type_hints": [
+            "dim=1"
+          ],
+          "shared_with_mechanism_ids": [],
+          "source_brief_ids": [],
+          "source_claim_ids": [
+            "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:8e87e1804f77f50f"
+          ],
+          "source_equation_ids": [],
+          "source_facet_ids": [],
+          "source_fact_ids": [
+            "fact-O-METHOD-MAINLINE-01-c8146479-node:8e87e1804f77f50f"
+          ],
+          "source_kind": "first_party_executable",
+          "source_obligation_ids": [],
+          "source_operation_ids": [
+            "fact-operation:fact-O-METHOD-MAINLINE-01-c8146479-node:8e87e1804f77f50f",
+            "graph-operation:node:2abf1a551ec8d545"
+          ],
+          "source_span_ids": [
+            "span:src/model/ebcar_dedicated_attention_model.py:334:336"
+          ],
+          "subject": "sym:9773c5add7af1f92",
+          "successor_detail_ids": [
+            "detail:mech_sym:9773c5add7af1f92:45"
+          ],
+          "witness_atoms": [
+            {
+              "atom_id": "atom:detail:mech_sym:9773c5add7af1f92:44:operation:fact-operation:fact-O-METHOD-MAINLINE-01-c8146479-node:8e87e1804f77f50f",
+              "atom_kind": "operation",
+              "content_digest": "sha256:af722c95b694913983eedb4b174f909f264f38cf5690912a813f3d9512a07af6",
+              "exact_excerpts": [
+                "relevance_scores, indices = torch.sort(\n            similarities, dim=1, descending=True\n        )  # [batch_size, num_passages]"
+              ],
+              "required": true,
+              "required_conditions": [],
+              "required_polarity": "positive",
+              "semantic_anchor": "sorts_by operation",
+              "source_anchor_ids": [
+                "span:src/model/ebcar_dedicated_attention_model.py:334:336"
+              ],
+              "source_operation_ids": [
+                "fact-operation:fact-O-METHOD-MAINLINE-01-c8146479-node:8e87e1804f77f50f"
+              ]
+            },
+            {
+              "atom_id": "atom:detail:mech_sym:9773c5add7af1f92:44:operand:fact-operation:fact-O-METHOD-MAINLINE-01-c8146479-node:8e87e1804f77f50f:0",
+              "atom_kind": "operand",
+              "content_digest": "sha256:01684d8c5ebd0712e6a0182758faaf833a1d5c895d5f7f38f2f8fcca4b337c06",
+              "exact_excerpts": [
+                "relevance_scores, indices = torch.sort(\n            similarities, dim=1, descending=True\n        )  # [batch_size, num_passages]"
+              ],
+              "required": true,
+              "required_conditions": [],
+              "required_polarity": "unknown",
+              "semantic_anchor": "torch.sort",
+              "source_anchor_ids": [
+                "span:src/model/ebcar_dedicated_attention_model.py:334:336"
+              ],
+              "source_operation_ids": [
+                "fact-operation:fact-O-METHOD-MAINLINE-01-c8146479-node:8e87e1804f77f50f"
+              ]
+            },
+            {
+              "atom_id": "atom:detail:mech_sym:9773c5add7af1f92:44:operand:fact-operation:fact-O-METHOD-MAINLINE-01-c8146479-node:8e87e1804f77f50f:1",
+              "atom_kind": "operand",
+              "content_digest": "sha256:56579d3dd487a3ee24c1c6e73923bb0dc29d37f8462147daaca2b4ce6d624cab",
+              "exact_excerpts": [
+                "relevance_scores, indices = torch.sort(\n            similarities, dim=1, descending=True\n        )  # [batch_size, num_passages]"
+              ],
+              "required": true,
+              "required_conditions": [],
+              "required_polarity": "unknown",
+              "semantic_anchor": "similarities",
+              "source_anchor_ids": [
+                "span:src/model/ebcar_dedicated_attention_model.py:334:336"
+              ],
+              "source_operation_ids": [
+                "fact-operation:fact-O-METHOD-MAINLINE-01-c8146479-node:8e87e1804f77f50f"
+              ]
+            },
+            {
+              "atom_id": "atom:detail:mech_sym:9773c5add7af1f92:44:operand:fact-operation:fact-O-METHOD-MAINLINE-01-c8146479-node:8e87e1804f77f50f:2",
+              "atom_kind": "operand",
+              "content_digest": "sha256:f278258ed2bfc94afce02e4e7b1009deb18543b22bfef5fcd450e0b1d8708a74",
+              "exact_excerpts": [
+                "relevance_scores, indices = torch.sort(\n            similarities, dim=1, descending=True\n        )  # [batch_size, num_passages]"
+              ],
+              "required": true,
+              "required_conditions": [],
+              "required_polarity": "unknown",
+              "semantic_anchor": "dim=1",
+              "source_anchor_ids": [
+                "span:src/model/ebcar_dedicated_attention_model.py:334:336"
+              ],
+              "source_operation_ids": [
+                "fact-operation:fact-O-METHOD-MAINLINE-01-c8146479-node:8e87e1804f77f50f"
+              ]
+            },
+            {
+              "atom_id": "atom:detail:mech_sym:9773c5add7af1f92:44:operand:fact-operation:fact-O-METHOD-MAINLINE-01-c8146479-node:8e87e1804f77f50f:3",
+              "atom_kind": "operand",
+              "content_digest": "sha256:f89dff6e015897e7a4d46382f89507bba2e073cf76727549f9b291d207f4cd09",
+              "exact_excerpts": [
+                "relevance_scores, indices = torch.sort(\n            similarities, dim=1, descending=True\n        )  # [batch_size, num_passages]"
+              ],
+              "required": true,
+              "required_conditions": [],
+              "required_polarity": "unknown",
+              "semantic_anchor": "descending=True",
+              "source_anchor_ids": [
+                "span:src/model/ebcar_dedicated_attention_model.py:334:336"
+              ],
+              "source_operation_ids": [
+                "fact-operation:fact-O-METHOD-MAINLINE-01-c8146479-node:8e87e1804f77f50f"
+              ]
+            },
+            {
+              "atom_id": "atom:detail:mech_sym:9773c5add7af1f92:44:output:fact-operation:fact-O-METHOD-MAINLINE-01-c8146479-node:8e87e1804f77f50f",
+              "atom_kind": "output",
+              "content_digest": "sha256:af89207496b3cd8fc428181527453695013c6da34ce3ddc9ac5e6ac20abe9f5b",
+              "exact_excerpts": [
+                "relevance_scores, indices = torch.sort(\n            similarities, dim=1, descending=True\n        )  # [batch_size, num_passages]"
+              ],
+              "required": true,
+              "required_conditions": [],
+              "required_polarity": "unknown",
+              "semantic_anchor": "(relevance_scores, indices)",
+              "source_anchor_ids": [
+                "span:src/model/ebcar_dedicated_attention_model.py:334:336"
+              ],
+              "source_operation_ids": [
+                "fact-operation:fact-O-METHOD-MAINLINE-01-c8146479-node:8e87e1804f77f50f"
+              ]
+            },
+            {
+              "atom_id": "atom:detail:mech_sym:9773c5add7af1f92:44:operation:graph-operation:node:2abf1a551ec8d545",
+              "atom_kind": "operation",
+              "content_digest": "sha256:c0efd99af6fda9c3b18e36a07d5a1afa5a287d35c4042d0a9dccb6792c485684",
+              "exact_excerpts": [
+                "relevance_scores, indices = torch.sort(\n            similarities, dim=1, descending=True\n        )  # [batch_size, num_passages]"
+              ],
+              "required": true,
+              "required_conditions": [],
+              "required_polarity": "positive",
+              "semantic_anchor": "SORT operation",
+              "source_anchor_ids": [
+                "span:src/model/ebcar_dedicated_attention_model.py:334:336"
+              ],
+              "source_operation_ids": [
+                "graph-operation:node:2abf1a551ec8d545"
+              ]
+            },
+            {
+              "atom_id": "atom:detail:mech_sym:9773c5add7af1f92:44:operand:graph-operation:node:2abf1a551ec8d545:0",
+              "atom_kind": "operand",
+              "content_digest": "sha256:cb4123bcdf9a470f20ad5b19fa7cfe193183111106c822732e03a828a0fdbe84",
+              "exact_excerpts": [
+                "relevance_scores, indices = torch.sort(\n            similarities, dim=1, descending=True\n        )  # [batch_size, num_passages]"
+              ],
+              "required": true,
+              "required_conditions": [],
+              "required_polarity": "unknown",
+              "semantic_anchor": "torch.sort",
+              "source_anchor_ids": [
+                "span:src/model/ebcar_dedicated_attention_model.py:334:336"
+              ],
+              "source_operation_ids": [
+                "graph-operation:node:2abf1a551ec8d545"
+              ]
+            },
+            {
+              "atom_id": "atom:detail:mech_sym:9773c5add7af1f92:44:operand:graph-operation:node:2abf1a551ec8d545:1",
+              "atom_kind": "operand",
+              "content_digest": "sha256:34a6ce64c948df0fb085b4e3d49254a3d89fa9572c4e645c3baa830f4c005da6",
+              "exact_excerpts": [
+                "relevance_scores, indices = torch.sort(\n            similarities, dim=1, descending=True\n        )  # [batch_size, num_passages]"
+              ],
+              "required": true,
+              "required_conditions": [],
+              "required_polarity": "unknown",
+              "semantic_anchor": "similarities",
+              "source_anchor_ids": [
+                "span:src/model/ebcar_dedicated_attention_model.py:334:336"
+              ],
+              "source_operation_ids": [
+                "graph-operation:node:2abf1a551ec8d545"
+              ]
+            },
+            {
+              "atom_id": "atom:detail:mech_sym:9773c5add7af1f92:44:operand:graph-operation:node:2abf1a551ec8d545:2",
+              "atom_kind": "operand",
+              "content_digest": "sha256:b25ea7c327582db52d67b734b62f9bf8b5a7cedebddc82a01fdc51b44f5b59c9",
+              "exact_excerpts": [
+                "relevance_scores, indices = torch.sort(\n            similarities, dim=1, descending=True\n        )  # [batch_size, num_passages]"
+              ],
+              "required": true,
+              "required_conditions": [],
+              "required_polarity": "unknown",
+              "semantic_anchor": "dim=1",
+              "source_anchor_ids": [
+                "span:src/model/ebcar_dedicated_attention_model.py:334:336"
+              ],
+              "source_operation_ids": [
+                "graph-operation:node:2abf1a551ec8d545"
+              ]
+            },
+            {
+              "atom_id": "atom:detail:mech_sym:9773c5add7af1f92:44:operand:graph-operation:node:2abf1a551ec8d545:3",
+              "atom_kind": "operand",
+              "content_digest": "sha256:488a23aacd536c6ae0386fe7d3bd68cfef7ab0b6f0dea849197455b09333b15e",
+              "exact_excerpts": [
+                "relevance_scores, indices = torch.sort(\n            similarities, dim=1, descending=True\n        )  # [batch_size, num_passages]"
+              ],
+              "required": true,
+              "required_conditions": [],
+              "required_polarity": "unknown",
+              "semantic_anchor": "descending=True",
+              "source_anchor_ids": [
+                "span:src/model/ebcar_dedicated_attention_model.py:334:336"
+              ],
+              "source_operation_ids": [
+                "graph-operation:node:2abf1a551ec8d545"
+              ]
+            },
+            {
+              "atom_id": "atom:detail:mech_sym:9773c5add7af1f92:44:output:graph-operation:node:2abf1a551ec8d545",
+              "atom_kind": "output",
+              "content_digest": "sha256:7609db3448a0ad381ed01a75c499edb5280f01241e37c86b22df5cec8b3193e1",
+              "exact_excerpts": [
+                "relevance_scores, indices = torch.sort(\n            similarities, dim=1, descending=True\n        )  # [batch_size, num_passages]"
+              ],
+              "required": true,
+              "required_conditions": [],
+              "required_polarity": "unknown",
+              "semantic_anchor": "(relevance_scores, indices)",
+              "source_anchor_ids": [
+                "span:src/model/ebcar_dedicated_attention_model.py:334:336"
+              ],
+              "source_operation_ids": [
+                "graph-operation:node:2abf1a551ec8d545"
+              ]
+            }
+          ]
+        },
+        {
+          "_atom_id": "detail:mech_sym:9773c5add7af1f92:6",
+          "_atom_kind": "detail",
+          "activation_basis_ids": [],
+          "active_path_status": "active_default",
+          "author_statements": [],
+          "claim_kind": "formalization",
+          "conditions": [],
+          "content_digest": "sha256:7a3c6132afc1eed1f75d533e022402eded6e2daaa3940596effe6940566859cb",
+          "detail_id": "detail:mech_sym:9773c5add7af1f92:6",
+          "evidence_authority": "repository_verified",
+          "exact_excerpts": [
+            "(document_id.long() % self.cfg.retrieval.top_k)"
+          ],
+          "formalizable": false,
+          "formalizable_signatures": [
+            {
+              "conditions": [],
+              "operands": [
+                "self.cfg.retrieval"
+              ],
+              "operation_id": "graph-operation:node:40010824c77665c6",
+              "predicate": "LOAD",
+              "result": ""
+            },
+            {
+              "conditions": [],
+              "operands": [
+                "self.cfg.retrieval.top_k"
+              ],
+              "operation_id": "graph-operation:node:4a32ad700aef7e9d",
+              "predicate": "LOAD",
+              "result": ""
+            },
+            {
+              "conditions": [],
+              "operands": [
+                "self"
+              ],
+              "operation_id": "graph-operation:node:59b6fc4a40c249e6",
+              "predicate": "LOAD",
+              "result": ""
+            },
+            {
+              "conditions": [],
+              "operands": [
+                "self.cfg"
+              ],
+              "operation_id": "graph-operation:node:59f0c526bf925076",
+              "predicate": "LOAD",
+              "result": ""
+            },
+            {
+              "conditions": [],
+              "operands": [
+                "document_id.long()",
+                "self.cfg.retrieval.top_k"
+              ],
+              "operation_id": "graph-operation:node:6d081e44ae03c2aa",
+              "predicate": "COMPUTE",
+              "result": ""
+            },
+            {
+              "conditions": [],
+              "operands": [
+                "document_id.long"
+              ],
+              "operation_id": "graph-operation:node:cc7664031e56503e",
+              "predicate": "CALL",
+              "result": ""
+            }
+          ],
+          "formula_role": "",
+          "importance": "supporting",
+          "mismatch_reason": "",
+          "operands": [
+            "self.cfg.retrieval",
+            "self.cfg.retrieval.top_k",
+            "self",
+            "self.cfg",
+            "document_id.long()",
+            "document_id.long"
+          ],
+          "order_index": 5,
+          "polarity": "positive",
+          "predecessor_detail_ids": [
+            "detail:mech_sym:9773c5add7af1f92:5"
+          ],
+          "predicate": "LOAD -> COMPUTE -> CALL",
+          "primary_mechanism_id": "mech_sym:9773c5add7af1f92",
+          "publication_policy": "annotated_only",
+          "result": "",
+          "role": "configuration",
+          "semantic_atom": "configuration: LOAD consumes self.cfg.retrieval, self.cfg.retrieval.top_k, self, self.cfg, document_id.long(), document_id.long",
+          "shape_or_type_hints": [],
+          "shared_with_mechanism_ids": [],
+          "source_brief_ids": [],
+          "source_claim_ids": [],
+          "source_equation_ids": [],
+          "source_facet_ids": [],
+          "source_fact_ids": [],
+          "source_kind": "first_party_executable",
+          "source_obligation_ids": [],
+          "source_operation_ids": [
+            "graph-operation:node:40010824c77665c6",
+            "graph-operation:node:4a32ad700aef7e9d",
+            "graph-operation:node:59b6fc4a40c249e6",
+            "graph-operation:node:59f0c526bf925076",
+            "graph-operation:node:6d081e44ae03c2aa",
+            "graph-operation:node:cc7664031e56503e"
+          ],
+          "source_span_ids": [
+            "span:src/model/ebcar_dedicated_attention_model.py:268:268"
+          ],
+          "subject": "sym:9773c5add7af1f92",
+          "successor_detail_ids": [
+            "detail:mech_sym:9773c5add7af1f92:7"
+          ],
+          "witness_atoms": [
+            {
+              "atom_id": "atom:detail:mech_sym:9773c5add7af1f92:6:operation:graph-operation:node:40010824c77665c6",
+              "atom_kind": "operation",
+              "content_digest": "sha256:adb9380738fef67bf14d2d4280eb7155e2fd18173f284c50f1c4482557d1ead0",
+              "exact_excerpts": [
+                "(document_id.long() % self.cfg.retrieval.top_k)"
+              ],
+              "required": true,
+              "required_conditions": [],
+              "required_polarity": "positive",
+              "semantic_anchor": "LOAD operation",
+              "source_anchor_ids": [
+                "span:src/model/ebcar_dedicated_attention_model.py:268:268"
+              ],
+              "source_operation_ids": [
+                "graph-operation:node:40010824c77665c6"
+              ]
+            },
+            {
+              "atom_id": "atom:detail:mech_sym:9773c5add7af1f92:6:operand:graph-operation:node:40010824c77665c6:0",
+              "atom_kind": "operand",
+              "content_digest": "sha256:1dc61be3176a7c2368e95c5ceabc21f4f0c124209b30e347af219ad9cffda985",
+              "exact_excerpts": [
+                "(document_id.long() % self.cfg.retrieval.top_k)"
+              ],
+              "required": true,
+              "required_conditions": [],
+              "required_polarity": "unknown",
+              "semantic_anchor": "self.cfg.retrieval",
+              "source_anchor_ids": [
+                "span:src/model/ebcar_dedicated_attention_model.py:268:268"
+              ],
+              "source_operation_ids": [
+                "graph-operation:node:40010824c77665c6"
+              ]
+            },
+            {
+              "atom_id": "atom:detail:mech_sym:9773c5add7af1f92:6:operation:graph-operation:node:4a32ad700aef7e9d",
+              "atom_kind": "operation",
+              "content_digest": "sha256:9846b83972a15b9c7e653521a92df604f9a8bb506efa09f56eb699630f8053a6",
+              "exact_excerpts": [
+                "(document_id.long() % self.cfg.retrieval.top_k)"
+              ],
+              "required": true,
+              "required_conditions": [],
+              "required_polarity": "positive",
+              "semantic_anchor": "LOAD operation",
+              "source_anchor_ids": [
+                "span:src/model/ebcar_dedicated_attention_model.py:268:268"
+              ],
+              "source_operation_ids": [
+                "graph-operation:node:4a32ad700aef7e9d"
+              ]
+            },
+            {
+              "atom_id": "atom:detail:mech_sym:9773c5add7af1f92:6:operand:graph-operation:node:4a32ad700aef7e9d:0",
+              "atom_kind": "operand",
+              "content_digest": "sha256:b90c8a7c9530a81beec0114f1e8cf77e8c6aad636e8791badee4578149ca3e77",
+              "exact_excerpts": [
+                "(document_id.long() % self.cfg.retrieval.top_k)"
+              ],
+              "required": true,
+              "required_conditions": [],
+              "required_polarity": "unknown",
+              "semantic_anchor": "self.cfg.retrieval.top_k",
+              "source_anchor_ids": [
+                "span:src/model/ebcar_dedicated_attention_model.py:268:268"
+              ],
+              "source_operation_ids": [
+                "graph-operation:node:4a32ad700aef7e9d"
+              ]
+            },
+            {
+              "atom_id": "atom:detail:mech_sym:9773c5add7af1f92:6:operation:graph-operation:node:59b6fc4a40c249e6",
+              "atom_kind": "operation",
+              "content_digest": "sha256:24105af474db04ecb64bbcd212563d8f50fa4631d0a5c1dc05f1fc3d751e44b8",
+              "exact_excerpts": [
+                "(document_id.long() % self.cfg.retrieval.top_k)"
+              ],
+              "required": true,
+              "required_conditions": [],
+              "required_polarity": "positive",
+              "semantic_anchor": "LOAD operation",
+              "source_anchor_ids": [
+                "span:src/model/ebcar_dedicated_attention_model.py:268:268"
+              ],
+              "source_operation_ids": [
+                "graph-operation:node:59b6fc4a40c249e6"
+              ]
+            },
+            {
+              "atom_id": "atom:detail:mech_sym:9773c5add7af1f92:6:operand:graph-operation:node:59b6fc4a40c249e6:0",
+              "atom_kind": "operand",
+              "content_digest": "sha256:fe50d424045aa681e2b507585e726d44684bc3b80870a3617aa1c046ce974df5",
+              "exact_excerpts": [
+                "(document_id.long() % self.cfg.retrieval.top_k)"
+              ],
+              "required": true,
+              "required_conditions": [],
+              "required_polarity": "unknown",
+              "semantic_anchor": "self",
+              "source_anchor_ids": [
+                "span:src/model/ebcar_dedicated_attention_model.py:268:268"
+              ],
+              "source_operation_ids": [
+                "graph-operation:node:59b6fc4a40c249e6"
+              ]
+            },
+            {
+              "atom_id": "atom:detail:mech_sym:9773c5add7af1f92:6:operation:graph-operation:node:59f0c526bf925076",
+              "atom_kind": "operation",
+              "content_digest": "sha256:df497daa706014916f4b6214766ae02e377f8f9fa8a48c0e3f9c413b91c448a5",
+              "exact_excerpts": [
+                "(document_id.long() % self.cfg.retrieval.top_k)"
+              ],
+              "required": true,
+              "required_conditions": [],
+              "required_polarity": "positive",
+              "semantic_anchor": "LOAD operation",
+              "source_anchor_ids": [
+                "span:src/model/ebcar_dedicated_attention_model.py:268:268"
+              ],
+              "source_operation_ids": [
+                "graph-operation:node:59f0c526bf925076"
+              ]
+            },
+            {
+              "atom_id": "atom:detail:mech_sym:9773c5add7af1f92:6:operand:graph-operation:node:59f0c526bf925076:0",
+              "atom_kind": "operand",
+              "content_digest": "sha256:4194d6f74c8b3fb9b8265ed6b5399591eb325d7e51b446da9612f058b9398032",
+              "exact_excerpts": [
+                "(document_id.long() % self.cfg.retrieval.top_k)"
+              ],
+              "required": true,
+              "required_conditions": [],
+              "required_polarity": "unknown",
+              "semantic_anchor": "self.cfg",
+              "source_anchor_ids": [
+                "span:src/model/ebcar_dedicated_attention_model.py:268:268"
+              ],
+              "source_operation_ids": [
+                "graph-operation:node:59f0c526bf925076"
+              ]
+            },
+            {
+              "atom_id": "atom:detail:mech_sym:9773c5add7af1f92:6:operation:graph-operation:node:6d081e44ae03c2aa",
+              "atom_kind": "operation",
+              "content_digest": "sha256:b3605ea2c0cbe96ef623abc34099b0a57f94ce5015fd509bc47ffc9afcdd2548",
+              "exact_excerpts": [
+                "(document_id.long() % self.cfg.retrieval.top_k)"
+              ],
+              "required": true,
+              "required_conditions": [],
+              "required_polarity": "positive",
+              "semantic_anchor": "COMPUTE operation",
+              "source_anchor_ids": [
+                "span:src/model/ebcar_dedicated_attention_model.py:268:268"
+              ],
+              "source_operation_ids": [
+                "graph-operation:node:6d081e44ae03c2aa"
+              ]
+            },
+            {
+              "atom_id": "atom:detail:mech_sym:9773c5add7af1f92:6:operand:graph-operation:node:6d081e44ae03c2aa:0",
+              "atom_kind": "operand",
+              "content_digest": "sha256:9818415240455cbd0dc7ae08283df2254160bdd1ee2baae14f228ac28067a7f9",
+              "exact_excerpts": [
+                "(document_id.long() % self.cfg.retrieval.top_k)"
+              ],
+              "required": true,
+              "required_conditions": [],
+              "required_polarity": "unknown",
+              "semantic_anchor": "document_id.long()",
+              "source_anchor_ids": [
+                "span:src/model/ebcar_dedicated_attention_model.py:268:268"
+              ],
+              "source_operation_ids": [
+                "graph-operation:node:6d081e44ae03c2aa"
+              ]
+            },
+            {
+              "atom_id": "atom:detail:mech_sym:9773c5add7af1f92:6:operand:graph-operation:node:6d081e44ae03c2aa:1",
+              "atom_kind": "operand",
+              "content_digest": "sha256:89701ff6ebd4f6c2da3f36788e8de7d8372cb7f8c29f6c817d878812ee129706",
+              "exact_excerpts": [
+                "(document_id.long() % self.cfg.retrieval.top_k)"
+              ],
+              "required": true,
+              "required_conditions": [],
+              "required_polarity": "unknown",
+              "semantic_anchor": "self.cfg.retrieval.top_k",
+              "source_anchor_ids": [
+                "span:src/model/ebcar_dedicated_attention_model.py:268:268"
+              ],
+              "source_operation_ids": [
+                "graph-operation:node:6d081e44ae03c2aa"
+              ]
+            },
+            {
+              "atom_id": "atom:detail:mech_sym:9773c5add7af1f92:6:formal:graph-operation:node:6d081e44ae03c2aa",
+              "atom_kind": "formal_relation",
+              "content_digest": "sha256:efc8cf85c46432d9aeab779ee9b60e7e54958c3c8bfa65f1abb56c7efe687018",
+              "exact_excerpts": [
+                "(document_id.long() % self.cfg.retrieval.top_k)"
+              ],
+              "required": true,
+              "required_conditions": [],
+              "required_polarity": "unknown",
+              "semantic_anchor": "COMPUTE",
+              "source_anchor_ids": [
+                "span:src/model/ebcar_dedicated_attention_model.py:268:268"
+              ],
+              "source_operation_ids": [
+                "graph-operation:node:6d081e44ae03c2aa"
+              ]
+            },
+            {
+              "atom_id": "atom:detail:mech_sym:9773c5add7af1f92:6:operation:graph-operation:node:cc7664031e56503e",
+              "atom_kind": "operation",
+              "content_digest": "sha256:c0c5c3963ce2fa2f63c80a533a63948b0176ee58183532aa78cbd18a607ae77d",
+              "exact_excerpts": [
+                "(document_id.long() % self.cfg.retrieval.top_k)"
+              ],
+              "required": true,
+              "required_conditions": [],
+              "required_polarity": "positive",
+              "semantic_anchor": "CALL operation",
+              "source_anchor_ids": [
+                "span:src/model/ebcar_dedicated_attention_model.py:268:268"
+              ],
+              "source_operation_ids": [
+                "graph-operation:node:cc7664031e56503e"
+              ]
+            },
+            {
+              "atom_id": "atom:detail:mech_sym:9773c5add7af1f92:6:operand:graph-operation:node:cc7664031e56503e:0",
+              "atom_kind": "operand",
+              "content_digest": "sha256:0a6c168e8a16402599507852202a15122eee2312215f26a6e8b9e49c1322a402",
+              "exact_excerpts": [
+                "(document_id.long() % self.cfg.retrieval.top_k)"
+              ],
+              "required": true,
+              "required_conditions": [],
+              "required_polarity": "unknown",
+              "semantic_anchor": "document_id.long",
+              "source_anchor_ids": [
+                "span:src/model/ebcar_dedicated_attention_model.py:268:268"
+              ],
+              "source_operation_ids": [
+                "graph-operation:node:cc7664031e56503e"
+              ]
+            },
+            {
+              "atom_id": "atom:detail:mech_sym:9773c5add7af1f92:6:interface:graph-operation:node:cc7664031e56503e",
+              "atom_kind": "interface",
+              "content_digest": "sha256:f94a9d120385664ef57392d4f2650f48a14d65d1f1a18a170ce97b618c3219e8",
+              "exact_excerpts": [
+                "(document_id.long() % self.cfg.retrieval.top_k)"
+              ],
+              "required": true,
+              "required_conditions": [],
+              "required_polarity": "unknown",
+              "semantic_anchor": "sym:9773c5add7af1f92",
+              "source_anchor_ids": [
+                "span:src/model/ebcar_dedicated_attention_model.py:268:268"
+              ],
+              "source_operation_ids": [
+                "graph-operation:node:cc7664031e56503e"
+              ]
+            }
+          ]
+        },
+        {
+          "_atom_id": "detail:mech_sym:9773c5add7af1f92:7",
+          "_atom_kind": "detail",
+          "activation_basis_ids": [],
+          "active_path_status": "active_default",
+          "author_statements": [],
+          "claim_kind": "formalization",
+          "conditions": [],
+          "content_digest": "sha256:040a8b5978a73892bc9112c8cd72198558d5f8b5f16bb1a591a071615de61ce1",
+          "detail_id": "detail:mech_sym:9773c5add7af1f92:7",
+          "evidence_authority": "repository_verified",
+          "exact_excerpts": [
+            "(document_id.long() % self.cfg.retrieval.top_k)\n                + (document_id.long() // self.cfg.retrieval.top_k)"
+          ],
+          "formalizable": false,
+          "formalizable_signatures": [
+            {
+              "conditions": [],
+              "operands": [
+                "document_id.long() % self.cfg.retrieval.top_k",
+                "document_id.long() // self.cfg.retrieval.top_k"
+              ],
+              "operation_id": "graph-operation:node:775cc984406f25f7",
+              "predicate": "COMPUTE",
+              "result": ""
+            }
+          ],
+          "formula_role": "",
+          "importance": "supporting",
+          "mismatch_reason": "",
+          "operands": [
+            "document_id.long() % self.cfg.retrieval.top_k",
+            "document_id.long() // self.cfg.retrieval.top_k"
+          ],
+          "order_index": 6,
+          "polarity": "positive",
+          "predecessor_detail_ids": [
+            "detail:mech_sym:9773c5add7af1f92:6"
+          ],
+          "predicate": "COMPUTE",
+          "primary_mechanism_id": "mech_sym:9773c5add7af1f92",
+          "publication_policy": "annotated_only",
+          "result": "",
+          "role": "transformation",
+          "semantic_atom": "transformation: COMPUTE consumes document_id.long() % self.cfg.retrieval.top_k, document_id.long() // self.cfg.retrieval.top_k",
+          "shape_or_type_hints": [],
+          "shared_with_mechanism_ids": [],
+          "source_brief_ids": [],
+          "source_claim_ids": [],
+          "source_equation_ids": [],
+          "source_facet_ids": [],
+          "source_fact_ids": [],
+          "source_kind": "first_party_executable",
+          "source_obligation_ids": [],
+          "source_operation_ids": [
+            "graph-operation:node:775cc984406f25f7"
+          ],
+          "source_span_ids": [
+            "span:src/model/ebcar_dedicated_attention_model.py:268:269"
+          ],
+          "subject": "sym:9773c5add7af1f92",
+          "successor_detail_ids": [
+            "detail:mech_sym:9773c5add7af1f92:8"
+          ],
+          "witness_atoms": [
+            {
+              "atom_id": "atom:detail:mech_sym:9773c5add7af1f92:7:operation:graph-operation:node:775cc984406f25f7",
+              "atom_kind": "operation",
+              "content_digest": "sha256:0fc5c96a60d1fe189bccafa115f701c883e66bb6b96e5d6a7ef4bb3eb3bfe1a9",
+              "exact_excerpts": [
+                "(document_id.long() % self.cfg.retrieval.top_k)\n                + (document_id.long() // self.cfg.retrieval.top_k)"
+              ],
+              "required": true,
+              "required_conditions": [],
+              "required_polarity": "positive",
+              "semantic_anchor": "COMPUTE operation",
+              "source_anchor_ids": [
+                "span:src/model/ebcar_dedicated_attention_model.py:268:269"
+              ],
+              "source_operation_ids": [
+                "graph-operation:node:775cc984406f25f7"
+              ]
+            },
+            {
+              "atom_id": "atom:detail:mech_sym:9773c5add7af1f92:7:operand:graph-operation:node:775cc984406f25f7:0",
+              "atom_kind": "operand",
+              "content_digest": "sha256:94a3bebf4dab807e64c8b78947ca4b93ac64bed2fb222ade6aa7611104ce360f",
+              "exact_excerpts": [
+                "(document_id.long() % self.cfg.retrieval.top_k)\n                + (document_id.long() // self.cfg.retrieval.top_k)"
+              ],
+              "required": true,
+              "required_conditions": [],
+              "required_polarity": "unknown",
+              "semantic_anchor": "document_id.long() % self.cfg.retrieval.top_k",
+              "source_anchor_ids": [
+                "span:src/model/ebcar_dedicated_attention_model.py:268:269"
+              ],
+              "source_operation_ids": [
+                "graph-operation:node:775cc984406f25f7"
+              ]
+            },
+            {
+              "atom_id": "atom:detail:mech_sym:9773c5add7af1f92:7:operand:graph-operation:node:775cc984406f25f7:1",
+              "atom_kind": "operand",
+              "content_digest": "sha256:7366ae13a3b8ea4c8e4c7d5f4b4358b6cd279a76babef67bac2ac613d712b08b",
+              "exact_excerpts": [
+                "(document_id.long() % self.cfg.retrieval.top_k)\n                + (document_id.long() // self.cfg.retrieval.top_k)"
+              ],
+              "required": true,
+              "required_conditions": [],
+              "required_polarity": "unknown",
+              "semantic_anchor": "document_id.long() // self.cfg.retrieval.top_k",
+              "source_anchor_ids": [
+                "span:src/model/ebcar_dedicated_attention_model.py:268:269"
+              ],
+              "source_operation_ids": [
+                "graph-operation:node:775cc984406f25f7"
+              ]
+            },
+            {
+              "atom_id": "atom:detail:mech_sym:9773c5add7af1f92:7:formal:graph-operation:node:775cc984406f25f7",
+              "atom_kind": "formal_relation",
+              "content_digest": "sha256:3aea2adb1fc85480302443f73a23cc3fa8b19e249f81009809c59c2d6d166ced",
+              "exact_excerpts": [
+                "(document_id.long() % self.cfg.retrieval.top_k)\n                + (document_id.long() // self.cfg.retrieval.top_k)"
+              ],
+              "required": true,
+              "required_conditions": [],
+              "required_polarity": "unknown",
+              "semantic_anchor": "COMPUTE",
+              "source_anchor_ids": [
+                "span:src/model/ebcar_dedicated_attention_model.py:268:269"
+              ],
+              "source_operation_ids": [
+                "graph-operation:node:775cc984406f25f7"
+              ]
+            }
+          ]
+        }
+      ],
+      "detail_ids": [
+        "mech_sym:9773c5add7af1f92:1",
+        "mech_sym:9773c5add7af1f92:13",
+        "mech_sym:9773c5add7af1f92:4",
+        "mech_sym:9773c5add7af1f92:44",
+        "mech_sym:9773c5add7af1f92:6",
+        "mech_sym:9773c5add7af1f92:7"
+      ],
+      "formula_obligation_ids": [],
+      "formula_package_ids": [],
+      "formula_package_source_detail_ids": {},
+      "join_dependency_proof": {
+        "atom_ids": [
+          "detail:mech_sym:9773c5add7af1f92:1",
+          "detail:mech_sym:9773c5add7af1f92:13",
+          "detail:mech_sym:9773c5add7af1f92:4",
+          "detail:mech_sym:9773c5add7af1f92:44",
+          "detail:mech_sym:9773c5add7af1f92:6",
+          "detail:mech_sym:9773c5add7af1f92:7"
+        ],
+        "mechanism_ids": [
+          "mech_sym:9773c5add7af1f92",
+          "mech_sym:f6cf5bdfe2ae16f0"
+        ]
+      },
+      "mechanism_header": {
+        "mechanism_headers": [
+          {
+            "importance": "core",
+            "mechanism_id": "mech_sym:9773c5add7af1f92",
+            "mechanism_name": "Sym:9773C5Add7Af1F92",
+            "purpose": "Source-grounded implementation of mech_sym:9773c5add7af1f92",
+            "scientific_role": "mechanism_spine"
+          },
+          {
+            "importance": "core",
+            "mechanism_id": "mech_sym:f6cf5bdfe2ae16f0",
+            "mechanism_name": "Sym:F6Cf5Bdfe2Ae16F0",
+            "purpose": "Source-grounded implementation of mech_sym:f6cf5bdfe2ae16f0",
+            "scientific_role": "mechanism_spine"
+          }
+        ],
+        "mechanism_id": "join:MA-S3",
+        "mechanism_ids": [
+          "mech_sym:9773c5add7af1f92",
+          "mech_sym:f6cf5bdfe2ae16f0"
+        ]
+      },
+      "obligation_ids": [
+        "MA-S3"
+      ],
+      "paragraph_ids": [
+        "MA-S3:P2__f1"
+      ],
+      "projection_proof": {
+        "detail:mech_sym:9773c5add7af1f92:1": "detail:mech_sym:9773c5add7af1f92:1",
+        "detail:mech_sym:9773c5add7af1f92:13": "detail:mech_sym:9773c5add7af1f92:13",
+        "detail:mech_sym:9773c5add7af1f92:4": "detail:mech_sym:9773c5add7af1f92:4",
+        "detail:mech_sym:9773c5add7af1f92:44": "detail:mech_sym:9773c5add7af1f92:44",
+        "detail:mech_sym:9773c5add7af1f92:6": "detail:mech_sym:9773c5add7af1f92:6",
+        "detail:mech_sym:9773c5add7af1f92:7": "detail:mech_sym:9773c5add7af1f92:7"
+      },
+      "section_id": "MA-S3"
+    }
+  },
+  "invocation_id": "inv:realizer:MA-S3:page:fd9c44a567a19a03ceeebb26ec0925ee111b58b3385e4e3490cd6b8403fb120d",
+  "prompt": "You are the unified V2 Mechanism Realizer. Read the user JSON payload as the sole technical authority. Return exactly one JSON object matching the supplied response schema and response_contract. Write only evidence-bound draft_markdown; render every required detail ID exactly once and emit every required formula package ID exactly once in used_formula_package_ids; emit exactly one formula witness for each required package, using its exact package ID as target_id and the package's bound frozen literal_source_excerpt from response_contract as exact_text; never use the package ID itself as formula exact_text; use only allowed atom target IDs; every exact_text must be a verbatim substring of draft_markdown. Preserve unresolved conditional branches and never assert an unresolved configuration value.",
+  "prompt_template_id": "unified_realizer_page_v2",
+  "request_digest": "sha256:3551381a4cd426b777d7c11f3d896fe7953eb983c5a3b39ecab1bf503fbbd5e1",
+  "response_schema": {
+    "properties": {
+      "draft_markdown": {
+        "type": "string"
+      },
+      "rendered_detail_ids": {
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      },
+      "used_formula_package_ids": {
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      },
+      "witnesses": {
+        "items": {
+          "additionalProperties": false,
+          "description": "Exact textual witness for one paragraph-level binding.",
+          "properties": {
+            "exact_text": {
+              "maxLength": 4000,
+              "minLength": 1,
+              "title": "Exact Text",
+              "type": "string"
+            },
+            "target_id": {
+              "maxLength": 240,
+              "minLength": 1,
+              "title": "Target Id",
+              "type": "string"
+            },
+            "witness_kind": {
+              "enum": [
+                "detail",
+                "atom",
+                "facet",
+                "field",
+                "slot",
+                "edge",
+                "formula",
+                "claim",
+                "equation"
+              ],
+              "title": "Witness Kind",
+              "type": "string"
+            }
+          },
+          "required": [
+            "witness_kind",
+            "target_id",
+            "exact_text"
+          ],
+          "title": "PublicationContentWitnessV1",
+          "type": "object"
+        },
+        "type": "array"
+      }
+    },
+    "required": [
+      "draft_markdown",
+      "rendered_detail_ids",
+      "used_formula_package_ids",
+      "witnesses"
+    ],
+    "type": "object"
+  },
+  "schema_version": "1.0"
+}

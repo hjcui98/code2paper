@@ -1343,6 +1343,8 @@ def _candidate_structural_failure_codes(loop: "ResearchLoopState") -> tuple[str,
     for item in loop.runtime.agenda.items:
         if item.priority != "must_cover":
             continue
+        if item.status in {"supported", "partial"}:
+            continue
         for value in item.missing_information or ():
             add(value)
     for record in getattr(loop.observation_promotion_ledger, "records", ()) or ():

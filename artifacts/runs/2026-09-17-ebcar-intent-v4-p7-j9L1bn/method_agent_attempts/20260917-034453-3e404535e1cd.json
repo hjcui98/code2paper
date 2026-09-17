@@ -1,0 +1,15 @@
+{
+  "schema_version": "1.0",
+  "run_id": "ebcar-intent-v4-p7-current-20260916T165846Z",
+  "pid": 2853735,
+  "supervisor_pid": 2853690,
+  "worker_pid": 2853735,
+  "attempt_id": "20260917-034453-3e404535e1cd",
+  "status": "external_termination_detected",
+  "started_at_unix": 1789616694.6012213,
+  "ended_at_unix": 1789616991.0002823,
+  "exit_code": null,
+  "terminal_reason": "external_termination_detected",
+  "stdout_path": "/tmp/c2p-p7-ebcar-v4-intent-j9L1bn/run_stdout.20260917-034453-3e404535e1cd.log",
+  "stderr_path": "/tmp/c2p-p7-ebcar-v4-intent-j9L1bn/run_stderr.20260917-034453-3e404535e1cd.log"
+}

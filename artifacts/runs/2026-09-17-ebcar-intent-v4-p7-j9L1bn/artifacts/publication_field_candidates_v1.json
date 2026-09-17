@@ -1,0 +1,244 @@
+{
+  "schema_version": "1.0",
+  "candidates": [
+    {
+      "schema_version": "1.0",
+      "candidate_id": "field:facet-df672e4efc3751e2:operation",
+      "facet_id": "facet-df672e4efc3751e2",
+      "field_name": "operation",
+      "semantic_atom": "Hybrid‑attention encoding: Feed the query and augmented passage embeddings into a Transformer encoder that applies shared full attention (global interactions) and dedicated masked attention (intra‑document interactions) in every layer, producing contextualized passage embeddings.",
+      "authority_lane": "executable_hard",
+      "polarity": "positive",
+      "conditions": [],
+      "bound_claim_ids": [
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:b6468fc08c848936",
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-rel:1b2f2e5db0f09696"
+      ],
+      "bound_fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:b6468fc08c848936",
+        "fact-O-METHOD-MAINLINE-01-c8146479-rel:1b2f2e5db0f09696"
+      ],
+      "bound_span_ids": [
+        "span:src/model/ebcar_dedicated_attention_model.py:145:174"
+      ],
+      "bound_equation_ids": [],
+      "exact_excerpts": [
+        "if self.cfg.use_dedicated_attention:\n            dedicated_attention_mask = torch.zeros(\n                (batch_size, num_passages + 1, num_passages + 1),\n                device=self.device,\n            )  # [batch_size, num_heads, num_passages + 1, num_passages + 1]\n            for i in range(batch_size):\n                temp_document_id = document_id[i]  # [num_passages]\n                for row, doc_id in enumerate(temp_document_id):\n                    dedicated_attention_mask[i, row, :] = -float(\n                        \"inf\"\n                    )  # Set this row to all -inf\n                    temp_indices = (\n                        temp_document_id == doc_id\n                    )  # Get the indices of the passages that have the same document id as the current passage\n                    temp_indices = torch.cat(\n                        (\n                            torch.tensor([True], device=self.device),\n                            temp_indices,\n                        )  # Always attend to the query\n                    )  # [num_passages + 1]\n                    dedicated_attention_mask[\n                        i, row, temp_indices\n                    ] = 0  # Set the dedicated attention mask to 0 for the passages that have the same document id as the current passage\n        else:\n            # This is the case when we don't use dedicated attention for ablation study\n            # The dedicated attention mask is all zeros\n            dedicated_attention_mask = torch.zeros(\n                (batch_size, num_passages + 1, num_passages + 1),\n                device=self.device,\n            )  # [batch_size, num_passages + 1, num_passages + 1]"
+      ],
+      "ownership_roles": [
+        "target_core"
+      ],
+      "render_policy": "optional",
+      "defer_reason": "partial_or_unresolved_ownership",
+      "derivation_record_ids": [],
+      "derivation_kind": "direct",
+      "claim_strength": "descriptive",
+      "surface_mode": "omit_and_review",
+      "content_digest": "sha256:c508d7520ec36ac9d9b89349a7a3b94bebd461e89b9a260d026f1a0bbe87b924"
+    },
+    {
+      "schema_version": "1.0",
+      "candidate_id": "field:facet-14d4dbe911667c07:operation",
+      "facet_id": "facet-14d4dbe911667c07",
+      "field_name": "operation",
+      "semantic_atom": "Improve reranking in retrieval-augmented generation (RAG) systems by addressing both inference efficiency and the need for cross-passage reasoning, especially when evidence is scattered across passages and requires resolving coreference or structural context.",
+      "authority_lane": "executable_hard",
+      "polarity": "positive",
+      "conditions": [],
+      "bound_claim_ids": [
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:b6468fc08c848936",
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-rel:1b2f2e5db0f09696"
+      ],
+      "bound_fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:b6468fc08c848936",
+        "fact-O-METHOD-MAINLINE-01-c8146479-rel:1b2f2e5db0f09696"
+      ],
+      "bound_span_ids": [
+        "span:src/model/ebcar_dedicated_attention_model.py:145:174"
+      ],
+      "bound_equation_ids": [],
+      "exact_excerpts": [
+        "if self.cfg.use_dedicated_attention:\n            dedicated_attention_mask = torch.zeros(\n                (batch_size, num_passages + 1, num_passages + 1),\n                device=self.device,\n            )  # [batch_size, num_heads, num_passages + 1, num_passages + 1]\n            for i in range(batch_size):\n                temp_document_id = document_id[i]  # [num_passages]\n                for row, doc_id in enumerate(temp_document_id):\n                    dedicated_attention_mask[i, row, :] = -float(\n                        \"inf\"\n                    )  # Set this row to all -inf\n                    temp_indices = (\n                        temp_document_id == doc_id\n                    )  # Get the indices of the passages that have the same document id as the current passage\n                    temp_indices = torch.cat(\n                        (\n                            torch.tensor([True], device=self.device),\n                            temp_indices,\n                        )  # Always attend to the query\n                    )  # [num_passages + 1]\n                    dedicated_attention_mask[\n                        i, row, temp_indices\n                    ] = 0  # Set the dedicated attention mask to 0 for the passages that have the same document id as the current passage\n        else:\n            # This is the case when we don't use dedicated attention for ablation study\n            # The dedicated attention mask is all zeros\n            dedicated_attention_mask = torch.zeros(\n                (batch_size, num_passages + 1, num_passages + 1),\n                device=self.device,\n            )  # [batch_size, num_passages + 1, num_passages + 1]"
+      ],
+      "ownership_roles": [
+        "target_core"
+      ],
+      "render_policy": "optional",
+      "defer_reason": "partial_or_unresolved_ownership",
+      "derivation_record_ids": [],
+      "derivation_kind": "direct",
+      "claim_strength": "descriptive",
+      "surface_mode": "omit_and_review",
+      "content_digest": "sha256:fd9d885829a81908ad45d6e0a17d2c80f05affdc4f8df5a084e28a53f35f6f7a"
+    },
+    {
+      "schema_version": "1.0",
+      "candidate_id": "field:facet-676fcfceb7eddd8a:operation",
+      "facet_id": "facet-676fcfceb7eddd8a",
+      "field_name": "operation",
+      "semantic_atom": "passage embeddings (pi): Fixed dense representations of candidate passages obtained from Contriever.",
+      "authority_lane": "executable_hard",
+      "polarity": "unknown",
+      "conditions": [],
+      "bound_claim_ids": [],
+      "bound_fact_ids": [
+        "fact-O-STAGE-05-5b3d398a-node:06b37685c9288fb6",
+        "fact-O-STAGE-05-5b3d398a-rel:caa3e47dda8fdf04"
+      ],
+      "bound_span_ids": [
+        "span:src/model/ebcar_dedicated_attention_model.py:265:277"
+      ],
+      "bound_equation_ids": [],
+      "exact_excerpts": [
+        "if self.cfg.add_positional_encoding:\n            # document_id might be out of range, so we need to modulate it and plus the quotient\n            document_id_embeddings = self.document_id_embedding(\n                (document_id.long() % self.cfg.retrieval.top_k)\n                + (document_id.long() // self.cfg.retrieval.top_k)\n            )  # [batch_size, num_passages, hidden_size]\n            passage_id_embeddings = self.passage_id_embedding(\n                passage_id.long()\n            )  # [batch_size, num_passages, hidden_size]\n            # Directly add the positional encoding to the passages\n            passages = (\n                passages + document_id_embeddings + passage_id_embeddings\n            )  # [batch_size, num_passages, hidden_size]"
+      ],
+      "ownership_roles": [
+        "target_core"
+      ],
+      "render_policy": "optional",
+      "defer_reason": "partial_or_unresolved_ownership",
+      "derivation_record_ids": [],
+      "derivation_kind": "direct",
+      "claim_strength": "descriptive",
+      "surface_mode": "omit_and_review",
+      "content_digest": "sha256:b959f8f0538f8e200707ca3050bd583bfde3bfd106c8505da6b5550517326a13"
+    },
+    {
+      "schema_version": "1.0",
+      "candidate_id": "field:facet-47997bc7d81ecdf5:operation",
+      "facet_id": "facet-47997bc7d81ecdf5",
+      "field_name": "operation",
+      "semantic_atom": "hybrid attention mechanism: Combines shared full attention (global cross‑passage) and dedicated masked attention (intra‑document) in each Transformer layer to jointly model inter‑ and intra‑document dependencies.",
+      "authority_lane": "executable_hard",
+      "polarity": "positive",
+      "conditions": [],
+      "bound_claim_ids": [
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:b6468fc08c848936",
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-rel:1b2f2e5db0f09696"
+      ],
+      "bound_fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:b6468fc08c848936",
+        "fact-O-METHOD-MAINLINE-01-c8146479-rel:1b2f2e5db0f09696"
+      ],
+      "bound_span_ids": [
+        "span:src/model/ebcar_dedicated_attention_model.py:145:174"
+      ],
+      "bound_equation_ids": [],
+      "exact_excerpts": [
+        "if self.cfg.use_dedicated_attention:\n            dedicated_attention_mask = torch.zeros(\n                (batch_size, num_passages + 1, num_passages + 1),\n                device=self.device,\n            )  # [batch_size, num_heads, num_passages + 1, num_passages + 1]\n            for i in range(batch_size):\n                temp_document_id = document_id[i]  # [num_passages]\n                for row, doc_id in enumerate(temp_document_id):\n                    dedicated_attention_mask[i, row, :] = -float(\n                        \"inf\"\n                    )  # Set this row to all -inf\n                    temp_indices = (\n                        temp_document_id == doc_id\n                    )  # Get the indices of the passages that have the same document id as the current passage\n                    temp_indices = torch.cat(\n                        (\n                            torch.tensor([True], device=self.device),\n                            temp_indices,\n                        )  # Always attend to the query\n                    )  # [num_passages + 1]\n                    dedicated_attention_mask[\n                        i, row, temp_indices\n                    ] = 0  # Set the dedicated attention mask to 0 for the passages that have the same document id as the current passage\n        else:\n            # This is the case when we don't use dedicated attention for ablation study\n            # The dedicated attention mask is all zeros\n            dedicated_attention_mask = torch.zeros(\n                (batch_size, num_passages + 1, num_passages + 1),\n                device=self.device,\n            )  # [batch_size, num_passages + 1, num_passages + 1]"
+      ],
+      "ownership_roles": [
+        "target_core"
+      ],
+      "render_policy": "optional",
+      "defer_reason": "partial_or_unresolved_ownership",
+      "derivation_record_ids": [],
+      "derivation_kind": "direct",
+      "claim_strength": "descriptive",
+      "surface_mode": "omit_and_review",
+      "content_digest": "sha256:93efe0c373487cf67e4afe608a95836c97865084c07deb8685f8feb46378fe17"
+    },
+    {
+      "schema_version": "1.0",
+      "candidate_id": "field:facet-85ba5afaa2fbe7ac:operation",
+      "facet_id": "facet-85ba5afaa2fbe7ac",
+      "field_name": "operation",
+      "semantic_atom": "dedicated masked attention module: Masked multi‑head attention that restricts a passage to attend only to the query and to other passages from the same document, enabling fine‑grained coreference resolution and local coherence.",
+      "authority_lane": "executable_hard",
+      "polarity": "positive",
+      "conditions": [],
+      "bound_claim_ids": [
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:b6468fc08c848936",
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-rel:1b2f2e5db0f09696"
+      ],
+      "bound_fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:b6468fc08c848936",
+        "fact-O-METHOD-MAINLINE-01-c8146479-rel:1b2f2e5db0f09696"
+      ],
+      "bound_span_ids": [
+        "span:src/model/ebcar_dedicated_attention_model.py:145:174"
+      ],
+      "bound_equation_ids": [],
+      "exact_excerpts": [
+        "if self.cfg.use_dedicated_attention:\n            dedicated_attention_mask = torch.zeros(\n                (batch_size, num_passages + 1, num_passages + 1),\n                device=self.device,\n            )  # [batch_size, num_heads, num_passages + 1, num_passages + 1]\n            for i in range(batch_size):\n                temp_document_id = document_id[i]  # [num_passages]\n                for row, doc_id in enumerate(temp_document_id):\n                    dedicated_attention_mask[i, row, :] = -float(\n                        \"inf\"\n                    )  # Set this row to all -inf\n                    temp_indices = (\n                        temp_document_id == doc_id\n                    )  # Get the indices of the passages that have the same document id as the current passage\n                    temp_indices = torch.cat(\n                        (\n                            torch.tensor([True], device=self.device),\n                            temp_indices,\n                        )  # Always attend to the query\n                    )  # [num_passages + 1]\n                    dedicated_attention_mask[\n                        i, row, temp_indices\n                    ] = 0  # Set the dedicated attention mask to 0 for the passages that have the same document id as the current passage\n        else:\n            # This is the case when we don't use dedicated attention for ablation study\n            # The dedicated attention mask is all zeros\n            dedicated_attention_mask = torch.zeros(\n                (batch_size, num_passages + 1, num_passages + 1),\n                device=self.device,\n            )  # [batch_size, num_passages + 1, num_passages + 1]"
+      ],
+      "ownership_roles": [
+        "target_core"
+      ],
+      "render_policy": "optional",
+      "defer_reason": "partial_or_unresolved_ownership",
+      "derivation_record_ids": [],
+      "derivation_kind": "direct",
+      "claim_strength": "descriptive",
+      "surface_mode": "omit_and_review",
+      "content_digest": "sha256:2d9b1ac7b15072b8e2614fd7f18b8cac5b8519a3acf73e3ea60a78a35aa52537"
+    },
+    {
+      "schema_version": "1.0",
+      "candidate_id": "field:facet-b9735878c5548c4a:operation",
+      "facet_id": "facet-b9735878c5548c4a",
+      "field_name": "operation",
+      "semantic_atom": "Embedding‑based reranking formulation and overall framework.",
+      "authority_lane": "executable_hard",
+      "polarity": "positive",
+      "conditions": [],
+      "bound_claim_ids": [
+        "claim-O-STAGE-05-5b3d398a-fact-O-STAGE-05-5b3d398a-node:06b37685c9288fb6",
+        "claim-O-STAGE-05-5b3d398a-fact-O-STAGE-05-5b3d398a-rel:caa3e47dda8fdf04"
+      ],
+      "bound_fact_ids": [
+        "fact-O-STAGE-05-5b3d398a-node:06b37685c9288fb6",
+        "fact-O-STAGE-05-5b3d398a-rel:caa3e47dda8fdf04"
+      ],
+      "bound_span_ids": [
+        "span:src/model/ebcar_dedicated_attention_model.py:265:277"
+      ],
+      "bound_equation_ids": [],
+      "exact_excerpts": [
+        "if self.cfg.add_positional_encoding:\n            # document_id might be out of range, so we need to modulate it and plus the quotient\n            document_id_embeddings = self.document_id_embedding(\n                (document_id.long() % self.cfg.retrieval.top_k)\n                + (document_id.long() // self.cfg.retrieval.top_k)\n            )  # [batch_size, num_passages, hidden_size]\n            passage_id_embeddings = self.passage_id_embedding(\n                passage_id.long()\n            )  # [batch_size, num_passages, hidden_size]\n            # Directly add the positional encoding to the passages\n            passages = (\n                passages + document_id_embeddings + passage_id_embeddings\n            )  # [batch_size, num_passages, hidden_size]"
+      ],
+      "ownership_roles": [
+        "target_core"
+      ],
+      "render_policy": "optional",
+      "defer_reason": "partial_or_unresolved_ownership",
+      "derivation_record_ids": [],
+      "derivation_kind": "direct",
+      "claim_strength": "descriptive",
+      "surface_mode": "omit_and_review",
+      "content_digest": "sha256:5d3057c5820b682ca0039f19db9d33ea475e4d794db732ec89bd3d5d9fc85c47"
+    },
+    {
+      "schema_version": "1.0",
+      "candidate_id": "field:facet-d27285ebc144a3fa:operation",
+      "facet_id": "facet-d27285ebc144a3fa",
+      "field_name": "operation",
+      "semantic_atom": "Design two complementary attention patterns that co‑exist in each layer: global and document‑local.",
+      "authority_lane": "executable_hard",
+      "polarity": "positive",
+      "conditions": [],
+      "bound_claim_ids": [],
+      "bound_fact_ids": [
+        "fact-O-METHOD-MAINLINE-01-c8146479-node:b6468fc08c848936",
+        "fact-O-METHOD-MAINLINE-01-c8146479-rel:1b2f2e5db0f09696"
+      ],
+      "bound_span_ids": [
+        "span:src/model/ebcar_dedicated_attention_model.py:145:174"
+      ],
+      "bound_equation_ids": [],
+      "exact_excerpts": [
+        "if self.cfg.use_dedicated_attention:\n            dedicated_attention_mask = torch.zeros(\n                (batch_size, num_passages + 1, num_passages + 1),\n                device=self.device,\n            )  # [batch_size, num_heads, num_passages + 1, num_passages + 1]\n            for i in range(batch_size):\n                temp_document_id = document_id[i]  # [num_passages]\n                for row, doc_id in enumerate(temp_document_id):\n                    dedicated_attention_mask[i, row, :] = -float(\n                        \"inf\"\n                    )  # Set this row to all -inf\n                    temp_indices = (\n                        temp_document_id == doc_id\n                    )  # Get the indices of the passages that have the same document id as the current passage\n                    temp_indices = torch.cat(\n                        (\n                            torch.tensor([True], device=self.device),\n                            temp_indices,\n                        )  # Always attend to the query\n                    )  # [num_passages + 1]\n                    dedicated_attention_mask[\n                        i, row, temp_indices\n                    ] = 0  # Set the dedicated attention mask to 0 for the passages that have the same document id as the current passage\n        else:\n            # This is the case when we don't use dedicated attention for ablation study\n            # The dedicated attention mask is all zeros\n            dedicated_attention_mask = torch.zeros(\n                (batch_size, num_passages + 1, num_passages + 1),\n                device=self.device,\n            )  # [batch_size, num_passages + 1, num_passages + 1]"
+      ],
+      "ownership_roles": [
+        "target_core"
+      ],
+      "render_policy": "optional",
+      "defer_reason": "partial_or_unresolved_ownership",
+      "derivation_record_ids": [],
+      "derivation_kind": "direct",
+      "claim_strength": "descriptive",
+      "surface_mode": "omit_and_review",
+      "content_digest": "sha256:d28067cc47a630225546c3046c3189bd43bd22267f8d69a3b427dd950edf0383"
+    }
+  ]
+}

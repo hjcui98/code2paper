@@ -1,0 +1,48 @@
+{
+  "schema_version": "1.0",
+  "admission_id": "sha256:e5922516d9cd86727ba4c1f809ae13b251700c24eb697d1450523981afe89ff2",
+  "run_id": "ebcar-intent-v4-p7-current-20260916T165846Z",
+  "repo_snapshot_id": "repo:9b4f1a34c70f10c2317f024df585e282c9d02371586a629e00ace26d8988c942",
+  "project_tree_hash": "sha256:9b4f1a34c70f10c2317f024df585e282c9d02371586a629e00ace26d8988c942",
+  "research_status": "incomplete",
+  "model_calls_allowed": true,
+  "candidate_handoff_allowed": true,
+  "candidate_handoff_id": "sha256:27a20921d5d1226e6b4bac3c10f9afcf85c6ceaa46e362c576b94b31e7627b2b",
+  "candidate_warning_codes": [
+    "candidate_deferred:O-COMPONENT-01-c301ecdd",
+    "candidate_deferred:O-COMPONENT-01-de6049e3",
+    "candidate_deferred:O-COMPONENT-02-2e14379d",
+    "candidate_deferred:O-COMPONENT-03-d8aa8c77",
+    "candidate_deferred:O-COMPONENT-04-b5b6af99",
+    "candidate_deferred:O-COMPONENT-05-4c3594d2",
+    "candidate_deferred:O-COMPONENT-06-34021b88",
+    "candidate_deferred:O-COMPONENT-07-d157b2cc",
+    "candidate_deferred:O-COMPONENT-08-4aac53dc",
+    "candidate_deferred:O-COMPONENT-09-6a8cfd6c",
+    "candidate_deferred:O-COMPONENT-10-dac6250f",
+    "candidate_deferred:O-COMPONENT-11-27f310b2",
+    "candidate_deferred:O-COMPONENT-12-370bd5b2",
+    "candidate_deferred:O-ORGANIZATION-01-6b45ad90",
+    "candidate_deferred:O-ORGANIZATION-02-54911271",
+    "candidate_deferred:O-ORGANIZATION-03-2c92c853",
+    "candidate_deferred:O-ORGANIZATION-04-1dd970df",
+    "candidate_deferred:O-ORGANIZATION-05-baf0d276",
+    "candidate_deferred:O-RATIONALE-CHECK-01-bad20132",
+    "candidate_deferred:O-RATIONALE-CHECK-02-30bb7c0f",
+    "candidate_deferred:O-RATIONALE-CHECK-03-b01101f7",
+    "candidate_deferred:O-RATIONALE-CHECK-04-c742a4fc",
+    "candidate_deferred:O-RATIONALE-CHECK-05-595ac6ff",
+    "candidate_deferred:O-RATIONALE-CHECK-06-388166d9",
+    "candidate_partial_unresolved:O-STAGE-01-039a963a"
+  ],
+  "downstream_phases_planned": [
+    "planning",
+    "formalizer",
+    "writer"
+  ],
+  "failure_codes": [
+    "research_status:incomplete",
+    "unified_core_intent_terminal_proof_missing:O-STAGE-01-039a963a"
+  ],
+  "content_digest": "sha256:e25ee5d8aaf818ff3c0382289255c494b89f35e2d2dcb8a25ede9c71c586f472"
+}

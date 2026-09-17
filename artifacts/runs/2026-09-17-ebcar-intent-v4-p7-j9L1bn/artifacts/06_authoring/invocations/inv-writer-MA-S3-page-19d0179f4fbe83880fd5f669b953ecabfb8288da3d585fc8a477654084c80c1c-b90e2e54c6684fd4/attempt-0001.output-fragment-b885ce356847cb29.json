@@ -1,0 +1,13 @@
+{
+  "attempt": 1,
+  "fragment": {
+    "blocked_reason": "",
+    "consumer_role": "writer",
+    "page_id": "page:19d0179f4fbe83880fd5f669b953ecabfb8288da3d585fc8a477654084c80c1c",
+    "response_hash": "sha256:06545f948d39f7cc7b556e9d57f89c65b3a6cee3d11514af9bede2abe2cfffe5",
+    "response_text": "{\"paragraphs\": [{\"paragraph_id\": \"MA-S3:P1__f5\", \"paragraph_markdown\": \"When the dedicated attention option is active, the model constructs a per-passage attention mask that restricts each passage to attend only to the query token and to other passages sharing the same document identifier. For each passage row in the batch, the corresponding row of the dedicated attention mask is first initialized to negative infinity, thereby suppressing all attention scores by default. The set of permitted positions is then determined by comparing the document identifier of the current passage against the document identifiers of all passages in the batch; passages whose identifiers match form the allowed set. This set is concatenated with a constant true entry that represents the query position, ensuring that every passage always retains full attention to the query. The resulting boolean index vector, of length equal to the number of passages plus one, is applied to the previously suppressed row so that only the query and same-document passages receive an unmasked (zero) attention bias. This construction yields a block-diagonal attention pattern within each document group while preserving a shared query-attention column across all passages.\", \"used_formula_package_ids\": []}], \"section_id\": \"MA-S3\"}",
+    "section_id": "MA-S3"
+  },
+  "invocation_id": "inv:writer:MA-S3:page:19d0179f4fbe83880fd5f669b953ecabfb8288da3d585fc8a477654084c80c1c",
+  "schema_version": "2.0"
+}

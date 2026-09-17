@@ -1,0 +1,20 @@
+{
+  "schema_version": "1.0",
+  "event_kind": "method_agent_supervisor_observation",
+  "run_id": "ebcar-intent-v4-p7-current-20260916T165846Z",
+  "attempt_id": "20260917-033042-e82858614bef",
+  "recorded_at_unix": 1789616553.8830557,
+  "worker_returncode": 2,
+  "parent_stop_signal": null,
+  "worker_terminal_reason": "",
+  "worker_exit_type": "",
+  "worker_partial_valid": false,
+  "worker_terminal_valid": false,
+  "primary_terminal_source": "supervisor",
+  "worker_partial_path": "/tmp/c2p-p7-ebcar-v4-intent-j9L1bn/artifacts/research_product/run_summary.partial.json",
+  "worker_terminal_path": "/tmp/c2p-p7-ebcar-v4-intent-j9L1bn/artifacts/06_authoring/invocations/run_terminal_event.20260917-033042-e82858614bef.json",
+  "fallback_artifacts": {
+    "run_summary_partial": "/tmp/c2p-p7-ebcar-v4-intent-j9L1bn/artifacts/research_product/run_summary.partial.json",
+    "run_terminal_event": "/tmp/c2p-p7-ebcar-v4-intent-j9L1bn/artifacts/06_authoring/invocations/run_terminal_event.supervisor.20260917-033042-e82858614bef.json"
+  }
+}

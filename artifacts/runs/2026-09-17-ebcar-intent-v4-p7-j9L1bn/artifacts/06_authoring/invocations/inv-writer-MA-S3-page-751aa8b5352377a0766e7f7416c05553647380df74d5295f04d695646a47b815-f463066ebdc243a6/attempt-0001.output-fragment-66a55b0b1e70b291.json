@@ -1,0 +1,13 @@
+{
+  "attempt": 1,
+  "fragment": {
+    "blocked_reason": "",
+    "consumer_role": "writer",
+    "page_id": "page:751aa8b5352377a0766e7f7416c05553647380df74d5295f04d695646a47b815",
+    "response_hash": "sha256:fc1f7ae9ee1d1f253c06633dcdbbca94fc5c0a9fbe24f666def8a6308b35c99f",
+    "response_text": "{\"paragraphs\":[{\"paragraph_id\":\"MA-S3:P1__f1\",\"paragraph_markdown\":\"The dedicated-attention encoder constructs its input by first reshaping the query embedding to insert a sequence dimension, yielding a tensor of shape [batch_size, 1, hidden_size]. When positional encoding is enabled, each passage embedding is enriched with two additive components: a document-identity embedding and a passage-identity embedding. The document identifier is modulated by the retrieval candidate pool size—specifically, the document index is reduced modulo the top-k retrieval depth and the quotient is added—so that identifiers exceeding the embedding table range are mapped into a valid index. The modulated document index is projected through a learned document-identity embedding table, and the passage index is projected through a separate learned passage-identity embedding table; both resulting vectors are added directly to the passage representation. The enriched passage embeddings are then concatenated with the reshaped query embedding along the sequence dimension, producing a joint tensor of shape [batch_size, num_passages + 1, hidden_size] in which the query occupies the leading position and the passages follow. During training, per-example losses are stacked into a single tensor and reduced by their mean, yielding the scalar objective that drives gradient descent.\"}],\"section_id\":\"MA-S3\"}",
+    "section_id": "MA-S3"
+  },
+  "invocation_id": "inv:writer:MA-S3:page:751aa8b5352377a0766e7f7416c05553647380df74d5295f04d695646a47b815",
+  "schema_version": "2.0"
+}

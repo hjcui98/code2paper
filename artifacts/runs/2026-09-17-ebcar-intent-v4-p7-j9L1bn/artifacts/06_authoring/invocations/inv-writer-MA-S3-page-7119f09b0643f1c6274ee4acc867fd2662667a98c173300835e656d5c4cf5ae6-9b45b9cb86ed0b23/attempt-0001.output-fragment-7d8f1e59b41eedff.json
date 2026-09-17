@@ -1,0 +1,13 @@
+{
+  "attempt": 1,
+  "fragment": {
+    "blocked_reason": "",
+    "consumer_role": "writer",
+    "page_id": "page:7119f09b0643f1c6274ee4acc867fd2662667a98c173300835e656d5c4cf5ae6",
+    "response_hash": "sha256:7572634b102c1d129aadbfd84f070cc1898eea5828ed510d98e0a31691db66e6",
+    "response_text": "{\"paragraphs\":[{\"paragraph_id\":\"MA-S3:P1__f2\",\"paragraph_markdown\":\"The enrichment mechanism decomposes each document identifier into two positional components through modular arithmetic with the configured retrieval list size. The remainder of the document identifier divided by the retrieval list size yields the position of the passage within the current retrieval list, while the integer quotient identifies the document-level index across the corpus. These two components are combined additively to form a composite positional code that distinguishes both intra-document position and inter-document provenance. When positional encoding is enabled, passage identifiers are additionally mapped through a learned embedding table, producing dense passage-level positional representations of shape [batch_size, num_passages, hidden_size]. The base passage embeddings and the derived positional representations are then concatenated along the feature dimension to yield the final enriched embedding, which is passed to the Transformer encoder.\",\"rendered_from_facet_ids\":[],\"rendered_slot_ids\":[],\"used_formula_package_ids\":[]}],\"section_id\":\"MA-S3\"}",
+    "section_id": "MA-S3"
+  },
+  "invocation_id": "inv:writer:MA-S3:page:7119f09b0643f1c6274ee4acc867fd2662667a98c173300835e656d5c4cf5ae6",
+  "schema_version": "2.0"
+}

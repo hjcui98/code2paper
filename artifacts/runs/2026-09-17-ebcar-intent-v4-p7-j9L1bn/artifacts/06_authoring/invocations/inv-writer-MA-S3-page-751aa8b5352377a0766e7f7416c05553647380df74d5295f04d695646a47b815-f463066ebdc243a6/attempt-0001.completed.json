@@ -1,0 +1,75 @@
+{
+  "actual_request_envelope_digest": "sha256:f5510775df2b63fe840c063b7bd18a846250d7fbd6d0f02dc3ca6079d9d41db4",
+  "actual_technical_bytes_digest": "sha256:be75c3c4b6cb8d9480ed505f15c48ef903acb77cc07632ed22841b13fe04fc6b",
+  "attempt": 1,
+  "consumer_role": "writer",
+  "content_digest": "sha256:dd99814ef048998e8520364983fa2c5f7fef72211ce88c39f42654fcc3e70c98",
+  "content_repair_attempt": false,
+  "delivery_rejection_code": "",
+  "delivery_status": "accepted",
+  "failed_task_ids": [
+    "MA-S3"
+  ],
+  "finished_at_unix": 1789616226.208885,
+  "fragment_digests": [
+    "sha256:66a55b0b1e70b291701e3370da6f90797107f287b6c097bf542bd2fb96aa187c"
+  ],
+  "invocation_id": "inv:writer:MA-S3:page:751aa8b5352377a0766e7f7416c05553647380df74d5295f04d695646a47b815",
+  "is_repair": false,
+  "mechanism_id": "join:MA-S3",
+  "model_identity_digest": "sha256:f3daa7dbeed50de151930dbb664f4b1e544958084740ec5f9338e08707efab8d",
+  "page_id": "page:751aa8b5352377a0766e7f7416c05553647380df74d5295f04d695646a47b815",
+  "phase": "writer",
+  "provider_diagnostics_digest": "sha256:86828100b1e88008f34e5fe4369d0c79dc5f06266083ef0651f2a55e4dfd0958",
+  "provider_usage": {
+    "completion_tokens": 1287,
+    "prompt_tokens": 29993,
+    "total_tokens": 31280
+  },
+  "reserved_input_tokens": 38473,
+  "response_digest": "sha256:fc1f7ae9ee1d1f253c06633dcdbbca94fc5c0a9fbe24f666def8a6308b35c99f",
+  "schema_version": "2.0",
+  "section_id": "MA-S3",
+  "sent_to_caller": true,
+  "started_at_unix": 1789616211.2447784,
+  "succeeded_task_ids": [],
+  "task_failures": [],
+  "task_ids": [
+    "MA-S3"
+  ],
+  "task_status": "partial",
+  "token_accounting": {
+    "accounting_version": "unified-request-token-accounting-v1",
+    "consumer_role": "writer",
+    "content_digest": "sha256:650d9097a9b0e267e1d0505e2f917d942d599d7b157679ff89668c44bd7ddeb6",
+    "fits": true,
+    "input_payload_tokens": 28727,
+    "input_tokens": 34377,
+    "invocation_id": "inv:writer:MA-S3:page:751aa8b5352377a0766e7f7416c05553647380df74d5295f04d695646a47b815",
+    "max_input_tokens": 80000,
+    "meter": {
+      "bytes_per_token": 0,
+      "content_digest": "sha256:fb6ec29617485fe455fe6ef884e072599282d45da4102ba6adb440d5e6b04bad",
+      "measurement_basis": "openai_chat_template_v1",
+      "meter_version": "unified-token-meter-v1",
+      "method": "model_tokenizer",
+      "tokenizer_identity": "vllm-openai-chat-template-v1:qwen38-27b-nvfp4|http://127.0.0.1:8006/v1|sha256:c0de9206a013581f2934ca19b3658a1d1b47d335c73050c20d6d57b9359dcfb5",
+      "unit": "tokens"
+    },
+    "model_context_tokens": 131072,
+    "output_reserve_tokens": 8192,
+    "overflow_tokens": 0,
+    "page_id": "page:751aa8b5352377a0766e7f7416c05553647380df74d5295f04d695646a47b815",
+    "rendered_prompt_tokens": 30005,
+    "response_schema_tokens": 2324,
+    "safety_margin_tokens": 1024,
+    "scaffolding_reserve_tokens": 0,
+    "system_prompt_tokens": 0,
+    "thinking_reserve_tokens": 0,
+    "wrapper_reserve_tokens": 2048
+  },
+  "upstream_archive_digest": "sha256:02c99eb39cb26038a803846cc19be97619909e93965d9f182c4843ce9438a988",
+  "upstream_plan_digest": "sha256:1574681d5f387963065f4c115ff9cfdb38d2d70ba956d834e9c6d027b2e5356e",
+  "upstream_workset_manifest_digest": "sha256:cd0d51ded32e9340e4239cc46198cfc714c85aec1b743a9c5e42a2b301433d49",
+  "workset_id": "workset:section:MA-S3"
+}

@@ -3051,15 +3051,23 @@ def _compile_candidate_node_impl(
             )
         )
         if not selected_nodes:
-            active_obligation.missing_information.append(
-                "ownership:target_candidate_not_found"
-            )
+            if "ownership:target_candidate_not_found" not in active_obligation.missing_information:
+                active_obligation.missing_information.append(
+                    "ownership:target_candidate_not_found"
+                )
             return gap_finalizer_node(
                 state,
                 runtime=runtime,
                 active_obligation_id=active_obligation_id,
                 gain_tracker=gain_tracker,
             )
+        else:
+            if "ownership:target_candidate_not_found" in active_obligation.missing_information:
+                active_obligation.missing_information = [
+                    item
+                    for item in active_obligation.missing_information
+                    if item != "ownership:target_candidate_not_found"
+                ]
     sibling_obligations = [
         item for item in runtime.agenda.items
         if item.obligation_id != active_obligation_id

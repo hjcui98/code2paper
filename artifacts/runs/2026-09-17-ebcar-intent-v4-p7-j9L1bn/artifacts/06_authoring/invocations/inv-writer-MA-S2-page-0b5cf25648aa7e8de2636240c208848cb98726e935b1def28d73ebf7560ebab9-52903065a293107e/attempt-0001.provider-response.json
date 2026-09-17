@@ -1,0 +1,25 @@
+{
+  "attempt": 1,
+  "blocked_reason": "",
+  "content_digest": "sha256:152223199595c0c0424ccf47fd89d096119910914b81a2443c051b9838d5c5a5",
+  "diagnostics": {
+    "finish_seen": true,
+    "partial_chars": 885,
+    "stream_events": 496,
+    "terminal_status": "finish_seen",
+    "usage_seen": true
+  },
+  "finish_reason": "structured_complete",
+  "invocation_id": "inv:writer:MA-S2:page:0b5cf25648aa7e8de2636240c208848cb98726e935b1def28d73ebf7560ebab9",
+  "provider_finish_reason": "stop",
+  "request_diagnostics_digest": "sha256:916c26845f7db64c0618a31291360d4263c2c52445aa7d4a7b15c8d6435d8ccf",
+  "response_digest": "sha256:96f68929b30daff73f091d0871ef59849cfed4d0d39321f13ebae04da625bc51",
+  "response_text": "{\"paragraphs\":[{\"paragraph_id\":\"MA-S2:P1\",\"paragraph_markdown\":\"The embedding-based reranking stage operates on query–document pairs in which each document carries a chunk identifier. A document is associated with a query when the document's chunk identifier equals the query's chunk identifier, subject to the size field being non-null. The selection predicate that governs which records are retrieved for scoring is not specified in the current formulation.\",\"used_formula_package_ids\":[]},{\"paragraph_id\":\"MA-S2:P2\",\"paragraph_markdown\":\"Following the matching step, the reranking procedure orders the matched candidates according to the embedding similarity between the query representation and each document representation. The specific similarity measure and scoring function are not detailed in the available specification.\",\"used_formula_package_ids\":[]}],\"section_id\":\"MA-S2\"}",
+  "schema_version": "1.0",
+  "thinking_chars": 0,
+  "usage": {
+    "completion_tokens": 1188,
+    "prompt_tokens": 3022,
+    "total_tokens": 4210
+  }
+}

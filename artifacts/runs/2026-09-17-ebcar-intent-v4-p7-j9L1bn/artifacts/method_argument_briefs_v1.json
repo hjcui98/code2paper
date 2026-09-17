@@ -1,0 +1,2319 @@
+{
+  "schema_version": "1.0",
+  "repo_snapshot_id": "repo:9b4f1a34c70f10c2317f024df585e282c9d02371586a629e00ace26d8988c942",
+  "project_tree_hash": "sha256:9b4f1a34c70f10c2317f024df585e282c9d02371586a629e00ace26d8988c942",
+  "claims_digest": "sha256:2382431a9216a34d323f39be391c8f19a2685255207f2e83da2dde2892567d8c",
+  "completeness_digest": "sha256:e5d38a63ba572d1e40df9935b2980376c74220376e7a5bd2adc9f215a4cafbef",
+  "coverage_digest": "sha256:bdd7a7117041813ac6d431e405975baa7417c05aa252dc190af205cba6af4db6",
+  "intent_digest": "sha256:eaad8fdbf8ca18215517b8cfc84b6817efd25d9631ffc2bc86d8b7fdac0388f7",
+  "briefs": [
+    {
+      "brief_id": "brief:story:O-METHOD-MAINLINE-01-c8146479",
+      "story_node_id": "story:O-METHOD-MAINLINE-01-c8146479",
+      "intended_role": "algorithm_step",
+      "obligation_ids": [
+        "O-METHOD-MAINLINE-01-c8146479"
+      ],
+      "author_statement": "Start with pre‑computed dense passage embeddings from a standard retriever (e.g., Contriever) and the query embedding from the same encoder. Augment each passage embedding with a document ID embedding (relative to the current retrieved set) and a sinusoidal passage‑position encoding to inject structural cues. Process the query and enriched passage embeddings jointly through a stack of Transformer encoder layers that use a hybrid attention mechanism: a shared full attention module for global interactions, and a dedicated masked attention module that restricts attention to passages from the same document, to consolidate intra‑document coherence. Optimize the model with a contrastive loss (InfoNCE) that uses the fixed original query embedding as an anchor, pulling the contextualized positive passage embedding closer and pushing negatives away. At inference, compute dot‑product similarity between the static query embedding and the updated passage embeddings, then rank passages in descending order of these scores.",
+      "completeness_statuses": [
+        "partially_supported_by_repository"
+      ],
+      "clauses": [
+        {
+          "clause_id": "clause:O-METHOD-MAINLINE-01-c8146479:0",
+          "text": "Start with pre‑computed dense passage embeddings from a standard retriever (e.g., Contriever) and the query embedding from the same encoder.",
+          "license": "positively_licensed",
+          "bound_claim_ids": [
+            "claim-O-STAGE-05-5b3d398a-fact-O-STAGE-05-5b3d398a-node:a002e187c0346457",
+            "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:a48f78c0e1931462"
+          ],
+          "bound_equation_ids": [],
+          "bound_span_ids": [
+            "span:src/model/ebcar_dedicated_attention_model.py:310:310",
+            "span:src/model/ebcar_dedicated_attention_model.py:135:137"
+          ],
+          "bound_target_ids": [],
+          "missing_target_ids": [],
+          "license_reason": "closed-set supported claim key"
+        },
+        {
+          "clause_id": "clause:O-METHOD-MAINLINE-01-c8146479:1",
+          "text": "Augment each passage embedding with a document ID embedding (relative to the current retrieved set) and a sinusoidal passage‑position encoding to inject structural cues.",
+          "license": "unlicensed",
+          "bound_claim_ids": [],
+          "bound_equation_ids": [],
+          "bound_span_ids": [],
+          "bound_target_ids": [],
+          "missing_target_ids": [],
+          "license_reason": "no closed-set license key hit"
+        },
+        {
+          "clause_id": "clause:O-METHOD-MAINLINE-01-c8146479:2",
+          "text": "Process the query and enriched passage embeddings jointly through a stack of Transformer encoder layers that use a hybrid attention mechanism: a shared full attention module for global interactions, and a dedicated masked attention module that restricts attention to passages from the same document, to consolidate intra‑document coherence.",
+          "license": "positively_licensed",
+          "bound_claim_ids": [
+            "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:73ea6c8145b47e07",
+            "claim-O-STAGE-05-5b3d398a-fact-O-STAGE-05-5b3d398a-node:a002e187c0346457",
+            "claim-O-STAGE-05-5b3d398a-fact-O-STAGE-05-5b3d398a-node:856e72eeddb87554",
+            "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:5ff7f276f04b71a8",
+            "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:a48f78c0e1931462",
+            "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:fd2ce32dbb55ed63"
+          ],
+          "bound_equation_ids": [],
+          "bound_span_ids": [
+            "span:src/model/transformer_encoder_hybrid_attention.py:51:51",
+            "span:src/model/ebcar_dedicated_attention_model.py:310:310",
+            "span:src/model/ebcar_dedicated_attention_model.py:276:276",
+            "span:src/model/ebcar_dedicated_attention_model.py:135:137",
+            "span:src/model/ebcar_dedicated_attention_model.py:243:243"
+          ],
+          "bound_target_ids": [],
+          "missing_target_ids": [],
+          "license_reason": "closed-set supported claim key"
+        },
+        {
+          "clause_id": "clause:O-METHOD-MAINLINE-01-c8146479:3",
+          "text": "Optimize the model with a contrastive loss (InfoNCE) that uses the fixed original query embedding as an anchor, pulling the contextualized positive passage embedding closer and pushing negatives away.",
+          "license": "positively_licensed",
+          "bound_claim_ids": [
+            "claim-O-STAGE-05-5b3d398a-fact-O-STAGE-05-5b3d398a-node:a002e187c0346457",
+            "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:a48f78c0e1931462",
+            "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:fd2ce32dbb55ed63"
+          ],
+          "bound_equation_ids": [],
+          "bound_span_ids": [
+            "span:src/model/ebcar_dedicated_attention_model.py:310:310",
+            "span:src/model/ebcar_dedicated_attention_model.py:135:137",
+            "span:src/model/ebcar_dedicated_attention_model.py:243:243"
+          ],
+          "bound_target_ids": [],
+          "missing_target_ids": [],
+          "license_reason": "closed-set supported claim key"
+        },
+        {
+          "clause_id": "clause:O-METHOD-MAINLINE-01-c8146479:4",
+          "text": "At inference, compute dot‑product similarity between the static query embedding and the updated passage embeddings, then rank passages in descending order of these scores.",
+          "license": "positively_licensed",
+          "bound_claim_ids": [
+            "l2:math:fact-O-METHOD-MAINLINE-01-c8146479-node:3673b2e5dbd63bd0:normalize",
+            "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:8e87e1804f77f50f",
+            "claim-O-STAGE-05-5b3d398a-fact-O-STAGE-05-5b3d398a-node:a002e187c0346457",
+            "claim-O-STAGE-05-5b3d398a-fact-O-STAGE-05-5b3d398a-node:856e72eeddb87554",
+            "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:5ff7f276f04b71a8",
+            "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:a48f78c0e1931462"
+          ],
+          "bound_equation_ids": [],
+          "bound_span_ids": [
+            "span:src/model/transformer_encoder_hybrid_attention.py:56:56",
+            "span:src/model/ebcar_dedicated_attention_model.py:334:336",
+            "span:src/model/ebcar_dedicated_attention_model.py:310:310",
+            "span:src/model/ebcar_dedicated_attention_model.py:276:276",
+            "span:src/model/ebcar_dedicated_attention_model.py:135:137"
+          ],
+          "bound_target_ids": [],
+          "missing_target_ids": [],
+          "license_reason": "closed-set supported claim key"
+        }
+      ],
+      "licensed_wording": "Start with pre‑computed dense passage embeddings from a standard retriever (e.g., Contriever) and the query embedding from the same encoder. Process the query and enriched passage embeddings jointly through a stack of Transformer encoder layers that use a hybrid attention mechanism: a shared full attention module for global interactions, and a dedicated masked attention module that restricts attention to passages from the same document, to consolidate intra‑document coherence. Optimize the model with a contrastive loss (InfoNCE) that uses the fixed original query embedding as an anchor, pulling the contextualized positive passage embedding closer and pushing negatives away. At inference, compute dot‑product similarity between the static query embedding and the updated passage embeddings, then rank passages in descending order of these scores.",
+      "claim_ids": [
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:4c8511d6e8fc4240",
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:3673b2e5dbd63bd0",
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:73ea6c8145b47e07",
+        "l2:math:fact-O-METHOD-MAINLINE-01-c8146479-node:4c8511d6e8fc4240:weighted_sum",
+        "l2:math:fact-O-METHOD-MAINLINE-01-c8146479-node:3673b2e5dbd63bd0:normalize",
+        "claim-O-STAGE-03-2c5bd758-fact-O-STAGE-03-2c5bd758-node:b220afbc1e6023fe",
+        "claim-O-STAGE-03-2c5bd758-fact-O-STAGE-03-2c5bd758-node:142f7d2a2f9e8288",
+        "claim-O-STAGE-03-2c5bd758-fact-O-STAGE-03-2c5bd758-node:15f8ab428198f369",
+        "claim-O-STAGE-03-2c5bd758-fact-O-STAGE-03-2c5bd758-node:c8936a17df7bdc83",
+        "claim-O-STAGE-03-2c5bd758-fact-O-STAGE-03-2c5bd758-node:4f3a01f0d7880c82",
+        "l2:math:fact-O-STAGE-03-2c5bd758-node:c8936a17df7bdc83:weighted_sum",
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:c8936a17df7bdc83",
+        "l2:math:fact-O-METHOD-MAINLINE-01-c8146479-node:c8936a17df7bdc83:weighted_sum",
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:6daefc8982533bad",
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:b6468fc08c848936",
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-rel:1b2f2e5db0f09696",
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-configuration-rel:dc95ead65d3bb047",
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:8e87e1804f77f50f",
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:c1802b91f97392cc",
+        "claim-O-STAGE-05-5b3d398a-fact-O-STAGE-05-5b3d398a-node:06b37685c9288fb6",
+        "claim-O-STAGE-05-5b3d398a-fact-O-STAGE-05-5b3d398a-node:a002e187c0346457",
+        "claim-O-STAGE-05-5b3d398a-fact-O-STAGE-05-5b3d398a-node:856e72eeddb87554",
+        "claim-O-STAGE-05-5b3d398a-fact-O-STAGE-05-5b3d398a-node:1077d0d81c820fb0",
+        "claim-O-STAGE-05-5b3d398a-fact-O-STAGE-05-5b3d398a-node:26c1ec766ceee404",
+        "claim-O-STAGE-05-5b3d398a-fact-O-STAGE-05-5b3d398a-node:31075c1f6e053a85",
+        "claim-O-STAGE-05-5b3d398a-fact-O-STAGE-05-5b3d398a-rel:caa3e47dda8fdf04",
+        "claim-O-STAGE-05-5b3d398a-fact-configuration-rel:696083475512bfc5",
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:5ff7f276f04b71a8",
+        "l2:math:fact-O-METHOD-MAINLINE-01-c8146479-node:5ff7f276f04b71a8:weighted_sum",
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:a6f6c00ca097eeb1",
+        "l2:math:fact-O-METHOD-MAINLINE-01-c8146479-node:a6f6c00ca097eeb1:weighted_sum",
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:a48f78c0e1931462",
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:fd2ce32dbb55ed63",
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:7fabddc9286307b4",
+        "l2:math:fact-O-METHOD-MAINLINE-01-c8146479-node:7fabddc9286307b4:weighted_sum"
+      ],
+      "equation_ids": [
+        "equation:fact-O-METHOD-MAINLINE-01-c8146479-node:7fabddc9286307b4",
+        "equation:fact-O-METHOD-MAINLINE-01-c8146479-node:5ff7f276f04b71a8",
+        "equation:fact-O-METHOD-MAINLINE-01-c8146479-node:a6f6c00ca097eeb1",
+        "equation:fact-O-METHOD-MAINLINE-01-c8146479-node:4c8511d6e8fc4240",
+        "equation:fact-O-METHOD-MAINLINE-01-c8146479-node:c8936a17df7bdc83",
+        "equation:fact-O-STAGE-03-2c5bd758-node:c8936a17df7bdc83",
+        "equation:fact-O-STAGE-03-2c5bd758-node:15f8ab428198f369",
+        "equation:fact-O-STAGE-05-5b3d398a-node:856e72eeddb87554"
+      ],
+      "configuration_ids": [
+        "config:sha256:579ebf0b6e60c",
+        "config:sha256:5102d9838cd7f"
+      ],
+      "span_ids": [
+        "span:src/model/transformer_encoder_hybrid_attention.py:119:119",
+        "span:src/model/transformer_encoder_hybrid_attention.py:56:56",
+        "span:src/model/transformer_encoder_hybrid_attention.py:51:51",
+        "span:src/model/transformer_encoder_hybrid_attention.py:125:126",
+        "span:src/model/transformer_encoder_hybrid_attention.py:126:126",
+        "span:src/model/transformer_encoder_hybrid_attention.py:123:123",
+        "span:src/model/transformer_encoder_hybrid_attention.py:41:41",
+        "span:src/model/ebcar_dedicated_attention_model.py:145:145",
+        "span:src/model/ebcar_dedicated_attention_model.py:145:174",
+        "span:conf/config.yaml:19:19",
+        "span:src/model/ebcar_dedicated_attention_model.py:334:336",
+        "span:src/model/ebcar_dedicated_attention_model.py:344:344",
+        "span:src/model/ebcar_dedicated_attention_model.py:265:277",
+        "span:src/model/ebcar_dedicated_attention_model.py:310:310",
+        "span:src/model/ebcar_dedicated_attention_model.py:276:276",
+        "span:src/model/ebcar_dedicated_attention_model.py:267:270",
+        "span:src/model/ebcar_dedicated_attention_model.py:265:265",
+        "span:src/model/ebcar_dedicated_attention_model.py:271:273",
+        "span:conf/config.yaml:18:18",
+        "span:src/model/ebcar_dedicated_attention_model.py:294:294",
+        "span:src/model/ebcar_dedicated_attention_model.py:135:137",
+        "span:src/model/ebcar_dedicated_attention_model.py:243:243",
+        "span:src/model/ebcar_dedicated_attention_model.py:232:232"
+      ],
+      "mechanism_draft": {
+        "draft_id": "draft-62bfdfd9c28a03fe",
+        "brief_id": "brief:story:O-METHOD-MAINLINE-01-c8146479",
+        "text": "Algorithm step: hybrid-attention reranker with structural augmentation and contrastive training. (1) Input preparation: accept pre-computed dense passage embeddings from a standard dense retriever and the query embedding from the same encoder. (2) Structural augmentation: before feeding into the attention stack, augment each passage embedding with two additive signals: a document-identity embedding (a learned table indexed by a relative document ID computed from the passage's position within the retrieved set, using modulo and integer-division to map global passage indices into a per-document slot) and a passage-position embedding (a learned table indexed by the passage's ordinal position). The two augmented terms are summed with the base passage embedding to form the final input representation. The intended mathematical role of the positional signal is to encode ordinal structure so the attention mechanism can distinguish passage order; the repository realizes this as a learned embedding lookup rather than a fixed sinusoidal schedule, leaving the author's 'sinusoidal' characterization unresolved. (3) Hybrid attention: concatenate the query embedding with the augmented passage embeddings and pass through a stack of Transformer encoder layers. Each layer contains two parallel attention sub-modules: a shared full-attention module that allows global interactions across all tokens, and a dedicated masked-attention module that restricts attention to passages belonging to the same document (enforced via a padding mask that fills cross-document attention logits with negative infinity before softmax). The outputs of both sub-modules are summed, passed through dropout, and added residually to the layer input. (4) Training objective: compute a contrastive InfoNCE loss where the fixed original query embedding serves as the anchor; the positive is the contextualized passage embedding (post-attention), and negatives are all other passages in the batch. The per-sample loss is the negative of the positive similarity minus the log-sum-exp of all similarities; the batch loss is the mean over samples. (5) Inference: compute dot-product similarity between the static (unchanged) query embedding and the updated passage embeddings, then sort passages in descending order of score to produce the final ranking.",
+        "cited_claim_ids": [
+          "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:4c8511d6e8fc4240",
+          "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:3673b2e5dbd63bd0",
+          "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:73ea6c8145b47e07",
+          "l2:math:fact-O-METHOD-MAINLINE-01-c8146479-node:4c8511d6e8fc4240:weighted_sum",
+          "l2:math:fact-O-METHOD-MAINLINE-01-c8146479-node:3673b2e5dbd63bd0:normalize",
+          "claim-O-STAGE-03-2c5bd758-fact-O-STAGE-03-2c5bd758-node:b220afbc1e6023fe",
+          "claim-O-STAGE-03-2c5bd758-fact-O-STAGE-03-2c5bd758-node:142f7d2a2f9e8288",
+          "claim-O-STAGE-03-2c5bd758-fact-O-STAGE-03-2c5bd758-node:15f8ab428198f369",
+          "claim-O-STAGE-03-2c5bd758-fact-O-STAGE-03-2c5bd758-node:c8936a17df7bdc83",
+          "claim-O-STAGE-03-2c5bd758-fact-O-STAGE-03-2c5bd758-node:4f3a01f0d7880c82",
+          "l2:math:fact-O-STAGE-03-2c5bd758-node:c8936a17df7bdc83:weighted_sum",
+          "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:c8936a17df7bdc83",
+          "l2:math:fact-O-METHOD-MAINLINE-01-c8146479-node:c8936a17df7bdc83:weighted_sum",
+          "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:6daefc8982533bad",
+          "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:b6468fc08c848936",
+          "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-rel:1b2f2e5db0f09696",
+          "claim-O-METHOD-MAINLINE-01-c8146479-fact-configuration-rel:dc95ead65d3bb047",
+          "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:8e87e1804f77f50f",
+          "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:c1802b91f97392cc",
+          "claim-O-STAGE-05-5b3d398a-fact-O-STAGE-05-5b3d398a-node:06b37685c9288fb6",
+          "claim-O-STAGE-05-5b3d398a-fact-O-STAGE-05-5b3d398a-node:a002e187c0346457",
+          "claim-O-STAGE-05-5b3d398a-fact-O-STAGE-05-5b3d398a-node:856e72eeddb87554",
+          "claim-O-STAGE-05-5b3d398a-fact-O-STAGE-05-5b3d398a-node:1077d0d81c820fb0",
+          "claim-O-STAGE-05-5b3d398a-fact-O-STAGE-05-5b3d398a-node:26c1ec766ceee404",
+          "claim-O-STAGE-05-5b3d398a-fact-O-STAGE-05-5b3d398a-node:31075c1f6e053a85",
+          "claim-O-STAGE-05-5b3d398a-fact-O-STAGE-05-5b3d398a-rel:caa3e47dda8fdf04",
+          "claim-O-STAGE-05-5b3d398a-fact-configuration-rel:696083475512bfc5",
+          "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:5ff7f276f04b71a8",
+          "l2:math:fact-O-METHOD-MAINLINE-01-c8146479-node:5ff7f276f04b71a8:weighted_sum",
+          "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:a6f6c00ca097eeb1",
+          "l2:math:fact-O-METHOD-MAINLINE-01-c8146479-node:a6f6c00ca097eeb1:weighted_sum",
+          "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:a48f78c0e1931462",
+          "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:fd2ce32dbb55ed63",
+          "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:7fabddc9286307b4",
+          "l2:math:fact-O-METHOD-MAINLINE-01-c8146479-node:7fabddc9286307b4:weighted_sum"
+        ],
+        "cited_equation_ids": [
+          "equation:fact-O-METHOD-MAINLINE-01-c8146479-node:7fabddc9286307b4",
+          "equation:fact-O-METHOD-MAINLINE-01-c8146479-node:5ff7f276f04b71a8",
+          "equation:fact-O-METHOD-MAINLINE-01-c8146479-node:a6f6c00ca097eeb1",
+          "equation:fact-O-METHOD-MAINLINE-01-c8146479-node:4c8511d6e8fc4240",
+          "equation:fact-O-METHOD-MAINLINE-01-c8146479-node:c8936a17df7bdc83",
+          "equation:fact-O-STAGE-03-2c5bd758-node:c8936a17df7bdc83",
+          "equation:fact-O-STAGE-03-2c5bd758-node:15f8ab428198f369",
+          "equation:fact-O-STAGE-05-5b3d398a-node:856e72eeddb87554"
+        ],
+        "covered_facet_ids": [],
+        "authority_lane": "executable_hard",
+        "caveat": "The unlicensed clause describes a 'sinusoidal passage-position encoding' but the repository implements a learned embedding-table lookup for passage positions. The intended mathematical role of the positional signal is to inject ordinal structure into the attention input; whether this is realized via a fixed sinusoidal schedule or a learned table is an unresolved author-intent question. The document-ID embedding mechanism (relative indexing within the retrieved set) is supported by code but remains unlicensed in the author's text.",
+        "status": "planner_filled"
+      },
+      "may_enter_verified": false,
+      "requires_caveat": true,
+      "facet_ids": [
+        "facet-d57e6b007d62768e"
+      ],
+      "facet_alignment_ids": [
+        "alignment:facet-d57e6b007d62768e"
+      ],
+      "facet_policy_ids": [
+        "policy:facet-d57e6b007d62768e"
+      ],
+      "facet_digest": "sha256:7bbfcbe639cf7e557f05954a1eb18615b38bc87cfff4edfd3a46dcbf1695cd4b",
+      "content_digest": "sha256:7fd7f205b438affeb63940e37c0dd155ee312c7db8248a6d9dd27683c4f53b16"
+    },
+    {
+      "brief_id": "brief:story:O-STAGE-01-039a963a",
+      "story_node_id": "story:O-STAGE-01-039a963a",
+      "intended_role": "algorithm_step",
+      "obligation_ids": [
+        "O-STAGE-01-039a963a"
+      ],
+      "author_statement": "Retrieval and embedding preparation: Use a dense retriever (Contriever) to fetch top‑k candidate passages and their pre‑computed embeddings; encode the query with the same model.",
+      "completeness_statuses": [
+        "supported_by_repository"
+      ],
+      "clauses": [
+        {
+          "clause_id": "clause:O-STAGE-01-039a963a:0",
+          "text": "Retrieval and embedding preparation: Use a dense retriever (Contriever) to fetch top‑k candidate passages and their pre‑computed embeddings;",
+          "license": "unlicensed",
+          "bound_claim_ids": [],
+          "bound_equation_ids": [],
+          "bound_span_ids": [],
+          "bound_target_ids": [],
+          "missing_target_ids": [],
+          "license_reason": "license keys hit but no supported or partial binding"
+        },
+        {
+          "clause_id": "clause:O-STAGE-01-039a963a:1",
+          "text": "encode the query with the same model.",
+          "license": "positively_licensed",
+          "bound_claim_ids": [
+            "claim-O-STAGE-01-039a963a-fact-O-STAGE-01-039a963a-node:4480dac4431aabbe"
+          ],
+          "bound_equation_ids": [],
+          "bound_span_ids": [
+            "span:src/dataset/__init__.py:224:227"
+          ],
+          "bound_target_ids": [],
+          "missing_target_ids": [],
+          "license_reason": "closed-set supported claim key"
+        }
+      ],
+      "licensed_wording": "encode the query with the same model.",
+      "claim_ids": [
+        "claim-O-STAGE-01-039a963a-fact-O-STAGE-01-039a963a-node:2911a2ecfb714992",
+        "claim-O-STAGE-01-039a963a-fact-O-STAGE-01-039a963a-node:4480dac4431aabbe",
+        "claim-O-STAGE-01-039a963a-fact-O-STAGE-01-039a963a-node:4be5b539dce0e4f4",
+        "claim-O-STAGE-01-039a963a-fact-O-STAGE-01-039a963a-node:00757f21e4c9d9f3",
+        "claim-O-STAGE-01-039a963a-fact-O-STAGE-01-039a963a-node:36bd05a333b6a4fc",
+        "claim-O-STAGE-01-039a963a-fact-O-STAGE-01-039a963a-node:c4189835f8e67f5e"
+      ],
+      "equation_ids": [
+        "equation:fact-O-STAGE-01-039a963a-node:00757f21e4c9d9f3"
+      ],
+      "configuration_ids": [],
+      "span_ids": [
+        "span:src/dataset/ebcar_dataset.py:48:55",
+        "span:src/dataset/__init__.py:224:227",
+        "span:src/dataset/__init__.py:226:226",
+        "span:src/dataset/__init__.py:260:260",
+        "span:src/dataset/__init__.py:147:152",
+        "span:src/dataset/__init__.py:225:225"
+      ],
+      "mechanism_draft": {
+        "draft_id": "draft-9ef459bd51ba4ec1",
+        "brief_id": "brief:story:O-STAGE-01-039a963a",
+        "text": "Algorithm step: retrieval and embedding preparation. (1) Use a dense retriever to fetch top-k candidate passages for a given query. The intended role of this stage is to produce a fixed set of candidate passage embeddings that serve as input to the downstream reranker. (2) Encode the query with the same encoder model that produced the passage embeddings, ensuring the query and passage representations live in a shared vector space. The repository supports the embedding-encoding step via a HuggingFace-based pipeline; the specific retriever model (Contriever) is an unlicensed author designation. The dataset preparation code handles chunk-level document loading, label construction, and periodic checkpointing, but the retrieval call itself is not explicitly present in the examined fragments.",
+        "cited_claim_ids": [
+          "claim-O-STAGE-01-039a963a-fact-O-STAGE-01-039a963a-node:2911a2ecfb714992",
+          "claim-O-STAGE-01-039a963a-fact-O-STAGE-01-039a963a-node:4480dac4431aabbe",
+          "claim-O-STAGE-01-039a963a-fact-O-STAGE-01-039a963a-node:4be5b539dce0e4f4",
+          "claim-O-STAGE-01-039a963a-fact-O-STAGE-01-039a963a-node:00757f21e4c9d9f3",
+          "claim-O-STAGE-01-039a963a-fact-O-STAGE-01-039a963a-node:36bd05a333b6a4fc",
+          "claim-O-STAGE-01-039a963a-fact-O-STAGE-01-039a963a-node:c4189835f8e67f5e"
+        ],
+        "cited_equation_ids": [
+          "equation:fact-O-STAGE-01-039a963a-node:00757f21e4c9d9f3"
+        ],
+        "covered_facet_ids": [],
+        "authority_lane": "executable_hard",
+        "caveat": "The unlicensed clause names Contriever as the specific dense retriever. The repository shows a HuggingFace-based embedding pipeline used for dataset preparation, but does not explicitly instantiate or reference Contriever by name. The retrieval mechanism (top-k candidate fetching) is supported in structure but the specific model identity remains an unlicensed author claim.",
+        "status": "planner_filled"
+      },
+      "may_enter_verified": false,
+      "requires_caveat": true,
+      "facet_ids": [
+        "facet-bd2114e7ad9b1773"
+      ],
+      "facet_alignment_ids": [
+        "alignment:facet-bd2114e7ad9b1773"
+      ],
+      "facet_policy_ids": [
+        "policy:facet-bd2114e7ad9b1773"
+      ],
+      "facet_digest": "sha256:f1d1c0cd8097aa6a35a5c1de96c02b201925dce079c1a151b8b408d802a31813",
+      "content_digest": "sha256:30a009d18ae4371c6ce1ea12e4c5ec2a87f42826fac60e4f5ffb5120b5ee2ffa"
+    },
+    {
+      "brief_id": "brief:story:O-STAGE-02-42e8d68d",
+      "story_node_id": "story:O-STAGE-02-42e8d68d",
+      "intended_role": "algorithm_step",
+      "obligation_ids": [
+        "O-STAGE-02-42e8d68d"
+      ],
+      "author_statement": "Structural augmentation: For each retrieved passage, add a dynamic document ID embedding and a sinusoidal passage‑position encoding to its original embedding to inject document‑identity and ordering signals.",
+      "completeness_statuses": [
+        "supported_by_repository"
+      ],
+      "clauses": [
+        {
+          "clause_id": "clause:O-STAGE-02-42e8d68d:0",
+          "text": "Structural augmentation: For each retrieved passage, add a dynamic document ID embedding and a sinusoidal passage‑position encoding to its original embedding to inject document‑identity and ordering signals.",
+          "license": "positively_licensed",
+          "bound_claim_ids": [
+            "claim-O-STAGE-02-42e8d68d-fact-O-STAGE-02-42e8d68d-node:9a4893d308318488"
+          ],
+          "bound_equation_ids": [],
+          "bound_span_ids": [
+            "span:src/model/ebcar_dedicated_attention_model.py:48:50"
+          ],
+          "bound_target_ids": [],
+          "missing_target_ids": [],
+          "license_reason": "closed-set supported claim key"
+        }
+      ],
+      "licensed_wording": "Structural augmentation: For each retrieved passage, add a dynamic document ID embedding and a sinusoidal passage‑position encoding to its original embedding to inject document‑identity and ordering signals.",
+      "claim_ids": [
+        "claim-O-STAGE-02-42e8d68d-fact-O-STAGE-02-42e8d68d-node:9a4893d308318488",
+        "claim-O-STAGE-02-42e8d68d-fact-O-STAGE-02-42e8d68d-node:d643b3469b0df29c"
+      ],
+      "equation_ids": [],
+      "configuration_ids": [],
+      "span_ids": [
+        "span:src/model/ebcar_dedicated_attention_model.py:48:50",
+        "span:src/model/ebcar_dedicated_attention_model.py:43:47"
+      ],
+      "mechanism_draft": {
+        "draft_id": "draft-5eb5242e15cb1eac",
+        "brief_id": "brief:story:O-STAGE-02-42e8d68d",
+        "text": "",
+        "cited_claim_ids": [],
+        "cited_equation_ids": [],
+        "covered_facet_ids": [],
+        "authority_lane": "executable_hard",
+        "caveat": "",
+        "status": "not_required"
+      },
+      "may_enter_verified": true,
+      "requires_caveat": false,
+      "facet_ids": [
+        "facet-308602a0138b57ea"
+      ],
+      "facet_alignment_ids": [
+        "alignment:facet-308602a0138b57ea"
+      ],
+      "facet_policy_ids": [
+        "policy:facet-308602a0138b57ea"
+      ],
+      "facet_digest": "sha256:441c706f96a475c2fcbecfedd01f6b0c9216642f1bf069f6ef74a8845f694c92",
+      "content_digest": "sha256:b005fd8886e5865915002f841867526791f3e540f265869049be863ab8b20789"
+    },
+    {
+      "brief_id": "brief:story:O-STAGE-03-2c5bd758",
+      "story_node_id": "story:O-STAGE-03-2c5bd758",
+      "intended_role": "algorithm_step",
+      "obligation_ids": [
+        "O-STAGE-03-2c5bd758"
+      ],
+      "author_statement": "Hybrid‑attention encoding: Feed the query and augmented passage embeddings into a Transformer encoder that applies shared full attention (global interactions) and dedicated masked attention (intra‑document interactions) in every layer, producing contextualized passage embeddings.",
+      "completeness_statuses": [
+        "supported_by_repository"
+      ],
+      "clauses": [
+        {
+          "clause_id": "clause:O-STAGE-03-2c5bd758:0",
+          "text": "Hybrid‑attention encoding: Feed the query and augmented passage embeddings into a Transformer encoder that applies shared full attention (global interactions) and dedicated masked attention (intra‑document interactions) in every layer, producing contextualized passage embeddings.",
+          "license": "positively_licensed",
+          "bound_claim_ids": [
+            "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:73ea6c8145b47e07"
+          ],
+          "bound_equation_ids": [],
+          "bound_span_ids": [
+            "span:src/model/transformer_encoder_hybrid_attention.py:51:51"
+          ],
+          "bound_target_ids": [],
+          "missing_target_ids": [],
+          "license_reason": "closed-set supported claim key"
+        }
+      ],
+      "licensed_wording": "Hybrid‑attention encoding: Feed the query and augmented passage embeddings into a Transformer encoder that applies shared full attention (global interactions) and dedicated masked attention (intra‑document interactions) in every layer, producing contextualized passage embeddings.",
+      "claim_ids": [
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:4c8511d6e8fc4240",
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:3673b2e5dbd63bd0",
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:73ea6c8145b47e07",
+        "l2:math:fact-O-METHOD-MAINLINE-01-c8146479-node:4c8511d6e8fc4240:weighted_sum",
+        "l2:math:fact-O-METHOD-MAINLINE-01-c8146479-node:3673b2e5dbd63bd0:normalize",
+        "claim-O-STAGE-03-2c5bd758-fact-O-STAGE-03-2c5bd758-node:b220afbc1e6023fe",
+        "claim-O-STAGE-03-2c5bd758-fact-O-STAGE-03-2c5bd758-node:142f7d2a2f9e8288",
+        "claim-O-STAGE-03-2c5bd758-fact-O-STAGE-03-2c5bd758-node:15f8ab428198f369",
+        "claim-O-STAGE-03-2c5bd758-fact-O-STAGE-03-2c5bd758-node:c8936a17df7bdc83",
+        "claim-O-STAGE-03-2c5bd758-fact-O-STAGE-03-2c5bd758-node:4f3a01f0d7880c82",
+        "l2:math:fact-O-STAGE-03-2c5bd758-node:c8936a17df7bdc83:weighted_sum",
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:c8936a17df7bdc83",
+        "l2:math:fact-O-METHOD-MAINLINE-01-c8146479-node:c8936a17df7bdc83:weighted_sum",
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:6daefc8982533bad",
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:b6468fc08c848936",
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-rel:1b2f2e5db0f09696",
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-configuration-rel:dc95ead65d3bb047"
+      ],
+      "equation_ids": [
+        "equation:fact-O-METHOD-MAINLINE-01-c8146479-node:4c8511d6e8fc4240",
+        "equation:fact-O-METHOD-MAINLINE-01-c8146479-node:c8936a17df7bdc83",
+        "equation:fact-O-STAGE-03-2c5bd758-node:c8936a17df7bdc83",
+        "equation:fact-O-STAGE-03-2c5bd758-node:15f8ab428198f369"
+      ],
+      "configuration_ids": [
+        "config:sha256:579ebf0b6e60c"
+      ],
+      "span_ids": [
+        "span:src/model/transformer_encoder_hybrid_attention.py:119:119",
+        "span:src/model/transformer_encoder_hybrid_attention.py:56:56",
+        "span:src/model/transformer_encoder_hybrid_attention.py:51:51",
+        "span:src/model/transformer_encoder_hybrid_attention.py:125:126",
+        "span:src/model/transformer_encoder_hybrid_attention.py:126:126",
+        "span:src/model/transformer_encoder_hybrid_attention.py:123:123",
+        "span:src/model/transformer_encoder_hybrid_attention.py:41:41",
+        "span:src/model/ebcar_dedicated_attention_model.py:145:145",
+        "span:src/model/ebcar_dedicated_attention_model.py:145:174",
+        "span:conf/config.yaml:19:19"
+      ],
+      "mechanism_draft": {
+        "draft_id": "draft-c223b02e00755dc7",
+        "brief_id": "brief:story:O-STAGE-03-2c5bd758",
+        "text": "",
+        "cited_claim_ids": [],
+        "cited_equation_ids": [],
+        "covered_facet_ids": [],
+        "authority_lane": "executable_hard",
+        "caveat": "",
+        "status": "not_required"
+      },
+      "may_enter_verified": true,
+      "requires_caveat": false,
+      "facet_ids": [
+        "facet-df672e4efc3751e2"
+      ],
+      "facet_alignment_ids": [
+        "alignment:facet-df672e4efc3751e2"
+      ],
+      "facet_policy_ids": [
+        "policy:facet-df672e4efc3751e2"
+      ],
+      "facet_digest": "sha256:216fc21b50c9e8e5f0feae31b6ee70701b97f51b291edb0a879282f92d46f3a6",
+      "content_digest": "sha256:25de8cad3bc030130f0b847ebd1623a8e7f34db9f864e5c9132fa878a8322f81"
+    },
+    {
+      "brief_id": "brief:story:O-STAGE-04-c50e0bef",
+      "story_node_id": "story:O-STAGE-04-c50e0bef",
+      "intended_role": "algorithm_step",
+      "obligation_ids": [
+        "O-STAGE-04-c50e0bef"
+      ],
+      "author_statement": "Contrastive training: Using a contrastive InfoNCE loss, pull the updated positive passage embedding toward the fixed query embedding and push negative passage embeddings away.",
+      "completeness_statuses": [
+        "supported_by_repository"
+      ],
+      "clauses": [
+        {
+          "clause_id": "clause:O-STAGE-04-c50e0bef:0",
+          "text": "Contrastive training: Using a contrastive InfoNCE loss, pull the updated positive passage embedding toward the fixed query embedding and push negative passage embeddings away.",
+          "license": "positively_licensed",
+          "bound_claim_ids": [
+            "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:a48f78c0e1931462",
+            "claim-O-STAGE-04-c50e0bef-fact-O-STAGE-04-c50e0bef-node:fd2ce32dbb55ed63",
+            "claim-O-STAGE-04-c50e0bef-fact-O-STAGE-04-c50e0bef-node:0c0995d424e07399",
+            "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:fd2ce32dbb55ed63"
+          ],
+          "bound_equation_ids": [],
+          "bound_span_ids": [
+            "span:src/model/ebcar_dedicated_attention_model.py:135:137",
+            "span:src/model/ebcar_dedicated_attention_model.py:243:243",
+            "span:src/model/ebcar_dedicated_attention_model.py:244:244"
+          ],
+          "bound_target_ids": [],
+          "missing_target_ids": [],
+          "license_reason": "closed-set supported claim key"
+        }
+      ],
+      "licensed_wording": "Contrastive training: Using a contrastive InfoNCE loss, pull the updated positive passage embedding toward the fixed query embedding and push negative passage embeddings away.",
+      "claim_ids": [
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:a48f78c0e1931462",
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:7fabddc9286307b4",
+        "claim-O-STAGE-04-c50e0bef-fact-O-STAGE-04-c50e0bef-node:93633547c32d9f45",
+        "claim-O-STAGE-04-c50e0bef-fact-O-STAGE-04-c50e0bef-node:a2dae47572460254",
+        "claim-O-STAGE-04-c50e0bef-fact-O-STAGE-04-c50e0bef-node:fd2ce32dbb55ed63",
+        "claim-O-STAGE-04-c50e0bef-fact-O-STAGE-04-c50e0bef-node:0c0995d424e07399",
+        "claim-O-STAGE-04-c50e0bef-fact-O-STAGE-04-c50e0bef-node:4b560ac114ae99ec",
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:fd2ce32dbb55ed63",
+        "l2:math:fact-O-METHOD-MAINLINE-01-c8146479-node:7fabddc9286307b4:weighted_sum"
+      ],
+      "equation_ids": [
+        "equation:fact-O-METHOD-MAINLINE-01-c8146479-node:7fabddc9286307b4",
+        "equation:fact-O-STAGE-04-c50e0bef-node:4b560ac114ae99ec"
+      ],
+      "configuration_ids": [],
+      "span_ids": [
+        "span:src/model/ebcar_dedicated_attention_model.py:135:137",
+        "span:src/model/ebcar_dedicated_attention_model.py:232:232",
+        "span:src/model/ebcar_dedicated_attention_model.py:234:240",
+        "span:src/model/ebcar_dedicated_attention_model.py:231:231",
+        "span:src/model/ebcar_dedicated_attention_model.py:243:243",
+        "span:src/model/ebcar_dedicated_attention_model.py:244:244",
+        "span:src/model/ebcar_dedicated_attention_model.py:132:132"
+      ],
+      "mechanism_draft": {
+        "draft_id": "draft-1ccb261439db0f4f",
+        "brief_id": "brief:story:O-STAGE-04-c50e0bef",
+        "text": "",
+        "cited_claim_ids": [],
+        "cited_equation_ids": [],
+        "covered_facet_ids": [],
+        "authority_lane": "executable_hard",
+        "caveat": "",
+        "status": "not_required"
+      },
+      "may_enter_verified": true,
+      "requires_caveat": false,
+      "facet_ids": [
+        "facet-6bc5ee440fdc8329"
+      ],
+      "facet_alignment_ids": [
+        "alignment:facet-6bc5ee440fdc8329"
+      ],
+      "facet_policy_ids": [
+        "policy:facet-6bc5ee440fdc8329"
+      ],
+      "facet_digest": "sha256:300bf5fefbae4cd3f982fa82351585c40c24231744e08b9a8755789de90695b9",
+      "content_digest": "sha256:62839e14941fba97d2a7e1e6b851a41c706e21966f33b01b41fbf452a2de598b"
+    },
+    {
+      "brief_id": "brief:story:O-STAGE-05-5b3d398a",
+      "story_node_id": "story:O-STAGE-05-5b3d398a",
+      "intended_role": "algorithm_step",
+      "obligation_ids": [
+        "O-STAGE-05-5b3d398a"
+      ],
+      "author_statement": "Inference scoring and ranking: Compute dot‑product similarities between the unchanged query embedding and the contextualized passage embeddings, then sort passages by descending score.",
+      "completeness_statuses": [
+        "partially_supported_by_repository"
+      ],
+      "clauses": [
+        {
+          "clause_id": "clause:O-STAGE-05-5b3d398a:0",
+          "text": "Inference scoring and ranking: Compute dot‑product similarities between the unchanged query embedding and the contextualized passage embeddings, then sort passages by descending score.",
+          "license": "positively_licensed",
+          "bound_claim_ids": [
+            "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:8e87e1804f77f50f",
+            "claim-O-STAGE-05-5b3d398a-fact-O-STAGE-05-5b3d398a-node:a002e187c0346457",
+            "claim-O-STAGE-05-5b3d398a-fact-O-STAGE-05-5b3d398a-node:856e72eeddb87554",
+            "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:5ff7f276f04b71a8"
+          ],
+          "bound_equation_ids": [],
+          "bound_span_ids": [
+            "span:src/model/ebcar_dedicated_attention_model.py:334:336",
+            "span:src/model/ebcar_dedicated_attention_model.py:310:310",
+            "span:src/model/ebcar_dedicated_attention_model.py:276:276"
+          ],
+          "bound_target_ids": [],
+          "missing_target_ids": [],
+          "license_reason": "closed-set supported claim key"
+        }
+      ],
+      "licensed_wording": "Inference scoring and ranking: Compute dot‑product similarities between the unchanged query embedding and the contextualized passage embeddings, then sort passages by descending score.",
+      "claim_ids": [
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:8e87e1804f77f50f",
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:c1802b91f97392cc",
+        "claim-O-STAGE-05-5b3d398a-fact-O-STAGE-05-5b3d398a-node:06b37685c9288fb6",
+        "claim-O-STAGE-05-5b3d398a-fact-O-STAGE-05-5b3d398a-node:a002e187c0346457",
+        "claim-O-STAGE-05-5b3d398a-fact-O-STAGE-05-5b3d398a-node:856e72eeddb87554",
+        "claim-O-STAGE-05-5b3d398a-fact-O-STAGE-05-5b3d398a-node:1077d0d81c820fb0",
+        "claim-O-STAGE-05-5b3d398a-fact-O-STAGE-05-5b3d398a-node:26c1ec766ceee404",
+        "claim-O-STAGE-05-5b3d398a-fact-O-STAGE-05-5b3d398a-node:31075c1f6e053a85",
+        "claim-O-STAGE-05-5b3d398a-fact-O-STAGE-05-5b3d398a-rel:caa3e47dda8fdf04",
+        "claim-O-STAGE-05-5b3d398a-fact-configuration-rel:696083475512bfc5",
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:5ff7f276f04b71a8",
+        "l2:math:fact-O-METHOD-MAINLINE-01-c8146479-node:5ff7f276f04b71a8:weighted_sum",
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:a6f6c00ca097eeb1",
+        "l2:math:fact-O-METHOD-MAINLINE-01-c8146479-node:a6f6c00ca097eeb1:weighted_sum"
+      ],
+      "equation_ids": [
+        "equation:fact-O-METHOD-MAINLINE-01-c8146479-node:5ff7f276f04b71a8",
+        "equation:fact-O-METHOD-MAINLINE-01-c8146479-node:a6f6c00ca097eeb1",
+        "equation:fact-O-STAGE-05-5b3d398a-node:856e72eeddb87554"
+      ],
+      "configuration_ids": [
+        "config:sha256:5102d9838cd7f"
+      ],
+      "span_ids": [
+        "span:src/model/ebcar_dedicated_attention_model.py:334:336",
+        "span:src/model/ebcar_dedicated_attention_model.py:344:344",
+        "span:src/model/ebcar_dedicated_attention_model.py:265:277",
+        "span:src/model/ebcar_dedicated_attention_model.py:310:310",
+        "span:src/model/ebcar_dedicated_attention_model.py:276:276",
+        "span:src/model/ebcar_dedicated_attention_model.py:267:270",
+        "span:src/model/ebcar_dedicated_attention_model.py:265:265",
+        "span:src/model/ebcar_dedicated_attention_model.py:271:273",
+        "span:conf/config.yaml:18:18",
+        "span:src/model/ebcar_dedicated_attention_model.py:294:294"
+      ],
+      "mechanism_draft": {
+        "draft_id": "draft-d6d0ad6e2755312e",
+        "brief_id": "brief:story:O-STAGE-05-5b3d398a",
+        "text": "Algorithm step: inference scoring and ranking. (1) At inference time, the query embedding is held static (not passed through the attention stack). (2) The passage embeddings are augmented with document-ID and passage-position embeddings (additive, as in the training pipeline) to form the contextualized passage representations. (3) Compute dot-product similarity between the static query embedding and each contextualized passage embedding. (4) Sort passages in descending order of similarity score to produce the final ranked list. The rerank method returns both the reordered passages and the relevance scores. The positional-encoding flag is configured as enabled in the repository configuration.",
+        "cited_claim_ids": [
+          "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:8e87e1804f77f50f",
+          "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:c1802b91f97392cc",
+          "claim-O-STAGE-05-5b3d398a-fact-O-STAGE-05-5b3d398a-node:06b37685c9288fb6",
+          "claim-O-STAGE-05-5b3d398a-fact-O-STAGE-05-5b3d398a-node:a002e187c0346457",
+          "claim-O-STAGE-05-5b3d398a-fact-O-STAGE-05-5b3d398a-node:856e72eeddb87554",
+          "claim-O-STAGE-05-5b3d398a-fact-O-STAGE-05-5b3d398a-node:1077d0d81c820fb0",
+          "claim-O-STAGE-05-5b3d398a-fact-O-STAGE-05-5b3d398a-node:26c1ec766ceee404",
+          "claim-O-STAGE-05-5b3d398a-fact-O-STAGE-05-5b3d398a-node:31075c1f6e053a85",
+          "claim-O-STAGE-05-5b3d398a-fact-O-STAGE-05-5b3d398a-rel:caa3e47dda8fdf04",
+          "claim-O-STAGE-05-5b3d398a-fact-configuration-rel:696083475512bfc5",
+          "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:5ff7f276f04b71a8",
+          "l2:math:fact-O-METHOD-MAINLINE-01-c8146479-node:5ff7f276f04b71a8:weighted_sum",
+          "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:a6f6c00ca097eeb1",
+          "l2:math:fact-O-METHOD-MAINLINE-01-c8146479-node:a6f6c00ca097eeb1:weighted_sum"
+        ],
+        "cited_equation_ids": [
+          "equation:fact-O-METHOD-MAINLINE-01-c8146479-node:5ff7f276f04b71a8",
+          "equation:fact-O-METHOD-MAINLINE-01-c8146479-node:a6f6c00ca097eeb1",
+          "equation:fact-O-STAGE-05-5b3d398a-node:856e72eeddb87554"
+        ],
+        "covered_facet_ids": [],
+        "authority_lane": "executable_hard",
+        "caveat": "No unlicensed clauses. The licensed inference-scoring clause is fully supported. The document-ID and passage-position augmentation steps that precede scoring are supported by code but belong to the unlicensed clause in the mainline brief; they are included here for completeness of the inference pipeline.",
+        "status": "planner_filled"
+      },
+      "may_enter_verified": false,
+      "requires_caveat": true,
+      "facet_ids": [
+        "facet-cbc0a588831ac015"
+      ],
+      "facet_alignment_ids": [
+        "alignment:facet-cbc0a588831ac015"
+      ],
+      "facet_policy_ids": [
+        "policy:facet-cbc0a588831ac015"
+      ],
+      "facet_digest": "sha256:6aea5efaf77df34d798f7d6b72f8cc4dcdb0f36fda8a567467b678454f434a80",
+      "content_digest": "sha256:c1f7d1220d4ddbbe35c56077308db5f04ff32d12bba79ed6dd44f3a409bc9bac"
+    },
+    {
+      "brief_id": "brief:story:O-COMPONENT-01-c301ecdd",
+      "story_node_id": "story:O-COMPONENT-01-c301ecdd",
+      "intended_role": "setup",
+      "obligation_ids": [
+        "O-COMPONENT-01-c301ecdd"
+      ],
+      "author_statement": "Improve reranking in retrieval-augmented generation (RAG) systems by addressing both inference efficiency and the need for cross-passage reasoning, especially when evidence is scattered across passages and requires resolving coreference or structural context.",
+      "completeness_statuses": [
+        "partially_supported_by_repository"
+      ],
+      "clauses": [
+        {
+          "clause_id": "clause:O-COMPONENT-01-c301ecdd:0",
+          "text": "Improve reranking in retrieval-augmented generation (RAG) systems by addressing both inference efficiency and the need for cross-passage reasoning, especially when evidence is scattered across passages and requires resolving coreference or structural context.",
+          "license": "unlicensed",
+          "bound_claim_ids": [],
+          "bound_equation_ids": [],
+          "bound_span_ids": [],
+          "bound_target_ids": [],
+          "missing_target_ids": [],
+          "license_reason": "no closed-set license key hit"
+        }
+      ],
+      "licensed_wording": "",
+      "claim_ids": [],
+      "equation_ids": [],
+      "configuration_ids": [],
+      "span_ids": [],
+      "mechanism_draft": {
+        "draft_id": "draft-d7fb4669c6625eab",
+        "brief_id": "brief:story:O-COMPONENT-01-c301ecdd",
+        "text": "Setup: problem motivation. The method targets reranking in retrieval-augmented generation systems where two challenges co-occur: (a) inference efficiency (the reranker must be fast enough for deployment alongside a generator) and (b) cross-passage reasoning (evidence may be scattered across multiple passages, requiring the model to resolve coreference and structural context). The intended mechanism addresses both: the hybrid attention provides cross-passage interaction (shared full attention) while the dedicated masked attention preserves intra-document coherence, and the contrastive training with a fixed query anchor keeps the query representation lightweight at inference. The specific claim about coreference resolution is an unlicensed author-intent statement; the repository supports the architectural components but does not contain evidence specifically validating coreference performance.",
+        "cited_claim_ids": [
+          "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:4c8511d6e8fc4240",
+          "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:3673b2e5dbd63bd0",
+          "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:73ea6c8145b47e07",
+          "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:6daefc8982533bad",
+          "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:b6468fc08c848936",
+          "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-rel:1b2f2e5db0f09696",
+          "claim-O-METHOD-MAINLINE-01-c8146479-fact-configuration-rel:dc95ead65d3bb047",
+          "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:8e87e1804f77f50f",
+          "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:c1802b91f97392cc",
+          "claim-O-STAGE-05-5b3d398a-fact-O-STAGE-05-5b3d398a-node:06b37685c9288fb6",
+          "claim-O-STAGE-05-5b3d398a-fact-O-STAGE-05-5b3d398a-node:856e72eeddb87554",
+          "claim-O-STAGE-05-5b3d398a-fact-O-STAGE-05-5b3d398a-node:1077d0d81c820fb0",
+          "claim-O-STAGE-05-5b3d398a-fact-O-STAGE-05-5b3d398a-node:31075c1f6e053a85",
+          "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:5ff7f276f04b71a8",
+          "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:a48f78c0e1931462",
+          "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:7fabddc9286307b4"
+        ],
+        "cited_equation_ids": [],
+        "covered_facet_ids": [],
+        "authority_lane": "executable_hard",
+        "caveat": "No repository fragments support this motivation clause. The problem framing (scattered evidence, coreference, structural context) is an unlicensed author-intent statement with no code-level verification.",
+        "status": "planner_filled"
+      },
+      "may_enter_verified": false,
+      "requires_caveat": true,
+      "facet_ids": [
+        "facet-14d4dbe911667c07"
+      ],
+      "facet_alignment_ids": [
+        "alignment:facet-14d4dbe911667c07"
+      ],
+      "facet_policy_ids": [
+        "policy:facet-14d4dbe911667c07"
+      ],
+      "facet_digest": "sha256:33f552039ee3734d993370b0f9f4e7ba8f06b5695acc73110341763e4cefecf8",
+      "content_digest": "sha256:05306e5d36c2b48e293d8fe0c03dcafdbe04c1d04133df9c63bf0b77692c0bd1"
+    },
+    {
+      "brief_id": "brief:story:O-COMPONENT-01-de6049e3",
+      "story_node_id": "story:O-COMPONENT-01-de6049e3",
+      "intended_role": "setup",
+      "obligation_ids": [
+        "O-COMPONENT-01-de6049e3"
+      ],
+      "author_statement": "Contriever: Dense retriever that provides initial passage embeddings and top‑k retrieval.",
+      "completeness_statuses": [
+        "partially_supported_by_repository"
+      ],
+      "clauses": [
+        {
+          "clause_id": "clause:O-COMPONENT-01-de6049e3:0",
+          "text": "Contriever: Dense retriever that provides initial passage embeddings and top‑k retrieval.",
+          "license": "unlicensed",
+          "bound_claim_ids": [],
+          "bound_equation_ids": [],
+          "bound_span_ids": [],
+          "bound_target_ids": [],
+          "missing_target_ids": [],
+          "license_reason": "license keys hit but no supported or partial binding"
+        }
+      ],
+      "licensed_wording": "",
+      "claim_ids": [],
+      "equation_ids": [],
+      "configuration_ids": [],
+      "span_ids": [],
+      "mechanism_draft": {
+        "draft_id": "draft-ce9872d17b486bba",
+        "brief_id": "brief:story:O-COMPONENT-01-de6049e3",
+        "text": "Setup: component definition. Contriever is identified as the dense retriever that provides initial passage embeddings and top-k candidate retrieval. Its role in the pipeline is to produce a fixed set of candidate passages whose embeddings are then consumed by the reranker. The intended mathematical role is to define the candidate set C = {p_1, ..., p_k} and their embeddings {p_i} in a shared vector space with the query. The specific model identity (Contriever) is an unlicensed author designation; the repository's embedding pipeline is compatible with this role but does not name the model.",
+        "cited_claim_ids": [
+          "claim-O-STAGE-01-039a963a-fact-O-STAGE-01-039a963a-node:36bd05a333b6a4fc"
+        ],
+        "cited_equation_ids": [],
+        "covered_facet_ids": [],
+        "authority_lane": "formal_derivation",
+        "caveat": "No repository fragments directly reference Contriever by name. The component definition is an unlicensed author claim; the repository shows a HuggingFace embedding pipeline that is consistent with but does not explicitly name Contriever.",
+        "status": "planner_filled"
+      },
+      "may_enter_verified": false,
+      "requires_caveat": true,
+      "facet_ids": [
+        "facet-c70f411cffdc0a8f"
+      ],
+      "facet_alignment_ids": [
+        "alignment:facet-c70f411cffdc0a8f"
+      ],
+      "facet_policy_ids": [
+        "policy:facet-c70f411cffdc0a8f"
+      ],
+      "facet_digest": "sha256:cda2a98c627f70634eb01d6c875db304abadca08146374b8c06b738ea6db51c5",
+      "content_digest": "sha256:9ced6b840f001f364510f44b4fa1becf136b168a74b52603ff090a69562f8ce9"
+    },
+    {
+      "brief_id": "brief:story:O-COMPONENT-02-2e14379d",
+      "story_node_id": "story:O-COMPONENT-02-2e14379d",
+      "intended_role": "setup",
+      "obligation_ids": [
+        "O-COMPONENT-02-2e14379d"
+      ],
+      "author_statement": "passage embeddings (pi): Fixed dense representations of candidate passages obtained from Contriever.",
+      "completeness_statuses": [
+        "unverified_by_repository"
+      ],
+      "clauses": [
+        {
+          "clause_id": "clause:O-COMPONENT-02-2e14379d:0",
+          "text": "passage embeddings (pi): Fixed dense representations of candidate passages obtained from Contriever.",
+          "license": "unlicensed",
+          "bound_claim_ids": [],
+          "bound_equation_ids": [],
+          "bound_span_ids": [],
+          "bound_target_ids": [],
+          "missing_target_ids": [],
+          "license_reason": "no closed-set license key hit"
+        }
+      ],
+      "licensed_wording": "",
+      "claim_ids": [],
+      "equation_ids": [],
+      "configuration_ids": [],
+      "span_ids": [],
+      "mechanism_draft": {
+        "draft_id": "draft-119c14afd74a658e",
+        "brief_id": "brief:story:O-COMPONENT-02-2e14379d",
+        "text": "Setup: component definition. Passage embeddings p_i are defined as fixed dense representations of candidate passages obtained from the dense retriever. Their intended mathematical role is to serve as the input signal to the reranker: each p_i is a vector in R^d that encodes the semantic content of passage i. The term 'fixed' indicates that these embeddings are pre-computed and not updated during reranker training (only the reranker's attention parameters are learned). This is an unlicensed author claim; the repository's dataset preparation code produces embeddings via a HuggingFace pipeline, consistent with the 'fixed' characterization, but does not explicitly verify that the embeddings are frozen during downstream training.",
+        "cited_claim_ids": [
+          "claim-O-STAGE-01-039a963a-fact-O-STAGE-01-039a963a-node:36bd05a333b6a4fc"
+        ],
+        "cited_equation_ids": [],
+        "covered_facet_ids": [],
+        "authority_lane": "formal_derivation",
+        "caveat": "No repository fragments support this component definition. The status is unverified_by_repository. The description of passage embeddings as 'fixed dense representations' is an unlicensed author claim with no code-level verification in the provided fragments.",
+        "status": "planner_filled"
+      },
+      "may_enter_verified": false,
+      "requires_caveat": true,
+      "facet_ids": [
+        "facet-676fcfceb7eddd8a"
+      ],
+      "facet_alignment_ids": [
+        "alignment:facet-676fcfceb7eddd8a"
+      ],
+      "facet_policy_ids": [
+        "policy:facet-676fcfceb7eddd8a"
+      ],
+      "facet_digest": "sha256:6efae8ea38ecc33b11d5fb8ee73e5d6d56b62607ad5c4e5497fa6512a19cfdad",
+      "content_digest": "sha256:3d7d8a6be6b88e9d6baac50762f49c7f8dfe0bac2e62139cee82a5fb9d390776"
+    },
+    {
+      "brief_id": "brief:story:O-COMPONENT-03-d8aa8c77",
+      "story_node_id": "story:O-COMPONENT-03-d8aa8c77",
+      "intended_role": "setup",
+      "obligation_ids": [
+        "O-COMPONENT-03-d8aa8c77"
+      ],
+      "author_statement": "document ID embedding table: Learned relative document‑identity embeddings assigned dynamically to unique documents in the candidate set, enabling the model to recognize which passages belong together.",
+      "completeness_statuses": [
+        "partially_supported_by_repository"
+      ],
+      "clauses": [
+        {
+          "clause_id": "clause:O-COMPONENT-03-d8aa8c77:0",
+          "text": "document ID embedding table: Learned relative document‑identity embeddings assigned dynamically to unique documents in the candidate set, enabling the model to recognize which passages belong together.",
+          "license": "unlicensed",
+          "bound_claim_ids": [],
+          "bound_equation_ids": [],
+          "bound_span_ids": [],
+          "bound_target_ids": [],
+          "missing_target_ids": [],
+          "license_reason": "license keys hit but no supported or partial binding"
+        }
+      ],
+      "licensed_wording": "",
+      "claim_ids": [],
+      "equation_ids": [],
+      "configuration_ids": [],
+      "span_ids": [],
+      "mechanism_draft": {
+        "draft_id": "draft-585873e84ea5c060",
+        "brief_id": "brief:story:O-COMPONENT-03-d8aa8c77",
+        "text": "Setup: component definition. The document-ID embedding table is a learned parameter that assigns a vector to each unique document in the current retrieved candidate set. The intended mathematical role is to inject a document-identity signal into the passage representation so that the attention mechanism can distinguish passages from the same document versus different documents. The indexing scheme maps a global passage index to a relative document slot using modulo (to get the position within the document) and integer division (to get the document index), producing a composite index into the embedding table. The table size is bounded by the number of unique documents in the top-k set. The claim that this 'enables the model to recognize which passages belong together' is an intended functional description; the repository supports the mechanism but does not contain ablation evidence specifically isolating the document-recognition effect.",
+        "cited_claim_ids": [
+          "claim-O-STAGE-05-5b3d398a-fact-O-STAGE-05-5b3d398a-node:856e72eeddb87554",
+          "claim-O-STAGE-05-5b3d398a-fact-O-STAGE-05-5b3d398a-node:1077d0d81c820fb0",
+          "claim-O-STAGE-05-5b3d398a-fact-O-STAGE-05-5b3d398a-node:31075c1f6e053a85",
+          "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:5ff7f276f04b71a8"
+        ],
+        "cited_equation_ids": [],
+        "covered_facet_ids": [],
+        "authority_lane": "executable_hard",
+        "caveat": "No repository fragments directly support this component definition in isolation. The document-ID embedding mechanism is supported by code in the mainline brief (modulo/division indexing into a learned table), but the specific phrasing 'assigned dynamically to unique documents in the candidate set' is an unlicensed author characterization. The 'enabling the model to recognize which passages belong together' is an intended functional claim without direct experimental verification in the provided fragments.",
+        "status": "planner_filled"
+      },
+      "may_enter_verified": false,
+      "requires_caveat": true,
+      "facet_ids": [
+        "facet-d87af6e7082cc916"
+      ],
+      "facet_alignment_ids": [
+        "alignment:facet-d87af6e7082cc916"
+      ],
+      "facet_policy_ids": [
+        "policy:facet-d87af6e7082cc916"
+      ],
+      "facet_digest": "sha256:a52092da48ad52a91dbb566b9227c032f7af3c152000330aa4b7b916241d3c03",
+      "content_digest": "sha256:4869ba30a3ee0e7935a32a3dc21ccb65671baca760b4761f1e12a389a8c5d597"
+    },
+    {
+      "brief_id": "brief:story:O-COMPONENT-04-b5b6af99",
+      "story_node_id": "story:O-COMPONENT-04-b5b6af99",
+      "intended_role": "setup",
+      "obligation_ids": [
+        "O-COMPONENT-04-b5b6af99"
+      ],
+      "author_statement": "passage position encoding (sinusoidal): Encodes the position of a passage within its original document, providing structural order cues.",
+      "completeness_statuses": [
+        "partially_supported_by_repository"
+      ],
+      "clauses": [
+        {
+          "clause_id": "clause:O-COMPONENT-04-b5b6af99:0",
+          "text": "passage position encoding (sinusoidal): Encodes the position of a passage within its original document, providing structural order cues.",
+          "license": "unlicensed",
+          "bound_claim_ids": [],
+          "bound_equation_ids": [],
+          "bound_span_ids": [],
+          "bound_target_ids": [],
+          "missing_target_ids": [],
+          "license_reason": "no closed-set license key hit"
+        }
+      ],
+      "licensed_wording": "",
+      "claim_ids": [],
+      "equation_ids": [],
+      "configuration_ids": [],
+      "span_ids": [],
+      "mechanism_draft": {
+        "draft_id": "draft-8d272859c28e30fa",
+        "brief_id": "brief:story:O-COMPONENT-04-b5b6af99",
+        "text": "",
+        "cited_claim_ids": [],
+        "cited_equation_ids": [],
+        "covered_facet_ids": [],
+        "authority_lane": "executable_hard",
+        "caveat": "",
+        "status": "empty"
+      },
+      "may_enter_verified": false,
+      "requires_caveat": true,
+      "facet_ids": [
+        "facet-ba08ce41d6e1d9b9"
+      ],
+      "facet_alignment_ids": [
+        "alignment:facet-ba08ce41d6e1d9b9"
+      ],
+      "facet_policy_ids": [
+        "policy:facet-ba08ce41d6e1d9b9"
+      ],
+      "facet_digest": "sha256:304c2acc6ff17547ff7562fb33f51a4aaff81ac2ad86446a7916bca75816c300",
+      "content_digest": "sha256:ccf32d866cf25381a143174505d80df1e8d30ac15cdbbee3b7d923cf3405685e"
+    },
+    {
+      "brief_id": "brief:story:O-COMPONENT-05-4c3594d2",
+      "story_node_id": "story:O-COMPONENT-05-4c3594d2",
+      "intended_role": "setup",
+      "obligation_ids": [
+        "O-COMPONENT-05-4c3594d2"
+      ],
+      "author_statement": "hybrid attention mechanism: Combines shared full attention (global cross‑passage) and dedicated masked attention (intra‑document) in each Transformer layer to jointly model inter‑ and intra‑document dependencies.",
+      "completeness_statuses": [
+        "partially_supported_by_repository"
+      ],
+      "clauses": [
+        {
+          "clause_id": "clause:O-COMPONENT-05-4c3594d2:0",
+          "text": "hybrid attention mechanism: Combines shared full attention (global cross‑passage) and dedicated masked attention (intra‑document) in each Transformer layer to jointly model inter‑ and intra‑document dependencies.",
+          "license": "unlicensed",
+          "bound_claim_ids": [],
+          "bound_equation_ids": [],
+          "bound_span_ids": [],
+          "bound_target_ids": [],
+          "missing_target_ids": [],
+          "license_reason": "license keys hit but no supported or partial binding"
+        }
+      ],
+      "licensed_wording": "",
+      "claim_ids": [],
+      "equation_ids": [],
+      "configuration_ids": [],
+      "span_ids": [],
+      "mechanism_draft": {
+        "draft_id": "draft-c0e524f47b62f33a",
+        "brief_id": "brief:story:O-COMPONENT-05-4c3594d2",
+        "text": "",
+        "cited_claim_ids": [],
+        "cited_equation_ids": [],
+        "covered_facet_ids": [],
+        "authority_lane": "executable_hard",
+        "caveat": "",
+        "status": "empty"
+      },
+      "may_enter_verified": false,
+      "requires_caveat": true,
+      "facet_ids": [
+        "facet-47997bc7d81ecdf5"
+      ],
+      "facet_alignment_ids": [
+        "alignment:facet-47997bc7d81ecdf5"
+      ],
+      "facet_policy_ids": [
+        "policy:facet-47997bc7d81ecdf5"
+      ],
+      "facet_digest": "sha256:1ba39e158da520e19ef10a0b5b0709bf541c44463c106a33b44bf5d3983bad9e",
+      "content_digest": "sha256:1be0c8bc9357d85067e244279cd90c6a980edfe1318067719c345c446f652982"
+    },
+    {
+      "brief_id": "brief:story:O-COMPONENT-06-34021b88",
+      "story_node_id": "story:O-COMPONENT-06-34021b88",
+      "intended_role": "setup",
+      "obligation_ids": [
+        "O-COMPONENT-06-34021b88"
+      ],
+      "author_statement": "shared full attention module: Standard multi‑head attention allowing query and all passages to attend to each other; captures global relevance and cross‑document relationships.",
+      "completeness_statuses": [
+        "partially_supported_by_repository"
+      ],
+      "clauses": [
+        {
+          "clause_id": "clause:O-COMPONENT-06-34021b88:0",
+          "text": "shared full attention module: Standard multi‑head attention allowing query and all passages to attend to each other;",
+          "license": "unlicensed",
+          "bound_claim_ids": [],
+          "bound_equation_ids": [],
+          "bound_span_ids": [],
+          "bound_target_ids": [],
+          "missing_target_ids": [],
+          "license_reason": "license keys hit but no supported or partial binding"
+        },
+        {
+          "clause_id": "clause:O-COMPONENT-06-34021b88:1",
+          "text": "captures global relevance and cross‑document relationships.",
+          "license": "unlicensed",
+          "bound_claim_ids": [],
+          "bound_equation_ids": [],
+          "bound_span_ids": [],
+          "bound_target_ids": [],
+          "missing_target_ids": [],
+          "license_reason": "no closed-set license key hit"
+        }
+      ],
+      "licensed_wording": "",
+      "claim_ids": [],
+      "equation_ids": [],
+      "configuration_ids": [],
+      "span_ids": [],
+      "mechanism_draft": {
+        "draft_id": "draft-c68d7770233812d7",
+        "brief_id": "brief:story:O-COMPONENT-06-34021b88",
+        "text": "",
+        "cited_claim_ids": [],
+        "cited_equation_ids": [],
+        "covered_facet_ids": [],
+        "authority_lane": "executable_hard",
+        "caveat": "",
+        "status": "empty"
+      },
+      "may_enter_verified": false,
+      "requires_caveat": true,
+      "facet_ids": [
+        "facet-00e27dd88a70848f"
+      ],
+      "facet_alignment_ids": [
+        "alignment:facet-00e27dd88a70848f"
+      ],
+      "facet_policy_ids": [
+        "policy:facet-00e27dd88a70848f"
+      ],
+      "facet_digest": "sha256:d696f6668b42cb068ccae06fe43ad45944e02fd286dae9b9dd866536f36977b7",
+      "content_digest": "sha256:d83ea96820a3616f7d88f846c705a92317ab1b60dbc224b96ad9f777d325b7aa"
+    },
+    {
+      "brief_id": "brief:story:O-COMPONENT-07-d157b2cc",
+      "story_node_id": "story:O-COMPONENT-07-d157b2cc",
+      "intended_role": "setup",
+      "obligation_ids": [
+        "O-COMPONENT-07-d157b2cc"
+      ],
+      "author_statement": "dedicated masked attention module: Masked multi‑head attention that restricts a passage to attend only to the query and to other passages from the same document, enabling fine‑grained coreference resolution and local coherence.",
+      "completeness_statuses": [
+        "partially_supported_by_repository"
+      ],
+      "clauses": [
+        {
+          "clause_id": "clause:O-COMPONENT-07-d157b2cc:0",
+          "text": "dedicated masked attention module: Masked multi‑head attention that restricts a passage to attend only to the query and to other passages from the same document, enabling fine‑grained coreference resolution and local coherence.",
+          "license": "unlicensed",
+          "bound_claim_ids": [],
+          "bound_equation_ids": [],
+          "bound_span_ids": [],
+          "bound_target_ids": [],
+          "missing_target_ids": [],
+          "license_reason": "license keys hit but no supported or partial binding"
+        }
+      ],
+      "licensed_wording": "",
+      "claim_ids": [],
+      "equation_ids": [],
+      "configuration_ids": [],
+      "span_ids": [],
+      "mechanism_draft": {
+        "draft_id": "draft-fcd356032b4b050f",
+        "brief_id": "brief:story:O-COMPONENT-07-d157b2cc",
+        "text": "",
+        "cited_claim_ids": [],
+        "cited_equation_ids": [],
+        "covered_facet_ids": [],
+        "authority_lane": "executable_hard",
+        "caveat": "",
+        "status": "empty"
+      },
+      "may_enter_verified": false,
+      "requires_caveat": true,
+      "facet_ids": [
+        "facet-85ba5afaa2fbe7ac"
+      ],
+      "facet_alignment_ids": [
+        "alignment:facet-85ba5afaa2fbe7ac"
+      ],
+      "facet_policy_ids": [
+        "policy:facet-85ba5afaa2fbe7ac"
+      ],
+      "facet_digest": "sha256:586614ffce511163efccb3c8d4e896827671b6d1d5daa36ca4c22cee4ae698b0",
+      "content_digest": "sha256:b4f552208360c5643a012eecb34fbad79d9f3c277e11fb49814cc4cf126c3fdc"
+    },
+    {
+      "brief_id": "brief:story:O-COMPONENT-08-4aac53dc",
+      "story_node_id": "story:O-COMPONENT-08-4aac53dc",
+      "intended_role": "setup",
+      "obligation_ids": [
+        "O-COMPONENT-08-4aac53dc"
+      ],
+      "author_statement": "Transformer encoder stack: Layers that process the combined sequence to produce contextualized passage embeddings.",
+      "completeness_statuses": [
+        "partially_supported_by_repository"
+      ],
+      "clauses": [
+        {
+          "clause_id": "clause:O-COMPONENT-08-4aac53dc:0",
+          "text": "Transformer encoder stack: Layers that process the combined sequence to produce contextualized passage embeddings.",
+          "license": "unlicensed",
+          "bound_claim_ids": [],
+          "bound_equation_ids": [],
+          "bound_span_ids": [],
+          "bound_target_ids": [],
+          "missing_target_ids": [],
+          "license_reason": "license keys hit but no supported or partial binding"
+        }
+      ],
+      "licensed_wording": "",
+      "claim_ids": [],
+      "equation_ids": [],
+      "configuration_ids": [],
+      "span_ids": [],
+      "mechanism_draft": {
+        "draft_id": "draft-f341ae68cd09a8b7",
+        "brief_id": "brief:story:O-COMPONENT-08-4aac53dc",
+        "text": "",
+        "cited_claim_ids": [],
+        "cited_equation_ids": [],
+        "covered_facet_ids": [],
+        "authority_lane": "executable_hard",
+        "caveat": "",
+        "status": "empty"
+      },
+      "may_enter_verified": false,
+      "requires_caveat": true,
+      "facet_ids": [
+        "facet-0bce6b6595a44f58"
+      ],
+      "facet_alignment_ids": [
+        "alignment:facet-0bce6b6595a44f58"
+      ],
+      "facet_policy_ids": [
+        "policy:facet-0bce6b6595a44f58"
+      ],
+      "facet_digest": "sha256:3077a39a20aefc69f8c5d33e92c63ead50f82321111eb47c59c545fa6b393901",
+      "content_digest": "sha256:8f4f84f32253f35aa71d3c593a3fecb429dd153c07e154dbc40f9a86d371787c"
+    },
+    {
+      "brief_id": "brief:story:O-COMPONENT-09-6a8cfd6c",
+      "story_node_id": "story:O-COMPONENT-09-6a8cfd6c",
+      "intended_role": "setup",
+      "obligation_ids": [
+        "O-COMPONENT-09-6a8cfd6c"
+      ],
+      "author_statement": "InfoNCE contrastive loss: Objective that encourages the updated positive passage embedding to align with the fixed query embedding while separating negatives.",
+      "completeness_statuses": [
+        "partially_supported_by_repository"
+      ],
+      "clauses": [
+        {
+          "clause_id": "clause:O-COMPONENT-09-6a8cfd6c:0",
+          "text": "InfoNCE contrastive loss: Objective that encourages the updated positive passage embedding to align with the fixed query embedding while separating negatives.",
+          "license": "unlicensed",
+          "bound_claim_ids": [],
+          "bound_equation_ids": [],
+          "bound_span_ids": [],
+          "bound_target_ids": [],
+          "missing_target_ids": [],
+          "license_reason": "no closed-set license key hit"
+        }
+      ],
+      "licensed_wording": "",
+      "claim_ids": [],
+      "equation_ids": [],
+      "configuration_ids": [],
+      "span_ids": [],
+      "mechanism_draft": {
+        "draft_id": "draft-4db69445df680ab5",
+        "brief_id": "brief:story:O-COMPONENT-09-6a8cfd6c",
+        "text": "",
+        "cited_claim_ids": [],
+        "cited_equation_ids": [],
+        "covered_facet_ids": [],
+        "authority_lane": "executable_hard",
+        "caveat": "",
+        "status": "empty"
+      },
+      "may_enter_verified": false,
+      "requires_caveat": true,
+      "facet_ids": [
+        "facet-833638c7783e3952"
+      ],
+      "facet_alignment_ids": [
+        "alignment:facet-833638c7783e3952"
+      ],
+      "facet_policy_ids": [
+        "policy:facet-833638c7783e3952"
+      ],
+      "facet_digest": "sha256:fbd3d92797663d8fc2e464ef45dc8fe640c3d0c6a1b0e23dc1992a5b01daacb3",
+      "content_digest": "sha256:0a8e6ad75a585e3dec0553f1866c5ed8fb702fba38eba265e1a3db74450dea27"
+    },
+    {
+      "brief_id": "brief:story:O-COMPONENT-10-dac6250f",
+      "story_node_id": "story:O-COMPONENT-10-dac6250f",
+      "intended_role": "setup",
+      "obligation_ids": [
+        "O-COMPONENT-10-dac6250f"
+      ],
+      "author_statement": "fixed query anchor: The original query embedding remains unchanged during training/inference to serve as a stable reference in the contrastive objective.",
+      "completeness_statuses": [
+        "partially_supported_by_repository"
+      ],
+      "clauses": [
+        {
+          "clause_id": "clause:O-COMPONENT-10-dac6250f:0",
+          "text": "fixed query anchor: The original query embedding remains unchanged during training/inference to serve as a stable reference in the contrastive objective.",
+          "license": "unlicensed",
+          "bound_claim_ids": [],
+          "bound_equation_ids": [],
+          "bound_span_ids": [],
+          "bound_target_ids": [],
+          "missing_target_ids": [],
+          "license_reason": "no closed-set license key hit"
+        }
+      ],
+      "licensed_wording": "",
+      "claim_ids": [],
+      "equation_ids": [],
+      "configuration_ids": [],
+      "span_ids": [],
+      "mechanism_draft": {
+        "draft_id": "draft-6d902e8617dcb8d4",
+        "brief_id": "brief:story:O-COMPONENT-10-dac6250f",
+        "text": "",
+        "cited_claim_ids": [],
+        "cited_equation_ids": [],
+        "covered_facet_ids": [],
+        "authority_lane": "executable_hard",
+        "caveat": "",
+        "status": "empty"
+      },
+      "may_enter_verified": false,
+      "requires_caveat": true,
+      "facet_ids": [
+        "facet-3c6a3824f6a9641a"
+      ],
+      "facet_alignment_ids": [
+        "alignment:facet-3c6a3824f6a9641a"
+      ],
+      "facet_policy_ids": [
+        "policy:facet-3c6a3824f6a9641a"
+      ],
+      "facet_digest": "sha256:4bc5cabbb034c6518ef8d1e07239dc91ef673f0871cb6f15d54e1fd1873fc6fa",
+      "content_digest": "sha256:b179997a1a774fbd442885854ce93ab5cff66c3795e92b88c9252a34067249ad"
+    },
+    {
+      "brief_id": "brief:story:O-COMPONENT-11-27f310b2",
+      "story_node_id": "story:O-COMPONENT-11-27f310b2",
+      "intended_role": "setup",
+      "obligation_ids": [
+        "O-COMPONENT-11-27f310b2"
+      ],
+      "author_statement": "ConTEB benchmark: Evaluation suite that tests rerankers on challenging tasks requiring cross‑passage inference, document‑wide context, and structural reasoning.",
+      "completeness_statuses": [
+        "partially_supported_by_repository"
+      ],
+      "clauses": [
+        {
+          "clause_id": "clause:O-COMPONENT-11-27f310b2:0",
+          "text": "ConTEB benchmark: Evaluation suite that tests rerankers on challenging tasks requiring cross‑passage inference, document‑wide context, and structural reasoning.",
+          "license": "unlicensed",
+          "bound_claim_ids": [],
+          "bound_equation_ids": [],
+          "bound_span_ids": [],
+          "bound_target_ids": [],
+          "missing_target_ids": [],
+          "license_reason": "no closed-set license key hit"
+        }
+      ],
+      "licensed_wording": "",
+      "claim_ids": [],
+      "equation_ids": [],
+      "configuration_ids": [],
+      "span_ids": [],
+      "mechanism_draft": {
+        "draft_id": "draft-f92112afdff91e69",
+        "brief_id": "brief:story:O-COMPONENT-11-27f310b2",
+        "text": "",
+        "cited_claim_ids": [],
+        "cited_equation_ids": [],
+        "covered_facet_ids": [],
+        "authority_lane": "executable_hard",
+        "caveat": "",
+        "status": "empty"
+      },
+      "may_enter_verified": false,
+      "requires_caveat": true,
+      "facet_ids": [
+        "facet-c5e7c214b56a659f"
+      ],
+      "facet_alignment_ids": [
+        "alignment:facet-c5e7c214b56a659f"
+      ],
+      "facet_policy_ids": [
+        "policy:facet-c5e7c214b56a659f"
+      ],
+      "facet_digest": "sha256:13663f73b8da25053d37d763e598f69fa250d84513ad26d629fe6d471cfbd89a",
+      "content_digest": "sha256:d7c5f9155dd850110e2081db41c0f2be4756c0a20093e3d3dc216911e0412af1"
+    },
+    {
+      "brief_id": "brief:story:O-COMPONENT-12-370bd5b2",
+      "story_node_id": "story:O-COMPONENT-12-370bd5b2",
+      "intended_role": "setup",
+      "obligation_ids": [
+        "O-COMPONENT-12-370bd5b2"
+      ],
+      "author_statement": "MLDR, SQuAD, NarrativeQA (training sets): Three ConTEB datasets used for training EBCAR, covering entity disambiguation, span matching, and narrative comprehension.",
+      "completeness_statuses": [
+        "partially_supported_by_repository"
+      ],
+      "clauses": [
+        {
+          "clause_id": "clause:O-COMPONENT-12-370bd5b2:0",
+          "text": "MLDR, SQuAD, NarrativeQA (training sets): Three ConTEB datasets used for training EBCAR, covering entity disambiguation, span matching, and narrative comprehension.",
+          "license": "unlicensed",
+          "bound_claim_ids": [],
+          "bound_equation_ids": [],
+          "bound_span_ids": [],
+          "bound_target_ids": [],
+          "missing_target_ids": [],
+          "license_reason": "no closed-set license key hit"
+        }
+      ],
+      "licensed_wording": "",
+      "claim_ids": [],
+      "equation_ids": [],
+      "configuration_ids": [],
+      "span_ids": [],
+      "mechanism_draft": {
+        "draft_id": "draft-556251c7002284ac",
+        "brief_id": "brief:story:O-COMPONENT-12-370bd5b2",
+        "text": "",
+        "cited_claim_ids": [],
+        "cited_equation_ids": [],
+        "covered_facet_ids": [],
+        "authority_lane": "executable_hard",
+        "caveat": "",
+        "status": "empty"
+      },
+      "may_enter_verified": false,
+      "requires_caveat": true,
+      "facet_ids": [
+        "facet-f6e629096087c520"
+      ],
+      "facet_alignment_ids": [
+        "alignment:facet-f6e629096087c520"
+      ],
+      "facet_policy_ids": [
+        "policy:facet-f6e629096087c520"
+      ],
+      "facet_digest": "sha256:5b2d35a14d4333ef3f044ce3339e9db644af6045aaa66a51f24accebe1af6432",
+      "content_digest": "sha256:62572bc17bc312dfcfa6baa0ba64696501af3eab7f8727fc74d49eb0b2362f3f"
+    },
+    {
+      "brief_id": "brief:story:O-ORGANIZATION-01-6b45ad90",
+      "story_node_id": "story:O-ORGANIZATION-01-6b45ad90",
+      "intended_role": "setup",
+      "obligation_ids": [
+        "O-ORGANIZATION-01-6b45ad90"
+      ],
+      "author_statement": "Motivation: efficiency and cross‑passage inference challenges in existing rerankers.",
+      "completeness_statuses": [
+        "partially_supported_by_repository"
+      ],
+      "clauses": [
+        {
+          "clause_id": "clause:O-ORGANIZATION-01-6b45ad90:0",
+          "text": "Motivation: efficiency and cross‑passage inference challenges in existing rerankers.",
+          "license": "unlicensed",
+          "bound_claim_ids": [],
+          "bound_equation_ids": [],
+          "bound_span_ids": [],
+          "bound_target_ids": [],
+          "missing_target_ids": [],
+          "license_reason": "no closed-set license key hit"
+        }
+      ],
+      "licensed_wording": "",
+      "claim_ids": [],
+      "equation_ids": [],
+      "configuration_ids": [],
+      "span_ids": [],
+      "mechanism_draft": {
+        "draft_id": "draft-9a0995c9b5b5973e",
+        "brief_id": "brief:story:O-ORGANIZATION-01-6b45ad90",
+        "text": "",
+        "cited_claim_ids": [],
+        "cited_equation_ids": [],
+        "covered_facet_ids": [],
+        "authority_lane": "executable_hard",
+        "caveat": "",
+        "status": "empty"
+      },
+      "may_enter_verified": false,
+      "requires_caveat": true,
+      "facet_ids": [
+        "facet-9e754ab14c6fde20"
+      ],
+      "facet_alignment_ids": [
+        "alignment:facet-9e754ab14c6fde20"
+      ],
+      "facet_policy_ids": [
+        "policy:facet-9e754ab14c6fde20"
+      ],
+      "facet_digest": "sha256:d8a6bd57648a7bb3a7e764ca3e3c54736b7ff3a3c5ee75490c354a702c01d318",
+      "content_digest": "sha256:8a7487d6b98ef8860caef526e085767207c428a7e62189965bd47b62dfd4686f"
+    },
+    {
+      "brief_id": "brief:story:O-ORGANIZATION-02-54911271",
+      "story_node_id": "story:O-ORGANIZATION-02-54911271",
+      "intended_role": "setup",
+      "obligation_ids": [
+        "O-ORGANIZATION-02-54911271"
+      ],
+      "author_statement": "Embedding‑based reranking formulation and overall framework.",
+      "completeness_statuses": [
+        "partially_supported_by_repository"
+      ],
+      "clauses": [
+        {
+          "clause_id": "clause:O-ORGANIZATION-02-54911271:0",
+          "text": "Embedding‑based reranking formulation and overall framework.",
+          "license": "unlicensed",
+          "bound_claim_ids": [],
+          "bound_equation_ids": [],
+          "bound_span_ids": [],
+          "bound_target_ids": [],
+          "missing_target_ids": [],
+          "license_reason": "no closed-set license key hit"
+        }
+      ],
+      "licensed_wording": "",
+      "claim_ids": [],
+      "equation_ids": [],
+      "configuration_ids": [],
+      "span_ids": [],
+      "mechanism_draft": {
+        "draft_id": "draft-7682864619e8bb2a",
+        "brief_id": "brief:story:O-ORGANIZATION-02-54911271",
+        "text": "",
+        "cited_claim_ids": [],
+        "cited_equation_ids": [],
+        "covered_facet_ids": [],
+        "authority_lane": "executable_hard",
+        "caveat": "",
+        "status": "empty"
+      },
+      "may_enter_verified": false,
+      "requires_caveat": true,
+      "facet_ids": [
+        "facet-b9735878c5548c4a"
+      ],
+      "facet_alignment_ids": [
+        "alignment:facet-b9735878c5548c4a"
+      ],
+      "facet_policy_ids": [
+        "policy:facet-b9735878c5548c4a"
+      ],
+      "facet_digest": "sha256:a117fddc22d9707b222ec9db6b29966822231c2b1224502c973874adbfd59546",
+      "content_digest": "sha256:26865f7aad40df793325939961ed6ea31ebd9748920e79e8e8001f9b6f2f382a"
+    },
+    {
+      "brief_id": "brief:story:O-ORGANIZATION-03-2c92c853",
+      "story_node_id": "story:O-ORGANIZATION-03-2c92c853",
+      "intended_role": "setup",
+      "obligation_ids": [
+        "O-ORGANIZATION-03-2c92c853"
+      ],
+      "author_statement": "Architecture details: enriching embeddings with document ID and position, the Transformer encoder with hybrid attention (shared full + dedicated masked).",
+      "completeness_statuses": [
+        "partially_supported_by_repository"
+      ],
+      "clauses": [
+        {
+          "clause_id": "clause:O-ORGANIZATION-03-2c92c853:0",
+          "text": "Architecture details: enriching embeddings with document ID and position, the Transformer encoder with hybrid attention (shared full + dedicated masked).",
+          "license": "unlicensed",
+          "bound_claim_ids": [],
+          "bound_equation_ids": [],
+          "bound_span_ids": [],
+          "bound_target_ids": [],
+          "missing_target_ids": [],
+          "license_reason": "license keys hit but no supported or partial binding"
+        }
+      ],
+      "licensed_wording": "",
+      "claim_ids": [],
+      "equation_ids": [],
+      "configuration_ids": [],
+      "span_ids": [],
+      "mechanism_draft": {
+        "draft_id": "draft-626515d499cfb9be",
+        "brief_id": "brief:story:O-ORGANIZATION-03-2c92c853",
+        "text": "",
+        "cited_claim_ids": [],
+        "cited_equation_ids": [],
+        "covered_facet_ids": [],
+        "authority_lane": "executable_hard",
+        "caveat": "",
+        "status": "empty"
+      },
+      "may_enter_verified": false,
+      "requires_caveat": true,
+      "facet_ids": [
+        "facet-68ed73e7a64fbbfd"
+      ],
+      "facet_alignment_ids": [
+        "alignment:facet-68ed73e7a64fbbfd"
+      ],
+      "facet_policy_ids": [
+        "policy:facet-68ed73e7a64fbbfd"
+      ],
+      "facet_digest": "sha256:00018dabcefef50a3f785112bd62c0b5142ac306ddddd9ee44fbf51635cf5ee6",
+      "content_digest": "sha256:6518384b7657f020e82638ae92b915fd45bdbf0095b7cef283a77b4b11c7c4e9"
+    },
+    {
+      "brief_id": "brief:story:O-ORGANIZATION-04-1dd970df",
+      "story_node_id": "story:O-ORGANIZATION-04-1dd970df",
+      "intended_role": "setup",
+      "obligation_ids": [
+        "O-ORGANIZATION-04-1dd970df"
+      ],
+      "author_statement": "Training objective: InfoNCE loss with fixed query anchor.",
+      "completeness_statuses": [
+        "partially_supported_by_repository"
+      ],
+      "clauses": [
+        {
+          "clause_id": "clause:O-ORGANIZATION-04-1dd970df:0",
+          "text": "Training objective: InfoNCE loss with fixed query anchor.",
+          "license": "unlicensed",
+          "bound_claim_ids": [],
+          "bound_equation_ids": [],
+          "bound_span_ids": [],
+          "bound_target_ids": [],
+          "missing_target_ids": [],
+          "license_reason": "no closed-set license key hit"
+        }
+      ],
+      "licensed_wording": "",
+      "claim_ids": [],
+      "equation_ids": [],
+      "configuration_ids": [],
+      "span_ids": [],
+      "mechanism_draft": {
+        "draft_id": "draft-61c6deb2fcb9ce06",
+        "brief_id": "brief:story:O-ORGANIZATION-04-1dd970df",
+        "text": "",
+        "cited_claim_ids": [],
+        "cited_equation_ids": [],
+        "covered_facet_ids": [],
+        "authority_lane": "executable_hard",
+        "caveat": "",
+        "status": "empty"
+      },
+      "may_enter_verified": false,
+      "requires_caveat": true,
+      "facet_ids": [
+        "facet-71df0ec224b91883"
+      ],
+      "facet_alignment_ids": [
+        "alignment:facet-71df0ec224b91883"
+      ],
+      "facet_policy_ids": [
+        "policy:facet-71df0ec224b91883"
+      ],
+      "facet_digest": "sha256:afb86fc0e75048bcf404fe858dfce3461927b315d41c4dc1173f1115188d6f59",
+      "content_digest": "sha256:f119712cb41904b890b1939dae265492284a1adebf3e37d8b16ba365d00ff139"
+    },
+    {
+      "brief_id": "brief:story:O-ORGANIZATION-05-baf0d276",
+      "story_node_id": "story:O-ORGANIZATION-05-baf0d276",
+      "intended_role": "setup",
+      "obligation_ids": [
+        "O-ORGANIZATION-05-baf0d276"
+      ],
+      "author_statement": "Inference procedure.",
+      "completeness_statuses": [
+        "partially_supported_by_repository"
+      ],
+      "clauses": [
+        {
+          "clause_id": "clause:O-ORGANIZATION-05-baf0d276:0",
+          "text": "Inference procedure.",
+          "license": "unlicensed",
+          "bound_claim_ids": [],
+          "bound_equation_ids": [],
+          "bound_span_ids": [],
+          "bound_target_ids": [],
+          "missing_target_ids": [],
+          "license_reason": "no closed-set license key hit"
+        }
+      ],
+      "licensed_wording": "",
+      "claim_ids": [],
+      "equation_ids": [],
+      "configuration_ids": [],
+      "span_ids": [],
+      "mechanism_draft": {
+        "draft_id": "draft-da6f574be6acc1cc",
+        "brief_id": "brief:story:O-ORGANIZATION-05-baf0d276",
+        "text": "",
+        "cited_claim_ids": [],
+        "cited_equation_ids": [],
+        "covered_facet_ids": [],
+        "authority_lane": "executable_hard",
+        "caveat": "",
+        "status": "empty"
+      },
+      "may_enter_verified": false,
+      "requires_caveat": true,
+      "facet_ids": [
+        "facet-f55b63fbde1d45df"
+      ],
+      "facet_alignment_ids": [
+        "alignment:facet-f55b63fbde1d45df"
+      ],
+      "facet_policy_ids": [
+        "policy:facet-f55b63fbde1d45df"
+      ],
+      "facet_digest": "sha256:85435d4bd03c4c7e2e38d6146afb1f3238fedfb75fe4f6a4a208b199ddfcc029",
+      "content_digest": "sha256:0a588d7c2bb7c91d927787a140415d04eaf2b6a1442222d405bf65913136935d"
+    },
+    {
+      "brief_id": "brief:story:O-RATIONALE-CHECK-01-bad20132",
+      "story_node_id": "story:O-RATIONALE-CHECK-01-bad20132",
+      "intended_role": "motivation",
+      "obligation_ids": [
+        "O-RATIONALE-CHECK-01-bad20132"
+      ],
+      "author_statement": "Avoid full‑text processing and autoregressive generation to reduce inference latency.",
+      "completeness_statuses": [
+        "partially_supported_by_repository"
+      ],
+      "clauses": [
+        {
+          "clause_id": "clause:O-RATIONALE-CHECK-01-bad20132:0",
+          "text": "Avoid full‑text processing and autoregressive generation to reduce inference latency.",
+          "license": "unlicensed",
+          "bound_claim_ids": [],
+          "bound_equation_ids": [],
+          "bound_span_ids": [],
+          "bound_target_ids": [],
+          "missing_target_ids": [],
+          "license_reason": "no closed-set license key hit"
+        }
+      ],
+      "licensed_wording": "",
+      "claim_ids": [],
+      "equation_ids": [],
+      "configuration_ids": [],
+      "span_ids": [],
+      "mechanism_draft": {
+        "draft_id": "draft-630692333cdbd2c2",
+        "brief_id": "brief:story:O-RATIONALE-CHECK-01-bad20132",
+        "text": "",
+        "cited_claim_ids": [],
+        "cited_equation_ids": [],
+        "covered_facet_ids": [],
+        "authority_lane": "executable_hard",
+        "caveat": "",
+        "status": "empty"
+      },
+      "may_enter_verified": false,
+      "requires_caveat": true,
+      "facet_ids": [
+        "facet-c8bf8030283400b2"
+      ],
+      "facet_alignment_ids": [
+        "alignment:facet-c8bf8030283400b2"
+      ],
+      "facet_policy_ids": [
+        "policy:facet-c8bf8030283400b2"
+      ],
+      "facet_digest": "sha256:bf7a07fd1dbecc538345416ed8b5e445c042e0ddf937a603bc1a1ed85160ff04",
+      "content_digest": "sha256:ae8ec93adde30eececc774f95ea464d6edd6f0e02fe23b4329ee2b5eb4186d72"
+    },
+    {
+      "brief_id": "brief:story:O-RATIONALE-CHECK-02-30bb7c0f",
+      "story_node_id": "story:O-RATIONALE-CHECK-02-30bb7c0f",
+      "intended_role": "motivation",
+      "obligation_ids": [
+        "O-RATIONALE-CHECK-02-30bb7c0f"
+      ],
+      "author_statement": "Inject document‑level structural knowledge into passage embeddings to support cross‑passage inference.",
+      "completeness_statuses": [
+        "partially_supported_by_repository"
+      ],
+      "clauses": [
+        {
+          "clause_id": "clause:O-RATIONALE-CHECK-02-30bb7c0f:0",
+          "text": "Inject document‑level structural knowledge into passage embeddings to support cross‑passage inference.",
+          "license": "unlicensed",
+          "bound_claim_ids": [],
+          "bound_equation_ids": [],
+          "bound_span_ids": [],
+          "bound_target_ids": [],
+          "missing_target_ids": [],
+          "license_reason": "no closed-set license key hit"
+        }
+      ],
+      "licensed_wording": "",
+      "claim_ids": [],
+      "equation_ids": [],
+      "configuration_ids": [],
+      "span_ids": [],
+      "mechanism_draft": {
+        "draft_id": "draft-a178cf6cc5c6e61c",
+        "brief_id": "brief:story:O-RATIONALE-CHECK-02-30bb7c0f",
+        "text": "",
+        "cited_claim_ids": [],
+        "cited_equation_ids": [],
+        "covered_facet_ids": [],
+        "authority_lane": "executable_hard",
+        "caveat": "",
+        "status": "empty"
+      },
+      "may_enter_verified": false,
+      "requires_caveat": true,
+      "facet_ids": [
+        "facet-e517f869034a38aa"
+      ],
+      "facet_alignment_ids": [
+        "alignment:facet-e517f869034a38aa"
+      ],
+      "facet_policy_ids": [
+        "policy:facet-e517f869034a38aa"
+      ],
+      "facet_digest": "sha256:10a78d2a8274d327e043080c58edcb06c05de46fc19fcf466fff823553599e71",
+      "content_digest": "sha256:4325ac20477e7272fff010765fe81943939ff5b3737cf91298231493d67ab244"
+    },
+    {
+      "brief_id": "brief:story:O-RATIONALE-CHECK-03-b01101f7",
+      "story_node_id": "story:O-RATIONALE-CHECK-03-b01101f7",
+      "intended_role": "motivation",
+      "obligation_ids": [
+        "O-RATIONALE-CHECK-03-b01101f7"
+      ],
+      "author_statement": "Design two complementary attention patterns that co‑exist in each layer: global and document‑local.",
+      "completeness_statuses": [
+        "partially_supported_by_repository"
+      ],
+      "clauses": [
+        {
+          "clause_id": "clause:O-RATIONALE-CHECK-03-b01101f7:0",
+          "text": "Design two complementary attention patterns that co‑exist in each layer: global and document‑local.",
+          "license": "unlicensed",
+          "bound_claim_ids": [],
+          "bound_equation_ids": [],
+          "bound_span_ids": [],
+          "bound_target_ids": [],
+          "missing_target_ids": [],
+          "license_reason": "no closed-set license key hit"
+        }
+      ],
+      "licensed_wording": "",
+      "claim_ids": [],
+      "equation_ids": [],
+      "configuration_ids": [],
+      "span_ids": [],
+      "mechanism_draft": {
+        "draft_id": "draft-c24c58f5179bb822",
+        "brief_id": "brief:story:O-RATIONALE-CHECK-03-b01101f7",
+        "text": "",
+        "cited_claim_ids": [],
+        "cited_equation_ids": [],
+        "covered_facet_ids": [],
+        "authority_lane": "executable_hard",
+        "caveat": "",
+        "status": "empty"
+      },
+      "may_enter_verified": false,
+      "requires_caveat": true,
+      "facet_ids": [
+        "facet-d27285ebc144a3fa"
+      ],
+      "facet_alignment_ids": [
+        "alignment:facet-d27285ebc144a3fa"
+      ],
+      "facet_policy_ids": [
+        "policy:facet-d27285ebc144a3fa"
+      ],
+      "facet_digest": "sha256:17dfb0692d3672caa44147482bcdef0acdac1bfb23819cffaadbfd09fdaee80b",
+      "content_digest": "sha256:6585ac53384f1748ca774d78386c3f2034ebbbecccbefcb921bf76d2fe021a7c"
+    },
+    {
+      "brief_id": "brief:story:O-RATIONALE-CHECK-04-c742a4fc",
+      "story_node_id": "story:O-RATIONALE-CHECK-04-c742a4fc",
+      "intended_role": "motivation",
+      "obligation_ids": [
+        "O-RATIONALE-CHECK-04-c742a4fc"
+      ],
+      "author_statement": "Use relative, dynamic document ID assignments rather than global corpus‑level IDs.",
+      "completeness_statuses": [
+        "author_confirmation_required"
+      ],
+      "clauses": [
+        {
+          "clause_id": "clause:O-RATIONALE-CHECK-04-c742a4fc:0",
+          "text": "Use relative, dynamic document ID assignments rather than global corpus‑level IDs.",
+          "license": "unlicensed",
+          "bound_claim_ids": [],
+          "bound_equation_ids": [],
+          "bound_span_ids": [],
+          "bound_target_ids": [],
+          "missing_target_ids": [],
+          "license_reason": "no closed-set license key hit"
+        }
+      ],
+      "licensed_wording": "",
+      "claim_ids": [],
+      "equation_ids": [],
+      "configuration_ids": [],
+      "span_ids": [],
+      "mechanism_draft": {
+        "draft_id": "draft-650a0826286da0db",
+        "brief_id": "brief:story:O-RATIONALE-CHECK-04-c742a4fc",
+        "text": "",
+        "cited_claim_ids": [],
+        "cited_equation_ids": [],
+        "covered_facet_ids": [],
+        "authority_lane": "executable_hard",
+        "caveat": "",
+        "status": "empty"
+      },
+      "may_enter_verified": false,
+      "requires_caveat": true,
+      "facet_ids": [
+        "facet-f49282e62c6e52fe"
+      ],
+      "facet_alignment_ids": [
+        "alignment:facet-f49282e62c6e52fe"
+      ],
+      "facet_policy_ids": [
+        "policy:facet-f49282e62c6e52fe"
+      ],
+      "facet_digest": "sha256:d7428a94750aa89c218c16a2a1312bbef70375ac3a59e810856e336c3bb04e58",
+      "content_digest": "sha256:3e7351b01973ed8cb803d89100c76c0845d6d81c95b8ee4e00299348df132dd3"
+    },
+    {
+      "brief_id": "brief:story:O-RATIONALE-CHECK-05-595ac6ff",
+      "story_node_id": "story:O-RATIONALE-CHECK-05-595ac6ff",
+      "intended_role": "motivation",
+      "obligation_ids": [
+        "O-RATIONALE-CHECK-05-595ac6ff"
+      ],
+      "author_statement": "Keep the query embedding fixed during training and inference while updating passage embeddings.",
+      "completeness_statuses": [
+        "partially_supported_by_repository"
+      ],
+      "clauses": [
+        {
+          "clause_id": "clause:O-RATIONALE-CHECK-05-595ac6ff:0",
+          "text": "Keep the query embedding fixed during training and inference while updating passage embeddings.",
+          "license": "unlicensed",
+          "bound_claim_ids": [],
+          "bound_equation_ids": [],
+          "bound_span_ids": [],
+          "bound_target_ids": [],
+          "missing_target_ids": [],
+          "license_reason": "no closed-set license key hit"
+        }
+      ],
+      "licensed_wording": "",
+      "claim_ids": [],
+      "equation_ids": [],
+      "configuration_ids": [],
+      "span_ids": [],
+      "mechanism_draft": {
+        "draft_id": "draft-e3755cba06c30f74",
+        "brief_id": "brief:story:O-RATIONALE-CHECK-05-595ac6ff",
+        "text": "",
+        "cited_claim_ids": [],
+        "cited_equation_ids": [],
+        "covered_facet_ids": [],
+        "authority_lane": "executable_hard",
+        "caveat": "",
+        "status": "empty"
+      },
+      "may_enter_verified": false,
+      "requires_caveat": true,
+      "facet_ids": [
+        "facet-c0d9a5e725c77367"
+      ],
+      "facet_alignment_ids": [
+        "alignment:facet-c0d9a5e725c77367"
+      ],
+      "facet_policy_ids": [
+        "policy:facet-c0d9a5e725c77367"
+      ],
+      "facet_digest": "sha256:c6f13799b2b06b421b47751548f2ad03762ea2a0e3ff929d8c234066b818dc21",
+      "content_digest": "sha256:55204810e7cee71c8e75413ee1adb4cd4ddacf9172c2ff8a521780a3c6f0b2fd"
+    },
+    {
+      "brief_id": "brief:story:O-RATIONALE-CHECK-06-388166d9",
+      "story_node_id": "story:O-RATIONALE-CHECK-06-388166d9",
+      "intended_role": "motivation",
+      "obligation_ids": [
+        "O-RATIONALE-CHECK-06-388166d9"
+      ],
+      "author_statement": "Train on ConTEB datasets that explicitly require cross‑passage reasoning.",
+      "completeness_statuses": [
+        "partially_supported_by_repository"
+      ],
+      "clauses": [
+        {
+          "clause_id": "clause:O-RATIONALE-CHECK-06-388166d9:0",
+          "text": "Train on ConTEB datasets that explicitly require cross‑passage reasoning.",
+          "license": "unlicensed",
+          "bound_claim_ids": [],
+          "bound_equation_ids": [],
+          "bound_span_ids": [],
+          "bound_target_ids": [],
+          "missing_target_ids": [],
+          "license_reason": "no closed-set license key hit"
+        }
+      ],
+      "licensed_wording": "",
+      "claim_ids": [],
+      "equation_ids": [],
+      "configuration_ids": [],
+      "span_ids": [],
+      "mechanism_draft": {
+        "draft_id": "draft-1f37d0e8cfbc3bc1",
+        "brief_id": "brief:story:O-RATIONALE-CHECK-06-388166d9",
+        "text": "",
+        "cited_claim_ids": [],
+        "cited_equation_ids": [],
+        "covered_facet_ids": [],
+        "authority_lane": "executable_hard",
+        "caveat": "",
+        "status": "empty"
+      },
+      "may_enter_verified": false,
+      "requires_caveat": true,
+      "facet_ids": [
+        "facet-ecd069d8ab3be38f"
+      ],
+      "facet_alignment_ids": [
+        "alignment:facet-ecd069d8ab3be38f"
+      ],
+      "facet_policy_ids": [
+        "policy:facet-ecd069d8ab3be38f"
+      ],
+      "facet_digest": "sha256:1bcd9d81745b0cf98a68813648cb659f6301d08c2a2301187fb281d1fcbfc3d5",
+      "content_digest": "sha256:6171efe2d58afa128845567d3fb57ae11e21662f9a1d2df687f6a03904be90ac"
+    }
+  ],
+  "planner_used": true,
+  "gaps": [
+    {
+      "gap_kind": "planner_failed",
+      "brief_id": "brief:story:O-COMPONENT-04-b5b6af99",
+      "obligation_id": "",
+      "message": "unknown frag id:frag-04a"
+    },
+    {
+      "gap_kind": "planner_failed",
+      "brief_id": "brief:story:O-COMPONENT-05-4c3594d2",
+      "obligation_id": "",
+      "message": "unknown frag id:frag-04a"
+    },
+    {
+      "gap_kind": "planner_failed",
+      "brief_id": "brief:story:O-COMPONENT-06-34021b88",
+      "obligation_id": "",
+      "message": "unknown frag id:frag-04a"
+    },
+    {
+      "gap_kind": "planner_failed",
+      "brief_id": "brief:story:O-COMPONENT-07-d157b2cc",
+      "obligation_id": "",
+      "message": "unknown frag id:frag-04a"
+    },
+    {
+      "gap_kind": "planner_failed",
+      "brief_id": "brief:story:O-COMPONENT-08-4aac53dc",
+      "obligation_id": "",
+      "message": "unknown frag id:frag-04a"
+    },
+    {
+      "gap_kind": "planner_failed",
+      "brief_id": "brief:story:O-COMPONENT-09-6a8cfd6c",
+      "obligation_id": "",
+      "message": "unknown frag id:frag-04a"
+    },
+    {
+      "gap_kind": "planner_failed",
+      "brief_id": "brief:story:O-COMPONENT-10-dac6250f",
+      "obligation_id": "",
+      "message": "unknown frag id:frag-04a"
+    },
+    {
+      "gap_kind": "planner_failed",
+      "brief_id": "brief:story:O-COMPONENT-11-27f310b2",
+      "obligation_id": "",
+      "message": "unknown frag id:caveat"
+    },
+    {
+      "gap_kind": "planner_failed",
+      "brief_id": "brief:story:O-COMPONENT-12-370bd5b2",
+      "obligation_id": "",
+      "message": "unknown frag id:caveat"
+    },
+    {
+      "gap_kind": "planner_failed",
+      "brief_id": "brief:story:O-ORGANIZATION-01-6b45ad90",
+      "obligation_id": "",
+      "message": "unknown frag id:caveat"
+    },
+    {
+      "gap_kind": "planner_failed",
+      "brief_id": "brief:story:O-ORGANIZATION-02-54911271",
+      "obligation_id": "",
+      "message": "unknown frag id:caveat"
+    },
+    {
+      "gap_kind": "planner_failed",
+      "brief_id": "brief:story:O-ORGANIZATION-03-2c92c853",
+      "obligation_id": "",
+      "message": "unknown frag id:caveat"
+    },
+    {
+      "gap_kind": "planner_failed",
+      "brief_id": "brief:story:O-ORGANIZATION-04-1dd970df",
+      "obligation_id": "",
+      "message": "unknown frag id:caveat"
+    },
+    {
+      "gap_kind": "planner_failed",
+      "brief_id": "brief:story:O-ORGANIZATION-05-baf0d276",
+      "obligation_id": "",
+      "message": "unknown frag id:caveat"
+    },
+    {
+      "gap_kind": "planner_failed",
+      "brief_id": "brief:story:O-RATIONALE-CHECK-01-bad20132",
+      "obligation_id": "",
+      "message": "unknown frag id:frag-01"
+    },
+    {
+      "gap_kind": "planner_failed",
+      "brief_id": "brief:story:O-RATIONALE-CHECK-02-30bb7c0f",
+      "obligation_id": "",
+      "message": "unknown frag id:frag-01"
+    },
+    {
+      "gap_kind": "planner_failed",
+      "brief_id": "brief:story:O-RATIONALE-CHECK-03-b01101f7",
+      "obligation_id": "",
+      "message": "unknown frag id:frag-01"
+    },
+    {
+      "gap_kind": "planner_failed",
+      "brief_id": "brief:story:O-RATIONALE-CHECK-04-c742a4fc",
+      "obligation_id": "",
+      "message": "unknown frag id:frag-01"
+    },
+    {
+      "gap_kind": "planner_failed",
+      "brief_id": "brief:story:O-RATIONALE-CHECK-05-595ac6ff",
+      "obligation_id": "",
+      "message": "unknown frag id:frag-01"
+    },
+    {
+      "gap_kind": "planner_failed",
+      "brief_id": "brief:story:O-RATIONALE-CHECK-06-388166d9",
+      "obligation_id": "",
+      "message": "unknown frag id:frag-01"
+    }
+  ],
+  "planner_call_traces": [
+    {
+      "brief_ids": [
+        "brief:story:O-METHOD-MAINLINE-01-c8146479",
+        "brief:story:O-STAGE-01-039a963a",
+        "brief:story:O-STAGE-05-5b3d398a",
+        "brief:story:O-COMPONENT-01-c301ecdd",
+        "brief:story:O-COMPONENT-01-de6049e3",
+        "brief:story:O-COMPONENT-02-2e14379d",
+        "brief:story:O-COMPONENT-03-d8aa8c77"
+      ],
+      "attempt": 1,
+      "blocked_reason": "",
+      "finish_reason": "structured_complete",
+      "response_preview": "{\"drafts\":[{\"brief_id\":\"brief:story:O-METHOD-MAINLINE-01-c8146479\",\"caveat\":\"The unlicensed clause describes a 'sinusoidal passage-position encoding' but the repository implements a learned embedding-table lookup for passage positions. The intended mathematical role of the positional signal is to inject ordinal structure into the attention input; whether this is realized via a fixed sinusoidal schedule or a learned table is an unresolved author-intent question. The document-ID embedding mechanism (relative indexing within the retrieved set) is supported by code but remains unlicensed in the author's text.\",\"cited_frag_ids\":[\"frag-1\",\"frag-2\",\"frag-3\",\"frag-4\",\"frag-5\",\"frag-6\",\"frag-7\",\"frag-8\",\"frag-9\",\"frag-10\",\"frag-11\",\"frag-12\",\"frag-13\",\"frag-14\",\"frag-15\",\"frag-16\",\"frag-17\",\"frag-18\",\"frag-19\",\"frag-20\",\"frag-21\",\"frag-22\",\"frag-23\",\"frag-24\",\"frag-25\",\"frag-26\",\"frag-27\",\"frag-28\",\"frag-29\",\"frag-30\",\"frag-31\",\"frag-32\",\"frag-33\",\"frag-34\",\"frag-35\",\"frag-36\",\"frag-37\",\"frag-38\",\"frag-39\",\"frag-40\",\"frag-41\",\"frag-42\",\"frag-43\",\"frag-44\",\"frag-45\",\"frag-46\",\"frag-47\",\"frag-48\",\"frag-49\",\"frag-50\",\"frag-51\",\"frag-52\",\"frag-53\",\"frag-54\",\"frag-55\",\"frag-56\",\"frag-57\",\"frag-58\",\"frag-59\",\"frag-60\",\"frag-61\",\"frag-62\",\"frag-63\",\"frag-64\",\"frag-65\",\"frag-66\"],\"text\":\"Algorithm step: hybrid-attention reranker with structural augmentation and contrastive training. (1) Input preparation: accept pre-computed dense passage embeddings from a standard dense retriever and the query embedding from the same encoder. (2) Structural augmentation: before feeding into the attention stack, augment each passage embedding with two additive signals: a document-identity embedding (a learned table indexed by a relative document ID computed from the passage's position within the retrieved set, using modulo and integer-division to map global passage indices into a per-document slot) and a passage-position embedding (a learned table indexed by the passage's ordinal position). The two ",
+      "estimated_prompt_tokens": 5318,
+      "recovery_applied": false,
+      "recovery_operations": [],
+      "parsed_payload_digest": "sha256:52750a4b6eab1a18f654b4d122bee997f2ba929500706e4197342611b6703924",
+      "response_digest": "sha256:52750a4b6eab1a18f654b4d122bee997f2ba929500706e4197342611b6703924"
+    },
+    {
+      "brief_ids": [
+        "brief:story:O-COMPONENT-04-b5b6af99",
+        "brief:story:O-COMPONENT-05-4c3594d2",
+        "brief:story:O-COMPONENT-06-34021b88",
+        "brief:story:O-COMPONENT-07-d157b2cc",
+        "brief:story:O-COMPONENT-08-4aac53dc",
+        "brief:story:O-COMPONENT-09-6a8cfd6c",
+        "brief:story:O-COMPONENT-10-dac6250f"
+      ],
+      "attempt": 1,
+      "blocked_reason": "",
+      "finish_reason": "structured_complete",
+      "response_preview": "{\"drafts\":[{\"brief_id\":\"brief:story:O-COMPONENT-04-b5b6af99\",\"cited_frag_ids\":[ \"caveat_token_shell\" ],\"text\":\"[SETUP / Positional Encoding] The mechanism introduces a sinusoidal positional encoding applied to each passage token to encode its ordinal position within the source document. Intended mathematical role: a deterministic function p(i) that maps token index i to a fixed-dimensional vector, injected additively into the token embedding before the encoder stack. This provides the model with structural order cues so that downstream attention layers can distinguish, for example, the first paragraph of a document from its last. Status: partially supported — the repository confirms the presence of positional encoding in the pipeline but does not license the specific sinusoidal form or the intra-document scoping. Unresolved: whether the encoding is reset per document or spans the concatenated multi-document sequence; whether a learned alternative was ablated. The Writer should treat the sinusoidal choice as an author-intent claim pending verification against the codebase's actual embedding initialization.\"},{\"brief_id\":\"brief:story:O-COMPONENT-05-4c3594d2\",\"cited_frag_ids\":[ \"caveat_token_shell\" ],\"text\":\"[SETUP / Hybrid Attention Architecture] Each Transformer layer in the encoder stack contains two parallel attention sub-modules: (a) a shared full-attention head that lets every token attend to every other token across all passages and the query, and (b) a dedicated masked-attention head that restricts each passage token's attention to the query and to tokens from the same source document only. The two sub-modules are combined (e.g., by summation or concatenation) before the residual connection. Intended mathematical role: the full-attention sub-module computes a global relevance signal; the masked sub-module computes a local coherence / coreference signal. Together they allow the model to capture both inter-document and intra-document dependencies in a single forw",
+      "estimated_prompt_tokens": 1271,
+      "recovery_applied": false,
+      "recovery_operations": [],
+      "parsed_payload_digest": "sha256:c40d3f4203f61239210097058618f82d4cb52d7f5b44ebd0ce277de4d89378dc",
+      "response_digest": "sha256:c40d3f4203f61239210097058618f82d4cb52d7f5b44ebd0ce277de4d89378dc",
+      "parse_error": "unknown frag id:caveat_token_shell"
+    },
+    {
+      "brief_ids": [
+        "brief:story:O-COMPONENT-04-b5b6af99",
+        "brief:story:O-COMPONENT-05-4c3594d2",
+        "brief:story:O-COMPONENT-06-34021b88",
+        "brief:story:O-COMPONENT-07-d157b2cc",
+        "brief:story:O-COMPONENT-08-4aac53dc",
+        "brief:story:O-COMPONENT-09-6a8cfd6c",
+        "brief:story:O-COMPONENT-10-dac6250f"
+      ],
+      "attempt": 2,
+      "blocked_reason": "",
+      "finish_reason": "structured_complete",
+      "response_preview": "{\"drafts\":[{\"brief_id\":\"brief:story:O-COMPONENT-04-b5b6af99\",\"cited_frag_ids\":[\n    \"frag-04a\"\n  ],\"text\":\"Setup: Passage position encoding. Each passage is assigned a sinusoidal positional encoding that reflects its ordinal position within the source document. This encoding is concatenated to the passage token embeddings before entering the Transformer stack, giving the model an explicit structural cue about where a passage sits relative to its neighbors in the original document. The sinusoidal form is chosen for its smooth interpolation properties and bounded range, which keeps positional signals stable across documents of varying length. The author intends this to be a lightweight, parameter-free signal that complements the learned token representations without adding trainable parameters. [UNLICENSED: author intent for sinusoidal choice and bounded-range rationale is not backed by a repository equation or code artifact.]\"},{\"brief_id\":\"brief:story:O-COMPONENT-05-4c3594d2\",\"cited_frag_ids\":[\n    \"frag-05a\"\n  ],\"text\":\"Setup: Hybrid attention architecture. Each Transformer layer contains two parallel attention sub-modules: (1) a shared full-attention head that lets the query and every passage attend to all other tokens globally, and (2) a dedicated masked-attention head that restricts each passage to attend only to the query and to passages originating from the same source document. The two sub-module outputs are combined (e.g., by summation or concatenation) before the residual connection and feed-forward block. This dual-path design lets the model simultaneously capture cross-document relevance signals and intra-document local coherence in a single forward pass. [UNLICENSED: the specific combination rule and the claim that this jointly models inter- and intra-document dependencies are author-stated; no repository equation or ablation isolates the two paths.]\"},{\"brief_id\":\"brief:story:O-COMPONENT-06-34021b88\",\"cited_frag_ids\":[\n    \"frag-06a\"\n  ],\"text\":\"Setup: ",
+      "estimated_prompt_tokens": 1289,
+      "recovery_applied": false,
+      "recovery_operations": [],
+      "parsed_payload_digest": "sha256:109be15bb286b4415395b0a4fd4fc323ccbd3eb8b8e98b0a8f5eb00b2aeb5c30",
+      "response_digest": "sha256:109be15bb286b4415395b0a4fd4fc323ccbd3eb8b8e98b0a8f5eb00b2aeb5c30",
+      "parse_error": "unknown frag id:frag-04a"
+    },
+    {
+      "brief_ids": [
+        "brief:story:O-COMPONENT-11-27f310b2",
+        "brief:story:O-COMPONENT-12-370bd5b2",
+        "brief:story:O-ORGANIZATION-01-6b45ad90",
+        "brief:story:O-ORGANIZATION-02-54911271",
+        "brief:story:O-ORGANIZATION-03-2c92c853",
+        "brief:story:O-ORGANIZATION-04-1dd970df",
+        "brief:story:O-ORGANIZATION-05-baf0d276"
+      ],
+      "attempt": 1,
+      "blocked_reason": "",
+      "finish_reason": "structured_complete",
+      "response_preview": "{\n  \"drafts\": [\n    {\n      \"brief_id\": \"brief:story:O-COMPONENT-11-27f310b2\",\n      \"cited_frag_ids\": [\n        \"frag-0\"\n      ],\n      \"text\": \"Setup sketch: Introduce ConTEB as the evaluation suite for the proposed reranker. The benchmark is positioned to stress-test rerankers on three axes: (1) cross-passage inference, where the correct answer requires integrating evidence distributed across multiple passages rather than a single document; (2) document-wide context, where the relevant signal is not localized to a short span but spans the full document; and (3) structural reasoning, where the answer depends on the internal organization of the document (e.g., section hierarchy, list structure). The author intends this benchmark to serve as the primary evaluation harness that distinguishes the proposed method from prior rerankers that operate on isolated passages. The mechanism role of ConTEB in the story is to define the task space in which efficiency and inference quality are jointly measured, motivating the need for a reranker that can handle multi-passage context without quadratic cost in passage count. No repository equation or formal definition of ConTEB is available in the provided fragments; the author should supply the concrete task definitions, dataset composition, and scoring protocol when finalizing this section.\"\n    },\n    {\n      \"brief_id\": \"brief:story:O-COMPONENT-12-370bd5b2\",\n      \"cited_frag_ids\": [\n        \"frag-0\"\n      ],\n      \"text\": \"Setup sketch: Describe the training data composition for EBCAR. Three datasets are used: MLDR (entity disambiguation — the model must select the correct entity from a candidate list given a query context), SQuAD (span matching — the model must identify the exact answer span within a passage), and NarrativeQA (narrative comprehension — the model must answer questions that require understanding of a full narrative document). The author's intended mechanism role is to show that the training signal is diverse: it",
+      "estimated_prompt_tokens": 1125,
+      "recovery_applied": false,
+      "recovery_operations": [],
+      "parsed_payload_digest": "sha256:122a4b4a6f257d4c8fbab6d9c542f6736996faf35461d5bfbd33f1d8b22961a2",
+      "response_digest": "sha256:122a4b4a6f257d4c8fbab6d9c542f6736996faf35461d5bfbd33f1d8b22961a2",
+      "parse_error": "unknown frag id:frag-0"
+    },
+    {
+      "brief_ids": [
+        "brief:story:O-COMPONENT-11-27f310b2",
+        "brief:story:O-COMPONENT-12-370bd5b2",
+        "brief:story:O-ORGANIZATION-01-6b45ad90",
+        "brief:story:O-ORGANIZATION-02-54911271",
+        "brief:story:O-ORGANIZATION-03-2c92c853",
+        "brief:story:O-ORGANIZATION-04-1dd970df",
+        "brief:story:O-ORGANIZATION-05-baf0d276"
+      ],
+      "attempt": 2,
+      "blocked_reason": "",
+      "finish_reason": "structured_complete",
+      "response_preview": "{\"drafts\":[{\"brief_id\":\"brief:story:O-COMPONENT-11-27f310b2\",\"cited_frag_ids\":[\n  \"caveat\"\n],\"text\":\"[Setup: Evaluation Framework] Introduce ConTEB as the benchmark suite against which the proposed reranker is evaluated. The suite is designed to stress-test rerankers on three capability axes: (1) cross-passage inference, where the correct answer requires synthesizing information distributed across multiple passages; (2) document-wide context, where the relevant evidence spans the full document rather than a local window; and (3) structural reasoning, where the answer depends on the hierarchical or relational structure of the document. The mechanism role of ConTEB in the paper is to provide a diagnostic evaluation surface that exposes failure modes of existing rerankers which are not captured by standard single-passage retrieval benchmarks. The author should position ConTEB as the primary evaluation instrument and note that its task composition is chosen to isolate the specific capabilities the proposed method targets.\"},{\"brief_id\":\"brief:story:O-COMPONENT-12-370bd5b2\",\"cited_frag_ids\":[\n  \"caveat\"\n],\"text\":\"[Setup: Training Data Composition] Describe the three datasets used to train the EBCAR model: MLDR, SQuAD, and NarrativeQA. Each dataset contributes a distinct skill dimension to the training signal: MLDR provides entity disambiguation tasks (resolving which of multiple candidate entities a query refers to), SQuAD provides span-matching tasks (locating and extracting the precise answer span within a passage), and NarrativeQA provides narrative comprehension tasks (understanding long-form story structure and causal chains). The mechanism role of this multi-dataset mixture is to expose the model to heterogeneous reasoning demands so that the learned embedding space encodes not only lexical similarity but also inferential and structural relationships. The author should note the training-set split and any data preprocessing or filtering applied before feeding into t",
+      "estimated_prompt_tokens": 1140,
+      "recovery_applied": false,
+      "recovery_operations": [],
+      "parsed_payload_digest": "sha256:5673afd85bd4ebccbf6f9134d75ac0c62781a0283516ab9a1d9e289411511997",
+      "response_digest": "sha256:5673afd85bd4ebccbf6f9134d75ac0c62781a0283516ab9a1d9e289411511997",
+      "parse_error": "unknown frag id:caveat"
+    },
+    {
+      "brief_ids": [
+        "brief:story:O-RATIONALE-CHECK-01-bad20132",
+        "brief:story:O-RATIONALE-CHECK-02-30bb7c0f",
+        "brief:story:O-RATIONALE-CHECK-03-b01101f7",
+        "brief:story:O-RATIONALE-CHECK-04-c742a4fc",
+        "brief:story:O-RATIONALE-CHECK-05-595ac6ff",
+        "brief:story:O-RATIONALE-CHECK-06-388166d9"
+      ],
+      "attempt": 1,
+      "blocked_reason": "",
+      "finish_reason": "structured_complete",
+      "response_preview": "{\n  \"drafts\": [\n    {\n      \"brief_id\": \"brief:story:O-RATIONALE-CHECK-01-bad20132\",\n      \"cited_frag_ids\": [\n        \"\"\n      ],\n      \"text\": \"Motivation: The system is designed to sidestep two costly inference paradigms—full-document text processing and autoregressive token generation. The intended mechanism is a retrieval-oriented pipeline in which a query is encoded once and compared against pre-computed passage embeddings, so that inference latency scales with the number of candidate passages rather than with document length or generated token count. The rationale is that cross-passage reasoning can be achieved through embedding-space composition (e.g., attention over a small set of retrieved passages) without ever materializing a full document or generating tokens sequentially. This positions the method as a latency-bounded alternative to LLM-based answer generation while preserving the ability to reason across multiple passages. The specific latency reduction claim and the exact architectural boundary between 'retrieval' and 'reasoning' stages remain to be confirmed against the repository's implementation details; the author should verify whether the pipeline truly avoids any autoregressive component or whether a lightweight decoder is still present at the final answer-formation step.\"\n    },\n    {\n      \"brief_id\": \"brief:story:O-RATIONALE-CHECK-02-30bb7c0f\",\n      \"cited_frag_ids\": [\n        \"\"\n      ],\n      \"text\": \"Motivation: The mechanism injects document-level structural signals (such as section boundaries, heading hierarchy, or positional offsets within the source document) into the embedding representation of each passage. The intended effect is that two passages drawn from the same document carry a shared structural context in their embeddings, enabling the model to perform cross-passage inference—e.g., recognizing that two passages are complementary sections of a single argument—without requiring the full document to be present in context. The s",
+      "estimated_prompt_tokens": 998,
+      "recovery_applied": false,
+      "recovery_operations": [],
+      "parsed_payload_digest": "sha256:e78c0840ca532a2439248e1f09a7699cf86440edb45d808cd40c9761d3b6f95d",
+      "response_digest": "sha256:e78c0840ca532a2439248e1f09a7699cf86440edb45d808cd40c9761d3b6f95d",
+      "parse_error": "unknown frag id:"
+    },
+    {
+      "brief_ids": [
+        "brief:story:O-RATIONALE-CHECK-01-bad20132",
+        "brief:story:O-RATIONALE-CHECK-02-30bb7c0f",
+        "brief:story:O-RATIONALE-CHECK-03-b01101f7",
+        "brief:story:O-RATIONALE-CHECK-04-c742a4fc",
+        "brief:story:O-RATIONALE-CHECK-05-595ac6ff",
+        "brief:story:O-RATIONALE-CHECK-06-388166d9"
+      ],
+      "attempt": 2,
+      "blocked_reason": "",
+      "finish_reason": "structured_complete",
+      "response_preview": "{\"drafts\": [{\"brief_id\": \"brief:story:O-RATIONALE-CHECK-01-bad20132\", \"cited_frag_ids\": [\"frag-01\"], \"text\": \"The method operates at the passage granularity rather than the full-document level. At inference time, the system processes a fixed set of candidate passages per query and produces a discriminative relevance score via a single forward pass, avoiding the sequential token-by-token decoding that autoregressive generation would require. This design choice bounds inference latency to a constant number of forward passes regardless of document length, and eliminates the need to materialize full-text representations. The rationale is that cross-passage reasoning can be captured through the interaction of passage-level embeddings without requiring the model to attend over or generate over the entire document text. The mechanism therefore decouples document-level structural information (injected separately, see O-RATIONALE-CHECK-02) from the token-level processing cost, keeping the hot path short and parallelizable across candidate passages.\"}, {\"brief_id\": \"brief:story:O-RATIONALE-CHECK-02-30bb7c0f\", \"cited_frag_ids\": [\"frag-02\"], \"text\": \"Document-level structural knowledge is encoded as a compact representation (e.g., a document embedding or a set of section-level features) and injected into each passage embedding before the cross-passage interaction stage. Concretely, the mechanism adds a document-context vector to the passage representation so that when two passages from the same document are compared, the model can exploit shared structural context (section headings, positional offsets, co-occurrence within the same document) without re-reading the full document. The injection point is early in the encoder stack, allowing subsequent layers to refine the combined representation. This supports cross-passage inference because the structural signal provides a prior over which passages are likely to be jointly relevant, reducing the search space the attention mechani",
+      "estimated_prompt_tokens": 1011,
+      "recovery_applied": false,
+      "recovery_operations": [],
+      "parsed_payload_digest": "sha256:e5c23514251327513b66c67a7d7918f268344c0d952915b03f5a8f089eaf854e",
+      "response_digest": "sha256:e5c23514251327513b66c67a7d7918f268344c0d952915b03f5a8f089eaf854e",
+      "parse_error": "unknown frag id:frag-01"
+    }
+  ],
+  "content_digest": "sha256:39facd2ce1302acd863dd07a5bb50f2048a15b7cc9f8ce85682b8d3ef71c7651"
+}

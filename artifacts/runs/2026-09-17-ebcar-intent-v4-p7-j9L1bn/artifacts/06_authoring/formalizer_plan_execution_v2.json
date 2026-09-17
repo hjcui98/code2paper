@@ -1,0 +1,12 @@
+{
+  "accepted_package_count": 0,
+  "actual_main_calls": 0,
+  "actual_repair_calls": 0,
+  "assertion_failures": [],
+  "plan_digest": "sha256:26902316a9ce851a3c043dc2b29c65a19f0bfcc41bfaefa61ea1831103f098e7",
+  "planned_main_invocations": 0,
+  "receipt_count": 0,
+  "repair_call_limit": 32,
+  "schema_version": "2.0",
+  "task_failures": []
+}

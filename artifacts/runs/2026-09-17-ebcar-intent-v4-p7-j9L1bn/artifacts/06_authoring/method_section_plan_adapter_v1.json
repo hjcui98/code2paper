@@ -1,0 +1,159 @@
+{
+  "schema_version": "1.0",
+  "adapter": "narrative_to_method_section_plan_v1",
+  "source_plan_digest": "sha256:39472136b1dee572b8956755458301c3381c023bb9d925946dd0ff91fc06c720",
+  "source_plan_id": "intent-narrative-v4",
+  "source_argument_unit_ids": [
+    "MA-S1:unit-1",
+    "MA-S1:unit-2",
+    "MA-S2:unit",
+    "MA-S3:unit-1",
+    "MA-S3:unit-2",
+    "MA-S3:unit-3",
+    "MA-S3:unit-4",
+    "MA-S3:unit-5",
+    "MA-S3:unit-6",
+    "MA-S3:unit-7",
+    "MA-S3:unit-8",
+    "MA-S3:unit-9",
+    "MA-S3:unit-10",
+    "MA-S3:unit-11",
+    "MA-S3:unit-12",
+    "MA-S3:unit-13",
+    "MA-S3:unit-14",
+    "MA-S3:unit-15",
+    "MA-S4:unit-1",
+    "MA-S4:unit-2",
+    "MA-S4:unit-3",
+    "MA-S4:unit-4",
+    "MA-S4:unit-5",
+    "MA-S4:unit-6",
+    "MA-S5:unit-1",
+    "MA-S5:unit-2",
+    "MA-S5:unit-3",
+    "MA-S5:unit-4"
+  ],
+  "source_obligation_ids": [],
+  "current_narrative_plan_digest": "sha256:722838f8d11901d7777a5d6511ec4b1d66792663dce672febbfcce1d68cda8f1",
+  "current_narrative_plan_id": "intent-narrative-v4",
+  "current_sections": [
+    {
+      "section_id": "MA-S1",
+      "paragraph_ids": [
+        "MA-S1:P1",
+        "MA-S1:P2"
+      ],
+      "mechanism_ids": []
+    },
+    {
+      "section_id": "MA-S2",
+      "paragraph_ids": [
+        "MA-S2:P1",
+        "MA-S2:P2"
+      ],
+      "mechanism_ids": []
+    },
+    {
+      "section_id": "MA-S3",
+      "paragraph_ids": [
+        "MA-S3:P1__f1",
+        "MA-S3:P1__f2",
+        "MA-S3:P1__f3",
+        "MA-S3:P1__f4",
+        "MA-S3:P1__f5",
+        "MA-S3:P1__f6",
+        "MA-S3:P1__f7",
+        "MA-S3:P1__f8",
+        "MA-S3:P1__f9",
+        "MA-S3:P1__f10",
+        "MA-S3:P2__f1",
+        "MA-S3:P2__f2",
+        "MA-S3:P2__f3",
+        "MA-S3:P2__f4",
+        "MA-S3:P2__f5",
+        "MA-S3:P2__f6",
+        "MA-S3:P2__f7",
+        "MA-S3:P3",
+        "MA-S3:P4",
+        "MA-S3:P5",
+        "MA-S3:P6",
+        "MA-S3:P7",
+        "MA-S3:P8",
+        "MA-S3:P9",
+        "MA-S3:P10",
+        "MA-S3:P11",
+        "MA-S3:P12",
+        "MA-S3:P13",
+        "MA-S3:P14",
+        "MA-S3:P15",
+        "MA-S3:P16",
+        "MA-S3:P17"
+      ],
+      "mechanism_ids": [
+        "mech_sym:f6cf5bdfe2ae16f0",
+        "mech_sym:9773c5add7af1f92"
+      ]
+    },
+    {
+      "section_id": "MA-S4",
+      "paragraph_ids": [
+        "MA-S4:P1",
+        "MA-S4:P2",
+        "MA-S4:P3",
+        "MA-S4:P4",
+        "MA-S4:P5",
+        "MA-S4:P6"
+      ],
+      "mechanism_ids": [
+        "mech_sym:f6cf5bdfe2ae16f0"
+      ]
+    },
+    {
+      "section_id": "MA-S5",
+      "paragraph_ids": [
+        "MA-S5:P1",
+        "MA-S5:P2",
+        "MA-S5:P3",
+        "MA-S5:P4"
+      ],
+      "mechanism_ids": [
+        "mech_sym:9773c5add7af1f92"
+      ]
+    }
+  ],
+  "argument_unit_section_bindings": {
+    "MA-S1:unit-1": "MA-S1",
+    "MA-S1:unit-2": "MA-S1",
+    "MA-S2:unit": "MA-S2",
+    "MA-S3:unit-1": "MA-S3",
+    "MA-S3:unit-10": "MA-S3",
+    "MA-S3:unit-11": "MA-S3",
+    "MA-S3:unit-12": "MA-S3",
+    "MA-S3:unit-13": "MA-S3",
+    "MA-S3:unit-14": "MA-S3",
+    "MA-S3:unit-15": "MA-S3",
+    "MA-S3:unit-2": "MA-S3",
+    "MA-S3:unit-3": "MA-S3",
+    "MA-S3:unit-4": "MA-S3",
+    "MA-S3:unit-5": "MA-S3",
+    "MA-S3:unit-6": "MA-S3",
+    "MA-S3:unit-7": "MA-S3",
+    "MA-S3:unit-8": "MA-S3",
+    "MA-S3:unit-9": "MA-S3",
+    "MA-S4:unit-1": "MA-S4",
+    "MA-S4:unit-2": "MA-S4",
+    "MA-S4:unit-3": "MA-S4",
+    "MA-S4:unit-4": "MA-S4",
+    "MA-S4:unit-5": "MA-S4",
+    "MA-S4:unit-6": "MA-S4",
+    "MA-S5:unit-1": "MA-S5",
+    "MA-S5:unit-2": "MA-S5",
+    "MA-S5:unit-3": "MA-S5",
+    "MA-S5:unit-4": "MA-S5"
+  },
+  "obligation_section_bindings": {},
+  "ambiguous_source_argument_unit_sections": {},
+  "unassigned_source_argument_unit_ids": [],
+  "unassigned_source_obligation_ids": [],
+  "binding_policy": "author_section_identity_then_unique_exact_source_anchor"
+}

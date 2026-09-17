@@ -4469,6 +4469,8 @@ def _run_writer_surface(
             formalizer_phase_checkpoint=authoring_phase_checkpoint,
         )
     except Exception as exc:  # noqa: BLE001 — the product run must not crash on writer faults
+        import traceback
+        traceback.print_exc()
         return {}, "blocked", f"writer_surface_fault:{type(exc).__name__}:{str(exc)[:200]}"
     status = result.status if hasattr(result, "status") else "blocked"
     blocked_reason = (

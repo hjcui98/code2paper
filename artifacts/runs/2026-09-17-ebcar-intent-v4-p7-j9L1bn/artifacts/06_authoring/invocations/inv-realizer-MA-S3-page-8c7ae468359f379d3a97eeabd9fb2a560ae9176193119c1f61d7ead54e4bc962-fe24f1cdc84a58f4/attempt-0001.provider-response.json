@@ -1,0 +1,25 @@
+{
+  "attempt": 1,
+  "blocked_reason": "",
+  "content_digest": "sha256:bc01cb5c0f45528dcc11f4b6100d238620fb2e4f26e354a4c31b82824ec60c57",
+  "diagnostics": {
+    "finish_seen": true,
+    "partial_chars": 3413,
+    "stream_events": 444,
+    "terminal_status": "finish_seen",
+    "usage_seen": true
+  },
+  "finish_reason": "structured_complete",
+  "invocation_id": "inv:realizer:MA-S3:page:8c7ae468359f379d3a97eeabd9fb2a560ae9176193119c1f61d7ead54e4bc962",
+  "provider_finish_reason": "stop",
+  "request_diagnostics_digest": "sha256:262a743192caabb498904038a91dc83628b748638915bf6bc9850dcdcd8ba23d",
+  "response_digest": "sha256:16acb5418269088c38971ea8ea4cea7a74276f4f888f60f7377c0f3ff0591aa9",
+  "response_text": "{\n  \"draft_markdown\": \"In the reranking pipeline, the system loads the temporary results via `reranked_passages.append(temp_reranked_passages)` and then returns the final set of `reranked_passages` and `relevance_scores` with the shape `[batch_size, num_passages]`. The subsequent encoder invocation is configured with default mask parameters: `attn_mask=None,`, `key_padding_mask=None,`, `causal_mask=False,`, and `return_attention=False,`. Based on the `return_attention` flag, the system initializes the collection with `all_attentions = [] if return_attention else None`. It then iterates through the model's layers using `for layer in self.layers:`. Within this loop, a conditional check `if return_attention:` determines the execution path. When the condition is met, the layer is called with `src, attn_weights = layer(` to capture the attention weights. This branch is conditional on the `return_attention` flag.\",\n  \"rendered_detail_ids\": [\n    \"detail:mech_sym:9773c5add7af1f92:53\",\n    \"detail:mech_sym:9773c5add7af1f92:54\",\n    \"detail:mech_sym:9773c5add7af1f92:55\",\n    \"detail:mech_sym:9773c5add7af1f92:56\",\n    \"detail:mech_sym:9773c5add7af1f92:57\",\n    \"detail:mech_sym:9773c5add7af1f92:58\",\n    \"detail:mech_sym:9773c5add7af1f92:59\",\n    \"detail:mech_sym:9773c5add7af1f92:60\",\n    \"detail:mech_sym:9773c5add7af1f92:61\",\n    \"detail:mech_sym:9773c5add7af1f92:62\",\n    \"detail:mech_sym:9773c5add7af1f92:63\",\n    \"detail:mech_sym:9773c5add7af1f92:64\"\n  ],\n  \"used_formula_package_ids\": [],\n  \"witnesses\": [\n    {\n      \"exact_text\": \"reranked_passages.append(temp_reranked_passages)\",\n      \"target_id\": \"detail:mech_sym:9773c5add7af1f92:53\",\n      \"witness_kind\": \"detail\"\n    },\n    {\n      \"exact_text\": \"reranked_passages` and `relevance_scores` with the shape `[batch_size, num_passages]`\",\n      \"target_id\": \"detail:mech_sym:9773c5add7af1f92:54\",\n      \"witness_kind\": \"detail\"\n    },\n    {\n      \"exact_text\": \"attn_mask=None,\",\n      \"target_id\": \"detail:mech_sym:9773c5add7af1f92:55\",\n      \"witness_kind\": \"detail\"\n    },\n    {\n      \"exact_text\": \"key_padding_mask=None,\",\n      \"target_id\": \"detail:mech_sym:9773c5add7af1f92:56\",\n      \"witness_kind\": \"detail\"\n    },\n    {\n      \"exact_text\": \"causal_mask=False,\",\n      \"target_id\": \"detail:mech_sym:9773c5add7af1f92:57\",\n      \"witness_kind\": \"detail\"\n    },\n    {\n      \"exact_text\": \"return_attention=False,\",\n      \"target_id\": \"detail:mech_sym:9773c5add7af1f92:58\",\n      \"witness_kind\": \"detail\"\n    },\n    {\n      \"exact_text\": \"all_attentions = [] if return_attention else None\",\n      \"target_id\": \"detail:mech_sym:9773c5add7af1f92:59\",\n      \"witness_kind\": \"detail\"\n    },\n    {\n      \"exact_text\": \"for layer in self.layers:\",\n      \"target_id\": \"detail:mech_sym:9773c5add7af1f92:60\",\n      \"witness_kind\": \"detail\"\n    },\n    {\n      \"exact_text\": \"for layer in self.layers:\",\n      \"target_id\": \"detail:mech_sym:9773c5add7af1f92:61\",\n      \"witness_kind\": \"detail\"\n    },\n    {\n      \"exact_text\": \"if return_attention:\",\n      \"target_id\": \"detail:mech_sym:9773c5add7af1f92:62\",\n      \"witness_kind\": \"detail\"\n    },\n    {\n      \"exact_text\": \"if return_attention:\",\n      \"target_id\": \"detail:mech_sym:9773c5add7af1f92:63\",\n      \"witness_kind\": \"detail\"\n    },\n    {\n      \"exact_text\": \"src, attn_weights = layer(\",\n      \"target_id\": \"detail:mech_sym:9773c5add7af1f92:64\",\n      \"witness_kind\": \"detail\"\n    }\n  ]\n}",
+  "schema_version": "1.0",
+  "thinking_chars": 0,
+  "usage": {
+    "completion_tokens": 1280,
+    "prompt_tokens": 25030,
+    "total_tokens": 26310
+  }
+}

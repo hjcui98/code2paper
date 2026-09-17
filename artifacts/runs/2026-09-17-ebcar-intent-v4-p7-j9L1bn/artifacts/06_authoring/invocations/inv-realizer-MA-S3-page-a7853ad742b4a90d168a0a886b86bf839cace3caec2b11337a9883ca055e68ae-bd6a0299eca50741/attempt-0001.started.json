@@ -1,0 +1,13 @@
+{
+  "attempt": 1,
+  "content_digest": "sha256:84926c56fd817e10a7cfbe2bb196977cd1c3532e35e49b833e1e85df6495225b",
+  "content_repair_attempt": false,
+  "expected_request_envelope_digest": "sha256:7b741ea81a4917814b862dd1ba01492e80ccefd129f88415d3bb46759b5ad2d8",
+  "expected_technical_bytes_digest": "sha256:a2a00429b47212e9b12e43af21b3fc181023d0ffcf103a5fe314b580a75fcabc",
+  "invocation_id": "inv:realizer:MA-S3:page:a7853ad742b4a90d168a0a886b86bf839cace3caec2b11337a9883ca055e68ae",
+  "model_identity_digest": "sha256:f3daa7dbeed50de151930dbb664f4b1e544958084740ec5f9338e08707efab8d",
+  "page_id": "page:a7853ad742b4a90d168a0a886b86bf839cace3caec2b11337a9883ca055e68ae",
+  "plan_digest": "sha256:31bfbd3f40ad4082047770fbf63df7a7b038f34ffe2c413a4c0937a2d5425501",
+  "schema_version": "2.0",
+  "started_at_unix": 1789617483.2085474
+}

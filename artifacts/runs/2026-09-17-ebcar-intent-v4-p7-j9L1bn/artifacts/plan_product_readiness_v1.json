@@ -1,0 +1,1031 @@
+{
+  "schema_version": "1.0",
+  "plan_id": "method-plan:c77606b296580961c395dc59",
+  "readiness": "candidate_ready_with_review",
+  "section_readiness": [
+    {
+      "section_id": "MA-S1",
+      "candidate_ready": true,
+      "verified_ready": false,
+      "blocked_for_safety_reasons": [],
+      "review_required_ids": [
+        "O-ORGANIZATION-01-6b45ad90",
+        "O-COMPONENT-11-27f310b2"
+      ]
+    },
+    {
+      "section_id": "MA-S2",
+      "candidate_ready": true,
+      "verified_ready": false,
+      "blocked_for_safety_reasons": [],
+      "review_required_ids": [
+        "O-ORGANIZATION-02-54911271"
+      ]
+    },
+    {
+      "section_id": "MA-S3",
+      "candidate_ready": true,
+      "verified_ready": false,
+      "blocked_for_safety_reasons": [],
+      "review_required_ids": [
+        "O-ORGANIZATION-03-2c92c853",
+        "O-METHOD-MAINLINE-01-c8146479",
+        "O-COMPONENT-06-34021b88",
+        "O-COMPONENT-08-4aac53dc",
+        "O-RATIONALE-CHECK-06-388166d9",
+        "O-COMPONENT-01-de6049e3",
+        "O-COMPONENT-04-b5b6af99",
+        "O-RATIONALE-CHECK-02-30bb7c0f",
+        "O-RATIONALE-CHECK-04-c742a4fc",
+        "O-COMPONENT-03-d8aa8c77",
+        "O-COMPONENT-05-4c3594d2",
+        "O-COMPONENT-07-d157b2cc",
+        "O-RATIONALE-CHECK-03-b01101f7"
+      ]
+    },
+    {
+      "section_id": "MA-S4",
+      "candidate_ready": true,
+      "verified_ready": false,
+      "blocked_for_safety_reasons": [],
+      "review_required_ids": [
+        "O-ORGANIZATION-04-1dd970df",
+        "O-METHOD-MAINLINE-01-c8146479",
+        "O-RATIONALE-CHECK-05-595ac6ff",
+        "O-COMPONENT-09-6a8cfd6c",
+        "O-COMPONENT-10-dac6250f",
+        "O-COMPONENT-12-370bd5b2"
+      ]
+    },
+    {
+      "section_id": "MA-S5",
+      "candidate_ready": true,
+      "verified_ready": false,
+      "blocked_for_safety_reasons": [],
+      "review_required_ids": [
+        "O-ORGANIZATION-05-baf0d276",
+        "O-METHOD-MAINLINE-01-c8146479",
+        "O-STAGE-05-5b3d398a",
+        "O-COMPONENT-01-c301ecdd",
+        "O-RATIONALE-CHECK-01-bad20132"
+      ]
+    }
+  ],
+  "unit_status": [
+    {
+      "argument_unit_id": "MA-S1:unit-1",
+      "section_id": "MA-S1",
+      "lane": "repository_partial",
+      "can_enter_candidate": true,
+      "can_enter_verified": false,
+      "requires_review": true,
+      "requires_callback": false,
+      "evidence_status": "partially_supported_by_repository",
+      "bound_obligation_ids": [
+        "O-ORGANIZATION-01-6b45ad90"
+      ]
+    },
+    {
+      "argument_unit_id": "MA-S1:unit-2",
+      "section_id": "MA-S1",
+      "lane": "repository_partial",
+      "can_enter_candidate": true,
+      "can_enter_verified": false,
+      "requires_review": true,
+      "requires_callback": false,
+      "evidence_status": "partially_supported_by_repository",
+      "bound_obligation_ids": [
+        "O-COMPONENT-11-27f310b2"
+      ]
+    },
+    {
+      "argument_unit_id": "MA-S2:unit",
+      "section_id": "MA-S2",
+      "lane": "repository_partial",
+      "can_enter_candidate": true,
+      "can_enter_verified": false,
+      "requires_review": true,
+      "requires_callback": false,
+      "evidence_status": "partially_supported_by_repository",
+      "bound_obligation_ids": [
+        "O-ORGANIZATION-02-54911271"
+      ]
+    },
+    {
+      "argument_unit_id": "MA-S3:unit-1",
+      "section_id": "MA-S3",
+      "lane": "repository_partial",
+      "can_enter_candidate": true,
+      "can_enter_verified": false,
+      "requires_review": true,
+      "requires_callback": false,
+      "evidence_status": "partially_supported_by_repository",
+      "bound_obligation_ids": [
+        "O-ORGANIZATION-03-2c92c853"
+      ]
+    },
+    {
+      "argument_unit_id": "MA-S3:unit-2",
+      "section_id": "MA-S3",
+      "lane": "repository_partial",
+      "can_enter_candidate": true,
+      "can_enter_verified": false,
+      "requires_review": true,
+      "requires_callback": false,
+      "evidence_status": "partially_supported_by_repository,supported_by_repository",
+      "bound_obligation_ids": [
+        "O-METHOD-MAINLINE-01-c8146479",
+        "O-STAGE-03-2c5bd758"
+      ]
+    },
+    {
+      "argument_unit_id": "MA-S3:unit-3",
+      "section_id": "MA-S3",
+      "lane": "repository_partial",
+      "can_enter_candidate": true,
+      "can_enter_verified": false,
+      "requires_review": true,
+      "requires_callback": false,
+      "evidence_status": "partially_supported_by_repository",
+      "bound_obligation_ids": [
+        "O-COMPONENT-06-34021b88"
+      ]
+    },
+    {
+      "argument_unit_id": "MA-S3:unit-4",
+      "section_id": "MA-S3",
+      "lane": "repository_partial",
+      "can_enter_candidate": true,
+      "can_enter_verified": false,
+      "requires_review": true,
+      "requires_callback": false,
+      "evidence_status": "partially_supported_by_repository",
+      "bound_obligation_ids": [
+        "O-COMPONENT-08-4aac53dc"
+      ]
+    },
+    {
+      "argument_unit_id": "MA-S3:unit-5",
+      "section_id": "MA-S3",
+      "lane": "repository_partial",
+      "can_enter_candidate": true,
+      "can_enter_verified": false,
+      "requires_review": true,
+      "requires_callback": false,
+      "evidence_status": "partially_supported_by_repository",
+      "bound_obligation_ids": [
+        "O-RATIONALE-CHECK-06-388166d9"
+      ]
+    },
+    {
+      "argument_unit_id": "MA-S3:unit-6",
+      "section_id": "MA-S3",
+      "lane": "repository_verified",
+      "can_enter_candidate": true,
+      "can_enter_verified": true,
+      "requires_review": false,
+      "requires_callback": false,
+      "evidence_status": "supported_by_repository",
+      "bound_obligation_ids": [
+        "O-STAGE-01-039a963a"
+      ]
+    },
+    {
+      "argument_unit_id": "MA-S3:unit-7",
+      "section_id": "MA-S3",
+      "lane": "repository_partial",
+      "can_enter_candidate": true,
+      "can_enter_verified": false,
+      "requires_review": true,
+      "requires_callback": false,
+      "evidence_status": "partially_supported_by_repository",
+      "bound_obligation_ids": [
+        "O-COMPONENT-01-de6049e3"
+      ]
+    },
+    {
+      "argument_unit_id": "MA-S3:unit-8",
+      "section_id": "MA-S3",
+      "lane": "repository_verified",
+      "can_enter_candidate": true,
+      "can_enter_verified": true,
+      "requires_review": false,
+      "requires_callback": false,
+      "evidence_status": "supported_by_repository",
+      "bound_obligation_ids": [
+        "O-STAGE-02-42e8d68d"
+      ]
+    },
+    {
+      "argument_unit_id": "MA-S3:unit-9",
+      "section_id": "MA-S3",
+      "lane": "repository_partial",
+      "can_enter_candidate": true,
+      "can_enter_verified": false,
+      "requires_review": true,
+      "requires_callback": false,
+      "evidence_status": "partially_supported_by_repository",
+      "bound_obligation_ids": [
+        "O-COMPONENT-04-b5b6af99"
+      ]
+    },
+    {
+      "argument_unit_id": "MA-S3:unit-10",
+      "section_id": "MA-S3",
+      "lane": "repository_partial",
+      "can_enter_candidate": true,
+      "can_enter_verified": false,
+      "requires_review": true,
+      "requires_callback": false,
+      "evidence_status": "partially_supported_by_repository",
+      "bound_obligation_ids": [
+        "O-RATIONALE-CHECK-02-30bb7c0f"
+      ]
+    },
+    {
+      "argument_unit_id": "MA-S3:unit-11",
+      "section_id": "MA-S3",
+      "lane": "author_intent_unverified",
+      "can_enter_candidate": true,
+      "can_enter_verified": false,
+      "requires_review": true,
+      "requires_callback": false,
+      "evidence_status": "author_confirmation_required",
+      "bound_obligation_ids": [
+        "O-RATIONALE-CHECK-04-c742a4fc"
+      ]
+    },
+    {
+      "argument_unit_id": "MA-S3:unit-12",
+      "section_id": "MA-S3",
+      "lane": "repository_partial",
+      "can_enter_candidate": true,
+      "can_enter_verified": false,
+      "requires_review": true,
+      "requires_callback": false,
+      "evidence_status": "partially_supported_by_repository",
+      "bound_obligation_ids": [
+        "O-COMPONENT-03-d8aa8c77"
+      ]
+    },
+    {
+      "argument_unit_id": "MA-S3:unit-13",
+      "section_id": "MA-S3",
+      "lane": "repository_partial",
+      "can_enter_candidate": true,
+      "can_enter_verified": false,
+      "requires_review": true,
+      "requires_callback": false,
+      "evidence_status": "partially_supported_by_repository",
+      "bound_obligation_ids": [
+        "O-COMPONENT-05-4c3594d2"
+      ]
+    },
+    {
+      "argument_unit_id": "MA-S3:unit-14",
+      "section_id": "MA-S3",
+      "lane": "repository_partial",
+      "can_enter_candidate": true,
+      "can_enter_verified": false,
+      "requires_review": true,
+      "requires_callback": false,
+      "evidence_status": "partially_supported_by_repository",
+      "bound_obligation_ids": [
+        "O-COMPONENT-07-d157b2cc"
+      ]
+    },
+    {
+      "argument_unit_id": "MA-S3:unit-15",
+      "section_id": "MA-S3",
+      "lane": "repository_partial",
+      "can_enter_candidate": true,
+      "can_enter_verified": false,
+      "requires_review": true,
+      "requires_callback": false,
+      "evidence_status": "partially_supported_by_repository",
+      "bound_obligation_ids": [
+        "O-RATIONALE-CHECK-03-b01101f7"
+      ]
+    },
+    {
+      "argument_unit_id": "MA-S4:unit-1",
+      "section_id": "MA-S4",
+      "lane": "repository_partial",
+      "can_enter_candidate": true,
+      "can_enter_verified": false,
+      "requires_review": true,
+      "requires_callback": false,
+      "evidence_status": "partially_supported_by_repository",
+      "bound_obligation_ids": [
+        "O-ORGANIZATION-04-1dd970df"
+      ]
+    },
+    {
+      "argument_unit_id": "MA-S4:unit-2",
+      "section_id": "MA-S4",
+      "lane": "repository_partial",
+      "can_enter_candidate": true,
+      "can_enter_verified": false,
+      "requires_review": true,
+      "requires_callback": false,
+      "evidence_status": "partially_supported_by_repository,supported_by_repository",
+      "bound_obligation_ids": [
+        "O-METHOD-MAINLINE-01-c8146479",
+        "O-STAGE-04-c50e0bef"
+      ]
+    },
+    {
+      "argument_unit_id": "MA-S4:unit-3",
+      "section_id": "MA-S4",
+      "lane": "repository_partial",
+      "can_enter_candidate": true,
+      "can_enter_verified": false,
+      "requires_review": true,
+      "requires_callback": false,
+      "evidence_status": "partially_supported_by_repository",
+      "bound_obligation_ids": [
+        "O-RATIONALE-CHECK-05-595ac6ff"
+      ]
+    },
+    {
+      "argument_unit_id": "MA-S4:unit-4",
+      "section_id": "MA-S4",
+      "lane": "repository_partial",
+      "can_enter_candidate": true,
+      "can_enter_verified": false,
+      "requires_review": true,
+      "requires_callback": false,
+      "evidence_status": "partially_supported_by_repository",
+      "bound_obligation_ids": [
+        "O-COMPONENT-09-6a8cfd6c"
+      ]
+    },
+    {
+      "argument_unit_id": "MA-S4:unit-5",
+      "section_id": "MA-S4",
+      "lane": "repository_partial",
+      "can_enter_candidate": true,
+      "can_enter_verified": false,
+      "requires_review": true,
+      "requires_callback": false,
+      "evidence_status": "partially_supported_by_repository",
+      "bound_obligation_ids": [
+        "O-COMPONENT-10-dac6250f"
+      ]
+    },
+    {
+      "argument_unit_id": "MA-S4:unit-6",
+      "section_id": "MA-S4",
+      "lane": "repository_partial",
+      "can_enter_candidate": true,
+      "can_enter_verified": false,
+      "requires_review": true,
+      "requires_callback": false,
+      "evidence_status": "partially_supported_by_repository",
+      "bound_obligation_ids": [
+        "O-COMPONENT-12-370bd5b2"
+      ]
+    },
+    {
+      "argument_unit_id": "MA-S5:unit-1",
+      "section_id": "MA-S5",
+      "lane": "repository_partial",
+      "can_enter_candidate": true,
+      "can_enter_verified": false,
+      "requires_review": true,
+      "requires_callback": false,
+      "evidence_status": "partially_supported_by_repository",
+      "bound_obligation_ids": [
+        "O-ORGANIZATION-05-baf0d276"
+      ]
+    },
+    {
+      "argument_unit_id": "MA-S5:unit-2",
+      "section_id": "MA-S5",
+      "lane": "repository_partial",
+      "can_enter_candidate": true,
+      "can_enter_verified": false,
+      "requires_review": true,
+      "requires_callback": false,
+      "evidence_status": "partially_supported_by_repository",
+      "bound_obligation_ids": [
+        "O-METHOD-MAINLINE-01-c8146479",
+        "O-STAGE-05-5b3d398a"
+      ]
+    },
+    {
+      "argument_unit_id": "MA-S5:unit-3",
+      "section_id": "MA-S5",
+      "lane": "repository_partial",
+      "can_enter_candidate": true,
+      "can_enter_verified": false,
+      "requires_review": true,
+      "requires_callback": false,
+      "evidence_status": "partially_supported_by_repository",
+      "bound_obligation_ids": [
+        "O-COMPONENT-01-c301ecdd"
+      ]
+    },
+    {
+      "argument_unit_id": "MA-S5:unit-4",
+      "section_id": "MA-S5",
+      "lane": "repository_partial",
+      "can_enter_candidate": true,
+      "can_enter_verified": false,
+      "requires_review": true,
+      "requires_callback": false,
+      "evidence_status": "partially_supported_by_repository",
+      "bound_obligation_ids": [
+        "O-RATIONALE-CHECK-01-bad20132"
+      ]
+    }
+  ],
+  "verified_positive_unit_ids": [
+    "MA-S3:unit-6",
+    "MA-S3:unit-8"
+  ],
+  "candidate_allowed_unit_ids": [
+    "MA-S1:unit-1",
+    "MA-S1:unit-2",
+    "MA-S2:unit",
+    "MA-S3:unit-1",
+    "MA-S3:unit-2",
+    "MA-S3:unit-3",
+    "MA-S3:unit-4",
+    "MA-S3:unit-5",
+    "MA-S3:unit-6",
+    "MA-S3:unit-7",
+    "MA-S3:unit-8",
+    "MA-S3:unit-9",
+    "MA-S3:unit-10",
+    "MA-S3:unit-11",
+    "MA-S3:unit-12",
+    "MA-S3:unit-13",
+    "MA-S3:unit-14",
+    "MA-S3:unit-15",
+    "MA-S4:unit-1",
+    "MA-S4:unit-2",
+    "MA-S4:unit-3",
+    "MA-S4:unit-4",
+    "MA-S4:unit-5",
+    "MA-S4:unit-6",
+    "MA-S5:unit-1",
+    "MA-S5:unit-2",
+    "MA-S5:unit-3",
+    "MA-S5:unit-4"
+  ],
+  "review_required_obligation_ids": [
+    "O-ORGANIZATION-01-6b45ad90",
+    "O-COMPONENT-11-27f310b2",
+    "O-ORGANIZATION-02-54911271",
+    "O-ORGANIZATION-03-2c92c853",
+    "O-METHOD-MAINLINE-01-c8146479",
+    "O-COMPONENT-06-34021b88",
+    "O-COMPONENT-08-4aac53dc",
+    "O-RATIONALE-CHECK-06-388166d9",
+    "O-COMPONENT-01-de6049e3",
+    "O-COMPONENT-04-b5b6af99",
+    "O-RATIONALE-CHECK-02-30bb7c0f",
+    "O-RATIONALE-CHECK-04-c742a4fc",
+    "O-COMPONENT-03-d8aa8c77",
+    "O-COMPONENT-05-4c3594d2",
+    "O-COMPONENT-07-d157b2cc",
+    "O-RATIONALE-CHECK-03-b01101f7",
+    "O-ORGANIZATION-04-1dd970df",
+    "O-RATIONALE-CHECK-05-595ac6ff",
+    "O-COMPONENT-09-6a8cfd6c",
+    "O-COMPONENT-10-dac6250f",
+    "O-COMPONENT-12-370bd5b2",
+    "O-ORGANIZATION-05-baf0d276",
+    "O-STAGE-05-5b3d398a",
+    "O-COMPONENT-01-c301ecdd",
+    "O-RATIONALE-CHECK-01-bad20132"
+  ],
+  "blocked_for_safety_reasons": [],
+  "review_candidates": [
+    {
+      "candidate_id": "review:O-METHOD-MAINLINE-01-c8146479",
+      "source_obligation_id": "O-METHOD-MAINLINE-01-c8146479",
+      "source_claim_id": null,
+      "section_id": "MA-S3",
+      "argument_unit_id": "MA-S3:unit-2",
+      "lane": "repository_partial",
+      "status": "partially_supported_by_repository",
+      "proposed_body": "The method is intended to address the following point, which currently awaits repository or author confirmation: Start with pre‑computed dense passage embeddings from a standard retriever (e.g., Contriever) and the query embedding from the same encoder. Augment each passage embedding with a document ID embedding (relative to the current retrieved set) and a sinusoidal passage‑position encoding to inject structural cues. Process the query and enriched passage embeddings jointly through a stack of Transformer encoder layers that use a hybrid attention mechanism: a shared full attention module for global interactions, and a dedicated masked attention module that restricts attention to passages from the same document, to consolidate intra‑document coherence. Optimize the model with a contrastive loss (InfoNCE) that uses the fixed original query embedding as an anchor, pulling the contextualized positive passage embedding closer and pushing negatives away. At inference, compute dot‑product similarity between the static query embedding and the updated passage embeddings, then rank passages in descending order of these scores.",
+      "confirmation_question": "Should the Method confirm that start with pre‑computed dense passage embeddings from a standard retriever (e.g., contriever) and the query embedding from the same encoder. augment each passage embedding with a document id embedding (relative to the current retrieved set) and a sinusoidal passage‑position encoding to inject structural cues. process the query and enriched passage embeddings jointly through a stack of transformer encoder layers that use a hybrid attention mechanism: a shared full attention module for global interactions, and a dedicated masked attention module that restricts attention to passages from the same document, to consolidate intra‑document coherence. optimize the model with a contrastive loss (infonce) that uses the fixed original query embedding as an anchor, pulling the contextualized positive passage embedding closer and pushing negatives away. at inference, compute dot‑product similarity between the static query embedding and the updated passage embeddings, then rank passages in descending order of these scores?",
+      "needed_evidence": [
+        "At least one typed behavior target is partially or fully covered; remaining targets need additional evidence or an explicit gap."
+      ],
+      "suggested_action": "confirm_author_intent_or_provide_evidence",
+      "blocks_verified": true,
+      "blocks_candidate": false,
+      "trace_refs": [
+        "O-METHOD-MAINLINE-01-c8146479"
+      ]
+    },
+    {
+      "candidate_id": "review:O-STAGE-05-5b3d398a",
+      "source_obligation_id": "O-STAGE-05-5b3d398a",
+      "source_claim_id": null,
+      "section_id": "MA-S5",
+      "argument_unit_id": "MA-S5:unit-2",
+      "lane": "repository_partial",
+      "status": "partially_supported_by_repository",
+      "proposed_body": "The method is intended to address the following point, which currently awaits repository or author confirmation: Inference scoring and ranking: Compute dot‑product similarities between the unchanged query embedding and the contextualized passage embeddings, then sort passages by descending score.",
+      "confirmation_question": "Should the Method confirm that inference scoring and ranking: compute dot‑product similarities between the unchanged query embedding and the contextualized passage embeddings, then sort passages by descending score?",
+      "needed_evidence": [
+        "At least one typed behavior target is partially or fully covered; remaining targets need additional evidence or an explicit gap."
+      ],
+      "suggested_action": "confirm_author_intent_or_provide_evidence",
+      "blocks_verified": true,
+      "blocks_candidate": false,
+      "trace_refs": [
+        "O-STAGE-05-5b3d398a"
+      ]
+    },
+    {
+      "candidate_id": "review:O-COMPONENT-01-c301ecdd",
+      "source_obligation_id": "O-COMPONENT-01-c301ecdd",
+      "source_claim_id": null,
+      "section_id": "MA-S5",
+      "argument_unit_id": "MA-S5:unit-3",
+      "lane": "repository_partial",
+      "status": "partially_supported_by_repository",
+      "proposed_body": "The method is intended to address the following point, which currently awaits repository or author confirmation: Improve reranking in retrieval-augmented generation (RAG) systems by addressing both inference efficiency and the need for cross-passage reasoning, especially when evidence is scattered across passages and requires resolving coreference or structural context.",
+      "confirmation_question": "Should the Method confirm that improve reranking in retrieval-augmented generation (rag) systems by addressing both inference efficiency and the need for cross-passage reasoning, especially when evidence is scattered across passages and requires resolving coreference or structural context?",
+      "needed_evidence": [
+        "At least one typed behavior target is partially or fully covered; remaining targets need additional evidence or an explicit gap."
+      ],
+      "suggested_action": "confirm_author_intent_or_provide_evidence",
+      "blocks_verified": true,
+      "blocks_candidate": false,
+      "trace_refs": [
+        "O-COMPONENT-01-c301ecdd"
+      ]
+    },
+    {
+      "candidate_id": "review:O-COMPONENT-01-de6049e3",
+      "source_obligation_id": "O-COMPONENT-01-de6049e3",
+      "source_claim_id": null,
+      "section_id": "MA-S3",
+      "argument_unit_id": "MA-S3:unit-7",
+      "lane": "repository_partial",
+      "status": "partially_supported_by_repository",
+      "proposed_body": "The method is intended to address the following point, which currently awaits repository or author confirmation: Contriever: Dense retriever that provides initial passage embeddings and top‑k retrieval.",
+      "confirmation_question": "Should the Method confirm that contriever: dense retriever that provides initial passage embeddings and top‑k retrieval?",
+      "needed_evidence": [
+        "Every typed target has a matching fact, but no authorized atomic claim is bound to this authoring obligation."
+      ],
+      "suggested_action": "confirm_author_intent_or_provide_evidence",
+      "blocks_verified": true,
+      "blocks_candidate": false,
+      "trace_refs": [
+        "O-COMPONENT-01-de6049e3"
+      ]
+    },
+    {
+      "candidate_id": "review:O-COMPONENT-02-2e14379d",
+      "source_obligation_id": "O-COMPONENT-02-2e14379d",
+      "source_claim_id": null,
+      "section_id": null,
+      "argument_unit_id": null,
+      "lane": "author_intent_unverified",
+      "status": "unverified_by_repository",
+      "proposed_body": "The method is intended to address the following point, which currently awaits repository or author confirmation: passage embeddings (pi): Fixed dense representations of candidate passages obtained from Contriever.",
+      "confirmation_question": "Should the Method confirm that passage embeddings (pi): fixed dense representations of candidate passages obtained from contriever?",
+      "needed_evidence": [
+        "run scoped repository research",
+        "Obligation has no typed behavior targets to align against facts."
+      ],
+      "suggested_action": "run scoped repository research",
+      "blocks_verified": true,
+      "blocks_candidate": false,
+      "trace_refs": [
+        "O-COMPONENT-02-2e14379d"
+      ]
+    },
+    {
+      "candidate_id": "review:O-COMPONENT-03-d8aa8c77",
+      "source_obligation_id": "O-COMPONENT-03-d8aa8c77",
+      "source_claim_id": null,
+      "section_id": "MA-S3",
+      "argument_unit_id": "MA-S3:unit-12",
+      "lane": "repository_partial",
+      "status": "partially_supported_by_repository",
+      "proposed_body": "The method is intended to address the following point, which currently awaits repository or author confirmation: document ID embedding table: Learned relative document‑identity embeddings assigned dynamically to unique documents in the candidate set, enabling the model to recognize which passages belong together.",
+      "confirmation_question": "Should the Method confirm that document id embedding table: learned relative document‑identity embeddings assigned dynamically to unique documents in the candidate set, enabling the model to recognize which passages belong together?",
+      "needed_evidence": [
+        "Every typed target has a matching fact, but no authorized atomic claim is bound to this authoring obligation."
+      ],
+      "suggested_action": "confirm_author_intent_or_provide_evidence",
+      "blocks_verified": true,
+      "blocks_candidate": false,
+      "trace_refs": [
+        "O-COMPONENT-03-d8aa8c77"
+      ]
+    },
+    {
+      "candidate_id": "review:O-COMPONENT-04-b5b6af99",
+      "source_obligation_id": "O-COMPONENT-04-b5b6af99",
+      "source_claim_id": null,
+      "section_id": "MA-S3",
+      "argument_unit_id": "MA-S3:unit-9",
+      "lane": "repository_partial",
+      "status": "partially_supported_by_repository",
+      "proposed_body": "The method is intended to address the following point, which currently awaits repository or author confirmation: passage position encoding (sinusoidal): Encodes the position of a passage within its original document, providing structural order cues.",
+      "confirmation_question": "Should the Method confirm that passage position encoding (sinusoidal): encodes the position of a passage within its original document, providing structural order cues?",
+      "needed_evidence": [
+        "Every typed target has a matching fact, but no authorized atomic claim is bound to this authoring obligation."
+      ],
+      "suggested_action": "confirm_author_intent_or_provide_evidence",
+      "blocks_verified": true,
+      "blocks_candidate": false,
+      "trace_refs": [
+        "O-COMPONENT-04-b5b6af99"
+      ]
+    },
+    {
+      "candidate_id": "review:O-COMPONENT-05-4c3594d2",
+      "source_obligation_id": "O-COMPONENT-05-4c3594d2",
+      "source_claim_id": null,
+      "section_id": "MA-S3",
+      "argument_unit_id": "MA-S3:unit-13",
+      "lane": "repository_partial",
+      "status": "partially_supported_by_repository",
+      "proposed_body": "The method is intended to address the following point, which currently awaits repository or author confirmation: hybrid attention mechanism: Combines shared full attention (global cross‑passage) and dedicated masked attention (intra‑document) in each Transformer layer to jointly model inter‑ and intra‑document dependencies.",
+      "confirmation_question": "Should the Method confirm that hybrid attention mechanism: combines shared full attention (global cross‑passage) and dedicated masked attention (intra‑document) in each transformer layer to jointly model inter‑ and intra‑document dependencies?",
+      "needed_evidence": [
+        "Every typed target has a matching fact, but no authorized atomic claim is bound to this authoring obligation."
+      ],
+      "suggested_action": "confirm_author_intent_or_provide_evidence",
+      "blocks_verified": true,
+      "blocks_candidate": false,
+      "trace_refs": [
+        "O-COMPONENT-05-4c3594d2"
+      ]
+    },
+    {
+      "candidate_id": "review:O-COMPONENT-06-34021b88",
+      "source_obligation_id": "O-COMPONENT-06-34021b88",
+      "source_claim_id": null,
+      "section_id": "MA-S3",
+      "argument_unit_id": "MA-S3:unit-3",
+      "lane": "repository_partial",
+      "status": "partially_supported_by_repository",
+      "proposed_body": "The method is intended to address the following point, which currently awaits repository or author confirmation: shared full attention module: Standard multi‑head attention allowing query and all passages to attend to each other; captures global relevance and cross‑document relationships.",
+      "confirmation_question": "Should the Method confirm that shared full attention module: standard multi‑head attention allowing query and all passages to attend to each other; captures global relevance and cross‑document relationships?",
+      "needed_evidence": [
+        "Every typed target has a matching fact, but no authorized atomic claim is bound to this authoring obligation."
+      ],
+      "suggested_action": "confirm_author_intent_or_provide_evidence",
+      "blocks_verified": true,
+      "blocks_candidate": false,
+      "trace_refs": [
+        "O-COMPONENT-06-34021b88"
+      ]
+    },
+    {
+      "candidate_id": "review:O-COMPONENT-07-d157b2cc",
+      "source_obligation_id": "O-COMPONENT-07-d157b2cc",
+      "source_claim_id": null,
+      "section_id": "MA-S3",
+      "argument_unit_id": "MA-S3:unit-14",
+      "lane": "repository_partial",
+      "status": "partially_supported_by_repository",
+      "proposed_body": "The method is intended to address the following point, which currently awaits repository or author confirmation: dedicated masked attention module: Masked multi‑head attention that restricts a passage to attend only to the query and to other passages from the same document, enabling fine‑grained coreference resolution and local coherence.",
+      "confirmation_question": "Should the Method confirm that dedicated masked attention module: masked multi‑head attention that restricts a passage to attend only to the query and to other passages from the same document, enabling fine‑grained coreference resolution and local coherence?",
+      "needed_evidence": [
+        "Every typed target has a matching fact, but no authorized atomic claim is bound to this authoring obligation."
+      ],
+      "suggested_action": "confirm_author_intent_or_provide_evidence",
+      "blocks_verified": true,
+      "blocks_candidate": false,
+      "trace_refs": [
+        "O-COMPONENT-07-d157b2cc"
+      ]
+    },
+    {
+      "candidate_id": "review:O-COMPONENT-08-4aac53dc",
+      "source_obligation_id": "O-COMPONENT-08-4aac53dc",
+      "source_claim_id": null,
+      "section_id": "MA-S3",
+      "argument_unit_id": "MA-S3:unit-4",
+      "lane": "repository_partial",
+      "status": "partially_supported_by_repository",
+      "proposed_body": "The method is intended to address the following point, which currently awaits repository or author confirmation: Transformer encoder stack: Layers that process the combined sequence to produce contextualized passage embeddings.",
+      "confirmation_question": "Should the Method confirm that transformer encoder stack: layers that process the combined sequence to produce contextualized passage embeddings?",
+      "needed_evidence": [
+        "Every typed target has a matching fact, but no authorized atomic claim is bound to this authoring obligation."
+      ],
+      "suggested_action": "confirm_author_intent_or_provide_evidence",
+      "blocks_verified": true,
+      "blocks_candidate": false,
+      "trace_refs": [
+        "O-COMPONENT-08-4aac53dc"
+      ]
+    },
+    {
+      "candidate_id": "review:O-COMPONENT-09-6a8cfd6c",
+      "source_obligation_id": "O-COMPONENT-09-6a8cfd6c",
+      "source_claim_id": null,
+      "section_id": "MA-S4",
+      "argument_unit_id": "MA-S4:unit-4",
+      "lane": "repository_partial",
+      "status": "partially_supported_by_repository",
+      "proposed_body": "The method is intended to address the following point, which currently awaits repository or author confirmation: InfoNCE contrastive loss: Objective that encourages the updated positive passage embedding to align with the fixed query embedding while separating negatives.",
+      "confirmation_question": "Should the Method confirm that infonce contrastive loss: objective that encourages the updated positive passage embedding to align with the fixed query embedding while separating negatives?",
+      "needed_evidence": [
+        "Every typed target has a matching fact, but no authorized atomic claim is bound to this authoring obligation."
+      ],
+      "suggested_action": "confirm_author_intent_or_provide_evidence",
+      "blocks_verified": true,
+      "blocks_candidate": false,
+      "trace_refs": [
+        "O-COMPONENT-09-6a8cfd6c"
+      ]
+    },
+    {
+      "candidate_id": "review:O-COMPONENT-10-dac6250f",
+      "source_obligation_id": "O-COMPONENT-10-dac6250f",
+      "source_claim_id": null,
+      "section_id": "MA-S4",
+      "argument_unit_id": "MA-S4:unit-5",
+      "lane": "repository_partial",
+      "status": "partially_supported_by_repository",
+      "proposed_body": "The method is intended to address the following point, which currently awaits repository or author confirmation: fixed query anchor: The original query embedding remains unchanged during training/inference to serve as a stable reference in the contrastive objective.",
+      "confirmation_question": "Should the Method confirm that fixed query anchor: the original query embedding remains unchanged during training/inference to serve as a stable reference in the contrastive objective?",
+      "needed_evidence": [
+        "Every typed target has a matching fact, but no authorized atomic claim is bound to this authoring obligation."
+      ],
+      "suggested_action": "confirm_author_intent_or_provide_evidence",
+      "blocks_verified": true,
+      "blocks_candidate": false,
+      "trace_refs": [
+        "O-COMPONENT-10-dac6250f"
+      ]
+    },
+    {
+      "candidate_id": "review:O-COMPONENT-11-27f310b2",
+      "source_obligation_id": "O-COMPONENT-11-27f310b2",
+      "source_claim_id": null,
+      "section_id": "MA-S1",
+      "argument_unit_id": "MA-S1:unit-2",
+      "lane": "repository_partial",
+      "status": "partially_supported_by_repository",
+      "proposed_body": "The method is intended to address the following point, which currently awaits repository or author confirmation: ConTEB benchmark: Evaluation suite that tests rerankers on challenging tasks requiring cross‑passage inference, document‑wide context, and structural reasoning.",
+      "confirmation_question": "Should the Method confirm that conteb benchmark: evaluation suite that tests rerankers on challenging tasks requiring cross‑passage inference, document‑wide context, and structural reasoning?",
+      "needed_evidence": [
+        "Every typed target has a matching fact, but no authorized atomic claim is bound to this authoring obligation."
+      ],
+      "suggested_action": "confirm_author_intent_or_provide_evidence",
+      "blocks_verified": true,
+      "blocks_candidate": false,
+      "trace_refs": [
+        "O-COMPONENT-11-27f310b2"
+      ]
+    },
+    {
+      "candidate_id": "review:O-COMPONENT-12-370bd5b2",
+      "source_obligation_id": "O-COMPONENT-12-370bd5b2",
+      "source_claim_id": null,
+      "section_id": "MA-S4",
+      "argument_unit_id": "MA-S4:unit-6",
+      "lane": "repository_partial",
+      "status": "partially_supported_by_repository",
+      "proposed_body": "The method is intended to address the following point, which currently awaits repository or author confirmation: MLDR, SQuAD, NarrativeQA (training sets): Three ConTEB datasets used for training EBCAR, covering entity disambiguation, span matching, and narrative comprehension.",
+      "confirmation_question": "Should the Method confirm that mldr, squad, narrativeqa (training sets): three conteb datasets used for training ebcar, covering entity disambiguation, span matching, and narrative comprehension?",
+      "needed_evidence": [
+        "Every typed target has a matching fact, but no authorized atomic claim is bound to this authoring obligation."
+      ],
+      "suggested_action": "confirm_author_intent_or_provide_evidence",
+      "blocks_verified": true,
+      "blocks_candidate": false,
+      "trace_refs": [
+        "O-COMPONENT-12-370bd5b2"
+      ]
+    },
+    {
+      "candidate_id": "review:O-ORGANIZATION-01-6b45ad90",
+      "source_obligation_id": "O-ORGANIZATION-01-6b45ad90",
+      "source_claim_id": null,
+      "section_id": "MA-S1",
+      "argument_unit_id": "MA-S1:unit-1",
+      "lane": "repository_partial",
+      "status": "partially_supported_by_repository",
+      "proposed_body": "The method is intended to address the following point, which currently awaits repository or author confirmation: Motivation: efficiency and cross‑passage inference challenges in existing rerankers.",
+      "confirmation_question": "Should the Method confirm that motivation: efficiency and cross‑passage inference challenges in existing rerankers?",
+      "needed_evidence": [
+        "Every typed behavior target is covered by supported code facts."
+      ],
+      "suggested_action": "confirm_author_intent_or_provide_evidence",
+      "blocks_verified": true,
+      "blocks_candidate": false,
+      "trace_refs": [
+        "O-ORGANIZATION-01-6b45ad90"
+      ]
+    },
+    {
+      "candidate_id": "review:O-ORGANIZATION-02-54911271",
+      "source_obligation_id": "O-ORGANIZATION-02-54911271",
+      "source_claim_id": null,
+      "section_id": "MA-S2",
+      "argument_unit_id": "MA-S2:unit",
+      "lane": "repository_partial",
+      "status": "partially_supported_by_repository",
+      "proposed_body": "The method is intended to address the following point, which currently awaits repository or author confirmation: Embedding‑based reranking formulation and overall framework.",
+      "confirmation_question": "Should the Method confirm that embedding‑based reranking formulation and overall framework?",
+      "needed_evidence": [
+        "Every typed behavior target is covered by supported code facts."
+      ],
+      "suggested_action": "confirm_author_intent_or_provide_evidence",
+      "blocks_verified": true,
+      "blocks_candidate": false,
+      "trace_refs": [
+        "O-ORGANIZATION-02-54911271"
+      ]
+    },
+    {
+      "candidate_id": "review:O-ORGANIZATION-03-2c92c853",
+      "source_obligation_id": "O-ORGANIZATION-03-2c92c853",
+      "source_claim_id": null,
+      "section_id": "MA-S3",
+      "argument_unit_id": "MA-S3:unit-1",
+      "lane": "repository_partial",
+      "status": "partially_supported_by_repository",
+      "proposed_body": "The method is intended to address the following point, which currently awaits repository or author confirmation: Architecture details: enriching embeddings with document ID and position, the Transformer encoder with hybrid attention (shared full + dedicated masked).",
+      "confirmation_question": "Should the Method confirm that architecture details: enriching embeddings with document id and position, the transformer encoder with hybrid attention (shared full + dedicated masked)?",
+      "needed_evidence": [
+        "Every typed behavior target is covered by supported code facts."
+      ],
+      "suggested_action": "confirm_author_intent_or_provide_evidence",
+      "blocks_verified": true,
+      "blocks_candidate": false,
+      "trace_refs": [
+        "O-ORGANIZATION-03-2c92c853"
+      ]
+    },
+    {
+      "candidate_id": "review:O-ORGANIZATION-04-1dd970df",
+      "source_obligation_id": "O-ORGANIZATION-04-1dd970df",
+      "source_claim_id": null,
+      "section_id": "MA-S4",
+      "argument_unit_id": "MA-S4:unit-1",
+      "lane": "repository_partial",
+      "status": "partially_supported_by_repository",
+      "proposed_body": "The method is intended to address the following point, which currently awaits repository or author confirmation: Training objective: InfoNCE loss with fixed query anchor.",
+      "confirmation_question": "Should the Method confirm that training objective: infonce loss with fixed query anchor?",
+      "needed_evidence": [
+        "Every typed behavior target is covered by supported code facts."
+      ],
+      "suggested_action": "confirm_author_intent_or_provide_evidence",
+      "blocks_verified": true,
+      "blocks_candidate": false,
+      "trace_refs": [
+        "O-ORGANIZATION-04-1dd970df"
+      ]
+    },
+    {
+      "candidate_id": "review:O-ORGANIZATION-05-baf0d276",
+      "source_obligation_id": "O-ORGANIZATION-05-baf0d276",
+      "source_claim_id": null,
+      "section_id": "MA-S5",
+      "argument_unit_id": "MA-S5:unit-1",
+      "lane": "repository_partial",
+      "status": "partially_supported_by_repository",
+      "proposed_body": "The method is intended to address the following point, which currently awaits repository or author confirmation: Inference procedure.",
+      "confirmation_question": "Should the Method confirm that inference procedure?",
+      "needed_evidence": [
+        "Every typed behavior target is covered by supported code facts."
+      ],
+      "suggested_action": "confirm_author_intent_or_provide_evidence",
+      "blocks_verified": true,
+      "blocks_candidate": false,
+      "trace_refs": [
+        "O-ORGANIZATION-05-baf0d276"
+      ]
+    },
+    {
+      "candidate_id": "review:O-RATIONALE-CHECK-01-bad20132",
+      "source_obligation_id": "O-RATIONALE-CHECK-01-bad20132",
+      "source_claim_id": null,
+      "section_id": "MA-S5",
+      "argument_unit_id": "MA-S5:unit-4",
+      "lane": "repository_partial",
+      "status": "partially_supported_by_repository",
+      "proposed_body": "The method is intended to address the following point, which currently awaits repository or author confirmation: Avoid full‑text processing and autoregressive generation to reduce inference latency.",
+      "confirmation_question": "Should the Method confirm that avoid full‑text processing and autoregressive generation to reduce inference latency?",
+      "needed_evidence": [
+        "Verify-only obligation has related executable facts but remains diagnostic; it does not become a positive Method claim."
+      ],
+      "suggested_action": "confirm_author_intent_or_provide_evidence",
+      "blocks_verified": true,
+      "blocks_candidate": false,
+      "trace_refs": [
+        "O-RATIONALE-CHECK-01-bad20132"
+      ]
+    },
+    {
+      "candidate_id": "review:O-RATIONALE-CHECK-02-30bb7c0f",
+      "source_obligation_id": "O-RATIONALE-CHECK-02-30bb7c0f",
+      "source_claim_id": null,
+      "section_id": "MA-S3",
+      "argument_unit_id": "MA-S3:unit-10",
+      "lane": "repository_partial",
+      "status": "partially_supported_by_repository",
+      "proposed_body": "The method is intended to address the following point, which currently awaits repository or author confirmation: Inject document‑level structural knowledge into passage embeddings to support cross‑passage inference.",
+      "confirmation_question": "Should the Method confirm that inject document‑level structural knowledge into passage embeddings to support cross‑passage inference?",
+      "needed_evidence": [
+        "Verify-only obligation has related executable facts but remains diagnostic; it does not become a positive Method claim."
+      ],
+      "suggested_action": "confirm_author_intent_or_provide_evidence",
+      "blocks_verified": true,
+      "blocks_candidate": false,
+      "trace_refs": [
+        "O-RATIONALE-CHECK-02-30bb7c0f"
+      ]
+    },
+    {
+      "candidate_id": "review:O-RATIONALE-CHECK-03-b01101f7",
+      "source_obligation_id": "O-RATIONALE-CHECK-03-b01101f7",
+      "source_claim_id": null,
+      "section_id": "MA-S3",
+      "argument_unit_id": "MA-S3:unit-15",
+      "lane": "repository_partial",
+      "status": "partially_supported_by_repository",
+      "proposed_body": "The method is intended to address the following point, which currently awaits repository or author confirmation: Design two complementary attention patterns that co‑exist in each layer: global and document‑local.",
+      "confirmation_question": "Should the Method confirm that design two complementary attention patterns that co‑exist in each layer: global and document‑local?",
+      "needed_evidence": [
+        "Verify-only obligation has related executable facts but remains diagnostic; it does not become a positive Method claim."
+      ],
+      "suggested_action": "confirm_author_intent_or_provide_evidence",
+      "blocks_verified": true,
+      "blocks_candidate": false,
+      "trace_refs": [
+        "O-RATIONALE-CHECK-03-b01101f7"
+      ]
+    },
+    {
+      "candidate_id": "review:O-RATIONALE-CHECK-04-c742a4fc",
+      "source_obligation_id": "O-RATIONALE-CHECK-04-c742a4fc",
+      "source_claim_id": null,
+      "section_id": "MA-S3",
+      "argument_unit_id": "MA-S3:unit-11",
+      "lane": "author_intent_unverified",
+      "status": "author_confirmation_required",
+      "proposed_body": "The method is intended to address the following point, which currently awaits repository or author confirmation: Use relative, dynamic document ID assignments rather than global corpus‑level IDs.",
+      "confirmation_question": "Should the Method confirm that use relative, dynamic document id assignments rather than global corpus‑level ids?",
+      "needed_evidence": [
+        "request an explicit author confirmation artifact",
+        "Verify-only obligation has no typed behavior targets; it remains a diagnostic item and never enters the Method正文."
+      ],
+      "suggested_action": "request an explicit author confirmation artifact",
+      "blocks_verified": true,
+      "blocks_candidate": false,
+      "trace_refs": [
+        "O-RATIONALE-CHECK-04-c742a4fc"
+      ]
+    },
+    {
+      "candidate_id": "review:O-RATIONALE-CHECK-05-595ac6ff",
+      "source_obligation_id": "O-RATIONALE-CHECK-05-595ac6ff",
+      "source_claim_id": null,
+      "section_id": "MA-S4",
+      "argument_unit_id": "MA-S4:unit-3",
+      "lane": "repository_partial",
+      "status": "partially_supported_by_repository",
+      "proposed_body": "The method is intended to address the following point, which currently awaits repository or author confirmation: Keep the query embedding fixed during training and inference while updating passage embeddings.",
+      "confirmation_question": "Should the Method confirm that keep the query embedding fixed during training and inference while updating passage embeddings?",
+      "needed_evidence": [
+        "Verify-only obligation has related executable facts but remains diagnostic; it does not become a positive Method claim."
+      ],
+      "suggested_action": "confirm_author_intent_or_provide_evidence",
+      "blocks_verified": true,
+      "blocks_candidate": false,
+      "trace_refs": [
+        "O-RATIONALE-CHECK-05-595ac6ff"
+      ]
+    },
+    {
+      "candidate_id": "review:O-RATIONALE-CHECK-06-388166d9",
+      "source_obligation_id": "O-RATIONALE-CHECK-06-388166d9",
+      "source_claim_id": null,
+      "section_id": "MA-S3",
+      "argument_unit_id": "MA-S3:unit-5",
+      "lane": "repository_partial",
+      "status": "partially_supported_by_repository",
+      "proposed_body": "The method is intended to address the following point, which currently awaits repository or author confirmation: Train on ConTEB datasets that explicitly require cross‑passage reasoning.",
+      "confirmation_question": "Should the Method confirm that train on conteb datasets that explicitly require cross‑passage reasoning?",
+      "needed_evidence": [
+        "Verify-only obligation has related executable facts but remains diagnostic; it does not become a positive Method claim."
+      ],
+      "suggested_action": "confirm_author_intent_or_provide_evidence",
+      "blocks_verified": true,
+      "blocks_candidate": false,
+      "trace_refs": [
+        "O-RATIONALE-CHECK-06-388166d9"
+      ]
+    }
+  ],
+  "audit_warnings": [],
+  "content_digest": "sha256:6f58c75c1742e637abb6aa0fad480c97217a341cb95d31a20a7c7fcf59c66ff7"
+}

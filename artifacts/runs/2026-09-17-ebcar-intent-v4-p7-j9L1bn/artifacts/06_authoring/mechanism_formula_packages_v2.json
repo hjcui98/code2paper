@@ -1,0 +1,17 @@
+{
+  "schema_version": "1.0",
+  "packages": [],
+  "formalizer_traces": [
+    {
+      "phase": "formalizer",
+      "v2": true,
+      "admission_status": "pass",
+      "actual_main_calls": 0,
+      "actual_repair_calls": 0,
+      "planned_main_invocations": 0,
+      "assertion_failures": []
+    }
+  ],
+  "phase_reused": false,
+  "content_digest": "sha256:996144b89a15e6b07dd7ead4ba8d9604e55cdf26b09583ae5864b891f4b1b33c"
+}

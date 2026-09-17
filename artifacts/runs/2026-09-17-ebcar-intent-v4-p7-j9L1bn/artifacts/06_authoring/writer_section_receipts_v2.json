@@ -1,0 +1,135 @@
+{
+  "content_digest": "sha256:ef9098651affa70ff66807c3e8b177c58285d12e0059b49cde37b67e541bd46d",
+  "plan_digest": "sha256:1574681d5f387963065f4c115ff9cfdb38d2d70ba956d834e9c6d027b2e5356e",
+  "receipts": [
+    {
+      "completed_invocation_ids": [
+        "inv:writer:MA-S1:page:281af1e758001328894fc2f8200e5e244a060ff3eafae98e6dcfb3a428ed052a"
+      ],
+      "completed_receipt_digests": [
+        "sha256:72b47e9c8abec69073afccf110fc3d275d7b4909ada29ea141d4378c6019eea7"
+      ],
+      "content_digest": "sha256:1cd975464d2256c4ec1c79c2eab5f4a2d148e7f74707db272cf649ce87b5bffa",
+      "output_digest": "sha256:9a708046b1ab1701d78546ca781269d7cab6bb3d2b067940851d19d30f83b16a",
+      "plan_digest": "sha256:1574681d5f387963065f4c115ff9cfdb38d2d70ba956d834e9c6d027b2e5356e",
+      "required_invocation_ids": [
+        "inv:writer:MA-S1:page:281af1e758001328894fc2f8200e5e244a060ff3eafae98e6dcfb3a428ed052a"
+      ],
+      "schema_version": "2.0",
+      "section_id": "MA-S1",
+      "workset_id": "workset:section:MA-S1"
+    },
+    {
+      "completed_invocation_ids": [
+        "inv:writer:MA-S2:page:0b5cf25648aa7e8de2636240c208848cb98726e935b1def28d73ebf7560ebab9"
+      ],
+      "completed_receipt_digests": [
+        "sha256:2e34f3b6e1a21ff0ac34ea77103a60581ef52de2cf38223a981e00c666466700"
+      ],
+      "content_digest": "sha256:18fc566a18abf413dea49d7fe398abc192a19382c052eba7e7d0c37296889ce6",
+      "output_digest": "sha256:b4179050e86ba960e6923bdea6859ea449a9bd08692d171b5a643d52f7b972ec",
+      "plan_digest": "sha256:1574681d5f387963065f4c115ff9cfdb38d2d70ba956d834e9c6d027b2e5356e",
+      "required_invocation_ids": [
+        "inv:writer:MA-S2:page:0b5cf25648aa7e8de2636240c208848cb98726e935b1def28d73ebf7560ebab9"
+      ],
+      "schema_version": "2.0",
+      "section_id": "MA-S2",
+      "workset_id": "workset:section:MA-S2"
+    },
+    {
+      "completed_invocation_ids": [
+        "inv:writer:MA-S3:page:14ab209d0459a9893155b9d6a8f31e210ffab86b670a9b2036c2559a645a084d",
+        "inv:writer:MA-S3:page:19d0179f4fbe83880fd5f669b953ecabfb8288da3d585fc8a477654084c80c1c",
+        "inv:writer:MA-S3:page:2f0edfb7ec40d04d13743030d6f8aeedf8920fe0c049255ad4fb072b81eb7f98",
+        "inv:writer:MA-S3:page:509596cab22a82c8f70a7dbd877e6bddeaaa539ebc7c8be5f484e0f1abef34b1",
+        "inv:writer:MA-S3:page:7119f09b0643f1c6274ee4acc867fd2662667a98c173300835e656d5c4cf5ae6",
+        "inv:writer:MA-S3:page:7a577e2ce049fd7aec70305dd6b3a04c8382133dda8179689b079624f32581a7",
+        "inv:writer:MA-S3:page:881f96e34f95310ed0fad191786b1209f382123d5af851aa8b9c8fe1806c8fb9",
+        "inv:writer:MA-S3:page:8c7ae468359f379d3a97eeabd9fb2a560ae9176193119c1f61d7ead54e4bc962",
+        "inv:writer:MA-S3:page:94cb2b059efbe2855f3c57c719c602ba713950a340dc45e777d034470e7372af",
+        "inv:writer:MA-S3:page:9f593df0feed4d367807bcffe418706ee95611c2342ce5f33bb5ce7f9001be20",
+        "inv:writer:MA-S3:page:a7853ad742b4a90d168a0a886b86bf839cace3caec2b11337a9883ca055e68ae",
+        "inv:writer:MA-S3:page:baf0b6a91335ba96aac3b50d40de7a76588b2483fac50202e4684d2bcdbf38e1",
+        "inv:writer:MA-S3:page:d4993f7db022baf71dbb59a35a77a2d5e59b931f0fb48ac01b7dac30ede562fa",
+        "inv:writer:MA-S3:page:f8856b7ab9650757bfaf91a062c203a9add0361068ed0a6c6c045ba25eb8e7e8",
+        "inv:writer:MA-S3:page:fd9c44a567a19a03ceeebb26ec0925ee111b58b3385e4e3490cd6b8403fb120d"
+      ],
+      "completed_receipt_digests": [
+        "sha256:760b2c6ee1d50e8af62f480271da28dbe13bf0cdce8b5731f2c33bf39f72f74e",
+        "sha256:31282de6b825aba4e166fa75e3afc8c180e7befb834fd24ac51b53edc29ce6e5",
+        "sha256:306977a0e0780eb7748447faced50c02ab1b2dbee8a2de717a34b7ad9350f803",
+        "sha256:892360af804cc1803ee420c90eae00a2950ad13722af2a3e8e5ced5c73d598c4",
+        "sha256:04e26bdfba9f2fe120dfe0fd92e6a851114255f63d850860b22d1abfb6bfdae4",
+        "sha256:f8a4b8870bced039c5d757762b6b8c4532dd629691e99cf20c4531308de13078",
+        "sha256:40bdd5198ef456a860fd15821e7c529755931471dcf0e188504061f044de1ce9",
+        "sha256:dd993fe49ab7dae3997dcea7d421e5cf538c78d0575e195a81d32b386905530d",
+        "sha256:3abef2b38c12c1832bc54783ffc192120493853d9af57334fb1a4926c63f024a",
+        "sha256:3460848c48d62bcb807a64dee7e5b67bad37e6b3f487a821b076e80233d8e3c3",
+        "sha256:012026606308bc6466dd0b049a36f616230b5f5e311f4e8a10f6120572e9b135",
+        "sha256:a6a41c192efde5a8fc83dcbdf727a47add32c7fea41bc386a7b88942d728b0fb",
+        "sha256:5887b6d88ebf7944826b1dfe23b0e1e5cf7eff8e58b7064e450d4a051141259f",
+        "sha256:2cb6385a81800921836ddcf5e7a3e7d93aa87e4f451846653bbffb6f1a612879",
+        "sha256:ff230f955d4ac73dda7af89785d893812cb82c4eb9c2a4e4bccab53d631a41bd"
+      ],
+      "content_digest": "sha256:744fdcb4ebab96f0f3b1edd8fe8b6bf6f9d09d718f7bbf09a1b29cf599b81eb3",
+      "output_digest": "",
+      "plan_digest": "sha256:1574681d5f387963065f4c115ff9cfdb38d2d70ba956d834e9c6d027b2e5356e",
+      "required_invocation_ids": [
+        "inv:writer:MA-S3:page:14ab209d0459a9893155b9d6a8f31e210ffab86b670a9b2036c2559a645a084d",
+        "inv:writer:MA-S3:page:19d0179f4fbe83880fd5f669b953ecabfb8288da3d585fc8a477654084c80c1c",
+        "inv:writer:MA-S3:page:2f0edfb7ec40d04d13743030d6f8aeedf8920fe0c049255ad4fb072b81eb7f98",
+        "inv:writer:MA-S3:page:509596cab22a82c8f70a7dbd877e6bddeaaa539ebc7c8be5f484e0f1abef34b1",
+        "inv:writer:MA-S3:page:7119f09b0643f1c6274ee4acc867fd2662667a98c173300835e656d5c4cf5ae6",
+        "inv:writer:MA-S3:page:751aa8b5352377a0766e7f7416c05553647380df74d5295f04d695646a47b815",
+        "inv:writer:MA-S3:page:7a577e2ce049fd7aec70305dd6b3a04c8382133dda8179689b079624f32581a7",
+        "inv:writer:MA-S3:page:881f96e34f95310ed0fad191786b1209f382123d5af851aa8b9c8fe1806c8fb9",
+        "inv:writer:MA-S3:page:8c7ae468359f379d3a97eeabd9fb2a560ae9176193119c1f61d7ead54e4bc962",
+        "inv:writer:MA-S3:page:94cb2b059efbe2855f3c57c719c602ba713950a340dc45e777d034470e7372af",
+        "inv:writer:MA-S3:page:9f593df0feed4d367807bcffe418706ee95611c2342ce5f33bb5ce7f9001be20",
+        "inv:writer:MA-S3:page:a7853ad742b4a90d168a0a886b86bf839cace3caec2b11337a9883ca055e68ae",
+        "inv:writer:MA-S3:page:baf0b6a91335ba96aac3b50d40de7a76588b2483fac50202e4684d2bcdbf38e1",
+        "inv:writer:MA-S3:page:d4993f7db022baf71dbb59a35a77a2d5e59b931f0fb48ac01b7dac30ede562fa",
+        "inv:writer:MA-S3:page:f8856b7ab9650757bfaf91a062c203a9add0361068ed0a6c6c045ba25eb8e7e8",
+        "inv:writer:MA-S3:page:fd9c44a567a19a03ceeebb26ec0925ee111b58b3385e4e3490cd6b8403fb120d"
+      ],
+      "schema_version": "2.0",
+      "section_id": "MA-S3",
+      "workset_id": "workset:section:MA-S3"
+    },
+    {
+      "completed_invocation_ids": [
+        "inv:writer:MA-S4:page:deb150313c1572b14530320add69c2d3fc68d162204676501b4ed6b6f9487019"
+      ],
+      "completed_receipt_digests": [
+        "sha256:5e0b8792ab9eaafdc1aefe02b0cd01ee34f74065d8a20b3eaffa6ec668d1b762"
+      ],
+      "content_digest": "sha256:c276561aae6521e74b0b01af7b5016384af64abb13eb59b0444b8d708fc24908",
+      "output_digest": "sha256:1ef27a743e96352c126ae1afed333a1dce5d6231adf8249b5dc40a3717d93d43",
+      "plan_digest": "sha256:1574681d5f387963065f4c115ff9cfdb38d2d70ba956d834e9c6d027b2e5356e",
+      "required_invocation_ids": [
+        "inv:writer:MA-S4:page:deb150313c1572b14530320add69c2d3fc68d162204676501b4ed6b6f9487019"
+      ],
+      "schema_version": "2.0",
+      "section_id": "MA-S4",
+      "workset_id": "workset:section:MA-S4"
+    },
+    {
+      "completed_invocation_ids": [
+        "inv:writer:MA-S5:page:5c2d0db68504d5ae006260b0181541d6dd1d98eb6ec8423956efe075ad43d515"
+      ],
+      "completed_receipt_digests": [
+        "sha256:a633907b2a8c7b7548fa1267bafa902c8a8728996e5b52485ccc69fe899cad38"
+      ],
+      "content_digest": "sha256:eecea07a1d5d1e4e6d67c91c85a48f91f5abee1c45e6e819ba05156884344673",
+      "output_digest": "sha256:8193015fb16299db58273d38e37546d0d90b651d0164cc3e35bdea321111eee0",
+      "plan_digest": "sha256:1574681d5f387963065f4c115ff9cfdb38d2d70ba956d834e9c6d027b2e5356e",
+      "required_invocation_ids": [
+        "inv:writer:MA-S5:page:5c2d0db68504d5ae006260b0181541d6dd1d98eb6ec8423956efe075ad43d515"
+      ],
+      "schema_version": "2.0",
+      "section_id": "MA-S5",
+      "workset_id": "workset:section:MA-S5"
+    }
+  ],
+  "schema_version": "2.0"
+}

@@ -1,0 +1,13 @@
+{
+  "attempt": 1,
+  "fragment": {
+    "blocked_reason": "",
+    "consumer_role": "writer",
+    "page_id": "page:881f96e34f95310ed0fad191786b1209f382123d5af851aa8b9c8fe1806c8fb9",
+    "response_hash": "sha256:a64ae63676cd586683de96a8c5db36f7f1226316c9e5b6fb5aa194f86a0f7c12",
+    "response_text": "{\"paragraphs\":[{\"paragraph_id\":\"MA-S3:P1__f4\",\"paragraph_markdown\":\"When the dedicated attention configuration is enabled, the model constructs a dedicated attention mask of shape (batch_size, num_passages + 1, num_passages + 1) on the model's compute device, initialized to zero. The extra position beyond the passage count accommodates the query token, which is prepended to the passage sequence. For each batch element, the document ID vector is extracted, and the mask rows are populated by iterating over each passage position: the corresponding mask row is first set to negative infinity to block all cross-passage attention, then the positions of passages sharing the same document ID as the current passage are identified, a leading true value is prepended to guarantee that attention to the query remains unblocked, and the mask entries at those positions are set to zero, thereby permitting attention only among passages originating from the same document. This per-document masking ensures that the dedicated attention head restricts information flow to within-document passage groups, while the shared full-attention head retains unrestricted access across all passages.\"}],\"section_id\":\"MA-S3\",\"used_formula_package_ids\":[]}",
+    "section_id": "MA-S3"
+  },
+  "invocation_id": "inv:writer:MA-S3:page:881f96e34f95310ed0fad191786b1209f382123d5af851aa8b9c8fe1806c8fb9",
+  "schema_version": "2.0"
+}

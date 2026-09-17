@@ -1466,3 +1466,52 @@ def test_compact_symbol_refs_resolve_only_when_unique() -> None:
     assert _canonical_symbol_id("src/model.py:forward", symbols) == "src/model.py:forward"
     assert _canonical_symbol_id("src/model.py", symbols) == "src/model.py"
     assert _canonical_symbol_id("missing.py:forward", symbols) == "missing.py:forward"
+
+
+def test_observation_without_behavior_nodes_superseded_not_promoted() -> None:
+    """An observation without behavior nodes cannot be claim_promoted; it is superseded."""
+    from types import SimpleNamespace
+    from code2paper.agentic.research_promotion import build_observation_promotion_ledger
+
+    span_id = "span:config.yaml:10:10"
+    observation = SimpleNamespace(
+        observation_id="observation:config-no-node",
+        obligation_id="OBL-1",
+        tool_name="inspect_configuration",
+        status="success",
+        source_authority="executable_hard",
+        result_refs=("config:config.yaml:10",),
+        exact_span_ids=(span_id,),
+        notebook=SimpleNamespace(discovered_symbols=()),
+    )
+    # Graph has no behavior nodes matching this span
+    graph = SimpleNamespace(nodes=())
+
+    compiled = SimpleNamespace(
+        packet_set=SimpleNamespace(packets=(
+            {
+                "packet_id": "packet:1",
+                "anchor_span_ids": [span_id],
+                "spans": [{"span_id": span_id}],
+            },
+        )),
+        fact_set=SimpleNamespace(facts=(
+            {"fact_id": "fact:1", "direct_span_ids": [span_id]},
+        )),
+        claim_set=SimpleNamespace(
+            claims=({"claim_id": "claim:1", "fact_ids": ["fact:1"]},),
+            content_digest="sha256:1",
+        ),
+    )
+    ledger = build_observation_promotion_ledger(
+        observations=(observation,),
+        behavior_graph=graph,
+        compiled_by_obligation={"OBL-1": compiled},
+        repo_snapshot_id="snap-1",
+        project_tree_hash="tree-1",
+    )
+    record = next(
+        r for r in ledger.records if r.observation_id == observation.observation_id
+    )
+    assert record.status == "superseded"
+    assert record.disposition_reason == "replaced_by_compiled_evidence"

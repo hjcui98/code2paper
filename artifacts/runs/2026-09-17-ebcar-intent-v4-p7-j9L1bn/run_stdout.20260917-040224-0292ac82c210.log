@@ -1,0 +1,21 @@
+[code2paper method-agent] run_id=ebcar-intent-v4-p7-current-20260916T165846Z
+[code2paper method-agent] repo=/data1/users/cuihengjia/code2paper/code_final/EBCAR - Embedding-Based Context-Aware Reranker
+[code2paper method-agent] out_root=/tmp/c2p-p7-ebcar-v4-intent-j9L1bn
+[code2paper method-agent] live_llm=True
+[code2paper method-agent] -----------------------------
+[code2paper method-agent] run_id=ebcar-intent-v4-p7-current-20260916T165846Z
+[code2paper method-agent] candidate written: no
+[code2paper method-agent] verified written: no
+[code2paper method-agent] verified facts: 43
+[code2paper method-agent] supported claims: 48
+[code2paper method-agent] review items: 26
+[code2paper method-agent] callbacks fulfilled: 0
+[code2paper method-agent] external queues: 0
+[code2paper method-agent] gaps: 25 (explicit=0, unresolved=25)
+[code2paper method-agent] unsupported positives: candidate=0 verified=0
+[code2paper method-agent] plan readiness: candidate_ready_with_review
+[code2paper method-agent] research: incomplete (candidate_handoff_partial, 12 turns)
+[code2paper method-agent] writer blocked reason: unified_actual_shared_payload_delivery_failed:ValueError:writer_v2_invocation_acceptance_count:inv:writer:MA-S3:page:751aa8b5352377a0766e7f7416c05553647380df74d5295f04d695646a47b815:0
+[code2paper method-agent] -----------------------------
+[code2paper method-agent] summary=/tmp/c2p-p7-ebcar-v4-intent-j9L1bn/artifacts/research_product/run_summary.json
+[code2paper method-agent] error=candidate_incomplete:unified_actual_shared_payload_delivery_failed:ValueError:writer_v2_invocation_acceptance_count:inv:writer:MA-S3:page:751aa8b5352377a0766e7f7416c05553647380df74d5295f04d695646a47b815:0

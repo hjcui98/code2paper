@@ -1,0 +1,11 @@
+{
+  "binding": {
+    "kind": "primary_detail_page_owner",
+    "page_ids": []
+  },
+  "by_mechanism": {
+    "mech_sym:9773c5add7af1f92": [],
+    "mech_sym:f6cf5bdfe2ae16f0": []
+  },
+  "schema_version": "1.0"
+}

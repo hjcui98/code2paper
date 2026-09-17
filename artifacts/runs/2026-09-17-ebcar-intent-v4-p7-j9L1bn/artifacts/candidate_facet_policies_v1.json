@@ -1,0 +1,1295 @@
+{
+  "schema_version": "1.0",
+  "policies": [
+    {
+      "facet_id": "facet-d57e6b007d62768e",
+      "policy_id": "policy:facet-d57e6b007d62768e",
+      "alignment_id": "alignment:facet-d57e6b007d62768e",
+      "clause_id": "clause:O-METHOD-MAINLINE-01-c8146479:0",
+      "alignment_status": "unresolved",
+      "prose_mode": "author_specification",
+      "candidate_allowed": true,
+      "verified_directly_allowed": false,
+      "review_severity": "major",
+      "supported_fields": [],
+      "unsupported_fields": [],
+      "field_bindings": [],
+      "bound_claim_ids": [],
+      "bound_span_ids": [],
+      "bound_equation_ids": [],
+      "evidence_digest": "sha256:655f865e48dec2c1dc5793fc71c4fa41108d4027593cba1be6b92a8bec939a8f",
+      "rationale": "Deterministic local evidence fallback after owner unavailability. Fail-closed alignment: deterministic_local_evidence_fallback",
+      "schema_failures": [
+        "deterministic_local_evidence_fallback"
+      ],
+      "content_digest": "sha256:1947396607bf5f78ce6b7fc3f2f64b62cc135ca9f49249657bbb99c5a53e45e4"
+    },
+    {
+      "facet_id": "facet-bd2114e7ad9b1773",
+      "policy_id": "policy:facet-bd2114e7ad9b1773",
+      "alignment_id": "alignment:facet-bd2114e7ad9b1773",
+      "clause_id": "clause:O-STAGE-01-039a963a:0",
+      "alignment_status": "unresolved",
+      "prose_mode": "author_specification",
+      "candidate_allowed": true,
+      "verified_directly_allowed": false,
+      "review_severity": "major",
+      "supported_fields": [],
+      "unsupported_fields": [],
+      "field_bindings": [],
+      "bound_claim_ids": [],
+      "bound_span_ids": [],
+      "bound_equation_ids": [],
+      "evidence_digest": "sha256:655f865e48dec2c1dc5793fc71c4fa41108d4027593cba1be6b92a8bec939a8f",
+      "rationale": "Deterministic local evidence fallback after owner unavailability. Fail-closed alignment: deterministic_local_evidence_fallback",
+      "schema_failures": [
+        "deterministic_local_evidence_fallback"
+      ],
+      "content_digest": "sha256:e651e618608b44cacd4aac0ca4c9a8a05e7e020c64fb0de1b1c7d1f066599e23"
+    },
+    {
+      "facet_id": "facet-308602a0138b57ea",
+      "policy_id": "policy:facet-308602a0138b57ea",
+      "alignment_id": "alignment:facet-308602a0138b57ea",
+      "clause_id": "clause:O-STAGE-02-42e8d68d:0",
+      "alignment_status": "unresolved",
+      "prose_mode": "author_specification",
+      "candidate_allowed": true,
+      "verified_directly_allowed": false,
+      "review_severity": "major",
+      "supported_fields": [],
+      "unsupported_fields": [
+        "operation"
+      ],
+      "field_bindings": [
+        {
+          "field_name": "operation",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": "The evidence confirms that document_id_embeddings and passage_id_embeddings are added to passages (evidence 2, 5, 8), but the claim specifies 'sinusoidal passage-position encoding' while the code uses a learned positional encoding via get_passage_positional_encoding (evidence 0) which is then frozen as an nn.Embedding (evidence 1). The term 'sinusoidal' is not supported by the evidence — the code shows a learned/frozen embedding table, not a sinusoidal function. Additionally, 'dynamic document ID embedding' is partially supported: the document_id_embedding is a learned embedding table (evidence 6) with a modulo/quotient index computation, which is dynamic in the sense of index computation but the embedding itself is a static learned table. The core addition operation (passages + document +"
+        }
+      ],
+      "bound_claim_ids": [],
+      "bound_span_ids": [],
+      "bound_equation_ids": [],
+      "evidence_digest": "sha256:655f865e48dec2c1dc5793fc71c4fa41108d4027593cba1be6b92a8bec939a8f",
+      "rationale": "Fail-closed alignment: field_positive_without_evidence:operation",
+      "schema_failures": [
+        "field_positive_without_evidence:operation"
+      ],
+      "content_digest": "sha256:f699bfe69ac5dbe2080a7d0b1bd713c11426664bad492aee2d8c4694694b802e"
+    },
+    {
+      "facet_id": "facet-df672e4efc3751e2",
+      "policy_id": "policy:facet-df672e4efc3751e2",
+      "alignment_id": "alignment:facet-df672e4efc3751e2",
+      "clause_id": "clause:O-STAGE-03-2c5bd758:0",
+      "alignment_status": "partial",
+      "prose_mode": "author_specification",
+      "candidate_allowed": true,
+      "verified_directly_allowed": false,
+      "review_severity": "major",
+      "supported_fields": [
+        "operation"
+      ],
+      "unsupported_fields": [],
+      "field_bindings": [
+        {
+          "field_name": "operation",
+          "status": "partial",
+          "polarity": "positive",
+          "bound_claim_ids": [
+            "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:b6468fc08c848936",
+            "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-rel:1b2f2e5db0f09696"
+          ],
+          "bound_fact_ids": [
+            "fact-O-METHOD-MAINLINE-01-c8146479-node:b6468fc08c848936",
+            "fact-O-METHOD-MAINLINE-01-c8146479-rel:1b2f2e5db0f09696"
+          ],
+          "bound_span_ids": [
+            "span:src/model/ebcar_dedicated_attention_model.py:145:174"
+          ],
+          "bound_equation_ids": [],
+          "exact_excerpts": [
+            {
+              "facet_id": "facet-df672e4efc3751e2",
+              "span_id": "span:src/model/ebcar_dedicated_attention_model.py:145:174",
+              "path": "src/model/ebcar_dedicated_attention_model.py",
+              "symbol": "sym:f6cf5bdfe2ae16f0",
+              "line_start": 145,
+              "line_end": 174,
+              "exact_excerpt": "        if self.cfg.use_dedicated_attention:\n            dedicated_attention_mask = torch.zeros(\n                (batch_size, num_passages + 1, num_passages + 1),\n                device=self.device,\n            )  # [batch_size, num_heads, num_passages + 1, num_passages + 1]\n            for i in range(batch_size):\n                temp_document_id = document_id[i]  # [num_passages]\n                for row, doc_id in enumerate(temp_document_id):\n                    dedicated_attention_mask[i, row, :] = -float(\n                        \"inf\"\n                    )  # Set this row to all -inf\n                    temp_indices = (\n                        temp_document_id == doc_id\n                    )  # Get the indices of the passages that have the same document id as the current passage\n                    temp_indices = torch.cat(\n                        (\n                            torch.tensor([True], device=self.device),\n                            temp_indices,\n                        )  # Always attend to the query\n                    )  # [num_passages + 1]\n                    dedicated_attention_mask[\n                        i, row, temp_indices\n                    ] = 0  # Set the dedicated attention mask to 0 for the passages that have the same document id as the current passage\n        else:\n            # This is the case when we don't use dedicated attention for ablation study\n            # The dedicated attention mask is all zeros\n            dedicated_attention_mask = torch.zeros(\n                (batch_size, num_passages + 1, num_passages + 1),\n                device=self.device,\n            )  # [batch_size, num_passages + 1, num_passages + 1]\n",
+              "excerpt_digest": "sha256:d1794815263ad9b2447fa50c83ee519400fb41cc40b479f42fa55c7d32f90147",
+              "file_digest": "sha256:d9c5c626979342c9dc612c6acf8b9a3aedc669df99986118030f37e793d52946",
+              "fact_ids": [
+                "fact-O-METHOD-MAINLINE-01-c8146479-node:b6468fc08c848936",
+                "fact-O-METHOD-MAINLINE-01-c8146479-rel:1b2f2e5db0f09696"
+              ],
+              "equation_ids": [],
+              "fact_atoms": [],
+              "equation_atoms": [],
+              "operation_atoms": []
+            }
+          ],
+          "active_path_conditions": [],
+          "unsupported_reason": ""
+        }
+      ],
+      "bound_claim_ids": [
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:b6468fc08c848936",
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-rel:1b2f2e5db0f09696"
+      ],
+      "bound_span_ids": [
+        "span:src/model/ebcar_dedicated_attention_model.py:145:174"
+      ],
+      "bound_equation_ids": [],
+      "evidence_digest": "sha256:3cb8c1c2cf072753c7ed076f6973347d6971e3e642f570eccd8b131b20e791cc",
+      "rationale": "Fail-closed alignment: field_evidence_pruned:operation",
+      "schema_failures": [
+        "field_evidence_pruned:operation"
+      ],
+      "content_digest": "sha256:22ed5704e50d85f8b21e58d804e6cc4c6d1986b021f43ef7d9d90984dae5d718"
+    },
+    {
+      "facet_id": "facet-6bc5ee440fdc8329",
+      "policy_id": "policy:facet-6bc5ee440fdc8329",
+      "alignment_id": "alignment:facet-6bc5ee440fdc8329",
+      "clause_id": "clause:O-STAGE-04-c50e0bef:0",
+      "alignment_status": "unresolved",
+      "prose_mode": "author_specification",
+      "candidate_allowed": true,
+      "verified_directly_allowed": false,
+      "review_severity": "major",
+      "supported_fields": [],
+      "unsupported_fields": [
+        "formula_goal"
+      ],
+      "field_bindings": [
+        {
+          "field_name": "formula_goal",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": "The evidence confirms the InfoNCE loss formula (loss_i = -pos_sim + logsumexp(all_sims, dim=0)) and its reduction to a scalar loss, but does not explicitly state the training objective of pulling positive passage embeddings toward the query embedding and pushing negative passage embeddings away. The formula is present but the stated goal of contrastive training is not directly evidenced in the supplied excerpts."
+        }
+      ],
+      "bound_claim_ids": [],
+      "bound_span_ids": [],
+      "bound_equation_ids": [],
+      "evidence_digest": "sha256:655f865e48dec2c1dc5793fc71c4fa41108d4027593cba1be6b92a8bec939a8f",
+      "rationale": "Fail-closed alignment: field_positive_without_evidence:formula_goal",
+      "schema_failures": [
+        "field_positive_without_evidence:formula_goal"
+      ],
+      "content_digest": "sha256:c10a87c6a2b1aec7baea8cf7805ce4e3ca72ffd29186592f3cc0893e66206c99"
+    },
+    {
+      "facet_id": "facet-cbc0a588831ac015",
+      "policy_id": "policy:facet-cbc0a588831ac015",
+      "alignment_id": "alignment:facet-cbc0a588831ac015",
+      "clause_id": "clause:O-STAGE-05-5b3d398a:0",
+      "alignment_status": "unresolved",
+      "prose_mode": "author_specification",
+      "candidate_allowed": true,
+      "verified_directly_allowed": false,
+      "review_severity": "major",
+      "supported_fields": [],
+      "unsupported_fields": [
+        "operation"
+      ],
+      "field_bindings": [
+        {
+          "field_name": "operation",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": "The sort-by-descending-score component is supported by evidence index 1 (torch.sort(similarities, dim=1, descending=True)). However, the dot-product similarity computation between the unchanged query embedding and contextualized passage embeddings is not directly evidenced in the supplied set. Evidence index 4 shows the positional encoding addition (passages + document_id_embeddings + passage_id_embeddings) and evidence index 6 shows the concatenation of query and passages, but no evidence directly shows the dot-product similarity computation step (e.g., query @ passages.T or similar). The facet's claim about computing dot-product similarities is not directly bound to any supplied evidence span."
+        }
+      ],
+      "bound_claim_ids": [],
+      "bound_span_ids": [],
+      "bound_equation_ids": [],
+      "evidence_digest": "sha256:655f865e48dec2c1dc5793fc71c4fa41108d4027593cba1be6b92a8bec939a8f",
+      "rationale": "Fail-closed alignment: field_positive_without_evidence:operation",
+      "schema_failures": [
+        "field_positive_without_evidence:operation"
+      ],
+      "content_digest": "sha256:3f77ad3b5112b91e7239ec77e86fd807358d6fb88da27de16d29d546be5dac63"
+    },
+    {
+      "facet_id": "facet-14d4dbe911667c07",
+      "policy_id": "policy:facet-14d4dbe911667c07",
+      "alignment_id": "alignment:facet-14d4dbe911667c07",
+      "clause_id": "clause:O-COMPONENT-01-c301ecdd:0",
+      "alignment_status": "partial",
+      "prose_mode": "author_specification",
+      "candidate_allowed": true,
+      "verified_directly_allowed": false,
+      "review_severity": "major",
+      "supported_fields": [
+        "operation"
+      ],
+      "unsupported_fields": [],
+      "field_bindings": [
+        {
+          "field_name": "operation",
+          "status": "partial",
+          "polarity": "positive",
+          "bound_claim_ids": [
+            "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:b6468fc08c848936",
+            "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-rel:1b2f2e5db0f09696"
+          ],
+          "bound_fact_ids": [
+            "fact-O-METHOD-MAINLINE-01-c8146479-node:b6468fc08c848936",
+            "fact-O-METHOD-MAINLINE-01-c8146479-rel:1b2f2e5db0f09696"
+          ],
+          "bound_span_ids": [
+            "span:src/model/ebcar_dedicated_attention_model.py:145:174"
+          ],
+          "bound_equation_ids": [],
+          "exact_excerpts": [
+            {
+              "facet_id": "facet-14d4dbe911667c07",
+              "span_id": "span:src/model/ebcar_dedicated_attention_model.py:145:174",
+              "path": "src/model/ebcar_dedicated_attention_model.py",
+              "symbol": "sym:f6cf5bdfe2ae16f0",
+              "line_start": 145,
+              "line_end": 174,
+              "exact_excerpt": "        if self.cfg.use_dedicated_attention:\n            dedicated_attention_mask = torch.zeros(\n                (batch_size, num_passages + 1, num_passages + 1),\n                device=self.device,\n            )  # [batch_size, num_heads, num_passages + 1, num_passages + 1]\n            for i in range(batch_size):\n                temp_document_id = document_id[i]  # [num_passages]\n                for row, doc_id in enumerate(temp_document_id):\n                    dedicated_attention_mask[i, row, :] = -float(\n                        \"inf\"\n                    )  # Set this row to all -inf\n                    temp_indices = (\n                        temp_document_id == doc_id\n                    )  # Get the indices of the passages that have the same document id as the current passage\n                    temp_indices = torch.cat(\n                        (\n                            torch.tensor([True], device=self.device),\n                            temp_indices,\n                        )  # Always attend to the query\n                    )  # [num_passages + 1]\n                    dedicated_attention_mask[\n                        i, row, temp_indices\n                    ] = 0  # Set the dedicated attention mask to 0 for the passages that have the same document id as the current passage\n        else:\n            # This is the case when we don't use dedicated attention for ablation study\n            # The dedicated attention mask is all zeros\n            dedicated_attention_mask = torch.zeros(\n                (batch_size, num_passages + 1, num_passages + 1),\n                device=self.device,\n            )  # [batch_size, num_passages + 1, num_passages + 1]\n",
+              "excerpt_digest": "sha256:d1794815263ad9b2447fa50c83ee519400fb41cc40b479f42fa55c7d32f90147",
+              "file_digest": "sha256:d9c5c626979342c9dc612c6acf8b9a3aedc669df99986118030f37e793d52946",
+              "fact_ids": [
+                "fact-O-METHOD-MAINLINE-01-c8146479-node:b6468fc08c848936",
+                "fact-O-METHOD-MAINLINE-01-c8146479-rel:1b2f2e5db0f09696"
+              ],
+              "equation_ids": [],
+              "fact_atoms": [],
+              "equation_atoms": [],
+              "operation_atoms": []
+            }
+          ],
+          "active_path_conditions": [],
+          "unsupported_reason": ""
+        }
+      ],
+      "bound_claim_ids": [
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:b6468fc08c848936",
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-rel:1b2f2e5db0f09696"
+      ],
+      "bound_span_ids": [
+        "span:src/model/ebcar_dedicated_attention_model.py:145:174"
+      ],
+      "bound_equation_ids": [],
+      "evidence_digest": "sha256:93c550b3365f8f40cbd87c023e972d1cf443f24008bd8e221b2533ed8a98279c",
+      "rationale": "Fail-closed alignment: field_evidence_pruned:operation",
+      "schema_failures": [
+        "field_evidence_pruned:operation"
+      ],
+      "content_digest": "sha256:c4673a81399e1cf5fac86a144dcce4e8c75bcd42aee908e3736ad3a5a27c6f9f"
+    },
+    {
+      "facet_id": "facet-c70f411cffdc0a8f",
+      "policy_id": "policy:facet-c70f411cffdc0a8f",
+      "alignment_id": "alignment:facet-c70f411cffdc0a8f",
+      "clause_id": "clause:O-COMPONENT-01-de6049e3:0",
+      "alignment_status": "unresolved",
+      "prose_mode": "author_specification",
+      "candidate_allowed": true,
+      "verified_directly_allowed": false,
+      "review_severity": "major",
+      "supported_fields": [],
+      "unsupported_fields": [
+        "operation"
+      ],
+      "field_bindings": [
+        {
+          "field_name": "operation",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": ""
+        }
+      ],
+      "bound_claim_ids": [],
+      "bound_span_ids": [],
+      "bound_equation_ids": [],
+      "evidence_digest": "sha256:655f865e48dec2c1dc5793fc71c4fa41108d4027593cba1be6b92a8bec939a8f",
+      "rationale": "",
+      "schema_failures": [],
+      "content_digest": "sha256:fa6178d7e0b4ee0b41b7af4e4d7b5027ac329c001b42175234a5acab05d780bf"
+    },
+    {
+      "facet_id": "facet-676fcfceb7eddd8a",
+      "policy_id": "policy:facet-676fcfceb7eddd8a",
+      "alignment_id": "alignment:facet-676fcfceb7eddd8a",
+      "clause_id": "clause:O-COMPONENT-02-2e14379d:0",
+      "alignment_status": "partial",
+      "prose_mode": "author_specification",
+      "candidate_allowed": true,
+      "verified_directly_allowed": false,
+      "review_severity": "major",
+      "supported_fields": [
+        "operation"
+      ],
+      "unsupported_fields": [],
+      "field_bindings": [
+        {
+          "field_name": "operation",
+          "status": "partial",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [
+            "fact-O-STAGE-05-5b3d398a-node:06b37685c9288fb6",
+            "fact-O-STAGE-05-5b3d398a-rel:caa3e47dda8fdf04"
+          ],
+          "bound_span_ids": [
+            "span:src/model/ebcar_dedicated_attention_model.py:265:277"
+          ],
+          "bound_equation_ids": [],
+          "exact_excerpts": [
+            {
+              "facet_id": "facet-676fcfceb7eddd8a",
+              "span_id": "span:src/model/ebcar_dedicated_attention_model.py:265:277",
+              "path": "src/model/ebcar_dedicated_attention_model.py",
+              "symbol": "sym:9773c5add7af1f92",
+              "line_start": 265,
+              "line_end": 277,
+              "exact_excerpt": "        if self.cfg.add_positional_encoding:\n            # document_id might be out of range, so we need to modulate it and plus the quotient\n            document_id_embeddings = self.document_id_embedding(\n                (document_id.long() % self.cfg.retrieval.top_k)\n                + (document_id.long() // self.cfg.retrieval.top_k)\n            )  # [batch_size, num_passages, hidden_size]\n            passage_id_embeddings = self.passage_id_embedding(\n                passage_id.long()\n            )  # [batch_size, num_passages, hidden_size]\n            # Directly add the positional encoding to the passages\n            passages = (\n                passages + document_id_embeddings + passage_id_embeddings\n            )  # [batch_size, num_passages, hidden_size]\n",
+              "excerpt_digest": "sha256:3c6758dbbeabbca831337ca5c9319287f1ea57619cb7700eeb37b68021595057",
+              "file_digest": "sha256:d9c5c626979342c9dc612c6acf8b9a3aedc669df99986118030f37e793d52946",
+              "fact_ids": [
+                "fact-O-STAGE-05-5b3d398a-node:06b37685c9288fb6",
+                "fact-O-STAGE-05-5b3d398a-rel:caa3e47dda8fdf04"
+              ],
+              "equation_ids": [],
+              "fact_atoms": [],
+              "equation_atoms": [],
+              "operation_atoms": []
+            }
+          ],
+          "active_path_conditions": [],
+          "unsupported_reason": ""
+        }
+      ],
+      "bound_claim_ids": [],
+      "bound_span_ids": [
+        "span:src/model/ebcar_dedicated_attention_model.py:265:277"
+      ],
+      "bound_equation_ids": [],
+      "evidence_digest": "sha256:1b68a1cc40a954edafb2a7e3242d92aa3a81b564679d306e59827b25a4bb72f2",
+      "rationale": "Deterministic local evidence fallback after owner unavailability. Fail-closed alignment: deterministic_local_evidence_fallback",
+      "schema_failures": [
+        "deterministic_local_evidence_fallback"
+      ],
+      "content_digest": "sha256:3573d1a159343fa071f923e9090b05bcdd5745ab81dd0b21dab44894dab79a42"
+    },
+    {
+      "facet_id": "facet-d87af6e7082cc916",
+      "policy_id": "policy:facet-d87af6e7082cc916",
+      "alignment_id": "alignment:facet-d87af6e7082cc916",
+      "clause_id": "clause:O-COMPONENT-03-d8aa8c77:0",
+      "alignment_status": "unresolved",
+      "prose_mode": "author_specification",
+      "candidate_allowed": true,
+      "verified_directly_allowed": false,
+      "review_severity": "major",
+      "supported_fields": [],
+      "unsupported_fields": [
+        "operation"
+      ],
+      "field_bindings": [
+        {
+          "field_name": "operation",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": ""
+        }
+      ],
+      "bound_claim_ids": [],
+      "bound_span_ids": [],
+      "bound_equation_ids": [],
+      "evidence_digest": "sha256:655f865e48dec2c1dc5793fc71c4fa41108d4027593cba1be6b92a8bec939a8f",
+      "rationale": "",
+      "schema_failures": [],
+      "content_digest": "sha256:6da5ed66751f26f50fe0b7ba058e3e36a19d57fe870ad97bbe8d144e201e86d3"
+    },
+    {
+      "facet_id": "facet-ba08ce41d6e1d9b9",
+      "policy_id": "policy:facet-ba08ce41d6e1d9b9",
+      "alignment_id": "alignment:facet-ba08ce41d6e1d9b9",
+      "clause_id": "clause:O-COMPONENT-04-b5b6af99:0",
+      "alignment_status": "unresolved",
+      "prose_mode": "author_specification",
+      "candidate_allowed": true,
+      "verified_directly_allowed": false,
+      "review_severity": "major",
+      "supported_fields": [],
+      "unsupported_fields": [
+        "operation"
+      ],
+      "field_bindings": [
+        {
+          "field_name": "operation",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": "Evidence confirms passage positional encoding is computed via get_passage_positional_encoding (sinusoidal) and added to passages, but no evidence confirms it encodes position 'within its original document' — the encoding is indexed by passage_id (a global passage index), not by position within a document. The document-level structural cue is provided by document_id_embeddings, not by the passage positional encoding itself. The 'structural order cues' claim is partially supported (order within a document is implied by passage_id ordering), but the 'within its original document' qualifier is not directly evidenced by the supplied spans."
+        }
+      ],
+      "bound_claim_ids": [],
+      "bound_span_ids": [],
+      "bound_equation_ids": [],
+      "evidence_digest": "sha256:655f865e48dec2c1dc5793fc71c4fa41108d4027593cba1be6b92a8bec939a8f",
+      "rationale": "Fail-closed alignment: field_positive_without_evidence:operation",
+      "schema_failures": [
+        "field_positive_without_evidence:operation"
+      ],
+      "content_digest": "sha256:7d8e2e393afa49b1d0e68b5fcbd38cdbee04b6131e9bba514c025180ba7feac5"
+    },
+    {
+      "facet_id": "facet-47997bc7d81ecdf5",
+      "policy_id": "policy:facet-47997bc7d81ecdf5",
+      "alignment_id": "alignment:facet-47997bc7d81ecdf5",
+      "clause_id": "clause:O-COMPONENT-05-4c3594d2:0",
+      "alignment_status": "partial",
+      "prose_mode": "author_specification",
+      "candidate_allowed": true,
+      "verified_directly_allowed": false,
+      "review_severity": "major",
+      "supported_fields": [
+        "operation"
+      ],
+      "unsupported_fields": [],
+      "field_bindings": [
+        {
+          "field_name": "operation",
+          "status": "partial",
+          "polarity": "positive",
+          "bound_claim_ids": [
+            "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:b6468fc08c848936",
+            "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-rel:1b2f2e5db0f09696"
+          ],
+          "bound_fact_ids": [
+            "fact-O-METHOD-MAINLINE-01-c8146479-node:b6468fc08c848936",
+            "fact-O-METHOD-MAINLINE-01-c8146479-rel:1b2f2e5db0f09696"
+          ],
+          "bound_span_ids": [
+            "span:src/model/ebcar_dedicated_attention_model.py:145:174"
+          ],
+          "bound_equation_ids": [],
+          "exact_excerpts": [
+            {
+              "facet_id": "facet-47997bc7d81ecdf5",
+              "span_id": "span:src/model/ebcar_dedicated_attention_model.py:145:174",
+              "path": "src/model/ebcar_dedicated_attention_model.py",
+              "symbol": "sym:f6cf5bdfe2ae16f0",
+              "line_start": 145,
+              "line_end": 174,
+              "exact_excerpt": "        if self.cfg.use_dedicated_attention:\n            dedicated_attention_mask = torch.zeros(\n                (batch_size, num_passages + 1, num_passages + 1),\n                device=self.device,\n            )  # [batch_size, num_heads, num_passages + 1, num_passages + 1]\n            for i in range(batch_size):\n                temp_document_id = document_id[i]  # [num_passages]\n                for row, doc_id in enumerate(temp_document_id):\n                    dedicated_attention_mask[i, row, :] = -float(\n                        \"inf\"\n                    )  # Set this row to all -inf\n                    temp_indices = (\n                        temp_document_id == doc_id\n                    )  # Get the indices of the passages that have the same document id as the current passage\n                    temp_indices = torch.cat(\n                        (\n                            torch.tensor([True], device=self.device),\n                            temp_indices,\n                        )  # Always attend to the query\n                    )  # [num_passages + 1]\n                    dedicated_attention_mask[\n                        i, row, temp_indices\n                    ] = 0  # Set the dedicated attention mask to 0 for the passages that have the same document id as the current passage\n        else:\n            # This is the case when we don't use dedicated attention for ablation study\n            # The dedicated attention mask is all zeros\n            dedicated_attention_mask = torch.zeros(\n                (batch_size, num_passages + 1, num_passages + 1),\n                device=self.device,\n            )  # [batch_size, num_passages + 1, num_passages + 1]\n",
+              "excerpt_digest": "sha256:d1794815263ad9b2447fa50c83ee519400fb41cc40b479f42fa55c7d32f90147",
+              "file_digest": "sha256:d9c5c626979342c9dc612c6acf8b9a3aedc669df99986118030f37e793d52946",
+              "fact_ids": [
+                "fact-O-METHOD-MAINLINE-01-c8146479-node:b6468fc08c848936",
+                "fact-O-METHOD-MAINLINE-01-c8146479-rel:1b2f2e5db0f09696"
+              ],
+              "equation_ids": [],
+              "fact_atoms": [],
+              "equation_atoms": [],
+              "operation_atoms": []
+            }
+          ],
+          "active_path_conditions": [],
+          "unsupported_reason": ""
+        }
+      ],
+      "bound_claim_ids": [
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:b6468fc08c848936",
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-rel:1b2f2e5db0f09696"
+      ],
+      "bound_span_ids": [
+        "span:src/model/ebcar_dedicated_attention_model.py:145:174"
+      ],
+      "bound_equation_ids": [],
+      "evidence_digest": "sha256:e020306ca4124a93a5ccc084adc22414ec82a8e731d889e8b442aab6bb844b56",
+      "rationale": "Fail-closed alignment: field_evidence_pruned:operation",
+      "schema_failures": [
+        "field_evidence_pruned:operation"
+      ],
+      "content_digest": "sha256:b6905cfa2cdf9f163184940d9e6e216038974906d2462f4a7138a761e25a3974"
+    },
+    {
+      "facet_id": "facet-00e27dd88a70848f",
+      "policy_id": "policy:facet-00e27dd88a70848f",
+      "alignment_id": "alignment:facet-00e27dd88a70848f",
+      "clause_id": "clause:O-COMPONENT-06-34021b88:0",
+      "alignment_status": "unresolved",
+      "prose_mode": "author_specification",
+      "candidate_allowed": true,
+      "verified_directly_allowed": false,
+      "review_severity": "major",
+      "supported_fields": [],
+      "unsupported_fields": [],
+      "field_bindings": [],
+      "bound_claim_ids": [],
+      "bound_span_ids": [],
+      "bound_equation_ids": [],
+      "evidence_digest": "sha256:655f865e48dec2c1dc5793fc71c4fa41108d4027593cba1be6b92a8bec939a8f",
+      "rationale": "",
+      "schema_failures": [],
+      "content_digest": "sha256:b45cdd2a30093175e6f1c37f52e7d856fa251de5afa80595dc3b2a95365463ef"
+    },
+    {
+      "facet_id": "facet-85ba5afaa2fbe7ac",
+      "policy_id": "policy:facet-85ba5afaa2fbe7ac",
+      "alignment_id": "alignment:facet-85ba5afaa2fbe7ac",
+      "clause_id": "clause:O-COMPONENT-07-d157b2cc:0",
+      "alignment_status": "partial",
+      "prose_mode": "author_specification",
+      "candidate_allowed": true,
+      "verified_directly_allowed": false,
+      "review_severity": "major",
+      "supported_fields": [
+        "operation"
+      ],
+      "unsupported_fields": [],
+      "field_bindings": [
+        {
+          "field_name": "operation",
+          "status": "partial",
+          "polarity": "positive",
+          "bound_claim_ids": [
+            "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:b6468fc08c848936",
+            "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-rel:1b2f2e5db0f09696"
+          ],
+          "bound_fact_ids": [
+            "fact-O-METHOD-MAINLINE-01-c8146479-node:b6468fc08c848936",
+            "fact-O-METHOD-MAINLINE-01-c8146479-rel:1b2f2e5db0f09696"
+          ],
+          "bound_span_ids": [
+            "span:src/model/ebcar_dedicated_attention_model.py:145:174"
+          ],
+          "bound_equation_ids": [],
+          "exact_excerpts": [
+            {
+              "facet_id": "facet-85ba5afaa2fbe7ac",
+              "span_id": "span:src/model/ebcar_dedicated_attention_model.py:145:174",
+              "path": "src/model/ebcar_dedicated_attention_model.py",
+              "symbol": "sym:f6cf5bdfe2ae16f0",
+              "line_start": 145,
+              "line_end": 174,
+              "exact_excerpt": "        if self.cfg.use_dedicated_attention:\n            dedicated_attention_mask = torch.zeros(\n                (batch_size, num_passages + 1, num_passages + 1),\n                device=self.device,\n            )  # [batch_size, num_heads, num_passages + 1, num_passages + 1]\n            for i in range(batch_size):\n                temp_document_id = document_id[i]  # [num_passages]\n                for row, doc_id in enumerate(temp_document_id):\n                    dedicated_attention_mask[i, row, :] = -float(\n                        \"inf\"\n                    )  # Set this row to all -inf\n                    temp_indices = (\n                        temp_document_id == doc_id\n                    )  # Get the indices of the passages that have the same document id as the current passage\n                    temp_indices = torch.cat(\n                        (\n                            torch.tensor([True], device=self.device),\n                            temp_indices,\n                        )  # Always attend to the query\n                    )  # [num_passages + 1]\n                    dedicated_attention_mask[\n                        i, row, temp_indices\n                    ] = 0  # Set the dedicated attention mask to 0 for the passages that have the same document id as the current passage\n        else:\n            # This is the case when we don't use dedicated attention for ablation study\n            # The dedicated attention mask is all zeros\n            dedicated_attention_mask = torch.zeros(\n                (batch_size, num_passages + 1, num_passages + 1),\n                device=self.device,\n            )  # [batch_size, num_passages + 1, num_passages + 1]\n",
+              "excerpt_digest": "sha256:d1794815263ad9b2447fa50c83ee519400fb41cc40b479f42fa55c7d32f90147",
+              "file_digest": "sha256:d9c5c626979342c9dc612c6acf8b9a3aedc669df99986118030f37e793d52946",
+              "fact_ids": [
+                "fact-O-METHOD-MAINLINE-01-c8146479-node:b6468fc08c848936",
+                "fact-O-METHOD-MAINLINE-01-c8146479-rel:1b2f2e5db0f09696"
+              ],
+              "equation_ids": [],
+              "fact_atoms": [],
+              "equation_atoms": [],
+              "operation_atoms": []
+            }
+          ],
+          "active_path_conditions": [],
+          "unsupported_reason": ""
+        }
+      ],
+      "bound_claim_ids": [
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:b6468fc08c848936",
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-rel:1b2f2e5db0f09696"
+      ],
+      "bound_span_ids": [
+        "span:src/model/ebcar_dedicated_attention_model.py:145:174"
+      ],
+      "bound_equation_ids": [],
+      "evidence_digest": "sha256:24f4b1feb4b3867c985f592a190d75cf844560feb5476b53ddb627fa654890ba",
+      "rationale": "Fail-closed alignment: field_evidence_pruned:operation",
+      "schema_failures": [
+        "field_evidence_pruned:operation"
+      ],
+      "content_digest": "sha256:5592b6ce082990679f784ee2304ca3bc961e9d27407d74ca4eb63369402a5083"
+    },
+    {
+      "facet_id": "facet-0bce6b6595a44f58",
+      "policy_id": "policy:facet-0bce6b6595a44f58",
+      "alignment_id": "alignment:facet-0bce6b6595a44f58",
+      "clause_id": "clause:O-COMPONENT-08-4aac53dc:0",
+      "alignment_status": "unresolved",
+      "prose_mode": "author_specification",
+      "candidate_allowed": true,
+      "verified_directly_allowed": false,
+      "review_severity": "major",
+      "supported_fields": [],
+      "unsupported_fields": [
+        "operation"
+      ],
+      "field_bindings": [
+        {
+          "field_name": "operation",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": "Evidence confirms individual TransformerEncoderLayerHybridAttention.forward operations (shared attention call at idx 0, residual connections at idx 6 and 7, return logic at idx 8-9) and the concatenation of query+passages (idx 14), but no evidence demonstrates a multi-layer stack (sequential composition of multiple encoder layers) or the end-to-end production of contextualized passage embeddings as a stack output. The evidence shows single-layer mechanics, not the stack-level mechanism described in the facet quote."
+        }
+      ],
+      "bound_claim_ids": [],
+      "bound_span_ids": [],
+      "bound_equation_ids": [],
+      "evidence_digest": "sha256:655f865e48dec2c1dc5793fc71c4fa41108d4027593cba1be6b92a8bec939a8f",
+      "rationale": "Fail-closed alignment: field_positive_without_evidence:operation",
+      "schema_failures": [
+        "field_positive_without_evidence:operation"
+      ],
+      "content_digest": "sha256:8365c2a0038ab54bee22c4e1a8d2f7d095a65362510d5399284350d09daa0ad9"
+    },
+    {
+      "facet_id": "facet-833638c7783e3952",
+      "policy_id": "policy:facet-833638c7783e3952",
+      "alignment_id": "alignment:facet-833638c7783e3952",
+      "clause_id": "clause:O-COMPONENT-09-6a8cfd6c:0",
+      "alignment_status": "unresolved",
+      "prose_mode": "author_specification",
+      "candidate_allowed": true,
+      "verified_directly_allowed": false,
+      "review_severity": "major",
+      "supported_fields": [],
+      "unsupported_fields": [
+        "formula_goal"
+      ],
+      "field_bindings": [
+        {
+          "field_name": "formula_goal",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": "The evidence confirms the formula structure (loss_i = -pos_sim + logsumexp(all_sims, dim=0) at evidence index 13, with all_sims = cat([pos_sim, neg_sims]) at evidence index 12), which matches the InfoNCE contrastive loss objective. However, the specific semantic characterization that the positive passage embedding is 'updated' while the query embedding is 'fixed' is not explicitly stated in any supplied evidence excerpt. The code shows the computation but does not document the frozen/updated status of the embeddings in the provided spans. The formula structure is supported; the interpretive gloss about which embeddings are fixed vs. updated is not directly evidenced in the supplied excerpts."
+        }
+      ],
+      "bound_claim_ids": [],
+      "bound_span_ids": [],
+      "bound_equation_ids": [],
+      "evidence_digest": "sha256:655f865e48dec2c1dc5793fc71c4fa41108d4027593cba1be6b92a8bec939a8f",
+      "rationale": "Fail-closed alignment: field_positive_without_evidence:formula_goal",
+      "schema_failures": [
+        "field_positive_without_evidence:formula_goal"
+      ],
+      "content_digest": "sha256:bc86032bc629ecefe053d954c7b45e4b57904553f540be762409c02a2df30268"
+    },
+    {
+      "facet_id": "facet-3c6a3824f6a9641a",
+      "policy_id": "policy:facet-3c6a3824f6a9641a",
+      "alignment_id": "alignment:facet-3c6a3824f6a9641a",
+      "clause_id": "clause:O-COMPONENT-10-dac6250f:0",
+      "alignment_status": "unresolved",
+      "prose_mode": "author_specification",
+      "candidate_allowed": true,
+      "verified_directly_allowed": false,
+      "review_severity": "major",
+      "supported_fields": [],
+      "unsupported_fields": [
+        "guarantee"
+      ],
+      "field_bindings": [
+        {
+          "field_name": "guarantee",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": ""
+        }
+      ],
+      "bound_claim_ids": [],
+      "bound_span_ids": [],
+      "bound_equation_ids": [],
+      "evidence_digest": "sha256:655f865e48dec2c1dc5793fc71c4fa41108d4027593cba1be6b92a8bec939a8f",
+      "rationale": "",
+      "schema_failures": [],
+      "content_digest": "sha256:67498be140f7dd10c70790dc55061e876eff6f7b08b28a5a24907801474861ec"
+    },
+    {
+      "facet_id": "facet-c5e7c214b56a659f",
+      "policy_id": "policy:facet-c5e7c214b56a659f",
+      "alignment_id": "alignment:facet-c5e7c214b56a659f",
+      "clause_id": "clause:O-COMPONENT-11-27f310b2:0",
+      "alignment_status": "unresolved",
+      "prose_mode": "author_specification",
+      "candidate_allowed": true,
+      "verified_directly_allowed": false,
+      "review_severity": "major",
+      "supported_fields": [],
+      "unsupported_fields": [
+        "operation"
+      ],
+      "field_bindings": [
+        {
+          "field_name": "operation",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": ""
+        }
+      ],
+      "bound_claim_ids": [],
+      "bound_span_ids": [],
+      "bound_equation_ids": [],
+      "evidence_digest": "sha256:655f865e48dec2c1dc5793fc71c4fa41108d4027593cba1be6b92a8bec939a8f",
+      "rationale": "",
+      "schema_failures": [],
+      "content_digest": "sha256:9fa70803e02a6ba6d8631af0a673adc093b0360e86aa59ea45317370f4f721c6"
+    },
+    {
+      "facet_id": "facet-f6e629096087c520",
+      "policy_id": "policy:facet-f6e629096087c520",
+      "alignment_id": "alignment:facet-f6e629096087c520",
+      "clause_id": "clause:O-COMPONENT-12-370bd5b2:0",
+      "alignment_status": "unresolved",
+      "prose_mode": "author_specification",
+      "candidate_allowed": true,
+      "verified_directly_allowed": false,
+      "review_severity": "major",
+      "supported_fields": [],
+      "unsupported_fields": [
+        "operation"
+      ],
+      "field_bindings": [
+        {
+          "field_name": "operation",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": "No evidence in the supplied set references MLDR, SQuAD, NarrativeQA, ConTEB datasets, entity disambiguation, span matching, or narrative comprehension. All 27 evidence items concern code-level facts about EBCarRerankerHybridAttention methods, load_conteb_dataset internals, and EBCARDatasetReal initialization, but none identify the three specific ConTEB dataset names or their task coverage."
+        }
+      ],
+      "bound_claim_ids": [],
+      "bound_span_ids": [],
+      "bound_equation_ids": [],
+      "evidence_digest": "sha256:655f865e48dec2c1dc5793fc71c4fa41108d4027593cba1be6b92a8bec939a8f",
+      "rationale": "",
+      "schema_failures": [],
+      "content_digest": "sha256:0e6610f9201cc9759edcc063a7680d7b66fd29889a48cd6c7a9bd93dd3d9a1b1"
+    },
+    {
+      "facet_id": "facet-9e754ab14c6fde20",
+      "policy_id": "policy:facet-9e754ab14c6fde20",
+      "alignment_id": "alignment:facet-9e754ab14c6fde20",
+      "clause_id": "clause:O-ORGANIZATION-01-6b45ad90:0",
+      "alignment_status": "unresolved",
+      "prose_mode": "author_specification",
+      "candidate_allowed": true,
+      "verified_directly_allowed": false,
+      "review_severity": "major",
+      "supported_fields": [],
+      "unsupported_fields": [
+        "operation"
+      ],
+      "field_bindings": [
+        {
+          "field_name": "operation",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": ""
+        }
+      ],
+      "bound_claim_ids": [],
+      "bound_span_ids": [],
+      "bound_equation_ids": [],
+      "evidence_digest": "sha256:655f865e48dec2c1dc5793fc71c4fa41108d4027593cba1be6b92a8bec939a8f",
+      "rationale": "",
+      "schema_failures": [],
+      "content_digest": "sha256:fafffdee27d087dd4ef86aed4bc0d7508b434f57b0a6fe8e7964f1ad88737866"
+    },
+    {
+      "facet_id": "facet-b9735878c5548c4a",
+      "policy_id": "policy:facet-b9735878c5548c4a",
+      "alignment_id": "alignment:facet-b9735878c5548c4a",
+      "clause_id": "clause:O-ORGANIZATION-02-54911271:0",
+      "alignment_status": "partial",
+      "prose_mode": "author_specification",
+      "candidate_allowed": true,
+      "verified_directly_allowed": false,
+      "review_severity": "major",
+      "supported_fields": [
+        "operation"
+      ],
+      "unsupported_fields": [],
+      "field_bindings": [
+        {
+          "field_name": "operation",
+          "status": "partial",
+          "polarity": "positive",
+          "bound_claim_ids": [
+            "claim-O-STAGE-05-5b3d398a-fact-O-STAGE-05-5b3d398a-node:06b37685c9288fb6",
+            "claim-O-STAGE-05-5b3d398a-fact-O-STAGE-05-5b3d398a-rel:caa3e47dda8fdf04"
+          ],
+          "bound_fact_ids": [
+            "fact-O-STAGE-05-5b3d398a-node:06b37685c9288fb6",
+            "fact-O-STAGE-05-5b3d398a-rel:caa3e47dda8fdf04"
+          ],
+          "bound_span_ids": [
+            "span:src/model/ebcar_dedicated_attention_model.py:265:277"
+          ],
+          "bound_equation_ids": [],
+          "exact_excerpts": [
+            {
+              "facet_id": "facet-b9735878c5548c4a",
+              "span_id": "span:src/model/ebcar_dedicated_attention_model.py:265:277",
+              "path": "src/model/ebcar_dedicated_attention_model.py",
+              "symbol": "sym:9773c5add7af1f92",
+              "line_start": 265,
+              "line_end": 277,
+              "exact_excerpt": "        if self.cfg.add_positional_encoding:\n            # document_id might be out of range, so we need to modulate it and plus the quotient\n            document_id_embeddings = self.document_id_embedding(\n                (document_id.long() % self.cfg.retrieval.top_k)\n                + (document_id.long() // self.cfg.retrieval.top_k)\n            )  # [batch_size, num_passages, hidden_size]\n            passage_id_embeddings = self.passage_id_embedding(\n                passage_id.long()\n            )  # [batch_size, num_passages, hidden_size]\n            # Directly add the positional encoding to the passages\n            passages = (\n                passages + document_id_embeddings + passage_id_embeddings\n            )  # [batch_size, num_passages, hidden_size]\n",
+              "excerpt_digest": "sha256:3c6758dbbeabbca831337ca5c9319287f1ea57619cb7700eeb37b68021595057",
+              "file_digest": "sha256:d9c5c626979342c9dc612c6acf8b9a3aedc669df99986118030f37e793d52946",
+              "fact_ids": [
+                "fact-O-STAGE-05-5b3d398a-node:06b37685c9288fb6",
+                "fact-O-STAGE-05-5b3d398a-rel:caa3e47dda8fdf04"
+              ],
+              "equation_ids": [],
+              "fact_atoms": [],
+              "equation_atoms": [],
+              "operation_atoms": []
+            }
+          ],
+          "active_path_conditions": [],
+          "unsupported_reason": ""
+        }
+      ],
+      "bound_claim_ids": [
+        "claim-O-STAGE-05-5b3d398a-fact-O-STAGE-05-5b3d398a-node:06b37685c9288fb6",
+        "claim-O-STAGE-05-5b3d398a-fact-O-STAGE-05-5b3d398a-rel:caa3e47dda8fdf04"
+      ],
+      "bound_span_ids": [
+        "span:src/model/ebcar_dedicated_attention_model.py:265:277"
+      ],
+      "bound_equation_ids": [],
+      "evidence_digest": "sha256:3f47b95f023f8e86ac5ed118f80c2d416cf2461bdfae411d6417b1c4c847ba37",
+      "rationale": "Fail-closed alignment: field_evidence_pruned:operation",
+      "schema_failures": [
+        "field_evidence_pruned:operation"
+      ],
+      "content_digest": "sha256:9a0b43c397a6fc7ce01b7cb20ce94d35b469c2397c839839047dd38ee699554d"
+    },
+    {
+      "facet_id": "facet-68ed73e7a64fbbfd",
+      "policy_id": "policy:facet-68ed73e7a64fbbfd",
+      "alignment_id": "alignment:facet-68ed73e7a64fbbfd",
+      "clause_id": "clause:O-ORGANIZATION-03-2c92c853:0",
+      "alignment_status": "unresolved",
+      "prose_mode": "author_specification",
+      "candidate_allowed": true,
+      "verified_directly_allowed": false,
+      "review_severity": "major",
+      "supported_fields": [],
+      "unsupported_fields": [
+        "operation"
+      ],
+      "field_bindings": [
+        {
+          "field_name": "operation",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": "The dedicated masked attention mechanism (document-level attention mask construction) is not directly evidenced in the supplied evidence set. Evidence index 6 shows the branch on self.cfg.use_dedicated_attention and the mask construction code, but the specific mechanism of how the dedicated mask is applied within the Transformer encoder's attention computation (i.e., the shared full + dedicated masked hybrid) is not fully demonstrated. The shared attention path is evidenced (index 1, 2), and the positional enrichment is evidenced (index 0, 5, 7, 8, 10), but the integration of both shared and dedicated attention paths into a single hybrid encoder layer is not explicitly shown as a unified mechanism in the evidence."
+        }
+      ],
+      "bound_claim_ids": [],
+      "bound_span_ids": [],
+      "bound_equation_ids": [],
+      "evidence_digest": "sha256:655f865e48dec2c1dc5793fc71c4fa41108d4027593cba1be6b92a8bec939a8f",
+      "rationale": "Fail-closed alignment: field_positive_without_evidence:operation",
+      "schema_failures": [
+        "field_positive_without_evidence:operation"
+      ],
+      "content_digest": "sha256:aae828f737da5a5678352a26e22e2634a6c646991286c9e2b76f484734c9bb7f"
+    },
+    {
+      "facet_id": "facet-71df0ec224b91883",
+      "policy_id": "policy:facet-71df0ec224b91883",
+      "alignment_id": "alignment:facet-71df0ec224b91883",
+      "clause_id": "clause:O-ORGANIZATION-04-1dd970df:0",
+      "alignment_status": "unresolved",
+      "prose_mode": "author_specification",
+      "candidate_allowed": true,
+      "verified_directly_allowed": false,
+      "review_severity": "major",
+      "supported_fields": [],
+      "unsupported_fields": [
+        "formula_goal"
+      ],
+      "field_bindings": [
+        {
+          "field_name": "formula_goal",
+          "status": "unresolved",
+          "polarity": "positive",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": ""
+        }
+      ],
+      "bound_claim_ids": [],
+      "bound_span_ids": [],
+      "bound_equation_ids": [],
+      "evidence_digest": "sha256:655f865e48dec2c1dc5793fc71c4fa41108d4027593cba1be6b92a8bec939a8f",
+      "rationale": "Fail-closed alignment: field_evidence_semantic_mismatch:formula_goal;field_positive_without_evidence:formula_goal",
+      "schema_failures": [
+        "field_evidence_semantic_mismatch:formula_goal;field_positive_without_evidence:formula_goal"
+      ],
+      "content_digest": "sha256:4c54eaa2288a3606b1aafce1509d59c4b17748547f5e2dd6bb1787d6f3290120"
+    },
+    {
+      "facet_id": "facet-f55b63fbde1d45df",
+      "policy_id": "policy:facet-f55b63fbde1d45df",
+      "alignment_id": "alignment:facet-f55b63fbde1d45df",
+      "clause_id": "clause:O-ORGANIZATION-05-baf0d276:0",
+      "alignment_status": "unresolved",
+      "prose_mode": "author_specification",
+      "candidate_allowed": true,
+      "verified_directly_allowed": false,
+      "review_severity": "major",
+      "supported_fields": [],
+      "unsupported_fields": [
+        "operation"
+      ],
+      "field_bindings": [
+        {
+          "field_name": "operation",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": "No evidence supplied; cannot bind 'Inference procedure.' to any repository evidence."
+        }
+      ],
+      "bound_claim_ids": [],
+      "bound_span_ids": [],
+      "bound_equation_ids": [],
+      "evidence_digest": "sha256:655f865e48dec2c1dc5793fc71c4fa41108d4027593cba1be6b92a8bec939a8f",
+      "rationale": "",
+      "schema_failures": [],
+      "content_digest": "sha256:71b46395a0db52929f6a02509fa0e29a8e23ab4bb8da3421e33299ca18ab8433"
+    },
+    {
+      "facet_id": "facet-c8bf8030283400b2",
+      "policy_id": "policy:facet-c8bf8030283400b2",
+      "alignment_id": "alignment:facet-c8bf8030283400b2",
+      "clause_id": "clause:O-RATIONALE-CHECK-01-bad20132:0",
+      "alignment_status": "unresolved",
+      "prose_mode": "author_specification",
+      "candidate_allowed": true,
+      "verified_directly_allowed": false,
+      "review_severity": "major",
+      "supported_fields": [],
+      "unsupported_fields": [
+        "operation"
+      ],
+      "field_bindings": [
+        {
+          "field_name": "operation",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": ""
+        }
+      ],
+      "bound_claim_ids": [],
+      "bound_span_ids": [],
+      "bound_equation_ids": [],
+      "evidence_digest": "sha256:655f865e48dec2c1dc5793fc71c4fa41108d4027593cba1be6b92a8bec939a8f",
+      "rationale": "",
+      "schema_failures": [],
+      "content_digest": "sha256:2655ee732c4cd4c851cc4deba5c77124f347fa758db34d3baa436cd0cf125a75"
+    },
+    {
+      "facet_id": "facet-e517f869034a38aa",
+      "policy_id": "policy:facet-e517f869034a38aa",
+      "alignment_id": "alignment:facet-e517f869034a38aa",
+      "clause_id": "clause:O-RATIONALE-CHECK-02-30bb7c0f:0",
+      "alignment_status": "unresolved",
+      "prose_mode": "author_specification",
+      "candidate_allowed": true,
+      "verified_directly_allowed": false,
+      "review_severity": "major",
+      "supported_fields": [],
+      "unsupported_fields": [
+        "operation"
+      ],
+      "field_bindings": [
+        {
+          "field_name": "operation",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": "Evidence confirms document-level structural knowledge (document_id_embeddings) is injected into passage embeddings via additive composition (passages + document_id_embeddings + passage_id_embeddings). However, the 'to support cross-passage inference' purpose is not directly evidenced in the supplied excerpts; the mechanism is confirmed but the stated purpose/goal is not explicitly stated in the code evidence provided."
+        }
+      ],
+      "bound_claim_ids": [],
+      "bound_span_ids": [],
+      "bound_equation_ids": [],
+      "evidence_digest": "sha256:655f865e48dec2c1dc5793fc71c4fa41108d4027593cba1be6b92a8bec939a8f",
+      "rationale": "Fail-closed alignment: field_positive_without_evidence:operation",
+      "schema_failures": [
+        "field_positive_without_evidence:operation"
+      ],
+      "content_digest": "sha256:232b6215863d7e5e1622ac21a18421f68c518e5daea35d1e6ddcbe24ea1a1e61"
+    },
+    {
+      "facet_id": "facet-d27285ebc144a3fa",
+      "policy_id": "policy:facet-d27285ebc144a3fa",
+      "alignment_id": "alignment:facet-d27285ebc144a3fa",
+      "clause_id": "clause:O-RATIONALE-CHECK-03-b01101f7:0",
+      "alignment_status": "partial",
+      "prose_mode": "author_specification",
+      "candidate_allowed": true,
+      "verified_directly_allowed": false,
+      "review_severity": "major",
+      "supported_fields": [
+        "operation"
+      ],
+      "unsupported_fields": [],
+      "field_bindings": [
+        {
+          "field_name": "operation",
+          "status": "partial",
+          "polarity": "positive",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [
+            "fact-O-METHOD-MAINLINE-01-c8146479-node:b6468fc08c848936",
+            "fact-O-METHOD-MAINLINE-01-c8146479-rel:1b2f2e5db0f09696"
+          ],
+          "bound_span_ids": [
+            "span:src/model/ebcar_dedicated_attention_model.py:145:174"
+          ],
+          "bound_equation_ids": [],
+          "exact_excerpts": [
+            {
+              "facet_id": "facet-d27285ebc144a3fa",
+              "span_id": "span:src/model/ebcar_dedicated_attention_model.py:145:174",
+              "path": "src/model/ebcar_dedicated_attention_model.py",
+              "symbol": "sym:f6cf5bdfe2ae16f0",
+              "line_start": 145,
+              "line_end": 174,
+              "exact_excerpt": "        if self.cfg.use_dedicated_attention:\n            dedicated_attention_mask = torch.zeros(\n                (batch_size, num_passages + 1, num_passages + 1),\n                device=self.device,\n            )  # [batch_size, num_heads, num_passages + 1, num_passages + 1]\n            for i in range(batch_size):\n                temp_document_id = document_id[i]  # [num_passages]\n                for row, doc_id in enumerate(temp_document_id):\n                    dedicated_attention_mask[i, row, :] = -float(\n                        \"inf\"\n                    )  # Set this row to all -inf\n                    temp_indices = (\n                        temp_document_id == doc_id\n                    )  # Get the indices of the passages that have the same document id as the current passage\n                    temp_indices = torch.cat(\n                        (\n                            torch.tensor([True], device=self.device),\n                            temp_indices,\n                        )  # Always attend to the query\n                    )  # [num_passages + 1]\n                    dedicated_attention_mask[\n                        i, row, temp_indices\n                    ] = 0  # Set the dedicated attention mask to 0 for the passages that have the same document id as the current passage\n        else:\n            # This is the case when we don't use dedicated attention for ablation study\n            # The dedicated attention mask is all zeros\n            dedicated_attention_mask = torch.zeros(\n                (batch_size, num_passages + 1, num_passages + 1),\n                device=self.device,\n            )  # [batch_size, num_passages + 1, num_passages + 1]\n",
+              "excerpt_digest": "sha256:d1794815263ad9b2447fa50c83ee519400fb41cc40b479f42fa55c7d32f90147",
+              "file_digest": "sha256:d9c5c626979342c9dc612c6acf8b9a3aedc669df99986118030f37e793d52946",
+              "fact_ids": [
+                "fact-O-METHOD-MAINLINE-01-c8146479-node:b6468fc08c848936",
+                "fact-O-METHOD-MAINLINE-01-c8146479-rel:1b2f2e5db0f09696"
+              ],
+              "equation_ids": [],
+              "fact_atoms": [],
+              "equation_atoms": [],
+              "operation_atoms": []
+            }
+          ],
+          "active_path_conditions": [],
+          "unsupported_reason": ""
+        }
+      ],
+      "bound_claim_ids": [],
+      "bound_span_ids": [
+        "span:src/model/ebcar_dedicated_attention_model.py:145:174"
+      ],
+      "bound_equation_ids": [],
+      "evidence_digest": "sha256:b286917df2c4723ab3fe1847c8623941e7964678c6f9b57bdd6787f90ec6cc93",
+      "rationale": "Fail-closed alignment: field_evidence_pruned:operation",
+      "schema_failures": [
+        "field_evidence_pruned:operation"
+      ],
+      "content_digest": "sha256:90ce39e2c13c7a5932d35e0bf8763dce05b5b5a64155b4ae6be62834536d2b25"
+    },
+    {
+      "facet_id": "facet-f49282e62c6e52fe",
+      "policy_id": "policy:facet-f49282e62c6e52fe",
+      "alignment_id": "alignment:facet-f49282e62c6e52fe",
+      "clause_id": "clause:O-RATIONALE-CHECK-04-c742a4fc:0",
+      "alignment_status": "unresolved",
+      "prose_mode": "author_specification",
+      "candidate_allowed": true,
+      "verified_directly_allowed": false,
+      "review_severity": "major",
+      "supported_fields": [],
+      "unsupported_fields": [
+        "operation"
+      ],
+      "field_bindings": [
+        {
+          "field_name": "operation",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": ""
+        }
+      ],
+      "bound_claim_ids": [],
+      "bound_span_ids": [],
+      "bound_equation_ids": [],
+      "evidence_digest": "sha256:655f865e48dec2c1dc5793fc71c4fa41108d4027593cba1be6b92a8bec939a8f",
+      "rationale": "",
+      "schema_failures": [],
+      "content_digest": "sha256:8a8f52c4e89e5a67e15c07a6a7432a733df53a034e7e762e67434ad285c55360"
+    },
+    {
+      "facet_id": "facet-c0d9a5e725c77367",
+      "policy_id": "policy:facet-c0d9a5e725c77367",
+      "alignment_id": "alignment:facet-c0d9a5e725c77367",
+      "clause_id": "clause:O-RATIONALE-CHECK-05-595ac6ff:0",
+      "alignment_status": "unresolved",
+      "prose_mode": "author_specification",
+      "candidate_allowed": true,
+      "verified_directly_allowed": false,
+      "review_severity": "major",
+      "supported_fields": [],
+      "unsupported_fields": [
+        "operation"
+      ],
+      "field_bindings": [
+        {
+          "field_name": "operation",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": ""
+        }
+      ],
+      "bound_claim_ids": [],
+      "bound_span_ids": [],
+      "bound_equation_ids": [],
+      "evidence_digest": "sha256:655f865e48dec2c1dc5793fc71c4fa41108d4027593cba1be6b92a8bec939a8f",
+      "rationale": "",
+      "schema_failures": [],
+      "content_digest": "sha256:c3fd5acff973b17de9ca5530619df319c57539b879a6a4f38507a42d04b600cb"
+    },
+    {
+      "facet_id": "facet-ecd069d8ab3be38f",
+      "policy_id": "policy:facet-ecd069d8ab3be38f",
+      "alignment_id": "alignment:facet-ecd069d8ab3be38f",
+      "clause_id": "clause:O-RATIONALE-CHECK-06-388166d9:0",
+      "alignment_status": "unresolved",
+      "prose_mode": "author_specification",
+      "candidate_allowed": true,
+      "verified_directly_allowed": false,
+      "review_severity": "major",
+      "supported_fields": [],
+      "unsupported_fields": [
+        "operation"
+      ],
+      "field_bindings": [
+        {
+          "field_name": "operation",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": "No evidence in the supplied set demonstrates that ConTEB datasets explicitly require cross-passage reasoning. Evidence 1 shows load_conteb_dataset branches on chunk_id matching, and evidence 2 shows EBCARDatasetReal.__init__ truncates lists by size, but neither establishes that the datasets explicitly require cross-passage reasoning as a training requirement. The claim about the nature of the training data (requiring cross-passage reasoning) is not supported by any of the 16 evidence items provided."
+        }
+      ],
+      "bound_claim_ids": [],
+      "bound_span_ids": [],
+      "bound_equation_ids": [],
+      "evidence_digest": "sha256:655f865e48dec2c1dc5793fc71c4fa41108d4027593cba1be6b92a8bec939a8f",
+      "rationale": "",
+      "schema_failures": [],
+      "content_digest": "sha256:c51caf41eca2ea3b5876c437895321cb00991e6c01d73ef6131f9ce115eee13e"
+    }
+  ]
+}

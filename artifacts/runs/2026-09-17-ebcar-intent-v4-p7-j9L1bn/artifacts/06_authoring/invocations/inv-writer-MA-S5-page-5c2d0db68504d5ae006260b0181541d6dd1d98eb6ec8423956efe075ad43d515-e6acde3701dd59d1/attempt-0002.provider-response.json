@@ -1,0 +1,25 @@
+{
+  "attempt": 2,
+  "blocked_reason": "",
+  "content_digest": "sha256:cca6f40af4eb947d0cd1acffcaf155ee0c50199fe28551dde67fcf0805727809",
+  "diagnostics": {
+    "finish_seen": true,
+    "partial_chars": 1164,
+    "stream_events": 465,
+    "terminal_status": "finish_seen",
+    "usage_seen": true
+  },
+  "finish_reason": "structured_complete",
+  "invocation_id": "inv:writer:MA-S5:page:5c2d0db68504d5ae006260b0181541d6dd1d98eb6ec8423956efe075ad43d515",
+  "provider_finish_reason": "stop",
+  "request_diagnostics_digest": "sha256:3ad88533a97e59ef0e47df16454b1be4fcfda01fa98caa92421e5ea67b835d6e",
+  "response_digest": "sha256:3a6639eb6de377431a5b69b6e8d9c28af7eeae921821863c478350d4fc3bb8a6",
+  "response_text": "{\"paragraphs\":[{\"paragraph_id\":\"MA-S5:P2\",\"paragraph_markdown\":\"When positional encoding is enabled, the document identifier for each passage is modulated to remain within the embedding table range: the identifier is reduced by its remainder modulo the retrieval top-k and augmented by its quotient, so that out-of-range identifiers are folded into a valid index. The modulated document identifiers are projected through a document ID embedding layer, and the passage identifiers are projected through a separate passage ID embedding layer, each producing a tensor of shape [batch_size, num_passages, hidden_size]. Both embedding outputs are added directly to the passage representations, yielding positionally encoded passages that carry document and passage identity information into the subsequent attention computation. In implementation, the document identifier operand is computed as document_id.long() % self.cfg.retrieval.top_k + document_id.long() // self.cfg.retrieval.top_k, and the passage identifier operand is cast via passage_id.long() before projection through the respective embedding tables.\"}],\"section_id\":\"MA-S5\",\"used_formula_package_ids\":[]}",
+  "schema_version": "1.0",
+  "thinking_chars": 0,
+  "usage": {
+    "completion_tokens": 1241,
+    "prompt_tokens": 30314,
+    "total_tokens": 31555
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "attempt": 1,
+  "blocked_reason": "",
+  "content_digest": "sha256:c508ac6c33a61574d3b2f212d8057b814aa264a87d2242a020f4edaba7e20f34",
+  "diagnostics": {
+    "finish_seen": true,
+    "partial_chars": 2129,
+    "stream_events": 556,
+    "terminal_status": "finish_seen",
+    "usage_seen": true
+  },
+  "finish_reason": "structured_complete",
+  "invocation_id": "inv:writer:MA-S5:page:5c2d0db68504d5ae006260b0181541d6dd1d98eb6ec8423956efe075ad43d515",
+  "provider_finish_reason": "stop",
+  "request_diagnostics_digest": "sha256:c2d7b4458df2bf4301358223eba7ca044185181390c06270051bf22fe29955d8",
+  "response_digest": "sha256:675f270450238d7aa7853155b6101f38a02cbc2163c70e0cc63f9a834d12269c",
+  "response_text": "{\"paragraphs\":[{\"paragraph_id\":\"MA-S5:P1\",\"paragraph_markdown\":\"The inference procedure of the dedicated attention model transforms a set of retrieved passages and a query into a joint attention context. Before the attention computation, the model optionally augments each passage representation with positional encodings that distinguish document-level and passage-level identity within the batch. This augmentation is governed by a configuration flag and is applied prior to the concatenation of the query and passage tensors.\"},{\"paragraph_id\":\"MA-S5:P2\",\"paragraph_markdown\":\"When positional encoding is enabled, the document identifier for each passage is modulated to remain within the embedding table range: the identifier is reduced by its remainder modulo the retrieval top-k and augmented by its quotient, so that out-of-range identifiers are folded into a valid index. The modulated document identifiers are projected through a document ID embedding layer, and the passage identifiers are projected through a separate passage ID embedding layer, each producing a tensor of shape [batch_size, num_passages, hidden_size]. Both embedding outputs are added directly to the passage representations, yielding positionally encoded passages that carry document and passage identity information into the subsequent attention computation.\"},{\"paragraph_id\":\"MA-S5:P3\",\"paragraph_markdown\":\"The positionally encoded passages are then concatenated with the query tensor along the sequence dimension, forming a single joint input to the dedicated attention layer. This concatenation places the query immediately before the passages so that the attention mechanism can attend to both the query and the augmented passage representations within a unified context window.\"},{\"paragraph_id\":\"MA-S5:P4\",\"paragraph_markdown\":\"The concatenated tensor is passed to the attention module, which computes the final attention output over the joint query–passage sequence. The inference procedure thus completes by producing the attended representations that serve as the model's output for the given query–passage pair.\"}],\"section_id\":\"MA-S5\"}",
+  "schema_version": "1.0",
+  "thinking_chars": 0,
+  "usage": {
+    "completion_tokens": 1407,
+    "prompt_tokens": 28686,
+    "total_tokens": 30093
+  }
+}

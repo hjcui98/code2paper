@@ -1,0 +1,369 @@
+[
+  {
+    "gap_id": "gap-partial:O-STAGE-01-039a963a",
+    "obligation_id": "O-STAGE-01-039a963a",
+    "status": "unresolved",
+    "reason": "Obligation O-STAGE-01-039a963a produced promoted partial evidence; the following fields remain unresolved for Candidate review: typed_predicate:SELECT",
+    "attempted_tools": [
+      "SEARCH_SYMBOLS",
+      "READ_CANDIDATE"
+    ],
+    "search_scope": [
+      "config:conf/dataset/conteb_test_03NarrativeQA.yaml:11:persist_directory",
+      "config:conf/dataset/conteb_test_03NarrativeQA.yaml:7:name",
+      "config:conf/dataset/conteb_test_02SQuAD.yaml:11:persist_directory",
+      "config:conf/dataset/conteb_test_02SQuAD.yaml:7:name",
+      "config:conf/dataset/conteb_test_01MLDR.yaml:11:persist_directory",
+      "config:conf/dataset/conteb_test_01MLDR.yaml:7:name",
+      "config:conf/config.yaml:21:d_model",
+      "config:conf/retrieval_model/contriever.yaml:7:model_name",
+      "symbol:src/dataset/__init__.py:load_conteb_dataset:143",
+      "symbol:src/dataset/__init__.py:load_conteb_test_dataset:17",
+      "symbol:src/dataset/ebcar_dataset.py:__init__:17"
+    ],
+    "missing_relations": [
+      "typed_predicate:SELECT"
+    ],
+    "stopping_reason": "candidate_partial_unresolved",
+    "lane": "author_intent_unverified",
+    "trace_refs": [
+      "agenda:O-STAGE-01-039a963a"
+    ]
+  },
+  {
+    "gap_id": "gap-unresolved:O-COMPONENT-01-c301ecdd",
+    "obligation_id": "O-COMPONENT-01-c301ecdd",
+    "status": "unresolved",
+    "reason": "Obligation O-COMPONENT-01-c301ecdd was still open when the research loop stopped (candidate_handoff_partial).",
+    "attempted_tools": [],
+    "search_scope": [],
+    "missing_relations": [],
+    "stopping_reason": "never_attempted",
+    "lane": "author_intent_unverified",
+    "trace_refs": [
+      "agenda:O-COMPONENT-01-c301ecdd"
+    ]
+  },
+  {
+    "gap_id": "gap-unresolved:O-COMPONENT-01-de6049e3",
+    "obligation_id": "O-COMPONENT-01-de6049e3",
+    "status": "unresolved",
+    "reason": "Obligation O-COMPONENT-01-de6049e3 was still open when the research loop stopped (candidate_handoff_partial).",
+    "attempted_tools": [],
+    "search_scope": [],
+    "missing_relations": [],
+    "stopping_reason": "never_attempted",
+    "lane": "author_intent_unverified",
+    "trace_refs": [
+      "agenda:O-COMPONENT-01-de6049e3"
+    ]
+  },
+  {
+    "gap_id": "gap-unresolved:O-COMPONENT-02-2e14379d",
+    "obligation_id": "O-COMPONENT-02-2e14379d",
+    "status": "unresolved",
+    "reason": "Obligation O-COMPONENT-02-2e14379d was still open when the research loop stopped (candidate_handoff_partial).",
+    "attempted_tools": [],
+    "search_scope": [],
+    "missing_relations": [],
+    "stopping_reason": "never_attempted",
+    "lane": "author_intent_unverified",
+    "trace_refs": [
+      "agenda:O-COMPONENT-02-2e14379d"
+    ]
+  },
+  {
+    "gap_id": "gap-unresolved:O-COMPONENT-03-d8aa8c77",
+    "obligation_id": "O-COMPONENT-03-d8aa8c77",
+    "status": "unresolved",
+    "reason": "Obligation O-COMPONENT-03-d8aa8c77 was still open when the research loop stopped (candidate_handoff_partial).",
+    "attempted_tools": [],
+    "search_scope": [],
+    "missing_relations": [],
+    "stopping_reason": "never_attempted",
+    "lane": "author_intent_unverified",
+    "trace_refs": [
+      "agenda:O-COMPONENT-03-d8aa8c77"
+    ]
+  },
+  {
+    "gap_id": "gap-unresolved:O-COMPONENT-04-b5b6af99",
+    "obligation_id": "O-COMPONENT-04-b5b6af99",
+    "status": "unresolved",
+    "reason": "Obligation O-COMPONENT-04-b5b6af99 was still open when the research loop stopped (candidate_handoff_partial).",
+    "attempted_tools": [],
+    "search_scope": [],
+    "missing_relations": [],
+    "stopping_reason": "never_attempted",
+    "lane": "author_intent_unverified",
+    "trace_refs": [
+      "agenda:O-COMPONENT-04-b5b6af99"
+    ]
+  },
+  {
+    "gap_id": "gap-unresolved:O-COMPONENT-05-4c3594d2",
+    "obligation_id": "O-COMPONENT-05-4c3594d2",
+    "status": "unresolved",
+    "reason": "Obligation O-COMPONENT-05-4c3594d2 was still open when the research loop stopped (candidate_handoff_partial).",
+    "attempted_tools": [],
+    "search_scope": [],
+    "missing_relations": [],
+    "stopping_reason": "never_attempted",
+    "lane": "author_intent_unverified",
+    "trace_refs": [
+      "agenda:O-COMPONENT-05-4c3594d2"
+    ]
+  },
+  {
+    "gap_id": "gap-unresolved:O-COMPONENT-06-34021b88",
+    "obligation_id": "O-COMPONENT-06-34021b88",
+    "status": "unresolved",
+    "reason": "Obligation O-COMPONENT-06-34021b88 was still open when the research loop stopped (candidate_handoff_partial).",
+    "attempted_tools": [],
+    "search_scope": [],
+    "missing_relations": [],
+    "stopping_reason": "never_attempted",
+    "lane": "author_intent_unverified",
+    "trace_refs": [
+      "agenda:O-COMPONENT-06-34021b88"
+    ]
+  },
+  {
+    "gap_id": "gap-unresolved:O-COMPONENT-07-d157b2cc",
+    "obligation_id": "O-COMPONENT-07-d157b2cc",
+    "status": "unresolved",
+    "reason": "Obligation O-COMPONENT-07-d157b2cc was still open when the research loop stopped (candidate_handoff_partial).",
+    "attempted_tools": [],
+    "search_scope": [],
+    "missing_relations": [],
+    "stopping_reason": "never_attempted",
+    "lane": "author_intent_unverified",
+    "trace_refs": [
+      "agenda:O-COMPONENT-07-d157b2cc"
+    ]
+  },
+  {
+    "gap_id": "gap-unresolved:O-COMPONENT-08-4aac53dc",
+    "obligation_id": "O-COMPONENT-08-4aac53dc",
+    "status": "unresolved",
+    "reason": "Obligation O-COMPONENT-08-4aac53dc was still open when the research loop stopped (candidate_handoff_partial).",
+    "attempted_tools": [],
+    "search_scope": [],
+    "missing_relations": [],
+    "stopping_reason": "never_attempted",
+    "lane": "author_intent_unverified",
+    "trace_refs": [
+      "agenda:O-COMPONENT-08-4aac53dc"
+    ]
+  },
+  {
+    "gap_id": "gap-unresolved:O-COMPONENT-09-6a8cfd6c",
+    "obligation_id": "O-COMPONENT-09-6a8cfd6c",
+    "status": "unresolved",
+    "reason": "Obligation O-COMPONENT-09-6a8cfd6c was still open when the research loop stopped (candidate_handoff_partial).",
+    "attempted_tools": [],
+    "search_scope": [],
+    "missing_relations": [],
+    "stopping_reason": "never_attempted",
+    "lane": "author_intent_unverified",
+    "trace_refs": [
+      "agenda:O-COMPONENT-09-6a8cfd6c"
+    ]
+  },
+  {
+    "gap_id": "gap-unresolved:O-COMPONENT-10-dac6250f",
+    "obligation_id": "O-COMPONENT-10-dac6250f",
+    "status": "unresolved",
+    "reason": "Obligation O-COMPONENT-10-dac6250f was still open when the research loop stopped (candidate_handoff_partial).",
+    "attempted_tools": [],
+    "search_scope": [],
+    "missing_relations": [],
+    "stopping_reason": "never_attempted",
+    "lane": "author_intent_unverified",
+    "trace_refs": [
+      "agenda:O-COMPONENT-10-dac6250f"
+    ]
+  },
+  {
+    "gap_id": "gap-unresolved:O-COMPONENT-11-27f310b2",
+    "obligation_id": "O-COMPONENT-11-27f310b2",
+    "status": "unresolved",
+    "reason": "Obligation O-COMPONENT-11-27f310b2 was still open when the research loop stopped (candidate_handoff_partial).",
+    "attempted_tools": [],
+    "search_scope": [],
+    "missing_relations": [],
+    "stopping_reason": "never_attempted",
+    "lane": "author_intent_unverified",
+    "trace_refs": [
+      "agenda:O-COMPONENT-11-27f310b2"
+    ]
+  },
+  {
+    "gap_id": "gap-unresolved:O-COMPONENT-12-370bd5b2",
+    "obligation_id": "O-COMPONENT-12-370bd5b2",
+    "status": "unresolved",
+    "reason": "Obligation O-COMPONENT-12-370bd5b2 was still open when the research loop stopped (candidate_handoff_partial).",
+    "attempted_tools": [],
+    "search_scope": [],
+    "missing_relations": [],
+    "stopping_reason": "never_attempted",
+    "lane": "author_intent_unverified",
+    "trace_refs": [
+      "agenda:O-COMPONENT-12-370bd5b2"
+    ]
+  },
+  {
+    "gap_id": "gap-unresolved:O-ORGANIZATION-01-6b45ad90",
+    "obligation_id": "O-ORGANIZATION-01-6b45ad90",
+    "status": "unresolved",
+    "reason": "Organization preference O-ORGANIZATION-01-6b45ad90 remained open; it does not consume must-cover code search.",
+    "attempted_tools": [],
+    "search_scope": [],
+    "missing_relations": [],
+    "stopping_reason": "organization_preference",
+    "lane": "author_intent_unverified",
+    "trace_refs": [
+      "agenda:O-ORGANIZATION-01-6b45ad90"
+    ]
+  },
+  {
+    "gap_id": "gap-unresolved:O-ORGANIZATION-02-54911271",
+    "obligation_id": "O-ORGANIZATION-02-54911271",
+    "status": "unresolved",
+    "reason": "Organization preference O-ORGANIZATION-02-54911271 remained open; it does not consume must-cover code search.",
+    "attempted_tools": [],
+    "search_scope": [],
+    "missing_relations": [],
+    "stopping_reason": "organization_preference",
+    "lane": "author_intent_unverified",
+    "trace_refs": [
+      "agenda:O-ORGANIZATION-02-54911271"
+    ]
+  },
+  {
+    "gap_id": "gap-unresolved:O-ORGANIZATION-03-2c92c853",
+    "obligation_id": "O-ORGANIZATION-03-2c92c853",
+    "status": "unresolved",
+    "reason": "Organization preference O-ORGANIZATION-03-2c92c853 remained open; it does not consume must-cover code search.",
+    "attempted_tools": [],
+    "search_scope": [],
+    "missing_relations": [],
+    "stopping_reason": "organization_preference",
+    "lane": "author_intent_unverified",
+    "trace_refs": [
+      "agenda:O-ORGANIZATION-03-2c92c853"
+    ]
+  },
+  {
+    "gap_id": "gap-unresolved:O-ORGANIZATION-04-1dd970df",
+    "obligation_id": "O-ORGANIZATION-04-1dd970df",
+    "status": "unresolved",
+    "reason": "Organization preference O-ORGANIZATION-04-1dd970df remained open; it does not consume must-cover code search.",
+    "attempted_tools": [],
+    "search_scope": [],
+    "missing_relations": [],
+    "stopping_reason": "organization_preference",
+    "lane": "author_intent_unverified",
+    "trace_refs": [
+      "agenda:O-ORGANIZATION-04-1dd970df"
+    ]
+  },
+  {
+    "gap_id": "gap-unresolved:O-ORGANIZATION-05-baf0d276",
+    "obligation_id": "O-ORGANIZATION-05-baf0d276",
+    "status": "unresolved",
+    "reason": "Organization preference O-ORGANIZATION-05-baf0d276 remained open; it does not consume must-cover code search.",
+    "attempted_tools": [],
+    "search_scope": [],
+    "missing_relations": [],
+    "stopping_reason": "organization_preference",
+    "lane": "author_intent_unverified",
+    "trace_refs": [
+      "agenda:O-ORGANIZATION-05-baf0d276"
+    ]
+  },
+  {
+    "gap_id": "gap-unresolved:O-RATIONALE-CHECK-01-bad20132",
+    "obligation_id": "O-RATIONALE-CHECK-01-bad20132",
+    "status": "unresolved",
+    "reason": "Obligation O-RATIONALE-CHECK-01-bad20132 was still open when the research loop stopped (candidate_handoff_partial).",
+    "attempted_tools": [],
+    "search_scope": [],
+    "missing_relations": [],
+    "stopping_reason": "never_attempted",
+    "lane": "author_intent_unverified",
+    "trace_refs": [
+      "agenda:O-RATIONALE-CHECK-01-bad20132"
+    ]
+  },
+  {
+    "gap_id": "gap-unresolved:O-RATIONALE-CHECK-02-30bb7c0f",
+    "obligation_id": "O-RATIONALE-CHECK-02-30bb7c0f",
+    "status": "unresolved",
+    "reason": "Obligation O-RATIONALE-CHECK-02-30bb7c0f was still open when the research loop stopped (candidate_handoff_partial).",
+    "attempted_tools": [],
+    "search_scope": [],
+    "missing_relations": [],
+    "stopping_reason": "never_attempted",
+    "lane": "author_intent_unverified",
+    "trace_refs": [
+      "agenda:O-RATIONALE-CHECK-02-30bb7c0f"
+    ]
+  },
+  {
+    "gap_id": "gap-unresolved:O-RATIONALE-CHECK-03-b01101f7",
+    "obligation_id": "O-RATIONALE-CHECK-03-b01101f7",
+    "status": "unresolved",
+    "reason": "Obligation O-RATIONALE-CHECK-03-b01101f7 was still open when the research loop stopped (candidate_handoff_partial).",
+    "attempted_tools": [],
+    "search_scope": [],
+    "missing_relations": [],
+    "stopping_reason": "never_attempted",
+    "lane": "author_intent_unverified",
+    "trace_refs": [
+      "agenda:O-RATIONALE-CHECK-03-b01101f7"
+    ]
+  },
+  {
+    "gap_id": "gap-unresolved:O-RATIONALE-CHECK-04-c742a4fc",
+    "obligation_id": "O-RATIONALE-CHECK-04-c742a4fc",
+    "status": "unresolved",
+    "reason": "Obligation O-RATIONALE-CHECK-04-c742a4fc was still open when the research loop stopped (candidate_handoff_partial).",
+    "attempted_tools": [],
+    "search_scope": [],
+    "missing_relations": [],
+    "stopping_reason": "never_attempted",
+    "lane": "author_intent_unverified",
+    "trace_refs": [
+      "agenda:O-RATIONALE-CHECK-04-c742a4fc"
+    ]
+  },
+  {
+    "gap_id": "gap-unresolved:O-RATIONALE-CHECK-05-595ac6ff",
+    "obligation_id": "O-RATIONALE-CHECK-05-595ac6ff",
+    "status": "unresolved",
+    "reason": "Obligation O-RATIONALE-CHECK-05-595ac6ff was still open when the research loop stopped (candidate_handoff_partial).",
+    "attempted_tools": [],
+    "search_scope": [],
+    "missing_relations": [],
+    "stopping_reason": "never_attempted",
+    "lane": "author_intent_unverified",
+    "trace_refs": [
+      "agenda:O-RATIONALE-CHECK-05-595ac6ff"
+    ]
+  },
+  {
+    "gap_id": "gap-unresolved:O-RATIONALE-CHECK-06-388166d9",
+    "obligation_id": "O-RATIONALE-CHECK-06-388166d9",
+    "status": "unresolved",
+    "reason": "Obligation O-RATIONALE-CHECK-06-388166d9 was still open when the research loop stopped (candidate_handoff_partial).",
+    "attempted_tools": [],
+    "search_scope": [],
+    "missing_relations": [],
+    "stopping_reason": "never_attempted",
+    "lane": "author_intent_unverified",
+    "trace_refs": [
+      "agenda:O-RATIONALE-CHECK-06-388166d9"
+    ]
+  }
+]

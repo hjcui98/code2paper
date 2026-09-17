@@ -7914,12 +7914,12 @@ def _move_authority_lanes(
 
 class NarrativeParagraphPlanV3(BaseModel):
     """Scientific paragraph plan specifying required and optional details and formula placements."""
-    model_config = ConfigDict(extra="forbid", frozen=True)
+    model_config = ConfigDict(extra="allow", frozen=True)
 
     paragraph_id: str
     section_id: str
     role: str
-    mechanism_id: str
+    mechanism_id: str = ""
     required_detail_ids: tuple[str, ...] = ()
     optional_detail_ids: tuple[str, ...] = ()
     formula_obligation_ids: tuple[str, ...] = ()
@@ -7929,7 +7929,7 @@ class NarrativeParagraphPlanV3(BaseModel):
     # report ids, but only witnesses satisfying this sidecar can make the
     # transaction valid.
     witness_contract: dict[str, Any] = Field(default_factory=dict)
-    suggested_depth: Literal["brief", "standard", "detailed"] = "standard"
+    suggested_depth: str = "standard"
     reader_goal: str = ""
     transition_from: str = ""
     transition_to: str = ""
@@ -7951,7 +7951,7 @@ class NarrativeParagraphPlanV3(BaseModel):
 
 class NarrativeSectionPlanV3(BaseModel):
     """Section plan grouping scientific paragraphs for one or more mechanisms."""
-    model_config = ConfigDict(extra="forbid", frozen=True)
+    model_config = ConfigDict(extra="allow", frozen=True)
 
     section_id: str
     heading: str
@@ -7975,7 +7975,7 @@ class NarrativeSectionPlanV3(BaseModel):
 
 class NarrativeUnitV1(BaseModel):
     """Scientific argument unit mapping mechanisms to narrative paragraphs without technical IR compaction."""
-    model_config = ConfigDict(extra="forbid", frozen=True)
+    model_config = ConfigDict(extra="allow", frozen=True)
 
     unit_id: str
     section_id: str
@@ -7989,7 +7989,7 @@ class NarrativeUnitV1(BaseModel):
     optional_detail_ids: tuple[str, ...]
     formula_obligation_ids: tuple[str, ...]
 
-    suggested_depth: Literal["brief", "standard", "detailed"]
+    suggested_depth: str = "standard"
     transition_from: str = ""
     transition_to: str = ""
 
@@ -8011,7 +8011,7 @@ class NarrativeUnitV1(BaseModel):
 
 class NarrativePlanV3(BaseModel):
     """Thin narrative plan referencing canonical mechanism context entities without technical IR compilation."""
-    model_config = ConfigDict(extra="forbid", frozen=True)
+    model_config = ConfigDict(extra="allow", frozen=True)
 
     plan_id: str
     sections: tuple[NarrativeSectionPlanV3, ...]
@@ -8184,16 +8184,35 @@ def validate_narrative_plan(
 
     for sec in plan.sections:
         for mid in sec.mechanism_ids:
-            if mid not in context_map:
+            if mid and mid not in context_map:
                 failures.append(f"unknown_mechanism_id:{mid}")
 
         for para in sec.paragraphs:
+            para_mids = tuple(dict.fromkeys(
+                str(mid).strip()
+                for mid in (
+                    list(getattr(para, "mechanism_ids", ()) or ())
+                    + ([para.mechanism_id] if para.mechanism_id else [])
+                    + list(getattr(sec, "mechanism_ids", ()) or ())
+                )
+                if str(mid).strip()
+            ))
             pmid = para.mechanism_id
-            if pmid not in context_map:
-                failures.append(f"unknown_mechanism_id:{pmid}")
+            if not pmid and not para_mids:
                 continue
-            ctx = context_map[pmid]
-            ctx_details = {d.detail_id: d for d in ctx.details}
+            for mid in (para_mids if para_mids else ((pmid,) if pmid else ())):
+                if mid not in context_map:
+                    failures.append(f"unknown_mechanism_id:{mid}")
+            applicable_contexts = [context_map[mid] for mid in para_mids if mid in context_map]
+            if not applicable_contexts and pmid and pmid in context_map:
+                applicable_contexts = [context_map[pmid]]
+            if not applicable_contexts:
+                continue
+            ctx_details = {
+                d.detail_id: d
+                for c in applicable_contexts
+                for d in (getattr(c, "details", ()) or ())
+            }
 
             for did in para.required_detail_ids:
                 if did not in ctx_details:
@@ -8226,7 +8245,8 @@ def validate_narrative_plan(
             raw_targets = _value(contract, "targets", ()) or ()
             atom_owner = {
                 atom.atom_id: detail.detail_id
-                for detail in ctx.details
+                for c in applicable_contexts
+                for detail in (getattr(c, "details", ()) or ())
                 for atom in (getattr(detail, "witness_atoms", ()) or ())
             }
             seen_targets: set[tuple[str, str]] = set()
@@ -8323,14 +8343,22 @@ def validate_narrative_plan(
                 failures.append(
                     f"paragraph_owner_not_in_unit:{para.paragraph_id}:{paragraph_owner}"
                 )
+            para_mids = tuple(dict.fromkeys(
+                str(mid).strip()
+                for mid in (
+                    list(getattr(para, "mechanism_ids", ()) or ())
+                    + ([para.mechanism_id] if para.mechanism_id else [])
+                    + list(getattr(sec, "mechanism_ids", ()) or ())
+                )
+                if str(mid).strip()
+            ))
+            owner_details = {
+                str(getattr(detail, "detail_id", ""))
+                for mid in para_mids
+                if (owner_ctx := context_map.get(mid)) is not None
+                for detail in (getattr(owner_ctx, "details", ()) or ())
+            }
             for detail_id in para.required_detail_ids:
-                owner_context = context_map.get(paragraph_owner)
-                if owner_context is None:
-                    continue
-                owner_details = {
-                    str(getattr(detail, "detail_id", ""))
-                    for detail in (getattr(owner_context, "details", ()) or ())
-                }
                 if str(detail_id) not in owner_details:
                     failures.append(
                         f"paragraph_detail_owner_mismatch:{para.paragraph_id}:{detail_id}"
@@ -8372,7 +8400,7 @@ def validate_narrative_plan(
     # 4. Check narrative units
     for unit in plan.narrative_units:
         for mid in unit.mechanism_context_ids:
-            if mid not in context_map:
+            if mid and mid not in context_map:
                 failures.append(f"unknown_unit_mechanism:{mid}")
 
     # Formula packages and obligations are paragraph-owned resources.  A
@@ -8382,11 +8410,11 @@ def validate_narrative_plan(
     formula_obligation_occurrences: dict[str, list[str]] = {}
     for sec in plan.sections:
         for para in sec.paragraphs:
-            for package_id in para.formula_package_ids:
+            for package_id in getattr(para, "formula_package_ids", ()) or ():
                 formula_package_occurrences.setdefault(package_id, []).append(
                     (sec.section_id, para.paragraph_id)
                 )
-            for obligation_id in para.formula_obligation_ids:
+            for obligation_id in getattr(para, "formula_obligation_ids", ()) or ():
                 formula_obligation_occurrences.setdefault(obligation_id, []).append(para.paragraph_id)
     for package_id, paragraph_ids in formula_package_occurrences.items():
         if len(paragraph_ids) != 1:

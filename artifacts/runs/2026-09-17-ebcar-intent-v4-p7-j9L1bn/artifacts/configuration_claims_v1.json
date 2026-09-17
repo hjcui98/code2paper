@@ -1,0 +1,71 @@
+{
+  "schema_version": "1.0",
+  "repo_snapshot_id": "repo:9b4f1a34c70f10c2317f024df585e282c9d02371586a629e00ace26d8988c942",
+  "project_tree_hash": "sha256:9b4f1a34c70f10c2317f024df585e282c9d02371586a629e00ace26d8988c942",
+  "claims": [
+    {
+      "configuration_id": "config:sha256:579ebf0b6e60c",
+      "key": "self.cfg.use_dedicated_attention",
+      "value": true,
+      "state": "default",
+      "definition_span_ids": [
+        "span:conf/config.yaml:19:19"
+      ],
+      "entrypoint_span_ids": [],
+      "override_chain": [],
+      "conditions": [],
+      "source_authority": "executable_hard",
+      "authority_lane": "configuration_resolved",
+      "source_fact_ids": [
+        "fact-configuration-rel:dc95ead65d3bb047"
+      ],
+      "active": true,
+      "unresolved_reason": "",
+      "canonical_identity": "sha256:2f9795729f8bd9fda8092e1a76dd361b732c8e64cd2bc144528f0838b2666d07",
+      "content_digest": "sha256:6acfb506387e911cbe9ba7d99b4fa60014286bd4bed1645d7e76f1b370d1760b"
+    },
+    {
+      "configuration_id": "config:sha256:68e84b7c1967c",
+      "key": "EBCARDatasetReal.__init__",
+      "value": "size=None",
+      "state": "default",
+      "definition_span_ids": [
+        "span:src/dataset/ebcar_dataset.py:27:27"
+      ],
+      "entrypoint_span_ids": [],
+      "override_chain": [],
+      "conditions": [],
+      "source_authority": "executable_hard",
+      "authority_lane": "configuration_resolved",
+      "source_fact_ids": [
+        "fact-O-STAGE-01-039a963a-node:32aefbb96ff8fa11"
+      ],
+      "active": true,
+      "unresolved_reason": "",
+      "canonical_identity": "sha256:3491d7e82975c5bee5348d5e28fee2675b5c39aec9a961e151bc4034ef11eeda",
+      "content_digest": "sha256:c249e3396f58612851eade196a431563e77423a86fb59efdde35a5171ffd7867"
+    },
+    {
+      "configuration_id": "config:sha256:5102d9838cd7f",
+      "key": "self.cfg.add_positional_encoding",
+      "value": true,
+      "state": "default",
+      "definition_span_ids": [
+        "span:conf/config.yaml:18:18"
+      ],
+      "entrypoint_span_ids": [],
+      "override_chain": [],
+      "conditions": [],
+      "source_authority": "executable_hard",
+      "authority_lane": "configuration_resolved",
+      "source_fact_ids": [
+        "fact-configuration-rel:696083475512bfc5"
+      ],
+      "active": true,
+      "unresolved_reason": "",
+      "canonical_identity": "sha256:2c527660f6c5d0b58b29eb582738d4ef7a623889f4cab62b07a6d3f09f13721a",
+      "content_digest": "sha256:32c1fec74839674c42fba4633e9377bfab40b6e2167d493ad6e0615d346b431f"
+    }
+  ],
+  "content_digest": "sha256:240eb921cdbd232a09bbae9373fd4701ea903c788ea8452f36990253cb4dd499"
+}

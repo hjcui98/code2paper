@@ -1847,7 +1847,13 @@ def fit_narrative_plan_to_page_budget(
             },
             atom_ids=atoms,
             atom_payloads=atom_payloads,
-            page_kind="technical" if len(mechanism_ids) <= 1 else "join",
+            page_kind=(
+                "header"
+                if not atoms
+                else "technical"
+                if len(mechanism_ids) <= 1
+                else "join"
+            ),
             mechanism_ids=mechanism_ids,
         )
         contributions = {
@@ -1861,15 +1867,25 @@ def fit_narrative_plan_to_page_budget(
                 archive_digest=archive.content_digest,
                 technical_payload=payload,
             )
+            page_kind = (
+                "header"
+                if not atoms
+                else "technical"
+                if len(mechanism_ids) <= 1
+                else "join"
+            )
+            page_mechanism_id = (
+                sorted(mechanism_ids)[0]
+                if len(mechanism_ids) == 1
+                else f"join:{section_id}"
+                if mechanism_ids
+                else f"header:{section_id}"
+            )
             page = ConsumerTechnicalPageV2(
                 page_id=page_id,
-                page_kind="technical" if len(mechanism_ids) <= 1 else "join",
+                page_kind=page_kind,
                 archive_digest=archive.content_digest,
-                mechanism_id=(
-                    sorted(mechanism_ids)[0]
-                    if len(mechanism_ids) == 1
-                    else f"join:{section_id}"
-                ),
+                mechanism_id=page_mechanism_id,
                 atom_ids=atoms,
                 technical_payload=payload,
                 technical_bytes_digest=bytes_digest,
@@ -1902,7 +1918,11 @@ def fit_narrative_plan_to_page_budget(
             row = (
                 paragraph.model_dump(mode="json")
                 if hasattr(paragraph, "model_dump")
+                else dict(vars(paragraph))
+                if hasattr(paragraph, "__dict__")
                 else dict(paragraph)
+                if isinstance(paragraph, Mapping)
+                else {}
             )
             paragraph_id = str(row.get("paragraph_id", ""))
             tokens, request_tokens, atoms, contributions = _paragraph_payload_tokens(
@@ -2239,11 +2259,26 @@ def fit_narrative_plan_to_page_budget(
                     fragment_obligations = row_obligations if index == 0 else ()
                     fragment_packages = row_packages if index == 0 else ()
                 last_fragment = fragment_index == len(fragments)
+                fragment_mid = str(row.get("mechanism_id", ""))
+                if fragment:
+                    for did in fragment:
+                        matches = _resolve_candidate_atom_ids(did, atom_payloads)
+                        if matches:
+                            payload = atom_payloads.get(matches[0], {})
+                            mid = str(payload.get("primary_mechanism_id") or payload.get("mechanism_id") or "").strip()
+                            if mid:
+                                fragment_mid = mid
+                                break
+                        if did.startswith("detail:"):
+                            parts = did.split(":")
+                            if len(parts) >= 3 and parts[1].startswith("mech_"):
+                                fragment_mid = f"{parts[1]}:{parts[2]}"
+                                break
                 revised_paragraphs.append(NarrativeParagraphPlanV3(
                     paragraph_id=fragment_id,
                     section_id=section_id,
                     role=str(row.get("role", "")),
-                    mechanism_id=str(row.get("mechanism_id", "")),
+                    mechanism_id=fragment_mid,
                     required_detail_ids=fragment_required,
                     optional_detail_ids=fragment_optional,
                     formula_obligation_ids=fragment_obligations,
@@ -2272,6 +2307,7 @@ def fit_narrative_plan_to_page_budget(
                         str(row.get("transition_to", "") or "")
                         if last_fragment else ""
                     ),
+                    mechanism_ids=(fragment_mid,) if fragment_mid else tuple(row.get("mechanism_ids", ()) or ()),
                 ))
                 diagnostics["split_paragraphs"].append({
                     "section_id": section_id,
@@ -2306,7 +2342,13 @@ def fit_narrative_plan_to_page_budget(
     revised_units: list[Any] = []
     for unit in (getattr(narrative_plan, "narrative_units", ()) or ()):
         unit_dict = (
-            unit.model_dump(mode="json") if hasattr(unit, "model_dump") else dict(unit)
+            unit.model_dump(mode="json")
+            if hasattr(unit, "model_dump")
+            else dict(vars(unit))
+            if hasattr(unit, "__dict__")
+            else dict(unit)
+            if isinstance(unit, Mapping)
+            else {}
         )
         section_id = str(unit_dict.get("section_id", ""))
         section = next(
@@ -2565,10 +2607,48 @@ def extend_writer_worksets_from_narrative_plan(
     ) -> list[ConsumerTechnicalPageV2]:
         atom_ids = sorted(required_atoms)
         if not atom_ids:
-            raise UnifiedCompilerError(
-                UNIFIED_PAGE_PROJECTION_INCOMPLETE,
-                f"section {section_id} has no archive atoms",
+            page_kind = "header"
+            page_mechanism_id = (
+                sorted(mechanism_ids)[0]
+                if len(mechanism_ids) == 1
+                else f"join:{section_id}" if mechanism_ids
+                else f"header:{section_id}"
             )
+            header = _mechanism_header(mechanism_ids, section_id)
+            paragraph_ids = tuple(dict.fromkeys(
+                str(row.get("paragraph_id") or "")
+                for row in paragraph_rows
+                if isinstance(row, Mapping) and str(row.get("paragraph_id") or "").strip()
+            ))
+            payload = _section_page_payload(
+                archive_digest=archive.content_digest if archive is not None else manifest.archive_digest,
+                header=header,
+                section_id=section_id,
+                task_ids=task_ids,
+                paragraph_ids=paragraph_ids,
+                detail_ids=(),
+                obligation_ids=(),
+                atom_ids=(),
+                atom_payloads=atom_payloads,
+                page_kind=page_kind,
+                mechanism_ids=mechanism_ids,
+            )
+            page_id, _page_bytes, bytes_digest = compute_technical_page_id(
+                archive_digest=archive.content_digest if archive is not None else manifest.archive_digest,
+                technical_payload=payload,
+            )
+            return [
+                ConsumerTechnicalPageV2(
+                    page_id=page_id,
+                    page_kind=page_kind,
+                    archive_digest=archive.content_digest if archive is not None else manifest.archive_digest,
+                    mechanism_id=page_mechanism_id,
+                    atom_ids=(),
+                    technical_payload=payload,
+                    technical_bytes_digest=bytes_digest,
+                    token_estimate=conservative_token_estimate(payload),
+                )
+            ]
         for atom_id in atom_ids:
             if atom_id not in atom_payloads:
                 raise UnifiedCompilerError(
@@ -2888,7 +2968,13 @@ def extend_writer_worksets_from_narrative_plan(
             workset_id=workset_id,
             task_kind="section",
             task_ids=task_ids,
-            mechanism_id=(sorted(mechanism_ids)[0] if len(mechanism_ids) == 1 else f"join:{section_id}"),
+            mechanism_id=(
+                sorted(mechanism_ids)[0]
+                if len(mechanism_ids) == 1
+                else f"join:{section_id}"
+                if mechanism_ids
+                else f"header:{section_id}"
+            ),
             section_id=section_id,
             required_atom_ids=tuple(sorted(required_atoms)),
             required_page_ids=tuple(page.page_id for page in section_pages),
@@ -2939,12 +3025,16 @@ def _narrative_plan_sections(narrative_plan: Any) -> list[dict[str, Any]]:
     for section in sections or ():
         if isinstance(section, BaseModel):
             section = section.model_dump(mode="json")
+        elif hasattr(section, "__dict__"):
+            section = dict(vars(section))
         if isinstance(section, Mapping):
             paragraphs = section.get("paragraphs", ()) or ()
             paragraph_rows = [
-                item.model_dump(mode="json") if isinstance(item, BaseModel) else item
+                item.model_dump(mode="json") if isinstance(item, BaseModel)
+                else dict(vars(item)) if hasattr(item, "__dict__")
+                else item
                 for item in paragraphs
-                if isinstance(item, (BaseModel, Mapping))
+                if isinstance(item, (BaseModel, Mapping)) or hasattr(item, "__dict__")
             ]
             def _values(name: str) -> tuple[str, ...]:
                 values: list[str] = []
@@ -4622,7 +4712,7 @@ def collect_archive_structural_diagnostics(
             ownerless_seed_ids.update(
                 str(seed_id)
                 for seed_id in (closure.get("unresolved_seed_ids", ()) or ())
-                if str(seed_id).strip()
+                if str(seed_id).strip() and not str(seed_id).startswith("story:")
             )
     conflicts = sorted(
         atom_id for atom_id, counts in owner_counts.items() if len(counts) > 1

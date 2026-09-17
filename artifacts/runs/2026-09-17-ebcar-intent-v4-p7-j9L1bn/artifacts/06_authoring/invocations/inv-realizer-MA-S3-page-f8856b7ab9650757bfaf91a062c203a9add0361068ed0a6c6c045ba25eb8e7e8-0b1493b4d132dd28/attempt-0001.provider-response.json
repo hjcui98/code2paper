@@ -1,0 +1,25 @@
+{
+  "attempt": 1,
+  "blocked_reason": "",
+  "content_digest": "sha256:632cfeafcae810cf69a01f67ca86fe0e23d6bb0a459c93fa4b9d8ed9596291d4",
+  "diagnostics": {
+    "finish_seen": true,
+    "partial_chars": 2392,
+    "stream_events": 297,
+    "terminal_status": "finish_seen",
+    "usage_seen": true
+  },
+  "finish_reason": "structured_complete",
+  "invocation_id": "inv:realizer:MA-S3:page:f8856b7ab9650757bfaf91a062c203a9add0361068ed0a6c6c045ba25eb8e7e8",
+  "provider_finish_reason": "stop",
+  "request_diagnostics_digest": "sha256:ea492ad15272e64484b28bd7cbbcc625f558b2dcf76bd8873b962d5224f57415",
+  "response_digest": "sha256:8f64f30e7908aa65dd8080d881a0a4c9ef6cfc53eac1d05a35339f3b98858162",
+  "response_text": "{\n  \"draft_markdown\": \"In the dedicated attention model, the similarity vector for the current query is extracted via `sim_i = similarities[i]  # [num_passages]`. The corresponding label vector is retrieved with `labels_i = labels[i]  # [num_passages]`. A positive mask is then constructed by comparing the labels to one: `pos_mask = labels_i == 1`. Similarly, a negative mask is derived by comparing the labels to zero: `neg_mask = labels_i == 0`. The implementation enforces that exactly one positive passage is present by verifying `torch.sum(pos_mask) == 1`; if this condition fails, the system raises an error with the message `), f\\\"Expected exactly 1 positive passage, got {torch.sum(pos_mask)}\\\"`. Finally, the similarity scores for the positive passages are isolated using boolean indexing: `pos_sim = sim_i[pos_mask]  # [num_positives]`.\",\n  \"rendered_detail_ids\": [\n    \"detail:mech_sym:f6cf5bdfe2ae16f0:57\",\n    \"detail:mech_sym:f6cf5bdfe2ae16f0:58\",\n    \"detail:mech_sym:f6cf5bdfe2ae16f0:59\",\n    \"detail:mech_sym:f6cf5bdfe2ae16f0:60\",\n    \"detail:mech_sym:f6cf5bdfe2ae16f0:61\",\n    \"detail:mech_sym:f6cf5bdfe2ae16f0:62\",\n    \"detail:mech_sym:f6cf5bdfe2ae16f0:63\"\n  ],\n  \"used_formula_package_ids\": [],\n  \"witnesses\": [\n    {\n      \"exact_text\": \"sim_i = similarities[i]  # [num_passages]\",\n      \"target_id\": \"detail:mech_sym:f6cf5bdfe2ae16f0:57\",\n      \"witness_kind\": \"detail\"\n    },\n    {\n      \"exact_text\": \"labels_i = labels[i]  # [num_passages]\",\n      \"target_id\": \"detail:mech_sym:f6cf5bdfe2ae16f0:58\",\n      \"witness_kind\": \"detail\"\n    },\n    {\n      \"exact_text\": \"pos_mask = labels_i == 1\",\n      \"target_id\": \"detail:mech_sym:f6cf5bdfe2ae16f0:59\",\n      \"witness_kind\": \"detail\"\n    },\n    {\n      \"exact_text\": \"neg_mask = labels_i == 0\",\n      \"target_id\": \"detail:mech_sym:f6cf5bdfe2ae16f0:60\",\n      \"witness_kind\": \"detail\"\n    },\n    {\n      \"exact_text\": \"torch.sum(pos_mask) == 1\",\n      \"target_id\": \"detail:mech_sym:f6cf5bdfe2ae16f0:61\",\n      \"witness_kind\": \"detail\"\n    },\n    {\n      \"exact_text\": \"), f&quot;Expected exactly 1 positive passage, got {torch.sum(pos_mask)}&quot;\",\n      \"target_id\": \"detail:mech_sym:f6cf5bdfe2ae16f0:62\",\n      \"witness_kind\": \"detail\"\n    },\n    {\n      \"exact_text\": \"pos_sim = sim_i[pos_mask]  # [num_positives]\",\n      \"target_id\": \"detail:mech_sym:f6cf5bdfe2ae16f0:63\",\n      \"witness_kind\": \"detail\"\n    }\n  ]\n}",
+  "schema_version": "1.0",
+  "thinking_chars": 0,
+  "usage": {
+    "completion_tokens": 846,
+    "prompt_tokens": 21820,
+    "total_tokens": 22666
+  }
+}

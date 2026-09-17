@@ -1,0 +1,12 @@
+{
+  "event_kind": "run_terminal",
+  "extra": {
+    "authoring_context_mode": "unified"
+  },
+  "last_completed_invocation_id": "inv:realizer:MA-S2:page:0b5cf25648aa7e8de2636240c208848cb98726e935b1def28d73ebf7560ebab9",
+  "recorded_at_unix": 1789618116.8092809,
+  "run_digest": "sha256:39472136b1dee572b8956755458301c3381c023bb9d925946dd0ff91fc06c720",
+  "schema_version": "2.0",
+  "terminal_reason": "blocked",
+  "terminal_stage": "publication_method_writer"
+}

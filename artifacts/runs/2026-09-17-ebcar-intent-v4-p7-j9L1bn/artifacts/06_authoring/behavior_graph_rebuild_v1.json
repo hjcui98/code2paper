@@ -1,0 +1,33 @@
+{
+  "schema_version": "1.0",
+  "source": "current_verified_repository_source",
+  "entry_symbol_ids": [
+    "sym:9773c5add7af1f92",
+    "sym:f6cf5bdfe2ae16f0"
+  ],
+  "repo_snapshot_id": "repo:9b4f1a34c70f10c2317f024df585e282c9d02371586a629e00ace26d8988c942",
+  "project_tree_hash": "sha256:9b4f1a34c70f10c2317f024df585e282c9d02371586a629e00ace26d8988c942",
+  "historical_graph": {
+    "present": true,
+    "repo_snapshot_id": "repo:9b4f1a34c70f10c2317f024df585e282c9d02371586a629e00ace26d8988c942",
+    "project_tree_hash": "sha256:9b4f1a34c70f10c2317f024df585e282c9d02371586a629e00ace26d8988c942",
+    "content_digest": "sha256:8a1635f8a5c16473bbfb1c1d685fef7f994a3e3e27008880cf0bb48f450d5a75",
+    "node_count": 868,
+    "relation_count": 1675,
+    "unresolved_relation_count": 182
+  },
+  "current_graph": {
+    "present": true,
+    "repo_snapshot_id": "repo:9b4f1a34c70f10c2317f024df585e282c9d02371586a629e00ace26d8988c942",
+    "project_tree_hash": "sha256:9b4f1a34c70f10c2317f024df585e282c9d02371586a629e00ace26d8988c942",
+    "content_digest": "sha256:42a68b3ad842d0ba3cba532cc88ff8ff58058a591b041abe9549940c1d2bed7a",
+    "node_count": 315,
+    "relation_count": 542,
+    "unresolved_relation_count": 52
+  },
+  "node_ids_added_count": 32,
+  "node_ids_removed_count": 585,
+  "relation_ids_added_count": 46,
+  "relation_ids_removed_count": 1179,
+  "content_digest": "sha256:df9e47c710446585ed04bef68198951f9e6e098717e3fff41dda482913c5056e"
+}

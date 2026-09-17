@@ -805,7 +805,9 @@ class ConsumerWorksetManifestV2(BaseModel):
                 raise ValueError(f"page {page.page_id} contains an empty atom ID")
         for workset in self.worksets:
             required_atoms = set(workset.required_atom_ids)
-            if not required_atoms and workset.task_ids:
+            workset_pages = [page_index[pid] for pid in workset.required_page_ids if pid in page_index]
+            is_header_workset = bool(workset_pages and all(p.page_kind == "header" for p in workset_pages))
+            if not required_atoms and workset.task_ids and not is_header_workset:
                 raise ValueError(
                     f"workset {workset.workset_id} has tasks but no required atoms"
                 )
@@ -835,7 +837,7 @@ class ConsumerWorksetManifestV2(BaseModel):
                 contribution = set(page.atom_ids) & required_atoms
                 if (
                     not contribution
-                    and page.page_kind != "join"
+                    and page.page_kind not in ("join", "header")
                 ):
                     extra_atoms_by_page[page_id] = set(page.atom_ids) - required_atoms
             if extra_atoms_by_page:

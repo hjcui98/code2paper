@@ -1,0 +1,629 @@
+[
+  {
+    "story_node_id": "story:O-METHOD-MAINLINE-01-c8146479",
+    "title": "Start with pre‑computed dense passage embeddings from a standard retriever (e.g., Contriever) and the query embedding",
+    "author_statement": "Start with pre‑computed dense passage embeddings from a standard retriever (e.g., Contriever) and the query embedding from the same encoder. Augment each passage embedding with a document ID embedding (relative to the current retrieved set) and a sinusoidal passage‑position encoding to inject structural cues. Process the query and enriched passage embeddings jointly through a stack of Transformer encoder layers that use a hybrid attention mechanism: a shared full attention module for global interactions, and a dedicated masked attention module that restricts attention to passages from the same document, to consolidate intra‑document coherence. Optimize the model with a contrastive loss (InfoNCE) that uses the fixed original query embedding as an anchor, pulling the contextualized positive passage embedding closer and pushing negatives away. At inference, compute dot‑product similarity between the static query embedding and the updated passage embeddings, then rank passages in descending order of these scores.",
+    "intended_role": "algorithm_step",
+    "source_refs": [
+      "intent_graph_v2:O-METHOD-MAINLINE-01-c8146479",
+      "author_field:method_mainline"
+    ],
+    "linked_obligation_ids": [
+      "O-METHOD-MAINLINE-01-c8146479"
+    ],
+    "linked_claim_ids": [
+      "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:b6468fc08c848936",
+      "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:a48f78c0e1931462",
+      "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:8e87e1804f77f50f",
+      "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:fd2ce32dbb55ed63",
+      "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:c1802b91f97392cc",
+      "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:4c8511d6e8fc4240",
+      "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:5ff7f276f04b71a8",
+      "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:6daefc8982533bad",
+      "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:7fabddc9286307b4",
+      "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:a6f6c00ca097eeb1",
+      "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:c8936a17df7bdc83",
+      "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-rel:1b2f2e5db0f09696",
+      "claim-O-METHOD-MAINLINE-01-c8146479-fact-configuration-rel:dc95ead65d3bb047",
+      "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:3673b2e5dbd63bd0",
+      "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:73ea6c8145b47e07",
+      "l2:math:fact-O-METHOD-MAINLINE-01-c8146479-node:7fabddc9286307b4:weighted_sum",
+      "l2:math:fact-O-METHOD-MAINLINE-01-c8146479-node:5ff7f276f04b71a8:weighted_sum",
+      "l2:math:fact-O-METHOD-MAINLINE-01-c8146479-node:a6f6c00ca097eeb1:weighted_sum",
+      "l2:math:fact-O-METHOD-MAINLINE-01-c8146479-node:4c8511d6e8fc4240:weighted_sum",
+      "l2:math:fact-O-METHOD-MAINLINE-01-c8146479-node:c8936a17df7bdc83:weighted_sum",
+      "l2:math:fact-O-METHOD-MAINLINE-01-c8146479-node:3673b2e5dbd63bd0:normalize"
+    ],
+    "evidence_lane": "repository_partial",
+    "notes": [
+      "kind=method_mainline; priority=must_cover"
+    ]
+  },
+  {
+    "story_node_id": "story:O-STAGE-01-039a963a",
+    "title": "Retrieval and embedding preparation: Use a dense retriever (Contriever) to fetch top‑k candidate passages and their",
+    "author_statement": "Retrieval and embedding preparation: Use a dense retriever (Contriever) to fetch top‑k candidate passages and their pre‑computed embeddings; encode the query with the same model.",
+    "intended_role": "algorithm_step",
+    "source_refs": [
+      "intent_graph_v2:O-STAGE-01-039a963a",
+      "author_field:pipeline_steps"
+    ],
+    "linked_obligation_ids": [
+      "O-STAGE-01-039a963a"
+    ],
+    "linked_claim_ids": [
+      "claim-O-STAGE-01-039a963a-fact-O-STAGE-01-039a963a-node:2911a2ecfb714992",
+      "claim-O-STAGE-01-039a963a-fact-O-STAGE-01-039a963a-node:4480dac4431aabbe",
+      "claim-O-STAGE-01-039a963a-fact-O-STAGE-01-039a963a-node:4be5b539dce0e4f4",
+      "claim-O-STAGE-01-039a963a-fact-O-STAGE-01-039a963a-node:00757f21e4c9d9f3",
+      "claim-O-STAGE-01-039a963a-fact-O-STAGE-01-039a963a-node:36bd05a333b6a4fc",
+      "claim-O-STAGE-01-039a963a-fact-O-STAGE-01-039a963a-node:c4189835f8e67f5e"
+    ],
+    "evidence_lane": "repository_verified",
+    "notes": [
+      "kind=stage; priority=must_cover"
+    ]
+  },
+  {
+    "story_node_id": "story:O-STAGE-02-42e8d68d",
+    "title": "Structural augmentation: For each retrieved passage, add a dynamic document ID embedding and a sinusoidal",
+    "author_statement": "Structural augmentation: For each retrieved passage, add a dynamic document ID embedding and a sinusoidal passage‑position encoding to its original embedding to inject document‑identity and ordering signals.",
+    "intended_role": "algorithm_step",
+    "source_refs": [
+      "intent_graph_v2:O-STAGE-02-42e8d68d",
+      "author_field:pipeline_steps"
+    ],
+    "linked_obligation_ids": [
+      "O-STAGE-02-42e8d68d"
+    ],
+    "linked_claim_ids": [
+      "claim-O-STAGE-02-42e8d68d-fact-O-STAGE-02-42e8d68d-node:9a4893d308318488",
+      "claim-O-STAGE-02-42e8d68d-fact-O-STAGE-02-42e8d68d-node:d643b3469b0df29c"
+    ],
+    "evidence_lane": "repository_verified",
+    "notes": [
+      "kind=stage; priority=must_cover"
+    ]
+  },
+  {
+    "story_node_id": "story:O-STAGE-03-2c5bd758",
+    "title": "Hybrid‑attention encoding: Feed the query and augmented passage embeddings into a Transformer encoder that applies",
+    "author_statement": "Hybrid‑attention encoding: Feed the query and augmented passage embeddings into a Transformer encoder that applies shared full attention (global interactions) and dedicated masked attention (intra‑document interactions) in every layer, producing contextualized passage embeddings.",
+    "intended_role": "algorithm_step",
+    "source_refs": [
+      "intent_graph_v2:O-STAGE-03-2c5bd758",
+      "author_field:pipeline_steps"
+    ],
+    "linked_obligation_ids": [
+      "O-STAGE-03-2c5bd758"
+    ],
+    "linked_claim_ids": [
+      "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:4c8511d6e8fc4240",
+      "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:3673b2e5dbd63bd0",
+      "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:73ea6c8145b47e07",
+      "l2:math:fact-O-METHOD-MAINLINE-01-c8146479-node:4c8511d6e8fc4240:weighted_sum",
+      "l2:math:fact-O-METHOD-MAINLINE-01-c8146479-node:3673b2e5dbd63bd0:normalize",
+      "claim-O-STAGE-03-2c5bd758-fact-O-STAGE-03-2c5bd758-node:b220afbc1e6023fe",
+      "claim-O-STAGE-03-2c5bd758-fact-O-STAGE-03-2c5bd758-node:142f7d2a2f9e8288",
+      "claim-O-STAGE-03-2c5bd758-fact-O-STAGE-03-2c5bd758-node:15f8ab428198f369",
+      "claim-O-STAGE-03-2c5bd758-fact-O-STAGE-03-2c5bd758-node:c8936a17df7bdc83",
+      "claim-O-STAGE-03-2c5bd758-fact-O-STAGE-03-2c5bd758-node:4f3a01f0d7880c82",
+      "l2:math:fact-O-STAGE-03-2c5bd758-node:c8936a17df7bdc83:weighted_sum"
+    ],
+    "evidence_lane": "repository_verified",
+    "notes": [
+      "kind=stage; priority=must_cover"
+    ]
+  },
+  {
+    "story_node_id": "story:O-STAGE-04-c50e0bef",
+    "title": "Contrastive training: Using a contrastive InfoNCE loss, pull the updated positive passage embedding toward the fixed",
+    "author_statement": "Contrastive training: Using a contrastive InfoNCE loss, pull the updated positive passage embedding toward the fixed query embedding and push negative passage embeddings away.",
+    "intended_role": "algorithm_step",
+    "source_refs": [
+      "intent_graph_v2:O-STAGE-04-c50e0bef",
+      "author_field:pipeline_steps"
+    ],
+    "linked_obligation_ids": [
+      "O-STAGE-04-c50e0bef"
+    ],
+    "linked_claim_ids": [
+      "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:a48f78c0e1931462",
+      "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:7fabddc9286307b4",
+      "claim-O-STAGE-04-c50e0bef-fact-O-STAGE-04-c50e0bef-node:93633547c32d9f45",
+      "claim-O-STAGE-04-c50e0bef-fact-O-STAGE-04-c50e0bef-node:a2dae47572460254",
+      "claim-O-STAGE-04-c50e0bef-fact-O-STAGE-04-c50e0bef-node:fd2ce32dbb55ed63",
+      "claim-O-STAGE-04-c50e0bef-fact-O-STAGE-04-c50e0bef-node:0c0995d424e07399",
+      "claim-O-STAGE-04-c50e0bef-fact-O-STAGE-04-c50e0bef-node:4b560ac114ae99ec"
+    ],
+    "evidence_lane": "repository_verified",
+    "notes": [
+      "kind=stage; priority=must_cover"
+    ]
+  },
+  {
+    "story_node_id": "story:O-STAGE-05-5b3d398a",
+    "title": "Inference scoring and ranking: Compute dot‑product similarities between the unchanged query embedding and the",
+    "author_statement": "Inference scoring and ranking: Compute dot‑product similarities between the unchanged query embedding and the contextualized passage embeddings, then sort passages by descending score.",
+    "intended_role": "algorithm_step",
+    "source_refs": [
+      "intent_graph_v2:O-STAGE-05-5b3d398a",
+      "author_field:pipeline_steps"
+    ],
+    "linked_obligation_ids": [
+      "O-STAGE-05-5b3d398a"
+    ],
+    "linked_claim_ids": [
+      "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:8e87e1804f77f50f",
+      "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:c1802b91f97392cc",
+      "claim-O-STAGE-05-5b3d398a-fact-O-STAGE-05-5b3d398a-node:06b37685c9288fb6",
+      "claim-O-STAGE-05-5b3d398a-fact-O-STAGE-05-5b3d398a-node:a002e187c0346457",
+      "claim-O-STAGE-05-5b3d398a-fact-O-STAGE-05-5b3d398a-node:856e72eeddb87554",
+      "claim-O-STAGE-05-5b3d398a-fact-O-STAGE-05-5b3d398a-node:1077d0d81c820fb0",
+      "claim-O-STAGE-05-5b3d398a-fact-O-STAGE-05-5b3d398a-node:26c1ec766ceee404",
+      "claim-O-STAGE-05-5b3d398a-fact-O-STAGE-05-5b3d398a-node:31075c1f6e053a85",
+      "claim-O-STAGE-05-5b3d398a-fact-O-STAGE-05-5b3d398a-rel:caa3e47dda8fdf04",
+      "claim-O-STAGE-05-5b3d398a-fact-configuration-rel:696083475512bfc5"
+    ],
+    "evidence_lane": "repository_partial",
+    "notes": [
+      "kind=stage; priority=must_cover"
+    ]
+  },
+  {
+    "story_node_id": "story:O-COMPONENT-01-c301ecdd",
+    "title": "Improve reranking in retrieval-augmented generation (RAG) systems by addressing both inference efficiency and the need",
+    "author_statement": "Improve reranking in retrieval-augmented generation (RAG) systems by addressing both inference efficiency and the need for cross-passage reasoning, especially when evidence is scattered across passages and requires resolving coreference or structural context.",
+    "intended_role": "setup",
+    "source_refs": [
+      "intent_graph_v2:O-COMPONENT-01-c301ecdd",
+      "author_field:project_goal"
+    ],
+    "linked_obligation_ids": [
+      "O-COMPONENT-01-c301ecdd"
+    ],
+    "linked_claim_ids": [],
+    "evidence_lane": "author_intent_unverified",
+    "notes": [
+      "kind=component; priority=should_cover",
+      "no repository-backed claim is linked; author review required"
+    ]
+  },
+  {
+    "story_node_id": "story:O-COMPONENT-01-de6049e3",
+    "title": "Contriever: Dense retriever that provides initial passage embeddings and top‑k retrieval.",
+    "author_statement": "Contriever: Dense retriever that provides initial passage embeddings and top‑k retrieval.",
+    "intended_role": "setup",
+    "source_refs": [
+      "intent_graph_v2:O-COMPONENT-01-de6049e3",
+      "author_field:key_building_blocks"
+    ],
+    "linked_obligation_ids": [
+      "O-COMPONENT-01-de6049e3"
+    ],
+    "linked_claim_ids": [],
+    "evidence_lane": "author_intent_unverified",
+    "notes": [
+      "kind=component; priority=should_cover",
+      "no repository-backed claim is linked; author review required"
+    ]
+  },
+  {
+    "story_node_id": "story:O-COMPONENT-02-2e14379d",
+    "title": "passage embeddings (pi): Fixed dense representations of candidate passages obtained from Contriever.",
+    "author_statement": "passage embeddings (pi): Fixed dense representations of candidate passages obtained from Contriever.",
+    "intended_role": "setup",
+    "source_refs": [
+      "intent_graph_v2:O-COMPONENT-02-2e14379d",
+      "author_field:key_building_blocks"
+    ],
+    "linked_obligation_ids": [
+      "O-COMPONENT-02-2e14379d"
+    ],
+    "linked_claim_ids": [],
+    "evidence_lane": "author_intent_unverified",
+    "notes": [
+      "kind=component; priority=should_cover",
+      "no repository-backed claim is linked; author review required"
+    ]
+  },
+  {
+    "story_node_id": "story:O-COMPONENT-03-d8aa8c77",
+    "title": "document ID embedding table: Learned relative document‑identity embeddings assigned dynamically to unique documents in",
+    "author_statement": "document ID embedding table: Learned relative document‑identity embeddings assigned dynamically to unique documents in the candidate set, enabling the model to recognize which passages belong together.",
+    "intended_role": "setup",
+    "source_refs": [
+      "intent_graph_v2:O-COMPONENT-03-d8aa8c77",
+      "author_field:key_building_blocks"
+    ],
+    "linked_obligation_ids": [
+      "O-COMPONENT-03-d8aa8c77"
+    ],
+    "linked_claim_ids": [],
+    "evidence_lane": "author_intent_unverified",
+    "notes": [
+      "kind=component; priority=should_cover",
+      "no repository-backed claim is linked; author review required"
+    ]
+  },
+  {
+    "story_node_id": "story:O-COMPONENT-04-b5b6af99",
+    "title": "passage position encoding (sinusoidal): Encodes the position of a passage within its original document, providing",
+    "author_statement": "passage position encoding (sinusoidal): Encodes the position of a passage within its original document, providing structural order cues.",
+    "intended_role": "setup",
+    "source_refs": [
+      "intent_graph_v2:O-COMPONENT-04-b5b6af99",
+      "author_field:key_building_blocks"
+    ],
+    "linked_obligation_ids": [
+      "O-COMPONENT-04-b5b6af99"
+    ],
+    "linked_claim_ids": [],
+    "evidence_lane": "author_intent_unverified",
+    "notes": [
+      "kind=component; priority=should_cover",
+      "no repository-backed claim is linked; author review required"
+    ]
+  },
+  {
+    "story_node_id": "story:O-COMPONENT-05-4c3594d2",
+    "title": "hybrid attention mechanism: Combines shared full attention (global cross‑passage) and dedicated masked attention",
+    "author_statement": "hybrid attention mechanism: Combines shared full attention (global cross‑passage) and dedicated masked attention (intra‑document) in each Transformer layer to jointly model inter‑ and intra‑document dependencies.",
+    "intended_role": "setup",
+    "source_refs": [
+      "intent_graph_v2:O-COMPONENT-05-4c3594d2",
+      "author_field:key_building_blocks"
+    ],
+    "linked_obligation_ids": [
+      "O-COMPONENT-05-4c3594d2"
+    ],
+    "linked_claim_ids": [],
+    "evidence_lane": "author_intent_unverified",
+    "notes": [
+      "kind=component; priority=should_cover",
+      "no repository-backed claim is linked; author review required"
+    ]
+  },
+  {
+    "story_node_id": "story:O-COMPONENT-06-34021b88",
+    "title": "shared full attention module: Standard multi‑head attention allowing query and all passages to attend to each other;",
+    "author_statement": "shared full attention module: Standard multi‑head attention allowing query and all passages to attend to each other; captures global relevance and cross‑document relationships.",
+    "intended_role": "setup",
+    "source_refs": [
+      "intent_graph_v2:O-COMPONENT-06-34021b88",
+      "author_field:key_building_blocks"
+    ],
+    "linked_obligation_ids": [
+      "O-COMPONENT-06-34021b88"
+    ],
+    "linked_claim_ids": [],
+    "evidence_lane": "author_intent_unverified",
+    "notes": [
+      "kind=component; priority=should_cover",
+      "no repository-backed claim is linked; author review required"
+    ]
+  },
+  {
+    "story_node_id": "story:O-COMPONENT-07-d157b2cc",
+    "title": "dedicated masked attention module: Masked multi‑head attention that restricts a passage to attend only to the query and",
+    "author_statement": "dedicated masked attention module: Masked multi‑head attention that restricts a passage to attend only to the query and to other passages from the same document, enabling fine‑grained coreference resolution and local coherence.",
+    "intended_role": "setup",
+    "source_refs": [
+      "intent_graph_v2:O-COMPONENT-07-d157b2cc",
+      "author_field:key_building_blocks"
+    ],
+    "linked_obligation_ids": [
+      "O-COMPONENT-07-d157b2cc"
+    ],
+    "linked_claim_ids": [],
+    "evidence_lane": "author_intent_unverified",
+    "notes": [
+      "kind=component; priority=should_cover",
+      "no repository-backed claim is linked; author review required"
+    ]
+  },
+  {
+    "story_node_id": "story:O-COMPONENT-08-4aac53dc",
+    "title": "Transformer encoder stack: Layers that process the combined sequence to produce contextualized passage embeddings.",
+    "author_statement": "Transformer encoder stack: Layers that process the combined sequence to produce contextualized passage embeddings.",
+    "intended_role": "setup",
+    "source_refs": [
+      "intent_graph_v2:O-COMPONENT-08-4aac53dc",
+      "author_field:key_building_blocks"
+    ],
+    "linked_obligation_ids": [
+      "O-COMPONENT-08-4aac53dc"
+    ],
+    "linked_claim_ids": [],
+    "evidence_lane": "author_intent_unverified",
+    "notes": [
+      "kind=component; priority=should_cover",
+      "no repository-backed claim is linked; author review required"
+    ]
+  },
+  {
+    "story_node_id": "story:O-COMPONENT-09-6a8cfd6c",
+    "title": "InfoNCE contrastive loss: Objective that encourages the updated positive passage embedding to align with the fixed query",
+    "author_statement": "InfoNCE contrastive loss: Objective that encourages the updated positive passage embedding to align with the fixed query embedding while separating negatives.",
+    "intended_role": "setup",
+    "source_refs": [
+      "intent_graph_v2:O-COMPONENT-09-6a8cfd6c",
+      "author_field:key_building_blocks"
+    ],
+    "linked_obligation_ids": [
+      "O-COMPONENT-09-6a8cfd6c"
+    ],
+    "linked_claim_ids": [],
+    "evidence_lane": "author_intent_unverified",
+    "notes": [
+      "kind=component; priority=should_cover",
+      "no repository-backed claim is linked; author review required"
+    ]
+  },
+  {
+    "story_node_id": "story:O-COMPONENT-10-dac6250f",
+    "title": "fixed query anchor: The original query embedding remains unchanged during training/inference to serve as a stable",
+    "author_statement": "fixed query anchor: The original query embedding remains unchanged during training/inference to serve as a stable reference in the contrastive objective.",
+    "intended_role": "setup",
+    "source_refs": [
+      "intent_graph_v2:O-COMPONENT-10-dac6250f",
+      "author_field:key_building_blocks"
+    ],
+    "linked_obligation_ids": [
+      "O-COMPONENT-10-dac6250f"
+    ],
+    "linked_claim_ids": [],
+    "evidence_lane": "author_intent_unverified",
+    "notes": [
+      "kind=component; priority=should_cover",
+      "no repository-backed claim is linked; author review required"
+    ]
+  },
+  {
+    "story_node_id": "story:O-COMPONENT-11-27f310b2",
+    "title": "ConTEB benchmark: Evaluation suite that tests rerankers on challenging tasks requiring cross‑passage inference",
+    "author_statement": "ConTEB benchmark: Evaluation suite that tests rerankers on challenging tasks requiring cross‑passage inference, document‑wide context, and structural reasoning.",
+    "intended_role": "setup",
+    "source_refs": [
+      "intent_graph_v2:O-COMPONENT-11-27f310b2",
+      "author_field:key_building_blocks"
+    ],
+    "linked_obligation_ids": [
+      "O-COMPONENT-11-27f310b2"
+    ],
+    "linked_claim_ids": [],
+    "evidence_lane": "author_intent_unverified",
+    "notes": [
+      "kind=component; priority=should_cover",
+      "no repository-backed claim is linked; author review required"
+    ]
+  },
+  {
+    "story_node_id": "story:O-COMPONENT-12-370bd5b2",
+    "title": "MLDR, SQuAD, NarrativeQA (training sets): Three ConTEB datasets used for training EBCAR, covering entity disambiguation",
+    "author_statement": "MLDR, SQuAD, NarrativeQA (training sets): Three ConTEB datasets used for training EBCAR, covering entity disambiguation, span matching, and narrative comprehension.",
+    "intended_role": "setup",
+    "source_refs": [
+      "intent_graph_v2:O-COMPONENT-12-370bd5b2",
+      "author_field:key_building_blocks"
+    ],
+    "linked_obligation_ids": [
+      "O-COMPONENT-12-370bd5b2"
+    ],
+    "linked_claim_ids": [],
+    "evidence_lane": "author_intent_unverified",
+    "notes": [
+      "kind=component; priority=should_cover",
+      "no repository-backed claim is linked; author review required"
+    ]
+  },
+  {
+    "story_node_id": "story:O-ORGANIZATION-01-6b45ad90",
+    "title": "Motivation: efficiency and cross‑passage inference challenges in existing rerankers.",
+    "author_statement": "Motivation: efficiency and cross‑passage inference challenges in existing rerankers.",
+    "intended_role": "setup",
+    "source_refs": [
+      "intent_graph_v2:O-ORGANIZATION-01-6b45ad90",
+      "author_field:story_order"
+    ],
+    "linked_obligation_ids": [
+      "O-ORGANIZATION-01-6b45ad90"
+    ],
+    "linked_claim_ids": [],
+    "evidence_lane": "author_intent_unverified",
+    "notes": [
+      "kind=organization; priority=preference",
+      "no repository-backed claim is linked; author review required"
+    ]
+  },
+  {
+    "story_node_id": "story:O-ORGANIZATION-02-54911271",
+    "title": "Embedding‑based reranking formulation and overall framework.",
+    "author_statement": "Embedding‑based reranking formulation and overall framework.",
+    "intended_role": "setup",
+    "source_refs": [
+      "intent_graph_v2:O-ORGANIZATION-02-54911271",
+      "author_field:story_order"
+    ],
+    "linked_obligation_ids": [
+      "O-ORGANIZATION-02-54911271"
+    ],
+    "linked_claim_ids": [],
+    "evidence_lane": "author_intent_unverified",
+    "notes": [
+      "kind=organization; priority=preference",
+      "no repository-backed claim is linked; author review required"
+    ]
+  },
+  {
+    "story_node_id": "story:O-ORGANIZATION-03-2c92c853",
+    "title": "Architecture details: enriching embeddings with document ID and position, the Transformer encoder with hybrid attention",
+    "author_statement": "Architecture details: enriching embeddings with document ID and position, the Transformer encoder with hybrid attention (shared full + dedicated masked).",
+    "intended_role": "setup",
+    "source_refs": [
+      "intent_graph_v2:O-ORGANIZATION-03-2c92c853",
+      "author_field:story_order"
+    ],
+    "linked_obligation_ids": [
+      "O-ORGANIZATION-03-2c92c853"
+    ],
+    "linked_claim_ids": [],
+    "evidence_lane": "author_intent_unverified",
+    "notes": [
+      "kind=organization; priority=preference",
+      "no repository-backed claim is linked; author review required"
+    ]
+  },
+  {
+    "story_node_id": "story:O-ORGANIZATION-04-1dd970df",
+    "title": "Training objective: InfoNCE loss with fixed query anchor.",
+    "author_statement": "Training objective: InfoNCE loss with fixed query anchor.",
+    "intended_role": "setup",
+    "source_refs": [
+      "intent_graph_v2:O-ORGANIZATION-04-1dd970df",
+      "author_field:story_order"
+    ],
+    "linked_obligation_ids": [
+      "O-ORGANIZATION-04-1dd970df"
+    ],
+    "linked_claim_ids": [],
+    "evidence_lane": "author_intent_unverified",
+    "notes": [
+      "kind=organization; priority=preference",
+      "no repository-backed claim is linked; author review required"
+    ]
+  },
+  {
+    "story_node_id": "story:O-ORGANIZATION-05-baf0d276",
+    "title": "Inference procedure.",
+    "author_statement": "Inference procedure.",
+    "intended_role": "setup",
+    "source_refs": [
+      "intent_graph_v2:O-ORGANIZATION-05-baf0d276",
+      "author_field:story_order"
+    ],
+    "linked_obligation_ids": [
+      "O-ORGANIZATION-05-baf0d276"
+    ],
+    "linked_claim_ids": [],
+    "evidence_lane": "author_intent_unverified",
+    "notes": [
+      "kind=organization; priority=preference",
+      "no repository-backed claim is linked; author review required"
+    ]
+  },
+  {
+    "story_node_id": "story:O-RATIONALE-CHECK-01-bad20132",
+    "title": "Avoid full‑text processing and autoregressive generation to reduce inference latency.",
+    "author_statement": "Avoid full‑text processing and autoregressive generation to reduce inference latency.",
+    "intended_role": "motivation",
+    "source_refs": [
+      "intent_graph_v2:O-RATIONALE-CHECK-01-bad20132",
+      "author_field:design_intents"
+    ],
+    "linked_obligation_ids": [
+      "O-RATIONALE-CHECK-01-bad20132"
+    ],
+    "linked_claim_ids": [],
+    "evidence_lane": "author_intent_unverified",
+    "notes": [
+      "kind=rationale_check; priority=verify_only",
+      "no repository-backed claim is linked; author review required"
+    ]
+  },
+  {
+    "story_node_id": "story:O-RATIONALE-CHECK-02-30bb7c0f",
+    "title": "Inject document‑level structural knowledge into passage embeddings to support cross‑passage inference.",
+    "author_statement": "Inject document‑level structural knowledge into passage embeddings to support cross‑passage inference.",
+    "intended_role": "motivation",
+    "source_refs": [
+      "intent_graph_v2:O-RATIONALE-CHECK-02-30bb7c0f",
+      "author_field:design_intents"
+    ],
+    "linked_obligation_ids": [
+      "O-RATIONALE-CHECK-02-30bb7c0f"
+    ],
+    "linked_claim_ids": [],
+    "evidence_lane": "author_intent_unverified",
+    "notes": [
+      "kind=rationale_check; priority=verify_only",
+      "no repository-backed claim is linked; author review required"
+    ]
+  },
+  {
+    "story_node_id": "story:O-RATIONALE-CHECK-03-b01101f7",
+    "title": "Design two complementary attention patterns that co‑exist in each layer: global and document‑local.",
+    "author_statement": "Design two complementary attention patterns that co‑exist in each layer: global and document‑local.",
+    "intended_role": "motivation",
+    "source_refs": [
+      "intent_graph_v2:O-RATIONALE-CHECK-03-b01101f7",
+      "author_field:design_intents"
+    ],
+    "linked_obligation_ids": [
+      "O-RATIONALE-CHECK-03-b01101f7"
+    ],
+    "linked_claim_ids": [],
+    "evidence_lane": "author_intent_unverified",
+    "notes": [
+      "kind=rationale_check; priority=verify_only",
+      "no repository-backed claim is linked; author review required"
+    ]
+  },
+  {
+    "story_node_id": "story:O-RATIONALE-CHECK-04-c742a4fc",
+    "title": "Use relative, dynamic document ID assignments rather than global corpus‑level IDs.",
+    "author_statement": "Use relative, dynamic document ID assignments rather than global corpus‑level IDs.",
+    "intended_role": "motivation",
+    "source_refs": [
+      "intent_graph_v2:O-RATIONALE-CHECK-04-c742a4fc",
+      "author_field:design_intents"
+    ],
+    "linked_obligation_ids": [
+      "O-RATIONALE-CHECK-04-c742a4fc"
+    ],
+    "linked_claim_ids": [],
+    "evidence_lane": "author_intent_unverified",
+    "notes": [
+      "kind=rationale_check; priority=verify_only",
+      "no repository-backed claim is linked; author review required"
+    ]
+  },
+  {
+    "story_node_id": "story:O-RATIONALE-CHECK-05-595ac6ff",
+    "title": "Keep the query embedding fixed during training and inference while updating passage embeddings.",
+    "author_statement": "Keep the query embedding fixed during training and inference while updating passage embeddings.",
+    "intended_role": "motivation",
+    "source_refs": [
+      "intent_graph_v2:O-RATIONALE-CHECK-05-595ac6ff",
+      "author_field:design_intents"
+    ],
+    "linked_obligation_ids": [
+      "O-RATIONALE-CHECK-05-595ac6ff"
+    ],
+    "linked_claim_ids": [],
+    "evidence_lane": "author_intent_unverified",
+    "notes": [
+      "kind=rationale_check; priority=verify_only",
+      "no repository-backed claim is linked; author review required"
+    ]
+  },
+  {
+    "story_node_id": "story:O-RATIONALE-CHECK-06-388166d9",
+    "title": "Train on ConTEB datasets that explicitly require cross‑passage reasoning.",
+    "author_statement": "Train on ConTEB datasets that explicitly require cross‑passage reasoning.",
+    "intended_role": "motivation",
+    "source_refs": [
+      "intent_graph_v2:O-RATIONALE-CHECK-06-388166d9",
+      "author_field:design_intents"
+    ],
+    "linked_obligation_ids": [
+      "O-RATIONALE-CHECK-06-388166d9"
+    ],
+    "linked_claim_ids": [],
+    "evidence_lane": "author_intent_unverified",
+    "notes": [
+      "kind=rationale_check; priority=verify_only",
+      "no repository-backed claim is linked; author review required"
+    ]
+  }
+]

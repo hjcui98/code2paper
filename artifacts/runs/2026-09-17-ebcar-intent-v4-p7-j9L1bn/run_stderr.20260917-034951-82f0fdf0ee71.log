@@ -1,0 +1,24 @@
+Traceback (most recent call last):
+  File "/home/cuihengjia/agent/Code2Paper copy/src/code2paper/agentic/autonomous_method_agent.py", line 4452, in _run_writer_surface
+    result, paths = run_publication_method_writer(
+                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        out_root=out_root,
+        ^^^^^^^^^^^^^^^^^^
+    ...<15 lines>...
+        formalizer_phase_checkpoint=authoring_phase_checkpoint,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/home/cuihengjia/agent/Code2Paper copy/src/code2paper/agentic/publication_method_writer.py", line 28100, in run_publication_method_writer
+    result, paths = _run_publication_method_writer_impl(
+                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        out_root=out_root,
+        ^^^^^^^^^^^^^^^^^^
+    ...<19 lines>...
+        authoring_execution_manifest_digest=authoring_execution_manifest_digest,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/home/cuihengjia/agent/Code2Paper copy/src/code2paper/agentic/publication_method_writer.py", line 5965, in _run_publication_method_writer_impl
+    raise ValueError(str(realizer_outcome["blocked"]))
+ValueError: unified_realizer_receipt_missing

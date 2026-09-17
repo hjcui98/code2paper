@@ -1,0 +1,43 @@
+{
+  "schema_version": "1.0",
+  "attempt_id": "20260917-034951-82f0fdf0ee71",
+  "run_id": "ebcar-intent-v4-p7-current-20260916T165846Z",
+  "status": "failed",
+  "supervisor_pid": 2865255,
+  "worker_pid": 2865320,
+  "started_at_unix": 1789616991.0009875,
+  "ended_at_unix": 1789617595.3178613,
+  "exit_code": 2,
+  "stdout_path": "/tmp/c2p-p7-ebcar-v4-intent-j9L1bn/run_stdout.20260917-034951-82f0fdf0ee71.log",
+  "stderr_path": "/tmp/c2p-p7-ebcar-v4-intent-j9L1bn/run_stderr.20260917-034951-82f0fdf0ee71.log",
+  "argv": [
+    "run",
+    "--repo",
+    "/data1/users/cuihengjia/code2paper/code_final/EBCAR - Embedding-Based Context-Aware Reranker",
+    "--author-intent",
+    "/data1/users/cuihengjia/code2paper/paperyaml3/EBCAR - Embedding-Based Context-Aware Reranker.yaml",
+    "--out",
+    "/tmp/c2p-p7-ebcar-v4-intent-j9L1bn",
+    "--llm-profile",
+    "tests/live/profiles/qwen38_vllm_budgeted.example.env",
+    "--authoring-context-mode",
+    "unified",
+    "--max-research-turns",
+    "60",
+    "--run-id",
+    "ebcar-intent-v4-p7-current-20260916T165846Z",
+    "--research-stage-checkpoint",
+    "/tmp/c2p-p7-ebcar-v4-current-CzMvuZQ5/artifacts/research_product/research_stage_checkpoint_v1.json"
+  ],
+  "worker_returncode": 2,
+  "terminal_reason": "worker_exit_2",
+  "parent_stop_signal": null,
+  "worker_terminal_reason": "",
+  "worker_exit_type": "",
+  "primary_terminal_source": "supervisor",
+  "partial_artifacts": {
+    "run_summary_partial": "/tmp/c2p-p7-ebcar-v4-intent-j9L1bn/artifacts/research_product/run_summary.partial.20260917-034951-82f0fdf0ee71.json",
+    "run_terminal_event": "/tmp/c2p-p7-ebcar-v4-intent-j9L1bn/artifacts/06_authoring/invocations/run_terminal_event.supervisor.20260917-034951-82f0fdf0ee71.json",
+    "supervisor_observation": "/tmp/c2p-p7-ebcar-v4-intent-j9L1bn/artifacts/06_authoring/invocations/run_supervisor_event.20260917-034951-82f0fdf0ee71.json"
+  }
+}

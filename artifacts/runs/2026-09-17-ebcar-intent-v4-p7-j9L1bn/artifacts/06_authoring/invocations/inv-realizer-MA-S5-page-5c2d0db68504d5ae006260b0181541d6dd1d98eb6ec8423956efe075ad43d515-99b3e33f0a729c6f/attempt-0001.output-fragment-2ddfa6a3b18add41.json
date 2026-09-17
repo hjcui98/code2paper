@@ -1,0 +1,74 @@
+{
+  "attempt": 1,
+  "fragment": {
+    "consumer_role": "realizer",
+    "content_repair_attempt": false,
+    "draft": {
+      "authority_disposition": "qualified_partial",
+      "blocked_reason": "",
+      "content_digest": "sha256:f3e44d4d87b0ad107dd749f3109811e66213fbf3e3b3c3542d8ec805d397b9ef",
+      "draft_id": "draft:mech_sym:9773c5add7af1f92:p19",
+      "draft_markdown": "## MA-S5\n\n### detail:mech_sym:9773c5add7af1f92:2\nThe model reads the configuration flag `self.cfg.add_positional_encoding` to determine whether to apply positional encodings. This is the active default path for the configuration check:\n\n```python\nif self.cfg.add_positional_encoding:\n```\n\n### detail:mech_sym:9773c5add7af1f92:3\nA conditional branch is defined on the configuration value `self.cfg.add_positional_encoding`. The branch's activation status is unresolved; the code path is only entered if the flag is true. The conditional block includes:\n\n```python\nif self.cfg.add_positional_encoding:\n            # document_id might be out of range, so we need to modulate it and plus the quotient\n            document_id_embeddings = self.document_id_embedding(\n                (document_id.long() % self.cfg.retrieval.top_k)\n                + (document_id.long() // self.cfg.retrieval.top_k)\n            )  # [batch_size, num_passages, hidden_size]\n            passage_id_embeddings = self.passage_id_embedding(\n                passage_id.long()\n            )  # [batch_size, num_passages, hidden_size]\n            # Directly add the positional encoding to the passages\n            passages = (\n                passages + document_id_embeddings + passage_id_embeddings\n            )  # [batch_size, num_passages, hidden_size]\n```\n\n### detail:mech_sym:9773c5add7af1f92:5\nWithin the conditional branch (when `self.cfg.add_positional_encoding` is true), the document ID embeddings are computed by calling `self.document_id_embedding` with a modulated document ID:\n\n```python\ndocument_id_embeddings = self.document_id_embedding(\n                (document_id.long() % self.cfg.retrieval.top_k)\n                + (document_id.long() // self.cfg.retrieval.top_k)\n            )  # [batch_size, num_passages, hidden_size]\n```\n\n### detail:mech_sym:9773c5add7af1f92:10\nAlso within the conditional branch (when `self.cfg.add_positional_encoding` is true), the passage ID embeddings are computed by calling `self.passage_id_embedding`:\n\n```python\npassage_id_embeddings = self.passage_id_embedding(\n                passage_id.long()\n            )  # [batch_size, num_passages, hidden_size]\n```\n\n### detail:mech_sym:9773c5add7af1f92:36\nOutside the positional encoding branch, the query and passages are concatenated along dimension 1:\n\n```python\ntorch.cat((query, passages), dim=1),\n```",
+      "formula_package_ids": [],
+      "heading": "Sym:9773C5Add7Af1F92",
+      "mechanism_id": "mech_sym:9773c5add7af1f92",
+      "page_index": 19,
+      "realized_detail_ids": [
+        "detail:mech_sym:9773c5add7af1f92:2",
+        "detail:mech_sym:9773c5add7af1f92:3",
+        "detail:mech_sym:9773c5add7af1f92:5",
+        "detail:mech_sym:9773c5add7af1f92:10",
+        "detail:mech_sym:9773c5add7af1f92:36"
+      ],
+      "repair_feedback": [],
+      "representation_diff_class": "none",
+      "request_digest": "sha256:2b16f7b4ad8fadbb765c65541fc7e56f2ffedb201e27fa9276d506315f84d11b",
+      "required_detail_ids": [
+        "detail:mech_sym:9773c5add7af1f92:2",
+        "detail:mech_sym:9773c5add7af1f92:3",
+        "detail:mech_sym:9773c5add7af1f92:5",
+        "detail:mech_sym:9773c5add7af1f92:10",
+        "detail:mech_sym:9773c5add7af1f92:36"
+      ],
+      "status": "accepted",
+      "unresolved_detail_ids": [
+        "detail:mech_sym:9773c5add7af1f92:3"
+      ],
+      "witness_atoms": [],
+      "witnesses": [
+        {
+          "exact_text": "The model reads the configuration flag `self.cfg.add_positional_encoding` to determine whether to apply positional encodings. This is the active default path for the configuration check:",
+          "target_id": "detail:mech_sym:9773c5add7af1f92:2",
+          "witness_kind": "detail"
+        },
+        {
+          "exact_text": "A conditional branch is defined on the configuration value `self.cfg.add_positional_encoding`. The branch's activation status is unresolved; the code path is only entered if the flag is true. The conditional block includes:",
+          "target_id": "detail:mech_sym:9773c5add7af1f92:3",
+          "witness_kind": "detail"
+        },
+        {
+          "exact_text": "Within the conditional branch (when `self.cfg.add_positional_encoding` is true), the document ID embeddings are computed by calling `self.document_id_embedding` with a modulated document ID:",
+          "target_id": "detail:mech_sym:9773c5add7af1f92:5",
+          "witness_kind": "detail"
+        },
+        {
+          "exact_text": "Also within the conditional branch (when `self.cfg.add_positional_encoding` is true), the passage ID embeddings are computed by calling `self.passage_id_embedding`:",
+          "target_id": "detail:mech_sym:9773c5add7af1f92:10",
+          "witness_kind": "detail"
+        },
+        {
+          "exact_text": "Outside the positional encoding branch, the query and passages are concatenated along dimension 1:",
+          "target_id": "detail:mech_sym:9773c5add7af1f92:36",
+          "witness_kind": "detail"
+        }
+      ]
+    },
+    "page_id": "page:5c2d0db68504d5ae006260b0181541d6dd1d98eb6ec8423956efe075ad43d515",
+    "repair_feedback": [],
+    "response_hash": "sha256:79156bd05de7e2bffe77882ad7087e01e5ee238bc8ca265df0d43726c3acbf08",
+    "response_text": "{\n  \"draft_markdown\": \"## MA-S5\\n\\n### detail:mech_sym:9773c5add7af1f92:2\\nThe model reads the configuration flag `self.cfg.add_positional_encoding` to determine whether to apply positional encodings. This is the active default path for the configuration check:\\n\\n```python\\nif self.cfg.add_positional_encoding:\\n```\\n\\n### detail:mech_sym:9773c5add7af1f92:3\\nA conditional branch is defined on the configuration value `self.cfg.add_positional_encoding`. The branch's activation status is unresolved; the code path is only entered if the flag is true. The conditional block includes:\\n\\n```python\\nif self.cfg.add_positional_encoding:\\n            # document_id might be out of range, so we need to modulate it and plus the quotient\\n            document_id_embeddings = self.document_id_embedding(\\n                (document_id.long() % self.cfg.retrieval.top_k)\\n                + (document_id.long() // self.cfg.retrieval.top_k)\\n            )  # [batch_size, num_passages, hidden_size]\\n            passage_id_embeddings = self.passage_id_embedding(\\n                passage_id.long()\\n            )  # [batch_size, num_passages, hidden_size]\\n            # Directly add the positional encoding to the passages\\n            passages = (\\n                passages + document_id_embeddings + passage_id_embeddings\\n            )  # [batch_size, num_passages, hidden_size]\\n```\\n\\n### detail:mech_sym:9773c5add7af1f92:5\\nWithin the conditional branch (when `self.cfg.add_positional_encoding` is true), the document ID embeddings are computed by calling `self.document_id_embedding` with a modulated document ID:\\n\\n```python\\ndocument_id_embeddings = self.document_id_embedding(\\n                (document_id.long() % self.cfg.retrieval.top_k)\\n                + (document_id.long() // self.cfg.retrieval.top_k)\\n            )  # [batch_size, num_passages, hidden_size]\\n```\\n\\n### detail:mech_sym:9773c5add7af1f92:10\\nAlso within the conditional branch (when `self.cfg.add_positional_encoding` is true), the passage ID embeddings are computed by calling `self.passage_id_embedding`:\\n\\n```python\\npassage_id_embeddings = self.passage_id_embedding(\\n                passage_id.long()\\n            )  # [batch_size, num_passages, hidden_size]\\n```\\n\\n### detail:mech_sym:9773c5add7af1f92:36\\nOutside the positional encoding branch, the query and passages are concatenated along dimension 1:\\n\\n```python\\ntorch.cat((query, passages), dim=1),\\n```\",\n  \"rendered_detail_ids\": [\n    \"detail:mech_sym:9773c5add7af1f92:2\",\n    \"detail:mech_sym:9773c5add7af1f92:3\",\n    \"detail:mech_sym:9773c5add7af1f92:5\",\n    \"detail:mech_sym:9773c5add7af1f92:10\",\n    \"detail:mech_sym:9773c5add7af1f92:36\"\n  ],\n  \"used_formula_package_ids\": [],\n  \"witnesses\": [\n    {\n      \"exact_text\": \"The model reads the configuration flag `self.cfg.add_positional_encoding` to determine whether to apply positional encodings. This is the active default path for the configuration check:\",\n      \"target_id\": \"detail:mech_sym:9773c5add7af1f92:2\",\n      \"witness_kind\": \"detail\"\n    },\n    {\n      \"exact_text\": \"A conditional branch is defined on the configuration value `self.cfg.add_positional_encoding`. The branch's activation status is unresolved; the code path is only entered if the flag is true. The conditional block includes:\",\n      \"target_id\": \"detail:mech_sym:9773c5add7af1f92:3\",\n      \"witness_kind\": \"detail\"\n    },\n    {\n      \"exact_text\": \"Within the conditional branch (when `self.cfg.add_positional_encoding` is true), the document ID embeddings are computed by calling `self.document_id_embedding` with a modulated document ID:\",\n      \"target_id\": \"detail:mech_sym:9773c5add7af1f92:5\",\n      \"witness_kind\": \"detail\"\n    },\n    {\n      \"exact_text\": \"Also within the conditional branch (when `self.cfg.add_positional_encoding` is true), the passage ID embeddings are computed by calling `self.passage_id_embedding`:\",\n      \"target_id\": \"detail:mech_sym:9773c5add7af1f92:10\",\n      \"witness_kind\": \"detail\"\n    },\n    {\n      \"exact_text\": \"Outside the positional encoding branch, the query and passages are concatenated along dimension 1:\",\n      \"target_id\": \"detail:mech_sym:9773c5add7af1f92:36\",\n      \"witness_kind\": \"detail\"\n    }\n  ]\n}",
+    "section_id": "MA-S5"
+  },
+  "invocation_id": "inv:realizer:MA-S5:page:5c2d0db68504d5ae006260b0181541d6dd1d98eb6ec8423956efe075ad43d515",
+  "schema_version": "2.0"
+}

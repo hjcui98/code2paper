@@ -1,0 +1,107 @@
+{
+  "attempt": 1,
+  "fragment": {
+    "consumer_role": "realizer",
+    "content_repair_attempt": false,
+    "draft": {
+      "authority_disposition": "repository_verified",
+      "blocked_reason": "",
+      "content_digest": "sha256:054b44a2d54b617ab5cfb009970cd0fd84e76cea2a96791008234be762c96ce5",
+      "draft_id": "draft:join:MA-S3:p10",
+      "draft_markdown": "## MA-S3: Dedicated Attention Loss Computation\n\nIn the dedicated attention model, the per-sample loss is computed and accumulated. The implementation extracts negative similarity scores, computes the InfoNCE-style loss, appends it to a collection, and conditionally emits diagnostic output when no positive passages are found.\n\n### 1. Negative Similarity Extraction\nThe model isolates negative similarity scores from the full similarity tensor using a boolean mask. The operation loads `sim_i` and applies `neg_mask` to produce `neg_sims`:\n\n```python\nneg_sims = sim_i[neg_mask]  # [num_negatives]\n```\n\nThis step prepares the negative component for the subsequent loss calculation.\n\n### 2. Loss Computation\nThe per-sample loss `loss_i` is derived from the positive similarity `pos_sim` and the full similarity set `all_sims`. The formula negates the positive similarity and adds the log-sum-exp of all similarities:\n\n```python\nloss_i = -pos_sim + torch.logsumexp(all_sims, dim=0)\n```\n\nThis computation transforms `pos_sim` and aggregates `all_sims` to yield the scalar loss value.\n\n### 3. Loss Accumulation\nThe computed loss is appended to the `losses` list for later aggregation:\n\n```python\nlosses.append(loss_i)\n```\n\n### 4. Conditional Diagnostics\nIf the loss tensor has no elements (i.e., no positive passages were found for the sample), the model emits diagnostic output. The condition checks the first dimension of the loss tensor:\n\n```python\nif loss_i.shape[0] == 0:\n```\n\nUnder this conditional branch, the following diagnostic statements are executed:\n\n```python\nprint(\"No positive passages found for sample\", i)\nprint(\"pos_mask\", pos_mask)\nprint(\"neg_mask\", neg_mask)\nprint(\"sim_i\", sim_i)\nprint(\"labels_i\", labels_i)\nprint(\"all_sims\", all_sims)\n```\n\nThese statements are only active when the condition `loss_i.shape[0] == 0` is met, indicating an empty positive set for the current sample.",
+      "formula_package_ids": [],
+      "heading": "join:MA-S3",
+      "mechanism_id": "join:MA-S3",
+      "page_index": 10,
+      "realized_detail_ids": [
+        "detail:mech_sym:f6cf5bdfe2ae16f0:64",
+        "detail:mech_sym:f6cf5bdfe2ae16f0:66",
+        "detail:mech_sym:f6cf5bdfe2ae16f0:67",
+        "detail:mech_sym:f6cf5bdfe2ae16f0:68",
+        "detail:mech_sym:f6cf5bdfe2ae16f0:70",
+        "detail:mech_sym:f6cf5bdfe2ae16f0:71",
+        "detail:mech_sym:f6cf5bdfe2ae16f0:72",
+        "detail:mech_sym:f6cf5bdfe2ae16f0:73",
+        "detail:mech_sym:f6cf5bdfe2ae16f0:74",
+        "detail:mech_sym:f6cf5bdfe2ae16f0:75"
+      ],
+      "repair_feedback": [],
+      "representation_diff_class": "witness_exact_text_whitespace_repaired",
+      "request_digest": "sha256:52ada7550207fb39e7592bdd812eca1681648341c29405b336d0074e71d5d4f7",
+      "required_detail_ids": [
+        "detail:mech_sym:f6cf5bdfe2ae16f0:64",
+        "detail:mech_sym:f6cf5bdfe2ae16f0:66",
+        "detail:mech_sym:f6cf5bdfe2ae16f0:67",
+        "detail:mech_sym:f6cf5bdfe2ae16f0:68",
+        "detail:mech_sym:f6cf5bdfe2ae16f0:70",
+        "detail:mech_sym:f6cf5bdfe2ae16f0:71",
+        "detail:mech_sym:f6cf5bdfe2ae16f0:72",
+        "detail:mech_sym:f6cf5bdfe2ae16f0:73",
+        "detail:mech_sym:f6cf5bdfe2ae16f0:74",
+        "detail:mech_sym:f6cf5bdfe2ae16f0:75"
+      ],
+      "status": "accepted",
+      "unresolved_detail_ids": [],
+      "witness_atoms": [],
+      "witnesses": [
+        {
+          "exact_text": "neg_sims = sim_i[neg_mask]  # [num_negatives]",
+          "target_id": "detail:mech_sym:f6cf5bdfe2ae16f0:64",
+          "witness_kind": "detail"
+        },
+        {
+          "exact_text": "loss_i = -pos_sim + torch.logsumexp(all_sims, dim=0)",
+          "target_id": "detail:mech_sym:f6cf5bdfe2ae16f0:66",
+          "witness_kind": "detail"
+        },
+        {
+          "exact_text": "losses.append(loss_i)",
+          "target_id": "detail:mech_sym:f6cf5bdfe2ae16f0:67",
+          "witness_kind": "detail"
+        },
+        {
+          "exact_text": "if loss_i.shape[0] == 0:",
+          "target_id": "detail:mech_sym:f6cf5bdfe2ae16f0:68",
+          "witness_kind": "detail"
+        },
+        {
+          "exact_text": "print(\"No positive passages found for sample\", i)",
+          "target_id": "detail:mech_sym:f6cf5bdfe2ae16f0:70",
+          "witness_kind": "detail"
+        },
+        {
+          "exact_text": "print(\"pos_mask\", pos_mask)",
+          "target_id": "detail:mech_sym:f6cf5bdfe2ae16f0:71",
+          "witness_kind": "detail"
+        },
+        {
+          "exact_text": "print(\"neg_mask\", neg_mask)",
+          "target_id": "detail:mech_sym:f6cf5bdfe2ae16f0:72",
+          "witness_kind": "detail"
+        },
+        {
+          "exact_text": "print(\"sim_i\", sim_i)",
+          "target_id": "detail:mech_sym:f6cf5bdfe2ae16f0:73",
+          "witness_kind": "detail"
+        },
+        {
+          "exact_text": "print(\"labels_i\", labels_i)",
+          "target_id": "detail:mech_sym:f6cf5bdfe2ae16f0:74",
+          "witness_kind": "detail"
+        },
+        {
+          "exact_text": "print(\"all_sims\", all_sims)",
+          "target_id": "detail:mech_sym:f6cf5bdfe2ae16f0:75",
+          "witness_kind": "detail"
+        }
+      ]
+    },
+    "page_id": "page:9f593df0feed4d367807bcffe418706ee95611c2342ce5f33bb5ce7f9001be20",
+    "repair_feedback": [],
+    "response_hash": "sha256:73d2fcc0201742e036bd4402271f58825ed2bf68c9ab589f85a32b436f12fd1c",
+    "response_text": "{\n  \"draft_markdown\": \"## MA-S3: Dedicated Attention Loss Computation\\n\\nIn the dedicated attention model, the per-sample loss is computed and accumulated. The implementation extracts negative similarity scores, computes the InfoNCE-style loss, appends it to a collection, and conditionally emits diagnostic output when no positive passages are found.\\n\\n### 1. Negative Similarity Extraction\\nThe model isolates negative similarity scores from the full similarity tensor using a boolean mask. The operation loads `sim_i` and applies `neg_mask` to produce `neg_sims`:\\n\\n```python\\nneg_sims = sim_i[neg_mask]  # [num_negatives]\\n```\\n\\nThis step prepares the negative component for the subsequent loss calculation.\\n\\n### 2. Loss Computation\\nThe per-sample loss `loss_i` is derived from the positive similarity `pos_sim` and the full similarity set `all_sims`. The formula negates the positive similarity and adds the log-sum-exp of all similarities:\\n\\n```python\\nloss_i = -pos_sim + torch.logsumexp(all_sims, dim=0)\\n```\\n\\nThis computation transforms `pos_sim` and aggregates `all_sims` to yield the scalar loss value.\\n\\n### 3. Loss Accumulation\\nThe computed loss is appended to the `losses` list for later aggregation:\\n\\n```python\\nlosses.append(loss_i)\\n```\\n\\n### 4. Conditional Diagnostics\\nIf the loss tensor has no elements (i.e., no positive passages were found for the sample), the model emits diagnostic output. The condition checks the first dimension of the loss tensor:\\n\\n```python\\nif loss_i.shape[0] == 0:\\n```\\n\\nUnder this conditional branch, the following diagnostic statements are executed:\\n\\n```python\\nprint(\\\"No positive passages found for sample\\\", i)\\nprint(\\\"pos_mask\\\", pos_mask)\\nprint(\\\"neg_mask\\\", neg_mask)\\nprint(\\\"sim_i\\\", sim_i)\\nprint(\\\"labels_i\\\", labels_i)\\nprint(\\\"all_sims\\\", all_sims)\\n```\\n\\nThese statements are only active when the condition `loss_i.shape[0] == 0` is met, indicating an empty positive set for the current sample.\",\n  \"rendered_detail_ids\": [\n    \"detail:mech_sym:f6cf5bdfe2ae16f0:64\",\n    \"detail:mech_sym:f6cf5bdfe2ae16f0:66\",\n    \"detail:mech_sym:f6cf5bdfe2ae16f0:67\",\n    \"detail:mech_sym:f6cf5bdfe2ae16f0:68\",\n    \"detail:mech_sym:f6cf5bdfe2ae16f0:70\",\n    \"detail:mech_sym:f6cf5bdfe2ae16f0:71\",\n    \"detail:mech_sym:f6cf5bdfe2ae16f0:72\",\n    \"detail:mech_sym:f6cf5bdfe2ae16f0:73\",\n    \"detail:mech_sym:f6cf5bdfe2ae16f0:74\",\n    \"detail:mech_sym:f6cf5bdfe2ae16f0:75\"\n  ],\n  \"used_formula_package_ids\": [],\n  \"witnesses\": [\n    {\n      \"exact_text\": \"neg_sims = sim_i[neg_mask]  # [num_negatives]\",\n      \"target_id\": \"detail:mech_sym:f6cf5bdfe2ae16f0:64\",\n      \"witness_kind\": \"detail\"\n    },\n    {\n      \"exact_text\": \"loss_i = -pos_sim + torch.logsumexp(all_sims, dim=0)\",\n      \"target_id\": \"detail:mech_sym:f6cf5bdfe2ae16f0:66\",\n      \"witness_kind\": \"detail\"\n    },\n    {\n      \"exact_text\": \"losses.append(loss_i)\",\n      \"target_id\": \"detail:mech_sym:f6cf5bdfe2ae16f0:67\",\n      \"witness_kind\": \"detail\"\n    },\n    {\n      \"exact_text\": \"if loss_i.shape[0] == 0:\",\n      \"target_id\": \"detail:mech_sym:f6cf5bdfe2ae16f0:68\",\n      \"witness_kind\": \"detail\"\n    },\n    {\n      \"exact_text\": \"print(“No positive passages found for sample”, i)\",\n      \"target_id\": \"detail:mech_sym:f6cf5bdfe2ae16f0:70\",\n      \"witness_kind\": \"detail\"\n    },\n    {\n      \"exact_text\": \"print(“pos_mask”, pos_mask)\",\n      \"target_id\": \"detail:mech_sym:f6cf5bdfe2ae16f0:71\",\n      \"witness_kind\": \"detail\"\n    },\n    {\n      \"exact_text\": \"print(“neg_mask”, neg_mask)\",\n      \"target_id\": \"detail:mech_sym:f6cf5bdfe2ae16f0:72\",\n      \"witness_kind\": \"detail\"\n    },\n    {\n      \"exact_text\": \"print(“sim_i”, sim_i)\",\n      \"target_id\": \"detail:mech_sym:f6cf5bdfe2ae16f0:73\",\n      \"witness_kind\": \"detail\"\n    },\n    {\n      \"exact_text\": \"print(“labels_i”, labels_i)\",\n      \"target_id\": \"detail:mech_sym:f6cf5bdfe2ae16f0:74\",\n      \"witness_kind\": \"detail\"\n    },\n    {\n      \"exact_text\": \"print(“all_sims”, all_sims)\",\n      \"target_id\": \"detail:mech_sym:f6cf5bdfe2ae16f0:75\",\n      \"witness_kind\": \"detail\"\n    }\n  ]\n}",
+    "section_id": "MA-S3"
+  },
+  "invocation_id": "inv:realizer:MA-S3:page:9f593df0feed4d367807bcffe418706ee95611c2342ce5f33bb5ce7f9001be20",
+  "schema_version": "2.0"
+}

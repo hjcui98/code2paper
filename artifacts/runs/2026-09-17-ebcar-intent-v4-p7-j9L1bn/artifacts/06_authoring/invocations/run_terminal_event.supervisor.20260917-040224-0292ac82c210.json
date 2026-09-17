@@ -1,0 +1,16 @@
+{
+  "event_kind": "run_terminal",
+  "extra": {
+    "attempt_id": "20260917-040224-0292ac82c210",
+    "checkpoint_digest": "",
+    "checkpoint_path": "",
+    "returncode": 2,
+    "run_id": "ebcar-intent-v4-p7-current-20260916T165846Z"
+  },
+  "last_completed_invocation_id": "",
+  "recorded_at_unix": 1789618117.2302952,
+  "run_digest": "ebcar-intent-v4-p7-current-20260916T165846Z",
+  "schema_version": "2.0",
+  "terminal_reason": "external_termination",
+  "terminal_stage": "method_agent_supervisor"
+}

@@ -1,0 +1,1748 @@
+{
+  "schema_version": "1.0",
+  "alignments": [
+    {
+      "facet_id": "facet-d57e6b007d62768e",
+      "alignment_id": "alignment:facet-d57e6b007d62768e",
+      "clause_id": "clause:O-METHOD-MAINLINE-01-c8146479:0",
+      "status": "unresolved",
+      "supported_fields": [],
+      "unsupported_fields": [],
+      "field_bindings": [],
+      "bound_claim_ids": [],
+      "bound_span_ids": [],
+      "bound_equation_ids": [],
+      "exact_excerpts": [],
+      "search_terms": [
+        "ID",
+        "InfoNCE",
+        "computed",
+        "embeddings",
+        "standard",
+        "retriever",
+        "Contriever",
+        "embedding",
+        "document",
+        "relative",
+        "retrieved",
+        "sinusoidal",
+        "position",
+        "encoding",
+        "structural",
+        "enriched"
+      ],
+      "rationale": "Deterministic local evidence fallback after owner unavailability.",
+      "evidence_digest": "sha256:655f865e48dec2c1dc5793fc71c4fa41108d4027593cba1be6b92a8bec939a8f",
+      "schema_failures": [
+        "deterministic_local_evidence_fallback"
+      ],
+      "content_digest": "sha256:77631ea18f7ff836ecb05dd70c3bc2e274f0ecca314e1fadefd3fdfd28b147b4"
+    },
+    {
+      "facet_id": "facet-bd2114e7ad9b1773",
+      "alignment_id": "alignment:facet-bd2114e7ad9b1773",
+      "clause_id": "clause:O-STAGE-01-039a963a:0",
+      "status": "unresolved",
+      "supported_fields": [],
+      "unsupported_fields": [],
+      "field_bindings": [],
+      "bound_claim_ids": [],
+      "bound_span_ids": [],
+      "bound_equation_ids": [],
+      "exact_excerpts": [],
+      "search_terms": [
+        "Retrieval",
+        "embedding",
+        "preparation",
+        "retriever",
+        "Contriever",
+        "candidate",
+        "passages",
+        "computed",
+        "embeddings",
+        "dense",
+        "fetch",
+        "top",
+        "pre",
+        "encode",
+        "query",
+        "same"
+      ],
+      "rationale": "Deterministic local evidence fallback after owner unavailability.",
+      "evidence_digest": "sha256:655f865e48dec2c1dc5793fc71c4fa41108d4027593cba1be6b92a8bec939a8f",
+      "schema_failures": [
+        "deterministic_local_evidence_fallback"
+      ],
+      "content_digest": "sha256:c75592aae06a224193ebd550cee5baa0a5426de954385919146928c733db7549"
+    },
+    {
+      "facet_id": "facet-308602a0138b57ea",
+      "alignment_id": "alignment:facet-308602a0138b57ea",
+      "clause_id": "clause:O-STAGE-02-42e8d68d:0",
+      "status": "unresolved",
+      "supported_fields": [],
+      "unsupported_fields": [
+        "operation"
+      ],
+      "field_bindings": [
+        {
+          "field_name": "operation",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": "The evidence confirms that document_id_embeddings and passage_id_embeddings are added to passages (evidence 2, 5, 8), but the claim specifies 'sinusoidal passage-position encoding' while the code uses a learned positional encoding via get_passage_positional_encoding (evidence 0) which is then frozen as an nn.Embedding (evidence 1). The term 'sinusoidal' is not supported by the evidence — the code shows a learned/frozen embedding table, not a sinusoidal function. Additionally, 'dynamic document ID embedding' is partially supported: the document_id_embedding is a learned embedding table (evidence 6) with a modulo/quotient index computation, which is dynamic in the sense of index computation but the embedding itself is a static learned table. The core addition operation (passages + document +"
+        }
+      ],
+      "bound_claim_ids": [],
+      "bound_span_ids": [],
+      "bound_equation_ids": [],
+      "exact_excerpts": [],
+      "search_terms": [
+        "ID",
+        "Structural",
+        "augmentation",
+        "retrieved",
+        "document",
+        "embedding",
+        "sinusoidal",
+        "position",
+        "encoding",
+        "original",
+        "identity",
+        "ordering",
+        "passage",
+        "add",
+        "dynamic",
+        "inject"
+      ],
+      "rationale": "",
+      "evidence_digest": "sha256:655f865e48dec2c1dc5793fc71c4fa41108d4027593cba1be6b92a8bec939a8f",
+      "schema_failures": [
+        "field_positive_without_evidence:operation"
+      ],
+      "content_digest": "sha256:25d35ad735651b148549b3357f2ba698a7e610444d7f6285876c085fe30f05fa"
+    },
+    {
+      "facet_id": "facet-df672e4efc3751e2",
+      "alignment_id": "alignment:facet-df672e4efc3751e2",
+      "clause_id": "clause:O-STAGE-03-2c5bd758:0",
+      "status": "partial",
+      "supported_fields": [
+        "operation"
+      ],
+      "unsupported_fields": [],
+      "field_bindings": [
+        {
+          "field_name": "operation",
+          "status": "partial",
+          "polarity": "positive",
+          "bound_claim_ids": [
+            "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:b6468fc08c848936",
+            "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-rel:1b2f2e5db0f09696"
+          ],
+          "bound_fact_ids": [
+            "fact-O-METHOD-MAINLINE-01-c8146479-node:b6468fc08c848936",
+            "fact-O-METHOD-MAINLINE-01-c8146479-rel:1b2f2e5db0f09696"
+          ],
+          "bound_span_ids": [
+            "span:src/model/ebcar_dedicated_attention_model.py:145:174"
+          ],
+          "bound_equation_ids": [],
+          "exact_excerpts": [
+            {
+              "facet_id": "facet-df672e4efc3751e2",
+              "span_id": "span:src/model/ebcar_dedicated_attention_model.py:145:174",
+              "path": "src/model/ebcar_dedicated_attention_model.py",
+              "symbol": "sym:f6cf5bdfe2ae16f0",
+              "line_start": 145,
+              "line_end": 174,
+              "exact_excerpt": "        if self.cfg.use_dedicated_attention:\n            dedicated_attention_mask = torch.zeros(\n                (batch_size, num_passages + 1, num_passages + 1),\n                device=self.device,\n            )  # [batch_size, num_heads, num_passages + 1, num_passages + 1]\n            for i in range(batch_size):\n                temp_document_id = document_id[i]  # [num_passages]\n                for row, doc_id in enumerate(temp_document_id):\n                    dedicated_attention_mask[i, row, :] = -float(\n                        \"inf\"\n                    )  # Set this row to all -inf\n                    temp_indices = (\n                        temp_document_id == doc_id\n                    )  # Get the indices of the passages that have the same document id as the current passage\n                    temp_indices = torch.cat(\n                        (\n                            torch.tensor([True], device=self.device),\n                            temp_indices,\n                        )  # Always attend to the query\n                    )  # [num_passages + 1]\n                    dedicated_attention_mask[\n                        i, row, temp_indices\n                    ] = 0  # Set the dedicated attention mask to 0 for the passages that have the same document id as the current passage\n        else:\n            # This is the case when we don't use dedicated attention for ablation study\n            # The dedicated attention mask is all zeros\n            dedicated_attention_mask = torch.zeros(\n                (batch_size, num_passages + 1, num_passages + 1),\n                device=self.device,\n            )  # [batch_size, num_passages + 1, num_passages + 1]\n",
+              "excerpt_digest": "sha256:d1794815263ad9b2447fa50c83ee519400fb41cc40b479f42fa55c7d32f90147",
+              "file_digest": "sha256:d9c5c626979342c9dc612c6acf8b9a3aedc669df99986118030f37e793d52946",
+              "fact_ids": [
+                "fact-O-METHOD-MAINLINE-01-c8146479-node:b6468fc08c848936",
+                "fact-O-METHOD-MAINLINE-01-c8146479-rel:1b2f2e5db0f09696"
+              ],
+              "equation_ids": [],
+              "fact_atoms": [],
+              "equation_atoms": [],
+              "operation_atoms": []
+            }
+          ],
+          "active_path_conditions": [],
+          "unsupported_reason": ""
+        }
+      ],
+      "bound_claim_ids": [
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:b6468fc08c848936",
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-rel:1b2f2e5db0f09696"
+      ],
+      "bound_span_ids": [
+        "span:src/model/ebcar_dedicated_attention_model.py:145:174"
+      ],
+      "bound_equation_ids": [],
+      "exact_excerpts": [
+        {
+          "facet_id": "facet-df672e4efc3751e2",
+          "span_id": "span:src/model/ebcar_dedicated_attention_model.py:145:174",
+          "path": "src/model/ebcar_dedicated_attention_model.py",
+          "symbol": "sym:f6cf5bdfe2ae16f0",
+          "line_start": 145,
+          "line_end": 174,
+          "exact_excerpt": "        if self.cfg.use_dedicated_attention:\n            dedicated_attention_mask = torch.zeros(\n                (batch_size, num_passages + 1, num_passages + 1),\n                device=self.device,\n            )  # [batch_size, num_heads, num_passages + 1, num_passages + 1]\n            for i in range(batch_size):\n                temp_document_id = document_id[i]  # [num_passages]\n                for row, doc_id in enumerate(temp_document_id):\n                    dedicated_attention_mask[i, row, :] = -float(\n                        \"inf\"\n                    )  # Set this row to all -inf\n                    temp_indices = (\n                        temp_document_id == doc_id\n                    )  # Get the indices of the passages that have the same document id as the current passage\n                    temp_indices = torch.cat(\n                        (\n                            torch.tensor([True], device=self.device),\n                            temp_indices,\n                        )  # Always attend to the query\n                    )  # [num_passages + 1]\n                    dedicated_attention_mask[\n                        i, row, temp_indices\n                    ] = 0  # Set the dedicated attention mask to 0 for the passages that have the same document id as the current passage\n        else:\n            # This is the case when we don't use dedicated attention for ablation study\n            # The dedicated attention mask is all zeros\n            dedicated_attention_mask = torch.zeros(\n                (batch_size, num_passages + 1, num_passages + 1),\n                device=self.device,\n            )  # [batch_size, num_passages + 1, num_passages + 1]\n",
+          "excerpt_digest": "sha256:d1794815263ad9b2447fa50c83ee519400fb41cc40b479f42fa55c7d32f90147",
+          "file_digest": "sha256:d9c5c626979342c9dc612c6acf8b9a3aedc669df99986118030f37e793d52946",
+          "fact_ids": [
+            "fact-O-METHOD-MAINLINE-01-c8146479-node:b6468fc08c848936",
+            "fact-O-METHOD-MAINLINE-01-c8146479-rel:1b2f2e5db0f09696"
+          ],
+          "equation_ids": [],
+          "fact_atoms": [],
+          "equation_atoms": [],
+          "operation_atoms": []
+        }
+      ],
+      "search_terms": [
+        "attention",
+        "encoding",
+        "augmented",
+        "embeddings",
+        "Transformer",
+        "interactions",
+        "dedicated",
+        "document",
+        "producing",
+        "contextualized",
+        "Hybrid",
+        "Feed",
+        "query",
+        "passage",
+        "encoder",
+        "applies"
+      ],
+      "rationale": "",
+      "evidence_digest": "sha256:3cb8c1c2cf072753c7ed076f6973347d6971e3e642f570eccd8b131b20e791cc",
+      "schema_failures": [
+        "field_evidence_pruned:operation"
+      ],
+      "content_digest": "sha256:7a460d1a95623a7485e04d848728851a970e4749d26da661801ca80c267b289b"
+    },
+    {
+      "facet_id": "facet-6bc5ee440fdc8329",
+      "alignment_id": "alignment:facet-6bc5ee440fdc8329",
+      "clause_id": "clause:O-STAGE-04-c50e0bef:0",
+      "status": "unresolved",
+      "supported_fields": [],
+      "unsupported_fields": [
+        "formula_goal"
+      ],
+      "field_bindings": [
+        {
+          "field_name": "formula_goal",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": "The evidence confirms the InfoNCE loss formula (loss_i = -pos_sim + logsumexp(all_sims, dim=0)) and its reduction to a scalar loss, but does not explicitly state the training objective of pulling positive passage embeddings toward the query embedding and pushing negative passage embeddings away. The formula is present but the stated goal of contrastive training is not directly evidenced in the supplied excerpts."
+        }
+      ],
+      "bound_claim_ids": [],
+      "bound_span_ids": [],
+      "bound_equation_ids": [],
+      "exact_excerpts": [],
+      "search_terms": [
+        "InfoNCE",
+        "Contrastive",
+        "training",
+        "positive",
+        "embedding",
+        "negative",
+        "embeddings",
+        "loss",
+        "pull",
+        "updated",
+        "passage",
+        "toward",
+        "fixed",
+        "query",
+        "push",
+        "away"
+      ],
+      "rationale": "",
+      "evidence_digest": "sha256:655f865e48dec2c1dc5793fc71c4fa41108d4027593cba1be6b92a8bec939a8f",
+      "schema_failures": [
+        "field_positive_without_evidence:formula_goal"
+      ],
+      "content_digest": "sha256:c72ee2a1f15c6049d377e2412e93f08444b7ebd17d40ce532b8d9d0f0c013e3c"
+    },
+    {
+      "facet_id": "facet-cbc0a588831ac015",
+      "alignment_id": "alignment:facet-cbc0a588831ac015",
+      "clause_id": "clause:O-STAGE-05-5b3d398a:0",
+      "status": "unresolved",
+      "supported_fields": [],
+      "unsupported_fields": [
+        "operation"
+      ],
+      "field_bindings": [
+        {
+          "field_name": "operation",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": "The sort-by-descending-score component is supported by evidence index 1 (torch.sort(similarities, dim=1, descending=True)). However, the dot-product similarity computation between the unchanged query embedding and contextualized passage embeddings is not directly evidenced in the supplied set. Evidence index 4 shows the positional encoding addition (passages + document_id_embeddings + passage_id_embeddings) and evidence index 6 shows the concatenation of query and passages, but no evidence directly shows the dot-product similarity computation step (e.g., query @ passages.T or similar). The facet's claim about computing dot-product similarities is not directly bound to any supplied evidence span."
+        }
+      ],
+      "bound_claim_ids": [],
+      "bound_span_ids": [],
+      "bound_equation_ids": [],
+      "exact_excerpts": [],
+      "search_terms": [
+        "Inference",
+        "similarities",
+        "unchanged",
+        "embedding",
+        "contextualized",
+        "embeddings",
+        "passages",
+        "descending",
+        "scoring",
+        "ranking",
+        "Compute",
+        "dot",
+        "product",
+        "between",
+        "query",
+        "passage"
+      ],
+      "rationale": "",
+      "evidence_digest": "sha256:655f865e48dec2c1dc5793fc71c4fa41108d4027593cba1be6b92a8bec939a8f",
+      "schema_failures": [
+        "field_positive_without_evidence:operation"
+      ],
+      "content_digest": "sha256:a39798cd73a4860d4cd7fdf752821b59f21452f2dc6cec86402e6f8d0314134b"
+    },
+    {
+      "facet_id": "facet-14d4dbe911667c07",
+      "alignment_id": "alignment:facet-14d4dbe911667c07",
+      "clause_id": "clause:O-COMPONENT-01-c301ecdd:0",
+      "status": "partial",
+      "supported_fields": [
+        "operation"
+      ],
+      "unsupported_fields": [],
+      "field_bindings": [
+        {
+          "field_name": "operation",
+          "status": "partial",
+          "polarity": "positive",
+          "bound_claim_ids": [
+            "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:b6468fc08c848936",
+            "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-rel:1b2f2e5db0f09696"
+          ],
+          "bound_fact_ids": [
+            "fact-O-METHOD-MAINLINE-01-c8146479-node:b6468fc08c848936",
+            "fact-O-METHOD-MAINLINE-01-c8146479-rel:1b2f2e5db0f09696"
+          ],
+          "bound_span_ids": [
+            "span:src/model/ebcar_dedicated_attention_model.py:145:174"
+          ],
+          "bound_equation_ids": [],
+          "exact_excerpts": [
+            {
+              "facet_id": "facet-14d4dbe911667c07",
+              "span_id": "span:src/model/ebcar_dedicated_attention_model.py:145:174",
+              "path": "src/model/ebcar_dedicated_attention_model.py",
+              "symbol": "sym:f6cf5bdfe2ae16f0",
+              "line_start": 145,
+              "line_end": 174,
+              "exact_excerpt": "        if self.cfg.use_dedicated_attention:\n            dedicated_attention_mask = torch.zeros(\n                (batch_size, num_passages + 1, num_passages + 1),\n                device=self.device,\n            )  # [batch_size, num_heads, num_passages + 1, num_passages + 1]\n            for i in range(batch_size):\n                temp_document_id = document_id[i]  # [num_passages]\n                for row, doc_id in enumerate(temp_document_id):\n                    dedicated_attention_mask[i, row, :] = -float(\n                        \"inf\"\n                    )  # Set this row to all -inf\n                    temp_indices = (\n                        temp_document_id == doc_id\n                    )  # Get the indices of the passages that have the same document id as the current passage\n                    temp_indices = torch.cat(\n                        (\n                            torch.tensor([True], device=self.device),\n                            temp_indices,\n                        )  # Always attend to the query\n                    )  # [num_passages + 1]\n                    dedicated_attention_mask[\n                        i, row, temp_indices\n                    ] = 0  # Set the dedicated attention mask to 0 for the passages that have the same document id as the current passage\n        else:\n            # This is the case when we don't use dedicated attention for ablation study\n            # The dedicated attention mask is all zeros\n            dedicated_attention_mask = torch.zeros(\n                (batch_size, num_passages + 1, num_passages + 1),\n                device=self.device,\n            )  # [batch_size, num_passages + 1, num_passages + 1]\n",
+              "excerpt_digest": "sha256:d1794815263ad9b2447fa50c83ee519400fb41cc40b479f42fa55c7d32f90147",
+              "file_digest": "sha256:d9c5c626979342c9dc612c6acf8b9a3aedc669df99986118030f37e793d52946",
+              "fact_ids": [
+                "fact-O-METHOD-MAINLINE-01-c8146479-node:b6468fc08c848936",
+                "fact-O-METHOD-MAINLINE-01-c8146479-rel:1b2f2e5db0f09696"
+              ],
+              "equation_ids": [],
+              "fact_atoms": [],
+              "equation_atoms": [],
+              "operation_atoms": []
+            }
+          ],
+          "active_path_conditions": [],
+          "unsupported_reason": ""
+        }
+      ],
+      "bound_claim_ids": [
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:b6468fc08c848936",
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-rel:1b2f2e5db0f09696"
+      ],
+      "bound_span_ids": [
+        "span:src/model/ebcar_dedicated_attention_model.py:145:174"
+      ],
+      "bound_equation_ids": [],
+      "exact_excerpts": [
+        {
+          "facet_id": "facet-14d4dbe911667c07",
+          "span_id": "span:src/model/ebcar_dedicated_attention_model.py:145:174",
+          "path": "src/model/ebcar_dedicated_attention_model.py",
+          "symbol": "sym:f6cf5bdfe2ae16f0",
+          "line_start": 145,
+          "line_end": 174,
+          "exact_excerpt": "        if self.cfg.use_dedicated_attention:\n            dedicated_attention_mask = torch.zeros(\n                (batch_size, num_passages + 1, num_passages + 1),\n                device=self.device,\n            )  # [batch_size, num_heads, num_passages + 1, num_passages + 1]\n            for i in range(batch_size):\n                temp_document_id = document_id[i]  # [num_passages]\n                for row, doc_id in enumerate(temp_document_id):\n                    dedicated_attention_mask[i, row, :] = -float(\n                        \"inf\"\n                    )  # Set this row to all -inf\n                    temp_indices = (\n                        temp_document_id == doc_id\n                    )  # Get the indices of the passages that have the same document id as the current passage\n                    temp_indices = torch.cat(\n                        (\n                            torch.tensor([True], device=self.device),\n                            temp_indices,\n                        )  # Always attend to the query\n                    )  # [num_passages + 1]\n                    dedicated_attention_mask[\n                        i, row, temp_indices\n                    ] = 0  # Set the dedicated attention mask to 0 for the passages that have the same document id as the current passage\n        else:\n            # This is the case when we don't use dedicated attention for ablation study\n            # The dedicated attention mask is all zeros\n            dedicated_attention_mask = torch.zeros(\n                (batch_size, num_passages + 1, num_passages + 1),\n                device=self.device,\n            )  # [batch_size, num_passages + 1, num_passages + 1]\n",
+          "excerpt_digest": "sha256:d1794815263ad9b2447fa50c83ee519400fb41cc40b479f42fa55c7d32f90147",
+          "file_digest": "sha256:d9c5c626979342c9dc612c6acf8b9a3aedc669df99986118030f37e793d52946",
+          "fact_ids": [
+            "fact-O-METHOD-MAINLINE-01-c8146479-node:b6468fc08c848936",
+            "fact-O-METHOD-MAINLINE-01-c8146479-rel:1b2f2e5db0f09696"
+          ],
+          "equation_ids": [],
+          "fact_atoms": [],
+          "equation_atoms": [],
+          "operation_atoms": []
+        }
+      ],
+      "search_terms": [
+        "RAG",
+        "reranking",
+        "retrieval-augmented",
+        "generation",
+        "addressing",
+        "inference",
+        "efficiency",
+        "cross-passage",
+        "reasoning",
+        "especially",
+        "scattered",
+        "passages",
+        "requires",
+        "resolving",
+        "coreference",
+        "structural"
+      ],
+      "rationale": "",
+      "evidence_digest": "sha256:93c550b3365f8f40cbd87c023e972d1cf443f24008bd8e221b2533ed8a98279c",
+      "schema_failures": [
+        "field_evidence_pruned:operation"
+      ],
+      "content_digest": "sha256:4c4e8f0cdc6c8daa990c23367a4add159c5df92ce40bbb4e880d5d8578df3971"
+    },
+    {
+      "facet_id": "facet-c70f411cffdc0a8f",
+      "alignment_id": "alignment:facet-c70f411cffdc0a8f",
+      "clause_id": "clause:O-COMPONENT-01-de6049e3:0",
+      "status": "unresolved",
+      "supported_fields": [],
+      "unsupported_fields": [
+        "operation"
+      ],
+      "field_bindings": [
+        {
+          "field_name": "operation",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": ""
+        }
+      ],
+      "bound_claim_ids": [],
+      "bound_span_ids": [],
+      "bound_equation_ids": [],
+      "exact_excerpts": [],
+      "search_terms": [
+        "Contriever",
+        "retriever",
+        "provides",
+        "embeddings",
+        "retrieval",
+        "Dense",
+        "initial",
+        "passage",
+        "top"
+      ],
+      "rationale": "",
+      "evidence_digest": "sha256:655f865e48dec2c1dc5793fc71c4fa41108d4027593cba1be6b92a8bec939a8f",
+      "schema_failures": [],
+      "content_digest": "sha256:3c3fe43e3caf179b0df93a8e0a18bc95337ad27bd1c674512e704663fc55f180"
+    },
+    {
+      "facet_id": "facet-676fcfceb7eddd8a",
+      "alignment_id": "alignment:facet-676fcfceb7eddd8a",
+      "clause_id": "clause:O-COMPONENT-02-2e14379d:0",
+      "status": "partial",
+      "supported_fields": [
+        "operation"
+      ],
+      "unsupported_fields": [],
+      "field_bindings": [
+        {
+          "field_name": "operation",
+          "status": "partial",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [
+            "fact-O-STAGE-05-5b3d398a-node:06b37685c9288fb6",
+            "fact-O-STAGE-05-5b3d398a-rel:caa3e47dda8fdf04"
+          ],
+          "bound_span_ids": [
+            "span:src/model/ebcar_dedicated_attention_model.py:265:277"
+          ],
+          "bound_equation_ids": [],
+          "exact_excerpts": [
+            {
+              "facet_id": "facet-676fcfceb7eddd8a",
+              "span_id": "span:src/model/ebcar_dedicated_attention_model.py:265:277",
+              "path": "src/model/ebcar_dedicated_attention_model.py",
+              "symbol": "sym:9773c5add7af1f92",
+              "line_start": 265,
+              "line_end": 277,
+              "exact_excerpt": "        if self.cfg.add_positional_encoding:\n            # document_id might be out of range, so we need to modulate it and plus the quotient\n            document_id_embeddings = self.document_id_embedding(\n                (document_id.long() % self.cfg.retrieval.top_k)\n                + (document_id.long() // self.cfg.retrieval.top_k)\n            )  # [batch_size, num_passages, hidden_size]\n            passage_id_embeddings = self.passage_id_embedding(\n                passage_id.long()\n            )  # [batch_size, num_passages, hidden_size]\n            # Directly add the positional encoding to the passages\n            passages = (\n                passages + document_id_embeddings + passage_id_embeddings\n            )  # [batch_size, num_passages, hidden_size]\n",
+              "excerpt_digest": "sha256:3c6758dbbeabbca831337ca5c9319287f1ea57619cb7700eeb37b68021595057",
+              "file_digest": "sha256:d9c5c626979342c9dc612c6acf8b9a3aedc669df99986118030f37e793d52946",
+              "fact_ids": [
+                "fact-O-STAGE-05-5b3d398a-node:06b37685c9288fb6",
+                "fact-O-STAGE-05-5b3d398a-rel:caa3e47dda8fdf04"
+              ],
+              "equation_ids": [],
+              "fact_atoms": [],
+              "equation_atoms": [],
+              "operation_atoms": []
+            }
+          ],
+          "active_path_conditions": [],
+          "unsupported_reason": ""
+        }
+      ],
+      "bound_claim_ids": [],
+      "bound_span_ids": [
+        "span:src/model/ebcar_dedicated_attention_model.py:265:277"
+      ],
+      "bound_equation_ids": [],
+      "exact_excerpts": [
+        {
+          "facet_id": "facet-676fcfceb7eddd8a",
+          "span_id": "span:src/model/ebcar_dedicated_attention_model.py:265:277",
+          "path": "src/model/ebcar_dedicated_attention_model.py",
+          "symbol": "sym:9773c5add7af1f92",
+          "line_start": 265,
+          "line_end": 277,
+          "exact_excerpt": "        if self.cfg.add_positional_encoding:\n            # document_id might be out of range, so we need to modulate it and plus the quotient\n            document_id_embeddings = self.document_id_embedding(\n                (document_id.long() % self.cfg.retrieval.top_k)\n                + (document_id.long() // self.cfg.retrieval.top_k)\n            )  # [batch_size, num_passages, hidden_size]\n            passage_id_embeddings = self.passage_id_embedding(\n                passage_id.long()\n            )  # [batch_size, num_passages, hidden_size]\n            # Directly add the positional encoding to the passages\n            passages = (\n                passages + document_id_embeddings + passage_id_embeddings\n            )  # [batch_size, num_passages, hidden_size]\n",
+          "excerpt_digest": "sha256:3c6758dbbeabbca831337ca5c9319287f1ea57619cb7700eeb37b68021595057",
+          "file_digest": "sha256:d9c5c626979342c9dc612c6acf8b9a3aedc669df99986118030f37e793d52946",
+          "fact_ids": [
+            "fact-O-STAGE-05-5b3d398a-node:06b37685c9288fb6",
+            "fact-O-STAGE-05-5b3d398a-rel:caa3e47dda8fdf04"
+          ],
+          "equation_ids": [],
+          "fact_atoms": [],
+          "equation_atoms": [],
+          "operation_atoms": []
+        }
+      ],
+      "search_terms": [
+        "embeddings",
+        "representations",
+        "candidate",
+        "passages",
+        "obtained",
+        "Contriever",
+        "passage",
+        "Fixed",
+        "dense"
+      ],
+      "rationale": "Deterministic local evidence fallback after owner unavailability.",
+      "evidence_digest": "sha256:1b68a1cc40a954edafb2a7e3242d92aa3a81b564679d306e59827b25a4bb72f2",
+      "schema_failures": [
+        "deterministic_local_evidence_fallback"
+      ],
+      "content_digest": "sha256:6199702c937ecfc7b650f9fd71efa3e2f2762fc84e309ccd20f1002cf1cc53af"
+    },
+    {
+      "facet_id": "facet-d87af6e7082cc916",
+      "alignment_id": "alignment:facet-d87af6e7082cc916",
+      "clause_id": "clause:O-COMPONENT-03-d8aa8c77:0",
+      "status": "unresolved",
+      "supported_fields": [],
+      "unsupported_fields": [
+        "operation"
+      ],
+      "field_bindings": [
+        {
+          "field_name": "operation",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": ""
+        }
+      ],
+      "bound_claim_ids": [],
+      "bound_span_ids": [],
+      "bound_equation_ids": [],
+      "exact_excerpts": [],
+      "search_terms": [
+        "ID",
+        "document",
+        "embedding",
+        "relative",
+        "identity",
+        "embeddings",
+        "assigned",
+        "dynamically",
+        "documents",
+        "candidate",
+        "enabling",
+        "recognize",
+        "passages",
+        "together",
+        "table",
+        "Learned"
+      ],
+      "rationale": "",
+      "evidence_digest": "sha256:655f865e48dec2c1dc5793fc71c4fa41108d4027593cba1be6b92a8bec939a8f",
+      "schema_failures": [],
+      "content_digest": "sha256:a1b1fd359339bf9ce6be75879834a36d8897ba54ef61ac9243a450bd24890c32"
+    },
+    {
+      "facet_id": "facet-ba08ce41d6e1d9b9",
+      "alignment_id": "alignment:facet-ba08ce41d6e1d9b9",
+      "clause_id": "clause:O-COMPONENT-04-b5b6af99:0",
+      "status": "unresolved",
+      "supported_fields": [],
+      "unsupported_fields": [
+        "operation"
+      ],
+      "field_bindings": [
+        {
+          "field_name": "operation",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": "Evidence confirms passage positional encoding is computed via get_passage_positional_encoding (sinusoidal) and added to passages, but no evidence confirms it encodes position 'within its original document' — the encoding is indexed by passage_id (a global passage index), not by position within a document. The document-level structural cue is provided by document_id_embeddings, not by the passage positional encoding itself. The 'structural order cues' claim is partially supported (order within a document is implied by passage_id ordering), but the 'within its original document' qualifier is not directly evidenced by the supplied spans."
+        }
+      ],
+      "bound_claim_ids": [],
+      "bound_span_ids": [],
+      "bound_equation_ids": [],
+      "exact_excerpts": [],
+      "search_terms": [
+        "position",
+        "encoding",
+        "sinusoidal",
+        "original",
+        "document",
+        "providing",
+        "structural",
+        "passage",
+        "Encodes",
+        "within",
+        "order",
+        "cues"
+      ],
+      "rationale": "",
+      "evidence_digest": "sha256:655f865e48dec2c1dc5793fc71c4fa41108d4027593cba1be6b92a8bec939a8f",
+      "schema_failures": [
+        "field_positive_without_evidence:operation"
+      ],
+      "content_digest": "sha256:924041f34b6131e1b3cc0ed963a8b737924644e1d0f3123fa9e091c08b15f0f0"
+    },
+    {
+      "facet_id": "facet-47997bc7d81ecdf5",
+      "alignment_id": "alignment:facet-47997bc7d81ecdf5",
+      "clause_id": "clause:O-COMPONENT-05-4c3594d2:0",
+      "status": "partial",
+      "supported_fields": [
+        "operation"
+      ],
+      "unsupported_fields": [],
+      "field_bindings": [
+        {
+          "field_name": "operation",
+          "status": "partial",
+          "polarity": "positive",
+          "bound_claim_ids": [
+            "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:b6468fc08c848936",
+            "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-rel:1b2f2e5db0f09696"
+          ],
+          "bound_fact_ids": [
+            "fact-O-METHOD-MAINLINE-01-c8146479-node:b6468fc08c848936",
+            "fact-O-METHOD-MAINLINE-01-c8146479-rel:1b2f2e5db0f09696"
+          ],
+          "bound_span_ids": [
+            "span:src/model/ebcar_dedicated_attention_model.py:145:174"
+          ],
+          "bound_equation_ids": [],
+          "exact_excerpts": [
+            {
+              "facet_id": "facet-47997bc7d81ecdf5",
+              "span_id": "span:src/model/ebcar_dedicated_attention_model.py:145:174",
+              "path": "src/model/ebcar_dedicated_attention_model.py",
+              "symbol": "sym:f6cf5bdfe2ae16f0",
+              "line_start": 145,
+              "line_end": 174,
+              "exact_excerpt": "        if self.cfg.use_dedicated_attention:\n            dedicated_attention_mask = torch.zeros(\n                (batch_size, num_passages + 1, num_passages + 1),\n                device=self.device,\n            )  # [batch_size, num_heads, num_passages + 1, num_passages + 1]\n            for i in range(batch_size):\n                temp_document_id = document_id[i]  # [num_passages]\n                for row, doc_id in enumerate(temp_document_id):\n                    dedicated_attention_mask[i, row, :] = -float(\n                        \"inf\"\n                    )  # Set this row to all -inf\n                    temp_indices = (\n                        temp_document_id == doc_id\n                    )  # Get the indices of the passages that have the same document id as the current passage\n                    temp_indices = torch.cat(\n                        (\n                            torch.tensor([True], device=self.device),\n                            temp_indices,\n                        )  # Always attend to the query\n                    )  # [num_passages + 1]\n                    dedicated_attention_mask[\n                        i, row, temp_indices\n                    ] = 0  # Set the dedicated attention mask to 0 for the passages that have the same document id as the current passage\n        else:\n            # This is the case when we don't use dedicated attention for ablation study\n            # The dedicated attention mask is all zeros\n            dedicated_attention_mask = torch.zeros(\n                (batch_size, num_passages + 1, num_passages + 1),\n                device=self.device,\n            )  # [batch_size, num_passages + 1, num_passages + 1]\n",
+              "excerpt_digest": "sha256:d1794815263ad9b2447fa50c83ee519400fb41cc40b479f42fa55c7d32f90147",
+              "file_digest": "sha256:d9c5c626979342c9dc612c6acf8b9a3aedc669df99986118030f37e793d52946",
+              "fact_ids": [
+                "fact-O-METHOD-MAINLINE-01-c8146479-node:b6468fc08c848936",
+                "fact-O-METHOD-MAINLINE-01-c8146479-rel:1b2f2e5db0f09696"
+              ],
+              "equation_ids": [],
+              "fact_atoms": [],
+              "equation_atoms": [],
+              "operation_atoms": []
+            }
+          ],
+          "active_path_conditions": [],
+          "unsupported_reason": ""
+        }
+      ],
+      "bound_claim_ids": [
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:b6468fc08c848936",
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-rel:1b2f2e5db0f09696"
+      ],
+      "bound_span_ids": [
+        "span:src/model/ebcar_dedicated_attention_model.py:145:174"
+      ],
+      "bound_equation_ids": [],
+      "exact_excerpts": [
+        {
+          "facet_id": "facet-47997bc7d81ecdf5",
+          "span_id": "span:src/model/ebcar_dedicated_attention_model.py:145:174",
+          "path": "src/model/ebcar_dedicated_attention_model.py",
+          "symbol": "sym:f6cf5bdfe2ae16f0",
+          "line_start": 145,
+          "line_end": 174,
+          "exact_excerpt": "        if self.cfg.use_dedicated_attention:\n            dedicated_attention_mask = torch.zeros(\n                (batch_size, num_passages + 1, num_passages + 1),\n                device=self.device,\n            )  # [batch_size, num_heads, num_passages + 1, num_passages + 1]\n            for i in range(batch_size):\n                temp_document_id = document_id[i]  # [num_passages]\n                for row, doc_id in enumerate(temp_document_id):\n                    dedicated_attention_mask[i, row, :] = -float(\n                        \"inf\"\n                    )  # Set this row to all -inf\n                    temp_indices = (\n                        temp_document_id == doc_id\n                    )  # Get the indices of the passages that have the same document id as the current passage\n                    temp_indices = torch.cat(\n                        (\n                            torch.tensor([True], device=self.device),\n                            temp_indices,\n                        )  # Always attend to the query\n                    )  # [num_passages + 1]\n                    dedicated_attention_mask[\n                        i, row, temp_indices\n                    ] = 0  # Set the dedicated attention mask to 0 for the passages that have the same document id as the current passage\n        else:\n            # This is the case when we don't use dedicated attention for ablation study\n            # The dedicated attention mask is all zeros\n            dedicated_attention_mask = torch.zeros(\n                (batch_size, num_passages + 1, num_passages + 1),\n                device=self.device,\n            )  # [batch_size, num_passages + 1, num_passages + 1]\n",
+          "excerpt_digest": "sha256:d1794815263ad9b2447fa50c83ee519400fb41cc40b479f42fa55c7d32f90147",
+          "file_digest": "sha256:d9c5c626979342c9dc612c6acf8b9a3aedc669df99986118030f37e793d52946",
+          "fact_ids": [
+            "fact-O-METHOD-MAINLINE-01-c8146479-node:b6468fc08c848936",
+            "fact-O-METHOD-MAINLINE-01-c8146479-rel:1b2f2e5db0f09696"
+          ],
+          "equation_ids": [],
+          "fact_atoms": [],
+          "equation_atoms": [],
+          "operation_atoms": []
+        }
+      ],
+      "search_terms": [
+        "attention",
+        "Combines",
+        "dedicated",
+        "document",
+        "Transformer",
+        "dependencies",
+        "hybrid",
+        "shared",
+        "full",
+        "global",
+        "cross",
+        "passage",
+        "masked",
+        "intra",
+        "layer",
+        "jointly"
+      ],
+      "rationale": "",
+      "evidence_digest": "sha256:e020306ca4124a93a5ccc084adc22414ec82a8e731d889e8b442aab6bb844b56",
+      "schema_failures": [
+        "field_evidence_pruned:operation"
+      ],
+      "content_digest": "sha256:50b6f0c38659c895b9614a62a9ce159fb667e46aa085df7e6da75e44e85c8841"
+    },
+    {
+      "facet_id": "facet-00e27dd88a70848f",
+      "alignment_id": "alignment:facet-00e27dd88a70848f",
+      "clause_id": "clause:O-COMPONENT-06-34021b88:0",
+      "status": "unresolved",
+      "supported_fields": [],
+      "unsupported_fields": [],
+      "field_bindings": [],
+      "bound_claim_ids": [],
+      "bound_span_ids": [],
+      "bound_equation_ids": [],
+      "exact_excerpts": [],
+      "search_terms": [
+        "attention",
+        "Standard",
+        "allowing",
+        "passages",
+        "captures",
+        "relevance",
+        "document",
+        "relationships",
+        "shared",
+        "full",
+        "module",
+        "multi",
+        "head",
+        "query",
+        "attend",
+        "other"
+      ],
+      "rationale": "",
+      "evidence_digest": "sha256:655f865e48dec2c1dc5793fc71c4fa41108d4027593cba1be6b92a8bec939a8f",
+      "schema_failures": [],
+      "content_digest": "sha256:885477438d58a79db83dff8267a5fc7f88fa3061baaa8c8ea1e9cf1d26ffa48a"
+    },
+    {
+      "facet_id": "facet-85ba5afaa2fbe7ac",
+      "alignment_id": "alignment:facet-85ba5afaa2fbe7ac",
+      "clause_id": "clause:O-COMPONENT-07-d157b2cc:0",
+      "status": "partial",
+      "supported_fields": [
+        "operation"
+      ],
+      "unsupported_fields": [],
+      "field_bindings": [
+        {
+          "field_name": "operation",
+          "status": "partial",
+          "polarity": "positive",
+          "bound_claim_ids": [
+            "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:b6468fc08c848936",
+            "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-rel:1b2f2e5db0f09696"
+          ],
+          "bound_fact_ids": [
+            "fact-O-METHOD-MAINLINE-01-c8146479-node:b6468fc08c848936",
+            "fact-O-METHOD-MAINLINE-01-c8146479-rel:1b2f2e5db0f09696"
+          ],
+          "bound_span_ids": [
+            "span:src/model/ebcar_dedicated_attention_model.py:145:174"
+          ],
+          "bound_equation_ids": [],
+          "exact_excerpts": [
+            {
+              "facet_id": "facet-85ba5afaa2fbe7ac",
+              "span_id": "span:src/model/ebcar_dedicated_attention_model.py:145:174",
+              "path": "src/model/ebcar_dedicated_attention_model.py",
+              "symbol": "sym:f6cf5bdfe2ae16f0",
+              "line_start": 145,
+              "line_end": 174,
+              "exact_excerpt": "        if self.cfg.use_dedicated_attention:\n            dedicated_attention_mask = torch.zeros(\n                (batch_size, num_passages + 1, num_passages + 1),\n                device=self.device,\n            )  # [batch_size, num_heads, num_passages + 1, num_passages + 1]\n            for i in range(batch_size):\n                temp_document_id = document_id[i]  # [num_passages]\n                for row, doc_id in enumerate(temp_document_id):\n                    dedicated_attention_mask[i, row, :] = -float(\n                        \"inf\"\n                    )  # Set this row to all -inf\n                    temp_indices = (\n                        temp_document_id == doc_id\n                    )  # Get the indices of the passages that have the same document id as the current passage\n                    temp_indices = torch.cat(\n                        (\n                            torch.tensor([True], device=self.device),\n                            temp_indices,\n                        )  # Always attend to the query\n                    )  # [num_passages + 1]\n                    dedicated_attention_mask[\n                        i, row, temp_indices\n                    ] = 0  # Set the dedicated attention mask to 0 for the passages that have the same document id as the current passage\n        else:\n            # This is the case when we don't use dedicated attention for ablation study\n            # The dedicated attention mask is all zeros\n            dedicated_attention_mask = torch.zeros(\n                (batch_size, num_passages + 1, num_passages + 1),\n                device=self.device,\n            )  # [batch_size, num_passages + 1, num_passages + 1]\n",
+              "excerpt_digest": "sha256:d1794815263ad9b2447fa50c83ee519400fb41cc40b479f42fa55c7d32f90147",
+              "file_digest": "sha256:d9c5c626979342c9dc612c6acf8b9a3aedc669df99986118030f37e793d52946",
+              "fact_ids": [
+                "fact-O-METHOD-MAINLINE-01-c8146479-node:b6468fc08c848936",
+                "fact-O-METHOD-MAINLINE-01-c8146479-rel:1b2f2e5db0f09696"
+              ],
+              "equation_ids": [],
+              "fact_atoms": [],
+              "equation_atoms": [],
+              "operation_atoms": []
+            }
+          ],
+          "active_path_conditions": [],
+          "unsupported_reason": ""
+        }
+      ],
+      "bound_claim_ids": [
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-node:b6468fc08c848936",
+        "claim-O-METHOD-MAINLINE-01-c8146479-fact-O-METHOD-MAINLINE-01-c8146479-rel:1b2f2e5db0f09696"
+      ],
+      "bound_span_ids": [
+        "span:src/model/ebcar_dedicated_attention_model.py:145:174"
+      ],
+      "bound_equation_ids": [],
+      "exact_excerpts": [
+        {
+          "facet_id": "facet-85ba5afaa2fbe7ac",
+          "span_id": "span:src/model/ebcar_dedicated_attention_model.py:145:174",
+          "path": "src/model/ebcar_dedicated_attention_model.py",
+          "symbol": "sym:f6cf5bdfe2ae16f0",
+          "line_start": 145,
+          "line_end": 174,
+          "exact_excerpt": "        if self.cfg.use_dedicated_attention:\n            dedicated_attention_mask = torch.zeros(\n                (batch_size, num_passages + 1, num_passages + 1),\n                device=self.device,\n            )  # [batch_size, num_heads, num_passages + 1, num_passages + 1]\n            for i in range(batch_size):\n                temp_document_id = document_id[i]  # [num_passages]\n                for row, doc_id in enumerate(temp_document_id):\n                    dedicated_attention_mask[i, row, :] = -float(\n                        \"inf\"\n                    )  # Set this row to all -inf\n                    temp_indices = (\n                        temp_document_id == doc_id\n                    )  # Get the indices of the passages that have the same document id as the current passage\n                    temp_indices = torch.cat(\n                        (\n                            torch.tensor([True], device=self.device),\n                            temp_indices,\n                        )  # Always attend to the query\n                    )  # [num_passages + 1]\n                    dedicated_attention_mask[\n                        i, row, temp_indices\n                    ] = 0  # Set the dedicated attention mask to 0 for the passages that have the same document id as the current passage\n        else:\n            # This is the case when we don't use dedicated attention for ablation study\n            # The dedicated attention mask is all zeros\n            dedicated_attention_mask = torch.zeros(\n                (batch_size, num_passages + 1, num_passages + 1),\n                device=self.device,\n            )  # [batch_size, num_passages + 1, num_passages + 1]\n",
+          "excerpt_digest": "sha256:d1794815263ad9b2447fa50c83ee519400fb41cc40b479f42fa55c7d32f90147",
+          "file_digest": "sha256:d9c5c626979342c9dc612c6acf8b9a3aedc669df99986118030f37e793d52946",
+          "fact_ids": [
+            "fact-O-METHOD-MAINLINE-01-c8146479-node:b6468fc08c848936",
+            "fact-O-METHOD-MAINLINE-01-c8146479-rel:1b2f2e5db0f09696"
+          ],
+          "equation_ids": [],
+          "fact_atoms": [],
+          "equation_atoms": [],
+          "operation_atoms": []
+        }
+      ],
+      "search_terms": [
+        "dedicated",
+        "attention",
+        "restricts",
+        "passages",
+        "document",
+        "enabling",
+        "coreference",
+        "resolution",
+        "coherence",
+        "masked",
+        "module",
+        "multi",
+        "head",
+        "passage",
+        "attend",
+        "only"
+      ],
+      "rationale": "",
+      "evidence_digest": "sha256:24f4b1feb4b3867c985f592a190d75cf844560feb5476b53ddb627fa654890ba",
+      "schema_failures": [
+        "field_evidence_pruned:operation"
+      ],
+      "content_digest": "sha256:d22a7b268b1f70dd4e43d3fdc8bade8ef8a90c0291a0c9ec42e0b0239cacbaaa"
+    },
+    {
+      "facet_id": "facet-0bce6b6595a44f58",
+      "alignment_id": "alignment:facet-0bce6b6595a44f58",
+      "clause_id": "clause:O-COMPONENT-08-4aac53dc:0",
+      "status": "unresolved",
+      "supported_fields": [],
+      "unsupported_fields": [
+        "operation"
+      ],
+      "field_bindings": [
+        {
+          "field_name": "operation",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": "Evidence confirms individual TransformerEncoderLayerHybridAttention.forward operations (shared attention call at idx 0, residual connections at idx 6 and 7, return logic at idx 8-9) and the concatenation of query+passages (idx 14), but no evidence demonstrates a multi-layer stack (sequential composition of multiple encoder layers) or the end-to-end production of contextualized passage embeddings as a stack output. The evidence shows single-layer mechanics, not the stack-level mechanism described in the facet quote."
+        }
+      ],
+      "bound_claim_ids": [],
+      "bound_span_ids": [],
+      "bound_equation_ids": [],
+      "exact_excerpts": [],
+      "search_terms": [
+        "Transformer",
+        "combined",
+        "sequence",
+        "contextualized",
+        "embeddings",
+        "encoder",
+        "stack",
+        "Layers",
+        "process",
+        "produce",
+        "passage"
+      ],
+      "rationale": "",
+      "evidence_digest": "sha256:655f865e48dec2c1dc5793fc71c4fa41108d4027593cba1be6b92a8bec939a8f",
+      "schema_failures": [
+        "field_positive_without_evidence:operation"
+      ],
+      "content_digest": "sha256:617a37bb80566a01cf96b0fe8f5eab3ab6e44df5e41a53759e5b70430d636146"
+    },
+    {
+      "facet_id": "facet-833638c7783e3952",
+      "alignment_id": "alignment:facet-833638c7783e3952",
+      "clause_id": "clause:O-COMPONENT-09-6a8cfd6c:0",
+      "status": "unresolved",
+      "supported_fields": [],
+      "unsupported_fields": [
+        "formula_goal"
+      ],
+      "field_bindings": [
+        {
+          "field_name": "formula_goal",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": "The evidence confirms the formula structure (loss_i = -pos_sim + logsumexp(all_sims, dim=0) at evidence index 13, with all_sims = cat([pos_sim, neg_sims]) at evidence index 12), which matches the InfoNCE contrastive loss objective. However, the specific semantic characterization that the positive passage embedding is 'updated' while the query embedding is 'fixed' is not explicitly stated in any supplied evidence excerpt. The code shows the computation but does not document the frozen/updated status of the embeddings in the provided spans. The formula structure is supported; the interpretive gloss about which embeddings are fixed vs. updated is not directly evidenced in the supplied excerpts."
+        }
+      ],
+      "bound_claim_ids": [],
+      "bound_span_ids": [],
+      "bound_equation_ids": [],
+      "exact_excerpts": [],
+      "search_terms": [
+        "InfoNCE",
+        "contrastive",
+        "Objective",
+        "encourages",
+        "positive",
+        "embedding",
+        "separating",
+        "negatives",
+        "loss",
+        "updated",
+        "passage",
+        "align",
+        "fixed",
+        "query"
+      ],
+      "rationale": "",
+      "evidence_digest": "sha256:655f865e48dec2c1dc5793fc71c4fa41108d4027593cba1be6b92a8bec939a8f",
+      "schema_failures": [
+        "field_positive_without_evidence:formula_goal"
+      ],
+      "content_digest": "sha256:58f6b625b0d72d6bf44789b8537e3329a863a86f8481a20b01a2626f158f5ae8"
+    },
+    {
+      "facet_id": "facet-3c6a3824f6a9641a",
+      "alignment_id": "alignment:facet-3c6a3824f6a9641a",
+      "clause_id": "clause:O-COMPONENT-10-dac6250f:0",
+      "status": "unresolved",
+      "supported_fields": [],
+      "unsupported_fields": [
+        "guarantee"
+      ],
+      "field_bindings": [
+        {
+          "field_name": "guarantee",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": ""
+        }
+      ],
+      "bound_claim_ids": [],
+      "bound_span_ids": [],
+      "bound_equation_ids": [],
+      "exact_excerpts": [],
+      "search_terms": [
+        "original",
+        "embedding",
+        "unchanged",
+        "training",
+        "inference",
+        "reference",
+        "contrastive",
+        "objective",
+        "fixed",
+        "query",
+        "anchor",
+        "remains",
+        "during",
+        "serve",
+        "stable"
+      ],
+      "rationale": "",
+      "evidence_digest": "sha256:655f865e48dec2c1dc5793fc71c4fa41108d4027593cba1be6b92a8bec939a8f",
+      "schema_failures": [],
+      "content_digest": "sha256:d4aed48d9294066fbc79c92c9c960f7702ad0c88201e1ecd6889143e2c13c483"
+    },
+    {
+      "facet_id": "facet-c5e7c214b56a659f",
+      "alignment_id": "alignment:facet-c5e7c214b56a659f",
+      "clause_id": "clause:O-COMPONENT-11-27f310b2:0",
+      "status": "unresolved",
+      "supported_fields": [],
+      "unsupported_fields": [
+        "operation"
+      ],
+      "field_bindings": [
+        {
+          "field_name": "operation",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": ""
+        }
+      ],
+      "bound_claim_ids": [],
+      "bound_span_ids": [],
+      "bound_equation_ids": [],
+      "exact_excerpts": [],
+      "search_terms": [
+        "ConTEB",
+        "benchmark",
+        "Evaluation",
+        "rerankers",
+        "challenging",
+        "requiring",
+        "inference",
+        "document",
+        "structural",
+        "reasoning",
+        "suite",
+        "tests",
+        "tasks",
+        "cross",
+        "passage",
+        "wide"
+      ],
+      "rationale": "",
+      "evidence_digest": "sha256:655f865e48dec2c1dc5793fc71c4fa41108d4027593cba1be6b92a8bec939a8f",
+      "schema_failures": [],
+      "content_digest": "sha256:b2bd9e31dd7c87a2234cf027b71cb526d51fd6ddf83470c61fdcc002716c863a"
+    },
+    {
+      "facet_id": "facet-f6e629096087c520",
+      "alignment_id": "alignment:facet-f6e629096087c520",
+      "clause_id": "clause:O-COMPONENT-12-370bd5b2:0",
+      "status": "unresolved",
+      "supported_fields": [],
+      "unsupported_fields": [
+        "operation"
+      ],
+      "field_bindings": [
+        {
+          "field_name": "operation",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": "No evidence in the supplied set references MLDR, SQuAD, NarrativeQA, ConTEB datasets, entity disambiguation, span matching, or narrative comprehension. All 27 evidence items concern code-level facts about EBCarRerankerHybridAttention methods, load_conteb_dataset internals, and EBCARDatasetReal initialization, but none identify the three specific ConTEB dataset names or their task coverage."
+        }
+      ],
+      "bound_claim_ids": [],
+      "bound_span_ids": [],
+      "bound_equation_ids": [],
+      "exact_excerpts": [],
+      "search_terms": [
+        "MLDR",
+        "EBCAR",
+        "SQuAD",
+        "NarrativeQA",
+        "ConTEB",
+        "training",
+        "datasets",
+        "covering",
+        "disambiguation",
+        "matching",
+        "narrative",
+        "comprehension",
+        "sets",
+        "Three",
+        "entity",
+        "span"
+      ],
+      "rationale": "",
+      "evidence_digest": "sha256:655f865e48dec2c1dc5793fc71c4fa41108d4027593cba1be6b92a8bec939a8f",
+      "schema_failures": [],
+      "content_digest": "sha256:c2c211fbd9dfd2ba32a6775154a002973ac526725915251f574a106951b63ac8"
+    },
+    {
+      "facet_id": "facet-9e754ab14c6fde20",
+      "alignment_id": "alignment:facet-9e754ab14c6fde20",
+      "clause_id": "clause:O-ORGANIZATION-01-6b45ad90:0",
+      "status": "unresolved",
+      "supported_fields": [],
+      "unsupported_fields": [
+        "operation"
+      ],
+      "field_bindings": [
+        {
+          "field_name": "operation",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": ""
+        }
+      ],
+      "bound_claim_ids": [],
+      "bound_span_ids": [],
+      "bound_equation_ids": [],
+      "exact_excerpts": [],
+      "search_terms": [
+        "Motivation",
+        "efficiency",
+        "inference",
+        "challenges",
+        "existing",
+        "rerankers",
+        "cross",
+        "passage"
+      ],
+      "rationale": "",
+      "evidence_digest": "sha256:655f865e48dec2c1dc5793fc71c4fa41108d4027593cba1be6b92a8bec939a8f",
+      "schema_failures": [],
+      "content_digest": "sha256:39af5c6e65ae0d1591c8b10a56e6358b58bc8b16a0509df7e916b9eb6a100271"
+    },
+    {
+      "facet_id": "facet-b9735878c5548c4a",
+      "alignment_id": "alignment:facet-b9735878c5548c4a",
+      "clause_id": "clause:O-ORGANIZATION-02-54911271:0",
+      "status": "partial",
+      "supported_fields": [
+        "operation"
+      ],
+      "unsupported_fields": [],
+      "field_bindings": [
+        {
+          "field_name": "operation",
+          "status": "partial",
+          "polarity": "positive",
+          "bound_claim_ids": [
+            "claim-O-STAGE-05-5b3d398a-fact-O-STAGE-05-5b3d398a-node:06b37685c9288fb6",
+            "claim-O-STAGE-05-5b3d398a-fact-O-STAGE-05-5b3d398a-rel:caa3e47dda8fdf04"
+          ],
+          "bound_fact_ids": [
+            "fact-O-STAGE-05-5b3d398a-node:06b37685c9288fb6",
+            "fact-O-STAGE-05-5b3d398a-rel:caa3e47dda8fdf04"
+          ],
+          "bound_span_ids": [
+            "span:src/model/ebcar_dedicated_attention_model.py:265:277"
+          ],
+          "bound_equation_ids": [],
+          "exact_excerpts": [
+            {
+              "facet_id": "facet-b9735878c5548c4a",
+              "span_id": "span:src/model/ebcar_dedicated_attention_model.py:265:277",
+              "path": "src/model/ebcar_dedicated_attention_model.py",
+              "symbol": "sym:9773c5add7af1f92",
+              "line_start": 265,
+              "line_end": 277,
+              "exact_excerpt": "        if self.cfg.add_positional_encoding:\n            # document_id might be out of range, so we need to modulate it and plus the quotient\n            document_id_embeddings = self.document_id_embedding(\n                (document_id.long() % self.cfg.retrieval.top_k)\n                + (document_id.long() // self.cfg.retrieval.top_k)\n            )  # [batch_size, num_passages, hidden_size]\n            passage_id_embeddings = self.passage_id_embedding(\n                passage_id.long()\n            )  # [batch_size, num_passages, hidden_size]\n            # Directly add the positional encoding to the passages\n            passages = (\n                passages + document_id_embeddings + passage_id_embeddings\n            )  # [batch_size, num_passages, hidden_size]\n",
+              "excerpt_digest": "sha256:3c6758dbbeabbca831337ca5c9319287f1ea57619cb7700eeb37b68021595057",
+              "file_digest": "sha256:d9c5c626979342c9dc612c6acf8b9a3aedc669df99986118030f37e793d52946",
+              "fact_ids": [
+                "fact-O-STAGE-05-5b3d398a-node:06b37685c9288fb6",
+                "fact-O-STAGE-05-5b3d398a-rel:caa3e47dda8fdf04"
+              ],
+              "equation_ids": [],
+              "fact_atoms": [],
+              "equation_atoms": [],
+              "operation_atoms": []
+            }
+          ],
+          "active_path_conditions": [],
+          "unsupported_reason": ""
+        }
+      ],
+      "bound_claim_ids": [
+        "claim-O-STAGE-05-5b3d398a-fact-O-STAGE-05-5b3d398a-node:06b37685c9288fb6",
+        "claim-O-STAGE-05-5b3d398a-fact-O-STAGE-05-5b3d398a-rel:caa3e47dda8fdf04"
+      ],
+      "bound_span_ids": [
+        "span:src/model/ebcar_dedicated_attention_model.py:265:277"
+      ],
+      "bound_equation_ids": [],
+      "exact_excerpts": [
+        {
+          "facet_id": "facet-b9735878c5548c4a",
+          "span_id": "span:src/model/ebcar_dedicated_attention_model.py:265:277",
+          "path": "src/model/ebcar_dedicated_attention_model.py",
+          "symbol": "sym:9773c5add7af1f92",
+          "line_start": 265,
+          "line_end": 277,
+          "exact_excerpt": "        if self.cfg.add_positional_encoding:\n            # document_id might be out of range, so we need to modulate it and plus the quotient\n            document_id_embeddings = self.document_id_embedding(\n                (document_id.long() % self.cfg.retrieval.top_k)\n                + (document_id.long() // self.cfg.retrieval.top_k)\n            )  # [batch_size, num_passages, hidden_size]\n            passage_id_embeddings = self.passage_id_embedding(\n                passage_id.long()\n            )  # [batch_size, num_passages, hidden_size]\n            # Directly add the positional encoding to the passages\n            passages = (\n                passages + document_id_embeddings + passage_id_embeddings\n            )  # [batch_size, num_passages, hidden_size]\n",
+          "excerpt_digest": "sha256:3c6758dbbeabbca831337ca5c9319287f1ea57619cb7700eeb37b68021595057",
+          "file_digest": "sha256:d9c5c626979342c9dc612c6acf8b9a3aedc669df99986118030f37e793d52946",
+          "fact_ids": [
+            "fact-O-STAGE-05-5b3d398a-node:06b37685c9288fb6",
+            "fact-O-STAGE-05-5b3d398a-rel:caa3e47dda8fdf04"
+          ],
+          "equation_ids": [],
+          "fact_atoms": [],
+          "equation_atoms": [],
+          "operation_atoms": []
+        }
+      ],
+      "search_terms": [
+        "Embedding",
+        "reranking",
+        "formulation",
+        "framework",
+        "based",
+        "overall"
+      ],
+      "rationale": "",
+      "evidence_digest": "sha256:3f47b95f023f8e86ac5ed118f80c2d416cf2461bdfae411d6417b1c4c847ba37",
+      "schema_failures": [
+        "field_evidence_pruned:operation"
+      ],
+      "content_digest": "sha256:6d21e84e8e707999c8f4cf61fc559fbd9a4a68b58cb50d57b0fa70c33fb88039"
+    },
+    {
+      "facet_id": "facet-68ed73e7a64fbbfd",
+      "alignment_id": "alignment:facet-68ed73e7a64fbbfd",
+      "clause_id": "clause:O-ORGANIZATION-03-2c92c853:0",
+      "status": "unresolved",
+      "supported_fields": [],
+      "unsupported_fields": [
+        "operation"
+      ],
+      "field_bindings": [
+        {
+          "field_name": "operation",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": "The dedicated masked attention mechanism (document-level attention mask construction) is not directly evidenced in the supplied evidence set. Evidence index 6 shows the branch on self.cfg.use_dedicated_attention and the mask construction code, but the specific mechanism of how the dedicated mask is applied within the Transformer encoder's attention computation (i.e., the shared full + dedicated masked hybrid) is not fully demonstrated. The shared attention path is evidenced (index 1, 2), and the positional enrichment is evidenced (index 0, 5, 7, 8, 10), but the integration of both shared and dedicated attention paths into a single hybrid encoder layer is not explicitly shown as a unified mechanism in the evidence."
+        }
+      ],
+      "bound_claim_ids": [],
+      "bound_span_ids": [],
+      "bound_equation_ids": [],
+      "exact_excerpts": [],
+      "search_terms": [
+        "ID",
+        "Architecture",
+        "enriching",
+        "embeddings",
+        "document",
+        "position",
+        "Transformer",
+        "attention",
+        "dedicated",
+        "details",
+        "encoder",
+        "hybrid",
+        "shared",
+        "full",
+        "masked"
+      ],
+      "rationale": "",
+      "evidence_digest": "sha256:655f865e48dec2c1dc5793fc71c4fa41108d4027593cba1be6b92a8bec939a8f",
+      "schema_failures": [
+        "field_positive_without_evidence:operation"
+      ],
+      "content_digest": "sha256:eec36c31fd1b6470575e51850b072dbf7d91e99984bb6f500f9422883b397c3b"
+    },
+    {
+      "facet_id": "facet-71df0ec224b91883",
+      "alignment_id": "alignment:facet-71df0ec224b91883",
+      "clause_id": "clause:O-ORGANIZATION-04-1dd970df:0",
+      "status": "unresolved",
+      "supported_fields": [],
+      "unsupported_fields": [
+        "formula_goal"
+      ],
+      "field_bindings": [
+        {
+          "field_name": "formula_goal",
+          "status": "unresolved",
+          "polarity": "positive",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": ""
+        }
+      ],
+      "bound_claim_ids": [],
+      "bound_span_ids": [],
+      "bound_equation_ids": [],
+      "exact_excerpts": [],
+      "search_terms": [
+        "InfoNCE",
+        "Training",
+        "objective",
+        "loss",
+        "fixed",
+        "query",
+        "anchor"
+      ],
+      "rationale": "",
+      "evidence_digest": "sha256:655f865e48dec2c1dc5793fc71c4fa41108d4027593cba1be6b92a8bec939a8f",
+      "schema_failures": [
+        "field_evidence_semantic_mismatch:formula_goal;field_positive_without_evidence:formula_goal"
+      ],
+      "content_digest": "sha256:3f9438a7a02dbabe4e2dde59eccb77a10f991452ca1e6ef6eb2f22eb8ab5e67a"
+    },
+    {
+      "facet_id": "facet-f55b63fbde1d45df",
+      "alignment_id": "alignment:facet-f55b63fbde1d45df",
+      "clause_id": "clause:O-ORGANIZATION-05-baf0d276:0",
+      "status": "unresolved",
+      "supported_fields": [],
+      "unsupported_fields": [
+        "operation"
+      ],
+      "field_bindings": [
+        {
+          "field_name": "operation",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": "No evidence supplied; cannot bind 'Inference procedure.' to any repository evidence."
+        }
+      ],
+      "bound_claim_ids": [],
+      "bound_span_ids": [],
+      "bound_equation_ids": [],
+      "exact_excerpts": [],
+      "search_terms": [
+        "Inference",
+        "procedure"
+      ],
+      "rationale": "",
+      "evidence_digest": "sha256:655f865e48dec2c1dc5793fc71c4fa41108d4027593cba1be6b92a8bec939a8f",
+      "schema_failures": [],
+      "content_digest": "sha256:1de54a63f52c7b5fb4ee0d8b88db92974e9475af1815f94851c4844b3e3d88f1"
+    },
+    {
+      "facet_id": "facet-c8bf8030283400b2",
+      "alignment_id": "alignment:facet-c8bf8030283400b2",
+      "clause_id": "clause:O-RATIONALE-CHECK-01-bad20132:0",
+      "status": "unresolved",
+      "supported_fields": [],
+      "unsupported_fields": [
+        "operation"
+      ],
+      "field_bindings": [
+        {
+          "field_name": "operation",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": ""
+        }
+      ],
+      "bound_claim_ids": [],
+      "bound_span_ids": [],
+      "bound_equation_ids": [],
+      "exact_excerpts": [],
+      "search_terms": [
+        "processing",
+        "autoregressive",
+        "generation",
+        "inference",
+        "Avoid",
+        "full",
+        "text",
+        "reduce",
+        "latency"
+      ],
+      "rationale": "",
+      "evidence_digest": "sha256:655f865e48dec2c1dc5793fc71c4fa41108d4027593cba1be6b92a8bec939a8f",
+      "schema_failures": [],
+      "content_digest": "sha256:2cb3f5ba4bf77ba04994643f2efa5489f326107fb35d3bb5e7e70a26a78cab1a"
+    },
+    {
+      "facet_id": "facet-e517f869034a38aa",
+      "alignment_id": "alignment:facet-e517f869034a38aa",
+      "clause_id": "clause:O-RATIONALE-CHECK-02-30bb7c0f:0",
+      "status": "unresolved",
+      "supported_fields": [],
+      "unsupported_fields": [
+        "operation"
+      ],
+      "field_bindings": [
+        {
+          "field_name": "operation",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": "Evidence confirms document-level structural knowledge (document_id_embeddings) is injected into passage embeddings via additive composition (passages + document_id_embeddings + passage_id_embeddings). However, the 'to support cross-passage inference' purpose is not directly evidenced in the supplied excerpts; the mechanism is confirmed but the stated purpose/goal is not explicitly stated in the code evidence provided."
+        }
+      ],
+      "bound_claim_ids": [],
+      "bound_span_ids": [],
+      "bound_equation_ids": [],
+      "exact_excerpts": [],
+      "search_terms": [
+        "document",
+        "structural",
+        "knowledge",
+        "embeddings",
+        "inference",
+        "Inject",
+        "level",
+        "passage",
+        "support",
+        "cross"
+      ],
+      "rationale": "",
+      "evidence_digest": "sha256:655f865e48dec2c1dc5793fc71c4fa41108d4027593cba1be6b92a8bec939a8f",
+      "schema_failures": [
+        "field_positive_without_evidence:operation"
+      ],
+      "content_digest": "sha256:20d1b1b89c6905878cc4523890fef315d806aa0e07094b9db2b9b187afaaf53d"
+    },
+    {
+      "facet_id": "facet-d27285ebc144a3fa",
+      "alignment_id": "alignment:facet-d27285ebc144a3fa",
+      "clause_id": "clause:O-RATIONALE-CHECK-03-b01101f7:0",
+      "status": "partial",
+      "supported_fields": [
+        "operation"
+      ],
+      "unsupported_fields": [],
+      "field_bindings": [
+        {
+          "field_name": "operation",
+          "status": "partial",
+          "polarity": "positive",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [
+            "fact-O-METHOD-MAINLINE-01-c8146479-node:b6468fc08c848936",
+            "fact-O-METHOD-MAINLINE-01-c8146479-rel:1b2f2e5db0f09696"
+          ],
+          "bound_span_ids": [
+            "span:src/model/ebcar_dedicated_attention_model.py:145:174"
+          ],
+          "bound_equation_ids": [],
+          "exact_excerpts": [
+            {
+              "facet_id": "facet-d27285ebc144a3fa",
+              "span_id": "span:src/model/ebcar_dedicated_attention_model.py:145:174",
+              "path": "src/model/ebcar_dedicated_attention_model.py",
+              "symbol": "sym:f6cf5bdfe2ae16f0",
+              "line_start": 145,
+              "line_end": 174,
+              "exact_excerpt": "        if self.cfg.use_dedicated_attention:\n            dedicated_attention_mask = torch.zeros(\n                (batch_size, num_passages + 1, num_passages + 1),\n                device=self.device,\n            )  # [batch_size, num_heads, num_passages + 1, num_passages + 1]\n            for i in range(batch_size):\n                temp_document_id = document_id[i]  # [num_passages]\n                for row, doc_id in enumerate(temp_document_id):\n                    dedicated_attention_mask[i, row, :] = -float(\n                        \"inf\"\n                    )  # Set this row to all -inf\n                    temp_indices = (\n                        temp_document_id == doc_id\n                    )  # Get the indices of the passages that have the same document id as the current passage\n                    temp_indices = torch.cat(\n                        (\n                            torch.tensor([True], device=self.device),\n                            temp_indices,\n                        )  # Always attend to the query\n                    )  # [num_passages + 1]\n                    dedicated_attention_mask[\n                        i, row, temp_indices\n                    ] = 0  # Set the dedicated attention mask to 0 for the passages that have the same document id as the current passage\n        else:\n            # This is the case when we don't use dedicated attention for ablation study\n            # The dedicated attention mask is all zeros\n            dedicated_attention_mask = torch.zeros(\n                (batch_size, num_passages + 1, num_passages + 1),\n                device=self.device,\n            )  # [batch_size, num_passages + 1, num_passages + 1]\n",
+              "excerpt_digest": "sha256:d1794815263ad9b2447fa50c83ee519400fb41cc40b479f42fa55c7d32f90147",
+              "file_digest": "sha256:d9c5c626979342c9dc612c6acf8b9a3aedc669df99986118030f37e793d52946",
+              "fact_ids": [
+                "fact-O-METHOD-MAINLINE-01-c8146479-node:b6468fc08c848936",
+                "fact-O-METHOD-MAINLINE-01-c8146479-rel:1b2f2e5db0f09696"
+              ],
+              "equation_ids": [],
+              "fact_atoms": [],
+              "equation_atoms": [],
+              "operation_atoms": []
+            }
+          ],
+          "active_path_conditions": [],
+          "unsupported_reason": ""
+        }
+      ],
+      "bound_claim_ids": [],
+      "bound_span_ids": [
+        "span:src/model/ebcar_dedicated_attention_model.py:145:174"
+      ],
+      "bound_equation_ids": [],
+      "exact_excerpts": [
+        {
+          "facet_id": "facet-d27285ebc144a3fa",
+          "span_id": "span:src/model/ebcar_dedicated_attention_model.py:145:174",
+          "path": "src/model/ebcar_dedicated_attention_model.py",
+          "symbol": "sym:f6cf5bdfe2ae16f0",
+          "line_start": 145,
+          "line_end": 174,
+          "exact_excerpt": "        if self.cfg.use_dedicated_attention:\n            dedicated_attention_mask = torch.zeros(\n                (batch_size, num_passages + 1, num_passages + 1),\n                device=self.device,\n            )  # [batch_size, num_heads, num_passages + 1, num_passages + 1]\n            for i in range(batch_size):\n                temp_document_id = document_id[i]  # [num_passages]\n                for row, doc_id in enumerate(temp_document_id):\n                    dedicated_attention_mask[i, row, :] = -float(\n                        \"inf\"\n                    )  # Set this row to all -inf\n                    temp_indices = (\n                        temp_document_id == doc_id\n                    )  # Get the indices of the passages that have the same document id as the current passage\n                    temp_indices = torch.cat(\n                        (\n                            torch.tensor([True], device=self.device),\n                            temp_indices,\n                        )  # Always attend to the query\n                    )  # [num_passages + 1]\n                    dedicated_attention_mask[\n                        i, row, temp_indices\n                    ] = 0  # Set the dedicated attention mask to 0 for the passages that have the same document id as the current passage\n        else:\n            # This is the case when we don't use dedicated attention for ablation study\n            # The dedicated attention mask is all zeros\n            dedicated_attention_mask = torch.zeros(\n                (batch_size, num_passages + 1, num_passages + 1),\n                device=self.device,\n            )  # [batch_size, num_passages + 1, num_passages + 1]\n",
+          "excerpt_digest": "sha256:d1794815263ad9b2447fa50c83ee519400fb41cc40b479f42fa55c7d32f90147",
+          "file_digest": "sha256:d9c5c626979342c9dc612c6acf8b9a3aedc669df99986118030f37e793d52946",
+          "fact_ids": [
+            "fact-O-METHOD-MAINLINE-01-c8146479-node:b6468fc08c848936",
+            "fact-O-METHOD-MAINLINE-01-c8146479-rel:1b2f2e5db0f09696"
+          ],
+          "equation_ids": [],
+          "fact_atoms": [],
+          "equation_atoms": [],
+          "operation_atoms": []
+        }
+      ],
+      "search_terms": [
+        "complementary",
+        "attention",
+        "patterns",
+        "document",
+        "Design",
+        "two",
+        "exist",
+        "layer",
+        "global",
+        "local"
+      ],
+      "rationale": "",
+      "evidence_digest": "sha256:b286917df2c4723ab3fe1847c8623941e7964678c6f9b57bdd6787f90ec6cc93",
+      "schema_failures": [
+        "field_evidence_pruned:operation"
+      ],
+      "content_digest": "sha256:58fa2494245ac877f8d29cabafe74fa08fb70cbbe611f8dc0fd02dc217cfb13f"
+    },
+    {
+      "facet_id": "facet-f49282e62c6e52fe",
+      "alignment_id": "alignment:facet-f49282e62c6e52fe",
+      "clause_id": "clause:O-RATIONALE-CHECK-04-c742a4fc:0",
+      "status": "unresolved",
+      "supported_fields": [],
+      "unsupported_fields": [
+        "operation"
+      ],
+      "field_bindings": [
+        {
+          "field_name": "operation",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": ""
+        }
+      ],
+      "bound_claim_ids": [],
+      "bound_span_ids": [],
+      "bound_equation_ids": [],
+      "exact_excerpts": [],
+      "search_terms": [
+        "ID",
+        "IDs",
+        "relative",
+        "document",
+        "assignments",
+        "dynamic",
+        "rather",
+        "global",
+        "corpus",
+        "level"
+      ],
+      "rationale": "",
+      "evidence_digest": "sha256:655f865e48dec2c1dc5793fc71c4fa41108d4027593cba1be6b92a8bec939a8f",
+      "schema_failures": [],
+      "content_digest": "sha256:e0effa148cb72952d031abeb73652d7679dbe5119d4c37d579c7a9f534afea29"
+    },
+    {
+      "facet_id": "facet-c0d9a5e725c77367",
+      "alignment_id": "alignment:facet-c0d9a5e725c77367",
+      "clause_id": "clause:O-RATIONALE-CHECK-05-595ac6ff:0",
+      "status": "unresolved",
+      "supported_fields": [],
+      "unsupported_fields": [
+        "operation"
+      ],
+      "field_bindings": [
+        {
+          "field_name": "operation",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": ""
+        }
+      ],
+      "bound_claim_ids": [],
+      "bound_span_ids": [],
+      "bound_equation_ids": [],
+      "exact_excerpts": [],
+      "search_terms": [
+        "embedding",
+        "training",
+        "inference",
+        "updating",
+        "embeddings",
+        "Keep",
+        "query",
+        "fixed",
+        "during",
+        "passage"
+      ],
+      "rationale": "",
+      "evidence_digest": "sha256:655f865e48dec2c1dc5793fc71c4fa41108d4027593cba1be6b92a8bec939a8f",
+      "schema_failures": [],
+      "content_digest": "sha256:73518b0ce8d82ff8db5ea1ac2057f0fda37b74ada9da1c21ca9fbed3e43aa3d7"
+    },
+    {
+      "facet_id": "facet-ecd069d8ab3be38f",
+      "alignment_id": "alignment:facet-ecd069d8ab3be38f",
+      "clause_id": "clause:O-RATIONALE-CHECK-06-388166d9:0",
+      "status": "unresolved",
+      "supported_fields": [],
+      "unsupported_fields": [
+        "operation"
+      ],
+      "field_bindings": [
+        {
+          "field_name": "operation",
+          "status": "unresolved",
+          "polarity": "unknown",
+          "bound_claim_ids": [],
+          "bound_fact_ids": [],
+          "bound_span_ids": [],
+          "bound_equation_ids": [],
+          "exact_excerpts": [],
+          "active_path_conditions": [],
+          "unsupported_reason": "No evidence in the supplied set demonstrates that ConTEB datasets explicitly require cross-passage reasoning. Evidence 1 shows load_conteb_dataset branches on chunk_id matching, and evidence 2 shows EBCARDatasetReal.__init__ truncates lists by size, but neither establishes that the datasets explicitly require cross-passage reasoning as a training requirement. The claim about the nature of the training data (requiring cross-passage reasoning) is not supported by any of the 16 evidence items provided."
+        }
+      ],
+      "bound_claim_ids": [],
+      "bound_span_ids": [],
+      "bound_equation_ids": [],
+      "exact_excerpts": [],
+      "search_terms": [
+        "ConTEB",
+        "datasets",
+        "explicitly",
+        "reasoning",
+        "Train",
+        "require",
+        "cross",
+        "passage"
+      ],
+      "rationale": "",
+      "evidence_digest": "sha256:655f865e48dec2c1dc5793fc71c4fa41108d4027593cba1be6b92a8bec939a8f",
+      "schema_failures": [],
+      "content_digest": "sha256:79551feebd9ffe90cff32a0f3684314c6c4c1114da54468a03ab80fbe091fb78"
+    }
+  ]
+}

@@ -1,0 +1,25 @@
+{
+  "attempt": 1,
+  "blocked_reason": "",
+  "content_digest": "sha256:b3240e0283af167e6695848a8808f1f023f0f195c746b3f91a6345d6b97b5702",
+  "diagnostics": {
+    "finish_seen": true,
+    "partial_chars": 1480,
+    "stream_events": 508,
+    "terminal_status": "finish_seen",
+    "usage_seen": true
+  },
+  "finish_reason": "structured_complete",
+  "invocation_id": "inv:writer:MA-S3:page:7a577e2ce049fd7aec70305dd6b3a04c8382133dda8179689b079624f32581a7",
+  "provider_finish_reason": "stop",
+  "request_diagnostics_digest": "sha256:afee67ae8060f8965c22c62342d64bc6fc7faf29b059defc656b07fd07a61713",
+  "response_digest": "sha256:0ba5a628e262e74412b3fee4e1c063cc9dddae413884c19014bdcb19844b8d79",
+  "response_text": "{\"paragraphs\":[{\"deferred_detail_ids\":[],\"paragraph_id\":\"MA-S3:P2__f4\",\"paragraph_markdown\":\"The dedicated attention mask is constructed by prepending a constant true entry to a per-batch boolean index vector, yielding a selection vector of length num_passages + 1 that marks the query position as always active. These indices are then used to zero out the corresponding columns of the dedicated attention mask for each batch element and mask row, ensuring that positions identified by the index vector are excluded from the dedicated attention pathway. The resulting mask is reshaped by inserting a singleton head dimension, producing a tensor of shape [batch_size, 1, num_passages + 1, num_passages + 1] suitable for multi-head attention consumption. The query and passage embeddings are concatenated along the sequence dimension and passed through the Transformer encoder together with the reshaped dedicated attention mask; the encoder output has shape [batch_size, num_passages + 1, hidden_size]. Passage embeddings are recovered by slicing the first position off the encoder output, yielding a tensor of shape [batch_size, num_passages, hidden_size]. Similarities between the query and each passage are computed as the matrix product of the query embedding with the transposed passage embedding matrix, followed by a squeeze of the singleton head dimension, producing a score tensor of shape [batch_size, num_passages].\",\"used_formula_package_ids\":[]}],\"section_id\":\"MA-S3\"}",
+  "schema_version": "1.0",
+  "thinking_chars": 0,
+  "usage": {
+    "completion_tokens": 1320,
+    "prompt_tokens": 31240,
+    "total_tokens": 32560
+  }
+}

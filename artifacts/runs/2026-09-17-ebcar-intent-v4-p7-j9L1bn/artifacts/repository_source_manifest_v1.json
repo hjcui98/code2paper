@@ -1,0 +1,435 @@
+{
+  "schema_version": "1.0",
+  "repo_snapshot_id": "repo:9b4f1a34c70f10c2317f024df585e282c9d02371586a629e00ace26d8988c942",
+  "project_tree_hash": "sha256:9b4f1a34c70f10c2317f024df585e282c9d02371586a629e00ace26d8988c942",
+  "entries": [
+    {
+      "path": ".gitignore",
+      "source_kind": "documentation",
+      "ownership_role": "unknown",
+      "executable_authority": false,
+      "content_digest": "sha256:fe11d82f2926cf1e2420e24e0f97616581b25457e761bf5a8a3eedb59e1b681f",
+      "symbol_ids": [],
+      "classification_reason": "documentation"
+    },
+    {
+      "path": "LICENSE",
+      "source_kind": "documentation",
+      "ownership_role": "unknown",
+      "executable_authority": false,
+      "content_digest": "sha256:7399d96e74201c11de619d79d97c664df890b789599fc23335dc9af7ed9aaa94",
+      "symbol_ids": [],
+      "classification_reason": "documentation"
+    },
+    {
+      "path": "conf/__init__.py",
+      "source_kind": "first_party_executable",
+      "ownership_role": "unknown",
+      "executable_authority": true,
+      "content_digest": "sha256:aadaa4e4848b009231e843c307ff01916d73e454edc8152826f1b98d72187d2b",
+      "symbol_ids": [
+        "sym:4ef3f9facbcbd5b3"
+      ],
+      "classification_reason": "first_party_executable"
+    },
+    {
+      "path": "conf/config.yaml",
+      "source_kind": "configuration",
+      "ownership_role": "unknown",
+      "executable_authority": false,
+      "content_digest": "sha256:963d3bc12044b5366de3a916dbe55bfc78548c2d2b0ce5ddb6c2681c0843f84b",
+      "symbol_ids": [],
+      "classification_reason": "configuration"
+    },
+    {
+      "path": "conf/dataset/conteb_test_01MLDR.yaml",
+      "source_kind": "dataset_or_checkpoint",
+      "ownership_role": "unknown",
+      "executable_authority": false,
+      "content_digest": "sha256:64e94b33c3251d6f805bfd1b0ea1014d08b9411b64817b6df6b31f35fccd3111",
+      "symbol_ids": [],
+      "classification_reason": "dataset_or_checkpoint:excluded_from_fact_authority"
+    },
+    {
+      "path": "conf/dataset/conteb_test_02SQuAD.yaml",
+      "source_kind": "dataset_or_checkpoint",
+      "ownership_role": "unknown",
+      "executable_authority": false,
+      "content_digest": "sha256:4ce73e75a207aaa44921aea0fdeebed3cf6197229992119d0f7a5b45bc577162",
+      "symbol_ids": [],
+      "classification_reason": "dataset_or_checkpoint:excluded_from_fact_authority"
+    },
+    {
+      "path": "conf/dataset/conteb_test_03NarrativeQA.yaml",
+      "source_kind": "dataset_or_checkpoint",
+      "ownership_role": "unknown",
+      "executable_authority": false,
+      "content_digest": "sha256:b78b1329ada65ca6dbb7214801edacc01e9f84565bd250246ed6f0a7362dc6fd",
+      "symbol_ids": [],
+      "classification_reason": "dataset_or_checkpoint:excluded_from_fact_authority"
+    },
+    {
+      "path": "conf/dataset/conteb_test_04COVID_QA.yaml",
+      "source_kind": "dataset_or_checkpoint",
+      "ownership_role": "unknown",
+      "executable_authority": false,
+      "content_digest": "sha256:06103ddcb31195be5f40187ff694210108823a782a1f16faa545c93a0bc2337c",
+      "symbol_ids": [],
+      "classification_reason": "dataset_or_checkpoint:excluded_from_fact_authority"
+    },
+    {
+      "path": "conf/dataset/conteb_test_05ESG_Reports.yaml",
+      "source_kind": "dataset_or_checkpoint",
+      "ownership_role": "unknown",
+      "executable_authority": false,
+      "content_digest": "sha256:e06253be7144f7f992a7b7ecccc2ededa36ec2a8d5b8dcde413f6c389b8c4683",
+      "symbol_ids": [],
+      "classification_reason": "dataset_or_checkpoint:excluded_from_fact_authority"
+    },
+    {
+      "path": "conf/dataset/conteb_test_06Football.yaml",
+      "source_kind": "dataset_or_checkpoint",
+      "ownership_role": "unknown",
+      "executable_authority": false,
+      "content_digest": "sha256:62db19ae07e2aefc8cfc90b67e544a9baafc51cb587e1f217ee5755e87c75e68",
+      "symbol_ids": [],
+      "classification_reason": "dataset_or_checkpoint:excluded_from_fact_authority"
+    },
+    {
+      "path": "conf/dataset/conteb_test_07Geography.yaml",
+      "source_kind": "dataset_or_checkpoint",
+      "ownership_role": "unknown",
+      "executable_authority": false,
+      "content_digest": "sha256:6599c93f32d10988d0ae92121e2eee73da2ab6ac913788fe397e08774683e447",
+      "symbol_ids": [],
+      "classification_reason": "dataset_or_checkpoint:excluded_from_fact_authority"
+    },
+    {
+      "path": "conf/dataset/conteb_test_08Insurance.yaml",
+      "source_kind": "dataset_or_checkpoint",
+      "ownership_role": "unknown",
+      "executable_authority": false,
+      "content_digest": "sha256:092214c86abc2b79a762c7f36bc8339819feb8da760c1d0db3553c3525366355",
+      "symbol_ids": [],
+      "classification_reason": "dataset_or_checkpoint:excluded_from_fact_authority"
+    },
+    {
+      "path": "conf/dataset/conteb_train.yaml",
+      "source_kind": "dataset_or_checkpoint",
+      "ownership_role": "unknown",
+      "executable_authority": false,
+      "content_digest": "sha256:178b7843fcc9a2a2ec3111e9c917805651cc865d7816fa3e722895f2f513740d",
+      "symbol_ids": [],
+      "classification_reason": "dataset_or_checkpoint:excluded_from_fact_authority"
+    },
+    {
+      "path": "conf/dataset/conteb_val.yaml",
+      "source_kind": "dataset_or_checkpoint",
+      "ownership_role": "unknown",
+      "executable_authority": false,
+      "content_digest": "sha256:ff55d8333d5b6d653f18ccfb2f782cc0c97c2bc1a97ab22a1a9bb9b6e9d82fb9",
+      "symbol_ids": [],
+      "classification_reason": "dataset_or_checkpoint:excluded_from_fact_authority"
+    },
+    {
+      "path": "conf/dataset/msmarco_v2.yaml",
+      "source_kind": "dataset_or_checkpoint",
+      "ownership_role": "unknown",
+      "executable_authority": false,
+      "content_digest": "sha256:9f719ca0794636649910a86db1c8ee9eaddc35dff2f65f89b838b13d9da65065",
+      "symbol_ids": [],
+      "classification_reason": "dataset_or_checkpoint:excluded_from_fact_authority"
+    },
+    {
+      "path": "conf/retrieval_model/contriever.yaml",
+      "source_kind": "configuration",
+      "ownership_role": "unknown",
+      "executable_authority": false,
+      "content_digest": "sha256:bdf7ecf30d3c796675ec4417240c576b1b85be64d8661b2e38f45d9cef8d0331",
+      "symbol_ids": [],
+      "classification_reason": "configuration"
+    },
+    {
+      "path": "conf/retrieval_model/e5.yaml",
+      "source_kind": "configuration",
+      "ownership_role": "unknown",
+      "executable_authority": false,
+      "content_digest": "sha256:a795baa69ad5e003d0469c6ed5fefd4e8cebbe25aae8057421b531c870926042",
+      "symbol_ids": [],
+      "classification_reason": "configuration"
+    },
+    {
+      "path": "conf/validation_dataset/conteb_val.yaml",
+      "source_kind": "configuration",
+      "ownership_role": "unknown",
+      "executable_authority": false,
+      "content_digest": "sha256:ff55d8333d5b6d653f18ccfb2f782cc0c97c2bc1a97ab22a1a9bb9b6e9d82fb9",
+      "symbol_ids": [],
+      "classification_reason": "configuration"
+    },
+    {
+      "path": "data/real/ConTEB_test/preprocess.py",
+      "source_kind": "dataset_or_checkpoint",
+      "ownership_role": "unknown",
+      "executable_authority": false,
+      "content_digest": "sha256:49205fccbb40fdfc823f5e40add4bea8d9b36438ed4018cefa7c90377c481d8d",
+      "symbol_ids": [
+        "sym:4a25fddb242217dc"
+      ],
+      "classification_reason": "dataset_or_checkpoint:excluded_from_fact_authority"
+    },
+    {
+      "path": "data/real/ConTEB_train/preprocess.py",
+      "source_kind": "dataset_or_checkpoint",
+      "ownership_role": "unknown",
+      "executable_authority": false,
+      "content_digest": "sha256:75d7a22d3189b3b7775cb71b600db6067e5d8e7f099e168ca0b38dc7b37f5719",
+      "symbol_ids": [
+        "sym:12a01acada534c10"
+      ],
+      "classification_reason": "dataset_or_checkpoint:excluded_from_fact_authority"
+    },
+    {
+      "path": "data/real/MS_MARCO_v2/preprocess.py",
+      "source_kind": "dataset_or_checkpoint",
+      "ownership_role": "unknown",
+      "executable_authority": false,
+      "content_digest": "sha256:42aa49f0cf6a389eaf6f1be7f3edb941bdde300539533f24638a7adadf8e4c30",
+      "symbol_ids": [
+        "sym:f9d0260a153209a5",
+        "sym:0ff9a0cb1f2a14f2",
+        "sym:528421a86324b19a"
+      ],
+      "classification_reason": "dataset_or_checkpoint:excluded_from_fact_authority"
+    },
+    {
+      "path": "main.py",
+      "source_kind": "first_party_executable",
+      "ownership_role": "unknown",
+      "executable_authority": true,
+      "content_digest": "sha256:8f7792b55a6e07765b90b7fb0ba53c06197172f84a3e2d281fb15aa99633217c",
+      "symbol_ids": [
+        "sym:2f2225cc58f1d81f",
+        "sym:32d9fcc61a60e214"
+      ],
+      "classification_reason": "first_party_executable"
+    },
+    {
+      "path": "paperdraft.md",
+      "source_kind": "documentation",
+      "ownership_role": "unknown",
+      "executable_authority": false,
+      "content_digest": "sha256:3fa1f602f355e365187c1193fd75cfc8796ac61ba2b372dfed1f67767e701797",
+      "symbol_ids": [],
+      "classification_reason": "documentation"
+    },
+    {
+      "path": "pyproject.toml",
+      "source_kind": "configuration",
+      "ownership_role": "unknown",
+      "executable_authority": false,
+      "content_digest": "sha256:a1817a02d016e80907e65a27213e50f48a6f350e91adaa02a34e1ec141f602fe",
+      "symbol_ids": [],
+      "classification_reason": "configuration"
+    },
+    {
+      "path": "requirements.txt",
+      "source_kind": "documentation",
+      "ownership_role": "unknown",
+      "executable_authority": false,
+      "content_digest": "sha256:e77200a4079b5ca13d773e9fdf919d390c4105be3f20ba7ba2e127a27756fa07",
+      "symbol_ids": [],
+      "classification_reason": "documentation"
+    },
+    {
+      "path": "requirements_licenses.csv",
+      "source_kind": "documentation",
+      "ownership_role": "unknown",
+      "executable_authority": false,
+      "content_digest": "sha256:d5f9b3ca8aabb35138b9b3db3571618c22484667ab7735b276e6054be248b6cb",
+      "symbol_ids": [],
+      "classification_reason": "documentation"
+    },
+    {
+      "path": "saved/conteb_train/merge.py",
+      "source_kind": "first_party_executable",
+      "ownership_role": "target_core",
+      "executable_authority": true,
+      "content_digest": "sha256:f1e095796e83e2d18eda6dcd94bb918747dde9006fa52e3fe22674010bdfe2f2",
+      "symbol_ids": [
+        "sym:1bf392cbfeba8533"
+      ],
+      "classification_reason": "first_party_executable"
+    },
+    {
+      "path": "src/__init__.py",
+      "source_kind": "first_party_executable",
+      "ownership_role": "unknown",
+      "executable_authority": true,
+      "content_digest": "sha256:aadaa4e4848b009231e843c307ff01916d73e454edc8152826f1b98d72187d2b",
+      "symbol_ids": [
+        "sym:8be55f5c15c9b15a"
+      ],
+      "classification_reason": "first_party_executable"
+    },
+    {
+      "path": "src/build_vector_database.py",
+      "source_kind": "first_party_executable",
+      "ownership_role": "unknown",
+      "executable_authority": true,
+      "content_digest": "sha256:5c254269b3c444b5abef64aab005f3c3b676fc29aa5e11ab17a26fbc196b8ebd",
+      "symbol_ids": [
+        "sym:ad205f3b3db779ac",
+        "sym:6d7872f2a3dddebf"
+      ],
+      "classification_reason": "first_party_executable"
+    },
+    {
+      "path": "src/dataset/__init__.py",
+      "source_kind": "first_party_executable",
+      "ownership_role": "evaluation",
+      "executable_authority": true,
+      "content_digest": "sha256:fc0e56c1b7c3342b73758c1143be591e2367c529d9b4a35309a0b109f9a1d718",
+      "symbol_ids": [
+        "sym:c66d3d6430d8b2c7",
+        "sym:2af4eca0daef58e9",
+        "sym:74e3346e550a6ef9"
+      ],
+      "classification_reason": "first_party_executable"
+    },
+    {
+      "path": "src/dataset/ebcar_dataset.py",
+      "source_kind": "first_party_executable",
+      "ownership_role": "target_core",
+      "executable_authority": true,
+      "content_digest": "sha256:12264b5fa8fb7b1352c578228cc993be37c650713508169a626da3237ff32933",
+      "symbol_ids": [
+        "sym:398c2b35cf09b2de",
+        "sym:5f68360a35d5f632",
+        "sym:ee29a2dfb78157bb",
+        "sym:51a352a81088b35b",
+        "sym:308f5b985883faa6",
+        "sym:7dd94efafce4f7db"
+      ],
+      "classification_reason": "first_party_executable"
+    },
+    {
+      "path": "src/evaluate.py",
+      "source_kind": "first_party_executable",
+      "ownership_role": "evaluation",
+      "executable_authority": true,
+      "content_digest": "sha256:04de30ef6c99308e9959658688a8540e0a665414c85f5ecd3e2d608d482cbf8b",
+      "symbol_ids": [
+        "sym:4da8548429b3fa59",
+        "sym:ec35335f84dc2576"
+      ],
+      "classification_reason": "first_party_executable"
+    },
+    {
+      "path": "src/model/ebcar_dedicated_attention_model.py",
+      "source_kind": "first_party_executable",
+      "ownership_role": "target_core",
+      "executable_authority": true,
+      "content_digest": "sha256:d9c5c626979342c9dc612c6acf8b9a3aedc669df99986118030f37e793d52946",
+      "symbol_ids": [
+        "sym:9b11f92186cf270c",
+        "sym:138b7727704d3ac1",
+        "sym:28206aee9102e05f",
+        "sym:018b1c01cabe7a09",
+        "sym:f6cf5bdfe2ae16f0",
+        "sym:9773c5add7af1f92"
+      ],
+      "classification_reason": "first_party_executable"
+    },
+    {
+      "path": "src/model/transformer_encoder_hybrid_attention.py",
+      "source_kind": "first_party_executable",
+      "ownership_role": "target_core",
+      "executable_authority": true,
+      "content_digest": "sha256:73d787c0583ae0f48c2896496a4de2b09e8afd1f39fa718ce3cd92d9bd8b9a0e",
+      "symbol_ids": [
+        "sym:730db54cb4821848",
+        "sym:2cc645d72c3c9bf0",
+        "sym:7ff88d0d30db3be9",
+        "sym:7a70ca6a9334b9bf",
+        "sym:7690fc91b0f2dce7",
+        "sym:e889346764321ecd",
+        "sym:2398741999df2d46",
+        "sym:861cecdb154fb3b9",
+        "sym:891af521cf814ac4",
+        "sym:81395e9010d48fdb"
+      ],
+      "classification_reason": "first_party_executable"
+    },
+    {
+      "path": "src/train_ebcar.py",
+      "source_kind": "first_party_executable",
+      "ownership_role": "target_core",
+      "executable_authority": true,
+      "content_digest": "sha256:1e07c02c72970fd0122108571c295a5c2ddf955b316ac07fe84f92052a3f0cc6",
+      "symbol_ids": [
+        "sym:2b395afb6fbdd872",
+        "sym:84125bba4b81722f"
+      ],
+      "classification_reason": "first_party_executable"
+    },
+    {
+      "path": "src/utils.py",
+      "source_kind": "first_party_executable",
+      "ownership_role": "target_core",
+      "executable_authority": true,
+      "content_digest": "sha256:923f28c502ac954c1204bd9967afe49ed22e3abe72d9e8bcd9c9585e81092f8b",
+      "symbol_ids": [
+        "sym:9a5ca1912bc8d9dc",
+        "sym:09a8a946c03c7c4e",
+        "sym:689aa844f51b8cce",
+        "sym:0c49be2eccc2eefb"
+      ],
+      "classification_reason": "first_party_executable"
+    },
+    {
+      "path": "utils.py",
+      "source_kind": "first_party_executable",
+      "ownership_role": "unknown",
+      "executable_authority": true,
+      "content_digest": "sha256:b89a172b4a2650dc1f3161c1a2c6f761ce478b47173835739f959b8367dbc051",
+      "symbol_ids": [
+        "sym:afe46dc845f72f17",
+        "sym:ca499533101ae4c2"
+      ],
+      "classification_reason": "first_party_executable"
+    }
+  ],
+  "target_core_paths": [
+    "saved/conteb_train/merge.py",
+    "src/dataset/ebcar_dataset.py",
+    "src/model/ebcar_dedicated_attention_model.py",
+    "src/model/transformer_encoder_hybrid_attention.py",
+    "src/train_ebcar.py",
+    "src/utils.py"
+  ],
+  "target_support_paths": [],
+  "comparand_paths": [],
+  "evaluation_paths": [
+    "src/dataset/__init__.py",
+    "src/evaluate.py"
+  ],
+  "excluded_paths": [
+    "conf/dataset/conteb_test_01MLDR.yaml",
+    "conf/dataset/conteb_test_02SQuAD.yaml",
+    "conf/dataset/conteb_test_03NarrativeQA.yaml",
+    "conf/dataset/conteb_test_04COVID_QA.yaml",
+    "conf/dataset/conteb_test_05ESG_Reports.yaml",
+    "conf/dataset/conteb_test_06Football.yaml",
+    "conf/dataset/conteb_test_07Geography.yaml",
+    "conf/dataset/conteb_test_08Insurance.yaml",
+    "conf/dataset/conteb_train.yaml",
+    "conf/dataset/conteb_val.yaml",
+    "conf/dataset/msmarco_v2.yaml",
+    "data/real/ConTEB_test/preprocess.py",
+    "data/real/ConTEB_train/preprocess.py",
+    "data/real/MS_MARCO_v2/preprocess.py"
+  ],
+  "anomaly_codes": [],
+  "content_digest": "sha256:ea4a881f3ffa9b5711e10c575bb4137d1f80304c3e3732dd7a6d840ac0b37078"
+}

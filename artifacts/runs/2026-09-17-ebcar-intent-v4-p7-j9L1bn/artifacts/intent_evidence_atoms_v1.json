@@ -1,0 +1,2157 @@
+{
+  "schema_version": "1.0",
+  "atoms": [
+    {
+      "atom_id": "atom:4ae9c80bf7941811",
+      "narrative_unit_id": "facet-d57e6b007d62768e",
+      "story_node_id": "",
+      "source_quote": "Start with pre‑computed dense passage embeddings from a standard retriever (e.g., Contriever)",
+      "source_quote_range": [
+        0,
+        93
+      ],
+      "subject": "Start",
+      "predicate": "encodes",
+      "object_or_operands": [],
+      "polarity": "positive",
+      "quantifier": "",
+      "condition": "",
+      "boundary": "",
+      "authority_expectation": "repository_implementation",
+      "semantic_fields": {
+        "operation": "Start with pre‑computed dense passage embeddings from a standard retriever (e.g., Contriever)"
+      },
+      "splitter_candidate": true,
+      "unresolved_reason": "owner_confirmation_required",
+      "content_digest": "sha256:0df7bc6d6ef6945f05671040de9032f1fa7e791a430dc78da960b65f978a59eb"
+    },
+    {
+      "atom_id": "atom:5951551f5dad6745",
+      "narrative_unit_id": "facet-d57e6b007d62768e",
+      "story_node_id": "",
+      "source_quote": "and the query embedding from the same encoder.",
+      "source_quote_range": [
+        94,
+        140
+      ],
+      "subject": "and",
+      "predicate": "encodes",
+      "object_or_operands": [],
+      "polarity": "positive",
+      "quantifier": "",
+      "condition": "",
+      "boundary": "",
+      "authority_expectation": "repository_implementation",
+      "semantic_fields": {
+        "operation": "and the query embedding from the same encoder."
+      },
+      "splitter_candidate": true,
+      "unresolved_reason": "owner_confirmation_required",
+      "content_digest": "sha256:692e25b6e4bec55c841dd37230d8c9dfe33e98c795cd1f0e7cf93e5e243508a5"
+    },
+    {
+      "atom_id": "atom:c9a89e0532fd3b78",
+      "narrative_unit_id": "facet-bd2114e7ad9b1773",
+      "story_node_id": "",
+      "source_quote": "Retrieval",
+      "source_quote_range": [
+        0,
+        9
+      ],
+      "subject": "Retrieval",
+      "predicate": "states",
+      "object_or_operands": [],
+      "polarity": "positive",
+      "quantifier": "",
+      "condition": "",
+      "boundary": "",
+      "authority_expectation": "repository_implementation",
+      "semantic_fields": {
+        "operation": "Retrieval"
+      },
+      "splitter_candidate": true,
+      "unresolved_reason": "owner_confirmation_required",
+      "content_digest": "sha256:b79ac1e5ea61cab8aa7dccf6232f64e2be9e59faec939999f306798307e98373"
+    },
+    {
+      "atom_id": "atom:54e21a262f2fc05d",
+      "narrative_unit_id": "facet-bd2114e7ad9b1773",
+      "story_node_id": "",
+      "source_quote": "and embedding preparation: Use a dense retriever (Contriever) to fetch top‑k candidate passages",
+      "source_quote_range": [
+        10,
+        105
+      ],
+      "subject": "and",
+      "predicate": "encodes",
+      "object_or_operands": [],
+      "polarity": "positive",
+      "quantifier": "",
+      "condition": "",
+      "boundary": "",
+      "authority_expectation": "repository_implementation",
+      "semantic_fields": {
+        "operation": "and embedding preparation: Use a dense retriever (Contriever) to fetch top‑k candidate passages"
+      },
+      "splitter_candidate": true,
+      "unresolved_reason": "owner_confirmation_required",
+      "content_digest": "sha256:c1dac5758ed6f0acdf7ccfb96d501b0434aa5a7d99beb573665defafd6bd1a7c"
+    },
+    {
+      "atom_id": "atom:64231d9e1c0748f3",
+      "narrative_unit_id": "facet-bd2114e7ad9b1773",
+      "story_node_id": "",
+      "source_quote": "and their pre‑computed embeddings",
+      "source_quote_range": [
+        106,
+        139
+      ],
+      "subject": "and",
+      "predicate": "encodes",
+      "object_or_operands": [],
+      "polarity": "positive",
+      "quantifier": "",
+      "condition": "",
+      "boundary": "",
+      "authority_expectation": "repository_implementation",
+      "semantic_fields": {
+        "operation": "and their pre‑computed embeddings"
+      },
+      "splitter_candidate": true,
+      "unresolved_reason": "owner_confirmation_required",
+      "content_digest": "sha256:3400a3ac9bf5609566b77912255e5490d3ad4b3448492c296cd74a66fb4d7b73"
+    },
+    {
+      "atom_id": "atom:1ee3b3d62ae063ba",
+      "narrative_unit_id": "facet-308602a0138b57ea",
+      "story_node_id": "",
+      "source_quote": "Structural augmentation: For each retrieved passage, add a dynamic document ID embedding",
+      "source_quote_range": [
+        0,
+        88
+      ],
+      "subject": "Structural",
+      "predicate": "encodes",
+      "object_or_operands": [],
+      "polarity": "positive",
+      "quantifier": "each",
+      "condition": "",
+      "boundary": "",
+      "authority_expectation": "repository_implementation",
+      "semantic_fields": {
+        "operation": "Structural augmentation: For each retrieved passage, add a dynamic document ID embedding"
+      },
+      "splitter_candidate": true,
+      "unresolved_reason": "owner_confirmation_required",
+      "content_digest": "sha256:1ea3204d697b6250a362a54fd1c1524f4d8055059f805ed0d58a24c102d3b095"
+    },
+    {
+      "atom_id": "atom:279af60c5396e98d",
+      "narrative_unit_id": "facet-308602a0138b57ea",
+      "story_node_id": "",
+      "source_quote": "and a sinusoidal passage‑position encoding to its original embedding to inject document‑identity",
+      "source_quote_range": [
+        89,
+        185
+      ],
+      "subject": "and",
+      "predicate": "encodes",
+      "object_or_operands": [],
+      "polarity": "positive",
+      "quantifier": "",
+      "condition": "",
+      "boundary": "",
+      "authority_expectation": "author_rationale",
+      "semantic_fields": {
+        "operation": "and a sinusoidal passage‑position encoding to its original embedding to inject document‑identity"
+      },
+      "splitter_candidate": true,
+      "unresolved_reason": "owner_confirmation_required",
+      "content_digest": "sha256:50305facbd561ec7a9e4f82c4a57879838f3481daab5a1aaea5004b0d5161e08"
+    },
+    {
+      "atom_id": "atom:26b83aa74ca4cb2a",
+      "narrative_unit_id": "facet-308602a0138b57ea",
+      "story_node_id": "",
+      "source_quote": "and ordering signals.",
+      "source_quote_range": [
+        186,
+        207
+      ],
+      "subject": "and",
+      "predicate": "states",
+      "object_or_operands": [],
+      "polarity": "positive",
+      "quantifier": "",
+      "condition": "",
+      "boundary": "",
+      "authority_expectation": "repository_implementation",
+      "semantic_fields": {
+        "operation": "and ordering signals."
+      },
+      "splitter_candidate": true,
+      "unresolved_reason": "owner_confirmation_required",
+      "content_digest": "sha256:39b2bb42101d85d0bb3f2e44e67c2ed05767e756ea3595cb49cb1b4320bbde78"
+    },
+    {
+      "atom_id": "atom:3844159cf7d87847",
+      "narrative_unit_id": "facet-df672e4efc3751e2",
+      "story_node_id": "",
+      "source_quote": "Hybrid‑attention encoding: Feed the query",
+      "source_quote_range": [
+        0,
+        41
+      ],
+      "subject": "Hybrid‑attention",
+      "predicate": "uses_attention",
+      "object_or_operands": [],
+      "polarity": "positive",
+      "quantifier": "",
+      "condition": "",
+      "boundary": "",
+      "authority_expectation": "repository_implementation",
+      "semantic_fields": {
+        "operation": "Hybrid‑attention encoding: Feed the query"
+      },
+      "splitter_candidate": true,
+      "unresolved_reason": "owner_confirmation_required",
+      "content_digest": "sha256:918b561e18315560489dc48f329b6a2484fc09e8d4e2b3f78245525d51639109"
+    },
+    {
+      "atom_id": "atom:79327246f9860a33",
+      "narrative_unit_id": "facet-df672e4efc3751e2",
+      "story_node_id": "",
+      "source_quote": "and augmented passage embeddings into a Transformer encoder that applies shared full attention (global interactions)",
+      "source_quote_range": [
+        42,
+        158
+      ],
+      "subject": "and",
+      "predicate": "uses_attention",
+      "object_or_operands": [],
+      "polarity": "positive",
+      "quantifier": "",
+      "condition": "",
+      "boundary": "",
+      "authority_expectation": "repository_implementation",
+      "semantic_fields": {
+        "operation": "and augmented passage embeddings into a Transformer encoder that applies shared full attention (global interactions)"
+      },
+      "splitter_candidate": true,
+      "unresolved_reason": "owner_confirmation_required",
+      "content_digest": "sha256:b9b8736fb1b4986e91bc64a389f73f963d2c20bd75e8d953b634d2176c2a4b7c"
+    },
+    {
+      "atom_id": "atom:b9a08526eba31655",
+      "narrative_unit_id": "facet-df672e4efc3751e2",
+      "story_node_id": "",
+      "source_quote": "and dedicated masked attention (intra‑document interactions) in every layer, producing contextualized passage embeddings.",
+      "source_quote_range": [
+        159,
+        280
+      ],
+      "subject": "and",
+      "predicate": "uses_attention",
+      "object_or_operands": [],
+      "polarity": "positive",
+      "quantifier": "every",
+      "condition": "",
+      "boundary": "",
+      "authority_expectation": "repository_compositional",
+      "semantic_fields": {
+        "operation": "and dedicated masked attention (intra‑document interactions) in every layer, producing contextualized passage embeddings."
+      },
+      "splitter_candidate": true,
+      "unresolved_reason": "owner_confirmation_required",
+      "content_digest": "sha256:f1c7d668d1d5525c0605a4cd64ee6de92ddb6d8d56731abacc883fa8ef350172"
+    },
+    {
+      "atom_id": "atom:300092e5e2b2d15d",
+      "narrative_unit_id": "facet-6bc5ee440fdc8329",
+      "story_node_id": "",
+      "source_quote": "Contrastive training: Using a contrastive InfoNCE loss, pull the updated positive passage embedding toward the fixed query embedding",
+      "source_quote_range": [
+        0,
+        132
+      ],
+      "subject": "Contrastive",
+      "predicate": "optimizes",
+      "object_or_operands": [],
+      "polarity": "positive",
+      "quantifier": "",
+      "condition": "",
+      "boundary": "",
+      "authority_expectation": "repository_implementation",
+      "semantic_fields": {
+        "operation": "Contrastive training: Using a contrastive InfoNCE loss, pull the updated positive passage embedding toward the fixed query embedding"
+      },
+      "splitter_candidate": true,
+      "unresolved_reason": "owner_confirmation_required",
+      "content_digest": "sha256:1b775be6d7d7b4e0299966a8301533c38320c73d8ef87905a7ef91c5eb6e84a5"
+    },
+    {
+      "atom_id": "atom:6498cbd05711635a",
+      "narrative_unit_id": "facet-6bc5ee440fdc8329",
+      "story_node_id": "",
+      "source_quote": "and push negative passage embeddings away.",
+      "source_quote_range": [
+        133,
+        175
+      ],
+      "subject": "and",
+      "predicate": "encodes",
+      "object_or_operands": [],
+      "polarity": "positive",
+      "quantifier": "",
+      "condition": "",
+      "boundary": "",
+      "authority_expectation": "repository_implementation",
+      "semantic_fields": {
+        "operation": "and push negative passage embeddings away."
+      },
+      "splitter_candidate": true,
+      "unresolved_reason": "owner_confirmation_required",
+      "content_digest": "sha256:66e0c7edf3466ef600fca994e6fa16ef72c02e6d35e3b0b205dcde7f4ea15672"
+    },
+    {
+      "atom_id": "atom:9f937691e9b4ada2",
+      "narrative_unit_id": "facet-cbc0a588831ac015",
+      "story_node_id": "",
+      "source_quote": "Inference scoring",
+      "source_quote_range": [
+        0,
+        17
+      ],
+      "subject": "Inference",
+      "predicate": "states",
+      "object_or_operands": [],
+      "polarity": "positive",
+      "quantifier": "",
+      "condition": "",
+      "boundary": "",
+      "authority_expectation": "repository_implementation",
+      "semantic_fields": {
+        "operation": "Inference scoring"
+      },
+      "splitter_candidate": true,
+      "unresolved_reason": "owner_confirmation_required",
+      "content_digest": "sha256:d74bca23803ed143e6833c1d6978100737a817580ff6103606ac7b2e6ed6be88"
+    },
+    {
+      "atom_id": "atom:a06dfb054613527e",
+      "narrative_unit_id": "facet-cbc0a588831ac015",
+      "story_node_id": "",
+      "source_quote": "and ranking: Compute dot‑product similarities between the unchanged query embedding",
+      "source_quote_range": [
+        18,
+        101
+      ],
+      "subject": "and",
+      "predicate": "scores",
+      "object_or_operands": [],
+      "polarity": "positive",
+      "quantifier": "",
+      "condition": "",
+      "boundary": "",
+      "authority_expectation": "repository_implementation",
+      "semantic_fields": {
+        "operation": "and ranking: Compute dot‑product similarities between the unchanged query embedding"
+      },
+      "splitter_candidate": true,
+      "unresolved_reason": "owner_confirmation_required",
+      "content_digest": "sha256:356a1a254a87559b136e92f0d8e7def49146e7d280b41e248a96b491d38a2bc1"
+    },
+    {
+      "atom_id": "atom:1078c41b924926d3",
+      "narrative_unit_id": "facet-cbc0a588831ac015",
+      "story_node_id": "",
+      "source_quote": "and the contextualized passage embeddings",
+      "source_quote_range": [
+        102,
+        143
+      ],
+      "subject": "and",
+      "predicate": "encodes",
+      "object_or_operands": [],
+      "polarity": "positive",
+      "quantifier": "",
+      "condition": "",
+      "boundary": "",
+      "authority_expectation": "repository_implementation",
+      "semantic_fields": {
+        "operation": "and the contextualized passage embeddings"
+      },
+      "splitter_candidate": true,
+      "unresolved_reason": "owner_confirmation_required",
+      "content_digest": "sha256:b4ed26e5e53c2623a3ff4b5a75a10e7ae8a3dd5945bcbc8f5127577215b6a342"
+    },
+    {
+      "atom_id": "atom:3632f5f1612adaa0",
+      "narrative_unit_id": "facet-cbc0a588831ac015",
+      "story_node_id": "",
+      "source_quote": "then sort passages by descending score.",
+      "source_quote_range": [
+        145,
+        184
+      ],
+      "subject": "then",
+      "predicate": "states",
+      "object_or_operands": [],
+      "polarity": "positive",
+      "quantifier": "",
+      "condition": "",
+      "boundary": "",
+      "authority_expectation": "repository_implementation",
+      "semantic_fields": {
+        "operation": "then sort passages by descending score."
+      },
+      "splitter_candidate": true,
+      "unresolved_reason": "owner_confirmation_required",
+      "content_digest": "sha256:abc1f2e26347bafda7a139e5b614479e5a678753ac58ff99afd4ee66fdc17d87"
+    },
+    {
+      "atom_id": "atom:5b8705e42f1ed7cb",
+      "narrative_unit_id": "facet-14d4dbe911667c07",
+      "story_node_id": "",
+      "source_quote": "Improve reranking in retrieval-augmented generation (RAG) systems by addressing both inference efficiency",
+      "source_quote_range": [
+        0,
+        105
+      ],
+      "subject": "Improve",
+      "predicate": "scores",
+      "object_or_operands": [],
+      "polarity": "positive",
+      "quantifier": "",
+      "condition": "",
+      "boundary": "",
+      "authority_expectation": "repository_implementation",
+      "semantic_fields": {
+        "operation": "Improve reranking in retrieval-augmented generation (RAG) systems by addressing both inference efficiency"
+      },
+      "splitter_candidate": true,
+      "unresolved_reason": "owner_confirmation_required",
+      "content_digest": "sha256:8cabf5a79c085d1c78840f5748b2e4123966687dec92e95d91fed86b8e1e8d01"
+    },
+    {
+      "atom_id": "atom:7da3d49caaf036db",
+      "narrative_unit_id": "facet-14d4dbe911667c07",
+      "story_node_id": "",
+      "source_quote": "and the need for cross-passage reasoning, especially when evidence is scattered across passages",
+      "source_quote_range": [
+        106,
+        201
+      ],
+      "subject": "and",
+      "predicate": "states",
+      "object_or_operands": [],
+      "polarity": "positive",
+      "quantifier": "",
+      "condition": "when evidence is scattered across passages",
+      "boundary": "",
+      "authority_expectation": "author_rationale",
+      "semantic_fields": {
+        "operation": "and the need for cross-passage reasoning, especially when evidence is scattered across passages"
+      },
+      "splitter_candidate": true,
+      "unresolved_reason": "owner_confirmation_required",
+      "content_digest": "sha256:26fc1ce6730d689e3a4282b257785ccd108a4c961b5da1d136bd9ecd43406dbe"
+    },
+    {
+      "atom_id": "atom:5aedcd8caaad8aee",
+      "narrative_unit_id": "facet-14d4dbe911667c07",
+      "story_node_id": "",
+      "source_quote": "and requires resolving coreference or structural context.",
+      "source_quote_range": [
+        202,
+        259
+      ],
+      "subject": "and",
+      "predicate": "states",
+      "object_or_operands": [],
+      "polarity": "positive",
+      "quantifier": "",
+      "condition": "",
+      "boundary": "",
+      "authority_expectation": "repository_implementation",
+      "semantic_fields": {
+        "operation": "and requires resolving coreference or structural context."
+      },
+      "splitter_candidate": true,
+      "unresolved_reason": "owner_confirmation_required",
+      "content_digest": "sha256:4c7efa8258eb002295cc6e2abb93a3f824e716cc54008b2857b99f70d8178f95"
+    },
+    {
+      "atom_id": "atom:729e0be73cf77501",
+      "narrative_unit_id": "facet-c70f411cffdc0a8f",
+      "story_node_id": "",
+      "source_quote": "Contriever: Dense retriever that provides initial passage embeddings",
+      "source_quote_range": [
+        0,
+        68
+      ],
+      "subject": "Contriever:",
+      "predicate": "encodes",
+      "object_or_operands": [],
+      "polarity": "positive",
+      "quantifier": "",
+      "condition": "",
+      "boundary": "",
+      "authority_expectation": "repository_implementation",
+      "semantic_fields": {
+        "operation": "Contriever: Dense retriever that provides initial passage embeddings"
+      },
+      "splitter_candidate": true,
+      "unresolved_reason": "owner_confirmation_required",
+      "content_digest": "sha256:9f4fdeacb057e6d71d9fdb82e2f823032964e26dce55d55327b0828061aaf019"
+    },
+    {
+      "atom_id": "atom:15a7f1b88f0f148a",
+      "narrative_unit_id": "facet-c70f411cffdc0a8f",
+      "story_node_id": "",
+      "source_quote": "and top‑k retrieval.",
+      "source_quote_range": [
+        69,
+        89
+      ],
+      "subject": "and",
+      "predicate": "states",
+      "object_or_operands": [],
+      "polarity": "positive",
+      "quantifier": "",
+      "condition": "",
+      "boundary": "",
+      "authority_expectation": "repository_implementation",
+      "semantic_fields": {
+        "operation": "and top‑k retrieval."
+      },
+      "splitter_candidate": true,
+      "unresolved_reason": "owner_confirmation_required",
+      "content_digest": "sha256:0cb2552e903f7d6b2faf37a4a98b0a87f4fb405f60a0d44d836322cedb13177d"
+    },
+    {
+      "atom_id": "atom:441e3088a88ea5c1",
+      "narrative_unit_id": "facet-676fcfceb7eddd8a",
+      "story_node_id": "",
+      "source_quote": "passage embeddings (pi): Fixed dense representations of candidate passages obtained from Contriever.",
+      "source_quote_range": [
+        0,
+        100
+      ],
+      "subject": "passage",
+      "predicate": "encodes",
+      "object_or_operands": [],
+      "polarity": "positive",
+      "quantifier": "",
+      "condition": "",
+      "boundary": "",
+      "authority_expectation": "repository_implementation",
+      "semantic_fields": {
+        "operation": "passage embeddings (pi): Fixed dense representations of candidate passages obtained from Contriever."
+      },
+      "splitter_candidate": false,
+      "unresolved_reason": "",
+      "content_digest": "sha256:032323bf10327b14473024d748dd9ca301c5c62c12220720d5d19750819acef6"
+    },
+    {
+      "atom_id": "atom:8d2039f49985b6ff",
+      "narrative_unit_id": "facet-d87af6e7082cc916",
+      "story_node_id": "",
+      "source_quote": "document ID embedding table: Learned relative document‑identity embeddings assigned dynamically to unique documents in the candidate set, enabling the model to recognize which passages belong together.",
+      "source_quote_range": [
+        0,
+        201
+      ],
+      "subject": "document",
+      "predicate": "encodes",
+      "object_or_operands": [],
+      "polarity": "positive",
+      "quantifier": "",
+      "condition": "",
+      "boundary": "",
+      "authority_expectation": "repository_implementation",
+      "semantic_fields": {
+        "operation": "document ID embedding table: Learned relative document‑identity embeddings assigned dynamically to unique documents in the candidate set, enabling the model to recognize which passages belong together."
+      },
+      "splitter_candidate": false,
+      "unresolved_reason": "",
+      "content_digest": "sha256:91eb4464a434e19b3b15461f896106a5c66538227a3854233bf3ff3f79f363fd"
+    },
+    {
+      "atom_id": "atom:7718d00fa0f6b809",
+      "narrative_unit_id": "facet-ba08ce41d6e1d9b9",
+      "story_node_id": "",
+      "source_quote": "passage position encoding (sinusoidal): Encodes the position of a passage within its original document, providing structural order cues.",
+      "source_quote_range": [
+        0,
+        136
+      ],
+      "subject": "passage",
+      "predicate": "states",
+      "object_or_operands": [],
+      "polarity": "positive",
+      "quantifier": "",
+      "condition": "",
+      "boundary": "",
+      "authority_expectation": "repository_implementation",
+      "semantic_fields": {
+        "operation": "passage position encoding (sinusoidal): Encodes the position of a passage within its original document, providing structural order cues."
+      },
+      "splitter_candidate": false,
+      "unresolved_reason": "",
+      "content_digest": "sha256:a29bef19bf455d8ac1f1748ca58e44259a1f3bb4dab4df3fa9145cd2e57c0bc6"
+    },
+    {
+      "atom_id": "atom:0b5caf64be0a118c",
+      "narrative_unit_id": "facet-47997bc7d81ecdf5",
+      "story_node_id": "",
+      "source_quote": "hybrid attention mechanism: Combines shared full attention (global cross‑passage)",
+      "source_quote_range": [
+        0,
+        81
+      ],
+      "subject": "hybrid",
+      "predicate": "uses_attention",
+      "object_or_operands": [],
+      "polarity": "positive",
+      "quantifier": "",
+      "condition": "",
+      "boundary": "",
+      "authority_expectation": "repository_implementation",
+      "semantic_fields": {
+        "operation": "hybrid attention mechanism: Combines shared full attention (global cross‑passage)"
+      },
+      "splitter_candidate": true,
+      "unresolved_reason": "owner_confirmation_required",
+      "content_digest": "sha256:bea43546d7b5feed150e47a3bd5fdd19b5f03040f6d42b0494d8de04e7f7ecd0"
+    },
+    {
+      "atom_id": "atom:f2fc7df6a9a970f1",
+      "narrative_unit_id": "facet-47997bc7d81ecdf5",
+      "story_node_id": "",
+      "source_quote": "and dedicated masked attention (intra‑document) in each Transformer layer to jointly model inter‑",
+      "source_quote_range": [
+        82,
+        179
+      ],
+      "subject": "and",
+      "predicate": "uses_attention",
+      "object_or_operands": [],
+      "polarity": "positive",
+      "quantifier": "each",
+      "condition": "",
+      "boundary": "",
+      "authority_expectation": "repository_compositional",
+      "semantic_fields": {
+        "operation": "and dedicated masked attention (intra‑document) in each Transformer layer to jointly model inter‑"
+      },
+      "splitter_candidate": true,
+      "unresolved_reason": "owner_confirmation_required",
+      "content_digest": "sha256:36958fb6cacbc27d89bb86987962a5847169d51fbf27bb35e5a86f8789880561"
+    },
+    {
+      "atom_id": "atom:b3b21af511bda982",
+      "narrative_unit_id": "facet-47997bc7d81ecdf5",
+      "story_node_id": "",
+      "source_quote": "and intra‑document dependencies.",
+      "source_quote_range": [
+        180,
+        212
+      ],
+      "subject": "and",
+      "predicate": "states",
+      "object_or_operands": [],
+      "polarity": "positive",
+      "quantifier": "",
+      "condition": "",
+      "boundary": "",
+      "authority_expectation": "repository_implementation",
+      "semantic_fields": {
+        "operation": "and intra‑document dependencies."
+      },
+      "splitter_candidate": true,
+      "unresolved_reason": "owner_confirmation_required",
+      "content_digest": "sha256:b4da1a5441fcec30cb74a10ba8d0297fbed5d77aac478038a2b9535c2d8d3f7c"
+    },
+    {
+      "atom_id": "atom:be9100649b7de2e8",
+      "narrative_unit_id": "facet-00e27dd88a70848f",
+      "story_node_id": "",
+      "source_quote": "shared full attention module: Standard multi‑head attention allowing query",
+      "source_quote_range": [
+        0,
+        74
+      ],
+      "subject": "shared",
+      "predicate": "uses_attention",
+      "object_or_operands": [],
+      "polarity": "positive",
+      "quantifier": "",
+      "condition": "",
+      "boundary": "",
+      "authority_expectation": "repository_implementation",
+      "semantic_fields": {
+        "operation": "shared full attention module: Standard multi‑head attention allowing query"
+      },
+      "splitter_candidate": true,
+      "unresolved_reason": "owner_confirmation_required",
+      "content_digest": "sha256:bd17d9e196d1a9452a41817a06ad3728c52d9c84f0d15f6d72554d9157886f94"
+    },
+    {
+      "atom_id": "atom:fd34c4deef56f7bd",
+      "narrative_unit_id": "facet-00e27dd88a70848f",
+      "story_node_id": "",
+      "source_quote": "and all passages to attend to each other",
+      "source_quote_range": [
+        75,
+        115
+      ],
+      "subject": "and",
+      "predicate": "states",
+      "object_or_operands": [],
+      "polarity": "positive",
+      "quantifier": "all",
+      "condition": "",
+      "boundary": "",
+      "authority_expectation": "repository_implementation",
+      "semantic_fields": {
+        "operation": "and all passages to attend to each other"
+      },
+      "splitter_candidate": true,
+      "unresolved_reason": "owner_confirmation_required",
+      "content_digest": "sha256:83e2ebb667f6fb2a133885654fdd5b62998340695ef42256a592af024bd25776"
+    },
+    {
+      "atom_id": "atom:910b7152442202c7",
+      "narrative_unit_id": "facet-85ba5afaa2fbe7ac",
+      "story_node_id": "",
+      "source_quote": "dedicated masked attention module: Masked multi‑head attention that restricts a passage to attend only to the query",
+      "source_quote_range": [
+        0,
+        115
+      ],
+      "subject": "dedicated",
+      "predicate": "uses_attention",
+      "object_or_operands": [],
+      "polarity": "positive",
+      "quantifier": "",
+      "condition": "",
+      "boundary": "",
+      "authority_expectation": "repository_implementation",
+      "semantic_fields": {
+        "operation": "dedicated masked attention module: Masked multi‑head attention that restricts a passage to attend only to the query"
+      },
+      "splitter_candidate": true,
+      "unresolved_reason": "owner_confirmation_required",
+      "content_digest": "sha256:f91c6e2bf3d70a364a024f5a1769125806e701ed605e70143966eb51bd9380c2"
+    },
+    {
+      "atom_id": "atom:4412cf3f873e934d",
+      "narrative_unit_id": "facet-85ba5afaa2fbe7ac",
+      "story_node_id": "",
+      "source_quote": "and to other passages from the same document, enabling fine‑grained coreference resolution",
+      "source_quote_range": [
+        116,
+        206
+      ],
+      "subject": "and",
+      "predicate": "states",
+      "object_or_operands": [],
+      "polarity": "positive",
+      "quantifier": "",
+      "condition": "",
+      "boundary": "",
+      "authority_expectation": "repository_implementation",
+      "semantic_fields": {
+        "operation": "and to other passages from the same document, enabling fine‑grained coreference resolution"
+      },
+      "splitter_candidate": true,
+      "unresolved_reason": "owner_confirmation_required",
+      "content_digest": "sha256:025d6af6eb60fdce2b3de86b87ed6866a25618fc9bf2cc9e16948d4d7de5e071"
+    },
+    {
+      "atom_id": "atom:e382e4a913c182a1",
+      "narrative_unit_id": "facet-85ba5afaa2fbe7ac",
+      "story_node_id": "",
+      "source_quote": "and local coherence.",
+      "source_quote_range": [
+        207,
+        227
+      ],
+      "subject": "and",
+      "predicate": "states",
+      "object_or_operands": [],
+      "polarity": "positive",
+      "quantifier": "",
+      "condition": "",
+      "boundary": "",
+      "authority_expectation": "repository_implementation",
+      "semantic_fields": {
+        "operation": "and local coherence."
+      },
+      "splitter_candidate": true,
+      "unresolved_reason": "owner_confirmation_required",
+      "content_digest": "sha256:ece592a92671f35bf960986d4161dbf65bcc32f32e6619d42909beb940cfa229"
+    },
+    {
+      "atom_id": "atom:0fedfaa9a198b44e",
+      "narrative_unit_id": "facet-0bce6b6595a44f58",
+      "story_node_id": "",
+      "source_quote": "Transformer encoder stack: Layers that process the combined sequence to produce contextualized passage embeddings.",
+      "source_quote_range": [
+        0,
+        114
+      ],
+      "subject": "Transformer",
+      "predicate": "encodes",
+      "object_or_operands": [],
+      "polarity": "positive",
+      "quantifier": "",
+      "condition": "",
+      "boundary": "",
+      "authority_expectation": "repository_implementation",
+      "semantic_fields": {
+        "operation": "Transformer encoder stack: Layers that process the combined sequence to produce contextualized passage embeddings."
+      },
+      "splitter_candidate": false,
+      "unresolved_reason": "",
+      "content_digest": "sha256:59b36746b8b6a63f6a60b9a99adbea4b94195a755232825cb371755ed4950cd6"
+    },
+    {
+      "atom_id": "atom:9e1c0dad508c8b30",
+      "narrative_unit_id": "facet-833638c7783e3952",
+      "story_node_id": "",
+      "source_quote": "InfoNCE contrastive loss: Objective that encourages the updated positive passage embedding to align with the fixed query embedding",
+      "source_quote_range": [
+        0,
+        130
+      ],
+      "subject": "InfoNCE",
+      "predicate": "optimizes",
+      "object_or_operands": [],
+      "polarity": "positive",
+      "quantifier": "",
+      "condition": "",
+      "boundary": "",
+      "authority_expectation": "repository_implementation",
+      "semantic_fields": {
+        "operation": "InfoNCE contrastive loss: Objective that encourages the updated positive passage embedding to align with the fixed query embedding"
+      },
+      "splitter_candidate": true,
+      "unresolved_reason": "owner_confirmation_required",
+      "content_digest": "sha256:f95cdad6d098c0ccdcac4e165f787e9ee1fda3c29b0662668d139fb82c0fdb29"
+    },
+    {
+      "atom_id": "atom:a75f9558318d3277",
+      "narrative_unit_id": "facet-833638c7783e3952",
+      "story_node_id": "",
+      "source_quote": "while separating negatives.",
+      "source_quote_range": [
+        131,
+        158
+      ],
+      "subject": "while",
+      "predicate": "states",
+      "object_or_operands": [],
+      "polarity": "positive",
+      "quantifier": "",
+      "condition": "while separating negatives.",
+      "boundary": "",
+      "authority_expectation": "repository_implementation",
+      "semantic_fields": {
+        "operation": "while separating negatives."
+      },
+      "splitter_candidate": true,
+      "unresolved_reason": "owner_confirmation_required",
+      "content_digest": "sha256:3c11e3e9d9222a699d6f1a2bbce3ce6c94af3a4702f0154d5738b664c15e8ca4"
+    },
+    {
+      "atom_id": "atom:68fe498ca968880b",
+      "narrative_unit_id": "facet-3c6a3824f6a9641a",
+      "story_node_id": "",
+      "source_quote": "fixed query anchor: The original query embedding remains unchanged during training/inference to serve as a stable reference in the contrastive objective.",
+      "source_quote_range": [
+        0,
+        153
+      ],
+      "subject": "fixed",
+      "predicate": "encodes",
+      "object_or_operands": [],
+      "polarity": "positive",
+      "quantifier": "",
+      "condition": "",
+      "boundary": "",
+      "authority_expectation": "repository_implementation",
+      "semantic_fields": {
+        "guarantee": "fixed query anchor: The original query embedding remains unchanged during training/inference to serve as a stable reference in the contrastive objective."
+      },
+      "splitter_candidate": false,
+      "unresolved_reason": "",
+      "content_digest": "sha256:1293cd7ed326d4ca28579fe936067b588dd22c3c62fa899b8a3b8b2134aeea6e"
+    },
+    {
+      "atom_id": "atom:46e9c8806a39f5ca",
+      "narrative_unit_id": "facet-c5e7c214b56a659f",
+      "story_node_id": "",
+      "source_quote": "ConTEB benchmark: Evaluation suite that tests rerankers on challenging tasks requiring cross‑passage inference, document‑wide context",
+      "source_quote_range": [
+        0,
+        133
+      ],
+      "subject": "ConTEB",
+      "predicate": "scores",
+      "object_or_operands": [],
+      "polarity": "positive",
+      "quantifier": "",
+      "condition": "",
+      "boundary": "",
+      "authority_expectation": "repository_implementation",
+      "semantic_fields": {
+        "operation": "ConTEB benchmark: Evaluation suite that tests rerankers on challenging tasks requiring cross‑passage inference, document‑wide context"
+      },
+      "splitter_candidate": true,
+      "unresolved_reason": "owner_confirmation_required",
+      "content_digest": "sha256:68054760f76795f09d50e77ac23f2d1d16499f5c77df297e183c18742d21bafe"
+    },
+    {
+      "atom_id": "atom:54c0747ae393585b",
+      "narrative_unit_id": "facet-c5e7c214b56a659f",
+      "story_node_id": "",
+      "source_quote": "and structural reasoning.",
+      "source_quote_range": [
+        135,
+        160
+      ],
+      "subject": "and",
+      "predicate": "states",
+      "object_or_operands": [],
+      "polarity": "positive",
+      "quantifier": "",
+      "condition": "",
+      "boundary": "",
+      "authority_expectation": "repository_implementation",
+      "semantic_fields": {
+        "operation": "and structural reasoning."
+      },
+      "splitter_candidate": true,
+      "unresolved_reason": "owner_confirmation_required",
+      "content_digest": "sha256:ee3eecea95375ef0906b9a0a8d856778e6840837a3668f55a3b83d922290f84a"
+    },
+    {
+      "atom_id": "atom:9d5484aeed0c44b8",
+      "narrative_unit_id": "facet-f6e629096087c520",
+      "story_node_id": "",
+      "source_quote": "MLDR, SQuAD, NarrativeQA (training sets): Three ConTEB datasets used for training EBCAR, covering entity disambiguation, span matching",
+      "source_quote_range": [
+        0,
+        134
+      ],
+      "subject": "MLDR,",
+      "predicate": "states",
+      "object_or_operands": [],
+      "polarity": "positive",
+      "quantifier": "",
+      "condition": "",
+      "boundary": "",
+      "authority_expectation": "repository_implementation",
+      "semantic_fields": {
+        "operation": "MLDR, SQuAD, NarrativeQA (training sets): Three ConTEB datasets used for training EBCAR, covering entity disambiguation, span matching"
+      },
+      "splitter_candidate": true,
+      "unresolved_reason": "owner_confirmation_required",
+      "content_digest": "sha256:9f0301c424ee34915ef7d3ab4f8395e3369c414790b094c642ba0206bc6df6de"
+    },
+    {
+      "atom_id": "atom:b9bc390e72504ea3",
+      "narrative_unit_id": "facet-f6e629096087c520",
+      "story_node_id": "",
+      "source_quote": "and narrative comprehension.",
+      "source_quote_range": [
+        136,
+        164
+      ],
+      "subject": "and",
+      "predicate": "states",
+      "object_or_operands": [],
+      "polarity": "positive",
+      "quantifier": "",
+      "condition": "",
+      "boundary": "",
+      "authority_expectation": "repository_implementation",
+      "semantic_fields": {
+        "operation": "and narrative comprehension."
+      },
+      "splitter_candidate": true,
+      "unresolved_reason": "owner_confirmation_required",
+      "content_digest": "sha256:a19feaf50632266b045dd7176ce5b5e46bf63a2586af81ac39bc78d90607005c"
+    },
+    {
+      "atom_id": "atom:50b564977a82d07d",
+      "narrative_unit_id": "facet-9e754ab14c6fde20",
+      "story_node_id": "",
+      "source_quote": "Motivation: efficiency",
+      "source_quote_range": [
+        0,
+        22
+      ],
+      "subject": "Motivation:",
+      "predicate": "states",
+      "object_or_operands": [],
+      "polarity": "positive",
+      "quantifier": "",
+      "condition": "",
+      "boundary": "",
+      "authority_expectation": "repository_implementation",
+      "semantic_fields": {
+        "operation": "Motivation: efficiency"
+      },
+      "splitter_candidate": true,
+      "unresolved_reason": "owner_confirmation_required",
+      "content_digest": "sha256:487eeda723d8169fa7f224f64a5e666a83188e9826f2a54e54e10dc6dd848d1c"
+    },
+    {
+      "atom_id": "atom:8c65a7a8abe6093f",
+      "narrative_unit_id": "facet-9e754ab14c6fde20",
+      "story_node_id": "",
+      "source_quote": "and cross‑passage inference challenges in existing rerankers.",
+      "source_quote_range": [
+        23,
+        84
+      ],
+      "subject": "and",
+      "predicate": "scores",
+      "object_or_operands": [],
+      "polarity": "positive",
+      "quantifier": "",
+      "condition": "",
+      "boundary": "",
+      "authority_expectation": "repository_implementation",
+      "semantic_fields": {
+        "operation": "and cross‑passage inference challenges in existing rerankers."
+      },
+      "splitter_candidate": true,
+      "unresolved_reason": "owner_confirmation_required",
+      "content_digest": "sha256:963007764988f90ce907511673349f43a2276dda4bd24768075bbc23f040e43a"
+    },
+    {
+      "atom_id": "atom:7f8c3069341b7408",
+      "narrative_unit_id": "facet-b9735878c5548c4a",
+      "story_node_id": "",
+      "source_quote": "Embedding‑based reranking formulation",
+      "source_quote_range": [
+        0,
+        37
+      ],
+      "subject": "Embedding‑based",
+      "predicate": "scores",
+      "object_or_operands": [],
+      "polarity": "positive",
+      "quantifier": "",
+      "condition": "",
+      "boundary": "",
+      "authority_expectation": "repository_implementation",
+      "semantic_fields": {
+        "operation": "Embedding‑based reranking formulation"
+      },
+      "splitter_candidate": true,
+      "unresolved_reason": "owner_confirmation_required",
+      "content_digest": "sha256:60224f667aa4d11daa1f731a8a8817c103b4927ee3074e8a28eeaf172e9a5775"
+    },
+    {
+      "atom_id": "atom:82d47e89cf1ac716",
+      "narrative_unit_id": "facet-b9735878c5548c4a",
+      "story_node_id": "",
+      "source_quote": "and overall framework.",
+      "source_quote_range": [
+        38,
+        60
+      ],
+      "subject": "and",
+      "predicate": "states",
+      "object_or_operands": [],
+      "polarity": "positive",
+      "quantifier": "",
+      "condition": "",
+      "boundary": "",
+      "authority_expectation": "repository_implementation",
+      "semantic_fields": {
+        "operation": "and overall framework."
+      },
+      "splitter_candidate": true,
+      "unresolved_reason": "owner_confirmation_required",
+      "content_digest": "sha256:cde1beb22d175b56f3e6fa9b5e72e610187b7589007ee6bbc8e0693bf16f3d0b"
+    },
+    {
+      "atom_id": "atom:ca94257de083bb96",
+      "narrative_unit_id": "facet-68ed73e7a64fbbfd",
+      "story_node_id": "",
+      "source_quote": "Architecture details: enriching embeddings with document ID",
+      "source_quote_range": [
+        0,
+        59
+      ],
+      "subject": "Architecture",
+      "predicate": "encodes",
+      "object_or_operands": [],
+      "polarity": "positive",
+      "quantifier": "",
+      "condition": "",
+      "boundary": "",
+      "authority_expectation": "repository_implementation",
+      "semantic_fields": {
+        "operation": "Architecture details: enriching embeddings with document ID"
+      },
+      "splitter_candidate": true,
+      "unresolved_reason": "owner_confirmation_required",
+      "content_digest": "sha256:5b1ae8893ff20068389f178286e35dc638d5db3808f7bec13389c11e0fe6c5e0"
+    },
+    {
+      "atom_id": "atom:60fe31fdd2c71db8",
+      "narrative_unit_id": "facet-68ed73e7a64fbbfd",
+      "story_node_id": "",
+      "source_quote": "and position, the Transformer encoder with hybrid attention (shared full + dedicated masked).",
+      "source_quote_range": [
+        60,
+        153
+      ],
+      "subject": "and",
+      "predicate": "uses_attention",
+      "object_or_operands": [],
+      "polarity": "positive",
+      "quantifier": "",
+      "condition": "",
+      "boundary": "",
+      "authority_expectation": "repository_implementation",
+      "semantic_fields": {
+        "operation": "and position, the Transformer encoder with hybrid attention (shared full + dedicated masked)."
+      },
+      "splitter_candidate": true,
+      "unresolved_reason": "owner_confirmation_required",
+      "content_digest": "sha256:e4fdcc5068352da8e88b5e0f8392386a70e603c58cabd2192c1d467783bb8879"
+    },
+    {
+      "atom_id": "atom:26ee06b7d3724b67",
+      "narrative_unit_id": "facet-71df0ec224b91883",
+      "story_node_id": "",
+      "source_quote": "Training objective: InfoNCE loss with fixed query anchor.",
+      "source_quote_range": [
+        0,
+        57
+      ],
+      "subject": "Training",
+      "predicate": "optimizes",
+      "object_or_operands": [],
+      "polarity": "positive",
+      "quantifier": "",
+      "condition": "",
+      "boundary": "",
+      "authority_expectation": "repository_implementation",
+      "semantic_fields": {
+        "formula_goal": "Training objective: InfoNCE loss with fixed query anchor."
+      },
+      "splitter_candidate": false,
+      "unresolved_reason": "",
+      "content_digest": "sha256:31ebe4e334802ea6dffe4e91859592d03a886fc21c882a829169e15835cdae8c"
+    },
+    {
+      "atom_id": "atom:59c01266ccb50e8b",
+      "narrative_unit_id": "facet-f55b63fbde1d45df",
+      "story_node_id": "",
+      "source_quote": "Inference procedure.",
+      "source_quote_range": [
+        0,
+        20
+      ],
+      "subject": "Inference",
+      "predicate": "states",
+      "object_or_operands": [],
+      "polarity": "positive",
+      "quantifier": "",
+      "condition": "",
+      "boundary": "",
+      "authority_expectation": "repository_implementation",
+      "semantic_fields": {
+        "operation": "Inference procedure."
+      },
+      "splitter_candidate": false,
+      "unresolved_reason": "",
+      "content_digest": "sha256:cef088222082e65da744938406d35d7f4522e4249949bed4475b5df4b99c822d"
+    },
+    {
+      "atom_id": "atom:5cc446ead0f71d2e",
+      "narrative_unit_id": "facet-c8bf8030283400b2",
+      "story_node_id": "",
+      "source_quote": "Avoid full‑text processing",
+      "source_quote_range": [
+        0,
+        26
+      ],
+      "subject": "Avoid",
+      "predicate": "states",
+      "object_or_operands": [],
+      "polarity": "positive",
+      "quantifier": "",
+      "condition": "",
+      "boundary": "",
+      "authority_expectation": "repository_implementation",
+      "semantic_fields": {
+        "operation": "Avoid full‑text processing"
+      },
+      "splitter_candidate": true,
+      "unresolved_reason": "owner_confirmation_required",
+      "content_digest": "sha256:170d2d50e43326433852472b5e715fe5b52f314158c5d2c41a6e74ffaa662370"
+    },
+    {
+      "atom_id": "atom:a2bdbdbffda36fed",
+      "narrative_unit_id": "facet-c8bf8030283400b2",
+      "story_node_id": "",
+      "source_quote": "and autoregressive generation to reduce inference latency.",
+      "source_quote_range": [
+        27,
+        85
+      ],
+      "subject": "and",
+      "predicate": "states",
+      "object_or_operands": [],
+      "polarity": "positive",
+      "quantifier": "",
+      "condition": "",
+      "boundary": "",
+      "authority_expectation": "author_rationale",
+      "semantic_fields": {
+        "operation": "and autoregressive generation to reduce inference latency."
+      },
+      "splitter_candidate": true,
+      "unresolved_reason": "owner_confirmation_required",
+      "content_digest": "sha256:57960bd657ee71ece662b5a3b36e8e06d692078d42f88e5a2f0562c1b8784043"
+    },
+    {
+      "atom_id": "atom:c653a68b89ae7402",
+      "narrative_unit_id": "facet-e517f869034a38aa",
+      "story_node_id": "",
+      "source_quote": "Inject document‑level structural knowledge into passage embeddings to support cross‑passage inference.",
+      "source_quote_range": [
+        0,
+        102
+      ],
+      "subject": "Inject",
+      "predicate": "encodes",
+      "object_or_operands": [],
+      "polarity": "positive",
+      "quantifier": "",
+      "condition": "",
+      "boundary": "",
+      "authority_expectation": "author_rationale",
+      "semantic_fields": {
+        "operation": "Inject document‑level structural knowledge into passage embeddings to support cross‑passage inference."
+      },
+      "splitter_candidate": false,
+      "unresolved_reason": "",
+      "content_digest": "sha256:d992091999e2a9382cc230707739cb3b4708e2ad7ac6ae2b08b1a6d5cc25ee4a"
+    },
+    {
+      "atom_id": "atom:4f1343de90a9df5a",
+      "narrative_unit_id": "facet-d27285ebc144a3fa",
+      "story_node_id": "",
+      "source_quote": "Design two complementary attention patterns that co‑exist in each layer: global",
+      "source_quote_range": [
+        0,
+        79
+      ],
+      "subject": "Design",
+      "predicate": "uses_attention",
+      "object_or_operands": [],
+      "polarity": "positive",
+      "quantifier": "each",
+      "condition": "",
+      "boundary": "",
+      "authority_expectation": "repository_compositional",
+      "semantic_fields": {
+        "operation": "Design two complementary attention patterns that co‑exist in each layer: global"
+      },
+      "splitter_candidate": true,
+      "unresolved_reason": "owner_confirmation_required",
+      "content_digest": "sha256:37a243affd72aded8314bb39817ae87fa8ef30884347f08334622931c4fcc69e"
+    },
+    {
+      "atom_id": "atom:aa421617c3b18abb",
+      "narrative_unit_id": "facet-d27285ebc144a3fa",
+      "story_node_id": "",
+      "source_quote": "and document‑local.",
+      "source_quote_range": [
+        80,
+        99
+      ],
+      "subject": "and",
+      "predicate": "states",
+      "object_or_operands": [],
+      "polarity": "positive",
+      "quantifier": "",
+      "condition": "",
+      "boundary": "",
+      "authority_expectation": "repository_implementation",
+      "semantic_fields": {
+        "operation": "and document‑local."
+      },
+      "splitter_candidate": true,
+      "unresolved_reason": "owner_confirmation_required",
+      "content_digest": "sha256:af5a3b659d6306e4d2ce645c0ca840318e303bed7e54775910a73b405b14cef0"
+    },
+    {
+      "atom_id": "atom:8afea89deec9368b",
+      "narrative_unit_id": "facet-f49282e62c6e52fe",
+      "story_node_id": "",
+      "source_quote": "Use relative, dynamic document ID assignments rather than global corpus‑level IDs.",
+      "source_quote_range": [
+        0,
+        82
+      ],
+      "subject": "Use",
+      "predicate": "states",
+      "object_or_operands": [],
+      "polarity": "positive",
+      "quantifier": "",
+      "condition": "",
+      "boundary": "",
+      "authority_expectation": "repository_implementation",
+      "semantic_fields": {
+        "operation": "Use relative, dynamic document ID assignments rather than global corpus‑level IDs."
+      },
+      "splitter_candidate": false,
+      "unresolved_reason": "",
+      "content_digest": "sha256:a9866a52a4594411d8da95ea4f89c1eb0535de19942bc46dab1eec2af5b17d8e"
+    },
+    {
+      "atom_id": "atom:6dba77d39e26d98a",
+      "narrative_unit_id": "facet-c0d9a5e725c77367",
+      "story_node_id": "",
+      "source_quote": "Keep the query embedding fixed during training",
+      "source_quote_range": [
+        0,
+        46
+      ],
+      "subject": "Keep",
+      "predicate": "encodes",
+      "object_or_operands": [],
+      "polarity": "positive",
+      "quantifier": "",
+      "condition": "",
+      "boundary": "",
+      "authority_expectation": "repository_implementation",
+      "semantic_fields": {
+        "operation": "Keep the query embedding fixed during training"
+      },
+      "splitter_candidate": true,
+      "unresolved_reason": "owner_confirmation_required",
+      "content_digest": "sha256:74bca857489e15eb94b9049ee9e6bf6968802e93895f75fe42d384b216bf480e"
+    },
+    {
+      "atom_id": "atom:b7c0e6194f7ebafb",
+      "narrative_unit_id": "facet-c0d9a5e725c77367",
+      "story_node_id": "",
+      "source_quote": "while updating passage embeddings.",
+      "source_quote_range": [
+        61,
+        95
+      ],
+      "subject": "while",
+      "predicate": "encodes",
+      "object_or_operands": [],
+      "polarity": "positive",
+      "quantifier": "",
+      "condition": "while updating passage embeddings.",
+      "boundary": "",
+      "authority_expectation": "repository_implementation",
+      "semantic_fields": {
+        "operation": "while updating passage embeddings."
+      },
+      "splitter_candidate": true,
+      "unresolved_reason": "owner_confirmation_required",
+      "content_digest": "sha256:a0caa92f3a73d5bb9df15167197ec1b6b132e3c94e661dc5d3201c95f1493394"
+    },
+    {
+      "atom_id": "atom:6361e23178ab207e",
+      "narrative_unit_id": "facet-ecd069d8ab3be38f",
+      "story_node_id": "",
+      "source_quote": "Train on ConTEB datasets that explicitly require cross‑passage reasoning.",
+      "source_quote_range": [
+        0,
+        73
+      ],
+      "subject": "Train",
+      "predicate": "states",
+      "object_or_operands": [],
+      "polarity": "positive",
+      "quantifier": "",
+      "condition": "",
+      "boundary": "",
+      "authority_expectation": "repository_implementation",
+      "semantic_fields": {
+        "operation": "Train on ConTEB datasets that explicitly require cross‑passage reasoning."
+      },
+      "splitter_candidate": false,
+      "unresolved_reason": "",
+      "content_digest": "sha256:fced4594f758fa254000ca6729bec5c696cb1a28ef6c2cdd16d23eb8575929ad"
+    }
+  ],
+  "closures": [
+    {
+      "atom_id": "atom:4ae9c80bf7941811",
+      "search_status": "terminal",
+      "evidence_disposition": "bounded_not_found",
+      "candidate_surface_status": "incomplete",
+      "repository_proof_status": "unavailable",
+      "author_surface_receipt_id": "",
+      "stop_reason": "bounded_research_complete",
+      "review_binding_id": "",
+      "content_digest": "sha256:063bfae2d5bfb22618ca8241a0a8227382c28167fe2b244aca8899ec5eb86324"
+    },
+    {
+      "atom_id": "atom:5951551f5dad6745",
+      "search_status": "terminal",
+      "evidence_disposition": "bounded_not_found",
+      "candidate_surface_status": "incomplete",
+      "repository_proof_status": "unavailable",
+      "author_surface_receipt_id": "",
+      "stop_reason": "bounded_research_complete",
+      "review_binding_id": "",
+      "content_digest": "sha256:027a7a5f3d540b4ebce0fd6417219f4706f6c3ea764ff44c1d7d10346be89991"
+    },
+    {
+      "atom_id": "atom:c9a89e0532fd3b78",
+      "search_status": "terminal",
+      "evidence_disposition": "bounded_not_found",
+      "candidate_surface_status": "incomplete",
+      "repository_proof_status": "unavailable",
+      "author_surface_receipt_id": "",
+      "stop_reason": "bounded_research_complete",
+      "review_binding_id": "",
+      "content_digest": "sha256:b130607e459ca7ae7536b880167076a3e30107b973e82a06a1cc860402a5db62"
+    },
+    {
+      "atom_id": "atom:54e21a262f2fc05d",
+      "search_status": "terminal",
+      "evidence_disposition": "bounded_not_found",
+      "candidate_surface_status": "incomplete",
+      "repository_proof_status": "unavailable",
+      "author_surface_receipt_id": "",
+      "stop_reason": "bounded_research_complete",
+      "review_binding_id": "",
+      "content_digest": "sha256:56cc9622483a21c69bc2a90feee9c2b457dc33263f1203a171b03c84e1d25731"
+    },
+    {
+      "atom_id": "atom:64231d9e1c0748f3",
+      "search_status": "terminal",
+      "evidence_disposition": "bounded_not_found",
+      "candidate_surface_status": "incomplete",
+      "repository_proof_status": "unavailable",
+      "author_surface_receipt_id": "",
+      "stop_reason": "bounded_research_complete",
+      "review_binding_id": "",
+      "content_digest": "sha256:9d67dd03ad03c80388b0097829d88608b263236e93580c49c5d99f900262ce66"
+    },
+    {
+      "atom_id": "atom:1ee3b3d62ae063ba",
+      "search_status": "terminal",
+      "evidence_disposition": "bounded_not_found",
+      "candidate_surface_status": "incomplete",
+      "repository_proof_status": "unavailable",
+      "author_surface_receipt_id": "",
+      "stop_reason": "bounded_research_complete",
+      "review_binding_id": "",
+      "content_digest": "sha256:71d5b1316671d6fc7e783e3afde4b9bf01c38a857af6a6a1b6cc94d24f060e75"
+    },
+    {
+      "atom_id": "atom:279af60c5396e98d",
+      "search_status": "terminal",
+      "evidence_disposition": "author_spec_only",
+      "candidate_surface_status": "incomplete",
+      "repository_proof_status": "not_applicable",
+      "author_surface_receipt_id": "",
+      "stop_reason": "bounded_research_complete",
+      "review_binding_id": "",
+      "content_digest": "sha256:ea57ba497c381b0a9774427c7a8913690123e2ddc0f702f2aee19771592792ab"
+    },
+    {
+      "atom_id": "atom:26b83aa74ca4cb2a",
+      "search_status": "terminal",
+      "evidence_disposition": "bounded_not_found",
+      "candidate_surface_status": "incomplete",
+      "repository_proof_status": "unavailable",
+      "author_surface_receipt_id": "",
+      "stop_reason": "bounded_research_complete",
+      "review_binding_id": "",
+      "content_digest": "sha256:52679ea5bf674ccc590eb9bb113b4d7c14b7b527123b73dbbfaa936cd6e466e5"
+    },
+    {
+      "atom_id": "atom:3844159cf7d87847",
+      "search_status": "terminal",
+      "evidence_disposition": "repository_partial",
+      "candidate_surface_status": "incomplete",
+      "repository_proof_status": "partial",
+      "author_surface_receipt_id": "",
+      "stop_reason": "bounded_research_complete",
+      "review_binding_id": "",
+      "content_digest": "sha256:b70ad0e273900a2709e24bf2282a193e1f8cc9d40ceafc1ef7ab5145f3c65d58"
+    },
+    {
+      "atom_id": "atom:79327246f9860a33",
+      "search_status": "terminal",
+      "evidence_disposition": "repository_partial",
+      "candidate_surface_status": "incomplete",
+      "repository_proof_status": "partial",
+      "author_surface_receipt_id": "",
+      "stop_reason": "bounded_research_complete",
+      "review_binding_id": "",
+      "content_digest": "sha256:0e6a3b13795b19d99e47197ecae478d7faee477f905a8c3b6e10fe0bdad24536"
+    },
+    {
+      "atom_id": "atom:b9a08526eba31655",
+      "search_status": "terminal",
+      "evidence_disposition": "repository_partial",
+      "candidate_surface_status": "incomplete",
+      "repository_proof_status": "partial",
+      "author_surface_receipt_id": "",
+      "stop_reason": "bounded_research_complete",
+      "review_binding_id": "",
+      "content_digest": "sha256:49a37849543cd21d86355f39c1e1fa51efd23f03aa95f0b781b410474c7d7d03"
+    },
+    {
+      "atom_id": "atom:300092e5e2b2d15d",
+      "search_status": "terminal",
+      "evidence_disposition": "bounded_not_found",
+      "candidate_surface_status": "incomplete",
+      "repository_proof_status": "unavailable",
+      "author_surface_receipt_id": "",
+      "stop_reason": "bounded_research_complete",
+      "review_binding_id": "",
+      "content_digest": "sha256:51b5550337f0c7eb0e17928baf9e3e4e4969545a2b698efd5a8029c7e2abaa6d"
+    },
+    {
+      "atom_id": "atom:6498cbd05711635a",
+      "search_status": "terminal",
+      "evidence_disposition": "bounded_not_found",
+      "candidate_surface_status": "incomplete",
+      "repository_proof_status": "unavailable",
+      "author_surface_receipt_id": "",
+      "stop_reason": "bounded_research_complete",
+      "review_binding_id": "",
+      "content_digest": "sha256:422a6f62211c5c06ed675b8bf96d6ab5bcde74aa461f77e9a98c8713f62ad3c5"
+    },
+    {
+      "atom_id": "atom:9f937691e9b4ada2",
+      "search_status": "terminal",
+      "evidence_disposition": "bounded_not_found",
+      "candidate_surface_status": "incomplete",
+      "repository_proof_status": "unavailable",
+      "author_surface_receipt_id": "",
+      "stop_reason": "bounded_research_complete",
+      "review_binding_id": "",
+      "content_digest": "sha256:e838839687929df559475410f46bf351f9976584221c285bf3df996705d2fe36"
+    },
+    {
+      "atom_id": "atom:a06dfb054613527e",
+      "search_status": "terminal",
+      "evidence_disposition": "bounded_not_found",
+      "candidate_surface_status": "incomplete",
+      "repository_proof_status": "unavailable",
+      "author_surface_receipt_id": "",
+      "stop_reason": "bounded_research_complete",
+      "review_binding_id": "",
+      "content_digest": "sha256:84f16870c67c262140713b1bf0c226618c5ed1ee75a16804a8cbd8a66edd4093"
+    },
+    {
+      "atom_id": "atom:1078c41b924926d3",
+      "search_status": "terminal",
+      "evidence_disposition": "bounded_not_found",
+      "candidate_surface_status": "incomplete",
+      "repository_proof_status": "unavailable",
+      "author_surface_receipt_id": "",
+      "stop_reason": "bounded_research_complete",
+      "review_binding_id": "",
+      "content_digest": "sha256:ba23a1d976d59119586707acb7e7091791ccc80a9d9c80db6f1972e177e84982"
+    },
+    {
+      "atom_id": "atom:3632f5f1612adaa0",
+      "search_status": "terminal",
+      "evidence_disposition": "bounded_not_found",
+      "candidate_surface_status": "incomplete",
+      "repository_proof_status": "unavailable",
+      "author_surface_receipt_id": "",
+      "stop_reason": "bounded_research_complete",
+      "review_binding_id": "",
+      "content_digest": "sha256:7fb7ca8dfc69086560bee80e027bae2f8838fb3e1e817de316dd9aec24a06e93"
+    },
+    {
+      "atom_id": "atom:5b8705e42f1ed7cb",
+      "search_status": "terminal",
+      "evidence_disposition": "repository_partial",
+      "candidate_surface_status": "incomplete",
+      "repository_proof_status": "partial",
+      "author_surface_receipt_id": "",
+      "stop_reason": "bounded_research_complete",
+      "review_binding_id": "",
+      "content_digest": "sha256:a22a4fa137d1ea2005ce84efe571b6afc7bc73452f2522d7cd2311bfe202d6df"
+    },
+    {
+      "atom_id": "atom:7da3d49caaf036db",
+      "search_status": "terminal",
+      "evidence_disposition": "author_spec_only",
+      "candidate_surface_status": "incomplete",
+      "repository_proof_status": "not_applicable",
+      "author_surface_receipt_id": "",
+      "stop_reason": "bounded_research_complete",
+      "review_binding_id": "",
+      "content_digest": "sha256:115bcde298f285134895c1656ec771fe4c71d98f146df3e43789207dd8f95b2c"
+    },
+    {
+      "atom_id": "atom:5aedcd8caaad8aee",
+      "search_status": "terminal",
+      "evidence_disposition": "repository_partial",
+      "candidate_surface_status": "incomplete",
+      "repository_proof_status": "partial",
+      "author_surface_receipt_id": "",
+      "stop_reason": "bounded_research_complete",
+      "review_binding_id": "",
+      "content_digest": "sha256:298e4ed6a3beff14249dbc9601842c0514cd6ae14d12c5b925ef1f19457e2f80"
+    },
+    {
+      "atom_id": "atom:729e0be73cf77501",
+      "search_status": "terminal",
+      "evidence_disposition": "bounded_not_found",
+      "candidate_surface_status": "incomplete",
+      "repository_proof_status": "unavailable",
+      "author_surface_receipt_id": "",
+      "stop_reason": "bounded_research_complete",
+      "review_binding_id": "",
+      "content_digest": "sha256:d4193fa6fe6e228815f92f7fa5ecd4efc0729f04752fcdfcfc346dc5a02c0263"
+    },
+    {
+      "atom_id": "atom:15a7f1b88f0f148a",
+      "search_status": "terminal",
+      "evidence_disposition": "bounded_not_found",
+      "candidate_surface_status": "incomplete",
+      "repository_proof_status": "unavailable",
+      "author_surface_receipt_id": "",
+      "stop_reason": "bounded_research_complete",
+      "review_binding_id": "",
+      "content_digest": "sha256:4282838b467aadf155be30bcaabcda5d23102076ba862b6cd448e55e992fdec9"
+    },
+    {
+      "atom_id": "atom:441e3088a88ea5c1",
+      "search_status": "terminal",
+      "evidence_disposition": "repository_partial",
+      "candidate_surface_status": "incomplete",
+      "repository_proof_status": "partial",
+      "author_surface_receipt_id": "",
+      "stop_reason": "bounded_research_complete",
+      "review_binding_id": "",
+      "content_digest": "sha256:9d852db2b8502df5667ea7764e0bd17564c6c4fa88efcac6ffb0fcb66a0691ef"
+    },
+    {
+      "atom_id": "atom:8d2039f49985b6ff",
+      "search_status": "terminal",
+      "evidence_disposition": "bounded_not_found",
+      "candidate_surface_status": "incomplete",
+      "repository_proof_status": "unavailable",
+      "author_surface_receipt_id": "",
+      "stop_reason": "bounded_research_complete",
+      "review_binding_id": "",
+      "content_digest": "sha256:1e8a447ddf85267d7ec7655ef4267f528933c0775316cdcb140ef014b98cd394"
+    },
+    {
+      "atom_id": "atom:7718d00fa0f6b809",
+      "search_status": "terminal",
+      "evidence_disposition": "bounded_not_found",
+      "candidate_surface_status": "incomplete",
+      "repository_proof_status": "unavailable",
+      "author_surface_receipt_id": "",
+      "stop_reason": "bounded_research_complete",
+      "review_binding_id": "",
+      "content_digest": "sha256:05b37f48323d7fa371ae8570ebd7bb49b6b60e7eff833fe76bafcfed4bb4eec4"
+    },
+    {
+      "atom_id": "atom:0b5caf64be0a118c",
+      "search_status": "terminal",
+      "evidence_disposition": "repository_partial",
+      "candidate_surface_status": "incomplete",
+      "repository_proof_status": "partial",
+      "author_surface_receipt_id": "",
+      "stop_reason": "bounded_research_complete",
+      "review_binding_id": "",
+      "content_digest": "sha256:f2f32fc255d3067dcb7e66cec2b2967906d356a36c655b8e4741cf5c86f3af1c"
+    },
+    {
+      "atom_id": "atom:f2fc7df6a9a970f1",
+      "search_status": "terminal",
+      "evidence_disposition": "repository_partial",
+      "candidate_surface_status": "incomplete",
+      "repository_proof_status": "partial",
+      "author_surface_receipt_id": "",
+      "stop_reason": "bounded_research_complete",
+      "review_binding_id": "",
+      "content_digest": "sha256:03ed79310d11e71ad4ed689bf400fe8b0afa08f563119ab826c0ca88d7fd090f"
+    },
+    {
+      "atom_id": "atom:b3b21af511bda982",
+      "search_status": "terminal",
+      "evidence_disposition": "repository_partial",
+      "candidate_surface_status": "incomplete",
+      "repository_proof_status": "partial",
+      "author_surface_receipt_id": "",
+      "stop_reason": "bounded_research_complete",
+      "review_binding_id": "",
+      "content_digest": "sha256:e406151e96dc5c1762c9696683d417d0e275ff1f658f4ead19e5eeb5cd085cb9"
+    },
+    {
+      "atom_id": "atom:be9100649b7de2e8",
+      "search_status": "terminal",
+      "evidence_disposition": "bounded_not_found",
+      "candidate_surface_status": "incomplete",
+      "repository_proof_status": "unavailable",
+      "author_surface_receipt_id": "",
+      "stop_reason": "bounded_research_complete",
+      "review_binding_id": "",
+      "content_digest": "sha256:60882524a91330631bea52923c690e6e03eaf774945b423379645b530016664a"
+    },
+    {
+      "atom_id": "atom:fd34c4deef56f7bd",
+      "search_status": "terminal",
+      "evidence_disposition": "bounded_not_found",
+      "candidate_surface_status": "incomplete",
+      "repository_proof_status": "unavailable",
+      "author_surface_receipt_id": "",
+      "stop_reason": "bounded_research_complete",
+      "review_binding_id": "",
+      "content_digest": "sha256:0a951b9887a6adbe5fee968b5a0edf55be4f137624e5cc7e30ac58d8402c0c0c"
+    },
+    {
+      "atom_id": "atom:910b7152442202c7",
+      "search_status": "terminal",
+      "evidence_disposition": "repository_partial",
+      "candidate_surface_status": "incomplete",
+      "repository_proof_status": "partial",
+      "author_surface_receipt_id": "",
+      "stop_reason": "bounded_research_complete",
+      "review_binding_id": "",
+      "content_digest": "sha256:490dee01c6a2887274c9521b03fffb877be4e5d45c03a0600eaf1496502df014"
+    },
+    {
+      "atom_id": "atom:4412cf3f873e934d",
+      "search_status": "terminal",
+      "evidence_disposition": "repository_partial",
+      "candidate_surface_status": "incomplete",
+      "repository_proof_status": "partial",
+      "author_surface_receipt_id": "",
+      "stop_reason": "bounded_research_complete",
+      "review_binding_id": "",
+      "content_digest": "sha256:122b9b4240085b599170f946b5df60740828c94f3ee87f8ff01e45d30df5eca3"
+    },
+    {
+      "atom_id": "atom:e382e4a913c182a1",
+      "search_status": "terminal",
+      "evidence_disposition": "repository_partial",
+      "candidate_surface_status": "incomplete",
+      "repository_proof_status": "partial",
+      "author_surface_receipt_id": "",
+      "stop_reason": "bounded_research_complete",
+      "review_binding_id": "",
+      "content_digest": "sha256:0d626ca8c3e043a11e36177b155c33215061cec0ea09760f84358e0905a03b63"
+    },
+    {
+      "atom_id": "atom:0fedfaa9a198b44e",
+      "search_status": "terminal",
+      "evidence_disposition": "bounded_not_found",
+      "candidate_surface_status": "incomplete",
+      "repository_proof_status": "unavailable",
+      "author_surface_receipt_id": "",
+      "stop_reason": "bounded_research_complete",
+      "review_binding_id": "",
+      "content_digest": "sha256:50f00ecd8b0993e5f11dc20af592c6b38013c38075bba2c5c8163cd967adabe9"
+    },
+    {
+      "atom_id": "atom:9e1c0dad508c8b30",
+      "search_status": "terminal",
+      "evidence_disposition": "bounded_not_found",
+      "candidate_surface_status": "incomplete",
+      "repository_proof_status": "unavailable",
+      "author_surface_receipt_id": "",
+      "stop_reason": "bounded_research_complete",
+      "review_binding_id": "",
+      "content_digest": "sha256:3833c2346ebb4e33f709522e5f9550ceacc96feb8bc0e3606e7f4343521b316c"
+    },
+    {
+      "atom_id": "atom:a75f9558318d3277",
+      "search_status": "terminal",
+      "evidence_disposition": "bounded_not_found",
+      "candidate_surface_status": "incomplete",
+      "repository_proof_status": "unavailable",
+      "author_surface_receipt_id": "",
+      "stop_reason": "bounded_research_complete",
+      "review_binding_id": "",
+      "content_digest": "sha256:22ca2be0840bc2dd31282b9fb1ff3a5c8ca0c29c480a953d16d2bc4a70403c64"
+    },
+    {
+      "atom_id": "atom:68fe498ca968880b",
+      "search_status": "terminal",
+      "evidence_disposition": "bounded_not_found",
+      "candidate_surface_status": "incomplete",
+      "repository_proof_status": "unavailable",
+      "author_surface_receipt_id": "",
+      "stop_reason": "bounded_research_complete",
+      "review_binding_id": "",
+      "content_digest": "sha256:5dd2b048e996ed1379b6eb2eef7b27dad0eee23659661417c6528707ce507c1c"
+    },
+    {
+      "atom_id": "atom:46e9c8806a39f5ca",
+      "search_status": "terminal",
+      "evidence_disposition": "bounded_not_found",
+      "candidate_surface_status": "incomplete",
+      "repository_proof_status": "unavailable",
+      "author_surface_receipt_id": "",
+      "stop_reason": "bounded_research_complete",
+      "review_binding_id": "",
+      "content_digest": "sha256:3853510d57ee3c6e0f34a12eae197eb625f9ac04b34a26bbbb0fadfa59f08502"
+    },
+    {
+      "atom_id": "atom:54c0747ae393585b",
+      "search_status": "terminal",
+      "evidence_disposition": "bounded_not_found",
+      "candidate_surface_status": "incomplete",
+      "repository_proof_status": "unavailable",
+      "author_surface_receipt_id": "",
+      "stop_reason": "bounded_research_complete",
+      "review_binding_id": "",
+      "content_digest": "sha256:12e5527bb374052d9efb741976f63ae358f023841f2c01fe4699ac6d5a98ded8"
+    },
+    {
+      "atom_id": "atom:9d5484aeed0c44b8",
+      "search_status": "terminal",
+      "evidence_disposition": "bounded_not_found",
+      "candidate_surface_status": "incomplete",
+      "repository_proof_status": "unavailable",
+      "author_surface_receipt_id": "",
+      "stop_reason": "bounded_research_complete",
+      "review_binding_id": "",
+      "content_digest": "sha256:0738610155903741d10ef6f4a15b7bde00fe507d831fc6c45785425bf3353f1b"
+    },
+    {
+      "atom_id": "atom:b9bc390e72504ea3",
+      "search_status": "terminal",
+      "evidence_disposition": "bounded_not_found",
+      "candidate_surface_status": "incomplete",
+      "repository_proof_status": "unavailable",
+      "author_surface_receipt_id": "",
+      "stop_reason": "bounded_research_complete",
+      "review_binding_id": "",
+      "content_digest": "sha256:e2bf42063639518a98512a4a1fd24a940b1a12b2bbd814446c4fcf89c24855fb"
+    },
+    {
+      "atom_id": "atom:50b564977a82d07d",
+      "search_status": "terminal",
+      "evidence_disposition": "bounded_not_found",
+      "candidate_surface_status": "incomplete",
+      "repository_proof_status": "unavailable",
+      "author_surface_receipt_id": "",
+      "stop_reason": "bounded_research_complete",
+      "review_binding_id": "",
+      "content_digest": "sha256:bec77e7d4b6da6aa6e59ff7e2b3dc74b6c8cddf5077830bcd0ee716eb9fcd42f"
+    },
+    {
+      "atom_id": "atom:8c65a7a8abe6093f",
+      "search_status": "terminal",
+      "evidence_disposition": "bounded_not_found",
+      "candidate_surface_status": "incomplete",
+      "repository_proof_status": "unavailable",
+      "author_surface_receipt_id": "",
+      "stop_reason": "bounded_research_complete",
+      "review_binding_id": "",
+      "content_digest": "sha256:57188738a8622f578d1920a53f4a52b69577e5d529b5aa28ad936b808afa8513"
+    },
+    {
+      "atom_id": "atom:7f8c3069341b7408",
+      "search_status": "terminal",
+      "evidence_disposition": "repository_partial",
+      "candidate_surface_status": "incomplete",
+      "repository_proof_status": "partial",
+      "author_surface_receipt_id": "",
+      "stop_reason": "bounded_research_complete",
+      "review_binding_id": "",
+      "content_digest": "sha256:41cbb96995be1b61d548c247176026cb84d124531c6e614fb1878ce9afe55326"
+    },
+    {
+      "atom_id": "atom:82d47e89cf1ac716",
+      "search_status": "terminal",
+      "evidence_disposition": "repository_partial",
+      "candidate_surface_status": "incomplete",
+      "repository_proof_status": "partial",
+      "author_surface_receipt_id": "",
+      "stop_reason": "bounded_research_complete",
+      "review_binding_id": "",
+      "content_digest": "sha256:f559f8ab55863fa1a114e44e51ff0cdcdef9196b8047ef410996969901c98763"
+    },
+    {
+      "atom_id": "atom:ca94257de083bb96",
+      "search_status": "terminal",
+      "evidence_disposition": "bounded_not_found",
+      "candidate_surface_status": "incomplete",
+      "repository_proof_status": "unavailable",
+      "author_surface_receipt_id": "",
+      "stop_reason": "bounded_research_complete",
+      "review_binding_id": "",
+      "content_digest": "sha256:d0790e1fbda791fefce9ae507ce09a0d070fa7947f11407a347c25b32855b5c7"
+    },
+    {
+      "atom_id": "atom:60fe31fdd2c71db8",
+      "search_status": "terminal",
+      "evidence_disposition": "bounded_not_found",
+      "candidate_surface_status": "incomplete",
+      "repository_proof_status": "unavailable",
+      "author_surface_receipt_id": "",
+      "stop_reason": "bounded_research_complete",
+      "review_binding_id": "",
+      "content_digest": "sha256:cc39dcc1a5f2154574eb6b35cb6d999cdf984992d19840e380403e5839ec3ade"
+    },
+    {
+      "atom_id": "atom:26ee06b7d3724b67",
+      "search_status": "terminal",
+      "evidence_disposition": "bounded_not_found",
+      "candidate_surface_status": "incomplete",
+      "repository_proof_status": "unavailable",
+      "author_surface_receipt_id": "",
+      "stop_reason": "bounded_research_complete",
+      "review_binding_id": "",
+      "content_digest": "sha256:bd39b7ffcbbeb63cef9c0c9268ba857ad477f748489df38342187bc3c482ccfc"
+    },
+    {
+      "atom_id": "atom:59c01266ccb50e8b",
+      "search_status": "terminal",
+      "evidence_disposition": "bounded_not_found",
+      "candidate_surface_status": "incomplete",
+      "repository_proof_status": "unavailable",
+      "author_surface_receipt_id": "",
+      "stop_reason": "bounded_research_complete",
+      "review_binding_id": "",
+      "content_digest": "sha256:36176bcbd4a00fae9be1de587b894241a3ae67729b3779fa267e79dd6aff0428"
+    },
+    {
+      "atom_id": "atom:5cc446ead0f71d2e",
+      "search_status": "terminal",
+      "evidence_disposition": "bounded_not_found",
+      "candidate_surface_status": "incomplete",
+      "repository_proof_status": "unavailable",
+      "author_surface_receipt_id": "",
+      "stop_reason": "bounded_research_complete",
+      "review_binding_id": "",
+      "content_digest": "sha256:6b20ea11c2ab6afd1c546080ff510ad69f7f84d2720df93f21f6552a957b127c"
+    },
+    {
+      "atom_id": "atom:a2bdbdbffda36fed",
+      "search_status": "terminal",
+      "evidence_disposition": "author_spec_only",
+      "candidate_surface_status": "incomplete",
+      "repository_proof_status": "not_applicable",
+      "author_surface_receipt_id": "",
+      "stop_reason": "bounded_research_complete",
+      "review_binding_id": "",
+      "content_digest": "sha256:03c0a11328f10fda1c82faf864921da1ca88b64b077815b1f3d6a7ab78474b3e"
+    },
+    {
+      "atom_id": "atom:c653a68b89ae7402",
+      "search_status": "terminal",
+      "evidence_disposition": "author_spec_only",
+      "candidate_surface_status": "incomplete",
+      "repository_proof_status": "not_applicable",
+      "author_surface_receipt_id": "",
+      "stop_reason": "bounded_research_complete",
+      "review_binding_id": "",
+      "content_digest": "sha256:f4453143fd73d87ffe40655bc82621ffa2c31a6d1b0337b1a14c851d9ce43aa8"
+    },
+    {
+      "atom_id": "atom:4f1343de90a9df5a",
+      "search_status": "terminal",
+      "evidence_disposition": "repository_partial",
+      "candidate_surface_status": "incomplete",
+      "repository_proof_status": "partial",
+      "author_surface_receipt_id": "",
+      "stop_reason": "bounded_research_complete",
+      "review_binding_id": "",
+      "content_digest": "sha256:dd8753af1da6c49dc9c4074586345618bbda5c639575e5e843430c668ab93c94"
+    },
+    {
+      "atom_id": "atom:aa421617c3b18abb",
+      "search_status": "terminal",
+      "evidence_disposition": "repository_partial",
+      "candidate_surface_status": "incomplete",
+      "repository_proof_status": "partial",
+      "author_surface_receipt_id": "",
+      "stop_reason": "bounded_research_complete",
+      "review_binding_id": "",
+      "content_digest": "sha256:0522f6deb8afc07444cb3cb793e3567efa1cc33a12bb0bb98124203ad9e2510d"
+    },
+    {
+      "atom_id": "atom:8afea89deec9368b",
+      "search_status": "terminal",
+      "evidence_disposition": "bounded_not_found",
+      "candidate_surface_status": "incomplete",
+      "repository_proof_status": "unavailable",
+      "author_surface_receipt_id": "",
+      "stop_reason": "bounded_research_complete",
+      "review_binding_id": "",
+      "content_digest": "sha256:7ab122632a6b32ce3b615d722c83533b29931e6c9f9320f9f6edccc13b20b4f5"
+    },
+    {
+      "atom_id": "atom:6dba77d39e26d98a",
+      "search_status": "terminal",
+      "evidence_disposition": "bounded_not_found",
+      "candidate_surface_status": "incomplete",
+      "repository_proof_status": "unavailable",
+      "author_surface_receipt_id": "",
+      "stop_reason": "bounded_research_complete",
+      "review_binding_id": "",
+      "content_digest": "sha256:8d0c4af84d74294a357206842675563acc99962294205d491b8160d249558ead"
+    },
+    {
+      "atom_id": "atom:b7c0e6194f7ebafb",
+      "search_status": "terminal",
+      "evidence_disposition": "bounded_not_found",
+      "candidate_surface_status": "incomplete",
+      "repository_proof_status": "unavailable",
+      "author_surface_receipt_id": "",
+      "stop_reason": "bounded_research_complete",
+      "review_binding_id": "",
+      "content_digest": "sha256:62cfd1166dddab702617bfe7769c5b72408c8ad329ceeb72e8802e5b358c724a"
+    },
+    {
+      "atom_id": "atom:6361e23178ab207e",
+      "search_status": "terminal",
+      "evidence_disposition": "bounded_not_found",
+      "candidate_surface_status": "incomplete",
+      "repository_proof_status": "unavailable",
+      "author_surface_receipt_id": "",
+      "stop_reason": "bounded_research_complete",
+      "review_binding_id": "",
+      "content_digest": "sha256:673ec1a664a66e0d5be8c185a31345868ce472c71ffb3d70eb4015e32e5a57bf"
+    }
+  ],
+  "legacy_field_to_atom_trace": {
+    "facet-d57e6b007d62768e": [
+      "atom:4ae9c80bf7941811",
+      "atom:5951551f5dad6745"
+    ],
+    "facet-bd2114e7ad9b1773": [
+      "atom:c9a89e0532fd3b78",
+      "atom:54e21a262f2fc05d",
+      "atom:64231d9e1c0748f3"
+    ],
+    "facet-308602a0138b57ea": [
+      "atom:1ee3b3d62ae063ba",
+      "atom:279af60c5396e98d",
+      "atom:26b83aa74ca4cb2a"
+    ],
+    "facet-df672e4efc3751e2": [
+      "atom:3844159cf7d87847",
+      "atom:79327246f9860a33",
+      "atom:b9a08526eba31655"
+    ],
+    "facet-6bc5ee440fdc8329": [
+      "atom:300092e5e2b2d15d",
+      "atom:6498cbd05711635a"
+    ],
+    "facet-cbc0a588831ac015": [
+      "atom:9f937691e9b4ada2",
+      "atom:a06dfb054613527e",
+      "atom:1078c41b924926d3",
+      "atom:3632f5f1612adaa0"
+    ],
+    "facet-14d4dbe911667c07": [
+      "atom:5b8705e42f1ed7cb",
+      "atom:7da3d49caaf036db",
+      "atom:5aedcd8caaad8aee"
+    ],
+    "facet-c70f411cffdc0a8f": [
+      "atom:729e0be73cf77501",
+      "atom:15a7f1b88f0f148a"
+    ],
+    "facet-676fcfceb7eddd8a": [
+      "atom:441e3088a88ea5c1"
+    ],
+    "facet-d87af6e7082cc916": [
+      "atom:8d2039f49985b6ff"
+    ],
+    "facet-ba08ce41d6e1d9b9": [
+      "atom:7718d00fa0f6b809"
+    ],
+    "facet-47997bc7d81ecdf5": [
+      "atom:0b5caf64be0a118c",
+      "atom:f2fc7df6a9a970f1",
+      "atom:b3b21af511bda982"
+    ],
+    "facet-00e27dd88a70848f": [
+      "atom:be9100649b7de2e8",
+      "atom:fd34c4deef56f7bd"
+    ],
+    "facet-85ba5afaa2fbe7ac": [
+      "atom:910b7152442202c7",
+      "atom:4412cf3f873e934d",
+      "atom:e382e4a913c182a1"
+    ],
+    "facet-0bce6b6595a44f58": [
+      "atom:0fedfaa9a198b44e"
+    ],
+    "facet-833638c7783e3952": [
+      "atom:9e1c0dad508c8b30",
+      "atom:a75f9558318d3277"
+    ],
+    "facet-3c6a3824f6a9641a": [
+      "atom:68fe498ca968880b"
+    ],
+    "facet-c5e7c214b56a659f": [
+      "atom:46e9c8806a39f5ca",
+      "atom:54c0747ae393585b"
+    ],
+    "facet-f6e629096087c520": [
+      "atom:9d5484aeed0c44b8",
+      "atom:b9bc390e72504ea3"
+    ],
+    "facet-9e754ab14c6fde20": [
+      "atom:50b564977a82d07d",
+      "atom:8c65a7a8abe6093f"
+    ],
+    "facet-b9735878c5548c4a": [
+      "atom:7f8c3069341b7408",
+      "atom:82d47e89cf1ac716"
+    ],
+    "facet-68ed73e7a64fbbfd": [
+      "atom:ca94257de083bb96",
+      "atom:60fe31fdd2c71db8"
+    ],
+    "facet-71df0ec224b91883": [
+      "atom:26ee06b7d3724b67"
+    ],
+    "facet-f55b63fbde1d45df": [
+      "atom:59c01266ccb50e8b"
+    ],
+    "facet-c8bf8030283400b2": [
+      "atom:5cc446ead0f71d2e",
+      "atom:a2bdbdbffda36fed"
+    ],
+    "facet-e517f869034a38aa": [
+      "atom:c653a68b89ae7402"
+    ],
+    "facet-d27285ebc144a3fa": [
+      "atom:4f1343de90a9df5a",
+      "atom:aa421617c3b18abb"
+    ],
+    "facet-f49282e62c6e52fe": [
+      "atom:8afea89deec9368b"
+    ],
+    "facet-c0d9a5e725c77367": [
+      "atom:6dba77d39e26d98a",
+      "atom:b7c0e6194f7ebafb"
+    ],
+    "facet-ecd069d8ab3be38f": [
+      "atom:6361e23178ab207e"
+    ]
+  }
+}

@@ -70,6 +70,22 @@ def classify_formula_worthiness(
         or getattr(record, "source_equation_expression", "")
         or ""
     )
+    # A generic transformation label does not turn a Python expression into
+    # a publishable equation. In particular, an operation-only COMPUTE row
+    # with qualified calls and no formula source must stay in prose even when
+    # the mechanism has unrelated notation hints.
+    operands = " ".join(_ids(_record_get(record, "operands")))
+    has_formula_source = bool(
+        _ids(_record_get(record, "source_equation_ids"))
+        or _ids(_record_get(record, "source_facet_ids"))
+    )
+    if (
+        role == "transformation"
+        and not bool(_record_get(record, "formalizable"))
+        and not has_formula_source
+        and re.search(r"\b(?:self|torch|numpy|np|tf)\s*\.|\.[a-zA-Z_]+\s*\(|//", operands)
+    ):
+        return "prose_or_algorithm", "unlinked_code_expression"
     upper_pred = predicate.upper()
     opcode = re.match(
         r"\b(LOAD|WRITE|RESHAPE|CALL|READ|RETURN|CONSTRUCT|CONCAT|SORT|STACK|FILTER|SELECT)\b",

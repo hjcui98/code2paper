@@ -1,0 +1,126 @@
+{
+  "schema_version": "1.0",
+  "sections": [
+    {
+      "schema_version": "1.0",
+      "section_id": "MA-S1",
+      "packages": [],
+      "disposition": {
+        "section_id": "MA-S1",
+        "disposition": "formalizer_empty",
+        "review_question": "Which core mechanism formula should this section present, and which repository evidence binds it?",
+        "review_note": "Core equation evidence exists but the Formalizer produced no accepted package.",
+        "required_obligation_ids": [],
+        "preferred_obligation_ids": [],
+        "blocking_for_candidate": false,
+        "blocking_for_verified": true
+      },
+      "obligation_truths": [],
+      "formula_obligations": [],
+      "evidence_packs": [],
+      "required_formula_failures": [],
+      "preferred_formula_review_ids": [],
+      "formula_route_failures": [],
+      "content_digest": "sha256:b9915744ce78e133b61ed68cdf62e2530b2990bd1eb73e0d176d6be8a1fd7327"
+    },
+    {
+      "schema_version": "1.0",
+      "section_id": "MA-S2",
+      "packages": [],
+      "disposition": {
+        "section_id": "MA-S2",
+        "disposition": "formalizer_empty",
+        "review_question": "Which core mechanism formula should this section present, and which repository evidence binds it?",
+        "review_note": "Core equation evidence exists but the Formalizer produced no accepted package.",
+        "required_obligation_ids": [],
+        "preferred_obligation_ids": [],
+        "blocking_for_candidate": false,
+        "blocking_for_verified": true
+      },
+      "obligation_truths": [],
+      "formula_obligations": [],
+      "evidence_packs": [],
+      "required_formula_failures": [],
+      "preferred_formula_review_ids": [],
+      "formula_route_failures": [],
+      "content_digest": "sha256:742420550fbfb86960caa8db952663f808ab5eadf5bbee18a5d23001ba169f5f"
+    },
+    {
+      "schema_version": "1.0",
+      "section_id": "MA-S3",
+      "packages": [],
+      "disposition": {
+        "section_id": "MA-S3",
+        "disposition": "formalizer_empty",
+        "review_question": "Which core mechanism formula should this section present, and which repository evidence binds it?",
+        "review_note": "Core equation evidence exists but the Formalizer produced no accepted package.",
+        "required_obligation_ids": [],
+        "preferred_obligation_ids": [],
+        "blocking_for_candidate": false,
+        "blocking_for_verified": true
+      },
+      "obligation_truths": [],
+      "formula_obligations": [],
+      "evidence_packs": [],
+      "required_formula_failures": [],
+      "preferred_formula_review_ids": [],
+      "formula_route_failures": [],
+      "content_digest": "sha256:b3bc11e2f0f079839d4746501807832f586643f06cce35fcd027c8f4163f5e68"
+    },
+    {
+      "schema_version": "1.0",
+      "section_id": "MA-S4",
+      "packages": [],
+      "disposition": {
+        "section_id": "MA-S4",
+        "disposition": "formalizer_empty",
+        "review_question": "Which core mechanism formula should this section present, and which repository evidence binds it?",
+        "review_note": "Core equation evidence exists but the Formalizer produced no accepted package.",
+        "required_obligation_ids": [],
+        "preferred_obligation_ids": [],
+        "blocking_for_candidate": false,
+        "blocking_for_verified": true
+      },
+      "obligation_truths": [],
+      "formula_obligations": [],
+      "evidence_packs": [],
+      "required_formula_failures": [],
+      "preferred_formula_review_ids": [],
+      "formula_route_failures": [],
+      "content_digest": "sha256:61889fdf12a6c63ace0be602c57114f51777d0485aab4bedf4b63b210e4fcedc"
+    },
+    {
+      "schema_version": "1.0",
+      "section_id": "MA-S5",
+      "packages": [],
+      "disposition": {
+        "section_id": "MA-S5",
+        "disposition": "formalizer_empty",
+        "review_question": "Which core mechanism formula should this section present, and which repository evidence binds it?",
+        "review_note": "Core equation evidence exists but the Formalizer produced no accepted package.",
+        "required_obligation_ids": [],
+        "preferred_obligation_ids": [],
+        "blocking_for_candidate": false,
+        "blocking_for_verified": true
+      },
+      "obligation_truths": [],
+      "formula_obligations": [],
+      "evidence_packs": [],
+      "required_formula_failures": [],
+      "preferred_formula_review_ids": [],
+      "formula_route_failures": [],
+      "content_digest": "sha256:08ab6953cff836da0ccc91ab283a8a887bc83c31415a3c60a9b654e45b4a5018"
+    }
+  ],
+  "formalizer_call_traces": [
+    {
+      "phase": "formalizer",
+      "v2": true,
+      "admission_status": "pass",
+      "actual_main_calls": 0,
+      "actual_repair_calls": 0,
+      "planned_main_invocations": 0,
+      "assertion_failures": []
+    }
+  ]
+}

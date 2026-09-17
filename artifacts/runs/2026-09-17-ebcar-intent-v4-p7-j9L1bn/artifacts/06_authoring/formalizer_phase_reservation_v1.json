@@ -1,0 +1,12 @@
+{
+  "active_calls_by_role": {},
+  "active_input_tokens_by_role": {},
+  "active_invocation_ids": [],
+  "content_digest": "sha256:983d909de8c79add3a1b7eb818de6e34df8fa2d1218697e7606c167c4ba82ed4",
+  "inactive_conditional_invocation_ids": [],
+  "phase": "formalizer",
+  "plan_digest": "sha256:26902316a9ce851a3c043dc2b29c65a19f0bfcc41bfaefa61ea1831103f098e7",
+  "reserved_input_tokens_by_role": {},
+  "schema_version": "1.0",
+  "unsettled_invocation_ids": []
+}

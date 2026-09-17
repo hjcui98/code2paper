@@ -1,0 +1,13 @@
+{
+  "schema_version": "1.0",
+  "run_id": "ebcar-intent-v4-p7-current-20260916T165846Z",
+  "repo_snapshot_id": "repo:9b4f1a34c70f10c2317f024df585e282c9d02371586a629e00ace26d8988c942",
+  "project_tree_hash": "sha256:9b4f1a34c70f10c2317f024df585e282c9d02371586a629e00ace26d8988c942",
+  "post_partial_retry_counts": {
+    "O-METHOD-MAINLINE-01-c8146479": 1,
+    "O-STAGE-01-039a963a": 1,
+    "O-STAGE-03-2c5bd758": 1
+  },
+  "semantic_gain_by_obligation": {},
+  "content_digest": "sha256:3c679acf9fb7ff073f639c9880a7bfd875e6af83ebb142af67318697fc813cac"
+}
