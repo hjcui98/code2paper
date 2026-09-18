@@ -3633,3 +3633,32 @@ faithfulness 两侧未测量并给出原因。
 
 验证：`tests/regression_20260917/test_quality_comparison.py` 9 项；全量离线 3762 passed、
 3 deselected、12 subtests passed、exit 0。
+
+## 2026-09-18 不变量 I1–I10 核验 + 修复 I10 缺口
+
+对 §3 的十条不变量逐条找执行点与测试证据，发现并修掉一个真实缺口。
+
+| 不变量 | 执行点 / 证据 | 结论 |
+|---|---|---|
+| I1 证据权威不变 | 作者意图只进组织/自述；实现事实由 source manifest/研究证据支持（`test_intent_writer_surface.py`） | ✓ |
+| I2 单一语义计划 | `test_plan_selection.py::test_v4_selection_does_not_execute_legacy_builder`（legacy 调用为 0） | ✓ |
+| I3 段落/任务分离 | 页 manifest 与 owner page 唯一化（`test_output_feasibility.py`） | ✓ |
+| I4 义务按 occurrence 守恒 | `assess_paragraph_transaction(paragraph_id, validation_stage)`：键为 `(paragraph, target_kind, target_id, stage)`，同一 detail 在两个段落分别评估 | ✓（构造级） |
+| I5 split 不丢条件 | 分页/条件分配（`test_page_calibration.py`、`test_output_feasibility.py`） | ✓ |
+| I6 发送≠内容接受 | 账本 `accepted` 只看内容验收记录（`test_ledger_recovery.py`；本轮质量报告实测同结论） | ✓ |
+| I7 恢复不重置成本 | 身份 + 租约 + `build_resume_preflight`（`test_execution_identity.py`） | ✓ |
+| I8 旧证据不可覆盖 | 产物索引只引用旧对象（`test_artifact_index.py`）+ 归档冻结 fixture | ✓ |
+| I9 失败内容不可发布 | `test_authoring_end_to_end_offline.py`（candidate/verified 为空） | ✓ |
+| I10 验收规则变更 → 身份变更 | **原为缺口**：`validator_bundle_digest` 恒为 `unspecified`，身份对验收规则改动是盲的 | 已修 |
+
+I10 修复：新增 `VALIDATOR_BUNDLE_SOURCES`（封闭集合：`publication_transaction_contract`、
+`writer_output_workload`、`unified_context_compiler`、`mechanism_context_pages`、
+`writer_attempt_ledger`、`authoring_artifact_index`、`paragraph_prose_composer`）与
+`capture_validator_bundle_snapshot()`（逐文件内容指纹 + 缺失/不稳定失败码）；
+`build_run_open_identity` 现在绑定该指纹，并接受 `tokenizer_identity`
+（缺省为显式 `unspecified` 标记）。刻意只收 contract 层：把整个 writer 收进来会让任何
+重构都使 resume 失效，身份会失去区分度。
+
+验证：`tests/regression_20260917/test_validator_bundle_identity.py` 5 项（含"改验收规则 →
+指纹与执行身份都变""缺失来源如实报失败码而非留空"）；全量离线 3767 passed、
+3 deselected、12 subtests passed、exit 0。

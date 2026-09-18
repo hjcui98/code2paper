@@ -55,6 +55,20 @@ RUN_LEASE_FILE = ".run_lease.lock"
 #: 进程内已持有的租约：跨进程互斥、进程内幂等（见 RunLease 文档）。
 _HELD_LEASES: dict[str, "RunLease"] = {}
 
+#: 不变量 I10：参与"验收规则身份"的**封闭**文件集合。任何改变验收语义的修改都必须
+#: 落在其中之一，从而改变 validator bundle digest——历史 accepted/rejected 不得在同一个
+#: receipt digest 名义下被重新解释。刻意只收 contract 层模块：把整个 writer 收进来会让
+#: 任何重构都使 resume 失效（过度触发虽然安全，但会让身份失去区分度）。
+VALIDATOR_BUNDLE_SOURCES: tuple[str, ...] = (
+    "src/code2paper/agentic/publication_transaction_contract.py",
+    "src/code2paper/agentic/writer_output_workload.py",
+    "src/code2paper/agentic/unified_context_compiler.py",
+    "src/code2paper/agentic/mechanism_context_pages.py",
+    "src/code2paper/agentic/writer_attempt_ledger.py",
+    "src/code2paper/agentic/authoring_artifact_index.py",
+    "src/code2paper/agentic/paragraph_prose_composer.py",
+)
+
 #: 引擎指纹排除项：运行产物、缓存、密钥、数据库不进身份（方案 §5.2）。
 _ENGINE_EXCLUDED_PREFIXES: tuple[str, ...] = (
     "artifacts/",
@@ -150,6 +164,30 @@ class EngineDirtyEntry:
         if self.digest:
             payload["digest"] = self.digest
         return payload
+
+
+@dataclass(frozen=True)
+class ValidatorBundleSnapshot:
+    """验收规则身份（I10）：validator/contract 层源码的逐文件内容指纹。"""
+
+    digest: str
+    engine_root: str
+    entries: tuple[tuple[str, str], ...] = ()
+    missing: tuple[str, ...] = ()
+    failure_code: str = ""
+
+    @property
+    def is_usable(self) -> bool:
+        return not self.failure_code
+
+    def as_diagnostics(self) -> dict[str, Any]:
+        return {
+            "digest": self.digest,
+            "engine_root": self.engine_root,
+            "source_count": len(self.entries),
+            "missing": list(self.missing),
+            "failure_code": self.failure_code,
+        }
 
 
 @dataclass(frozen=True)
@@ -361,6 +399,51 @@ class AuthoringExecutionIdentityV2(BaseModel):
             for key, value in self._payload().items()
             if key not in {"schema_version"} and value is not None
         }
+
+
+def capture_validator_bundle_snapshot(
+    engine_root: str | Path | None = None,
+    *,
+    sources: tuple[str, ...] | None = None,
+) -> ValidatorBundleSnapshot:
+    """指纹化验收规则来源；文件缺失/引擎根不可解析时如实记录失败码，不静默留空。"""
+
+    root = Path(engine_root) if engine_root is not None else resolve_engine_root()
+    relative_sources = tuple(sources if sources is not None else VALIDATOR_BUNDLE_SOURCES)
+    if root is None:
+        return ValidatorBundleSnapshot(
+            digest=digest_json({"validator_bundle": "unavailable", "reason": "engine_root_unresolved"}),
+            engine_root="",
+            failure_code=ENGINE_ROOT_UNRESOLVED,
+        )
+    entries: list[tuple[str, str]] = []
+    missing: list[str] = []
+    unstable = False
+    for relative in relative_sources:
+        digest, was_unstable = _hash_file(root / relative)
+        unstable = unstable or was_unstable
+        if digest == "missing":
+            missing.append(relative)
+            continue
+        entries.append((relative, digest))
+    failure_code = ""
+    if missing:
+        failure_code = "validator_source_missing"
+    if unstable:
+        failure_code = "validator_source_unstable"
+    payload = {
+        "validator_bundle": "v1",
+        "sources": dict(entries),
+        "missing": sorted(missing),
+        "failure_code": failure_code,
+    }
+    return ValidatorBundleSnapshot(
+        digest=digest_json(payload),
+        engine_root=str(root),
+        entries=tuple(entries),
+        missing=tuple(sorted(missing)),
+        failure_code=failure_code,
+    )
 
 
 def build_execution_identity(
@@ -876,8 +959,15 @@ def build_run_open_identity(
     run_open_mode: str = "auto",
     engine_snapshot: EngineSourceSnapshot | None = None,
     research_import_digest: str | None = None,
+    validator_bundle: ValidatorBundleSnapshot | None = None,
+    tokenizer_identity: str | None = None,
 ) -> AuthoringExecutionIdentityV2:
-    """从产品入口输入构造执行身份（预检与正式准入共用同一实现）。"""
+    """从产品入口输入构造执行身份（预检与正式准入共用同一实现）。
+
+    I10：``validator_bundle_digest`` 绑定**验收规则来源**（``VALIDATOR_BUNDLE_SOURCES``
+    的逐文件内容指纹），因此改变验收语义的修改一定会改变执行身份，历史
+    accepted/rejected 不会在同一个 receipt digest 名义下被重新解释。
+    """
 
     is_fork = str(run_open_mode or "").strip().casefold() == "fork_authoring"
     llm_payload: Mapping[str, Any] = (
@@ -903,6 +993,12 @@ def build_run_open_identity(
                 getattr(llm_config, "prompt_template_version", "") or ""
             ),
         }),
+        tokenizer_contract_digest=digest_json({
+            "tokenizer": str(tokenizer_identity or "").strip() or "unspecified"
+        }),
+        validator_bundle_digest=(
+            validator_bundle or capture_validator_bundle_snapshot()
+        ).digest,
         creation_mode="fork_authoring" if is_fork else "new",
         research_import_digest=(str(research_import_digest or "") or None),
         # 引擎指纹不可用时允许"新执行"继续（并如实记录 unknown），
@@ -1024,6 +1120,9 @@ __all__ = [
     "RESUME_IDENTITY_MISSING",
     "RESUME_ENGINE_UNAVAILABLE",
     "RUN_DIRECTORY_NOT_EMPTY",
+    "VALIDATOR_BUNDLE_SOURCES",
+    "ValidatorBundleSnapshot",
+    "capture_validator_bundle_snapshot",
     "RUN_LEASE_FILE",
     "RUN_LEASE_HELD",
 ]
