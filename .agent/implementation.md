@@ -3130,3 +3130,20 @@ exit 0。
   被记录/展示"的展示开关，不改变 satisfied，也不能作为发布 verified 的后门。
 
 验证：regression 71 passed；全量离线 3672 passed、3 deselected、12 subtests passed、exit 0。
+
+## 2026-09-18 WP7 §11.1：单一计划选择（v4 不再白跑 legacy builder）
+
+- `publication_method_writer._build_narrative_plan_v3` 重构：**选择在构建之前决定**。
+  * `v4`：只构建 V4，并由 `project_intent_plan_to_narrative_v3` 给出**一次**兼容投影；
+    legacy builder 完全不执行（trace 记 `legacy_builder_executed=False`）。
+  * `v3`：只跑 legacy builder（既有默认路径不变）。
+  * `shadow`：两者都建，但只有 `v3` 可执行，且在 envelope 中显式标注
+    `executable_plan_version`；影子调用仍走各自的 trace/meter。
+  * 显式选定 `v4`/`shadow` 时 V4 编译失败**必须失败**（不变量 I2，不静默 fallback）；
+    `v4` 选定但未编译出计划时报 `intent_plan_v4_selected_but_not_compiled`。
+- envelope 新增 `executable_plan_version`，trace 新增 `plan_selection` 与
+  `legacy_builder_executed`，使"这次跑的是哪套计划、有没有影子调用"可被直接断言。
+
+验证：regression 75 passed（新增 `test_plan_selection.py` 4 例：v4 不调用 legacy、
+v3 调用、v4 编译失败仍失败、shadow 双建单执行）；全量离线 3676 passed、3 deselected、
+12 subtests passed、exit 0。

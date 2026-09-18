@@ -21245,27 +21245,47 @@ def _build_narrative_plan_v3(
     proposal_llm_caller: Callable[..., Any] | None = None,
     proposal_call_meter: Any | None = None,
 ) -> tuple[Any, dict[str, Any]]:
-    from code2paper.agentic.intent_narrative_compiler import build_intent_narrative_plan_v4
+    from code2paper.agentic.intent_narrative_compiler import (
+        build_intent_narrative_plan_v4,
+        project_intent_plan_to_narrative_v3,
+    )
     from code2paper.agentic.method_architect import build_narrative_plan_v3
 
-    plan, trace = build_narrative_plan_v3(
-        contexts=contexts,
-        story_spine=story_spine,
-        formula_packages=formula_packages,
-        prior_plan=prior_plan,
-        proposal_caller=proposal_caller,
-        llm_config=llm_config,
-        proposal_call_meter=proposal_call_meter,
-        # R7 default wiring: the product entry passes no architect caller, so
-        # the builder constructs the bounded proposal caller from llm_config.
-        # ``proposal_llm_caller`` is the transport override used by tests.
-        proposal_llm_caller=proposal_llm_caller,
+    # WP7 §11.1：计划选择在构建**之前**决定。显式选定 v4 时不再执行 legacy
+    # builder——否则每次运行都会白建一份 V3（可能带 proposal 调用）再丢弃它。
+    # ``shadow`` 是显式影子模式：两者都建，但只有一个可执行，且影子调用必须在
+    # 自己的 trace/budget 下计量。
+    selection = (
+        str(os.environ.get("CODE2PAPER_INTENT_NARRATIVE_PLAN", "v3") or "v3")
+        .strip()
+        .casefold()
+        or "v3"
     )
+    if selection not in {"v3", "v4", "shadow"}:
+        selection = "v3"
+
+    plan: Any = None
+    trace: dict[str, Any] = {}
+    legacy_built = False
+    if selection in {"v3", "shadow"}:
+        plan, trace = build_narrative_plan_v3(
+            contexts=contexts,
+            story_spine=story_spine,
+            formula_packages=formula_packages,
+            prior_plan=prior_plan,
+            proposal_caller=proposal_caller,
+            llm_config=llm_config,
+            proposal_call_meter=proposal_call_meter,
+            # R7 default wiring: the product entry passes no architect caller, so
+            # the builder constructs the bounded proposal caller from llm_config.
+            # ``proposal_llm_caller`` is the transport override used by tests.
+            proposal_llm_caller=proposal_llm_caller,
+        )
+        legacy_built = True
     envelope: dict[str, Any] = {
         "schema_version": "1.0",
-        "selected_plan_version": str(
-            os.environ.get("CODE2PAPER_INTENT_NARRATIVE_PLAN", "v3") or "v3"
-        ).strip().casefold() or "v3",
+        "selected_plan_version": selection,
+        "executable_plan_version": "",
         "intent_plan_v4": None,
         "bindings": [],
         "intent_plan_v4_trace": {},
@@ -21284,14 +21304,32 @@ def _build_narrative_plan_v3(
             ]
             envelope["intent_plan_v4_trace"] = intent_trace
         except (TypeError, ValueError):
-            if envelope["selected_plan_version"] == "v4":
+            # 选定 v4 时编译失败必须失败，不能悄悄退回 V3（不变量 I2）。
+            if envelope["selected_plan_version"] in {"v4", "shadow"}:
                 raise
             envelope["intent_plan_v4_trace"] = {"error": "intent_plan_v4_compile_failed"}
+    if envelope["selected_plan_version"] == "v4":
+        # v4 路径：唯一语义计划是 V4，legacy builder 未被执行；这里给出一次
+        # 兼容 V3 投影供下游（内容计划/adapter）消费。
+        if not envelope.get("intent_plan_v4"):
+            raise ValueError("intent_plan_v4_selected_but_not_compiled")
+        from code2paper.agentic.intent_spine_models import IntentNarrativePlanV4
+
+        plan = project_intent_plan_to_narrative_v3(
+            IntentNarrativePlanV4.model_validate(envelope["intent_plan_v4"])
+        )
+        envelope["executable_plan_version"] = "v4"
+    elif envelope["selected_plan_version"] == "shadow":
+        envelope["executable_plan_version"] = "v3"
+    else:
+        envelope["executable_plan_version"] = "v3"
     trace = {
         **trace,
         "intent_narrative_envelope": envelope,
         "intent_plan_v4": bool(envelope.get("intent_plan_v4")),
         "binding_count": len(envelope.get("bindings") or ()),
+        "plan_selection": selection,
+        "legacy_builder_executed": legacy_built,
     }
     return plan, trace
 
