@@ -132,6 +132,34 @@ def classify_transport_failure(
     return "unknown"
 
 
+def transport_failure_failure_code(
+    exception: BaseException | None = None,
+    *,
+    status_code: int | None = None,
+    sent: bool = True,
+    policy: TransportRetryPolicyV1 | None = None,
+) -> str:
+    """把传输失败映射为稳定失败码（供持久收据/片段记录，§9.2）。
+
+    * 结果未知 → ``send_outcome_unknown:<ExcType>``（保留 reservation，不自动重发）
+    * 终态失败 → ``transport_terminal_failure:<ExcType>``
+    * 可重试失败 → ``transport_retryable_failure:<ExcType>``（本层不自动重试，
+      重试必须经策略与 run 预算）
+    """
+
+    active = policy or TransportRetryPolicyV1()
+    kind = classify_transport_failure(
+        status_code=status_code, exception=exception, sent=sent, policy=active
+    )
+    name = type(exception).__name__ if exception is not None else f"status:{status_code}"
+    if kind in {"transport_timeout", "unknown"}:
+        return f"send_outcome_unknown:{name}"
+    if kind == "terminal_status":
+        return f"transport_terminal_failure:{name}"
+    return f"transport_retryable_failure:{name}"
+
+
+
 def next_transport_action(
     *,
     failure_kind: TransportFailureKindV1,
@@ -222,4 +250,5 @@ __all__ = [
     "classify_transport_failure",
     "load_transport_retry_policy",
     "next_transport_action",
+    "transport_failure_failure_code",
 ]

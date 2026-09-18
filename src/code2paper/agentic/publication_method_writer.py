@@ -9,6 +9,7 @@ import os
 import re
 import tempfile
 import time
+from code2paper.agentic.transport_retry_policy import transport_failure_failure_code
 from code2paper.agentic.writer_attempt_ledger import (
     build_resume_preflight,
     content_budget_exhausted,
@@ -5145,10 +5146,19 @@ def _run_publication_method_writer_impl(
                     response = base_caller(config, request)
                 except Exception as exc:  # noqa: BLE001 - receipt must record the call failure
                     from code2paper.export.run_manifest import hash_text
+                    # WP5 §9.2：区分"已发送但结果未知"与可重试/终态失败。结果未知
+                    # 保留 reservation，且**不自动重发**——重试必须经传输策略与
+                    # run 预算，不能变成免费无限重试。
+                    transport_failure_code = transport_failure_failure_code(
+                        exc, sent=True
+                    )
                     response = LLMResponse(
                         text="",
                         response_hash=hash_text(""),
-                        blocked_reason=f"writer_call_error:{type(exc).__name__}",
+                        blocked_reason=(
+                            f"writer_call_error:{type(exc).__name__}:"
+                            f"{transport_failure_code}"
+                        ),
                     )
             if response is None:
                 from code2paper.export.run_manifest import hash_text

@@ -116,3 +116,33 @@ def test_backoff_is_deterministic_and_capped() -> None:
         for index in range(5)
     ]
     assert delays == [2.0, 4.0, 5.0, 5.0, 5.0]
+
+
+def test_failure_codes_are_recorded_for_durable_receipts() -> None:
+    """§9.2：持久记录必须能区分"结果未知 / 终态 / 可重试"。"""
+
+    from code2paper.agentic.transport_retry_policy import (
+        transport_failure_failure_code as code_for,
+    )
+
+    unknown = code_for(TimeoutError("read timeout"), sent=True)
+    assert unknown.startswith("send_outcome_unknown:")
+    assert "TimeoutError" in unknown
+
+    assert code_for(status_code=400).startswith("transport_terminal_failure:")
+    assert code_for(status_code=429).startswith("transport_retryable_failure:")
+    assert code_for(ConnectionResetError("reset"), sent=False).startswith(
+        "transport_retryable_failure:"
+    )
+
+
+def test_writer_call_branch_uses_the_transport_classifier() -> None:
+    """结构性守卫：provider 调用异常分支必须调用分类器（否则策略层形同虚设）。"""
+
+    import inspect
+
+    from code2paper.agentic import publication_method_writer
+
+    source = inspect.getsource(publication_method_writer)
+    assert "transport_failure_failure_code(" in source
+    assert "send_outcome_unknown" in source or "transport_failure_code" in source

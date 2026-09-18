@@ -3249,3 +3249,20 @@ v3 调用、v4 编译失败仍失败、shadow 双建单执行）；全量离线 
 
 验证：regression 92 passed（新增 `test_repair_packet.py` 5 例）；全量离线 3693 passed、
 3 deselected、12 subtests passed、exit 0。
+
+## 2026-09-18 WP5 接线：传输失败分类进入 provider 调用分支
+
+- `transport_retry_policy.py` 新增 `transport_failure_failure_code(...)`：把传输失败映射为
+  稳定失败码——结果未知 → `send_outcome_unknown:<ExcType>`（保留 reservation、不自动重发）；
+  终态 → `transport_terminal_failure:<ExcType>`；可重试 → `transport_retryable_failure:<ExcType>`
+  （本层不自动重试，重试必须经策略与 run 预算）。
+- `publication_method_writer.py` 的 provider 调用异常分支现在调用该分类器，并把结果追加到
+  `blocked_reason`（保留既有 `writer_call_error:<Type>` 前缀以兼容既有断言），使持久片段
+  可区分"结果未知"与"内容失败"。
+- 结构性守卫测试：provider 调用分支必须包含分类器调用，否则策略层形同虚设。
+
+仍未完成：`unsettled_reservations` 并入写侧预算核算（避免与既有
+`unsettled_started_attempt_records` 双重扣费）；真实超时下的端到端集成用例（需注入会
+超时的 caller）。
+
+验证：regression 94 passed；全量离线 3695 passed、3 deselected、12 subtests passed、exit 0。
