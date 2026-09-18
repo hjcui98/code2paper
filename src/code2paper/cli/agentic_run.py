@@ -686,7 +686,7 @@ def _recover_stale_method_attempts(out_root: Path) -> None:
 
 #: 只读/离线诊断命令：由 method_agent_main 直接执行，不进入 worker 监督进程。
 _READ_ONLY_METHOD_AGENT_COMMANDS = frozenset(
-    {"doctor", "live-admission", "record-offline-receipt"}
+    {"doctor", "quality-report", "live-admission", "record-offline-receipt"}
 )
 
 
@@ -837,6 +837,15 @@ def _method_agent_parser() -> argparse.ArgumentParser:
     doctor_parser.add_argument(
         "--json", action="store_true", help="Emit the structured report as JSON"
     )
+    quality_parser = subparsers.add_parser(
+        "quality-report",
+        help=(
+            "§14.3 read-only quality report: mechanically recomputable dimensions plus "
+            "explicit not-measured markers (no model calls)."
+        ),
+    )
+    quality_parser.add_argument("--out", dest="out_root", required=True, help="Run directory to measure")
+    quality_parser.add_argument("--json", action="store_true", help="Emit the structured report as JSON")
     admission_parser = subparsers.add_parser(
         "live-admission",
         help=(
@@ -968,6 +977,17 @@ def method_agent_main(argv: list[str] | None = None) -> int:
         from code2paper.agentic.authoring_doctor import run_authoring_doctor
 
         report = run_authoring_doctor(Path(args.out_root).expanduser().resolve())
+        if bool(getattr(args, "json", False)):
+            print(report.model_dump_json(indent=2))
+        else:
+            print(report.render())
+        return 0
+    if args.command == "quality-report":
+        from code2paper.agentic.authoring_quality_report import (
+            build_authoring_quality_report,
+        )
+
+        report = build_authoring_quality_report(Path(args.out_root).expanduser().resolve())
         if bool(getattr(args, "json", False)):
             print(report.model_dump_json(indent=2))
         else:

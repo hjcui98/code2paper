@@ -886,7 +886,7 @@ def _prepared_continuation_execution_digest(
 
 DEFAULT_LIVE_PROFILE = Path("tests/live/profiles/qwen38_vllm_budgeted.example.env")
 TOKEN_USAGE_SUMMARY_FILENAME = "token_usage_summary_v1.json"
-#: 记录"哪些 invocation 回执复制自冻结根"，用于把复用用量与本次发送分开。
+#: 复用证据索引的文件名/读写实现由产品侧统一定义（见 reused_evidence_index）。
 REUSED_EVIDENCE_RECEIPTS_FILENAME = "reused_evidence_receipts_v1.json"
 
 
@@ -1951,43 +1951,22 @@ def _write_reused_evidence_receipts_index(
 ) -> Path:
     """记录"哪些回执是从冻结根复制来的"（路径 + 复制时摘要），供用量汇总分类。"""
 
-    payload = {
-        "schema_version": "1.0",
-        "artifact": REUSED_EVIDENCE_RECEIPTS_FILENAME.removesuffix(".json"),
-        "source": "frozen_formalizer_phase",
-        "frozen_root": str(frozen),
-        "receipts": [
-            {
-                "path": relative,
-                "digest": _digest_file(authoring / "invocations" / relative),
-            }
-            for relative in receipts
-        ],
-    }
-    path = authoring / REUSED_EVIDENCE_RECEIPTS_FILENAME
-    path.write_text(
-        json.dumps(payload, ensure_ascii=False, sort_keys=True, indent=2) + "\n",
-        encoding="utf-8",
+    from code2paper.agentic.reused_evidence_index import write_reused_evidence_index
+
+    return write_reused_evidence_index(
+        root=authoring.parent.parent,
+        frozen_root=frozen,
+        ledger_dir=authoring / "invocations",
+        relative_paths=receipts,
     )
-    return path
 
 
 def _load_reused_evidence_receipts_index(fresh: Path) -> dict[str, str]:
     """读取复用证据索引：``相对路径 -> 复制时摘要``（缺失/不可读时按空处理）。"""
 
-    path = fresh / "artifacts" / "06_authoring" / REUSED_EVIDENCE_RECEIPTS_FILENAME
-    if not path.is_file():
-        return {}
-    payload = _read_json_mapping(path)
-    index: dict[str, str] = {}
-    for entry in payload.get("receipts") or ():
-        if not isinstance(entry, Mapping):
-            continue
-        relative = str(entry.get("path") or "").strip()
-        digest = str(entry.get("digest") or "").strip()
-        if relative and digest:
-            index[relative] = digest
-    return index
+    from code2paper.agentic.reused_evidence_index import load_reused_evidence_index
+
+    return load_reused_evidence_index(fresh)
 
 
 def _frozen_project_tree_hash(frozen: Path) -> tuple[str, str]:

@@ -3570,3 +3570,39 @@ sent_calls=0 sent_total=0 | reused_evidence_calls=45 reused_evidence_total=12212
 
 验证：regression 新增 `tests/regression_20260917/test_token_usage_provenance.py`（5 项）；
 全量离线 3745 passed、3 deselected、12 subtests passed、exit 0。
+
+## 2026-09-18 §14.3：质量报告（只报可机械复算的维度）
+
+方案 §14.3 要求"不能只报 accepted_pages / pages"。新增
+`src/code2paper/agentic/authoring_quality_report.py` +
+CLI `method-agent quality-report --out <dir> [--json]`（只读，走既有产品入口）。
+
+六个维度的处理方式（不编分数）：
+
+| 维度 | 状态 | 来源 |
+|---|---|---|
+| 效率 | measured | invocation 账本（发送数/内容尝试/拒发）+ 回执 provider_usage + 预算信封 |
+| 恢复健壮性 | measured | `scan_exhausted_invocations`、doctor 阻塞页、未结算预留、耗尽页失败码 |
+| 意图覆盖 | measured/partial | `obligation_coverage_v2`（must-cover/有依据/未解决/显式缺口）+ 意图表面代理指标 |
+| 信息利用 | partial | `method_authoring_closure_metrics_v1` 各块 + 消费回执计数 |
+| 叙事质量 | partial | 仅代理指标（无段落材料的段数、阻塞页数），并声明"为 0 ≠ 合格" |
+| 忠实性 | **not_measured** | 需要冻结证据 + 正文 + 逐句/逐公式比对；离线无判断者，不报分 |
+
+关键口径（事故实测得出）：**接受必须看账本的内容验收记录**，不能看回执的
+`delivery_status`——事故里两次 provider 调用的 `delivery_status` 都是 accepted，而页
+最终未被接受（`task_status=partial`）。因此效率指标的首次接受率用
+`primary_accepted`，repair 收益用 `accepted` + `content_repair_count`。
+
+同时把"复用证据"口径接进报告：复用证据索引抽到产品侧
+`src/code2paper/agentic/reused_evidence_index.py`（回放脚本改为调用它），
+prepared 根里复制自冻结根的回执不计入本次 run 的效率指标，但以
+`reused_evidence_invocations/receipts` 显式报出，不被静默丢弃。
+
+事故归档实测（冻结 oracle）：40 invocations / 45 provider sends（2 次拒发无 provider
+request）/ 19 接受 / 首次接受率 0.4 / repair 5 次中 3 次成功 / 1,164,056 input tokens；
+唯一阻塞页 2/2 内容尝试耗尽，失败码 `detail_witness_missing` + `detail_semantic_mismatch`；
+7 个 allowed formula、消费 0；27 段缺段落材料；comparison 状态 `not_available`
+（无候选产物，不伪造 baseline）。
+
+验证：`tests/regression_20260917/test_quality_report.py` 8 项；全量离线 3753 passed、
+3 deselected、12 subtests passed、exit 0。
