@@ -3488,3 +3488,53 @@ python -m code2paper.cli.main method-agent run \
   若要求 L1 也有 IdentityV2，需要把 replay 入口接到 `create_or_validate_execution_identity`
   （独立小改动，可用 provider=NONE 离线验证）。
 - L1 通过 ≠ L2/L3 通过；L2 失败不得清 ledger 后标记为同一修复验证成功。
+
+## 2026-09-18 §14.2 L1 入口接上 WP1 身份 + 两个真实缺陷
+
+用户选择"先不跑 live，继续离线加固（把 L1 入口也接上 IdentityV2 等）"。
+
+### 1. L1（回放）入口与产品入口共用同一准入实现
+
+- `autonomous_method_agent._open_authoring_execution` → 公开为
+  `open_authoring_execution`（产品入口与回放共用，避免两套相近准入）。
+- 新增 `research_import_digest` 形参：回放永远从冻结证据出发，非 fork 模式也必须把
+  "导入的研究证据"绑进身份，否则两份不同冻结输入会得到同一个 execution_id；
+  fork 模式下以 checkpoint 校验结果为准，显式摘要与文件冲突即拒绝。
+- `scripts/run_authoring_replay.py`：新增 `--run-open-mode`（默认 `auto`）、
+  `--research-import`、`--author-intent`；身份在**任何进程产物之前**建立（早于 runtime
+  ledger/token 汇总/frozen 拷贝）；被拒 → exit 2 且 fresh 根零污染，拒绝证据写在
+  `<fresh>.execution_identity_rejected.json`；`execution_record.json` 记录
+  `execution_identity`。
+
+冻结输入默认值：意图图 `artifacts/intent_obligation_graph_v2.json`，研究导入
+`artifacts/research_product/research_stage_checkpoint_v1.json`（事故归档实测
+`verify_research_import` 通过，digest `sha256:aca55aa7…`）。
+
+### 2. 缺陷（已修，高危）：run 根位于 `artifacts/` 之下时产物写到引擎树
+
+`output_names._out_root` 无条件截断到第一个 `artifacts` 之前 →
+`out_root=<ws>/artifacts/runs/<run>` 的全部产物被写进 `<ws>`。冒烟实测：
+`publication_writer_result_v1.json`、`deterministic_preflight_v1.json` 出现在仓库
+`artifacts/06_authoring/`（已留档到证据目录并还原仓库）。若不修，我原本推荐的 live
+运行根（`artifacts/runs/...`，引擎指纹排除路径）会静默把证据写到 run 之外。
+
+修复：仅当 `artifacts` 后紧跟**已知阶段目录**（由 `METHOD_OUTPUTS` 派生：
+`01_input`…`10_run`、`research_product`）时才做"子目录 → run 根"归一化。
+回归：`tests/regression_20260917/test_output_root_normalization.py`（含 writer 级用例，
+已确认对旧实现会失败）。
+
+### 3. 缺陷（未修，已留证）：`prepare` 根把冻结历史用量记成本次 run 的 token 用量
+
+`token_usage_summary_v1.json` 报 `calls=45 / input=1164056 / output=57144`，而同轮
+`model_calls: 0`、`/health`、`/models`、`/metrics` 全 `Connection refused`、墙钟 < 1s。
+来源：`prepare` 复制冻结 Formalizer 阶段的 invocation 回执（带历史 usage），随后被计入
+本次 run。对 §14.3 的"发送调用数 / 真实 tokens / 无效调用量"是失真的，需要区分
+"本次发送"与"复用证据用量"。涉及账本口径，未擅自改。
+
+### 4. 测试污染教训（已修）
+
+在测试里直接调用 `run_authoring_replay.main()` 会把默认 live profile 应用进进程环境，
+污染同一 session 的后续测试（全量套件出现 8 个与本改动无关的失败）。测试内调用 CLI
+必须传显式空 profile 并快照/恢复 `os.environ`。
+
+验证：全量离线 3740 passed、3 deselected、12 subtests passed、exit 0。

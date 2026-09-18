@@ -56,6 +56,7 @@ from code2paper.agentic.authoring_context_contract import (
 from code2paper.agentic.authoring_execution_identity import (
     AuthoringExecutionIdentityV2,
     RunLease,
+    RunOpenDecision,
     RunOpenRejected,
     acquire_run_lease,
     build_run_open_identity,
@@ -4281,7 +4282,7 @@ def _persist_partial_method_run(
 _ACTIVE_RUN_LEASES: set[RunLease] = set()
 
 
-def _open_authoring_execution(
+def open_authoring_execution(
     *,
     out_root: Path,
     run_open_mode: str,
@@ -4290,18 +4291,41 @@ def _open_authoring_execution(
     claims_path: str | Path | None,
     llm_config: LLMConfig | None,
     research_stage_checkpoint: str | Path | None = None,
+    research_import_digest: str | None = None,
 ) -> tuple[AuthoringExecutionIdentityV2, RunLease]:
     """目录准入 + 单写者租约 + create-or-validate 身份（WP1 §5.3/§5.4）。
 
     必须在任何研究/写作产物写入之前执行：拒绝时零模型调用、零写入。
+
+    产品入口（``run_autonomous_method_agent``）与回放入口
+    （``scripts/run_authoring_replay.py``）共用同一实现，使 L1/L2 的准入判据与
+    execution_id 完全一致，而不是两套相近但不相同的准入。
+
+    ``research_import_digest`` 供回放入口在非 fork 模式下也绑定"导入的冻结研究
+    证据"：回放永远从冻结证据出发，若不绑定，两份不同冻结输入会得到同一个身份。
+    fork 模式仍以 checkpoint 文件自身的校验结果为准，显式摘要与之冲突即拒绝。
     """
 
     mode = str(run_open_mode or "auto")
+    explicit_import = str(research_import_digest or "")
     verifiable, import_digest, _detail = (True, "", "")
     if mode.strip().casefold() == "fork_authoring":
         verifiable, import_digest, _detail = verify_research_import(
             research_stage_checkpoint
         )
+        if verifiable and explicit_import and explicit_import != import_digest:
+            raise RunOpenRejected(
+                RunOpenDecision(
+                    allowed=False,
+                    code="research_import_digest_mismatch",
+                    requested_mode=mode,
+                    effective_mode=mode,
+                    allowed_next_action="recompute_the_import_digest_from_the_checkpoint",
+                    detail="显式研究导入摘要与 checkpoint 文件内容不一致",
+                )
+            )
+    elif explicit_import:
+        import_digest = explicit_import
     identity = build_run_open_identity(
         repo_path=repo_path,
         author_intent_path=author_intent_path,
@@ -4349,7 +4373,7 @@ def run_autonomous_method_agent(
     effective_run_id = _effective_method_run_id(resolved_out, run_id)
     # WP1：目录准入与单写者租约先于一切产物写入；租约由模块级集合持有到进程退出，
     # 避免局部变量被回收时提前释放 flock。
-    execution_identity, run_lease = _open_authoring_execution(
+    execution_identity, run_lease = open_authoring_execution(
         out_root=resolved_out,
         run_open_mode=run_open_mode,
         repo_path=repo_path,
@@ -4581,6 +4605,7 @@ __all__ = [
     "load_user_claims",
     "load_research_stage_checkpoint",
     "merge_product_evidence",
+    "open_authoring_execution",
     "persist_research_stage_checkpoint",
     "persist_product_artifacts",
     "run_autonomous_method_agent",

@@ -221,6 +221,19 @@ ALIASES = {
 }
 
 
+def _artifact_stage_dirs() -> frozenset[str]:
+    """``METHOD_OUTPUTS`` 中 ``artifacts/<stage>/...`` 的阶段目录集合（派生，非手写）。"""
+
+    return frozenset(
+        value.split("/")[1]
+        for value in METHOD_OUTPUTS.values()
+        if value.startswith("artifacts/") and value.count("/") >= 2
+    )
+
+
+_ARTIFACT_STAGE_DIRS = _artifact_stage_dirs()
+
+
 def method_output(base: Path, key: str) -> Path:
     canonical_key = ALIASES.get(key, key)
     path = _out_root(base) / METHOD_OUTPUTS[canonical_key]
@@ -249,5 +262,13 @@ def _out_root(base: Path) -> Path:
         return base.parent
     if "artifacts" in parts:
         index = parts.index("artifacts")
-        return Path(*parts[:index]) if index else Path(".")
+        # ``artifacts`` 只有在后面紧跟**已知阶段目录**时才是"子目录 → run 根"的
+        # 历史简写（旧调用方会传 <root>/artifacts/06_authoring[...]）。
+        # 其它情况一律按字面处理：run 根本身完全可能位于名为 artifacts 的目录之下
+        # （例如 <workspace>/artifacts/runs/<run>）。旧规则无条件截断到第一个
+        # artifacts 之前，会把这类 run 的产物静默写到 run 根之外——实测中
+        # publication_writer_result_v1 被写进了引擎树的 artifacts/06_authoring/。
+        if len(parts) > index + 1 and parts[index + 1] in _ARTIFACT_STAGE_DIRS:
+            return Path(*parts[:index]) if index else Path(".")
+        return base
     return base

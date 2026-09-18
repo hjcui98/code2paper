@@ -1487,6 +1487,7 @@ def _write_execution_record(
         ),
         "resume_section_ids": list(arguments.resume),
         "code_state_digest": _code_state_digest(),
+        "execution_identity": telemetry.get("execution_identity", {}),
         "authoring_context": telemetry.get("authoring_context", {}),
         "preflight_only": bool(telemetry.get("preflight_only")),
         "deterministic_preflight": telemetry.get(
@@ -2679,6 +2680,109 @@ def _run_deterministic_replay_preflight(
     }
 
 
+def _default_frozen_author_intent(frozen: Path) -> Path | None:
+    candidate = frozen / "artifacts" / "intent_obligation_graph_v2.json"
+    return candidate if candidate.is_file() else None
+
+
+def _default_frozen_research_import(frozen: Path) -> Path | None:
+    candidate = frozen / "artifacts" / "research_product" / "research_stage_checkpoint_v1.json"
+    return candidate if candidate.is_file() else None
+
+
+def _open_replay_execution_identity(
+    *,
+    frozen: Path,
+    fresh: Path,
+    arguments: Any,
+    llm_config: Any,
+) -> dict[str, Any]:
+    """WP1 准入：回放入口与产品入口共用 ``open_authoring_execution``。
+
+    返回写入 telemetry 的诊断；不可信输入一律 fail-closed（抛
+    ``RunOpenRejected``），调用方据此零生成退出。
+    """
+
+    from code2paper.agentic.autonomous_method_agent import open_authoring_execution
+    from code2paper.agentic.authoring_execution_identity import (
+        RESEARCH_IMPORT_UNVERIFIABLE,
+        RunOpenRejected,
+        verify_research_import,
+    )
+
+    mode = str(getattr(arguments, "run_open_mode", "") or "").strip().casefold()
+    if not mode:
+        # 未显式要求身份（直接进程内调用/旧脚本用法）：如实记录"未请求"，
+        # 不得让产物看起来像身份受控的 run。
+        return {"status": "not_requested"}
+
+    repo_value = str(getattr(arguments, "repo", "") or "").strip()
+    if not repo_value:
+        raise RunOpenRejected(
+            _rejected_decision(mode, "execution_identity_target_repo_required")
+        )
+    repo_path = Path(repo_value).expanduser().resolve()
+    if not repo_path.is_dir():
+        raise RunOpenRejected(
+            _rejected_decision(mode, "execution_identity_target_repo_missing")
+        )
+
+    intent_path = Path(str(getattr(arguments, "author_intent", "") or "")).expanduser()
+    if not str(getattr(arguments, "author_intent", "") or "").strip():
+        intent_path = _default_frozen_author_intent(frozen)
+    claims_value = str(getattr(arguments, "claims", "") or "").strip()
+
+    import_path = Path(str(getattr(arguments, "research_import", "") or "")).expanduser()
+    if not str(getattr(arguments, "research_import", "") or "").strip():
+        import_path = _default_frozen_research_import(frozen)
+
+    # 回放永远从冻结研究证据出发（§14.2 L1/L2）：所有模式都要求可校验的导入，
+    # 并把导入摘要绑进身份，否则两份不同冻结输入会得到同一个 execution_id。
+    verifiable, import_digest, import_detail = verify_research_import(import_path)
+    if not verifiable:
+        raise RunOpenRejected(_rejected_decision(mode, RESEARCH_IMPORT_UNVERIFIABLE, import_detail))
+
+    identity, _lease = open_authoring_execution(
+        out_root=fresh,
+        run_open_mode=mode,
+        repo_path=repo_path,
+        author_intent_path=intent_path,
+        claims_path=(claims_value or None),
+        llm_config=llm_config,
+        research_stage_checkpoint=import_path,
+        research_import_digest=import_digest,
+    )
+    return {
+        "status": "opened",
+        "mode": mode,
+        "execution_id": identity.execution_id,
+        "content_digest": identity.content_digest,
+        "engine_commit_sha": identity.engine_commit_sha,
+        "engine_source_digest": identity.engine_source_digest,
+        "target_repo_snapshot_digest": identity.target_repo_snapshot_digest,
+        "target_project_tree_hash": identity.target_project_tree_hash,
+        "intent_content_digest": identity.intent_content_digest,
+        "claims_digest": identity.claims_digest,
+        "research_import_digest": identity.research_import_digest,
+        "author_intent_path": str(intent_path) if intent_path else "",
+        "research_import_path": str(import_path) if import_path else "",
+        "identity_path": str(fresh / "artifacts" / "research_product" / "authoring_execution_identity_v2.json"),
+    }
+
+
+def _rejected_decision(mode: str, code: str, detail: str = "") -> Any:
+    from code2paper.agentic.authoring_execution_identity import RunOpenDecision
+
+    return RunOpenDecision(
+        allowed=False,
+        code=code,
+        requested_mode=mode,
+        effective_mode=mode,
+        allowed_next_action="provide_target_repo_and_verified_research_import",
+        detail=detail or "回放身份准入需要目标仓库与已校验的研究导入",
+    )
+
+
 def _replay(
     *,
     frozen: Path,
@@ -2736,6 +2840,9 @@ def _replay(
     from code2paper.llm.providers import load_llm_config_from_env
 
     llm_config = load_llm_config_from_env()
+    # 身份/准入已由 main() 在任何进程产物之前完成（见 _open_replay_execution_identity）；
+    # 直接进程内调用 `_replay` 时 telemetry 里没有该键，如实视为"未请求"。
+    telemetry.setdefault("execution_identity", {"status": "not_requested"})
     requested_mode = str(getattr(arguments, "authoring_context_mode", "") or "").strip().casefold()
     profile_mode = str(os.environ.get("CODE2PAPER_AUTHORING_CONTEXT_MODE", "") or "").strip().casefold()
     effective_mode = requested_mode or profile_mode or "legacy"
@@ -3832,6 +3939,33 @@ def _build_parser() -> argparse.ArgumentParser:
             "record its result"
         ),
     )
+    parser.add_argument(
+        "--run-open-mode",
+        choices=("auto", "new", "resume", "fork_authoring"),
+        default="auto",
+        help=(
+            "WP1 execution identity + directory admission before any authoring "
+            "write (default: auto — new for an empty root, resume when the "
+            "identity matches, otherwise rejected). fork_authoring requires a "
+            "verified --research-import checkpoint."
+        ),
+    )
+    parser.add_argument(
+        "--research-import",
+        default="",
+        help=(
+            "Verified research checkpoint for fork_authoring "
+            "(default: <frozen>/artifacts/research_product/research_stage_checkpoint_v1.json)"
+        ),
+    )
+    parser.add_argument(
+        "--author-intent",
+        default="",
+        help=(
+            "Author intent file bound into the execution identity "
+            "(default: <frozen>/artifacts/intent_obligation_graph_v2.json)"
+        ),
+    )
     return parser
 
 
@@ -3879,6 +4013,63 @@ def main(argv: list[str] | None = None) -> int:
     runtime_start: dict | None = None
     runtime_end: dict | None = None
     exit_code = 0
+
+    # WP1：身份 + 目录准入必须早于**任何**进程产物——包括运行账本与 token 汇总；
+    # 否则一次被拒的准入会留下文件，把同一 fresh 根的下一次 `new` 也一起挡掉。
+    from code2paper.agentic.authoring_execution_identity import RunOpenRejected
+    from code2paper.llm.providers import load_llm_config_from_env
+
+    try:
+        telemetry["execution_identity"] = _open_replay_execution_identity(
+            frozen=frozen,
+            fresh=fresh,
+            arguments=arguments,
+            llm_config=load_llm_config_from_env(),
+        )
+    except RunOpenRejected as rejected:
+        decision = rejected.decision
+        telemetry["execution_identity"] = {
+            "status": "rejected",
+            "mode": str(getattr(arguments, "run_open_mode", "") or ""),
+            "code": decision.code,
+            "next_action": decision.allowed_next_action,
+            "detail": decision.detail,
+            "mismatched_fields": list(decision.mismatched_fields),
+            "exhausted_invocations": list(decision.exhausted_invocations),
+        }
+        telemetry["terminal_stage"] = "input"
+        telemetry["terminal_reason"] = f"execution_identity_rejected:{decision.code}"
+        _remember_first_failure(
+            telemetry,
+            stage="input",
+            reason=telemetry["terminal_reason"],
+            error_code=decision.code,
+        )
+        # 拒绝证据写在 fresh 根之外：fresh 根保持可重试（零生成、零污染）。
+        refusal = fresh.parent / f"{fresh.name}.execution_identity_rejected.json"
+        refusal.parent.mkdir(parents=True, exist_ok=True)
+        refusal.write_text(
+            json.dumps(
+                {
+                    "schema_version": "1.0",
+                    "command": " ".join(sys.argv),
+                    "frozen_root": str(frozen),
+                    "fresh_root": str(fresh),
+                    "execution_identity": telemetry["execution_identity"],
+                },
+                ensure_ascii=False,
+                sort_keys=True,
+                indent=2,
+            )
+            + "\n",
+            encoding="utf-8",
+        )
+        print(
+            "[replay] execution identity rejected "
+            f"code={decision.code} next={decision.allowed_next_action} "
+            f"detail={decision.detail} record={refusal}"
+        )
+        return 2
 
     def _request_exit(signum: int, _frame: object) -> None:
         raise SystemExit(128 + int(signum))
