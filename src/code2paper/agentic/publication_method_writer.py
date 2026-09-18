@@ -9,6 +9,10 @@ import os
 import re
 import tempfile
 import time
+from code2paper.agentic.writer_attempt_ledger import (
+    content_budget_exhausted,
+    read_invocation_ledger_state,
+)
 from code2paper.agentic.unified_invocation_ledger import (
     publish_provider_request, publish_provider_response,
     publish_writer_content_acceptance, read_writer_content_acceptance,
@@ -4825,10 +4829,21 @@ def _run_publication_method_writer_impl(
                         )
 
             attempt = last_started_attempt(ledger_root, invocation_id) + 1
-            if attempt > int(getattr(invocation, "max_attempts", 0) or 0):
+            max_content_attempts = int(getattr(invocation, "max_attempts", 0) or 0)
+            # WP5 §9.2：内容预算按**真实内容尝试**（provider send）计数，不按事件序号。
+            # 拒发事件可以保留诊断收据，但不得消耗内容预算；否则连续两次预发送拒绝
+            # 就能把一个从未发送过请求的 invocation 永久锁死——这正是事故
+            # attempt-0003/0004 之后"重启即必死"的机制。
+            content_state = read_invocation_ledger_state(
+                out_root, invocation_id, content_attempt_limit=max_content_attempts
+            )
+            if attempt > max_content_attempts and (
+                content_budget_exhausted(content_state, max_content_attempts)
+                or not content_state.counters.rejected_before_send_events
+            ):
                 request_failures.append(
                     f"attempt_limit_exhausted:{invocation_id}:{attempt}>"
-                    f"{int(getattr(invocation, 'max_attempts', 0) or 0)}"
+                    f"{max_content_attempts}"
                 )
             started_at = time.time()
             # Primary attempts are bound to the immutable plan envelope.  A

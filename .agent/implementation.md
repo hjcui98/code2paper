@@ -3074,3 +3074,19 @@ exit 0。
    无静默 fallback）、Writer 必需页缺口在 phase boundary 前置暴露。
 6. **live 验证（L1/L2/L3）**：需方案 §14.1 的显式授权与全新 out 目录；本轮未运行任何
    真实模型调用，也未续跑 `/tmp/c2p-p7-ebcar-v4-intent-j9L1bn`。
+
+## 2026-09-18 WP5 写侧：内容预算按真实发送计数（不再被拒发事件吃掉）
+
+- `writer_attempt_ledger.py` 新增纯函数 `content_budget_exhausted(state, max_attempts)`：
+  已接受 → False；否则只有 `content_attempt_count >= max_attempts` 才算耗尽。
+- `publication_method_writer.py` 调用边界：`attempt = last_started_attempt(...) + 1` 仍作为
+  **事件序号**用于收据身份，但"是否拒发"改为
+  `attempt > max_attempts and (content_budget_exhausted(...) or 没有拒发事件)`：
+  连续两次预发送拒绝不再把内容预算耗尽（此前 `attempt 3 > 2` 直接拒发，等于用一个
+  从未发送过请求的页永久锁死）。拒发仍保留诊断收据（§9.2 允许），但不消耗内容尝试。
+- 新增回归：`test_presend_refusals_do_not_consume_content_budget`（两次拒发、零发送 →
+  不算耗尽；事故页 2/2 → 耗尽）、`test_accepted_invocation_is_never_exhausted`。
+
+验证：`python -m pytest -q tests/regression_20260917` 65 passed；
+`tests/test_agentic_publication_method_writer.py + regression` 211 passed；
+`python -m pytest -q -m 'not live_llm'` → 3666 passed、3 deselected、12 subtests passed，exit 0。

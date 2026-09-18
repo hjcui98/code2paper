@@ -227,6 +227,21 @@ class ResumePreflightV1(BaseModel):
         return self.model_dump(mode="json")
 
 
+def content_budget_exhausted(
+    state: WriterInvocationLedgerStateV1, max_attempts: int
+) -> bool:
+    """内容预算是否真的耗尽（§9.2）。
+
+    只有**真实内容尝试**（provider send）用满上限才算耗尽；仅有预发送拒绝事件不算——
+    否则一个从未发送过请求的 invocation 会被拒发事件永久锁死。
+    """
+
+    if state.accepted:
+        return False
+    limit = int(max_attempts) if int(max_attempts) > 0 else state.content_attempt_limit
+    return state.counters.content_attempt_count >= limit
+
+
 def build_resume_preflight(
     out_root: str | Path,
     required_invocation_ids: list[str] | tuple[str, ...],
@@ -270,5 +285,6 @@ __all__ = [
     "WriterAttemptCountersV1",
     "WriterInvocationLedgerStateV1",
     "build_resume_preflight",
+    "content_budget_exhausted",
     "read_invocation_ledger_state",
 ]
