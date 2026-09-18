@@ -3371,3 +3371,23 @@ NEXT ACTION     read-only diagnosis or explicit authoring fork
   110 个 Binder-owned 目标仍暴露给 Writer、根因链路完整。
 
 验证：regression 109 passed；全量离线 3710 passed、3 deselected、12 subtests passed、exit 0。
+
+## 2026-09-18 S8：离线端到端（产品路径 + 身份/索引/doctor 全链）
+
+新增 `tests/regression_20260917/test_authoring_end_to_end_offline.py`（provider=NONE，
+无需 live 授权，纳入常规回归）：
+
+1. 离线产品 run 写出 RunIdentity 与 **AuthoringExecutionIdentityV2**（引擎 commit、
+   目标 commit、intent/claims 摘要齐备）与 run summary；
+2. 索引与 doctor 在真实 run 上一致：执行身份条目为 `active`、发布 index revision=1、
+   doctor 报 `AuthoringExecutionIdentityV2` 且引擎指纹可用、无
+   `engine_fingerprint_unavailable` 阻断；
+3. 重开语义（WP1 准入实测）：`new` 对非空目录被拒（`run_directory_not_empty`），
+   同一身份 + 相同输入走 `auto` 解析为 resume 且**身份字节不变**；
+4. fail-closed 不变量：离线 run 不写出非空 candidate/verified，也不误报耗尽。
+
+**端到端测试发现的真实缺陷（已修）**：产物索引把"不含 `worksets`/`pages` 键"的产物
+（身份、回执、计划）一律判为 `valid_empty`，会让 `allow_empty=False` 的读者错误拒绝这些
+产物。已把判空收窄为"仅在产物自身声明 manifest 形状时才判空"。
+
+验证：regression 113 passed；全量离线 3714 passed、3 deselected、12 subtests passed、exit 0。

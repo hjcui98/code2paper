@@ -217,11 +217,17 @@ def _semantic_digest(payload: Any) -> str:
 
 
 def _empty_manifest(payload: Any) -> bool:
-    return (
-        isinstance(payload, dict)
-        and not (payload.get("worksets") or ())
-        and not (payload.get("pages") or ())
-    )
+    """仅对**声明了 manifest 形状**的产物判空。
+
+    身份、回执、计划等产物不含 ``worksets``/``pages`` 键，若把"键缺失"当作"空"，
+    它们会被误标为 valid_empty，进而被 ``allow_empty=False`` 的读者错误拒绝。
+    """
+
+    if not isinstance(payload, dict):
+        return False
+    if "worksets" not in payload and "pages" not in payload:
+        return False
+    return not (payload.get("worksets") or ()) and not (payload.get("pages") or ())
 
 
 def build_artifact_index(
