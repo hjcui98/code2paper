@@ -347,7 +347,16 @@ def read_attempt_outcomes(
 def unsettled_reservations(
     out_root: str | Path, invocation_id: str
 ) -> tuple[AttemptOutcomeV1, ...]:
-    """需要保留预留的 attempt（结果未知 / 有响应未完成）。"""
+    """需要保留预留的 attempt（结果未知 / 有响应未完成）。
+
+    视角说明（防止与账本预算视角重复扣费）：
+    * 本函数是**崩溃点视角**：只保留"可能已产生真实开销且结果未知"的 attempt，
+      "已预留未发送"可安全释放。
+    * `unified_invocation_ledger.unsettled_started_attempt_records` 是**预算视角**：
+      保守地把"started 且无 completed"都算作未结算。
+    两者语义不同，**不得相加**；写侧预算核算继续只使用后者，本函数用于诊断与
+    结果未知处理。
+    """
 
     return tuple(
         outcome

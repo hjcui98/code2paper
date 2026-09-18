@@ -3304,3 +3304,27 @@ v3 调用、v4 编译失败仍失败、shadow 双建单执行）；全量离线 
 > 把中性句判定为 positive 极性），而不是实现缺陷；已按判定器的真实语义改写测试。
 
 验证：regression 102 passed；全量离线 3703 passed、3 deselected、12 subtests passed、exit 0。
+
+## 2026-09-18 收尾核对：预留视角防双重扣费 + invocation plan 截断审计
+
+### 1. 两种预留视角（WP5）
+
+- **崩溃点视角**（`writer_attempt_ledger.unsettled_reservations`）：只保留"可能已产生
+  真实开销且结果未知"（`send_outcome_unknown` / `response_without_completion`）；
+  "已预留未发送"可安全释放。
+- **预算视角**（`unified_invocation_ledger.unsettled_started_attempt_records`）：保守地把
+  "started 且无 completed"都算作未结算。
+- 结论：两者语义不同，**不得相加**；写侧预算核算继续只使用后者，前者用于诊断与结果
+  未知处理。已在模块 docstring 写明契约，并用回归钉住：
+  * 事故归档 4 个 attempt 都有 completed 回执 → 两种视角都必须为空（拒发事件不计费）；
+  * "已预留未发送" vs "已发送无响应"在两种视角下的差异被显式断言。
+
+### 2. invocation plan 截断审计（WP4）
+
+对 `unified_context_compiler.py` 的 invocation plan 构建段（约 4107–4540 行）做只读扫描：
+未发现对页/调用集合的切片截断（唯一的 `[:8]` 是错误信息里截断 ID 列表用于展示），
+预算越界一律走 `UNIFIED_INVOCATION_BUDGET_EXCEEDED` / `run_budget_insufficient_after_repage`
+等显式失败（该文件内相关错误常量出现 98 处）。结论：不存在"剩余页被静默截掉"的分支，
+符合 §8.5。
+
+验证：regression 104 passed；全量离线 3705 passed、3 deselected、12 subtests passed、exit 0。

@@ -224,3 +224,50 @@ def test_incident_archive_attempts_are_settled_or_presend_rejections() -> None:
         3: "rejected_before_send",
         4: "rejected_before_send",
     }
+
+
+def test_incident_refusals_are_not_billed_as_unsettled(tmp_path) -> None:
+    """预算视角与崩溃点视角不得把"拒发事件"当成未结算开销（防双重扣费）。
+
+    两者语义不同但**必须一致地对已完成的拒发事件不计费**：
+    * `unsettled_started_attempt_records`（账本预算视角）= started 且无 completed；
+    * `unsettled_reservations`（崩溃点视角）= 结果未知 / 有响应未完成。
+    事故里 4 个 attempt 都有 completed 回执 → 两者都必须为空。
+    """
+
+    from code2paper.agentic.unified_invocation_ledger import (
+        unsettled_started_attempt_records,
+    )
+    from code2paper.agentic.writer_attempt_ledger import unsettled_reservations
+
+    root = _run_root()
+    ledger_root = root / "artifacts" / "06_authoring" / "invocations"
+
+    class _Plan:
+        invocations: tuple = ()
+
+    assert unsettled_started_attempt_records(ledger_root, _Plan()) == ()
+    assert unsettled_reservations(root, INCIDENT_DIR_NAME) == ()
+
+
+def test_presend_only_and_started_only_attempts_are_distinguished(tmp_path) -> None:
+    """两种视角的差异被显式钉住：只在"已预留未发送"上不同，且都不产生未知开销。"""
+
+    from code2paper.agentic.writer_attempt_ledger import read_attempt_outcomes
+
+    invocation = "inv:writer:MA-S3:page:started-only"
+    directory = tmp_path / "artifacts" / "06_authoring" / "invocations" / (
+        "inv-writer-MA-S3-page-started-only-0001"
+    )
+    directory.mkdir(parents=True)
+    (directory / "attempt-0001.started.json").write_text("{}", encoding="utf-8")
+    (directory / "attempt-0002.started.json").write_text("{}", encoding="utf-8")
+    (directory / "attempt-0002.provider-request.json").write_text("{}", encoding="utf-8")
+
+    outcomes = {item.attempt: item for item in read_attempt_outcomes(tmp_path, invocation)}
+    # 已预留未发送：不得计费（可释放）。
+    assert outcomes[1].state == "reservation_without_send"
+    assert outcomes[1].reservation_retained is False
+    # 已发送无响应：结果未知，必须保留预留。
+    assert outcomes[2].state == "send_outcome_unknown"
+    assert outcomes[2].reservation_retained is True
