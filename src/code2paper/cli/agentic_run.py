@@ -684,6 +684,141 @@ def _recover_stale_method_attempts(out_root: Path) -> None:
         )
 
 
+#: 只读/离线诊断命令：由 method_agent_main 直接执行，不进入 worker 监督进程。
+_READ_ONLY_METHOD_AGENT_COMMANDS = frozenset(
+    {"doctor", "live-admission", "record-offline-receipt"}
+)
+
+
+def _read_json_optional(path: str) -> Any | None:
+    value = str(path or "").strip()
+    if not value:
+        return None
+    try:
+        return json.loads(Path(value).expanduser().read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return None
+
+
+def _live_admission_main(args: argparse.Namespace) -> int:
+    """§14.1：live 准入预检（只读；不建目录、不发请求）。"""
+
+    from code2paper.agentic.live_admission_preflight import (
+        parse_runtime_probe,
+        preflight_live_admission,
+    )
+
+    repo_path = Path(args.repo).expanduser().resolve()
+    if not repo_path.is_dir():
+        print(f"[code2paper method-agent] error=repo_not_found:{repo_path}")
+        return 2
+    for label in (
+        "--author-intent",
+        "--claims",
+        "--offline-receipt",
+        "--health-json",
+        "--models-json",
+        "--llm-profile",
+        "--research-import",
+    ):
+        value = str(getattr(args, label.lstrip("-").replace("-", "_"), "") or "")
+        if value and not Path(value).expanduser().is_file():
+            print(f"[code2paper method-agent] error=input_not_found:{label}:{value}")
+            return 2
+
+    changed_env: dict[str, str | None] = {}
+    try:
+        if args.llm_profile:
+            changed_env = _apply_llm_profile(args.llm_profile)
+        llm_config = load_llm_config_from_env(
+            provider=args.llm_provider or None,
+            model=args.llm_model or None,
+        )
+        probe = None
+        if args.health_json or args.models_json:
+            probe = parse_runtime_probe(
+                models_payload=_read_json_optional(args.models_json),
+                health_payload=_read_json_optional(args.health_json),
+            )
+        report = preflight_live_admission(
+            args.out_root,
+            repo_path=repo_path,
+            author_intent_path=args.author_intent or None,
+            claims_path=args.claims or None,
+            llm_config=llm_config,
+            run_open_mode=args.run_open_mode,
+            model_context_tokens=args.context_tokens,
+            max_writer_calls=args.max_writer_calls,
+            max_total_input_tokens=args.max_input_tokens,
+            runtime_probe=probe,
+            offline_suite_receipt=args.offline_receipt or None,
+            research_import_path=args.research_import or None,
+        )
+    finally:
+        _restore_env(changed_env)
+
+    if bool(getattr(args, "json", False)):
+        print(report.model_dump_json(indent=2))
+    else:
+        print(report.render())
+    # 0 = 可以进入 live；3 = 明确不可进入（阻断项已打印），便于脚本判定。
+    return 0 if report.ready else 3
+
+
+def _record_offline_receipt_main(args: argparse.Namespace) -> int:
+    """记录一次真实离线全链结果，并绑定当前 engine source digest。"""
+
+    from code2paper.agentic.live_admission_preflight import (
+        build_offline_suite_receipt,
+        write_offline_suite_receipt,
+    )
+
+    from code2paper.agentic.authoring_execution_identity import resolve_engine_root
+
+    engine_root = resolve_engine_root() or Path.cwd()
+    command = [
+        sys.executable,
+        "-m",
+        "pytest",
+        "-q",
+        "-m",
+        str(args.marker),
+        str(args.pytest_target),
+    ]
+    exit_code = 124
+    output = ""
+    try:
+        completed = subprocess.run(
+            command,
+            cwd=str(engine_root),
+            capture_output=True,
+            text=True,
+            timeout=float(args.timeout_seconds),
+            check=False,
+        )
+        exit_code = int(completed.returncode)
+        output = (completed.stdout or "") + "\n" + (completed.stderr or "")
+    except subprocess.TimeoutExpired as exc:
+        output = f"timeout after {args.timeout_seconds}s\n" + str(exc.stdout or "")
+    except OSError as exc:
+        output = f"failed to launch pytest: {type(exc).__name__}: {exc}"
+        exit_code = 126
+
+    receipt = build_offline_suite_receipt(
+        command=f"cd {engine_root} && " + " ".join(command),
+        exit_code=exit_code,
+        output=output,
+    )
+    path = write_offline_suite_receipt(args.receipt_out, receipt)
+    print(
+        "[code2paper method-agent] offline receipt "
+        f"path={path} passed={receipt.passed} passed_count={receipt.passed_count} "
+        f"failed={receipt.failed_count} exit={receipt.exit_code} "
+        f"engine={receipt.engine_source_digest[:19]}"
+    )
+    return 0 if receipt.passed else 1
+
+
 def _method_agent_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="code2paper method-agent",
@@ -701,6 +836,64 @@ def _method_agent_parser() -> argparse.ArgumentParser:
     doctor_parser.add_argument("--out", dest="out_root", required=True, help="Run directory to inspect")
     doctor_parser.add_argument(
         "--json", action="store_true", help="Emit the structured report as JSON"
+    )
+    admission_parser = subparsers.add_parser(
+        "live-admission",
+        help=(
+            "§14.1 read-only live admission preflight: identity, inputs, offline "
+            "receipt, budget and run-directory state (no model calls)."
+        ),
+    )
+    admission_parser.add_argument("--repo", dest="repo", required=True, help="Target code repository")
+    admission_parser.add_argument("--out", dest="out_root", required=True, help="Planned run directory")
+    admission_parser.add_argument("--author-intent", dest="author_intent", default="")
+    admission_parser.add_argument("--claims", default="")
+    admission_parser.add_argument("--llm-profile", dest="llm_profile", default="")
+    admission_parser.add_argument("--llm-provider", default="")
+    admission_parser.add_argument("--llm-model", default="")
+    admission_parser.add_argument(
+        "--run-open-mode",
+        choices=("auto", "new", "resume", "fork_authoring"),
+        default="auto",
+    )
+    admission_parser.add_argument("--context-tokens", dest="context_tokens", type=int, default=0)
+    admission_parser.add_argument(
+        "--max-writer-calls", dest="max_writer_calls", type=int, default=0
+    )
+    admission_parser.add_argument(
+        "--max-input-tokens", dest="max_input_tokens", type=int, default=0
+    )
+    admission_parser.add_argument(
+        "--offline-receipt",
+        dest="offline_receipt",
+        default="",
+        help="Receipt JSON from `record-offline-receipt`, bound to the current engine digest",
+    )
+    admission_parser.add_argument("--health-json", dest="health_json", default="")
+    admission_parser.add_argument("--models-json", dest="models_json", default="")
+    admission_parser.add_argument(
+        "--research-import",
+        dest="research_import",
+        default="",
+        help="Verified research checkpoint required by --run-open-mode fork_authoring",
+    )
+    admission_parser.add_argument("--json", action="store_true")
+    receipt_parser = subparsers.add_parser(
+        "record-offline-receipt",
+        help=(
+            "Run the offline suite (no live_llm) and record a receipt bound to the "
+            "current engine source digest."
+        ),
+    )
+    receipt_parser.add_argument("--out", dest="receipt_out", required=True, help="Receipt JSON path")
+    receipt_parser.add_argument(
+        "--marker", default="not live_llm", help="pytest -m expression (default: not live_llm)"
+    )
+    receipt_parser.add_argument(
+        "--timeout-seconds", dest="timeout_seconds", type=float, default=7200.0
+    )
+    receipt_parser.add_argument(
+        "--pytest-target", dest="pytest_target", default="tests", help="Path passed to pytest"
     )
     run_parser = subparsers.add_parser("run", help="Run the full product path.")
     run_parser.add_argument("--repo", dest="repo", required=True, help="Target code repository")
@@ -780,6 +973,10 @@ def method_agent_main(argv: list[str] | None = None) -> int:
         else:
             print(report.render())
         return 0
+    if args.command == "live-admission":
+        return _live_admission_main(args)
+    if args.command == "record-offline-receipt":
+        return _record_offline_receipt_main(args)
     if args.command != "run":
         parser.error(f"unknown method-agent command: {args.command}")
 
@@ -1003,6 +1200,11 @@ def supervised_method_agent_main(argv: list[str] | None = None) -> int:
     parser = _method_agent_parser()
     args = parser.parse_args(raw_argv)
     if args.command != "run":
+        # 只读/离线诊断命令不能被包进 worker 监督进程：监督器会先创建 attempt
+        # 目录、进程清单与日志——对 `doctor` / `live-admission` 是纯副作用，
+        # 而且会让"预检只读"的承诺失效。
+        if args.command in _READ_ONLY_METHOD_AGENT_COMMANDS:
+            return method_agent_main(raw_argv)
         parser.error(f"unknown method-agent command: {args.command}")
     out_root = Path(args.out_root).expanduser().resolve()
     out_root.mkdir(parents=True, exist_ok=True)

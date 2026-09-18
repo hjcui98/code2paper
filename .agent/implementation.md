@@ -3391,3 +3391,100 @@ NEXT ACTION     read-only diagnosis or explicit authoring fork
 产物。已把判空收窄为"仅在产物自身声明 manifest 形状时才判空"。
 
 验证：regression 113 passed；全量离线 3714 passed、3 deselected、12 subtests passed、exit 0。
+
+## 2026-09-18 §14.1：live 准入预检（离线可跑，授权到手即可进 L1）
+
+新增 `src/code2paper/agentic/live_admission_preflight.py` +
+`tests/regression_20260917/test_live_admission.py`，并接入既有 CLI
+（`code2paper method-agent live-admission ...` / `record-offline-receipt ...`）。
+
+§14.1 的每一条必要条件都变成一个有名 gate，`ready=False` 时给出**具体阻断码**：
+
+| gate | 阻断码 | 判据 |
+|---|---|---|
+| engine_identity | engine_identity_unavailable | 引擎 commit + 逐文件内容指纹可用（工作树 dirty 被折进 digest 并告警） |
+| target_identity | target_identity_unresolved | 目标仓库 commit/tree 指纹可解析 |
+| author_materials | author_material_missing | 作者意图与 claims 存在且非空 |
+| model_profile_identity | model_identity_unresolved | provider/model 显式声明 |
+| declared_budget | run_budget_not_declared | 上下文窗口、writer 调用数、输入 token 预算均显式 > 0 |
+| transport_policy | transport_policy_unbounded | 重试有界、未知结果不自动重试、重试计入预算 |
+| offline_suite_receipt | offline_suite_receipt_missing / _not_passed / _stale | 离线全链**真实结果回执**，且绑定当前 engine source digest |
+| runtime_model_identity | runtime_model_identity_mismatch | `/health` 正常且 `/v1/models` 真的服务所配置模型 |
+| run_open_decision | run_open_rejected:<code> | 复用 WP1 准入状态机（new/resume/fork 语义不重写） |
+| doctor_critical_clear | doctor_critical_blocker | 已有 run 时 doctor 无 critical 阻断 |
+
+设计要点：
+
+- **只读**：不建 out 目录、不写身份、不发请求（测试断言 out_root 事后不存在）。
+- **回执绑定**：`record-offline-receipt` 跑真实 pytest 并解析真实汇总行；换一行源码即失效
+  （engine digest 变），杜绝"之前跑过"当作现状。
+- **不重写语义**：目录准入直接调用 WP1 的 `validate_run_open`，模型配置走产品同一路径
+  （`_apply_llm_profile` + `load_llm_config_from_env`），因此预检身份与 run 身份同源。
+- **退出码**：`live-admission` 0 = 可进 live，3 = 明确不可进，2 = 输入错误。
+
+冒烟（冻结事故归档，`--run-open-mode resume`）：NOT READY，`run_open_rejected:*` ——
+归档无引擎指纹且 invocation 已耗尽内容预算，符合 §14.2 "保持失败身份，修复后再明确 fork"。
+
+验证：`tests/regression_20260917/test_live_admission.py` 12 passed；全量离线见下。
+
+补记（同一轮，预检收口）：
+
+- **fork_authoring（L2）**：预检与启动器共用 `verify_research_import`，研究导入
+  参与身份；无可信 checkpoint 或空壳 JSON（缺 `run_id`/`repo_snapshot_id`/
+  `project_tree_hash` 绑定）→ `research_import_unverifiable` + 准入拒绝。
+  预检因此对 L2 也能给出与真实 run **一致**的 execution_id。
+- **作者材料口径**：author intent 必需；claims 在产品入口可选——未声明只告警，
+  **声明了却缺失/为空**才阻断（不静默把身份降级成"无 claims"）。
+- **CLI 路由修复**：`code2paper method-agent doctor|live-admission|
+  record-offline-receipt` 之前会被 `supervised_method_agent_main` 当成未知子命令
+  而 `parser.error`（doctor 的 CLI 实际不可达），或更糟——被包进 worker 监督进程
+  从而创建 attempt 目录/进程清单/日志，破坏"预检只读"。现在这三个命令直接走
+  `method_agent_main`，测试断言只读命令不产生任何 out 目录副作用。
+- `record-offline-receipt` 在 engine root 下执行 pytest，回执 command 字段记录 cwd。
+
+验证：`tests/regression_20260917/` + `test_agentic_method_agent_cli.py` +
+`test_agentic_candidate_handoff.py` 共 163 passed；全量离线见下。
+
+### live 执行顺序（授权后可直接照做；顺序有硬约束）
+
+**顺序约束**：任何文件改动（含文档）都会改变 engine source digest → 使已录制的离线回执失效。
+因此必须：**改完 → 提交 → 录回执 → 预检 → live**，中间不得再改任何文件。
+
+```bash
+# 1) 提交后录制离线全链回执（真实 pytest 结果，绑定当前引擎指纹）
+python -m code2paper.cli.main method-agent record-offline-receipt \
+  --out /tmp/c2p-live/offline-receipt.json          # 回执必须放在引擎树之外
+
+# 2) 准入预检（只读；READY 才进 live）
+python -m code2paper.cli.main method-agent live-admission \
+  --repo <EBCAR> --out /tmp/c2p-live/L1 \
+  --llm-profile tests/live/profiles/qwen38_vllm_budgeted.example.env \
+  --run-open-mode new --context-tokens 131072 \
+  --max-writer-calls <N> --max-input-tokens <N> \
+  --offline-receipt /tmp/c2p-live/offline-receipt.json \
+  --health-json /tmp/c2p-live/health.json --models-json /tmp/c2p-live/models.json
+
+# 3) L1 失败局部任务重验（复用冻结研究证据，经同一 production 投影重建 MA-S3 页）
+python scripts/run_authoring_replay.py \
+  artifacts/runs/2026-09-17-ebcar-intent-v4-p7-j9L1bn /tmp/c2p-live/L1 \
+  --repo <EBCAR> --resume MA-S3 \
+  --profile tests/live/profiles/qwen38_vllm_budgeted.example.env --force-profile \
+  --authoring-context-mode unified
+
+# 4) L2 仅 fork 研究证据、重做整个 authoring（产品入口 → 会创建 IdentityV2 并走准入）
+python -m code2paper.cli.main method-agent run \
+  --repo <EBCAR> --author-intent <...> --out /tmp/c2p-live/L2 \
+  --llm-profile tests/live/profiles/qwen38_vllm_budgeted.example.env \
+  --run-open-mode fork_authoring \
+  --research-stage-checkpoint <冻结归档中已校验 checkpoint>
+
+# 5) L3 端到端 fresh + 跨项目（项目集合与预算在运行前冻结）
+```
+
+已知口径差异（必须在报告里如实标注，不能被当成已满足）：
+
+- L1 走 `run_authoring_replay.py`，它写 `execution_record.json`（命令、退出码、code-state
+  digest、运行账本前后键），但**不**创建 `AuthoringExecutionIdentityV2`；L2 走产品入口则创建。
+  若要求 L1 也有 IdentityV2，需要把 replay 入口接到 `create_or_validate_execution_identity`
+  （独立小改动，可用 provider=NONE 离线验证）。
+- L1 通过 ≠ L2/L3 通过；L2 失败不得清 ledger 后标记为同一修复验证成功。
