@@ -3000,3 +3000,35 @@ exit 0。
 验证：`python -m pytest -q tests/test_agentic_unified_context_compiler.py` 30 passed；
 `python -m pytest -q -m 'not live_llm'` → 3659 passed、3 deselected、12 subtests passed，
 exit 0。
+
+## 2026-09-18 WP5 账本核心：事件序号与真实发送计数分离
+
+新增 `src/code2paper/agentic/writer_attempt_ledger.py`（只读派生，不改写历史记录，I8）：
+
+- `WriterAttemptCountersV1`：`event_seq`（历史 attempt，不可变）、`provider_send_count`、
+  `content_attempt_count`、`content_repair_count`、`rejected_before_send_events`。
+- `read_invocation_ledger_state(out_root, invocation_id)`：从 `attempt-*.completed.json`
+  与 `attempt-*.content-acceptance.json` 派生状态；**accepted 只取内容验收**——传输层
+  `delivery_status=accepted` 不算（事故里两次 provider 调用的 delivery 都是 accepted，
+  内容验收都是 rejected）；拒发事件（`attempt_limit_exhausted:`）计入诊断但不计入发送/
+  内容次数，并从中读出 `content_attempt_limit`。
+- `build_resume_preflight(...)` → `ResumePreflightV1`：进入 Writer 主循环前给出
+  `resume_exhausted_invocation` 结构化阻断（execution_id、invocation_id、
+  content_attempts_used/limit、last_provider_attempt、last_content_failure_codes、
+  rejected_before_send_events、allowed_next_action），零新增调用；缺目录/缺回执**不算**
+  已耗尽（不把缺失当结论）。
+- 历史 acceptance 失败项映射为结构化码（detail_witness_missing / paragraph_missing /
+  authority_surface_violation / input_material_missing / detail_semantic_mismatch），
+  调用方不需要解析 `detail:detail:` 这类拼接串。
+
+事故归档实测：`event_seq=4`、`provider_send_count=2`、`content_attempt_count=2`、
+`content_repair_count=1`、`rejected_before_send_events=(3,4)`、`exhausted=True`、
+`last_content_failure_codes` 含 `detail_witness_missing`；已接受页（MA-S1）不被误判为耗尽。
+
+仍未完成（WP5 剩余）：把计数器接到 Writer 调用边界（预发送拒绝不得推进内容尝试次数）、
+限流/超时的独立 transport policy 与 `send_outcome_unknown` 保留 reservation、§9.5 的
+崩溃点恢复用例。
+
+验证：`python -m pytest -q tests/regression_20260917` 63 passed；
+`python -m pytest -q -m 'not live_llm'` → 3664 passed、3 deselected、12 subtests passed，
+exit 0。
