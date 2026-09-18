@@ -3147,3 +3147,19 @@ exit 0。
 验证：regression 75 passed（新增 `test_plan_selection.py` 4 例：v4 不调用 legacy、
 v3 调用、v4 编译失败仍失败、shadow 双建单执行）；全量离线 3676 passed、3 deselected、
 12 subtests passed、exit 0。
+
+## 2026-09-18 WP7 §11.2：Writer 阶段边界的依赖前置检查
+
+- `publication_method_writer.py` 在加载 Writer 持久恢复状态之后、进入调用循环之前，
+  对**账本已出现预发送拒绝**的必需 invocation 做前置检查（事故签名：
+  `attempt_limit_exhausted` 记录）。命中即返回结构化阻断：
+  `writer_phase_boundary_blocked:blocked_by_stage=writer:primary_cause=...:invocation=...:
+  content_attempts=used/limit:rejected_before_send=[...]:downstream_not_run=realizer,binder,
+  section_composition,publication_audit`，不再跑完整个 Writer 循环后靠
+  `writer_v2_invocation_acceptance_count:0` 事后暴露根因。
+- 判据刻意收窄为"有预发送拒绝记录"而非"内容尝试用满"：声明了 retry reserve 的 repair
+  流程（`test_writer_content_repair_uses_declared_retry_reserve_and_commits_only_after_acceptance`）
+  没有这种记录，不会被误判为耗尽——该误判在首次全量回归中被既有测试抓到并已修正。
+
+验证：regression 76 passed；受影响套件 98 passed；全量离线 3677 passed、3 deselected、
+12 subtests passed、exit 0。

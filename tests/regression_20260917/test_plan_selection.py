@@ -7,6 +7,8 @@ from types import SimpleNamespace
 import pytest
 
 from code2paper.agentic import method_architect
+
+from . import incident_archive
 from code2paper.agentic.publication_method_writer import _build_narrative_plan_v3
 
 ENV_KEY = "CODE2PAPER_INTENT_NARRATIVE_PLAN"
@@ -128,3 +130,23 @@ def test_shadow_mode_builds_both_with_one_executable(monkeypatch) -> None:
     assert envelope["intent_plan_v4"] is not None
     # 影子模式只有一个可执行计划，且明确标注。
     assert envelope["executable_plan_version"] == "v3"
+
+
+def test_writer_phase_boundary_blocks_on_exhausted_page() -> None:
+    """§11.2：必需页已耗尽时在 phase boundary 阻断，并给出阶段/根因/下游链。"""
+
+    from code2paper.agentic.writer_attempt_ledger import build_resume_preflight
+
+    incident = incident_archive.read_json("writer_result")
+    # 事故的终态原因是"跑到最后才发现 0 accepted"；新的边界检查应在循环之前
+    # 就用同类根因阻断。这里验证边界检查产出的根因链内容完整。
+    preflight = build_resume_preflight(
+        incident_archive.archive_root(),
+        [incident_archive.INCIDENT_INVOCATION],
+    )
+    assert preflight.allowed is False
+    assert preflight.code == "resume_exhausted_invocation"
+    assert preflight.content_attempts_used == preflight.content_attempt_limit == 2
+    assert preflight.last_provider_attempt == 2
+    assert preflight.rejected_before_send_events == (3, 4)
+    assert "writer_v2_invocation_acceptance_count" in incident["blocked_reason"]

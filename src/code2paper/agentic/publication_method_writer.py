@@ -10,6 +10,7 @@ import re
 import tempfile
 import time
 from code2paper.agentic.writer_attempt_ledger import (
+    build_resume_preflight,
     content_budget_exhausted,
     read_invocation_ledger_state,
 )
@@ -4568,6 +4569,46 @@ def _run_publication_method_writer_impl(
                     ),
                 )
             )
+
+            # WP7 §11.2：Writer 阶段边界的依赖前置检查。必需页若已在持久账本中
+            # 耗尽内容预算，就在这里以结构化根因阻断，而不是跑完整个 Writer 循环、
+            # 再进 Realizer/Binder 之后才报 writer_v2_invocation_acceptance_count:0
+            # （事故的失败方式：根因被下游缺失掩盖）。
+            # 只检查"账本已经拒发过"的 invocation：那是该身份无法再发送的
+            # fail-closed 证据（事故 attempt-0003/0004）。声明了 retry reserve 的
+            # repair 流程没有这种记录，不会被误判为耗尽。
+            _required_invocation_ids = [
+                str(item.invocation_id) for item in unified_writer_plan.invocations
+            ]
+            _presend_rejected_ids = [
+                invocation_id
+                for invocation_id in _required_invocation_ids
+                if read_invocation_ledger_state(
+                    out_root, invocation_id
+                ).counters.rejected_before_send_events
+            ]
+            writer_phase_preflight = build_resume_preflight(
+                out_root, _presend_rejected_ids
+            )
+            if not writer_phase_preflight.allowed:
+                blocked_result = PublicationWriterRunResultV1(
+                    status="blocked",
+                    plan_digest=plan.content_digest,
+                    claim_digest=claims.content_digest,
+                    blocked_reason=(
+                        "writer_phase_boundary_blocked:"
+                        "blocked_by_stage=writer:"
+                        f"primary_cause={writer_phase_preflight.code}:"
+                        f"invocation={writer_phase_preflight.invocation_id}:"
+                        f"content_attempts={writer_phase_preflight.content_attempts_used}/"
+                        f"{writer_phase_preflight.content_attempt_limit}:"
+                        "rejected_before_send="
+                        f"{list(writer_phase_preflight.rejected_before_send_events)}:"
+                        "downstream_not_run="
+                        "realizer,binder,section_composition,publication_audit"
+                    ),
+                )
+                return blocked_result, _write_result_only(out_root, blocked_result)
 
         def _capturing_writer_caller(config: Any, request: Any) -> Any:
             payload = getattr(request, "input_payload", None)
