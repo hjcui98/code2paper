@@ -686,7 +686,13 @@ def _recover_stale_method_attempts(out_root: Path) -> None:
 
 #: 只读/离线诊断命令：由 method_agent_main 直接执行，不进入 worker 监督进程。
 _READ_ONLY_METHOD_AGENT_COMMANDS = frozenset(
-    {"doctor", "quality-report", "live-admission", "record-offline-receipt"}
+    {
+        "doctor",
+        "quality-report",
+        "compare-quality",
+        "live-admission",
+        "record-offline-receipt",
+    }
 )
 
 
@@ -846,6 +852,20 @@ def _method_agent_parser() -> argparse.ArgumentParser:
     )
     quality_parser.add_argument("--out", dest="out_root", required=True, help="Run directory to measure")
     quality_parser.add_argument("--json", action="store_true", help="Emit the structured report as JSON")
+    compare_parser = subparsers.add_parser(
+        "compare-quality",
+        help=(
+            "§14.3 read-only comparison of two quality reports; refuses when the frozen "
+            "input or model identity differ."
+        ),
+    )
+    compare_parser.add_argument(
+        "--baseline", required=True, help="Baseline run directory or quality report JSON"
+    )
+    compare_parser.add_argument(
+        "--candidate", required=True, help="Candidate run directory or quality report JSON"
+    )
+    compare_parser.add_argument("--json", action="store_true")
     admission_parser = subparsers.add_parser(
         "live-admission",
         help=(
@@ -993,6 +1013,24 @@ def method_agent_main(argv: list[str] | None = None) -> int:
         else:
             print(report.render())
         return 0
+    if args.command == "compare-quality":
+        from code2paper.agentic.authoring_quality_comparison import (
+            compare_authoring_quality_reports,
+        )
+
+        baseline_path = Path(args.baseline).expanduser()
+        candidate_path = Path(args.candidate).expanduser()
+        for label, path in (("baseline", baseline_path), ("candidate", candidate_path)):
+            if not path.exists():
+                print(f"[code2paper method-agent] error=input_not_found:--{label}:{path}")
+                return 2
+        comparison = compare_authoring_quality_reports(baseline_path, candidate_path)
+        if bool(getattr(args, "json", False)):
+            print(comparison.model_dump_json(indent=2))
+        else:
+            print(comparison.render())
+        # 0 = 可比（差值有效）；3 = 不可比（原因已打印），便于脚本判定。
+        return 0 if comparison.comparable else 3
     if args.command == "live-admission":
         return _live_admission_main(args)
     if args.command == "record-offline-receipt":

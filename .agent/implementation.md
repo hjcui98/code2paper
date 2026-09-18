@@ -3606,3 +3606,30 @@ request）/ 19 接受 / 首次接受率 0.4 / repair 5 次中 3 次成功 / 1,16
 
 验证：`tests/regression_20260917/test_quality_report.py` 8 项；全量离线 3753 passed、
 3 deselected、12 subtests passed、exit 0。
+
+## 2026-09-18 §14.3：对照比较器（同冻结输入/同模型配置才可比）
+
+新增 `src/code2paper/agentic/authoring_quality_comparison.py` +
+CLI `method-agent compare-quality --baseline <dir|json> --candidate <dir|json> [--json]`
+（只读；exit 0 = 可比，3 = 不可比，2 = 输入缺失）。
+
+- 质量报告新增 `comparability` 锚点（进 content_digest）：
+  `frozen_input_digest`（由 `authoring_run_contract_v1` 的 repo_snapshot_id /
+  project_tree_hash / run_identity_digest / code_commit_sha 复算）、
+  `model_identity_digest` + `profile_digest`（预算信封）、
+  `engine_source_digest` / `execution_id`（IdentityV2，legacy 根为空）。
+- 比较规则（fail-closed，且**不产生任何综合评分**）：
+  - 冻结输入锚点缺失或不一致 → `comparable=False`，**不给差值**；
+  - 模型身份缺失或不一致 → 同上；
+  - **引擎指纹不同不阻断**——修复正是要比较的对象，差异记入 `scope_notes`；
+  - 只有极性明确的机械指标（`METRIC_POLARITY`，如发送数↓、接受率↑、token↓）才给
+    `better/worse/same`，其余一律 `unknown` + 原始 delta；
+  - 任一侧 `not_measured` 的维度只声明"哪侧没测、为什么"，不出差值；
+  - 缺候选产物 → `partial_evidence=True` 并声明"差异只代表已存证据，不代表完整正文质量"
+    （§14.3 不伪造旧完整输出）。
+
+事故归档自比实测：COMPARABLE，71 个指标 delta 全 0，`partial_evidence=True`，
+faithfulness 两侧未测量并给出原因。
+
+验证：`tests/regression_20260917/test_quality_comparison.py` 9 项；全量离线 3762 passed、
+3 deselected、12 subtests passed、exit 0。

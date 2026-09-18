@@ -40,6 +40,7 @@ from code2paper.agentic.writer_attempt_ledger import (
 
 __all__ = [
     "QualityDimensionV1",
+    "QualityComparabilityV1",
     "AuthoringQualityReportV1",
     "build_authoring_quality_report",
 ]
@@ -75,6 +76,39 @@ class QualityDimensionV1(BaseModel):
     notes: tuple[str, ...] = ()
 
 
+class QualityComparabilityV1(BaseModel):
+    """§14.3 对照比较的锚点：只有冻结输入与模型配置相同，比较才有意义。
+
+    引擎指纹**故意**不参与可比性判定——修复本身就会改变引擎指纹，那正是要比较的对象。
+    """
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    frozen_input_digest: str = ""
+    repo_snapshot_id: str = ""
+    project_tree_hash: str = ""
+    run_identity_digest: str = ""
+    model_identity_digest: str = ""
+    profile_digest: str = ""
+    engine_source_digest: str = ""
+    execution_id: str = ""
+    sources: dict[str, str] = Field(default_factory=dict)
+
+    def is_comparable_with(self, other: "QualityComparabilityV1") -> tuple[bool, tuple[str, ...]]:
+        """返回 (是否可比, 阻断原因元组)。缺锚点即不可比（fail-closed）。"""
+
+        reasons: list[str] = []
+        if not self.frozen_input_digest or not other.frozen_input_digest:
+            reasons.append("frozen_input_identity_missing")
+        elif self.frozen_input_digest != other.frozen_input_digest:
+            reasons.append("frozen_input_identity_mismatch")
+        if not self.model_identity_digest or not other.model_identity_digest:
+            reasons.append("model_identity_missing")
+        elif self.model_identity_digest != other.model_identity_digest:
+            reasons.append("model_identity_mismatch")
+        return (not reasons), tuple(reasons)
+
+
 class AuthoringQualityReportV1(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
 
@@ -84,6 +118,7 @@ class AuthoringQualityReportV1(BaseModel):
     dimensions: tuple[QualityDimensionV1, ...] = ()
     unmeasured_dimensions: tuple[str, ...] = ()
     candidate_artifacts: tuple[str, ...] = ()
+    comparability: QualityComparabilityV1 = Field(default_factory=QualityComparabilityV1)
     comparison_status: str = "not_available"
     comparison_note: str = ""
     content_digest: str = ""
@@ -110,6 +145,13 @@ class AuthoringQualityReportV1(BaseModel):
             for note in item.notes:
                 lines.append(f"    note: {note}")
         lines.append(f"COMPARISON         {self.comparison_status} {self.comparison_note}".rstrip())
+        anchor = self.comparability
+        lines.append(
+            "ANCHORS            "
+            f"frozen_input={anchor.frozen_input_digest[:19] or '(missing)'} "
+            f"model={anchor.model_identity_digest[:19] or '(missing)'} "
+            f"engine={anchor.engine_source_digest[:19] or '(missing)'}"
+        )
         if self.unmeasured_dimensions:
             lines.append("UNMEASURED         " + ", ".join(self.unmeasured_dimensions))
         return "\n".join(lines)
@@ -447,6 +489,67 @@ def _candidate_artifacts(out_root: Path) -> tuple[str, ...]:
     return tuple(candidates)
 
 
+def _comparability(out_root: Path, identity: Any) -> QualityComparabilityV1:
+    """从产物里提取冻结输入/模型/引擎锚点（缺失即留空——比较方据此 fail-closed）。"""
+
+    artifacts = out_root / "artifacts"
+    authoring = artifacts / "06_authoring"
+    contract = _read_json(authoring / "authoring_run_contract_v1.json")
+    checkpoint = _read_json(artifacts / "research_product" / "research_stage_checkpoint_v1.json")
+    envelope = _read_json(authoring / "run_invocation_budget_envelope_v1.json")
+
+    repo_snapshot_id = str(
+        contract.get("repo_snapshot_id") or checkpoint.get("repo_snapshot_id") or ""
+    )
+    project_tree_hash = str(
+        contract.get("project_tree_hash") or checkpoint.get("project_tree_hash") or ""
+    )
+    run_identity_digest = str(contract.get("run_identity_digest") or "")
+    code_commit_sha = str(contract.get("code_commit_sha") or "")
+    frozen_input_digest = (
+        sha256_digest(
+            canonical_json_bytes(
+                {
+                    "repo_snapshot_id": repo_snapshot_id,
+                    "project_tree_hash": project_tree_hash,
+                    "run_identity_digest": run_identity_digest,
+                    "code_commit_sha": code_commit_sha,
+                }
+            )
+        )
+        if (repo_snapshot_id or project_tree_hash or run_identity_digest or code_commit_sha)
+        else ""
+    )
+    sources = {}
+    if contract:
+        sources["authoring_run_contract_v1"] = str(
+            authoring / "authoring_run_contract_v1.json"
+        )
+    if checkpoint:
+        sources["research_stage_checkpoint_v1"] = str(
+            artifacts / "research_product" / "research_stage_checkpoint_v1.json"
+        )
+    if envelope:
+        sources["run_invocation_budget_envelope_v1"] = str(
+            authoring / "run_invocation_budget_envelope_v1.json"
+        )
+    if identity is not None:
+        sources["authoring_execution_identity_v2"] = str(
+            artifacts / "research_product" / "authoring_execution_identity_v2.json"
+        )
+    return QualityComparabilityV1(
+        frozen_input_digest=frozen_input_digest,
+        repo_snapshot_id=repo_snapshot_id,
+        project_tree_hash=project_tree_hash,
+        run_identity_digest=run_identity_digest,
+        model_identity_digest=str(envelope.get("model_identity_digest") or ""),
+        profile_digest=str(envelope.get("profile_digest") or ""),
+        engine_source_digest=str(getattr(identity, "engine_source_digest", "") or ""),
+        execution_id=str(getattr(identity, "execution_id", "") or ""),
+        sources=sources,
+    )
+
+
 def build_authoring_quality_report(out_root: str | Path) -> AuthoringQualityReportV1:
     """只读装配 §14.3 报告（不写任何文件、不调用模型）。"""
 
@@ -483,6 +586,7 @@ def build_authoring_quality_report(out_root: str | Path) -> AuthoringQualityRepo
             "没有可比的候选产物：§14.3 要求同一冻结输入、同一模型配置的旧候选与独立 "
             "baseline；缺失时不伪造旧完整输出。"
         )
+    comparability = _comparability(root, identity)
     payload = {
         "out_root": str(root),
         "execution_identity": doctor.execution_identity,
@@ -490,6 +594,7 @@ def build_authoring_quality_report(out_root: str | Path) -> AuthoringQualityRepo
         "dimensions": [item.model_dump(mode="json") for item in dimensions],
         "candidates": list(candidates),
         "comparison_status": comparison_status,
+        "comparability": comparability.model_dump(mode="json"),
     }
     return AuthoringQualityReportV1(
         out_root=str(root),
@@ -497,6 +602,7 @@ def build_authoring_quality_report(out_root: str | Path) -> AuthoringQualityRepo
         dimensions=tuple(dimensions),
         unmeasured_dimensions=unmeasured,
         candidate_artifacts=candidates,
+        comparability=comparability,
         comparison_status=comparison_status,
         comparison_note=comparison_note,
         content_digest=sha256_digest(canonical_json_bytes(payload)),
