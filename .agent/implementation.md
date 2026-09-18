@@ -2964,3 +2964,23 @@ invocation plan/admission（§8.5）。
 12 subtests passed，exit 0（S3 后 3648 + 新增 9）。事故页形状（16 段 + 真实 detail
 义务 + atom witness）在 8192 输出预算下被判为不可行；无 atom 的过渡页输出成本非零；
 Binder-owned atom 不计入 Writer 负担。
+
+## 2026-09-18 WP4 接线：候选页接受点加入语义段落预算
+
+- `unified_context_compiler.py` 新增 `_max_semantic_paragraphs_per_page()`
+  （默认取 WP4 候选值 6，可用 `CODE2PAPER_UNIFIED_MAX_SEMANTIC_PARAGRAPHS_PER_PAGE`
+  覆盖，0 = 显式关闭该维度，非法值回落候选值）。
+- `extend_writer_worksets_from_narrative_plan` 的候选页接受点（含 flush 后的单组复查）
+  在输入预算之外增加"候选页语义段落数 > 上限"判据：超限时**先拆页**（flush 当前页，
+  新页从该组开始），单组仍超限则保持既有的 typed block
+  `UNIFIED_ATOMIC_PAGE_OVER_BUDGET`。atom→页归属与义务守恒由原分页逻辑保证，本改动只
+  让页更小，不做段落 fragment 预拆（§8.1/§8.3）。
+- 事故页形状（16 段）在默认上限下会被拆成多页，而不是作为一次 16 段事务发出。
+
+仍未完成（下一步）：WP2 之后的端到端页分布尚未重新测量与登记；§8.5 的
+invocation plan / lookahead reservation / admission 重建（不足时报
+`run_budget_insufficient_after_repage`）未接。
+
+验证：`python -m pytest -q tests/test_agentic_unified_context_compiler.py` 30 passed；
+`python -m pytest -q -m 'not live_llm'` → 3658 passed、3 deselected、12 subtests passed，
+exit 0。

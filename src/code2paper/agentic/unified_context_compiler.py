@@ -25,6 +25,7 @@ import math
 import re
 import time
 import json
+import os
 from collections import Counter
 from collections.abc import Callable, Iterable, Mapping, Sequence
 from pathlib import PurePosixPath
@@ -39,6 +40,9 @@ from code2paper.agentic.mechanism_context_models import (
     sha256_digest,
 )
 from code2paper.agentic.source_inventory import normalize_source_path
+from code2paper.agentic.writer_output_workload import (
+    DEFAULT_MAX_SEMANTIC_PARAGRAPHS_PER_PAGE as _DEFAULT_MAX_SEMANTIC_PARAGRAPHS_PER_PAGE,
+)
 from code2paper.agentic.unified_context_models import (
     UNIFIED_INVOCATION_BUDGET_EXCEEDED,
     UNIFIED_INVOCATION_BUDGET_MISSING,
@@ -2436,6 +2440,26 @@ def fit_narrative_plan_to_page_budget(
     return revised_plan, tuple(dict.fromkeys(failures)), diagnostics
 
 
+def _max_semantic_paragraphs_per_page() -> int:
+    """WP4 §8.2/§8.3：单页语义段落上限（待标定候选，可用环境变量覆盖）。
+
+    这不是"页大小=常量"的正确性标准，而是把"一页必须一次写完多少段"纳入候选页
+    联合预算；超出时先拆页（flush 当前页），而不是先拆段落 fragment。
+    """
+
+    raw = str(
+        os.environ.get(
+            "CODE2PAPER_UNIFIED_MAX_SEMANTIC_PARAGRAPHS_PER_PAGE",
+            str(_DEFAULT_MAX_SEMANTIC_PARAGRAPHS_PER_PAGE),
+        )
+        or ""
+    ).strip()
+    try:
+        return max(0, int(raw))
+    except ValueError:
+        return _DEFAULT_MAX_SEMANTIC_PARAGRAPHS_PER_PAGE
+
+
 def extend_writer_worksets_from_narrative_plan(
     manifest: ConsumerWorksetManifestV2,
     narrative_plan: Any,
@@ -2846,11 +2870,18 @@ def extend_writer_worksets_from_narrative_plan(
             candidate_request_tokens = _candidate_request_tokens(
                 candidate_page, candidate_paragraph_ids
             )
+            paragraph_limit = _max_semantic_paragraphs_per_page()
             candidate_over_budget = (
                 candidate_tokens > max_page_input_tokens
                 or (
                     candidate_request_tokens is not None
                     and candidate_request_tokens > int(max_request_input_tokens or 0)
+                )
+                # WP4 §8.3：输出工作量维度——一页要一次写出的语义段落数超限时
+                # 先拆页；输入看起来装得下不代表一次事务写得完（事故页 16 段）。
+                or (
+                    paragraph_limit > 0
+                    and len(set(candidate_paragraph_ids)) > paragraph_limit
                 )
             )
             if candidate_over_budget and current_atoms:
@@ -2879,6 +2910,10 @@ def extend_writer_worksets_from_narrative_plan(
                     or (
                         candidate_request_tokens is not None
                         and candidate_request_tokens > int(max_request_input_tokens or 0)
+                    )
+                    or (
+                        paragraph_limit > 0
+                        and len(set(candidate_paragraph_ids)) > paragraph_limit
                     )
                 )
             if candidate_over_budget:

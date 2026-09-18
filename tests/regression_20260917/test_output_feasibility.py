@@ -193,3 +193,23 @@ def test_occurrence_counting_keeps_shared_detail_obligations() -> None:
         ]
     )
     assert workload.required_detail_occurrences == 2
+
+
+def test_page_paragraph_limit_knob_is_wired_and_overridable(monkeypatch) -> None:
+    """WP4 §8.3：候选页接受点读得到语义段落上限，且可显式覆盖。"""
+
+    from code2paper.agentic.unified_context_compiler import (
+        _max_semantic_paragraphs_per_page,
+    )
+
+    monkeypatch.delenv("CODE2PAPER_UNIFIED_MAX_SEMANTIC_PARAGRAPHS_PER_PAGE", raising=False)
+    assert _max_semantic_paragraphs_per_page() == DEFAULT_MAX_SEMANTIC_PARAGRAPHS_PER_PAGE
+
+    monkeypatch.setenv("CODE2PAPER_UNIFIED_MAX_SEMANTIC_PARAGRAPHS_PER_PAGE", "2")
+    assert _max_semantic_paragraphs_per_page() == 2
+
+    # 0 表示显式关闭该维度（只按输入预算），非法值回落到候选值。
+    monkeypatch.setenv("CODE2PAPER_UNIFIED_MAX_SEMANTIC_PARAGRAPHS_PER_PAGE", "0")
+    assert _max_semantic_paragraphs_per_page() == 0
+    monkeypatch.setenv("CODE2PAPER_UNIFIED_MAX_SEMANTIC_PARAGRAPHS_PER_PAGE", "abc")
+    assert _max_semantic_paragraphs_per_page() == DEFAULT_MAX_SEMANTIC_PARAGRAPHS_PER_PAGE
