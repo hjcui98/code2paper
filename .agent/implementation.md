@@ -2935,3 +2935,32 @@ witness 合同），且**缺少或失败的 Binder 回执会 fail-closed 阻断�
 
 验证：`python -m pytest -q -m 'not live_llm'` → 3648 passed、3 deselected、
 12 subtests passed，exit 0（无回归）。
+
+## 2026-09-18 WP4（估量层）：输出工作量估量与页契约联合评估
+
+范围：方案 §8.2/§8.4 的纯函数部分。**未接线**分页器（见下）。
+
+- 新增 `src/code2paper/agentic/writer_output_workload.py`：
+  `WriterOutputWorkloadV1`（语义段落数、required detail occurrences、Writer-owned /
+  Binder-owned witness 数、公式消费数、JSON 开销、目标正文量、安全余量、预计输出
+  tokens、basis_version、confidence、unknown_reasons）与
+  `estimate_writer_output_workload(...)`；
+  `PageContractEvaluationV1` 与 `evaluate_page_contract(...)`：同时检查
+  `input_tokens <= max_page_input_tokens`、预计输出 <= 可用输出预算、以及
+  `max_semantic_paragraphs_per_page` 候选上限；**输出预算未知时默认 fail-closed**
+  （`output_budget_unknown`，可显式放宽）。
+  `narrative_ordinal()` 按叙事序号排序（P2 在 P10 之前）。
+  经验系数可经 `calibrated_profile` 注入；未标定时 confidence=uncalibrated，
+  `DEFAULT_MAX_SEMANTIC_PARAGRAPHS_PER_PAGE=6` 仅作待标定候选。
+
+未接线（必须与重新标定一起做）：`fit_narrative_plan_to_page_budget._over_budget` 与
+`extend_writer_worksets_from_narrative_plan` 的候选页接受点尚未调用
+`evaluate_page_contract`。原因：WP2 改变了段落数（15 空槽合并），旧的分页/Obligation
+分布尚未重新测量；在没有端到端页数回归的前提下改预算门，可能把 fail-closed 变成
+误杀或漏放。下一步：先测量新的页分布，再把联合预算接到候选页接受点并重建
+invocation plan/admission（§8.5）。
+
+验证：`python -m pytest -q -m 'not live_llm'` → 3657 passed、3 deselected、
+12 subtests passed，exit 0（S3 后 3648 + 新增 9）。事故页形状（16 段 + 真实 detail
+义务 + atom witness）在 8192 输出预算下被判为不可行；无 atom 的过渡页输出成本非零；
+Binder-owned atom 不计入 Writer 负担。
