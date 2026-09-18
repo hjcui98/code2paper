@@ -3202,3 +3202,25 @@ v3 调用、v4 编译失败仍失败、shadow 双建单执行）；全量离线 
   阶段快照按 phase 后缀区分。
 
 验证：regression 81 passed；全量离线 3682 passed、3 deselected、12 subtests passed、exit 0。
+
+## 2026-09-18 WP5 transport policy（§9.2）
+
+新增 `src/code2paper/agentic/transport_retry_policy.py`（纯决策函数，无 I/O）：
+
+- `TransportRetryPolicyV1`：`max_transport_retries`（默认 2，可经
+  `CODE2PAPER_TRANSPORT_MAX_RETRIES` 覆盖）、指数退避（base/max，默认 1s/30s）、可重试
+  状态码（429/500/502/503/504）、`counts_against_call_budget=True`、
+  `unknown_outcome_retries=0`。
+- `classify_transport_failure(status_code=/exception=/sent=)`：429/5xx → `retryable_status`；
+  其他 4xx → `terminal_status`；已发送的 timeout → `transport_timeout`；未发送的连接失败 →
+  `connection_error`；无法判定 → `unknown`（按结果未知 fail-closed 处理）。
+- `next_transport_action(...)`：结果未知（timeout/unknown）→ **`preserve_reservation`**
+  （保留 reservation，不自动重发/退款）；可重试失败受 `max_transport_retries` 与
+  **run 调用上限**双重约束（`transport_retry_exceeds_call_budget`）；终态失败 → `fail`。
+- 坏配置回落默认（不会变成无限重试或负数）。
+
+仍未完成：把该策略接到实际调用重试点（`_default_llm_caller` / writer provider 调用路径
+的异常分支），以及 `unsettled_reservations` 与写侧预算核算合并（避免双重扣费）。
+
+验证：regression 87 passed（新增 `test_transport_policy.py` 6 例）；全量离线 3688 passed、
+3 deselected、12 subtests passed、exit 0。
