@@ -19,6 +19,7 @@ from typing import Any, Literal
 from pydantic import BaseModel, ConfigDict, Field
 
 from code2paper.agentic.digest import digest_json
+from code2paper.agentic.tool_runtime import atomic_write_bytes
 
 ArtifactStatusV1 = Literal[
     "missing",
@@ -362,6 +363,129 @@ def resolve_artifact(
     return path
 
 
+class ResolvedAuthoringSnapshotV1(BaseModel):
+    """阶段开始前冻结的输入快照（方案 §10.3）。
+
+    reader 不在执行过程中反复读取可变的 active 指针：本快照固定该阶段使用的
+    产物路径与字节摘要，执行完成后另写完成状态，不修改已执行的输入快照。
+    """
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    schema_version: str = "1.0"
+    phase: str
+    execution_identity_digest: str = ""
+    index_revision: int = 1
+    index_digest: str = ""
+    resolved: dict[str, str] = Field(default_factory=dict)
+    digests: dict[str, str] = Field(default_factory=dict)
+    content_digest: str = ""
+
+    def as_diagnostics(self) -> dict[str, Any]:
+        return self.model_dump(mode="json")
+
+
+def artifact_index_path(out_root: str | Path) -> Path:
+    return (
+        Path(out_root).expanduser().resolve()
+        / "artifacts"
+        / "06_authoring"
+        / "authoring_artifact_index_v1.json"
+    )
+
+
+def publish_artifact_index(
+    out_root: str | Path,
+    *,
+    execution_identity_digest: str = "",
+    reference_digests: dict[str, str] | None = None,
+) -> tuple[str, AuthoringArtifactIndexV1]:
+    """原子发布一版索引；读回校验后才算发布成功（§10.2）。"""
+
+    root = Path(out_root).expanduser().resolve()
+    path = artifact_index_path(root)
+    previous_revision = 0
+    if path.is_file():
+        try:
+            previous_revision = int(
+                json.loads(path.read_text(encoding="utf-8")).get("index_revision") or 0
+            )
+        except (OSError, ValueError):
+            previous_revision = 0
+    index = build_artifact_index(
+        root,
+        execution_identity_digest=execution_identity_digest,
+        reference_digests=reference_digests,
+        index_revision=previous_revision + 1,
+    )
+    path.parent.mkdir(parents=True, exist_ok=True)
+    atomic_write_bytes(
+        path, (index.model_dump_json(indent=2) + "\n").encode("utf-8")
+    )
+    try:
+        reread = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError) as exc:  # pragma: no cover - 磁盘异常
+        raise ArtifactIndexError("artifact_index_publish_incomplete") from exc
+    if str(reread.get("content_digest") or "") != index.content_digest:
+        raise ArtifactIndexError("artifact_index_publish_incomplete")
+    return str(path), index
+
+
+def build_resolved_authoring_snapshot(
+    index: AuthoringArtifactIndexV1,
+    *,
+    out_root: str | Path,
+    phase: str,
+    required_roles: list[str] | tuple[str, ...],
+) -> ResolvedAuthoringSnapshotV1:
+    """把某阶段需要的产物解析结果冻结成不可变快照。"""
+
+    root = Path(out_root).expanduser().resolve()
+    resolved: dict[str, str] = {}
+    digests: dict[str, str] = {}
+    for key in required_roles or ():
+        role, _, phase_name = str(key).partition(":")
+        if not role or not phase_name:
+            raise ArtifactIndexError(f"artifact_role_phase_malformed:{key}")
+        path = resolve_artifact(index, role, phase_name, out_root=root)
+        entry = index.entry_for(role, phase_name)
+        resolved[key] = str(path.relative_to(root))
+        digests[key] = entry.file_bytes_digest if entry is not None else ""
+    payload = {
+        "schema_version": "1.0",
+        "phase": str(phase),
+        "execution_identity_digest": index.execution_identity_digest,
+        "index_revision": index.index_revision,
+        "index_digest": index.content_digest,
+        "resolved": resolved,
+        "digests": digests,
+    }
+    return ResolvedAuthoringSnapshotV1(
+        phase=str(phase),
+        execution_identity_digest=index.execution_identity_digest,
+        index_revision=index.index_revision,
+        index_digest=index.content_digest,
+        resolved=resolved,
+        digests=digests,
+        content_digest=digest_json(payload),
+    )
+
+
+def write_resolved_authoring_snapshot(
+    out_root: str | Path, snapshot: ResolvedAuthoringSnapshotV1
+) -> str:
+    path = (
+        Path(out_root).expanduser().resolve()
+        / "artifacts"
+        / "06_authoring"
+        / f"resolved_authoring_snapshot_v1.{snapshot.phase}.json"
+    )
+    path.parent.mkdir(parents=True, exist_ok=True)
+    atomic_write_bytes(path, (snapshot.model_dump_json(indent=2) + "\n").encode("utf-8"))
+    return str(path)
+
+
+
 def resolve_role_phase_keys() -> tuple[str, ...]:
     return tuple(f"{role}:{phase}" for role, phase in _ROLE_PHASE_KEYS)
 
@@ -371,7 +495,12 @@ __all__ = [
     "ArtifactIndexError",
     "ArtifactStatusV1",
     "AuthoringArtifactIndexV1",
+    "ResolvedAuthoringSnapshotV1",
+    "artifact_index_path",
     "build_artifact_index",
+    "build_resolved_authoring_snapshot",
+    "publish_artifact_index",
+    "write_resolved_authoring_snapshot",
     "resolve_artifact",
     "resolve_role_phase_keys",
 ]

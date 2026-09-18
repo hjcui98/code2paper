@@ -3186,3 +3186,19 @@ v3 调用、v4 编译失败仍失败、shadow 双建单执行）；全量离线 
 边界与事故形状都可被回归重算，任何改动都会在 `test_page_calibration.py` 失败。
 
 验证：regression 79 passed；全量离线 3680 passed、3 deselected、12 subtests passed、exit 0。
+
+## 2026-09-18 WP6 写侧：索引发布与阶段输入快照
+
+- `authoring_artifact_index.py` 新增：
+  * `publish_artifact_index(out_root, ...)`：先构建索引对象、原子写入
+    `artifacts/06_authoring/authoring_artifact_index_v1.json`，**读回校验 content_digest**
+    后才算发布成功（半写对象不得成为 active）；`index_revision` 在已有索引基础上递增。
+  * `ResolvedAuthoringSnapshotV1` + `build_resolved_authoring_snapshot(index, out_root,
+    phase, required_roles)` + `write_resolved_authoring_snapshot(...)`：把某阶段需要的
+    产物解析结果（相对路径 + 字节摘要 + 索引摘要）冻结成
+    `resolved_authoring_snapshot_v1.<phase>.json`；reader 执行期间不再反复读 active 指针
+    （§10.3）。缺必需产物即 fail-closed。
+- 产物命名：索引固定路径 `artifacts/06_authoring/authoring_artifact_index_v1.json`；
+  阶段快照按 phase 后缀区分。
+
+验证：regression 81 passed；全量离线 3682 passed、3 deselected、12 subtests passed、exit 0。

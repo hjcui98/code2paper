@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+from pathlib import Path
 
 import pytest
 
@@ -115,3 +116,81 @@ def test_contract_builder_and_validator_agree_on_not_applicable(tmp_path) -> Non
     )
     assert blocked_satisfied == satisfied
     assert blocked_missing == missing
+
+
+def test_publish_increments_revision_and_verifies_readback(tmp_path) -> None:
+    """§10.2：先写不可变对象再原子发布 index revision，读回校验后才算成功。"""
+
+    from code2paper.agentic.authoring_artifact_index import (
+        artifact_index_path,
+        publish_artifact_index,
+    )
+
+    root = tmp_path / "run"
+    manifest = root / "artifacts/06_authoring/consumer_workset_manifest_v2.json"
+    manifest.parent.mkdir(parents=True)
+    manifest.write_text(
+        json.dumps({"schema_version": "2.0", "worksets": [], "pages": []}),
+        encoding="utf-8",
+    )
+
+    first_path, first = publish_artifact_index(root, execution_identity_digest="exec-x")
+    assert first.index_revision == 1
+    assert Path(first_path) == artifact_index_path(root)
+    assert first.active["consumer_workset_manifest:formalizer"].endswith(
+        "consumer_workset_manifest_v2.json"
+    )
+
+    second_path, second = publish_artifact_index(root, execution_identity_digest="exec-x")
+    assert second_path == first_path
+    assert second.index_revision == 2
+    # 读回的索引必须与内存对象一致（半写对象不得成为 active）。
+    on_disk = json.loads(Path(second_path).read_text(encoding="utf-8"))
+    assert on_disk["content_digest"] == second.content_digest
+    assert on_disk["index_revision"] == 2
+
+
+def test_resolved_snapshot_freezes_phase_inputs_and_fails_closed(tmp_path) -> None:
+    from code2paper.agentic.authoring_artifact_index import (
+        ArtifactIndexError,
+        build_resolved_authoring_snapshot,
+        publish_artifact_index,
+        write_resolved_authoring_snapshot,
+    )
+
+    root = tmp_path / "run"
+    plan = root / "artifacts/06_authoring/narrative_plan_v3.revision.2.json"
+    plan.parent.mkdir(parents=True)
+    plan.write_text(
+        json.dumps({"schema_version": "3.0", "content_digest": "sha256:plan"}),
+        encoding="utf-8",
+    )
+    _path, index = publish_artifact_index(root, execution_identity_digest="exec-y")
+
+    snapshot = build_resolved_authoring_snapshot(
+        index,
+        out_root=root,
+        phase="writer",
+        required_roles=("narrative_plan:authoring",),
+    )
+    assert snapshot.phase == "writer"
+    assert snapshot.resolved["narrative_plan:authoring"].endswith(
+        "narrative_plan_v3.revision.2.json"
+    )
+    assert snapshot.digests["narrative_plan:authoring"].startswith("sha256:")
+    assert snapshot.index_digest == index.content_digest
+
+    written = write_resolved_authoring_snapshot(root, snapshot)
+    assert Path(written).name == "resolved_authoring_snapshot_v1.writer.json"
+    assert json.loads(Path(written).read_text(encoding="utf-8"))["content_digest"] == (
+        snapshot.content_digest
+    )
+
+    # 该阶段缺少必需产物时 fail-closed，不静默跳过。
+    with pytest.raises(ArtifactIndexError, match="artifact_missing|artifact_role_phase_unknown"):
+        build_resolved_authoring_snapshot(
+            index,
+            out_root=root,
+            phase="writer",
+            required_roles=("binder_receipts:binder",),
+        )
