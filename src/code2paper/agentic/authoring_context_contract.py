@@ -325,11 +325,21 @@ def validate_authoring_run_contract(
 ) -> tuple[bool, tuple[str, ...]]:
     """Validate that all expected artifacts are present in actual artifacts.
 
+    WP6 §10.5：与 ``build_authoring_run_contract`` 使用**同一** required-key 判定——
+    正当的 N/A（在 builder 里已按 expected 过滤并记录 proof）不再被 validator 误报为
+    缺失，否则同一份合同在两条路径上会得出不同结论。
+
+    ``allow_blocked`` 仅供"允许不完整状态被记录/展示"的调用方使用：它**不**改变
+    satisfied 的判定，也不能作为"允许发布 verified"的后门。
+
     Returns (is_satisfied, missing_keys).
     """
+    not_applicable = set(contract.not_applicable_artifact_keys)
+    actual = set(contract.actual_artifact_keys)
     missing = tuple(
-        key for key in contract.expected_artifact_keys
-        if key not in contract.actual_artifact_keys
+        key
+        for key in contract.expected_artifact_keys
+        if key not in actual and key not in not_applicable
     )
     return len(missing) == 0, missing
 

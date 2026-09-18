@@ -3108,3 +3108,25 @@ exit 0。
 事故归档实测：attempt 1/2 = `settled`，3/4 = `rejected_before_send`（与内容预算判定一致）。
 
 验证：regression 67 passed；全量离线 3668 passed、3 deselected、12 subtests passed、exit 0。
+
+## 2026-09-18 WP6：阶段化产物索引与合同 N/A 一致性
+
+- 新增 `src/code2paper/agentic/authoring_artifact_index.py`（新增解析层，不重命名历史文件）：
+  `ArtifactIndexEntryV1(logical_role, phase, schema_version, generation, path, status,
+  semantic_digest, file_bytes_digest)` 与 `AuthoringArtifactIndexV1`（active 指针 +
+  content_digest）；`build_artifact_index(out_root, reference_digests=...)` 只读扫描已知
+  产物；`resolve_artifact(index, role, phase, out_root=..., expected_digest=...,
+  allow_empty=...)` 对未知 role/phase、active 歧义、缺失、语义摘要不符、路径逃逸一律
+  阻断（不按 mtime/字典序/无后缀猜当前对象）。
+  状态包含 `valid_empty`（合法空产物）与 `source_snapshot`（兼容源快照，不是独立语义
+  对象），二者不会被当成 active 真身。
+- 事故归档验证：`consumer_workset_manifest:formalizer` = 空基础 manifest（valid_empty）、
+  `:writer` = `.writer.2` 真身（active），两者各自可解析；`narrative_plan:authoring`
+  默认取 `revision.2`，当按适配器记录的参考摘要解引用时取回 `narrative_plan_v3`，
+  另一代标为 `superseded`；`allow_empty=False` 时空 manifest 报
+  `artifact_empty_not_allowed`。
+- `authoring_context_contract.validate_authoring_run_contract` 与 builder 共用同一
+  required-key 判定：正当 N/A 不再被误报缺失；`allow_blocked` 明确为"允许不完整状态
+  被记录/展示"的展示开关，不改变 satisfied，也不能作为发布 verified 的后门。
+
+验证：regression 71 passed；全量离线 3672 passed、3 deselected、12 subtests passed、exit 0。
