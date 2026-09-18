@@ -3224,3 +3224,28 @@ v3 调用、v4 编译失败仍失败、shadow 双建单执行）；全量离线 
 
 验证：regression 87 passed（新增 `test_transport_policy.py` 6 例）；全量离线 3688 passed、
 3 deselected、12 subtests passed、exit 0。
+
+## 2026-09-18 WP3 §7.3：Writer 定向修复包
+
+新增 `src/code2paper/agentic/writer_repair_packet.py`（纯函数）：
+
+- `WriterRepairPacketV1`：repair_kind、escalation（`repair_in_place` / `replan_required`）、
+  paragraph_id/section_id、missing_targets（kind + canonical id + reason_code）、
+  allowed_edits、allowed_paragraph_ids（**有且仅有失败段落**）、
+  `preserve_other_paragraphs=True`、`frozen_paragraph_digests`（已接受段落摘要，失败段落
+  被排除）、原正文、authority_refs 与 content_digest；`as_request_payload()` 只暴露模型
+  需要的最小修复载荷（不含内部冻结摘要）。
+- `build_writer_repair_packet(...)`：按失败码决定 repair_kind 与允许的编辑面
+  （detail→`paragraph_content`+`detail_witnesses`；formula→`formula_references`）；
+  **权限越界 / 目标越界一律升级为 `replan_required`**（§7.3 末句：不能硬让 Writer 在
+  错误段落加一句话过门），此时 allowed_edits/allowed_paragraph_ids 为空。
+- `contract_failures_from_legacy_strings(...)`：只读兼容适配（历史 acceptance 失败项 →
+  (code, kind, target)），执行层不使用拼接字符串判断（§7.5）。修正了一处解析错误：
+  段落 id 自身含冒号（`MA-S3:P1__f1:detail:detail:…`），必须按 `:<kind>:` 标记切分而不是
+  按位置切分。
+- 事故 attempt-2 实测：两个 detail witness 缺失 → `repair_in_place`，
+  targets = `mech_sym:f6cf5bdfe2ae16f0:15/76`，只允许改 `MA-S3:P1__f1`，
+  `MA-S3:P3/P4` 摘要被冻结。
+
+验证：regression 92 passed（新增 `test_repair_packet.py` 5 例）；全量离线 3693 passed、
+3 deselected、12 subtests passed、exit 0。
