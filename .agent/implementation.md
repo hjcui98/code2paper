@@ -3538,3 +3538,35 @@ python -m code2paper.cli.main method-agent run \
 必须传显式空 profile 并快照/恢复 `os.environ`。
 
 验证：全量离线 3740 passed、3 deselected、12 subtests passed、exit 0。
+
+## 2026-09-18 §14.3：token 用量区分"本次发送"与"复用证据"（缺陷 2 修复）
+
+上轮留证的缺陷已修：`--authoring-stage prepare` 复制冻结 Formalizer 阶段的 invocation
+回执后，token 汇总把这 45 次历史调用（1.16M input tokens）记成**本次 run** 的用量——
+同一轮 `deterministic_preflight_v1.json` 却是 `model_calls: 0`。这既让 §14.3 的效率口径
+（发送调用数/真实 tokens/无效调用量）失真，也让"这次尝试是否真的发过请求"这条判断
+（prepared 根续跑分支依赖 `calls == 0 and total_tokens == 0`）永远不成立。
+
+修复：
+
+- 复制冻结 Formalizer 阶段时写出**来源索引**
+  `artifacts/06_authoring/reused_evidence_receipts_v1.json`（相对路径 + 复制时摘要）；
+- 汇总时按索引 + 摘要比对分类：一致 → `reused_evidence`；索引声明但内容已被改写 →
+  按"本次发送"保守计入并在 `provenance.content_changed_after_copy*` 留痕；
+- `token_usage_summary_v1.json` 语义明确化：
+  - 顶层 `calls`/`*_tokens`/`status` = **本次发送**（恢复续跑判断所依赖的语义）；
+  - `reused_evidence` = 复用冻结证据的用量（不丢失、不冒充）；
+  - `all_receipts` = 两者之和（与旧口径可对账）；
+  - `provenance` = {sent, reused_evidence, unclassified}。
+- 无来源索引时（既有调用方/测试）行为与旧实现逐字段一致。
+
+实测（真实事故归档 + EBCAR 目标，零模型调用）：
+```
+sent_calls=0 sent_total=0 | reused_evidence_calls=45 reused_evidence_total=1221200
+| all_receipts_total=1221200
+```
+证据：`artifacts/runs/2026-09-18-live-admission/token-usage-provenance-evidence/`
+（`before-fix-*` / `after-fix-*` 对照）。
+
+验证：regression 新增 `tests/regression_20260917/test_token_usage_provenance.py`（5 项）；
+全量离线 3745 passed、3 deselected、12 subtests passed、exit 0。

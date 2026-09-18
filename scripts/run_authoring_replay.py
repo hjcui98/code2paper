@@ -886,6 +886,8 @@ def _prepared_continuation_execution_digest(
 
 DEFAULT_LIVE_PROFILE = Path("tests/live/profiles/qwen38_vllm_budgeted.example.env")
 TOKEN_USAGE_SUMMARY_FILENAME = "token_usage_summary_v1.json"
+#: 记录"哪些 invocation 回执复制自冻结根"，用于把复用用量与本次发送分开。
+REUSED_EVIDENCE_RECEIPTS_FILENAME = "reused_evidence_receipts_v1.json"
 
 
 def _is_custom_env_configured() -> bool:
@@ -1110,16 +1112,31 @@ def _summarize_token_usage(calls: list[Mapping[str, Any]] | tuple[Mapping[str, A
     blocked_calls = 0
     models: set[str] = set()
     endpoint_origins: set[str] = set()
+    reused_totals = {
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "total_tokens": 0,
+        "reasoning_tokens": 0,
+    }
+    reused_calls = 0
+    reused_calls_with_usage = 0
+    reused_estimated_total_calls = 0
 
     for call in calls:
         raw_usage = call.get("token_usage")
         usage: Mapping[str, Any] = raw_usage if isinstance(raw_usage, Mapping) else {}
-        if usage:
-            calls_with_usage += 1
-        if bool(call.get("cached")):
-            cached_calls += 1
-        if str(call.get("blocked_reason") or "").strip():
-            blocked_calls += 1
+        reused = bool(call.get("reused_evidence"))
+        if reused:
+            # 复用冻结证据的用量单独记账：它既不是本次发送，也不能被静默丢掉。
+            reused_calls += 1
+            reused_calls_with_usage += int(bool(usage))
+        else:
+            if usage:
+                calls_with_usage += 1
+            if bool(call.get("cached")):
+                cached_calls += 1
+            if str(call.get("blocked_reason") or "").strip():
+                blocked_calls += 1
         model = str(call.get("model") or "").strip()
         endpoint = str(call.get("endpoint_origin") or "").strip()
         if model:
@@ -1132,16 +1149,29 @@ def _summarize_token_usage(calls: list[Mapping[str, Any]] | tuple[Mapping[str, A
         explicit_total = _usage_count(usage, _TOTAL_TOKEN_KEYS)
         if explicit_total is None:
             total_tokens = input_tokens + output_tokens
-            if input_tokens or output_tokens:
-                estimated_total_calls += 1
+            total_class = "estimated" if (input_tokens or output_tokens) else "absent"
         else:
             total_tokens = explicit_total
-            explicit_total_calls += 1
+            total_class = "explicit"
+        if reused:
+            if total_class == "estimated":
+                reused_estimated_total_calls += 1
+            reused_totals["input_tokens"] += input_tokens
+            reused_totals["output_tokens"] += output_tokens
+            reused_totals["total_tokens"] += total_tokens
+        else:
+            if total_class == "explicit":
+                explicit_total_calls += 1
+            elif total_class == "estimated":
+                estimated_total_calls += 1
+            totals["input_tokens"] += input_tokens
+            totals["output_tokens"] += output_tokens
+            totals["total_tokens"] += total_tokens
         reasoning_tokens = _usage_count(usage, _REASONING_TOKEN_KEYS) or 0
-        totals["input_tokens"] += input_tokens
-        totals["output_tokens"] += output_tokens
-        totals["total_tokens"] += total_tokens
-        totals["reasoning_tokens"] += reasoning_tokens
+        if reused:
+            reused_totals["reasoning_tokens"] += reasoning_tokens
+        else:
+            totals["reasoning_tokens"] += reasoning_tokens
 
         for key, value in usage.items():
             count = _positive_int(value)
@@ -1168,21 +1198,25 @@ def _summarize_token_usage(calls: list[Mapping[str, Any]] | tuple[Mapping[str, A
         role_totals["reasoning_tokens"] += reasoning_tokens
 
     call_count = len(calls)
+    sent_count = call_count - reused_calls
     return {
         "schema_version": "1.0",
         "artifact": "token_usage_summary_v1",
         "accounting": (
-            "sum provider total_tokens; derive input_tokens+output_tokens only "
-            "when total_tokens is absent; reasoning_tokens is a non-additive breakdown"
+            "top-level calls/*_tokens count only provider calls this run sent; "
+            "reused_evidence_* carries frozen receipts copied into the root; "
+            "all_receipts_* is their sum; sum provider total_tokens and derive "
+            "input+output only when total_tokens is absent; reasoning_tokens is "
+            "a non-additive breakdown"
         ),
         "status": (
-            "no_calls" if call_count == 0
-            else "complete" if calls_with_usage == call_count
+            "no_calls" if sent_count == 0
+            else "complete" if calls_with_usage == sent_count
             else "partial"
         ),
-        "calls": call_count,
+        "calls": sent_count,
         "calls_with_usage": calls_with_usage,
-        "calls_without_usage": call_count - calls_with_usage,
+        "calls_without_usage": sent_count - calls_with_usage,
         "explicit_total_token_calls": explicit_total_calls,
         "estimated_total_token_calls": estimated_total_calls,
         "cached_calls": cached_calls,
@@ -1190,6 +1224,27 @@ def _summarize_token_usage(calls: list[Mapping[str, Any]] | tuple[Mapping[str, A
         "usage_available": calls_with_usage > 0,
         "total_tokens_is_estimate": estimated_total_calls > 0,
         **totals,
+        "provenance": {
+            "sent": sent_count,
+            "reused_evidence": reused_calls,
+            "unclassified": 0,
+        },
+        "reused_evidence": {
+            "calls": reused_calls,
+            "calls_with_usage": reused_calls_with_usage,
+            "estimated_total_token_calls": reused_estimated_total_calls,
+            **reused_totals,
+        },
+        "all_receipts": {
+            "calls": call_count,
+            "calls_with_usage": calls_with_usage + reused_calls_with_usage,
+            "input_tokens": totals["input_tokens"] + reused_totals["input_tokens"],
+            "output_tokens": totals["output_tokens"] + reused_totals["output_tokens"],
+            "total_tokens": totals["total_tokens"] + reused_totals["total_tokens"],
+            "reasoning_tokens": (
+                totals["reasoning_tokens"] + reused_totals["reasoning_tokens"]
+            ),
+        },
         "by_role": dict(sorted(by_role.items())),
         "raw_usage_totals": dict(sorted(raw_usage_totals.items())),
         "models": sorted(models),
@@ -1207,6 +1262,8 @@ def _write_token_usage_summary(fresh: Path) -> dict[str, Any]:
     if ledger_root.is_dir():
         from code2paper.agentic.unified_context_models import ActualRequestReceiptV2
 
+        reused_index = _load_reused_evidence_receipts_index(fresh)
+        provenance_mismatches: list[str] = []
         seen: set[tuple[str, int]] = set()
         corrupt: list[str] = []
         for receipt_path in sorted(ledger_root.glob("*/attempt-*.completed.json")):
@@ -1223,10 +1280,18 @@ def _write_token_usage_summary(fresh: Path) -> dict[str, Any]:
             seen.add(key)
             if not receipt.sent_to_caller:
                 continue
+            relative = str(receipt_path.relative_to(ledger_root)).replace(os.sep, "/")
+            expected = reused_index.get(relative)
+            # 索引里声明为"复制自冻结根"且内容仍与复制时一致 → 复用证据；
+            # 摘要不符说明文件在复制后被改写，按本次发送保守计入并留痕。
+            reused = bool(expected) and expected == _digest_file(receipt_path)
+            if expected and not reused:
+                provenance_mismatches.append(relative)
             calls.append({
                 "role": receipt.consumer_role,
                 "token_usage": dict(receipt.provider_usage or {}),
                 "model": receipt.model_identity_digest,
+                "reused_evidence": reused,
                 "blocked_reason": (
                     receipt.delivery_rejection_code
                     if receipt.delivery_status == "rejected" else ""
@@ -1236,8 +1301,14 @@ def _write_token_usage_summary(fresh: Path) -> dict[str, Any]:
             raise ValueError(
                 "durable_usage_receipt_corrupt:" + ",".join(corrupt[:5])
             )
+        if provenance_mismatches:
+            # 复制后内容被改写：如实记录，且这些回执按"本次发送"保守计入。
+            provenance_mismatches_note = list(provenance_mismatches)
+        else:
+            provenance_mismatches_note = []
         source = "durable_unified_invocation_receipts"
     else:
+        provenance_mismatches_note = []
         try:
             from code2paper.llm.generation_trace import get_run_generation_traces
 
@@ -1246,6 +1317,13 @@ def _write_token_usage_summary(fresh: Path) -> dict[str, Any]:
             calls = []
     summary = _summarize_token_usage(calls)
     summary["source"] = source
+    if provenance_mismatches_note:
+        summary["provenance"]["content_changed_after_copy"] = len(
+            provenance_mismatches_note
+        )
+        summary["provenance"]["content_changed_after_copy_receipts"] = list(
+            provenance_mismatches_note[:5]
+        )
     path = fresh / "artifacts" / "06_authoring" / TOKEN_USAGE_SUMMARY_FILENAME
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(
@@ -1253,13 +1331,17 @@ def _write_token_usage_summary(fresh: Path) -> dict[str, Any]:
         encoding="utf-8",
     )
     result = {**summary, "path": str(path)}
+    reused = summary["reused_evidence"]
     print(
         "[replay] token usage: "
-        f"total={summary['total_tokens']} "
+        f"sent_calls={summary['calls']} "
+        f"sent_total={summary['total_tokens']} "
         f"input={summary['input_tokens']} "
         f"output={summary['output_tokens']} "
-        f"calls={summary['calls']} "
         f"usage_calls={summary['calls_with_usage']} "
+        f"| reused_evidence_calls={reused['calls']} "
+        f"reused_evidence_total={reused['total_tokens']} "
+        f"| all_receipts_total={summary['all_receipts']['total_tokens']} "
         f"path={path}"
     )
     return result
@@ -1845,7 +1927,67 @@ def _copy_frozen_formalizer_phase(
                 "decision": "copied",
                 "reason": "prepare_checkpoint",
             })
+            # 证据来源索引：这些回执是**复用的冻结用量**，不是本次 run 的花费。
+            # token 汇总据此把"本次发送"与"复用证据"分开（§14.3 效率口径）。
+            _write_reused_evidence_receipts_index(
+                authoring=authoring,
+                frozen=frozen,
+                receipts=tuple(
+                    sorted(
+                        str(path.relative_to(target_invocations)).replace(os.sep, "/")
+                        for path in target_invocations.rglob("*")
+                        if path.is_file()
+                    )
+                ),
+            )
     return tuple(dict.fromkeys(missing))
+
+
+def _write_reused_evidence_receipts_index(
+    *,
+    authoring: Path,
+    frozen: Path,
+    receipts: tuple[str, ...],
+) -> Path:
+    """记录"哪些回执是从冻结根复制来的"（路径 + 复制时摘要），供用量汇总分类。"""
+
+    payload = {
+        "schema_version": "1.0",
+        "artifact": REUSED_EVIDENCE_RECEIPTS_FILENAME.removesuffix(".json"),
+        "source": "frozen_formalizer_phase",
+        "frozen_root": str(frozen),
+        "receipts": [
+            {
+                "path": relative,
+                "digest": _digest_file(authoring / "invocations" / relative),
+            }
+            for relative in receipts
+        ],
+    }
+    path = authoring / REUSED_EVIDENCE_RECEIPTS_FILENAME
+    path.write_text(
+        json.dumps(payload, ensure_ascii=False, sort_keys=True, indent=2) + "\n",
+        encoding="utf-8",
+    )
+    return path
+
+
+def _load_reused_evidence_receipts_index(fresh: Path) -> dict[str, str]:
+    """读取复用证据索引：``相对路径 -> 复制时摘要``（缺失/不可读时按空处理）。"""
+
+    path = fresh / "artifacts" / "06_authoring" / REUSED_EVIDENCE_RECEIPTS_FILENAME
+    if not path.is_file():
+        return {}
+    payload = _read_json_mapping(path)
+    index: dict[str, str] = {}
+    for entry in payload.get("receipts") or ():
+        if not isinstance(entry, Mapping):
+            continue
+        relative = str(entry.get("path") or "").strip()
+        digest = str(entry.get("digest") or "").strip()
+        if relative and digest:
+            index[relative] = digest
+    return index
 
 
 def _frozen_project_tree_hash(frozen: Path) -> tuple[str, str]:
