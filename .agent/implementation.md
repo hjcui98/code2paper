@@ -3032,3 +3032,45 @@ exit 0。
 验证：`python -m pytest -q tests/regression_20260917` 63 passed；
 `python -m pytest -q -m 'not live_llm'` → 3664 passed、3 deselected、12 subtests passed，
 exit 0。
+
+## 2026-09-18 阶段收敛：现状、证据与剩余项交接
+
+本轮不新增功能改动，只固化当前状态与下一步，避免后续会话重复摸索。
+
+### 已完成并各自带离线证据（34ae0cf 之后 9 个提交）
+
+| 提交 | 阶段 | 内容 | 证据 |
+|---|---|---|---|
+| `4a5de49` | S0 前置 | 引入执行方案文档 | — |
+| `0395e25` | WP0/S0 | 事故归档冻结 oracle（blob+sha256 双身份）+ 6 条事故事实 | `tests/regression_20260917/test_archived_failure_facts.py` |
+| `7038808` | WP1/S1 | 引擎内容指纹、`AuthoringExecutionIdentityV2`、new/resume/fork 准入、耗尽阻断、单写者租约、CLI `--run-open-mode` | `test_execution_identity.py` |
+| `5eba40a` | WP2/S2 | 作者单元分类/合并、页内 `author_intent_surfaces`、`intent-content-v2` 指纹 | `test_intent_writer_surface.py` |
+| `87ad104` | WP3/S3 | 两阶段验收（writer_content/final_bound）、结构化 `ContractFailureV1` | `test_witness_projection.py` |
+| `1b10d12` | WP3/S3 | 页级配对（页接受=writer_content，atom 交确定性 Binder）+ Writer 视图剥离 atom | 同上 + `test_llm_section_writer.py` 更新 |
+| `11169b1` | WP4 | 输出工作量估量与页契约联合评估（纯函数） | `test_output_feasibility.py` |
+| `9d6dca1` | WP4 | 候选页接受点加入语义段落预算（先拆页） | 同上 + `test_agentic_unified_context_compiler.py` |
+| `ea710d3` | WP4/§8.5 | `run_budget_insufficient_after_repage` 可解释失败码 | 同上 |
+| `a7c4fc1` | WP5 读侧 | 事件序号 vs 真实发送计数、恢复前置检查 | `test_ledger_recovery.py` |
+
+最后一次全量离线：**3664 passed、3 deselected、12 subtests passed、exit 0**。
+工作区只剩两项有意不提交的内容：`docs/1.txt`（草稿）与 `paperbanana_single_shot`（submodule 内容变更）。
+
+### 剩余项（按建议顺序，均为可独立开工的边界）
+
+1. **WP4 收尾**：用冻结证据重新测量 WP2 之后的真实页分布，登记语义段落上限标定值；
+   确认 invocation plan 构建路径不存在"剩余页被截断"的分支（只允许显式失败）。
+2. **WP5 写侧**：`publication_method_writer.py` 调用边界
+   （`attempt = last_started_attempt(...) + 1` 与 `publish_attempt_started(...)`）目前仍以
+   **事件序号**决定是否拒发；应改为以 `read_invocation_ledger_state(...)` 的
+   `content_attempt_count` 决定内容预算，使"预发送拒绝"不再消耗内容尝试（§9.2）；
+   随后补 transport policy（限流/超时）与 `send_outcome_unknown` 的 reservation 保留，
+   以及 §9.5 的崩溃点恢复用例（reservation 后未 send / send 后无 response /
+   response 后未 completed / completed 后未 acceptance）。
+3. **WP3 剩余**：§7.3 repair packet（失败页定向修复语义）、§7.4 binder 端"atom 仅用于
+   定位候选 span"、§7.6 单一正文表面（段落对象为唯一真源、section_markdown 派生）。
+4. **WP6**：新增 `authoring_artifact_index.py`（`(logical_role, phase, generation)` 解析、
+   active 指针、digest 解引用）与 `build/validate_authoring_run_contract` 的 N/A 一致性。
+5. **WP7**：`build_selected_narrative_plan(selection, ...)`（v4 路径 legacy 调用归零、
+   无静默 fallback）、Writer 必需页缺口在 phase boundary 前置暴露。
+6. **live 验证（L1/L2/L3）**：需方案 §14.1 的显式授权与全新 out 目录；本轮未运行任何
+   真实模型调用，也未续跑 `/tmp/c2p-p7-ebcar-v4-intent-j9L1bn`。
