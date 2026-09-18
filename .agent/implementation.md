@@ -2914,3 +2914,24 @@ final_bound atom 绑定）一起落地，并先核实 binder 阶段确实产出 
   tests/test_agentic_publication_method_writer.py -m 'not live_llm'`：202 passed。
 - `python -m pytest -q -m 'not live_llm'`：3646 passed、3 deselected、
   12 subtests passed，exit 0（S2 后 3641 + 新增 5，无回归）。
+
+## 2026-09-18 WP3 完成：页级配对与 Writer 表面剥离 atom
+
+先核实再上线：`publication_method_writer.py` 的 Binder 阶段（`_write_unified_v2_binder_receipts`
+→ `binder_receipts_v2`）确实消费最终接受的 Writer 段落与 `section_inputs`（含完整 canonical
+witness 合同），且**缺少或失败的 Binder 回执会 fail-closed 阻断发布**。因此可以把页接受
+降到 `writer_content`，atom/条件/极性/接口由 Binder 负责。
+
+- 页级两处 `assess_paragraph_transaction(...)`（missing_paragraph/invalid_count/
+  required_target_count 的来源）改为 `validation_stage="writer_content"`。
+- §7.1 上线：`_compact_writer_witness_contract_for_llm` 从 Writer 视图剥离
+  `target_kind="atom"` 的目标，并记录 `binder_owned={owner, target_count}`；canonical
+  合同不变，Binder 仍取完整 atom。
+- 既有测试 `test_unified_page_projection_keeps_page_and_compacts_duplicate_contracts`
+  原先断言 Writer 视图包含必需 atom——这正是方案 §7.1 要修的行为，已改为断言
+  Writer 视图 targets 为空 + `binder_owned`，同时断言 canonical 合同仍保留 atom。
+- 新增/恢复 `test_witness_projection.py` 两例：合成合同剥离 2 个 atom；事故真实请求
+  P1__f1 的必需 atom 在 Writer 视图消失、detail 目标保留。
+
+验证：`python -m pytest -q -m 'not live_llm'` → 3648 passed、3 deselected、
+12 subtests passed，exit 0（无回归）。

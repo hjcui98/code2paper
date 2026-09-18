@@ -5632,16 +5632,22 @@ def _run_publication_method_writer_impl(
                             {"paragraph_id": paragraph_id},
                             plan_row=plan_row,
                             formula_routes=formula_routes,
+                            validation_stage="writer_content",
                         ).missing_by_kind
                     ).values()
                 )
                 missing.append(f"missing_paragraph:{plan_row.get('paragraph_id')}")
                 continue
+            # WP3 §7.2 页级配对：页接受只验 Writer 内容义务（detail/公式/正文），
+            # atom/条件/极性/接口由随后的确定性 Binder 阶段校验，且 Binder 缺失或
+            # 失败会 fail-closed 阻断发布。因此这里不能用 final_bound 要求模型枚举
+            # 它看不到的 atom（否则 §7.1 会造成死锁）。
             assessment = assess_paragraph_transaction(
                 transaction,
                 plan_row=plan_row,
                 formula_routes=formula_routes,
                 required_anchors=required_anchors_from_plan_row(plan_row),
+                validation_stage="writer_content",
             )
             assessments[paragraph_id] = assessment
             required_count = sum(len(values) for values in assessment.required_by_kind.values())

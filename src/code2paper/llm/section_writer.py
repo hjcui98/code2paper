@@ -841,6 +841,13 @@ def _compact_writer_author_intent_surfaces_for_llm(value: Any) -> list[dict[str,
 
 
 def _compact_writer_witness_contract_for_llm(value: Any) -> Any:
+    """Writer 视图只保留 Writer 自己负责的 witness（方案 §7.1）。
+
+    atom 由确定性 Binder 负责（``binding_contract.atom_binding.owner=binder``），
+    所以不能一边这样声明、一边把 atom 作为 Writer 的必填 witness。Binder 仍从
+    ``WriterSectionInput`` 上的完整 canonical contract 取用 atom。
+    """
+
     if hasattr(value, "model_dump"):
         value = value.model_dump(mode="json")
     if not isinstance(value, Mapping):
@@ -851,12 +858,20 @@ def _compact_writer_witness_contract_for_llm(value: Any) -> Any:
         if key in value
     }
     targets = value.get("targets") or ()
+    writer_targets: list[dict[str, Any]] = []
+    binder_owned = 0
     if not isinstance(targets, (str, bytes)):
-        compact["targets"] = [
-            target
-            for raw_target in targets
-            if (target := _compact_writer_target_contract_for_llm(raw_target))
-        ]
+        for raw_target in targets:
+            target = _compact_writer_target_contract_for_llm(raw_target)
+            if not target:
+                continue
+            if str(target.get("target_kind") or "") == "atom":
+                binder_owned += 1
+                continue
+            writer_targets.append(target)
+    compact["targets"] = writer_targets
+    if binder_owned:
+        compact["binder_owned"] = {"owner": "binder", "target_count": binder_owned}
     return compact
 
 

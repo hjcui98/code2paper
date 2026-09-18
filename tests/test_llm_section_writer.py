@@ -996,16 +996,11 @@ def test_unified_page_projection_keeps_page_and_compacts_duplicate_contracts() -
     visible = _llm_visible_section_payload(section)
 
     assert visible["shared_contexts"] == [page]
-    visible_target = visible["narrative_plan"]["paragraphs"][0]["witness_contract"]["targets"][0]
-    assert visible_target == {
-        "target_id": "atom:1",
-        "target_kind": "atom",
-        "detail_id": "detail:1",
-        "required": True,
-    }
-    assert "semantic_atom" not in visible_target
-    assert "allowed_anchor_ids" not in visible_target
-    assert "allowed_exact_excerpts" not in visible_target
+    # 方案 §7.1：atom 由确定性 Binder 负责，Writer 视图不再把它列为必填 witness；
+    # canonical 合同（section.prompt_payload）仍保留完整 atom 供 Binder 使用。
+    visible_contract = visible["narrative_plan"]["paragraphs"][0]["witness_contract"]
+    assert visible_contract["targets"] == []
+    assert visible_contract["binder_owned"] == {"owner": "binder", "target_count": 1}
     assert section.prompt_payload["binding_contract"]["detail_witness_contracts"]["detail:1"][0] == target
 
 
