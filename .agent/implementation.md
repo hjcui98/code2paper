@@ -3362,3 +3362,12 @@ NEXT ACTION     read-only diagnosis or explicit authoring fork
    为耗尽。
 
 验证：regression 108 passed；全量离线 3709 passed、3 deselected、12 subtests passed、exit 0。
+
+## 2026-09-18 §15 收口：doctor 进入既有 CLI
+
+- `code2paper method-agent doctor --out <dir> [--json]`：走既有产品入口（不新增第二套
+  CLI），只读诊断；文本渲染等价于 §15.1 的样式，`--json` 给结构化报告供自动化消费。
+- 冒烟（事故归档）：exit 0，输出 19/20 页接受、1 页耗尽（2/2）、27 段缺材料、
+  110 个 Binder-owned 目标仍暴露给 Writer、根因链路完整。
+
+验证：regression 109 passed；全量离线 3710 passed、3 deselected、12 subtests passed、exit 0。

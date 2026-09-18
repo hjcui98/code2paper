@@ -62,3 +62,22 @@ def test_doctor_is_read_only(tmp_path) -> None:
     assert report.page_count == 0
     assert report.critical_blockers == ()
     assert sorted(str(item.relative_to(root)) for item in root.rglob("*")) == before
+
+
+def test_doctor_cli_renders_and_emits_json(capsys) -> None:
+    """§15：doctor 走既有 CLI（不新增第二套产品入口），只读且可机读。"""
+
+    import json
+
+    from code2paper.cli.agentic_run import method_agent_main
+
+    root = str(incident_archive.archive_root())
+    assert method_agent_main(["doctor", "--out", root]) == 0
+    rendered = capsys.readouterr().out
+    assert "BLOCKED" in rendered and "NEXT ACTION" in rendered
+
+    assert method_agent_main(["doctor", "--out", root, "--json"]) == 0
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["page_count"] == 20
+    assert len(payload["blocked_pages"]) == 1
+    assert "resume_exhausted_invocation" in payload["critical_blockers"]

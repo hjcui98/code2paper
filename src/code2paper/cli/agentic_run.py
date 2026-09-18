@@ -694,6 +694,14 @@ def _method_agent_parser() -> argparse.ArgumentParser:
         ),
     )
     subparsers = parser.add_subparsers(dest="command", required=True)
+    doctor_parser = subparsers.add_parser(
+        "doctor",
+        help="Read-only diagnosis of an existing run directory (no model calls).",
+    )
+    doctor_parser.add_argument("--out", dest="out_root", required=True, help="Run directory to inspect")
+    doctor_parser.add_argument(
+        "--json", action="store_true", help="Emit the structured report as JSON"
+    )
     run_parser = subparsers.add_parser("run", help="Run the full product path.")
     run_parser.add_argument("--repo", dest="repo", required=True, help="Target code repository")
     run_parser.add_argument("--author-intent", dest="author_intent", default="", help="Author intent YAML/JSON file")
@@ -763,6 +771,15 @@ def method_agent_main(argv: list[str] | None = None) -> int:
 
     parser = _method_agent_parser()
     args = parser.parse_args(argv)
+    if args.command == "doctor":
+        from code2paper.agentic.authoring_doctor import run_authoring_doctor
+
+        report = run_authoring_doctor(Path(args.out_root).expanduser().resolve())
+        if bool(getattr(args, "json", False)):
+            print(report.model_dump_json(indent=2))
+        else:
+            print(report.render())
+        return 0
     if args.command != "run":
         parser.error(f"unknown method-agent command: {args.command}")
 
