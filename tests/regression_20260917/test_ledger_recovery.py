@@ -271,3 +271,26 @@ def test_presend_only_and_started_only_attempts_are_distinguished(tmp_path) -> N
     # 已发送无响应：结果未知，必须保留预留。
     assert outcomes[2].state == "send_outcome_unknown"
     assert outcomes[2].reservation_retained is True
+
+
+def test_repair_accepted_page_is_complete_but_not_primary_accepted() -> None:
+    """两种"接受"语义必须分开：页内容完成 vs 首次交付被接受。"""
+
+    accepted_dir = (
+        "inv-writer-MA-S1-page-"
+        "281af1e758001328894fc2f8200e5e244a060ff3eafae98e6dcfb3a428ed052a-"
+        "68f416529f3b1c40"
+    )
+    primary = read_invocation_ledger_state(_run_root(), accepted_dir)
+    assert primary.accepted is True and primary.primary_accepted is True
+
+    # MA-S5 页：首次被拒、repair 后接受 → 内容完成，但不是首次交付接受。
+    repaired_dir = (
+        "inv-writer-MA-S5-page-"
+        "5c2d0db68504d5ae006260b0181541d6dd1d98eb6ec8423956efe075ad43d515-"
+        "e6acde3701dd59d1"
+    )
+    repaired = read_invocation_ledger_state(_run_root(), repaired_dir)
+    assert repaired.accepted is True
+    assert repaired.primary_accepted is False
+    assert repaired.exhausted is False

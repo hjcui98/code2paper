@@ -61,7 +61,10 @@ class WriterInvocationLedgerStateV1(BaseModel):
     invocation_id: str
     counters: WriterAttemptCountersV1
     content_attempt_limit: int = DEFAULT_CONTENT_ATTEMPT_LIMIT
+    #: 任一（含 repair）内容验收通过 = 该页内容已完成，不再需要发送。
     accepted: bool = False
+    #: 仅"非 repair 的首次交付"被接受 = 页交付门语义（与上者不同，不可混用）。
+    primary_accepted: bool = False
     last_provider_attempt: int = 0
     last_content_failure_codes: tuple[str, ...] = ()
     last_rejection_code: str = ""
@@ -155,6 +158,7 @@ def read_invocation_ledger_state(
     rejected: list[int] = []
     event_seq = 0
     accepted = False
+    primary_accepted = False
     last_provider_attempt = 0
     last_rejection = ""
     failure_codes: tuple[str, ...] = ()
@@ -187,10 +191,11 @@ def read_invocation_ledger_state(
                 acceptance_payload = json.loads(acceptance.read_text(encoding="utf-8"))
             except (OSError, ValueError):
                 acceptance_payload = {}
-            if bool(acceptance_payload.get("accepted")) and not bool(
-                payload.get("content_repair_attempt")
-            ):
+            if bool(acceptance_payload.get("accepted")):
+                # 页内容已完成（repair 后接受也算完成）。
                 accepted = True
+                if not bool(payload.get("content_repair_attempt")):
+                    primary_accepted = True
         codes = _acceptance_failure_codes(acceptance)
         if codes:
             failure_codes = codes
@@ -206,6 +211,7 @@ def read_invocation_ledger_state(
         ),
         content_attempt_limit=limit,
         accepted=accepted,
+        primary_accepted=primary_accepted,
         last_provider_attempt=last_provider_attempt,
         last_content_failure_codes=failure_codes,
         last_rejection_code=last_rejection,

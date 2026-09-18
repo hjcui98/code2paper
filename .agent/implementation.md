@@ -3328,3 +3328,37 @@ v3 调用、v4 编译失败仍失败、shadow 双建单执行）；全量离线 
 符合 §8.5。
 
 验证：regression 104 passed；全量离线 3705 passed、3 deselected、12 subtests passed、exit 0。
+
+## 2026-09-18 §15：authoring doctor（只读诊断）
+
+新增 `src/code2paper/agentic/authoring_doctor.py` + `AuthoringDoctorReportV1`：
+一条命令给出执行身份（引擎/目标是否分离）、各阶段状态、逐页内容预算余量与拒发事件、
+首个根因与下游阻断、空语义段落数、Binder-owned 目标仍暴露给 Writer 的数量、
+critical 阻断与 next action；全程只读（不写文件、不发请求），供 live 准入的
+"doctor 无 critical 阻断"使用。
+
+事故归档实跑输出：
+
+```
+EXECUTION       legacy identity; engine fingerprint unavailable
+TARGET          EBCAR - Embedding-Based Context-Aware Reranker @ 287506e3e2df
+FORMALIZER      0 receipt(s)
+WRITER          4/5 sections complete; incomplete
+REALIZER        20 receipt(s)
+BINDER          not produced
+PAGES           19/20 accepted
+BLOCKED         inv:writer:MA-S3:page:751aa8b5… (2/2 content attempts)
+INTENT SURFACE  27 paragraph(s) lack per-paragraph material
+WITNESS OWNER   110 Binder-owned target(s) still shown to Writer
+FIRST CAUSE     …writer_v2_invocation_acceptance_count:…:0
+NEXT ACTION     read-only diagnosis or explicit authoring fork
+```
+
+过程中的两处口径修正（均由测试与实跑暴露，非实现缺陷）：
+1. 页"已接受"必须同时看内容验收记录**与分节回执**（resume 复用页没有新的验收记录）；
+2. 账本需要区分两种接受语义——`accepted`（**任一**含 repair 的验收通过 = 页内容完成，
+   用于判断是否还需发送）与 `primary_accepted`（非 repair 的首次交付接受 = 页交付门
+   语义）。此前把 repair 接受排除在 `accepted` 外，导致 3 个 repair 后已完成的页被误判
+   为耗尽。
+
+验证：regression 108 passed；全量离线 3709 passed、3 deselected、12 subtests passed、exit 0。
