@@ -148,3 +148,79 @@ def test_accepted_invocation_is_never_exhausted() -> None:
     state = read_invocation_ledger_state(_run_root(), accepted_dir)
     assert state.accepted is True
     assert content_budget_exhausted(state, 0) is False
+
+
+def _write_attempt(directory, attempt: int, files: dict[str, dict | None]) -> None:
+    for suffix, payload in files.items():
+        path = directory / f"attempt-{attempt:04d}.{suffix}.json"
+        path.write_text(json.dumps(payload if payload is not None else {}), encoding="utf-8")
+
+
+def test_crash_points_are_classified_without_losing_reservations(tmp_path) -> None:
+    """§9.5：reservation 后未 send / send 后无 response / response 后未 completed /
+    completed 后未 acceptance 必须各自可解释，且不得重复计费或丢预留。"""
+
+    from code2paper.agentic.writer_attempt_ledger import (
+        read_attempt_outcomes,
+        unsettled_reservations,
+    )
+
+    invocation = "inv:writer:MA-S3:page:crash"
+    directory = tmp_path / "artifacts" / "06_authoring" / "invocations" / (
+        "inv-writer-MA-S3-page-crash-0001"
+    )
+    directory.mkdir(parents=True)
+    _write_attempt(directory, 1, {"started": {}})
+    _write_attempt(directory, 2, {"started": {}, "provider-request": {}})
+    _write_attempt(directory, 3, {"started": {}, "provider-request": {}, "provider-response": {}})
+    _write_attempt(
+        directory,
+        4,
+        {
+            "started": {},
+            "provider-request": {},
+            "provider-response": {},
+            "completed": {"attempt": 4, "sent_to_caller": True, "delivery_status": "accepted"},
+        },
+    )
+    _write_attempt(
+        directory,
+        5,
+        {
+            "started": {},
+            "provider-request": {},
+            "provider-response": {},
+            "completed": {"attempt": 5, "sent_to_caller": True, "delivery_status": "accepted"},
+            "content-acceptance": {"accepted": True},
+        },
+    )
+
+    states = {item.attempt: item for item in read_attempt_outcomes(tmp_path, invocation)}
+    assert states[1].state == "reservation_without_send"
+    assert states[1].reservation_retained is False
+    assert states[2].state == "send_outcome_unknown"
+    assert states[2].reservation_retained is True
+    assert states[3].state == "response_without_completion"
+    assert states[3].reservation_retained is True
+    assert states[4].state == "completed_without_acceptance"
+    assert states[4].acceptance_replayable is True
+    assert states[4].reservation_retained is False
+    assert states[5].state == "settled"
+
+    retained = unsettled_reservations(tmp_path, invocation)
+    assert [item.attempt for item in retained] == [2, 3]
+
+
+def test_incident_archive_attempts_are_settled_or_presend_rejections() -> None:
+    from code2paper.agentic.writer_attempt_ledger import read_attempt_outcomes
+
+    states = {
+        item.attempt: item.state
+        for item in read_attempt_outcomes(_run_root(), INCIDENT_DIR_NAME)
+    }
+    assert states == {
+        1: "settled",
+        2: "settled",
+        3: "rejected_before_send",
+        4: "rejected_before_send",
+    }

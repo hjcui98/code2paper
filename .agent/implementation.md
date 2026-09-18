@@ -3090,3 +3090,21 @@ exit 0。
 验证：`python -m pytest -q tests/regression_20260917` 65 passed；
 `tests/test_agentic_publication_method_writer.py + regression` 211 passed；
 `python -m pytest -q -m 'not live_llm'` → 3666 passed、3 deselected、12 subtests passed，exit 0。
+
+## 2026-09-18 WP5 崩溃点分类（§9.5）
+
+`writer_attempt_ledger.py` 新增 `read_attempt_outcomes` / `unsettled_reservations` +
+`AttemptOutcomeV1`，按 attempt 汇总崩溃点状态：
+
+| 状态 | 预留 | 语义 |
+|---|---|---|
+| `reservation_without_send` | 释放 | 已预留未发送：不得计费 |
+| `send_outcome_unknown` | **保留** | 已发请求无响应：结果未知，不自动退款/重发 |
+| `response_without_completion` | **保留** | 有响应缺 completed：可由 validator 重建 |
+| `completed_without_acceptance` | 释放 | 缺内容验收：确定性 validator 重放即可，无需再调模型 |
+| `rejected_before_send` | 释放 | 预算/合同拒绝：不消耗内容预算 |
+| `settled` / `not_started` | 释放 | — |
+
+事故归档实测：attempt 1/2 = `settled`，3/4 = `rejected_before_send`（与内容预算判定一致）。
+
+验证：regression 67 passed；全量离线 3668 passed、3 deselected、12 subtests passed、exit 0。
