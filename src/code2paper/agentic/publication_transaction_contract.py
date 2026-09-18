@@ -2404,6 +2404,39 @@ def bind_paragraph_witnesses(
     return transaction.__class__.model_validate(source)
 
 
+def _atom_path_detail_verified(
+    detail_id: str,
+    constraints: Mapping[tuple[str, str], Mapping[str, Any]],
+    witness_by_key: Mapping[tuple[str, str], str],
+) -> bool:
+    """§7.4：atom 只帮助定位候选 span，不能单独证明 detail 已写。
+
+    detail 自身声明了语义要求（semantic_atom / conditions / polarity）时，其 atom
+    文本必须**同时满足**这些要求；无法确定的（atom 文本缺失/不满足）返回 False，
+    由调用方给出细分错误，而不是自动接受。
+    """
+
+    local = constraints.get(("detail", detail_id)) or {}
+    has_requirement = bool(
+        str(local.get("semantic_atom") or "").strip()
+        or (local.get("conditions") or ())
+        or str(local.get("polarity") or "unknown").strip().casefold()
+        not in {"", "unknown"}
+    )
+    if not has_requirement:
+        # 未声明语义要求：完整 atom 集合仍是该 detail 的无损证明（既有契约）。
+        return True
+    texts = [
+        text
+        for (kind, target), text in witness_by_key.items()
+        if kind == "atom"
+        and str((constraints.get((kind, target)) or {}).get("detail_id") or "") == detail_id
+    ]
+    if not texts:
+        return False
+    return all(_witness_satisfies_constraints(text, local) for text in texts)
+
+
 def assess_paragraph_transaction(
     transaction: Mapping[str, Any] | Any,
     *,
@@ -2543,7 +2576,15 @@ def assess_paragraph_transaction(
                 ):
                     witnessed_details.append(did)
                 elif detail_atoms and all((k, t) in witness_keys for (k, t) in detail_atoms):
-                    witnessed_details.append(did)
+                    if _atom_path_detail_verified(did, constraints_by_key, witness_by_key):
+                        witnessed_details.append(did)
+                    else:
+                        # atom 齐了但 detail 自身的必要条件/方向不成立：细分错误，
+                        # 不把"见到 atom"当成"detail 已写"。
+                        semantic_failures.append(
+                            f"detail_semantic_mismatch:detail:{did}"
+                        )
+                        missing_details.append(did)
                 else:
                     missing_details.append(did)
             witnessed[kind] = tuple(witnessed_details)

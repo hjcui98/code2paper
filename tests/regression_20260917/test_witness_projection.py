@@ -154,3 +154,90 @@ def test_incident_request_atoms_are_not_writer_required() -> None:
     assert compact["targets"], "detail 目标必须保留"
     assert all(target["target_kind"] == "detail" for target in compact["targets"])
     assert compact["binder_owned"]["target_count"] > 0
+
+
+def test_atom_direction_must_hold_before_it_can_complete_a_detail() -> None:
+    """§7.4：atom 只帮助定位候选 span；其方向/条件不成立时不能补全 detail。
+
+    真实的语义要求挂在 atom 约束上（semantic_anchor / exact_excerpts / polarity），
+    detail 键本身只是聚合占位。
+    """
+
+    from code2paper.agentic.publication_transaction_contract import (
+        assess_paragraph_transaction as assess,
+    )
+
+    plan_row = {
+        "paragraph_id": "sec_1_p1",
+        "required_detail_ids": ("d:loss",),
+        "witness_atoms": [
+            {
+                "atom_id": "atom:loss",
+                "detail_id": "d:loss",
+                "semantic_anchor": "compute_loss",
+                "exact_excerpts": [EXACT],
+                "required": True,
+            }
+        ],
+    }
+    positive = {
+        "paragraph_id": "sec_1_p1",
+        "paragraph_markdown": BODY,
+        "rendered_detail_ids": [],
+        "witnesses": [
+            {"witness_kind": "atom", "target_id": "atom:loss", "exact_text": EXACT}
+        ],
+    }
+    accepted = assess(positive, plan_row=plan_row, validation_stage="final_bound")
+    assert accepted.valid is True, accepted.failures
+
+    negated_text = "the loss does not decrease under this schedule"
+    negated = {
+        "paragraph_id": "sec_1_p1",
+        "paragraph_markdown": negated_text,
+        "rendered_detail_ids": [],
+        "witnesses": [
+            {"witness_kind": "atom", "target_id": "atom:loss", "exact_text": negated_text}
+        ],
+    }
+    rejected = assess(negated, plan_row=plan_row, validation_stage="final_bound")
+    assert rejected.valid is False
+    # 拒绝可以是"witness 不落在 atom 契约内"（细分类），关键是不能自动接受。
+    assert {failure.code for failure in rejected.failures} & {
+        "detail_semantic_mismatch",
+        "detail_witness_missing",
+        "exact_span_not_in_body",
+    }
+
+
+def test_atom_path_guard_requires_detail_requirements_to_hold() -> None:
+    """直接单测新守卫：detail 一旦声明要求，atom 文本必须同时满足。"""
+
+    from code2paper.agentic.publication_transaction_contract import (
+        _atom_path_detail_verified,
+    )
+
+    constraints = {
+        ("detail", "d:1"): {"semantic_atom": "", "conditions": (), "polarity": "unknown"},
+        ("atom", "atom:1"): {"detail_id": "d:1", "required": True},
+    }
+    witnesses = {("atom", "atom:1"): EXACT}
+    # detail 未声明要求 → 完整 atom 集合仍是无损证明。
+    assert _atom_path_detail_verified("d:1", constraints, witnesses) is True
+
+    constraints[("detail", "d:1")] = {
+        "semantic_atom": "compute_loss",
+        "conditions": (),
+        "polarity": "unknown",
+    }
+    # atom 文本确实包含 detail 语义要求 → 可以补全。
+    assert _atom_path_detail_verified("d:1", constraints, witnesses) is True
+    # atom 文本不含该语义 → 不能补全。
+    assert (
+        _atom_path_detail_verified(
+            "d:1", constraints, {("atom", "atom:1"): "the loss does not decrease"}
+        )
+        is False
+    )
+    # atom 文本缺失 → 不能补全（无法确定）。
+    assert _atom_path_detail_verified("d:1", constraints, {}) is False

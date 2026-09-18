@@ -3284,3 +3284,23 @@ v3 调用、v4 编译失败仍失败、shadow 双建单执行）；全量离线 
   attempt-1 只写了 1 段 → 本地校验报出 15 段缺失；合成用例覆盖重复段、越界段、乱序段。
 
 验证：regression 100 passed；全量离线 3701 passed、3 deselected、12 subtests passed、exit 0。
+
+## 2026-09-18 WP3 §7.4：atom 只能帮助定位，不能单独证明 detail
+
+- `publication_transaction_contract.py` 新增 `_atom_path_detail_verified(detail_id,
+  constraints, witness_by_key)`：当 detail **自身声明了语义要求**
+  （semantic_atom / conditions / polarity）时，其 atom 文本必须同时满足这些要求才能
+  触发"完整 atom 集合补全 detail"；atom 文本缺失或不满足 → 返回 False，由调用方给出
+  `detail_semantic_mismatch` 细分错误并计入 missing，而不是"见到 atom 就算写了"。
+  detail 未声明要求时，完整 atom 集合仍是既有契约认可的无损证明（行为不变）。
+- 现状说明：detail 键的约束当前是聚合占位（`exact: ()`/`semantic_atom: ""`/
+  `polarity: "unknown"`），真实的语义要求挂在 atom 约束上（semantic_anchor /
+  exact_excerpts / conditions / polarity），本守卫对两者都适用，是面向未来的收口。
+- 测试（`test_witness_projection.py` 新增 2 例）：atom 定位成立 → detail 可补全；
+  atom 文本不落在契约/语义内 → 拒绝且给出细分类失败码；直接单测守卫在"无要求/要求成立/
+  要求不成立/文本缺失"四种输入下的判定。
+
+> 过程记录：本条目两次测试失败均来自我写错的期望（臆造的 `detail_requirements` 字段、
+> 把中性句判定为 positive 极性），而不是实现缺陷；已按判定器的真实语义改写测试。
+
+验证：regression 102 passed；全量离线 3703 passed、3 deselected、12 subtests passed、exit 0。
