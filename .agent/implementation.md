@@ -2792,3 +2792,51 @@ obligation、未过滤失败 claim、未放宽 span validator。
 - P7 冻结 story/prior plan/context 经当前产品 `_build_narrative_plan_v3` → V4 envelope → V3 projection → `validate_narrative_plan` 零模型重放：5 sections、32 paragraphs、28 唯一 argument units、0 validation failures；11 个 required detail 唯一归属，required fallback 为 0；122 个 optional detail 缺少 story 锚点，仍须后续审查，不能当成实现事实授权。
 - 定向回归 `python -m pytest -q tests/test_agentic_intent_spine_authoring.py tests/test_agentic_mechanism_formula_obligations.py tests/test_agentic_candidate_handoff.py tests/test_agentic_publication_method_writer.py tests/test_agentic_unified_context_compiler.py`：221 passed。最终代码上的全量 `python -m pytest -q`：3601 passed、3 skipped、7 warnings、12 subtests passed，exit 0。`python -m compileall -q src tests scripts` 与 `git diff --check`：exit 0。
 - 尚无新 Writer completed、Candidate 或 Verified；原目录属于旧 SHA，且本轮改变了 V4/公式政策，不应把旧 Formalizer receipt 当作新代码的成功。7 个作者 required 公式仍 open、Research partial，P7 §7.2 未验收；必须重新生成新 run 的身份与成果，再检查产品 Writer/Binder/最终门。
+
+## 2026-09-18 按 20260917 修复方案执行 WP0/WP1
+
+范围：按 `docs/code2paper_repair_execution_20260917.md` 的强制顺序开工，只做 S0/S1；
+未续跑 `/tmp/c2p-p7-ebcar-v4-intent-j9L1bn`，未发起任何 live 模型调用。
+
+### S0 事故回归固定（WP0，提交 0395e25）
+
+- 新增 `tests/regression_20260917/`：`incident_archive.py` 冻结 15 个归档 fixture 的
+  Git blob SHA 与 sha256（双重身份），`conftest.py` 拒绝真实网络并校验归档零改动，
+  `test_archived_failure_facts.py` 固定六条事故事实：attempt 3/4 为预发送拒绝
+  （sent_to_caller=false、provider_usage=null、3>2/4>2）、只有 attempt 1/2 到达
+  provider 且 attempt 2 是唯一 content repair；MA-S3 receipt 15/16 且聚合未完成；
+  第 2 次缺的是两个 detail witness（完整响应 17 条 atom、0 条 detail、
+  rendered_detail_ids 为空）；Writer 请求中 P3–P17 共 15 个空槽（无机制/detail/
+  formula、targets 为空、共用同一 section 级 reader_goal、对象无逐段作者语义字段）；
+  `RunIdentity.code_commit_sha` 等于目标 RepoSnapshot 的 EBCAR commit 287506e3，
+  身份模型没有引擎 HEAD 字段；Formalizer 空 manifest 与 Writer manifest 同时合法。
+
+### S1 引擎身份与目录准入（WP1，提交 d09a5d7）
+
+- 新增 `agentic/authoring_execution_identity.py`：内容寻址引擎指纹（逐文件 sha256，
+  排除产物/缓存/密钥/数据库）、`AuthoringExecutionIdentityV2`（引擎/目标/输入摘要
+  分离，engine_root 不参与 digest）、目录准入状态机（含
+  resume_exhausted_invocation 与 resume_engine_identity_unavailable）、跨进程 flock
+  单写者租约（进程内幂等）、`verify_research_import`、create-or-validate 身份写入
+  （不一致即拒，不改写历史身份）、只读的 `scan_exhausted_invocations`。
+- 接线：`run_autonomous_method_agent(..., run_open_mode=...)` 在任何产物写入前完成
+  准入/租约/身份，runtime 建立后复查目标 commit；CLI 增加
+  `--run-open-mode {auto,new,resume,fork_authoring}` 并先做只读预检（拒绝时返回 2、
+  零写入），正式准入在锁内复查。
+- 行为变更（有意 fail-closed）：非空目录且无 `AuthoringExecutionIdentityV2` 时
+  `auto`/`new` 一律拒绝；旧 RunIdentityV1 目录只能显式 `fork_authoring`；已耗尽内容
+  预算的 invocation 在 resume 时直接阻断。这正是事故"重启即必死"的入口。
+
+### 验证
+
+- `python -m pytest -q tests/regression_20260917 -m 'not live_llm'`：34 passed。
+- `python -m pytest -q -m 'not live_llm'`：3635 passed、3 deselected、
+  12 subtests passed、7 warnings，exit 0（基线 3601 + 新增 34，无回归）。
+- `python -m compileall -q src tests scripts`：exit 0；归档在回归期间逐字节未变。
+
+### 未完成 / 下一步
+
+- WP2（作者意图到达 Writer：局部 `author_intent_surfaces`、槽位分类与合并、
+  零交集不升级证据、intent digest 覆盖 statement）尚未开始。
+- WP3–WP7 未开始；live 验证（L1/L2/L3）未执行，需方案 §14.1 的显式授权与全新
+  out 目录。

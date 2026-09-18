@@ -146,6 +146,7 @@ METHOD_OUTPUTS = {
     "authoring_structural_exit_v1": "artifacts/06_authoring/authoring_structural_exit_v1.json",
     "method_generation_trace_v1": "artifacts/research_product/method_generation_trace_v1.json",
     "run_identity_v1": "artifacts/research_product/run_identity_v1.json",
+    "authoring_execution_identity_v2": "artifacts/research_product/authoring_execution_identity_v2.json",
     "research_closure_admission_v1": "artifacts/research_product/research_closure_admission_v1.json",
     "candidate_handoff_v1": "artifacts/candidate_handoff_v1.json",
     "unified_source_partition_exclusions_v1": "artifacts/research_product/unified_source_partition_exclusions_v1.json",

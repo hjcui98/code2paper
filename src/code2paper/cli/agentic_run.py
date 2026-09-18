@@ -26,6 +26,7 @@ from code2paper.agentic.autonomous_method_agent import (
     MethodAgentRunResultV1,
     run_autonomous_method_agent,
 )
+from code2paper.agentic.authoring_execution_identity import preflight_run_open
 from code2paper.agentic.completion_report import AgenticRunCompletionReport, load_run_completion_report
 from code2paper.agentic.contracts import AgenticRunState
 from code2paper.agentic.runner import AgenticRunResult, run_agentic_code2paper
@@ -744,6 +745,16 @@ def _method_agent_parser() -> argparse.ArgumentParser:
         default="",
         help="Resume/reuse a validated Formalizer authoring phase checkpoint.",
     )
+    run_parser.add_argument(
+        "--run-open-mode",
+        choices=("auto", "new", "resume", "fork_authoring"),
+        default="auto",
+        help=(
+            "Run-directory admission: new refuses a non-empty root, resume requires a "
+            "matching AuthoringExecutionIdentityV2 with unused content budget, "
+            "fork_authoring imports verified research evidence only (default: auto)."
+        ),
+    )
     return parser
 
 
@@ -792,6 +803,31 @@ def method_agent_main(argv: list[str] | None = None) -> int:
             })
         out_root = Path(args.out_root).expanduser().resolve()
         out_root.mkdir(parents=True, exist_ok=True)
+        # WP1 §5.4：目录准入预检必须先于启动器写入任何进程产物（日志/监督清单）。
+        # 正式准入会在锁内复查一次，防止预检与加锁之间出现竞争。
+        run_open_mode = str(getattr(args, "run_open_mode", "auto") or "auto")
+        preflight = preflight_run_open(
+            out_root,
+            run_open_mode,
+            repo_path=repo_path,
+            author_intent_path=(
+                Path(args.author_intent).expanduser().resolve() if args.author_intent else None
+            ),
+            claims_path=(
+                Path(args.claims).expanduser().resolve() if args.claims else None
+            ),
+            llm_config=llm_config,
+        )
+        if not preflight.allowed:
+            print(
+                "[code2paper method-agent] error="
+                f"{preflight.code}:{preflight.detail or preflight.allowed_next_action}"
+            )
+            print(
+                "[code2paper method-agent] next_action="
+                f"{preflight.allowed_next_action}"
+            )
+            return 2
         attempt_id = str(
             os.environ.get("CODE2PAPER_METHOD_AGENT_ATTEMPT_ID", "") or ""
         ).strip()
@@ -869,6 +905,7 @@ def method_agent_main(argv: list[str] | None = None) -> int:
             compile_concept_cards=bool(args.compile_concept_cards),
             compile_argument_briefs=bool(args.compile_argument_briefs),
             authoring_context_mode=args.authoring_context_mode,
+            run_open_mode=str(getattr(args, "run_open_mode", "auto") or "auto"),
         )
         _print_method_agent_summary(result)
         _write_method_agent_exit_artifact(out_root, result)

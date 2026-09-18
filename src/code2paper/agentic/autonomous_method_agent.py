@@ -53,6 +53,16 @@ from code2paper.agentic.authoring_context_contract import (
     write_authoring_run_contract,
     write_run_identity,
 )
+from code2paper.agentic.authoring_execution_identity import (
+    AuthoringExecutionIdentityV2,
+    RunLease,
+    RunOpenRejected,
+    acquire_run_lease,
+    build_run_open_identity,
+    create_or_validate_execution_identity,
+    validate_run_open,
+    verify_research_import,
+)
 from code2paper.agentic.authoring_projection import (
     build_authoring_projection,
     projected_writer_inputs,
@@ -3093,6 +3103,7 @@ def _run_autonomous_method_agent_impl(
     compile_concept_cards: bool = False,
     compile_argument_briefs: bool = True,
     authoring_context_mode: str | None = None,
+    execution_identity: AuthoringExecutionIdentityV2 | None = None,
 ) -> MethodAgentRunResultV1:
     """Run the full autonomous Method Agent product path.
 
@@ -3322,6 +3333,23 @@ def _run_autonomous_method_agent_impl(
         claim_set=claim_set,
     )
     loop_identity = loop_result.loop_state
+    # WP1 复查：准入阶段用目标仓库 HEAD 作为代理身份；runtime 建立后必须一致，
+    # 否则这次执行不能被解释为同一目标身份（拒绝写入写作产物）。
+    if execution_identity is not None:
+        runtime_target_commit = str(
+            getattr(runtime.repo_snapshot, "git_commit", "") or ""
+        )
+        admitted = str(execution_identity.target_repo_snapshot_digest or "")
+        if (
+            runtime_target_commit
+            and admitted
+            and admitted != "unknown"
+            and runtime_target_commit != admitted
+        ):
+            raise ValueError(
+                "resume_identity_mismatch:target_repo_commit:"
+                f"admitted={admitted}:runtime={runtime_target_commit}"
+            )
     run_identity = build_run_identity(
         run_id=effective_run_id,
         repo_root=repo_path,
@@ -4250,6 +4278,48 @@ def _persist_partial_method_run(
     }
 
 
+_ACTIVE_RUN_LEASES: set[RunLease] = set()
+
+
+def _open_authoring_execution(
+    *,
+    out_root: Path,
+    run_open_mode: str,
+    repo_path: str | Path,
+    author_intent_path: str | Path | None,
+    claims_path: str | Path | None,
+    llm_config: LLMConfig | None,
+    research_stage_checkpoint: str | Path | None = None,
+) -> tuple[AuthoringExecutionIdentityV2, RunLease]:
+    """目录准入 + 单写者租约 + create-or-validate 身份（WP1 §5.3/§5.4）。
+
+    必须在任何研究/写作产物写入之前执行：拒绝时零模型调用、零写入。
+    """
+
+    mode = str(run_open_mode or "auto")
+    verifiable, import_digest, _detail = (True, "", "")
+    if mode.strip().casefold() == "fork_authoring":
+        verifiable, import_digest, _detail = verify_research_import(
+            research_stage_checkpoint
+        )
+    identity = build_run_open_identity(
+        repo_path=repo_path,
+        author_intent_path=author_intent_path,
+        claims_path=claims_path,
+        llm_config=llm_config,
+        run_open_mode=mode,
+        research_import_digest=import_digest,
+    )
+    decision = validate_run_open(
+        out_root, mode, identity, research_import_verifiable=verifiable
+    )
+    if not decision.allowed:
+        raise RunOpenRejected(decision)
+    lease = acquire_run_lease(out_root, execution_id=identity.execution_id)
+    create_or_validate_execution_identity(out_root, identity)
+    return identity, lease
+
+
 def run_autonomous_method_agent(
     *,
     repo_path: str | Path,
@@ -4270,12 +4340,25 @@ def run_autonomous_method_agent(
     compile_concept_cards: bool = False,
     compile_argument_briefs: bool = True,
     authoring_context_mode: str | None = None,
+    run_open_mode: str = "auto",
 ) -> MethodAgentRunResultV1:
     """Run the product path with durable closure for exceptions/signals."""
 
     resolved_out = Path(out_root).expanduser().resolve()
     resolved_out.mkdir(parents=True, exist_ok=True)
     effective_run_id = _effective_method_run_id(resolved_out, run_id)
+    # WP1：目录准入与单写者租约先于一切产物写入；租约由模块级集合持有到进程退出，
+    # 避免局部变量被回收时提前释放 flock。
+    execution_identity, run_lease = _open_authoring_execution(
+        out_root=resolved_out,
+        run_open_mode=run_open_mode,
+        repo_path=repo_path,
+        author_intent_path=author_intent_path,
+        claims_path=claims_path,
+        llm_config=llm_config,
+        research_stage_checkpoint=research_stage_checkpoint,
+    )
+    _ACTIVE_RUN_LEASES.add(run_lease)
     old_handlers: dict[int, Any] = {}
     can_install_handlers = threading.current_thread() is threading.main_thread()
     if can_install_handlers:
@@ -4311,6 +4394,7 @@ def run_autonomous_method_agent(
             compile_concept_cards=compile_concept_cards,
             compile_argument_briefs=compile_argument_briefs,
             authoring_context_mode=authoring_context_mode,
+            execution_identity=execution_identity,
         )
     except BaseException as exc:
         _persist_partial_method_run(
