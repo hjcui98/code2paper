@@ -44,6 +44,7 @@ from code2paper.agentic.writer_output_workload import (
     DEFAULT_MAX_SEMANTIC_PARAGRAPHS_PER_PAGE as _DEFAULT_MAX_SEMANTIC_PARAGRAPHS_PER_PAGE,
 )
 from code2paper.agentic.unified_context_models import (
+    UNIFIED_RUN_BUDGET_INSUFFICIENT_AFTER_REPAGE,
     UNIFIED_INVOCATION_BUDGET_EXCEEDED,
     UNIFIED_INVOCATION_BUDGET_MISSING,
     UNIFIED_MECHANISM_OWNER_CONFLICT,
@@ -4104,6 +4105,27 @@ def bound_consumer_llm_config(
     )
 
 
+def _repage_budget_failure_code(plan_revision: int, *, exceeded: bool) -> str | None:
+    """拆页后预算不足时给出可解释的失败码（方案 §8.5）。
+
+    ``plan_revision > 1`` 表示这次 plan 是分页/修订后的版本；此时越过 whole-run
+    预算必须报 ``run_budget_insufficient_after_repage``，而不是让调用方以为只是
+    普通超预算、更不能以"只是拆页"为由截掉剩余页。
+    """
+
+    if not exceeded:
+        return None
+    try:
+        revision = int(plan_revision)
+    except (TypeError, ValueError):
+        revision = 1
+    return (
+        UNIFIED_RUN_BUDGET_INSUFFICIENT_AFTER_REPAGE
+        if revision > 1
+        else UNIFIED_INVOCATION_BUDGET_EXCEEDED
+    )
+
+
 def build_consumer_invocation_plan_v1(
     manifest: ConsumerWorksetManifestV2,
     envelope: RunInvocationBudgetEnvelopeV1,
@@ -5117,9 +5139,14 @@ def evaluate_unified_live_admission_v1(
     for role, calls in reserved_calls.items():
         limit = int(envelope.max_calls_by_role.get(role, -1))
         if limit < 0 or int(calls) > limit:
-            invocation_gate_failures.append(
-                f"{UNIFIED_INVOCATION_BUDGET_EXCEEDED}:calls:{role}:{calls}>{limit}"
+            invocation_gate_failures.append(f"{UNIFIED_INVOCATION_BUDGET_EXCEEDED}:calls:{role}:{calls}>{limit}")
+            repage_code = _repage_budget_failure_code(
+                plan.plan_revision, exceeded=limit >= 0
             )
+            if repage_code == UNIFIED_RUN_BUDGET_INSUFFICIENT_AFTER_REPAGE:
+                invocation_gate_failures.append(
+                    f"{repage_code}:calls:{role}:{calls}>{limit}"
+                )
     for role, tokens in reserved_tokens.items():
         limit = int(envelope.max_input_tokens_by_role.get(role, -1))
         if limit < 0 or int(tokens) > limit:
@@ -5132,6 +5159,12 @@ def evaluate_unified_live_admission_v1(
             f"{UNIFIED_INVOCATION_BUDGET_EXCEEDED}:total_input_tokens:"
             f"{total_reserved_tokens}>{envelope.max_total_input_tokens}"
         )
+        repage_code = _repage_budget_failure_code(plan.plan_revision, exceeded=True)
+        if repage_code == UNIFIED_RUN_BUDGET_INSUFFICIENT_AFTER_REPAGE:
+            invocation_gate_failures.append(
+                f"{repage_code}:total_input_tokens:"
+                f"{total_reserved_tokens}>{envelope.max_total_input_tokens}"
+            )
     if phase == "formalizer" and formula_repair_count > envelope.max_formula_repair_calls:
         invocation_gate_failures.append(
             f"{UNIFIED_INVOCATION_BUDGET_EXCEEDED}:formula_repairs"

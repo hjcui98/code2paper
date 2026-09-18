@@ -2984,3 +2984,19 @@ invocation plan / lookahead reservation / admission 重建（不足时报
 验证：`python -m pytest -q tests/test_agentic_unified_context_compiler.py` 30 passed；
 `python -m pytest -q -m 'not live_llm'` → 3658 passed、3 deselected、12 subtests passed，
 exit 0。
+
+## 2026-09-18 WP4 §8.5：拆页后预算不足的可解释失败码
+
+- `unified_context_models.py` 新增
+  `UNIFIED_RUN_BUDGET_INSUFFICIENT_AFTER_REPAGE = "run_budget_insufficient_after_repage"`。
+- `unified_context_compiler.py` 新增 `_repage_budget_failure_code(plan_revision, exceeded)`：
+  `plan_revision > 1`（分页/修订后的 plan）且越过 whole-run 预算时给出该码；普通
+  `plan_revision == 1` 仍报既有 `unified_invocation_budget_exceeded`（既有码保留，
+  便于兼容既有断言与日志）。
+- 接入点：invocation gate 的 role 调用数检查与 total input tokens 检查（这两处正是
+  拆页会增加的量）。语义是"拆页也必须过 whole-run 预算；不足要显式报告，不能以
+  '只是拆页'为由截掉剩余页"（§8.5）。
+
+验证：`python -m pytest -q tests/test_agentic_unified_context_compiler.py` 30 passed；
+`python -m pytest -q -m 'not live_llm'` → 3659 passed、3 deselected、12 subtests passed，
+exit 0。

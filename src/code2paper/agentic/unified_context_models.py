@@ -60,6 +60,8 @@ UNIFIED_PAGE_PROJECTION_OVERREACH = "unified_page_projection_overreach"
 UNIFIED_ATOMIC_PAGE_OVER_BUDGET = "unified_atomic_page_over_budget"
 UNIFIED_INVOCATION_BUDGET_MISSING = "unified_invocation_budget_missing"
 UNIFIED_INVOCATION_BUDGET_EXCEEDED = "unified_invocation_budget_exceeded"
+#: WP4 §8.5：分页（拆页）后 whole-run 预算不足，必须显式区分于普通超预算。
+UNIFIED_RUN_BUDGET_INSUFFICIENT_AFTER_REPAGE = "run_budget_insufficient_after_repage"
 UNIFIED_UNPLANNED_ACTUAL_REQUEST = "unified_unplanned_actual_request"
 UNIFIED_ACTUAL_PAGE_BYTES_MISMATCH = "unified_actual_page_bytes_mismatch"
 UNIFIED_CONSUMER_RECEIPT_MISSING = "unified_consumer_receipt_missing"

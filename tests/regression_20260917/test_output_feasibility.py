@@ -213,3 +213,27 @@ def test_page_paragraph_limit_knob_is_wired_and_overridable(monkeypatch) -> None
     assert _max_semantic_paragraphs_per_page() == 0
     monkeypatch.setenv("CODE2PAPER_UNIFIED_MAX_SEMANTIC_PARAGRAPHS_PER_PAGE", "abc")
     assert _max_semantic_paragraphs_per_page() == DEFAULT_MAX_SEMANTIC_PARAGRAPHS_PER_PAGE
+
+
+def test_repage_budget_failure_code_distinguishes_revised_plan() -> None:
+    """方案 §8.5：拆页后的预算不足必须可解释，且不掩盖普通超预算。"""
+
+    from code2paper.agentic.unified_context_compiler import (
+        _repage_budget_failure_code,
+    )
+    from code2paper.agentic.unified_context_models import (
+        UNIFIED_INVOCATION_BUDGET_EXCEEDED,
+        UNIFIED_RUN_BUDGET_INSUFFICIENT_AFTER_REPAGE,
+    )
+
+    assert _repage_budget_failure_code(1, exceeded=False) is None
+    assert (
+        _repage_budget_failure_code(1, exceeded=True)
+        == UNIFIED_INVOCATION_BUDGET_EXCEEDED
+    )
+    # plan_revision > 1 表示这是分页/修订后的 plan：报"拆页后预算不足"。
+    assert (
+        _repage_budget_failure_code(2, exceeded=True)
+        == UNIFIED_RUN_BUDGET_INSUFFICIENT_AFTER_REPAGE
+    )
+    assert _repage_budget_failure_code("bad", exceeded=True) == UNIFIED_INVOCATION_BUDGET_EXCEEDED
