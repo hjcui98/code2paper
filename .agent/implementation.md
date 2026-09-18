@@ -3266,3 +3266,21 @@ v3 调用、v4 编译失败仍失败、shadow 双建单执行）；全量离线 
 超时的 caller）。
 
 验证：regression 94 passed；全量离线 3695 passed、3 deselected、12 subtests passed、exit 0。
+
+## 2026-09-18 WP3 §7.6：单一正文表面
+
+新增 `src/code2paper/agentic/paragraph_prose_composer.py`（纯函数）：
+
+- `compose_section_markdown(payload, ...)`：由**有序段落对象**确定性拼接正文，顺序用
+  `narrative_ordinal`（P2 在 P10 之前），不使用字典序。
+- `audit_prose_surface(payload, required_paragraph_ids=...)` → `ProseSurfaceAuditV1`：
+  **本地闭集校验**（每个 required id 恰好一次、无重复、无越界、顺序符合叙事序号），
+  不依赖 provider 是否支持 JSON Schema 的数组约束；同时判定 `section_markdown` 是否为
+  派生物。序列化结果显式带 `valid`。
+- `normalize_writer_section_payload(...)`：把响应归一为"段落对象唯一真源"，
+  `section_markdown` 一律替换为确定性派生结果并标 `section_markdown_derived=True`；
+  模型自带的那份不再作为正文来源（消除两表面漂移）。
+- 事故实测：attempt-2 完整响应含 `section_markdown` + 16 段 → 审计通过、段落为真源；
+  attempt-1 只写了 1 段 → 本地校验报出 15 段缺失；合成用例覆盖重复段、越界段、乱序段。
+
+验证：regression 100 passed；全量离线 3701 passed、3 deselected、12 subtests passed、exit 0。
