@@ -1702,6 +1702,21 @@ def validate_paragraph_binding_response(
     return tuple(valid), tuple(dict.fromkeys(errors)), tuple(unbound_values)
 
 
+class ContractFailureV1(BaseModel):
+    """结构化合同失败（方案 §7.5）：执行层不再解析拼接字符串。"""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    code: str
+    stage: str
+    paragraph_id: str = ""
+    target_kind: str = ""
+    target_id: str = ""
+    expected: str = ""
+    observed: str = ""
+    repairable_by: str = ""
+
+
 class ParagraphTransactionAssessmentV1(BaseModel):
     """Deterministic result for one planned paragraph transaction."""
 
@@ -1711,6 +1726,10 @@ class ParagraphTransactionAssessmentV1(BaseModel):
     section_id: str = ""
     status: Literal["not_run", "blocked", "invalid", "valid"] = "not_run"
     valid: bool = False
+    #: ``writer_content`` 只验写作内容义务；``final_bound`` 另验 Binder 侧
+    #: atom/条件/极性/接口（方案 §7.2）。两层都必须通过才发布。
+    validation_stage: str = "final_bound"
+    failures: tuple[ContractFailureV1, ...] = ()
     required_by_kind: dict[str, tuple[str, ...]] = Field(default_factory=dict)
     declared_by_kind: dict[str, tuple[str, ...]] = Field(default_factory=dict)
     witnessed_by_kind: dict[str, tuple[str, ...]] = Field(default_factory=dict)
@@ -2391,6 +2410,7 @@ def assess_paragraph_transaction(
     plan_row: Mapping[str, Any] | None = None,
     formula_routes: Mapping[str, Any] | None = None,
     required_anchors: Mapping[tuple[str, str], tuple[str, ...]] | None = None,
+    validation_stage: str = "final_bound",
 ) -> ParagraphTransactionAssessmentV1:
     """Assess exact declaration, witness, route, and optional semantic anchors.
 
@@ -2407,7 +2427,13 @@ def assess_paragraph_transaction(
         get = lambda name, default=None: getattr(transaction, name, default)
     paragraph_id = str(get("paragraph_id", "") or "").strip()
     body = str(get("paragraph_markdown", "") or "").strip()
+    stage = str(validation_stage or "final_bound").strip() or "final_bound"
+    if stage not in {"writer_content", "final_bound"}:
+        raise ValueError(f"unknown validation_stage:{stage}")
     required = required_targets_from_plan_row(plan_row)
+    if stage == "writer_content":
+        # Writer 层不要求模型枚举 Binder 负责的 atom witness（方案 §7.1/§7.2）。
+        required = {kind: values for kind, values in required.items() if kind != "atom"}
     declared = _transaction_declarations(get)
     invalid: list[str] = []
     witness_keys: set[tuple[str, str]] = set()
@@ -2453,7 +2479,7 @@ def assess_paragraph_transaction(
                 # through the complete set of owned atom witnesses.  The
                 # aggregate detail id remains useful for routing and is not a
                 # second prose substring requirement.
-                if kind == "detail":
+                if kind == "detail" and stage == "final_bound":
                     detail_atoms = [
                         (atom_kind, atom_target)
                         for (atom_kind, atom_target), constraint in _witness_constraints_from_plan_row(plan_row).items()
@@ -2500,7 +2526,18 @@ def assess_paragraph_transaction(
                         and c.get("required", True)
                     )
                 ]
-                if ("detail", did) in witness_keys and (
+                if stage == "writer_content":
+                    # Writer 层：明确的 detail witness 即视为内容义务已履行；
+                    # 完整 atom 集合仍可作为无损证明，但**不要求**模型枚举 atom
+                    # （方案 §7.1/§7.2）。不完整的 atom 集合不构成 detail 证明。
+                    if ("detail", did) in witness_keys or (
+                        detail_atoms
+                        and all((k, t) in witness_keys for (k, t) in detail_atoms)
+                    ):
+                        witnessed_details.append(did)
+                    else:
+                        missing_details.append(did)
+                elif ("detail", did) in witness_keys and (
                     not detail_atoms
                     or all((k, t) in witness_keys for (k, t) in detail_atoms)
                 ):
@@ -2620,11 +2657,85 @@ def assess_paragraph_transaction(
         if str(obligation_id).strip()
     }
     body_digest = _digest(body)
+
+    def _failure_code(item: str, kind: str) -> str:
+        if item.startswith("missing_exact_witness"):
+            return "atom_witness_missing" if kind == "atom" else "detail_witness_missing"
+        if item.startswith(("witness_not_unique_substring", "witness_missing_fields")):
+            return "exact_span_not_in_body"
+        if item.startswith("duplicate_witness"):
+            return "target_out_of_scope"
+        return "detail_semantic_mismatch"
+
+    failures: list[ContractFailureV1] = []
+    if not paragraph_id:
+        failures.append(ContractFailureV1(
+            code="paragraph_missing", stage=stage, expected="paragraph_id"
+        ))
+    elif not body:
+        failures.append(ContractFailureV1(
+            code="paragraph_missing",
+            stage=stage,
+            paragraph_id=paragraph_id,
+            expected="non_empty_paragraph_markdown",
+            repairable_by="writer_content",
+        ))
+    for kind, targets in missing.items():
+        for target in targets:
+            failures.append(ContractFailureV1(
+                code={
+                    "detail": "detail_witness_missing",
+                    "atom": "atom_witness_missing",
+                    "formula": "formula_consumer_mismatch",
+                }.get(kind, "input_material_missing"),
+                stage=stage,
+                paragraph_id=paragraph_id,
+                target_kind=kind,
+                target_id=target,
+                expected="exact_witness",
+                repairable_by="binder" if kind == "atom" else "writer_content",
+            ))
+    emitted_structured = {
+        (failure.code, failure.target_kind, failure.target_id) for failure in failures
+    }
+    for item in dict.fromkeys(invalid):
+        parts = item.split(":", 2)
+        kind = parts[1] if len(parts) > 1 else ""
+        target = parts[2] if len(parts) > 2 else ""
+        structured = (_failure_code(item, kind), kind, target)
+        if structured in emitted_structured:
+            continue
+        emitted_structured.add(structured)
+        failures.append(ContractFailureV1(
+            code=structured[0],
+            stage=stage,
+            paragraph_id=paragraph_id,
+            target_kind=kind,
+            target_id=target,
+            observed=item,
+            repairable_by="binder" if kind == "atom" else "writer_content",
+        ))
+    for item in dict.fromkeys(semantic_failures):
+        parts = item.split(":", 2)
+        kind = parts[1] if len(parts) > 1 else ""
+        target = parts[2] if len(parts) > 2 else ""
+        failures.append(ContractFailureV1(
+            code=_failure_code(item, kind),
+            stage=stage,
+            paragraph_id=paragraph_id,
+            target_kind=kind,
+            target_id=target,
+            observed=item,
+            repairable_by="binder" if kind == "atom" else "writer_content",
+        ))
+
     return ParagraphTransactionAssessmentV1(
         paragraph_id=paragraph_id,
         section_id=str(row.get("section_id") or "").strip(),
         status="valid" if valid else "invalid" if body else "not_run",
         valid=valid,
+        validation_stage=stage,
+        failures=tuple(failures),
         required_by_kind=required,
         declared_by_kind=declared,
         witnessed_by_kind=witnessed,

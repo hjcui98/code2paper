@@ -2878,3 +2878,39 @@ obligation、未过滤失败 claim、未放宽 span validator。
   仓库事实）。
 - `python -m pytest -q -m 'not live_llm'`：3641 passed、3 deselected、
   12 subtests passed，exit 0（S1 后 3635 + 新增 6，无回归）。
+
+## 2026-09-18 WP3（部分）：witness 两阶段验收与结构化失败（S3）
+
+范围：方案 §7.2/§7.4/§7.5。
+
+### 实现
+
+- `publication_transaction_contract.py`：新增 `ContractFailureV1`
+  （code/stage/paragraph_id/target_kind/target_id/expected/observed/repairable_by），
+  `ParagraphTransactionAssessmentV1` 增加 `validation_stage` 与结构化 `failures`；
+  `assess_paragraph_transaction(..., validation_stage=...)`：
+  - `writer_content`：必需目标不含 Binder 负责的 atom；detail 义务由明确的 detail
+    witness 或**完整** atom 集合履行，完整 atom 集合之外的 atom 声明不再自动补齐
+    detail（事故里"17 条 atom、0 条 detail"不能再被掩盖）。
+  - `final_bound`：保持既有严格语义（detail 需要 detail witness + 全部必需 atom，
+    或完整 atom 集合），负例不退化。
+  - 未知 stage 直接 fail-closed（`unknown validation_stage`）。
+- 结构化失败码：paragraph_missing、detail_witness_missing、atom_witness_missing、
+  formula_consumer_mismatch、exact_span_not_in_body、target_out_of_scope、
+  detail_semantic_mismatch、input_material_missing；target id 含冒号时按两刀切分，
+  并按 (code, kind, target) 去重；执行层不再需要解析拼接字符串。
+
+### 明确未上线（不可单独上线）
+
+方案 §7.1（Writer 表面剥离 Binder 所有的 atom）**本轮回退**：页级门仍是
+`final_bound`，它要求模型枚举全部 atom witness；一旦 Writer 看不到 atom 目标，
+detail 将永远无法满足——即半条 §7.1 会导致 fail-closed 死锁，而不是更安全。
+§7.1 必须与 §7.2 的页级配对（页接受改用 writer_content + 由确定性 Binder 保障
+final_bound atom 绑定）一起落地，并先核实 binder 阶段确实产出 atom 绑定。
+
+### 验证
+
+- `python -m pytest -q tests/regression_20260917 tests/test_agentic_detail_atom_binder_and_trace_v2.py
+  tests/test_agentic_publication_method_writer.py -m 'not live_llm'`：202 passed。
+- `python -m pytest -q -m 'not live_llm'`：3646 passed、3 deselected、
+  12 subtests passed，exit 0（S2 后 3641 + 新增 5，无回归）。
