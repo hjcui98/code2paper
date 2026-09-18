@@ -23,8 +23,21 @@ from pydantic import BaseModel, ConfigDict
 RESPONSE_PROTOCOL_JSON_PARAGRAPH_OBJECTS = "json_paragraph_objects"
 WORKLOAD_BASIS_VERSION = "writer-output-workload-v1"
 
-#: 待标定候选（方案 §8.2 明确"初始 4–6 仅可作为待标定候选"）。
-DEFAULT_MAX_SEMANTIC_PARAGRAPHS_PER_PAGE = 6
+#: 事故归档（`artifacts/runs/2026-09-17-ebcar-intent-v4-p7-j9L1bn`，24 个 Writer 请求）
+#: 实测出的三条边界——它们是**证据**，不是策略：
+#:   * 首次调用即 accepted 的请求最大段落数 = 2；
+#:   * 首次 rejected、经一次 content repair 后 accepted 的最大段落数 = 6；
+#:   * 首次 + repair 都 rejected（内容预算耗尽）的段落数 = 16。
+#: 也就是说：段落数越多，"首次即接受"的概率越低；6 已经处在依赖 repair 的边界，
+#: 16 则被实测证明一次事务写不完。默认上限取 6（repair 可恢复边界）；若要追求首次
+#: 即接受，应显式下调到 2，代价是更多页与更多调用。两条边界都必须由回归钉住。
+FIRST_ATTEMPT_ACCEPTED_MAX_PARAGRAPHS = 2
+REPAIR_RECOVERABLE_MAX_PARAGRAPHS = 6
+OBSERVED_UNRECOVERABLE_PARAGRAPHS = 16
+CALIBRATION_SOURCE = "artifacts/runs/2026-09-17-ebcar-intent-v4-p7-j9L1bn"
+
+#: 默认上限 = 实测的"repair 可恢复边界"。方案 §8.2 明确它不是普遍正确值。
+DEFAULT_MAX_SEMANTIC_PARAGRAPHS_PER_PAGE = REPAIR_RECOVERABLE_MAX_PARAGRAPHS
 DEFAULT_JSON_STRUCTURE_TOKENS = 48
 DEFAULT_PER_PARAGRAPH_JSON_TOKENS = 24
 DEFAULT_SAFETY_RESERVE_TOKENS = 512
@@ -269,7 +282,11 @@ def evaluate_page_contract(
 
 __all__ = [
     "BINDER_OWNED_TARGET_KINDS",
+    "CALIBRATION_SOURCE",
     "DEFAULT_MAX_SEMANTIC_PARAGRAPHS_PER_PAGE",
+    "FIRST_ATTEMPT_ACCEPTED_MAX_PARAGRAPHS",
+    "OBSERVED_UNRECOVERABLE_PARAGRAPHS",
+    "REPAIR_RECOVERABLE_MAX_PARAGRAPHS",
     "PageContractEvaluationV1",
     "RESPONSE_PROTOCOL_JSON_PARAGRAPH_OBJECTS",
     "WORKLOAD_BASIS_VERSION",

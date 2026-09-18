@@ -3163,3 +3163,26 @@ v3 调用、v4 编译失败仍失败、shadow 双建单执行）；全量离线 
 
 验证：regression 76 passed；受影响套件 98 passed；全量离线 3677 passed、3 deselected、
 12 subtests passed、exit 0。
+
+## 2026-09-18 WP4 标定：页内语义段落边界的实测结果
+
+数据源：事故归档 `artifacts/runs/2026-09-17-ebcar-intent-v4-p7-j9L1bn` 的 24 个 Writer 请求
+（请求侧 `narrative_plan.paragraphs` 数 × 对应 content-acceptance 结果）。
+
+**重要修正**：此前把 `technical_payload.paragraph_ids`（页的原子段落，事故页=1）当成
+"一次要写多少段"是错的；真正的输出工作量在**请求侧**段落列表（事故页=16），WP4 的估量
+与上限必须喂请求侧契约。
+
+实测三点边界（已写成常量并由回归钉住）：
+
+| 边界 | 值 | 证据 |
+|---|---|---|
+| 首次调用即接受的最大段落数 | **2** | 2 段页全部首次 accepted；1 段页有一例需 repair |
+| repair 可恢复的最大段落数 | **6** | 4 段与 6 段页都是"首次 rejected → repair accepted" |
+| 实测不可一次完成 | **16** | 事故页首次与 repair 均 rejected（内容预算耗尽） |
+
+因此 `DEFAULT_MAX_SEMANTIC_PARAGRAPHS_PER_PAGE = 6` 是"依赖 repair 的边界"，不是"首次
+即可接受"的安全值；若要追求首次即接受应显式下调到 2（代价是更多页与更多调用）。两条
+边界与事故形状都可被回归重算，任何改动都会在 `test_page_calibration.py` 失败。
+
+验证：regression 79 passed；全量离线 3680 passed、3 deselected、12 subtests passed、exit 0。
