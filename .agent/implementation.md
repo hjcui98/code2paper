@@ -2840,3 +2840,41 @@ obligation、未过滤失败 claim、未放宽 span validator。
   零交集不升级证据、intent digest 覆盖 statement）尚未开始。
 - WP3–WP7 未开始；live 验证（L1/L2/L3）未执行，需方案 §14.1 的显式授权与全新
   out 目录。
+
+## 2026-09-18 WP2：作者意图真正到达 Writer（S2）
+
+范围：方案 §6。编译器把"一个 story 槽位 = 一个必须写出的段落"改成"作者单元分类 +
+受限合并 + 可审计去向"，并把页内作者语义与权限送到实际模型表面。
+
+### 实现
+
+- `intent_spine_models.py`：新增 `AuthorIntentSurfaceV1`（author_statement / intended_role /
+  local_reader_goal / authority_surface / implementation_status / supporting_detail_ids /
+  unresolved_points / source_content_digest），`ParagraphKindV1`
+  （grounded_content / author_specification / expository_bridge / structural_only /
+  unresolved）；`IntentNarrativeParagraphV4` 增加 paragraph_kind、author_intent_surfaces、
+  surface_digest、implementation_status、unresolved_ids、source_story_ids、source_slot_ids、
+  disposition；`IntentNarrativePlanV4` 增加 `source_intent_digest_version`。
+- `intent_narrative_compiler.py`：新增 `SlotBindingDecision`（overlap/status/needs_research，
+  零交集只能是 organizational_fallback）、`compile_author_intent_surfaces`、
+  `compile_authoring_units`（分类 + 合并：同 section/同 kind/同 role/同 authority 且不承载
+  argument unit 或 intent atom 才合并；mechanism 不相容不合并）、
+  `compile_intent_content_digest`（覆盖 statement/role/priority/notes/关联证据/顺序/atom，
+  版本 `intent-content-v2`）。段落改为由单元生成：structural_only 不生成正文，
+  unresolved 以受限作者描述出现（authority 绝不升级为 repository_statement，且不带必需
+  detail），每个单元都带 disposition。trace 增加 unit_kind_counts、unresolved_story_ids、
+  structural_only_story_ids、non_writable_unit_ids。
+- `section_writer.py`：`_WRITER_PARAGRAPH_NARRATIVE_FIELDS` 增加 WP2 字段，
+  新增 `_compact_writer_author_intent_surfaces_for_llm` 保留作者内容与权限（不再只传 ID）。
+- V4→V3 投影携带上述字段（V3 段落模型 extra=allow，digest 因此随语义变化）。
+
+### 验证
+
+- `python -m pytest -q tests/regression_20260917 -m 'not live_llm'`：40 passed
+  （新增 `test_intent_writer_surface.py`：空槽不变成 grounded 段落、15 个同形空槽合并为
+  ≤2 个受限单元、每个 story 都有去向、请求表面确实带 author_statement/local_reader_goal/
+  authority/implementation_status、改 statement 不改 ID 时 source_intent_digest 与
+  surface_digest 必变、零交集只是组织 fallback、must-cover 无归属仍为 unresolved 而非
+  仓库事实）。
+- `python -m pytest -q -m 'not live_llm'`：3641 passed、3 deselected、
+  12 subtests passed，exit 0（S1 后 3635 + 新增 6，无回归）。

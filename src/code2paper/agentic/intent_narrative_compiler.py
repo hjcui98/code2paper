@@ -3,11 +3,14 @@
 from __future__ import annotations
 
 import hashlib
+import json
 from collections import defaultdict
 from collections.abc import Mapping, Sequence
+from dataclasses import dataclass, replace
 from typing import Any
 
 from code2paper.agentic.intent_spine_models import (
+    AuthorIntentSurfaceV1,
     IntentNarrativeParagraphV4,
     IntentNarrativePlanV4,
     IntentNarrativeSectionV4,
@@ -53,6 +56,35 @@ def _priority(node: Any) -> str:
 
 def _digest(*parts: str) -> str:
     return "sha256:" + hashlib.sha256("\x1f".join(parts).encode("utf-8")).hexdigest()
+
+
+def compile_author_intent_surfaces(
+    story_spine: Sequence[Any],
+) -> dict[str, AuthorIntentSurfaceV1]:
+    """把作者 story 解析成页内可用的局部语义条目（不是 ID 清单）。"""
+
+    surfaces: dict[str, AuthorIntentSurfaceV1] = {}
+    for node in story_spine:
+        story_id = _text(_get(node, "story_node_id"))
+        if not story_id:
+            continue
+        statement = _text(_get(node, "author_statement")) or _text(_get(node, "title"))
+        if not statement:
+            continue
+        payload = _story_intent_payload(node)
+        surfaces[story_id] = AuthorIntentSurfaceV1(
+            surface_id=f"surface:{story_id}",
+            story_node_id=story_id,
+            author_statement=statement,
+            intended_role=_text(_get(node, "intended_role")),
+            local_reader_goal=_text(_get(node, "reader_question")) or statement,
+            authority_surface="author_specification",
+            implementation_status="unresolved",
+            source_content_digest=_digest(
+                json.dumps(payload, ensure_ascii=False, sort_keys=True)
+            ),
+        )
+    return surfaces
 
 
 def compile_story_mechanism_bindings(
@@ -267,6 +299,291 @@ def _best_slot(slots: Sequence[dict[str, Any]], handles: set[str]) -> dict[str, 
     return max(slots, key=lambda slot: len(handles & slot["story_handles"]))
 
 
+@dataclass(frozen=True)
+class SlotBindingDecision:
+    """一次槽位绑定的可审计结论（方案 §6.4）。
+
+    ``status`` 为 ``grounded`` 时才有证据依据；``organizational_fallback``
+    只是确定性的组织落位，不得把证据等级升级为仓库实现事实。
+    """
+
+    slot_id: str | None
+    overlap_ids: tuple[str, ...]
+    status: str
+    needs_research: bool
+
+
+@dataclass(frozen=True)
+class AuthoringUnitV1:
+    """一个可写单元：段落身份、作者语义、义务与可审计去向。"""
+
+    unit_id: str
+    section_id: str
+    paragraph_kind: str
+    intended_role: str
+    local_reader_goal: str
+    authority_surface: str
+    implementation_status: str
+    disposition: str
+    story_ids: tuple[str, ...] = ()
+    slot_ids: tuple[str, ...] = ()
+    surfaces: tuple[Any, ...] = ()
+    mechanism_ids: tuple[str, ...] = ()
+    required_details: tuple[Any, ...] = ()
+    optional_details: tuple[Any, ...] = ()
+    argument_unit_ids: tuple[str, ...] = ()
+    intent_atom_ids: tuple[str, ...] = ()
+    formula_obligation_ids: tuple[str, ...] = ()
+    formula_package_ids: tuple[str, ...] = ()
+    unresolved_ids: tuple[str, ...] = ()
+
+    @property
+    def is_writable(self) -> bool:
+        """structural_only 不生成段落；unresolved 以受限作者描述出现。
+
+        unresolved 单元仍要写出作者说明（否则 must-cover story 会被静默丢弃），
+        但它的 ``authority_surface``/``implementation_status`` 明确禁止把它当成
+        仓库已验证实现。
+        """
+
+        return self.paragraph_kind != "structural_only"
+
+    def as_trace(self) -> dict[str, Any]:
+        return {
+            "unit_id": self.unit_id,
+            "section_id": self.section_id,
+            "paragraph_kind": self.paragraph_kind,
+            "intended_role": self.intended_role,
+            "authority_surface": self.authority_surface,
+            "implementation_status": self.implementation_status,
+            "disposition": self.disposition,
+            "source_story_ids": list(self.story_ids),
+            "source_slot_ids": list(self.slot_ids),
+            "required_detail_ids": [
+                _text(_get(detail, "detail_id")) for detail in self.required_details
+            ],
+            "unresolved_ids": list(self.unresolved_ids),
+        }
+
+
+def _slot_binding_decision(
+    slots: Sequence[dict[str, Any]], handles: set[str]
+) -> SlotBindingDecision:
+    """把"选一个槽位"变成带依据与状态的决策，而不是裸槽位。"""
+
+    if not slots:
+        return SlotBindingDecision(None, (), "unresolved", bool(handles))
+    best: dict[str, Any] | None = None
+    best_count = -1
+    for slot in slots:
+        count = len(handles & slot["story_handles"])
+        if count > best_count:
+            best, best_count = slot, count
+    assert best is not None
+    overlap = tuple(sorted(handles & best["story_handles"]))
+    if best_count <= 0:
+        return SlotBindingDecision(
+            _text(best.get("slot_id")), (), "organizational_fallback", bool(handles)
+        )
+    return SlotBindingDecision(_text(best.get("slot_id")), overlap, "grounded", False)
+
+
+def _story_intent_payload(node: Any) -> dict[str, Any]:
+    """作者语义内容（不含路径/运行时间），用于 v2 意图指纹。"""
+
+    return {
+        "story_node_id": _text(_get(node, "story_node_id")),
+        "title": _text(_get(node, "title")),
+        "author_statement": _text(_get(node, "author_statement")),
+        "intended_role": _text(_get(node, "intended_role")),
+        "priority": _priority(node),
+        "notes": list(_ids(_get(node, "notes"))),
+        "linked_claim_ids": list(_ids(_get(node, "linked_claim_ids"))),
+        "linked_obligation_ids": list(_ids(_get(node, "linked_obligation_ids"))),
+        "source_refs": list(_ids(_get(node, "source_refs"))),
+    }
+
+
+def compile_intent_content_digest(
+    story_spine: Sequence[Any], intent_atoms: Sequence[Any] = ()
+) -> str:
+    """覆盖 statement/role/priority/notes/关联证据/顺序与 atom 内容的意图指纹。"""
+
+    payload = {
+        "version": "intent-content-v2",
+        "stories": [_story_intent_payload(node) for node in story_spine],
+        "intent_atoms": [
+            {
+                "atom_id": _text(_get(atom, "atom_id")),
+                "story_node_id": _text(_get(atom, "story_node_id")),
+                "statement": _text(_get(atom, "statement") or _get(atom, "text")),
+            }
+            for atom in intent_atoms
+        ],
+    }
+    encoded = json.dumps(payload, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+    return "sha256:" + hashlib.sha256(encoded.encode("utf-8")).hexdigest()
+
+
+def _slot_kind(
+    slot: Mapping[str, Any],
+    *,
+    binding: Any,
+    story_node: Any,
+) -> tuple[str, str]:
+    """分类一个槽位，返回 (paragraph_kind, implementation_status)。"""
+
+    required = tuple(slot.get("required_details") or ())
+    optional = tuple(slot.get("optional_details") or ())
+    packages = tuple(slot.get("formula_package_ids") or ())
+    if required or packages:
+        status = "supported" if binding is not None and binding.binding_status == "exact" else "partial"
+        return "grounded_content", status
+    statement = _text(_get(story_node, "author_statement")) or _text(_get(story_node, "title"))
+    if not statement and not (slot.get("argument_unit_ids") or slot.get("intent_atom_ids")):
+        # 既无作者说明也无 argument unit / intent atom：纯结构槽位。
+        return "structural_only", "unresolved"
+    if binding is not None and binding.binding_status == "mismatch":
+        return "unresolved", "mismatch"
+    if binding is not None and binding.binding_status == "unresolved":
+        return "unresolved", "unresolved"
+    if optional:
+        return "author_specification", "partial"
+    role = _text(_get(story_node, "intended_role"))
+    if _notes_kind(story_node) == "organization" or role in {"motivation", "setup"}:
+        return "expository_bridge", "partial"
+    if _priority(story_node) == "must_cover":
+        # 必须覆盖但没有任何可解释的实现归属：保留为未解决义务，
+        # 不做成"必须有 detail"的伪实现段落（方案 §6.4/§6.5）。
+        return "unresolved", "unresolved"
+    return "author_specification", "unresolved"
+
+
+def compile_authoring_units(
+    slots: Sequence[Mapping[str, Any]],
+    *,
+    section_id: str,
+    story_by_id: Mapping[str, Any],
+    binding_by_story: Mapping[str, Any],
+    surfaces_by_story: Mapping[str, Any],
+) -> tuple[AuthoringUnitV1, ...]:
+    """把槽位编译为可写单元：分类、合并、保留 coverage（方案 §6.3）。"""
+
+    units: list[AuthoringUnitV1] = []
+    merge_index: dict[tuple[str, str, str], int] = {}
+
+    def _merge_key(kind: str, role: str, authority: str) -> tuple[str, str, str]:
+        return (kind, role, authority)
+
+    for index, slot in enumerate(slots, start=1):
+        story_id = _text(slot.get("story_id"))
+        mechanism_id = _text(slot.get("mechanism_id"))
+        binding = binding_by_story.get(story_id)
+        story_node = story_by_id.get(story_id)
+        kind, implementation_status = _slot_kind(slot, binding=binding, story_node=story_node)
+        role = _text(_get(story_node, "intended_role")) or (
+            "step_sequence" if story_id else "overview"
+        )
+        surface = surfaces_by_story.get(story_id)
+        if kind == "grounded_content" and mechanism_id and binding is not None and binding.binding_status in {"exact", "partial"}:
+            authority = "repository_statement"
+        elif kind == "unresolved" and binding is not None and binding.binding_status == "mismatch":
+            authority = "mismatch_statement"
+        else:
+            authority = "author_specification"
+        surfaces = tuple(
+            item for item in (surface,) if item is not None
+        )
+        if surface is not None and surface.implementation_status != implementation_status:
+            surfaces = (surface.model_copy(update={"implementation_status": implementation_status}),)
+        local_goal = (
+            _text(_get(story_node, "reader_question"))
+            or (surfaces[0].local_reader_goal if surfaces else "")
+        )
+        unresolved_ids = tuple(
+            dict.fromkeys(
+                [
+                    *(
+                        _ids(_get(story_node, "linked_obligation_ids"))
+                        if kind == "unresolved"
+                        else ()
+                    ),
+                    *(
+                        binding.unresolved_atom_ids
+                        if kind == "unresolved" and binding is not None
+                        else ()
+                    ),
+                ]
+            )
+        )
+        if kind == "unresolved" and not unresolved_ids:
+            # 没有可枚举的 obligation/atom 时，至少把 story 本身标为未解决项，
+            # 保证 can't silently disappear。
+            fallback = story_id or _text(slot.get("slot_id"))
+            unresolved_ids = (fallback,) if fallback else ()
+        unit = AuthoringUnitV1(
+            unit_id=f"{section_id}:U{index}",
+            section_id=section_id,
+            paragraph_kind=kind,
+            intended_role=role,
+            local_reader_goal=local_goal,
+            authority_surface=authority,
+            implementation_status=implementation_status,
+            disposition="",
+            story_ids=(story_id,) if story_id else (),
+            slot_ids=(_text(slot.get("slot_id")),) if _text(slot.get("slot_id")) else (),
+            surfaces=surfaces,
+            mechanism_ids=(mechanism_id,) if mechanism_id else (),
+            required_details=tuple(slot.get("required_details") or ()),
+            optional_details=tuple(slot.get("optional_details") or ()),
+            argument_unit_ids=tuple(slot.get("argument_unit_ids") or ()),
+            intent_atom_ids=tuple(slot.get("intent_atom_ids") or ()),
+            formula_obligation_ids=tuple(dict.fromkeys(slot.get("formula_obligation_ids") or ())),
+            formula_package_ids=tuple(dict.fromkeys(slot.get("formula_package_ids") or ())),
+            unresolved_ids=unresolved_ids,
+        )
+        key = _merge_key(kind, role, authority)
+        existing_index = merge_index.get(key)
+        can_merge = (
+            existing_index is not None
+            and units[existing_index].paragraph_kind in {"author_specification", "expository_bridge", "structural_only", "unresolved"}
+            # 承载 argument unit / intent atom 的槽位是作者覆盖锚点，不参与合并。
+            and not units[existing_index].argument_unit_ids
+            and not unit.argument_unit_ids
+            and not units[existing_index].intent_atom_ids
+            and not unit.intent_atom_ids
+            and units[existing_index].mechanism_ids in {(), unit.mechanism_ids}
+            and unit.mechanism_ids in {(), units[existing_index].mechanism_ids}
+        )
+        if can_merge:
+            current = units[existing_index]
+            units[existing_index] = replace(
+                current,
+                story_ids=tuple(dict.fromkeys((*current.story_ids, *unit.story_ids))),
+                slot_ids=tuple(dict.fromkeys((*current.slot_ids, *unit.slot_ids))),
+                surfaces=tuple((*current.surfaces, *unit.surfaces)),
+                argument_unit_ids=tuple(dict.fromkeys((*current.argument_unit_ids, *unit.argument_unit_ids))),
+                intent_atom_ids=tuple(dict.fromkeys((*current.intent_atom_ids, *unit.intent_atom_ids))),
+                unresolved_ids=tuple(dict.fromkeys((*current.unresolved_ids, *unit.unresolved_ids))),
+            )
+            continue
+        merge_index[key] = len(units)
+        units.append(unit)
+
+    # 去向必须可审计：每条单元都要有明确的处置。
+    disposition_by_kind = {
+        "grounded_content": "rendered_as_implementation_prose",
+        "author_specification": "rendered_as_bounded_author_description",
+        "expository_bridge": "context_only_no_implementation_claims",
+        "structural_only": "coverage_only_no_prose",
+        "unresolved": "pending_bounded_binding_or_research",
+    }
+    return tuple(
+        replace(unit, disposition=disposition_by_kind[unit.paragraph_kind]) for unit in units
+    )
+
+
+
 def build_intent_narrative_plan_v4(
     *,
     story_spine: Sequence[Any] = (),
@@ -294,6 +611,7 @@ def build_intent_narrative_plan_v4(
         intent_atoms=intent_atoms,
     )
     binding_by_story = {item.story_node_id: item for item in bindings}
+    surfaces_by_story = compile_author_intent_surfaces(story_values)
     assigned_stories = _assign_story_to_sections(story_values, section_rows)
     atoms_by_story: dict[str, list[str]] = defaultdict(list)
     for atom in intent_atoms:
@@ -324,6 +642,7 @@ def build_intent_narrative_plan_v4(
             owners = tuple(binding.mechanism_ids) if binding and binding.mechanism_ids else ("",)
             for owner_index, mechanism_id in enumerate(owners):
                 slot = {
+                    "slot_id": f"{section_id}:slot{len(slots) + 1}",
                     "section_id": section_id,
                     "story_id": story_id,
                     "mechanism_id": mechanism_id,
@@ -364,6 +683,7 @@ def build_intent_narrative_plan_v4(
                 ))),
             )
             slot = {
+                "slot_id": f"{section_id}:slot{len(slots_by_section[section_id]) + 1}",
                 "section_id": section_id,
                 "story_id": "",
                 "mechanism_id": mechanism_id,
@@ -438,6 +758,7 @@ def build_intent_narrative_plan_v4(
     from code2paper.agentic.method_architect import _v3_detail_witness_contract
 
     sections: list[IntentNarrativeSectionV4] = []
+    all_units: list[AuthoringUnitV1] = []
     for row in section_rows:
         section_id = row["section_id"]
         story_ids = tuple(dict.fromkeys(assigned_stories.get(section_id, ())))
@@ -445,44 +766,72 @@ def build_intent_narrative_plan_v4(
             slot["mechanism_id"] for slot in slots_by_section[section_id]
             if slot["mechanism_id"]
         ))
+        units = compile_authoring_units(
+            slots_by_section[section_id],
+            section_id=section_id,
+            story_by_id=story_by_id,
+            binding_by_story=binding_by_story,
+            surfaces_by_story=surfaces_by_story,
+        )
+        all_units.extend(units)
         paragraphs: list[IntentNarrativeParagraphV4] = []
-        for index, slot in enumerate(slots_by_section[section_id], start=1):
-            story_id = slot["story_id"]
-            mechanism_id = slot["mechanism_id"]
-            binding = binding_by_story.get(story_id)
-            surface = "repository_statement" if mechanism_id and (not story_id or binding and binding.binding_status in {"exact", "partial"}) else "author_specification"
-            if binding and binding.binding_status == "mismatch":
-                surface = "mismatch_statement"
-            required_details = slot["required_details"]
-            optional_details = slot["optional_details"]
+        paragraph_index = 0
+        for unit in units:
+            if not unit.is_writable:
+                # structural-only / unresolved 保留 coverage 与义务，但不强制
+                # 生成独立正文段落（方案 §6.3）。
+                continue
+            paragraph_index += 1
+            required_details = unit.required_details
+            optional_details = unit.optional_details
             witness_targets = [
                 target for detail in required_details
                 for target in _v3_detail_witness_contract(detail, required=True)
             ]
-            witness_targets.extend(
-                target for detail in optional_details
-                for target in _v3_detail_witness_contract(detail, required=False)
-            )
+            if unit.paragraph_kind == "grounded_content":
+                witness_targets.extend(
+                    target for detail in optional_details
+                    for target in _v3_detail_witness_contract(detail, required=False)
+                )
             paragraphs.append(IntentNarrativeParagraphV4(
-                paragraph_id=f"{section_id}:P{index}",
+                paragraph_id=f"{section_id}:P{paragraph_index}",
                 section_id=section_id,
-                role="step_sequence" if story_id else "overview",
+                role=unit.intended_role or "overview",
                 heading_intent=row["heading_intent"],
-                reader_goal=row["reader_question"],
-                ordered_story_node_ids=(story_id,) if story_id else (),
-                ordered_argument_unit_ids=tuple(slot["argument_unit_ids"]),
-                intent_atom_ids=tuple(slot["intent_atom_ids"]),
-                mechanism_id=mechanism_id,
-                mechanism_ids=(mechanism_id,) if mechanism_id else (),
-                required_detail_ids=tuple(_text(_get(detail, "detail_id")) for detail in required_details),
-                optional_detail_ids=tuple(_text(_get(detail, "detail_id")) for detail in optional_details),
-                required_intent_atom_ids=tuple(slot["intent_atom_ids"]),
-                required_author_surface_ids=(story_id or section_id,) if surface != "repository_statement" else (),
-                formula_obligation_ids=tuple(dict.fromkeys(slot["formula_obligation_ids"])),
-                formula_package_ids=tuple(dict.fromkeys(slot["formula_package_ids"])),
-                authority_surface=surface,
+                reader_goal=unit.local_reader_goal or row["reader_question"],
+                ordered_story_node_ids=unit.story_ids,
+                ordered_argument_unit_ids=unit.argument_unit_ids,
+                intent_atom_ids=unit.intent_atom_ids,
+                mechanism_id=unit.mechanism_ids[0] if unit.mechanism_ids else "",
+                mechanism_ids=unit.mechanism_ids,
+                required_detail_ids=tuple(
+                    _text(_get(detail, "detail_id")) for detail in required_details
+                ),
+                optional_detail_ids=tuple(
+                    _text(_get(detail, "detail_id")) for detail in optional_details
+                ),
+                required_intent_atom_ids=(
+                    unit.intent_atom_ids if unit.paragraph_kind == "grounded_content" else ()
+                ),
+                required_author_surface_ids=(
+                    tuple(item.surface_id for item in unit.surfaces)
+                    if unit.authority_surface != "repository_statement"
+                    else ()
+                ),
+                formula_obligation_ids=unit.formula_obligation_ids,
+                formula_package_ids=unit.formula_package_ids,
+                authority_surface=unit.authority_surface,
                 witness_contract={"targets": witness_targets},
-                transition_from="" if index == 1 else f"{section_id}:P{index - 1}",
+                transition_from=(
+                    "" if paragraph_index == 1 else f"{section_id}:P{paragraph_index - 1}"
+                ),
+                paragraph_kind=unit.paragraph_kind,
+                author_intent_surfaces=unit.surfaces,
+                implementation_status=unit.implementation_status,
+                unresolved_ids=unit.unresolved_ids,
+                source_story_ids=unit.story_ids,
+                source_slot_ids=unit.slot_ids,
+                disposition=unit.disposition,
             ))
         heading = row["heading_intent"]
         if heading_is_internal_identifier(heading):
@@ -500,9 +849,9 @@ def build_intent_narrative_plan_v4(
 
     plan = IntentNarrativePlanV4(
         plan_id="intent-narrative-v4",
-        source_intent_digest=_digest(
-            *( _text(_get(node, "story_node_id")) for node in story_values )
-        ),
+        # WP2：意图指纹覆盖 statement/role/priority/notes/关联证据/顺序/atom 内容，
+        # 而不是只有 story ID（改说明文字必须改变指纹）。
+        source_intent_digest=compile_intent_content_digest(story_values, intent_atoms),
         sections=tuple(sections),
         section_order_source=order_source,  # type: ignore[arg-type]
     )
@@ -528,6 +877,29 @@ def build_intent_narrative_plan_v4(
         "mechanism_binding_fallback_ids": mechanism_binding_fallbacks,
         "required_detail_binding_fallback_count": len(required_binding_fallbacks),
         "required_detail_binding_fallback_ids": required_binding_fallbacks,
+        "source_intent_digest_version": plan.source_intent_digest_version,
+        "units": [unit.as_trace() for unit in all_units],
+        "unit_kind_counts": {
+            kind: sum(1 for unit in all_units if unit.paragraph_kind == kind)
+            for kind in (
+                "grounded_content",
+                "author_specification",
+                "expository_bridge",
+                "structural_only",
+                "unresolved",
+            )
+        },
+        "unresolved_story_ids": sorted({
+            story_id for unit in all_units if unit.paragraph_kind == "unresolved"
+            for story_id in unit.story_ids
+        }),
+        "structural_only_story_ids": sorted({
+            story_id for unit in all_units if unit.paragraph_kind == "structural_only"
+            for story_id in unit.story_ids
+        }),
+        "non_writable_unit_ids": [
+            unit.unit_id for unit in all_units if not unit.is_writable
+        ],
     }
     return plan, bindings, trace
 
@@ -571,6 +943,18 @@ def project_intent_plan_to_narrative_v3(plan: IntentNarrativePlanV4) -> Any:
                 required_repository_proposition_ids=paragraph.required_repository_proposition_ids,
                 authority_surface=paragraph.authority_surface,
                 mechanism_ids=paragraph.mechanism_ids,
+                # WP2：页内作者语义、可写性分类与去向随投影保留（V3 允许额外字段）。
+                paragraph_kind=paragraph.paragraph_kind,
+                author_intent_surfaces=[
+                    surface.model_dump(mode="json")
+                    for surface in paragraph.author_intent_surfaces
+                ],
+                surface_digest=paragraph.surface_digest,
+                implementation_status=paragraph.implementation_status,
+                unresolved_ids=paragraph.unresolved_ids,
+                source_story_ids=paragraph.source_story_ids,
+                source_slot_ids=paragraph.source_slot_ids,
+                disposition=paragraph.disposition,
             ))
             placements.extend(
                 FormulaPlacementV1(

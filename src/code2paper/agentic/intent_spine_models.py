@@ -72,6 +72,52 @@ ClaimVerificationStatusV2 = Literal[
     "exact_verified", "semantic_verified", "unresolved", "rejected"
 ]
 SectionOrderSourceV1 = Literal["author_intent", "accepted_author_plan"]
+#: 段落可写性分类（方案 §6.3）：只有 grounded_content 才承担必须写出的实现义务。
+ParagraphKindV1 = Literal[
+    "grounded_content",
+    "author_specification",
+    "expository_bridge",
+    "structural_only",
+    "unresolved",
+]
+ImplementationStatusV1 = Literal["supported", "partial", "unresolved", "mismatch"]
+
+
+class AuthorIntentSurfaceV1(_SpineModel):
+    """页内可写的作者语义条目：ID 不是写作内容，statement 才是。
+
+    完整作者意图仍留在上游 canonical artifact；Writer 只看到本页所需的条目，
+    并同时看到权限等级（authority_surface）与实现状态，避免把作者设计当成
+    仓库已验证实现（不变量 I1）。
+    """
+
+    surface_id: str
+    story_node_id: str = ""
+    author_statement: str
+    intended_role: str = ""
+    local_reader_goal: str = ""
+    authority_surface: str = "author_specification"
+    implementation_status: ImplementationStatusV1 = "unresolved"
+    supporting_detail_ids: tuple[str, ...] = ()
+    unresolved_points: tuple[str, ...] = ()
+    source_content_digest: str = ""
+    content_digest: str = ""
+
+    @field_validator("surface_id", "author_statement")
+    @classmethod
+    def _required(cls, value: str) -> str:
+        if not str(value).strip():
+            raise ValueError("author intent surface requires id and statement")
+        return str(value).strip()
+
+    @model_validator(mode="after")
+    def _normalize(self) -> "AuthorIntentSurfaceV1":
+        object.__setattr__(self, "supporting_detail_ids", _clean_tuple(self.supporting_detail_ids))
+        object.__setattr__(self, "unresolved_points", _clean_tuple(self.unresolved_points))
+        payload = self.model_dump(mode="json", exclude={"content_digest"})
+        object.__setattr__(self, "content_digest", _digest(payload))
+        return self
+
 
 
 class IntentNarrativeParagraphV4(_SpineModel):
@@ -96,6 +142,15 @@ class IntentNarrativeParagraphV4(_SpineModel):
     witness_contract: dict[str, Any] = Field(default_factory=dict)
     transition_from: str = ""
     transition_to: str = ""
+    # WP2：可写性分类、页内作者语义、来源槽位与可审计去向。
+    paragraph_kind: ParagraphKindV1 = "grounded_content"
+    author_intent_surfaces: tuple[AuthorIntentSurfaceV1, ...] = ()
+    surface_digest: str = ""
+    implementation_status: ImplementationStatusV1 = "supported"
+    unresolved_ids: tuple[str, ...] = ()
+    source_story_ids: tuple[str, ...] = ()
+    source_slot_ids: tuple[str, ...] = ()
+    disposition: str = ""
     content_digest: str = ""
 
     @field_validator("paragraph_id", "section_id")
@@ -122,6 +177,16 @@ class IntentNarrativeParagraphV4(_SpineModel):
         )
         object.__setattr__(self, "formula_obligation_ids", _clean_tuple(self.formula_obligation_ids))
         object.__setattr__(self, "formula_package_ids", _clean_tuple(self.formula_package_ids))
+        object.__setattr__(self, "unresolved_ids", _clean_tuple(self.unresolved_ids))
+        object.__setattr__(self, "source_story_ids", _clean_tuple(self.source_story_ids))
+        object.__setattr__(self, "source_slot_ids", _clean_tuple(self.source_slot_ids))
+        surfaces = tuple(self.author_intent_surfaces or ())
+        object.__setattr__(self, "author_intent_surfaces", surfaces)
+        object.__setattr__(
+            self,
+            "surface_digest",
+            _digest([surface.content_digest for surface in surfaces]) if surfaces else "",
+        )
         if not self.mechanism_id and self.mechanism_ids:
             object.__setattr__(self, "mechanism_id", self.mechanism_ids[0])
         if self.mechanism_id and self.mechanism_id not in self.mechanism_ids:
@@ -172,6 +237,7 @@ class IntentNarrativeSectionV4(_SpineModel):
 class IntentNarrativePlanV4(_SpineModel):
     plan_id: str
     source_intent_digest: str = ""
+    source_intent_digest_version: str = "intent-content-v2"
     sections: tuple[IntentNarrativeSectionV4, ...]
     section_order_source: SectionOrderSourceV1 = "accepted_author_plan"
     content_digest: str = ""

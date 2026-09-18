@@ -758,6 +758,14 @@ _WRITER_PARAGRAPH_NARRATIVE_FIELDS = (
     "paragraph_id",
     "section_id",
     "role",
+    # WP2：段落可写性、页内作者语义与去向必须到达实际模型表面。
+    "paragraph_kind",
+    "author_intent_surfaces",
+    "surface_digest",
+    "implementation_status",
+    "unresolved_ids",
+    "source_story_ids",
+    "disposition",
     "mechanism_id",
     "required_detail_ids",
     "optional_detail_ids",
@@ -796,6 +804,40 @@ def _compact_writer_target_contract_for_llm(value: Any) -> dict[str, Any]:
         for key in _WRITER_TARGET_FIELDS
         if key in value
     }
+
+
+_WRITER_AUTHOR_SURFACE_FIELDS = (
+    "surface_id",
+    "story_node_id",
+    "author_statement",
+    "intended_role",
+    "local_reader_goal",
+    "authority_surface",
+    "implementation_status",
+    "supporting_detail_ids",
+    "unresolved_points",
+    "source_content_digest",
+    "content_digest",
+)
+
+
+def _compact_writer_author_intent_surfaces_for_llm(value: Any) -> list[dict[str, Any]]:
+    """保留页内作者内容与权限，而不是只保留 ID（方案 §6.1/§6.2）。"""
+
+    if hasattr(value, "model_dump"):
+        value = value.model_dump(mode="json")
+    if isinstance(value, Mapping):
+        value = [value]
+    rows: list[dict[str, Any]] = []
+    for item in value or ():
+        if hasattr(item, "model_dump"):
+            item = item.model_dump(mode="json")
+        if not isinstance(item, Mapping):
+            continue
+        row = {key: item[key] for key in _WRITER_AUTHOR_SURFACE_FIELDS if key in item}
+        if row:
+            rows.append(row)
+    return rows
 
 
 def _compact_writer_witness_contract_for_llm(value: Any) -> Any:
@@ -879,6 +921,12 @@ def _compact_writer_narrative_plan_for_llm(
                 refs.append(ref)
         if refs:
             row["shared_detail_refs"] = refs
+        if "author_intent_surfaces" in raw_row:
+            surfaces = _compact_writer_author_intent_surfaces_for_llm(
+                raw_row["author_intent_surfaces"]
+            )
+            if surfaces:
+                row["author_intent_surfaces"] = surfaces
         if include_witness_contract and "witness_contract" in raw_row:
             row["witness_contract"] = _compact_writer_witness_contract_for_llm(
                 raw_row["witness_contract"]
