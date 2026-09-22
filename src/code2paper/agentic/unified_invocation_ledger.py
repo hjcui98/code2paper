@@ -271,6 +271,43 @@ def publish_provider_response(root: Path, invocation_id: str, attempt: int, resp
     })
 
 
+def _read_recorded_diagnostic(
+    root: Path, invocation_id: str, attempt: int, kind: str
+) -> dict[str, Any] | None:
+    """读取一次已落盘的 provider 诊断记录并**复算**其自摘要（§B.5/§G.3）。"""
+
+    path = _diagnostic_path(root, invocation_id, attempt, kind)
+    if not path.is_file():
+        return None
+    try:
+        value = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return None
+    if not isinstance(value, dict):
+        return None
+    declared = str(value.pop("content_digest", "") or "")
+    if not declared or _fragment_payload_digest(value) != declared:
+        return None
+    value["content_digest"] = declared
+    return value
+
+
+def read_recorded_provider_request(
+    root: Path, invocation_id: str, attempt: int
+) -> dict[str, Any] | None:
+    """本地结算用：读回该 attempt 的 provider request（含真实 input_payload）。"""
+
+    return _read_recorded_diagnostic(root, invocation_id, attempt, "request")
+
+
+def read_recorded_provider_response(
+    root: Path, invocation_id: str, attempt: int
+) -> dict[str, Any] | None:
+    """本地结算用：读回该 attempt 的 provider response（含 response_text）。"""
+
+    return _read_recorded_diagnostic(root, invocation_id, attempt, "response")
+
+
 def _verify_provider_diagnostics(root: Path, receipt: ActualRequestReceiptV2) -> None:
     if not receipt.provider_diagnostics_digest:
         return
@@ -1542,6 +1579,8 @@ __all__ = [
     "ResumePlan",
     "build_resume_plan",
     "write_run_terminal_event",
+    "read_recorded_provider_request",
+    "read_recorded_provider_response",
     "read_run_terminal_event",
     "rebuild_aggregate_fragments",
 ]

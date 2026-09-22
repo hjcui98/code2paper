@@ -155,8 +155,15 @@ def test_recorded_response_is_settled_without_a_second_call(tmp_path: Path) -> N
     _run_once(tmp_path, _counting_caller(resume_calls), paths=paths)
 
     assert _writer_call_count(resume_calls) == 0, "已有响应不得再次请求 provider"
+    # 本地结算：响应字节被重新解析 + 同一 assessor 复验 + 不可变 validation replay。
     recovery = reduce_invocation_recovery(tmp_path, invocation_id)
-    assert recovery.state == "response_received_unsettled", recovery.state
+    assert recovery.state == "accepted_reusable", recovery.state
+    assert recovery.accepted is True
+    replays = list(directory.glob("attempt-*.validation-replay.*.json"))
+    assert replays, "本地结算必须留下不可变 replay 记录"
+    assert not list(directory.glob("attempt-0002.*")), (
+        "本地结算不得新开 attempt"
+    )
     # 恢复动作必须与 ledger 一致：doctor 报同一个结论（§B.4）。
     report = run_authoring_doctor(tmp_path)
     page = next(
@@ -178,11 +185,10 @@ def test_completed_without_acceptance_is_revalidated_locally(tmp_path: Path) -> 
     _run_once(tmp_path, _counting_caller(resume_calls), paths=paths)
 
     assert _writer_call_count(resume_calls) == 0, "重新验收不得再发一次请求"
-    # 当前实现：completed 已落盘、acceptance 缺失时不会重新请求 provider，也不会
-    # 用"新 attempt + 空响应"制造一个假的拒绝记录；该 attempt 保持待本地验收。
+    # completed 已落盘、acceptance 缺失 → 本地结算该 attempt（不新开 attempt）。
     recovery = reduce_invocation_recovery(tmp_path, invocation_id)
-    assert recovery.state == "validation_pending", recovery.state
-    assert recovery.accepted is False
+    assert recovery.state == "accepted_reusable", recovery.state
+    assert recovery.accepted is True
     # 绝不发布未经最终验证的文本。
     verified = tmp_path / "artifacts" / "06_authoring" / "repository_verified_method.md"
     if verified.is_file():
@@ -253,15 +259,9 @@ def test_unknown_outcome_stays_visible_after_a_blocked_resume(tmp_path: Path) ->
     )
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason=(
-        "已知缺口：completed 已落盘、acceptance 缺失时，恢复没有本地结算（没有生产者发布 "
-        "validation replay），而是为一次未发送的 attempt 写了拒绝 sidecar。修好后应改为断言 "
-        "该 attempt 被本地结算（validation replay / acceptance）且不存在 attempt-0002 记录。"
-    ),
-)
 def test_unsent_resume_attempt_leaves_no_rejection_record(tmp_path: Path) -> None:
+    """本地结算不得为一次未发送的 attempt 制造拒绝记录。"""
+
     paths, _calls = _baseline(tmp_path)
     directory = _truncate_attempts(tmp_path, ".completed.json")
     invocation_id = _ledger_invocation_id(directory)
@@ -272,3 +272,10 @@ def test_unsent_resume_attempt_leaves_no_rejection_record(tmp_path: Path) -> Non
     assert _writer_call_count(resume_calls) == 0
     assert not list(directory.glob("attempt-0002.content-acceptance.json"))
     assert reduce_invocation_recovery(tmp_path, invocation_id).accepted is True
+    # 结算记录是 append-only 的 replay，不是覆盖历史 acceptance。
+    replays = sorted(directory.glob("attempt-0001.validation-replay.*.json"))
+    assert replays
+    payload = json.loads(replays[0].read_text(encoding="utf-8"))
+    assert payload["accepted"] is True
+    assert payload["source_response_digest"]
+    assert payload["validator_bundle_digest"]

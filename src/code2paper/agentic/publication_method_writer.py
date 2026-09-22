@@ -2040,6 +2040,106 @@ def _persist_research_closure_admission(
     return str(path)
 
 
+def _settle_recorded_writer_attempt(
+    *,
+    ledger_root: Path,
+    invocation_id: str,
+    validator_bundle_digest: str = "",
+) -> tuple[bool, tuple[str, ...], str, Any] | None:
+    """用账本里**已落盘**的请求/响应做本地结算（审计 §B.5/§G.3）。
+
+    崩溃在 "response 已落盘、completed/acceptance 未落盘" 时，响应字节就在账本里：
+    重新解析、用同一个 assessor 复验、并把结论发布成不可变的 validation replay，
+    这样既不需要再请求 provider，也不需要为一次从未发送的 attempt 制造记录。
+    返回 ``(accepted, failure_codes, response_text, metadata)``；无法结算时返回 None。
+    """
+
+    from code2paper.agentic.unified_invocation_ledger import (
+        invocation_dir,
+        read_recorded_provider_request,
+        read_recorded_provider_response,
+    )
+    from code2paper.agentic.writer_attempt_ledger import (
+        ValidationReplayV1,
+        publish_validation_replay,
+    )
+    from code2paper.llm.response_schemas import (
+        PublicationMethodSectionOutputV1,
+        try_parse_structured_response,
+    )
+
+    directory = invocation_dir(Path(ledger_root), invocation_id)
+    if not directory.is_dir():
+        return None
+    attempts = sorted(
+        {
+            int(path.name.split("-")[1].split(".")[0])
+            for path in directory.glob("attempt-*.provider-response.json")
+        }
+    )
+    for attempt in reversed(attempts):
+        if list(directory.glob(f"attempt-{attempt:04d}.content-acceptance.json")):
+            continue
+        response_record = read_recorded_provider_response(
+            Path(ledger_root), invocation_id, attempt
+        )
+        request_record = read_recorded_provider_request(
+            Path(ledger_root), invocation_id, attempt
+        )
+        if not response_record or not request_record:
+            continue
+        response_text = str(response_record.get("response_text") or "")
+        if not response_text.strip():
+            continue
+        payload = request_record.get("input_payload")
+        if not isinstance(payload, Mapping):
+            continue
+        metadata, _error = try_parse_structured_response(
+            response_text, PublicationMethodSectionOutputV1
+        )
+        if metadata is None:
+            continue
+        section = WriterSectionInput(
+            section_id=str(payload.get("section_id") or ""),
+            heading=str(payload.get("heading") or ""),
+            publication_mode=True,
+            prompt_payload=dict(payload),
+        )
+        response = LLMResponse(
+            text=response_text,
+            response_hash=str(response_record.get("response_digest") or ""),
+            metadata=metadata,
+        )
+        assessment = assess_publication_writer_response(section, response)
+        failures = [
+            str(item) for item in (assessment.get("missing") or ())
+        ]
+        for key in ("invalid_count", "invalid_witness_count", "authority_violation_count"):
+            if int(assessment.get(key, 0) or 0):
+                failures.append(key)
+        for paragraph in metadata.paragraphs or ():
+            body = "\n".join(
+                line for line in paragraph.paragraph_markdown.splitlines()
+                if not re.match(r"^\s*#", line)
+            )
+            if not any(char.isalnum() for char in body):
+                failures.append("paragraph_body_not_substantive")
+        accepted = not failures
+        publish_validation_replay(
+            # publish_validation_replay 接收 run 根（它自己解析 invocation 目录）。
+            Path(ledger_root).parent.parent.parent,
+            invocation_id,
+            attempt=attempt,
+            accepted=accepted,
+            validator_bundle_digest=str(validator_bundle_digest or ""),
+            source_response_digest=str(response_record.get("response_digest") or ""),
+            failure_codes=tuple(dict.fromkeys(failures)),
+            detail="local_settlement_from_recorded_response",
+        )
+        return accepted, tuple(dict.fromkeys(failures)), response_text, metadata
+    return None
+
+
 def _run_publication_method_writer_impl(
     *,
     out_root: str | Path,
@@ -4964,8 +5064,72 @@ def _run_publication_method_writer_impl(
                     f"send_outcome_unknown:{invocation_id}:"
                     f"{list(recovery.unknown_reservation_attempts)}"
                 )
-            elif recovery.state == "response_received_unsettled":
-                request_failures.append(f"response_received_unsettled:{invocation_id}")
+            elif recovery.state in {
+                "response_received_unsettled",
+                "validation_pending",
+            }:
+                # 审计 §B.5/§G.3：响应已经落盘 → **本地结算**（重新解析 + 同一
+                # assessor 复验 + 发布不可变 validation replay），既不再请求 provider，
+                # 也不为一次从未发送的 attempt 制造记录。
+                from code2paper.agentic.authoring_execution_identity import (
+                    capture_validator_bundle_snapshot as _capture_validator_bundle,
+                    load_execution_identity as _load_execution_identity,
+                )
+
+                _identity = _load_execution_identity(out_root)
+                _validator_bundle_digest = str(
+                    getattr(_identity, "validator_bundle_digest", "") or ""
+                )
+                if not _validator_bundle_digest:
+                    # 独立调用产品 writer（没有 run 身份）时也要绑定**当前**验收规则
+                    # 身份，这样身份变化后旧 replay 不会被当成有效结算。
+                    try:
+                        _validator_bundle_digest = str(
+                            _capture_validator_bundle().digest or ""
+                        )
+                    except Exception:  # noqa: BLE001 - 指纹失败不阻断结算本身
+                        _validator_bundle_digest = ""
+                settled = _settle_recorded_writer_attempt(
+                    ledger_root=Path(ledger_root),
+                    invocation_id=invocation_id,
+                    validator_bundle_digest=_validator_bundle_digest,
+                )
+                if settled is not None and settled[0]:
+                    accepted_text, _failures, accepted_metadata = (
+                        settled[2],
+                        settled[1],
+                        settled[3],
+                    )
+                    unified_v2_writer_page_request_records.append({
+                        "invocation_id": invocation_id,
+                        "section_id": actual_section_id,
+                        "page_id": page.page_id,
+                        "accepted": True,
+                        "response_nonempty": True,
+                        "transport_response_status": "nonempty",
+                        "task_status": "complete",
+                        "content_accepted": True,
+                        "content_acceptance_status": "accepted",
+                        "repair_committed": False,
+                        "resume_eligible": True,
+                        "reused_from_ledger": True,
+                        "settled_locally": True,
+                        "request_failures": [],
+                    })
+                    return LLMResponse(
+                        text=accepted_text,
+                        response_hash=str(
+                            getattr(accepted_metadata, "content_digest", "") or ""
+                        ),
+                        metadata=accepted_metadata,
+                        response_mode="local_settlement",
+                    )
+                if settled is not None:
+                    request_failures.extend(settled[1])
+                else:
+                    request_failures.append(
+                        f"response_received_unsettled:{invocation_id}"
+                    )
             elif recovery.state == "ledger_corrupt":
                 request_failures.append(
                     f"ledger_corrupt:{invocation_id}:{list(recovery.blocks[:1])}"

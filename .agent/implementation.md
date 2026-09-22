@@ -4694,3 +4694,37 @@ resume，断言"零重复发送 + 状态与 ledger 一致 + 不发布未验证�
 且**不新开 attempt**。
 
 回归 + writer 套件 491 项通过、1 xfailed。
+
+## 2026-09-22 审计 PR G.3（第二片）：本地结算补齐（validation replay 的生产者）
+
+上一片用 strict xfail 钉住的缺口本轮修掉了：崩溃在 "response 已落盘、completed/acceptance
+未落盘" 时，恢复既没有结算已落盘的响应，又为一次从未发送的 attempt 写了拒绝 sidecar
+（`attempt-0002.content-acceptance.json` + `transaction_metadata_missing`）。
+
+修复：
+
+- `unified_invocation_ledger` 新增公开读取器 `read_recorded_provider_request` /
+  `read_recorded_provider_response`：读取已落盘的 provider 诊断记录并**复算自摘要**
+  （缺失/损坏返回 None，不静默当成可用）。
+- `publication_method_writer` 新增 `_settle_recorded_writer_attempt(...)`：找到"有响应、
+  无 acceptance"的最新 attempt → 读回 request/response → 重新解析
+  `PublicationMethodSectionOutputV1` → 用**同一个** `assess_publication_writer_response`
+  复验 → 把结论发布成不可变 `validation replay`（带 `source_response_digest` 与
+  `validator_bundle_digest`）。无法结算时返回 None，由调用方退回原来的 typed failure。
+- 页面循环里把 `response_received_unsettled` / `validation_pending` 接到本地结算：
+  接受则**不新开 attempt、不发请求**，直接以本地结算的响应继续（记录 `settled_locally`）；
+  拒绝则带上真实失败原因；结算不了才报 `response_received_unsettled`。
+- 没有 run 身份时（直接调用产品 writer 的测试路径）用
+  `capture_validator_bundle_snapshot()` 绑定**当前**验收规则身份，避免 replay 身份留空。
+
+实测（崩溃注入测试全部转正，strict xfail 已移除）：
+
+- 崩溃点 3（response 已落盘）：恢复后 reducer = `accepted_reusable`、`accepted=True`，
+  留下 `attempt-0001.validation-replay.*.json`，且**没有任何 attempt-0002 记录**，0 次
+  writer 调用；
+- 崩溃点 4（completed 已落盘、acceptance 缺失）：同上，`accepted_reusable` + replay，
+  0 次调用；
+- 崩溃点 2（结果未知）仍然保持 `send_outcome_unknown` 且不重发；
+- 崩溃点 6（Writer 已接受、Binder 未跑）仍只重跑确定性 Binder。
+
+回归 + writer 套件 492 项全绿。
