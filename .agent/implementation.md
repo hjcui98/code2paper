@@ -3925,3 +3925,22 @@ failure（`paragraph_count:N>limit` 或 `input_tokens:N>limit`），不再只打
 compiler 里也没有 residual 组装）。因此候选页判定看到的段落数与实际请求的段落数仍然不同。
 要按 §C.1 统一 packing unit，必须把"计划层面的段落归属"前移到打包循环（技术闭包降为
 packing unit 的一个属性），并同步 C.5 的重建步骤；这是下一轮 PR C 的主任务。
+
+### PR C（F01）第四片：段数上限的显式策略标注（§C.2）
+
+审核要求："段数上限可作为辅助安全限制，但不能替代 token 和义务估量。0=关闭上限只能作为
+显式实验配置；生产准入必须标注该策略，不接受环境变量悄悄改变契约。"
+
+- 新增 `semantic_paragraph_limit_policy(environment=None)`：返回
+  `{value, source(default/environment/environment_invalid_fallback_default), valid,
+  disabled, experiment_acknowledged}`；`_max_semantic_paragraphs_per_page()` 改为它的
+  薄包装（单一 owner）。
+- **进入有效配置身份**：`capture_effective_config_digest` 现在把该策略写入 payload，因此
+  用环境变量改上限会改变执行身份（不能再"悄悄改契约"）。
+- **live 准入新 gate** `semantic_paragraph_limit_policy`：关闭上限而未显式声明实验
+  （`CODE2PAPER_UNIFIED_PARAGRAPH_LIMIT_EXPERIMENT=1`）→ 阻断
+  `semantic_paragraph_limit_policy_unacknowledged`；非法值同样阻断（不再静默回落默认）。
+
+测试：`test_page_contract_recheck.py` 扩到 13 项（策略取值/来源/实验声明/非法值 +
+有效配置身份绑定 + 准入阻断与声明后放行）。全量离线 3818 passed、3 deselected、
+12 subtests passed、exit 0。

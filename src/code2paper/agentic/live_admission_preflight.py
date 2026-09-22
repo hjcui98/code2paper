@@ -418,6 +418,29 @@ def preflight_live_admission(
     if not transport_ok:
         blockers.append("transport_policy_unbounded")
 
+    # §C.2：段数上限是辅助安全限。0=关闭只能是**显式实验配置**；环境变量不能悄悄改契约，
+    # 因此关闭上限而未显式声明实验时，live 准入直接阻断。
+    from code2paper.agentic.unified_context_compiler import (
+        semantic_paragraph_limit_policy,
+    )
+
+    paragraph_policy = semantic_paragraph_limit_policy()
+    paragraph_ok = not (
+        paragraph_policy["disabled"] and not paragraph_policy["experiment_acknowledged"]
+    ) and bool(paragraph_policy["valid"])
+    gates.append(
+        LiveAdmissionGateV1(
+            name="semantic_paragraph_limit_policy",
+            passed=paragraph_ok,
+            detail=(
+                f"value={paragraph_policy['value']} source={paragraph_policy['source']} "
+                f"experiment={paragraph_policy['experiment_acknowledged']}"
+            ),
+        )
+    )
+    if not paragraph_ok:
+        blockers.append("semantic_paragraph_limit_policy_unacknowledged")
+
     if receipt is None:
         gates.append(
             LiveAdmissionGateV1(
@@ -568,6 +591,7 @@ def preflight_live_admission(
             "max_writer_calls": int(max_writer_calls),
             "max_total_input_tokens": int(max_total_input_tokens),
             "transport": policy.as_diagnostics(),
+            "semantic_paragraph_limit": paragraph_policy,
             "offline_suite_receipt": (
                 receipt.model_dump(mode="json") if receipt is not None else None
             ),

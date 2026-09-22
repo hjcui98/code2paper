@@ -339,3 +339,96 @@ def test_page_payload_preserves_the_narrative_paragraph_order() -> None:
         for item in (page.technical_payload.get("paragraph_ids") or ())
     ]
     assert landed == list(paragraph_ids), "页内顺序必须是叙述顺序而不是字典序"
+
+
+# --------------------------------------------------------------------------- #
+# §C.2：段数上限的策略标注（0=关闭只能是显式实验配置）
+# --------------------------------------------------------------------------- #
+
+
+def test_paragraph_limit_policy_is_explicit_and_identity_bound() -> None:
+    from code2paper.agentic.authoring_run_config import capture_effective_config_digest
+    from code2paper.agentic.unified_context_compiler import (
+        semantic_paragraph_limit_policy,
+    )
+
+    default = semantic_paragraph_limit_policy({})
+    assert default["value"] > 0
+    assert default["source"] == "default"
+    assert default["disabled"] is False
+
+    disabled = semantic_paragraph_limit_policy(
+        {"CODE2PAPER_UNIFIED_MAX_SEMANTIC_PARAGRAPHS_PER_PAGE": "0"}
+    )
+    assert disabled["disabled"] is True
+    assert disabled["experiment_acknowledged"] is False
+
+    acknowledged = semantic_paragraph_limit_policy(
+        {
+            "CODE2PAPER_UNIFIED_MAX_SEMANTIC_PARAGRAPHS_PER_PAGE": "0",
+            "CODE2PAPER_UNIFIED_PARAGRAPH_LIMIT_EXPERIMENT": "1",
+        }
+    )
+    assert acknowledged["experiment_acknowledged"] is True
+
+    invalid = semantic_paragraph_limit_policy(
+        {"CODE2PAPER_UNIFIED_MAX_SEMANTIC_PARAGRAPHS_PER_PAGE": "not-a-number"}
+    )
+    assert invalid["valid"] is False, "非法值不得静默当作正常配置"
+
+    # 策略进有效配置身份：环境变量不能在不改变身份的情况下改契约。
+    base = capture_effective_config_digest(narrative_plan_mode="v3", environment={})
+    changed = capture_effective_config_digest(
+        narrative_plan_mode="v3",
+        environment={"CODE2PAPER_UNIFIED_MAX_SEMANTIC_PARAGRAPHS_PER_PAGE": "0"},
+    )
+    assert base["digest"] != changed["digest"]
+    assert base["payload"]["semantic_paragraph_limit"]["value"] > 0
+
+
+def test_admission_blocks_an_unacknowledged_disabled_paragraph_limit(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    import json as _json
+    import subprocess as _subprocess
+
+    from code2paper.agentic.live_admission_preflight import preflight_live_admission
+    from code2paper.llm.client import LLMConfig, LLMProvider
+
+    target = tmp_path / "target"
+    (target / "src").mkdir(parents=True)
+    (target / "src" / "core.py").write_text("VALUE = 1\n", encoding="utf-8")
+    for args in (["init", "-q"], ["add", "-A"],
+                 ["-c", "user.email=t@e", "-c", "user.name=t", "commit", "-q", "-m", "i"]):
+        _subprocess.run(["git", *args], cwd=target, check=True, capture_output=True)
+    intent = tmp_path / "intent.yaml"
+    intent.write_text("title: demo\n", encoding="utf-8")
+
+    monkeypatch.setenv("CODE2PAPER_UNIFIED_MAX_SEMANTIC_PARAGRAPHS_PER_PAGE", "0")
+    monkeypatch.delenv("CODE2PAPER_UNIFIED_PARAGRAPH_LIMIT_EXPERIMENT", raising=False)
+    blocked = preflight_live_admission(
+        tmp_path / "run",
+        repo_path=target,
+        author_intent_path=intent,
+        llm_config=LLMConfig(provider=LLMProvider.OPENAI, model="m"),
+        run_open_mode="new",
+    )
+    assert blocked.ready is False
+    assert "semantic_paragraph_limit_policy_unacknowledged" in blocked.blockers
+    gate = next(
+        g for g in blocked.gates if g.name == "semantic_paragraph_limit_policy"
+    )
+    assert gate.passed is False
+
+    # 显式声明实验后不再是阻断项（仍记录在 policy 里）。
+    monkeypatch.setenv("CODE2PAPER_UNIFIED_PARAGRAPH_LIMIT_EXPERIMENT", "1")
+    acknowledged = preflight_live_admission(
+        tmp_path / "run2",
+        repo_path=target,
+        author_intent_path=intent,
+        llm_config=LLMConfig(provider=LLMProvider.OPENAI, model="m"),
+        run_open_mode="new",
+    )
+    assert "semantic_paragraph_limit_policy_unacknowledged" not in acknowledged.blockers
+    assert acknowledged.policy["semantic_paragraph_limit"]["experiment_acknowledged"] is True
+    _json.dumps(acknowledged.model_dump(mode="json"))

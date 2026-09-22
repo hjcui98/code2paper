@@ -96,8 +96,16 @@ def capture_effective_config_digest(
             key: _env_value(key, environment) for key in EFFECTIVE_CONFIG_ENV_KEYS
         },
     }
+    # §C.2：段数上限策略（值/来源/是否显式实验）属于有效配置的一部分，必须随身份冻结，
+    # 不能让环境变量在不改变身份的情况下改契约。
+    from code2paper.agentic.unified_context_compiler import (
+        semantic_paragraph_limit_policy,
+    )
+
+    paragraph_limit = semantic_paragraph_limit_policy(environment)
     payload: dict[str, Any] = {
         "narrative_plan_mode": mode,
+        "semantic_paragraph_limit": paragraph_limit,
         "authoring_context_mode": context_mode,
         "response_protocol": protocol,
         "prompt_bundle": {

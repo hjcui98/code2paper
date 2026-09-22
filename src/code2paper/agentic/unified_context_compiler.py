@@ -2446,24 +2446,58 @@ def fit_narrative_plan_to_page_budget(
     return revised_plan, tuple(dict.fromkeys(failures)), diagnostics
 
 
+#: §C.2：段数上限是**辅助安全限**，它的取值与来源必须显式进入运行契约——
+#: 0（关闭）只允许作为显式实验配置，不能靠环境变量悄悄改契约。
+SEMANTIC_PARAGRAPH_LIMIT_ENV = "CODE2PAPER_UNIFIED_MAX_SEMANTIC_PARAGRAPHS_PER_PAGE"
+SEMANTIC_PARAGRAPH_LIMIT_EXPERIMENT_ENV = (
+    "CODE2PAPER_UNIFIED_PARAGRAPH_LIMIT_EXPERIMENT"
+)
+
+
+def semantic_paragraph_limit_policy(
+    environment: Mapping[str, str] | None = None,
+) -> dict[str, Any]:
+    """返回段数上限的**策略标注**：值、来源、是否显式实验配置。"""
+
+    env = environment if environment is not None else os.environ
+    raw = str(env.get(SEMANTIC_PARAGRAPH_LIMIT_ENV, "") or "").strip()
+    experiment_flag = str(
+        env.get(SEMANTIC_PARAGRAPH_LIMIT_EXPERIMENT_ENV, "") or ""
+    ).strip().casefold() in {"1", "true", "yes", "on"}
+    if not raw:
+        value = int(_DEFAULT_MAX_SEMANTIC_PARAGRAPHS_PER_PAGE)
+        source = "default"
+        valid = True
+    else:
+        try:
+            value = max(0, int(raw))
+            source = "environment"
+            valid = True
+        except ValueError:
+            value = int(_DEFAULT_MAX_SEMANTIC_PARAGRAPHS_PER_PAGE)
+            source = "environment_invalid_fallback_default"
+            valid = False
+    return {
+        "value": value,
+        "source": source,
+        "valid": valid,
+        # 0 = 关闭上限：只允许显式实验配置；生产准入据此拒绝。
+        "disabled": value == 0,
+        "experiment_acknowledged": bool(experiment_flag),
+        "env_key": SEMANTIC_PARAGRAPH_LIMIT_ENV,
+        "experiment_env_key": SEMANTIC_PARAGRAPH_LIMIT_EXPERIMENT_ENV,
+    }
+
+
 def _max_semantic_paragraphs_per_page() -> int:
     """WP4 §8.2/§8.3：单页语义段落上限（待标定候选，可用环境变量覆盖）。
 
     这不是"页大小=常量"的正确性标准，而是把"一页必须一次写完多少段"纳入候选页
     联合预算；超出时先拆页（flush 当前页），而不是先拆段落 fragment。
+    取值与来源见 :func:`semantic_paragraph_limit_policy`（§C.2 的策略标注）。
     """
 
-    raw = str(
-        os.environ.get(
-            "CODE2PAPER_UNIFIED_MAX_SEMANTIC_PARAGRAPHS_PER_PAGE",
-            str(_DEFAULT_MAX_SEMANTIC_PARAGRAPHS_PER_PAGE),
-        )
-        or ""
-    ).strip()
-    try:
-        return max(0, int(raw))
-    except ValueError:
-        return _DEFAULT_MAX_SEMANTIC_PARAGRAPHS_PER_PAGE
+    return int(semantic_paragraph_limit_policy()["value"])
 
 
 def extend_writer_worksets_from_narrative_plan(
