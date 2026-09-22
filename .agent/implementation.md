@@ -4145,3 +4145,25 @@ optional 不进 gap、以及用 `wraps` 间谍断言**生产路径真的进入**
 "同字段重新构造"一致（并记录 model_copy 的旧 digest 反例）、unit 级生产路径必须拿到
 重建后的 digest（该测试在 legacy `model_copy` 变体下失败）。13 项全绿；全量离线（含
 D.1）3844 passed、3 deselected、12 subtests passed、exit 0。
+
+## 2026-09-22 审计 PR D.4：Writer 可见字段 golden contract 与材料 lineage
+
+复现的审计论断（成立）：`_WRITER_PARAGRAPH_NARRATIVE_FIELDS` 没有段落级
+`authority_surface`（也没有 `required_author_surface_ids` / 
+`required_repository_proposition_ids`），模型只能看到每条 surface 自己的 authority，
+看不到本段整体授权边界；并且没有任何入口能回答"材料是未检索到，还是在投影/合并中丢了"。
+
+修复：
+
+- Writer 段落视图补上 `authority_surface`、`required_author_surface_ids`、
+  `required_repository_proposition_ids`（技术事实仍只来自 canonical page，叙述合同里
+  不复制 excerpt/atoms/shared_contexts）。
+- 新增产品函数 `writer_paragraph_material_lineage(narrative_plan, page_payload)`：
+  逐段落列出 required/optional detail 与必读 author surface，区分
+  `materialized_detail_ids` 与 `missing_detail_ids`（页已编译却缺材料 = 投影/合并丢失）、
+  `missing_author_surface_ids`；已进 `__all__`。这是只读诊断，不改请求内容。
+
+测试：新增 `tests/regression_20260917/test_writer_surface_contract.py` 5 项——两个
+compaction 函数的 golden 字段集（含 statement/reader goal/authority/status/supporting
+detail/unresolved/disposition 真正到达）、技术材料不得被复制进叙述合同、lineage 能区分
+"已物化"与"投影丢失"、surface 压缩保留内容与权限。回归目录 285 项、writer 相关 281 项全绿。

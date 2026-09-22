@@ -771,6 +771,11 @@ _WRITER_PARAGRAPH_NARRATIVE_FIELDS = (
     "optional_detail_ids",
     "formula_obligation_ids",
     "formula_package_ids",
+    # 审计 §D.4：段落级权限与"必读作者 surface"必须到达模型；否则模型只看到每条
+    # surface 自己的 authority，无法判断本段的整体授权边界。
+    "authority_surface",
+    "required_author_surface_ids",
+    "required_repository_proposition_ids",
     "suggested_depth",
     "reader_goal",
     "transition_from",
@@ -949,6 +954,113 @@ def _compact_writer_narrative_plan_for_llm(
         paragraphs.append(row)
     compact["paragraphs"] = paragraphs
     return compact
+
+
+def writer_paragraph_material_lineage(
+    narrative_plan: Any,
+    page_payload: Mapping[str, Any] | None,
+) -> list[dict[str, Any]]:
+    """回答"材料是未检索到，还是在投影/合并中丢了"（审计 §D.4）。
+
+    对页内每个段落，列出它要求的 detail / author surface，并报告这些材料是否真的
+    出现在**同一页**的技术 payload 或页内作者语义里：
+
+    * ``missing_detail_ids``：本页要求、但页 payload 里找不到对应 atom/detail 的
+      detail——这是**投影/合并丢失**（页已经编译完成却缺材料）；
+    * ``missing_author_surface_ids``：本段必读、但没有随段落到达的 surface；
+    * 两者都为空时，材料在这条链路上是完整的。
+
+    这是只读诊断，不改变请求内容，也不代替页面契约复核。
+    """
+
+    if hasattr(narrative_plan, "model_dump"):
+        narrative_plan = narrative_plan.model_dump(mode="json")
+    payload = dict(page_payload or {})
+
+    atom_payloads = [
+        atom for atom in (payload.get("atoms") or ()) if isinstance(atom, Mapping)
+    ]
+    page_detail_ids: set[str] = {
+        str(value).strip().removeprefix("detail:")
+        for value in (payload.get("detail_ids") or ())
+        if str(value).strip()
+    }
+    for atom in atom_payloads:
+        for key in ("detail_id", "target_id"):
+            value = str(atom.get(key) or "").strip().removeprefix("detail:")
+            if value:
+                page_detail_ids.add(value)
+        atom_id = str(atom.get("_atom_id") or atom.get("atom_id") or "").strip()
+        if atom_id.startswith("detail:"):
+            detail_from_atom = atom_id.removeprefix("detail:").strip()
+            if detail_from_atom:
+                page_detail_ids.add(detail_from_atom)
+
+    paragraphs = list(
+        (narrative_plan or {}).get("paragraphs") or ()
+        if isinstance(narrative_plan, Mapping)
+        else ()
+    )
+    rows: list[dict[str, Any]] = []
+    for raw_row in paragraphs:
+        row = (
+            raw_row.model_dump(mode="json")
+            if hasattr(raw_row, "model_dump")
+            else dict(raw_row)
+            if isinstance(raw_row, Mapping)
+            else None
+        )
+        if row is None:
+            continue
+        required_ids = [
+            str(value).strip()
+            for value in (row.get("required_detail_ids") or ())
+            if str(value).strip()
+        ]
+        optional_ids = [
+            str(value).strip()
+            for value in (row.get("optional_detail_ids") or ())
+            if str(value).strip()
+        ]
+        surface_ids: set[str] = set()
+        for surface in row.get("author_intent_surfaces") or ():
+            surface_row = (
+                surface.model_dump(mode="json")
+                if hasattr(surface, "model_dump")
+                else surface
+                if isinstance(surface, Mapping)
+                else None
+            )
+            if surface_row is None:
+                continue
+            surface_id = str(surface_row.get("surface_id") or "").strip()
+            if surface_id:
+                surface_ids.add(surface_id)
+        required_surface_ids = [
+            str(value).strip()
+            for value in (row.get("required_author_surface_ids") or ())
+            if str(value).strip()
+        ]
+        rows.append({
+            "paragraph_id": str(row.get("paragraph_id") or ""),
+            "required_detail_ids": required_ids,
+            "optional_detail_ids": optional_ids,
+            "materialized_detail_ids": [
+                detail_id for detail_id in required_ids
+                if detail_id.removeprefix("detail:") in page_detail_ids
+            ],
+            "missing_detail_ids": [
+                detail_id for detail_id in required_ids
+                if detail_id.removeprefix("detail:") not in page_detail_ids
+            ],
+            "required_author_surface_ids": required_surface_ids,
+            "missing_author_surface_ids": [
+                surface_id
+                for surface_id in required_surface_ids
+                if surface_id not in surface_ids
+            ],
+        })
+    return rows
 
 
 def _compact_writer_binding_contract_for_llm(value: Any) -> Any:
@@ -6707,4 +6819,5 @@ __all__ = [
     "normalize_publication_heading",
     "write_method_by_sections",
     "write_publication_method_by_sections",
+    "writer_paragraph_material_lineage",
 ]
