@@ -4114,7 +4114,31 @@ def _run_autonomous_method_agent_impl(
         "duration_ms": round((time.time() - started) * 1000, 1),
     })
     _atomic_write_text(resolved_out / "artifacts" / "research_product" / "agent_trace.json", _json_text(agent_trace))
-    _atomic_write_text(resolved_out / "artifacts" / "research_product" / "run_summary.json", _json_text(summary))
+    # 审计 §F.1/§F.4/§F.5：run summary 是索引里的 run_summary:terminal 产物，发布时
+    # 走 journaled 事务并注册，读者再用 read_artifact_validated 验证字节后使用。
+    from code2paper.agentic.authoring_artifact_publication import (
+        publish_artifact_transaction,
+    )
+
+    _summary_target = resolved_out / "artifacts" / "research_product" / "run_summary.json"
+    _summary_tx = publish_artifact_transaction(
+        resolved_out,
+        role="run_summary",
+        phase="terminal",
+        target_path=_summary_target,
+        payload=_json_text(summary).encode("utf-8"),
+        generation=1,
+        producer="autonomous_method_agent.finalize",
+        upstream_refs=(
+            f"run:{effective_run_id}",
+            f"repo:{Path(repo_path).expanduser().resolve()}",
+        ),
+    )
+    if _summary_tx.state != "complete":
+        raise ValueError(
+            "run_summary_publish_incomplete:"
+            + ",".join(_summary_tx.failures or (_summary_tx.state,))
+        )
 
     return MethodAgentRunResultV1(
         run_id=effective_run_id,

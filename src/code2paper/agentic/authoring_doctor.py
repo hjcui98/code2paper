@@ -152,6 +152,34 @@ class AuthoringDoctorReportV1(BaseModel):
         return "\n".join(lines)
 
 
+def load_run_summary_validated(out_root: str | Path) -> tuple[Any, str]:
+    """按 §F.5 读取 run summary：先解析索引（优先已发布 revision），再验证字节。
+
+    返回 ``(payload, blocker)``；验证失败时 payload 为 None 并给出 typed blocker，
+    **不退回**按固定文件名再读一份未验证内容。
+    """
+
+    from code2paper.agentic.authoring_artifact_index import (
+        ArtifactIndexError,
+        build_artifact_index,
+        load_published_artifact_index,
+        read_artifact_validated,
+    )
+
+    root = Path(out_root).expanduser().resolve()
+    try:
+        index = load_published_artifact_index(root)
+    except ArtifactIndexError:
+        index = build_artifact_index(root)
+    try:
+        read = read_artifact_validated(
+            index, "run_summary", "terminal", out_root=root
+        )
+    except ArtifactIndexError as exc:
+        return None, f"artifact_read_blocked:run_summary:terminal:{exc}"
+    return read.payload, ""
+
+
 def _read_json(path: Path) -> Any:
     """legacy 归档读取（未经索引验证）；受索引管理的产物走 _validated_payload。"""
 

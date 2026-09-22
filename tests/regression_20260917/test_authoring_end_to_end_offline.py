@@ -176,8 +176,18 @@ def test_resume_does_not_rewrite_the_registration(offline_run) -> None:
     before = load_artifact_registry(out_root)
     _run(out_root, mode="auto")
     after = load_artifact_registry(out_root)
-    assert after.active == before.active
-    assert len(after.registrations) == len(before.registrations)
+    # 身份产物走"校验既有身份"分支：不得产生第二条身份注册。
+    assert (
+        after.active["authoring_execution_identity:research"]
+        == before.active["authoring_execution_identity:research"]
+    )
+    identity_registrations = lambda registry: [  # noqa: E731
+        item for item in registry.registrations
+        if item.key() == "authoring_execution_identity:research"
+    ]
+    assert len(identity_registrations(after)) == len(identity_registrations(before))
+    # run summary 每次 finalize 都是新内容 → 新的不可变注册记录（指针前移是预期的）。
+    assert after.active["run_summary:terminal"]
 
 
 def test_offline_run_scope_is_admission_only(offline_run) -> None:
@@ -201,3 +211,50 @@ def test_offline_run_scope_is_admission_only(offline_run) -> None:
     # 范围声明可在测试报告里单列。
     assert TEST_SCOPE.startswith("product admission/diagnostic smoke")
     assert "no writing-chain evidence" in TEST_SCOPE
+
+
+def test_run_summary_is_registered_and_read_after_verification(offline_run) -> None:
+    """§F.1/§F.4/§F.5：summary 发布时注册，读取时验证字节（改动后必须失败）。"""
+
+    from code2paper.agentic.authoring_artifact_index import (
+        build_artifact_index,
+        publish_artifact_index,
+    )
+    from code2paper.agentic.authoring_artifact_publication import (
+        scan_publication_transactions,
+    )
+    from code2paper.agentic.authoring_artifact_registry import (
+        load_artifact_registry,
+    )
+    from code2paper.agentic.authoring_doctor import load_run_summary_validated
+
+    out_root, _result = offline_run
+
+    registry = load_artifact_registry(out_root)
+    keys = {item.key() for item in registry.active_registrations()}
+    assert "run_summary:terminal" in keys, keys
+
+    transactions = [
+        item
+        for item in scan_publication_transactions(out_root)
+        if item.logical_role == "run_summary"
+    ]
+    assert transactions and transactions[0].state == "complete", transactions
+
+    # 先让索引与当前字节一致（resume 会重写 summary），再验证读取成功。
+    publish_artifact_index(out_root)
+    payload, blocker = load_run_summary_validated(out_root)
+    assert blocker == "", blocker
+    assert payload["run_id"] == "e2e-offline"
+
+    # 发布索引后改动 summary：reader 必须在使用前失败，不返回被改动内容。
+    summary_path = out_root / "artifacts" / "research_product" / "run_summary.json"
+    mutated = json.loads(summary_path.read_text(encoding="utf-8"))
+    mutated["run_id"] = "mutated-run-id"
+    summary_path.write_text(
+        json.dumps(mutated, indent=2) + "\n", encoding="utf-8"
+    )
+    payload_after, blocker_after = load_run_summary_validated(out_root)
+    assert payload_after is None
+    assert "artifact_bytes_changed_since_index" in blocker_after, blocker_after
+    assert build_artifact_index(out_root).entries

@@ -4774,3 +4774,27 @@ witness targets 为 0）与 `MA-S1:P2`（grounded，4 个 target）——作者-
 摘要继续跑"。
 
 G.2 文件 11 项全绿；回归 + unified 套件 350 项通过。
+
+## 2026-09-22 审计 PR F.5（第二片）：run summary 的发布注册与验证读取
+
+复现的审计论断（成立）：`artifacts/research_product/run_summary.json` 是索引里的
+`run_summary:terminal` 产物，但产品入口只用 `_atomic_write_text` 写它（无验证、无注册），
+也没有任何 reader 在使用前核对字节——索引里那份摘要与实际内容可以各自漂移。
+
+修复：
+
+- 产品 finalize 改为走 §F.4 journaled 事务发布 run summary（role=run_summary,
+  phase=terminal, generation=1, producer=autonomous_method_agent.finalize,
+  upstream refs=run/repo），失败即 `run_summary_publish_incomplete` fail-closed；
+  注册由事务内的 §F.1 步骤完成。
+- 新增 `authoring_doctor.load_run_summary_validated(out_root)`：优先读**已发布**索引
+  revision（否则临时扫描），经 `read_artifact_validated` 验证字节与语义摘要后返回
+  payload；验证失败返回 typed blocker 且 payload 为 None，**不退回**按文件名再读一份。
+
+测试（真实产品 run）：summary 出现在 registry 的 active 注册里、journal 状态为 complete、
+索引与当前字节一致时可读且 `run_id` 正确；发布索引后改动 summary →
+`artifact_read_blocked:run_summary:terminal:artifact_bytes_changed_since_index:...` 且不返回内容。
+另修正既有 resume 断言：身份注册不得新增（保持原意），而 summary 每次 finalize 都是新内容 →
+新的不可变注册记录、指针前移属于预期。
+
+回归 + unified 套件 351 项通过。
