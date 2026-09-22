@@ -4167,3 +4167,42 @@ D.1）3844 passed、3 deselected、12 subtests passed、exit 0。
 compaction 函数的 golden 字段集（含 statement/reader goal/authority/status/supporting
 detail/unresolved/disposition 真正到达）、技术材料不得被复制进叙述合同、lineage 能区分
 "已物化"与"投影丢失"、surface 压缩保留内容与权限。回归目录 285 项、writer 相关 281 项全绿。
+
+## 2026-09-22 审计 PR E.1/E.2（载荷部分）：canonical 失败归属与可执行修复载荷
+
+复现的审计论断（成立）：
+
+- `writer_repair_packet` 自带第二套 vocabulary（`missing_detail_witness` 等），与
+  `publication_transaction_contract.ContractFailureV1.code`（`detail_witness_missing`
+  等）不是同一集合，owner 也各写一份；
+- 动作选择是 `repair_kind = codes[0]`，只有两个硬编码升级码；
+- `as_request_payload` 把 `paragraph_markdown`、`authority_refs`、`allowed_paragraph_ids`
+  一并丢掉——模型拿不到修复必需的局部内容（只剩 target id）。
+
+修复：
+
+- `publication_transaction_contract.py` 新增 canonical 表：`CANONICAL_FAILURE_OWNERS`
+  （14 个 code → owner）、`CANONICAL_FAILURE_ALLOWED_EDITS`、
+  `CANONICAL_FAILURE_OWNER_ACTIONS`、`FAILURE_ACTION_PRIORITY`、
+  `LEGACY_FAILURE_CODE_ALIASES`，以及 `canonical_failure_code/owner/escalation` 与
+  `select_failure_action`（返回 `FailureActionSelectionV1`）。
+- 动作按责任与依赖选择：`ledger_corrupt`/`unknown_failure` → `typed_block`；
+  authority/target scope → `replan_required`；formula closure → planner replan/recompile；
+  input material → research；atom 绑定 → binder；writer_content 才允许原地改正文；
+  transport/unknown-outcome → execution reconcile。空集合也归 `unknown_failure`
+  （typed block），不默认改正文。
+- `writer_repair_packet` 改为消费 canonical 表：`EscalationV1` 增加 `typed_block`，
+  `_ESCALATING_CODES`/`_REPAIRABLE_EDITS` 删除；`contract_failures_from_legacy_strings`
+  在**读取边界**输出 canonical code。
+- `as_request_payload` 保留修复所需的局部合同（失败段正文、authority refs、允许段落、
+  target 原因、escalation），只隐藏内部 `frozen_paragraph_digests`。
+
+测试：`test_repair_packet.py` 扩到 10 项——事故包改用 canonical code、formula closure
+升级到 planner、placeholder 缺失才是 Writer 原地修复、未知码 typed block、账本损坏优先于
+其它失败、升级类优先于 `codes[0]`、canonical 查表与别名转换。回归目录 260 项、writer 侧
+183 项全绿。
+
+**PR E 仍缺**：E.2 的调用边界接线（生产 repair 请求真正消费 packet 与
+`as_request_payload`）、E.3 原子提交与单调进展（repair 接受后 scope/冻结段/义务复核）、
+E.4 的 `writer_content` vs `final_bound` 负例矩阵、E.5 paragraph objects 单一正文源的
+生产路径复核。

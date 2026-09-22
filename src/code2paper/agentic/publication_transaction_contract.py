@@ -11,7 +11,8 @@ from __future__ import annotations
 import hashlib
 import json
 import re
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
+from types import MappingProxyType
 from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
@@ -1715,6 +1716,141 @@ class ContractFailureV1(BaseModel):
     expected: str = ""
     observed: str = ""
     repairable_by: str = ""
+
+
+# --------------------------------------------------------------------------- #
+# 审计 §E.1：canonical failure code → owner → allowed action
+# --------------------------------------------------------------------------- #
+
+#: canonical code → 应接收的 owner。repair packet 不再自带另一套同义词表；历史字符串
+#: 只在 ``contract_failures_from_legacy_strings`` 读取边界转换。
+CANONICAL_FAILURE_OWNERS: Mapping[str, str] = MappingProxyType({
+    "detail_witness_missing": "writer_content",
+    "paragraph_missing": "writer_content",
+    "formula_placeholder_missing": "writer_content",
+    "exact_span_not_in_body": "writer_content",
+    "detail_semantic_mismatch": "writer_content",
+    "formula_consumer_mismatch": "planner_formalizer_compiler",
+    "input_material_missing": "research_compiler",
+    "authority_surface_violation": "planner_research",
+    "target_out_of_scope": "planner_research",
+    "atom_witness_missing": "binder",
+    "transport_failure": "execution_owner",
+    "send_outcome_unknown": "execution_owner",
+    "ledger_corrupt": "system",
+    "unknown_failure": "system",
+})
+
+#: writer_content 类失败允许修改的编辑集合（其它 owner 不允许原地改正文）。
+CANONICAL_FAILURE_ALLOWED_EDITS: Mapping[str, tuple[str, ...]] = MappingProxyType({
+    "detail_witness_missing": ("paragraph_content", "detail_witnesses"),
+    "paragraph_missing": ("paragraph_content", "detail_witnesses"),
+    "formula_placeholder_missing": ("paragraph_content", "formula_references"),
+    "exact_span_not_in_body": ("paragraph_content", "detail_witnesses"),
+    "detail_semantic_mismatch": ("paragraph_content", "detail_witnesses"),
+})
+
+#: owner → 执行层允许的动作。
+CANONICAL_FAILURE_OWNER_ACTIONS: Mapping[str, str] = MappingProxyType({
+    "writer_content": "writer_content_repair",
+    "binder": "binder_repair",
+    "planner_formalizer_compiler": "replan_or_recompile",
+    "planner_research": "replan_required",
+    "research_compiler": "research_then_recompile",
+    "execution_owner": "transport_reconcile",
+    "system": "typed_block",
+})
+
+#: 多个失败同时出现时的动作优先级：未知/损坏与升级类先决定动作，然后是材料与依赖，
+#: 最后才是内容补写与传输对账。绝不能只按 ``codes[0]`` 决定整个 repair_kind。
+FAILURE_ACTION_PRIORITY: tuple[str, ...] = (
+    "ledger_corrupt",
+    "unknown_failure",
+    "authority_surface_violation",
+    "target_out_of_scope",
+    "formula_consumer_mismatch",
+    "input_material_missing",
+    "atom_witness_missing",
+    "paragraph_missing",
+    "detail_witness_missing",
+    "formula_placeholder_missing",
+    "exact_span_not_in_body",
+    "detail_semantic_mismatch",
+    "send_outcome_unknown",
+    "transport_failure",
+)
+
+#: 历史（097/0917 证据与旧 packet）字符串 → canonical code。
+LEGACY_FAILURE_CODE_ALIASES: Mapping[str, str] = MappingProxyType({
+    "missing_detail_witness": "detail_witness_missing",
+    "missing_paragraph": "paragraph_missing",
+    "missing_atom_witness": "atom_witness_missing",
+    "missing_formula_witness": "formula_placeholder_missing",
+})
+
+
+def canonical_failure_code(code: str) -> str:
+    """把任意失败码归一到 canonical 集合；无法识别的一律 ``unknown_failure``。"""
+
+    value = str(code or "").strip()
+    if not value:
+        return "unknown_failure"
+    alias = LEGACY_FAILURE_CODE_ALIASES.get(value)
+    if alias:
+        return alias
+    return value if value in CANONICAL_FAILURE_OWNERS else "unknown_failure"
+
+
+def canonical_failure_owner(code: str) -> str:
+    return CANONICAL_FAILURE_OWNERS[canonical_failure_code(code)]
+
+
+def canonical_failure_escalation(code: str) -> str:
+    action = CANONICAL_FAILURE_OWNER_ACTIONS[canonical_failure_owner(code)]
+    if action == "typed_block":
+        return "typed_block"
+    if action in {"replan_required", "replan_or_recompile", "research_then_recompile"}:
+        return "replan_required"
+    return "repair_in_place"
+
+
+class FailureActionSelectionV1(BaseModel):
+    """一组失败对应的**唯一**动作选择（审计 §E.1）。"""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    code: str
+    owner: str
+    action: str
+    escalation: str
+    codes: tuple[str, ...] = ()
+
+    def as_trace(self) -> dict[str, Any]:
+        return self.model_dump(mode="json")
+
+
+def select_failure_action(codes: Sequence[str]) -> FailureActionSelectionV1:
+    """按责任与依赖选一个动作，而不是 ``codes[0]``。"""
+
+    normalized: list[str] = []
+    for code in codes or ():
+        canonical = canonical_failure_code(code)
+        if canonical not in normalized:
+            normalized.append(canonical)
+    if not normalized:
+        normalized = ["unknown_failure"]
+    chosen = next(
+        (candidate for candidate in FAILURE_ACTION_PRIORITY if candidate in normalized),
+        "unknown_failure",
+    )
+    owner = CANONICAL_FAILURE_OWNERS[chosen]
+    return FailureActionSelectionV1(
+        code=chosen,
+        owner=owner,
+        action=CANONICAL_FAILURE_OWNER_ACTIONS[owner],
+        escalation=canonical_failure_escalation(chosen),
+        codes=tuple(normalized),
+    )
 
 
 class ParagraphTransactionAssessmentV1(BaseModel):
