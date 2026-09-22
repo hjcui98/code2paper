@@ -299,6 +299,38 @@ def _best_slot(slots: Sequence[dict[str, Any]], handles: set[str]) -> dict[str, 
     return max(slots, key=lambda slot: len(handles & slot["story_handles"]))
 
 
+def _slot_for_decision(
+    slots: Sequence[dict[str, Any]], decision: SlotBindingDecision
+) -> dict[str, Any]:
+    """把绑定结论落回具体槽位（审计 §D.2：owner 选择必须经过 decision）。"""
+
+    for slot in slots:
+        if _text(slot.get("slot_id")) == decision.slot_id:
+            return slot
+    # 决策没有槽位时保持既有的确定性首槽行为；调用方负责记录 fallback 状态。
+    return slots[0]
+
+
+def _binding_decision_trace(
+    *,
+    subject_kind: str,
+    subject_id: str,
+    decision: SlotBindingDecision,
+    evidence_authority: str = "",
+) -> dict[str, Any]:
+    """叙事适配与代码支持是两条轴：分别保存，不互相顶替（审计 §D.2）。"""
+
+    return {
+        "subject_kind": subject_kind,
+        "subject_id": subject_id,
+        "slot_id": decision.slot_id or "",
+        "narrative_binding": decision.status,
+        "overlap_ids": list(decision.overlap_ids),
+        "needs_research": bool(decision.needs_research),
+        "evidence_authority": evidence_authority,
+    }
+
+
 @dataclass(frozen=True)
 class SlotBindingDecision:
     """一次槽位绑定的可审计结论（方案 §6.4）。
@@ -331,6 +363,8 @@ class AuthoringUnitV1:
     mechanism_ids: tuple[str, ...] = ()
     required_details: tuple[Any, ...] = ()
     optional_details: tuple[Any, ...] = ()
+    #: 合并时被统一掉的其它局部 reader goal（审计 §D.1：不得静默丢弃）。
+    merged_local_reader_goals: tuple[str, ...] = ()
     argument_unit_ids: tuple[str, ...] = ()
     intent_atom_ids: tuple[str, ...] = ()
     formula_obligation_ids: tuple[str, ...] = ()
@@ -362,8 +396,32 @@ class AuthoringUnitV1:
             "required_detail_ids": [
                 _text(_get(detail, "detail_id")) for detail in self.required_details
             ],
+            # 审计 §D.1：optional / formula / package 也必须出现在 trace 里，
+            # 否则"合并时是否丢了东西"无法从产物回答。
+            "optional_detail_ids": [
+                _text(_get(detail, "detail_id")) for detail in self.optional_details
+            ],
+            "formula_obligation_ids": list(self.formula_obligation_ids),
+            "formula_package_ids": list(self.formula_package_ids),
+            "mechanism_ids": list(self.mechanism_ids),
+            "merged_local_reader_goals": list(self.merged_local_reader_goals),
             "unresolved_ids": list(self.unresolved_ids),
         }
+
+
+def _surface_with_status(
+    surface: AuthorIntentSurfaceV1, implementation_status: str
+) -> AuthorIntentSurfaceV1:
+    """重建并验证 sealed surface，而不是带着旧 digest 的 ``model_copy(update=...)``。
+
+    审计 §D.3：``model_copy`` 不经过 model validator，surface 的 ``content_digest``
+    会停留在旧内容上，而段落的 ``surface_digest`` 又是这些摘要的摘要——于是"改了
+    implementation status 却没有任何指纹变化"。
+    """
+
+    payload = surface.model_dump(mode="json", exclude={"content_digest"})
+    payload["implementation_status"] = implementation_status
+    return AuthorIntentSurfaceV1.model_validate(payload)
 
 
 def _slot_binding_decision(
@@ -373,15 +431,10 @@ def _slot_binding_decision(
 
     if not slots:
         return SlotBindingDecision(None, (), "unresolved", bool(handles))
-    best: dict[str, Any] | None = None
-    best_count = -1
-    for slot in slots:
-        count = len(handles & slot["story_handles"])
-        if count > best_count:
-            best, best_count = slot, count
-    assert best is not None
+    # 只有一个 owner 选择原语：确定性取 overlap 最大的槽位（作者顺序做 tie-break）。
+    best = _best_slot(slots, handles)
     overlap = tuple(sorted(handles & best["story_handles"]))
-    if best_count <= 0:
+    if not overlap:
         return SlotBindingDecision(
             _text(best.get("slot_id")), (), "organizational_fallback", bool(handles)
         )
@@ -396,6 +449,9 @@ def _story_intent_payload(node: Any) -> dict[str, Any]:
         "title": _text(_get(node, "title")),
         "author_statement": _text(_get(node, "author_statement")),
         "intended_role": _text(_get(node, "intended_role")),
+        # 审计 §D.3：reader_question 会被实际消费成段落的 reader_goal，
+        # 只改它必须改变意图指纹。
+        "reader_question": _text(_get(node, "reader_question")),
         "priority": _priority(node),
         "notes": list(_ids(_get(node, "notes"))),
         "linked_claim_ids": list(_ids(_get(node, "linked_claim_ids"))),
@@ -459,6 +515,210 @@ def _slot_kind(
     return "author_specification", "unresolved"
 
 
+def _local_digest(identity: str, record: Any) -> str:
+    """局部条目摘要：优先 producer 声明的 ``content_digest``，否则按内容重算。
+
+    审计 §D.1：合并必须能比较"同 ID 是否同内容"。只比 ID 会把同名不同内容的
+    条目悄悄并成一个；只比字节摘要又无法识别同一任务的不同序列化。
+    """
+
+    declared = _text(_get(record, "content_digest")) or _text(
+        _get(record, "source_content_digest")
+    )
+    if declared:
+        return declared
+    if isinstance(record, Mapping):
+        payload: Any = dict(record)
+    elif hasattr(record, "model_dump"):
+        payload = record.model_dump(mode="json")
+    elif hasattr(record, "__dict__"):
+        payload = dict(vars(record))
+    else:
+        payload = {"value": str(record)}
+    if isinstance(payload, Mapping):
+        payload = {key: value for key, value in payload.items() if key != "content_digest"}
+    try:
+        serialized = json.dumps(payload, ensure_ascii=False, sort_keys=True, default=str)
+    except (TypeError, ValueError):  # pragma: no cover - 非序列化输入
+        serialized = str(payload)
+    return _digest(identity, serialized)
+
+
+def _record_key(identity: str, digest: str) -> str:
+    return f"{identity}\x1f{digest}" if identity else f"\x1f{digest}"
+
+
+def _merge_local_records(
+    current: Sequence[Any],
+    incoming: Sequence[Any],
+    *,
+    identity_field: str,
+    label: str,
+) -> tuple[tuple[Any, ...], tuple[str, ...]]:
+    """按 canonical ID + 内容摘要保序合并局部条目；同 ID 不同内容 = 冲突。"""
+
+    merged = list(current)
+    by_identity: dict[str, str] = {}
+    seen_digests: set[str] = set()
+    for item in current:
+        identity = _text(_get(item, identity_field))
+        digest = _local_digest(identity, item)
+        if identity:
+            by_identity[identity] = digest
+        seen_digests.add(digest)
+    conflicts: list[str] = []
+    for item in incoming:
+        identity = _text(_get(item, identity_field))
+        digest = _local_digest(identity, item)
+        if identity and identity in by_identity:
+            if by_identity[identity] != digest:
+                conflicts.append(f"{label}_conflict:{identity}")
+            # 同 ID 同内容：已在合并结果里，不重复追加。
+            continue
+        if not identity and digest in seen_digests:
+            # 无 ID 的同内容条目：按内容去重，不重复追加。
+            continue
+        merged.append(item)
+        if identity:
+            by_identity[identity] = digest
+        seen_digests.add(digest)
+    return tuple(merged), tuple(conflicts)
+
+
+def _merge_reader_goal(current: str, incoming: str) -> str:
+    """兼容的局部 reader goal：相等或一方为空；否则返回 ""（不可合并）。"""
+
+    current_text = _text(current)
+    incoming_text = _text(incoming)
+    if not current_text:
+        return incoming_text
+    if not incoming_text:
+        return current_text
+    return current_text if current_text == incoming_text else ""
+
+
+_LOCAL_IDENTITY_FIELDS: tuple[tuple[str, str, str], ...] = (
+    # (label, AuthoringUnitV1 字段, 条目身份字段)
+    ("surface", "surfaces", "surface_id"),
+    ("required_detail", "required_details", "detail_id"),
+    ("optional_detail", "optional_details", "detail_id"),
+)
+
+
+def _unit_merge_conflicts(
+    current: AuthoringUnitV1,
+    incoming: AuthoringUnitV1,
+    *,
+    allow_goal_variance: bool = False,
+) -> tuple[str, ...]:
+    """返回阻止合并的冲突码；空元组表示字段可以被无损合并（审计 §D.1）。
+
+    ``allow_goal_variance`` 只对"没有实现材料的同形空槽"开放：把它们折叠成一个受限
+    作者描述段落是既有产品行为；此时其它局部 reader goal 会记录进
+    ``merged_local_reader_goals``，而不是静默丢弃。
+    """
+
+    conflicts: list[str] = []
+    if current.section_id != incoming.section_id:
+        conflicts.append(f"section_mismatch:{current.section_id}!={incoming.section_id}")
+    if current.implementation_status != incoming.implementation_status:
+        conflicts.append(
+            "implementation_status_mismatch:"
+            f"{current.implementation_status}!={incoming.implementation_status}"
+        )
+    if not allow_goal_variance and not _merge_reader_goal(
+        current.local_reader_goal, incoming.local_reader_goal
+    ):
+        conflicts.append("local_reader_goal_conflict")
+    for label, field, identity_field in _LOCAL_IDENTITY_FIELDS:
+        _merged, found = _merge_local_records(
+            getattr(current, field),
+            getattr(incoming, field),
+            identity_field=identity_field,
+            label=label,
+        )
+        conflicts.extend(found)
+    return tuple(conflicts)
+
+
+def _merge_units(current: AuthoringUnitV1, incoming: AuthoringUnitV1) -> AuthoringUnitV1:
+    """逐字段合并两个相邻同质单元；任何字段都不得静默丢弃（审计 §D.1）。"""
+
+    merged_goal = _merge_reader_goal(
+        current.local_reader_goal, incoming.local_reader_goal
+    )
+    alternate_goals = [
+        _text(goal) for goal in current.merged_local_reader_goals if _text(goal)
+    ]
+    if not merged_goal:
+        # 目标不同但被允许统一（同形空槽）：保留段落级目标，其余目标进 trace。
+        merged_goal = _text(current.local_reader_goal) or _text(
+            incoming.local_reader_goal
+        )
+    for candidate in (
+        current.local_reader_goal,
+        incoming.local_reader_goal,
+        *incoming.merged_local_reader_goals,
+    ):
+        text = _text(candidate)
+        if text and text != merged_goal and text not in alternate_goals:
+            alternate_goals.append(text)
+
+    surfaces, _ = _merge_local_records(
+        current.surfaces, incoming.surfaces, identity_field="surface_id", label="surface"
+    )
+    required, _ = _merge_local_records(
+        current.required_details,
+        incoming.required_details,
+        identity_field="detail_id",
+        label="required_detail",
+    )
+    optional, _ = _merge_local_records(
+        current.optional_details,
+        incoming.optional_details,
+        identity_field="detail_id",
+        label="optional_detail",
+    )
+    # 同一 detail 在一侧是 required、另一侧是 optional 时按 required 保留（更强的义务），
+    # optional 里不再重复；这是"提升"而不是"丢弃"。
+    required_ids = {_text(_get(detail, "detail_id")) for detail in required}
+    optional = tuple(
+        detail
+        for detail in optional
+        if _text(_get(detail, "detail_id")) not in required_ids
+    )
+    return replace(
+        current,
+        local_reader_goal=merged_goal,
+        merged_local_reader_goals=tuple(alternate_goals),
+        story_ids=tuple(dict.fromkeys((*current.story_ids, *incoming.story_ids))),
+        slot_ids=tuple(dict.fromkeys((*current.slot_ids, *incoming.slot_ids))),
+        surfaces=surfaces,
+        mechanism_ids=tuple(
+            dict.fromkeys((*current.mechanism_ids, *incoming.mechanism_ids))
+        ),
+        required_details=required,
+        optional_details=optional,
+        argument_unit_ids=tuple(
+            dict.fromkeys((*current.argument_unit_ids, *incoming.argument_unit_ids))
+        ),
+        intent_atom_ids=tuple(
+            dict.fromkeys((*current.intent_atom_ids, *incoming.intent_atom_ids))
+        ),
+        formula_obligation_ids=tuple(
+            dict.fromkeys(
+                (*current.formula_obligation_ids, *incoming.formula_obligation_ids)
+            )
+        ),
+        formula_package_ids=tuple(
+            dict.fromkeys((*current.formula_package_ids, *incoming.formula_package_ids))
+        ),
+        unresolved_ids=tuple(
+            dict.fromkeys((*current.unresolved_ids, *incoming.unresolved_ids))
+        ),
+    )
+
+
 def compile_authoring_units(
     slots: Sequence[Mapping[str, Any]],
     *,
@@ -495,7 +755,7 @@ def compile_authoring_units(
             item for item in (surface,) if item is not None
         )
         if surface is not None and surface.implementation_status != implementation_status:
-            surfaces = (surface.model_copy(update={"implementation_status": implementation_status}),)
+            surfaces = (_surface_with_status(surface, implementation_status),)
         local_goal = (
             _text(_get(story_node, "reader_question"))
             or (surfaces[0].local_reader_goal if surfaces else "")
@@ -544,28 +804,34 @@ def compile_authoring_units(
         )
         key = _merge_key(kind, role, authority)
         existing_index = merge_index.get(key)
-        can_merge = (
-            existing_index is not None
-            and units[existing_index].paragraph_kind in {"author_specification", "expository_bridge", "structural_only", "unresolved"}
-            # 承载 argument unit / intent atom 的槽位是作者覆盖锚点，不参与合并。
-            and not units[existing_index].argument_unit_ids
-            and not unit.argument_unit_ids
-            and not units[existing_index].intent_atom_ids
-            and not unit.intent_atom_ids
-            and units[existing_index].mechanism_ids in {(), unit.mechanism_ids}
-            and unit.mechanism_ids in {(), units[existing_index].mechanism_ids}
+        existing_unit = (
+            units[existing_index] if existing_index is not None else None
         )
-        if can_merge:
-            current = units[existing_index]
-            units[existing_index] = replace(
-                current,
-                story_ids=tuple(dict.fromkeys((*current.story_ids, *unit.story_ids))),
-                slot_ids=tuple(dict.fromkeys((*current.slot_ids, *unit.slot_ids))),
-                surfaces=tuple((*current.surfaces, *unit.surfaces)),
-                argument_unit_ids=tuple(dict.fromkeys((*current.argument_unit_ids, *unit.argument_unit_ids))),
-                intent_atom_ids=tuple(dict.fromkeys((*current.intent_atom_ids, *unit.intent_atom_ids))),
-                unresolved_ids=tuple(dict.fromkeys((*current.unresolved_ids, *unit.unresolved_ids))),
+        can_merge = (
+            existing_unit is not None
+            # 相邻位置：合并是"相邻同质槽位"的压缩，不是把后面的同质槽位并回前面
+            # （审计 §D.1：跨段合并会改变叙述顺序与局部权限边界）。
+            and existing_index == len(units) - 1
+            and existing_unit.paragraph_kind
+            in {"author_specification", "expository_bridge", "structural_only", "unresolved"}
+            # 承载 argument unit / intent atom 的槽位是作者覆盖锚点，不参与合并。
+            and not existing_unit.argument_unit_ids
+            and not unit.argument_unit_ids
+            and not existing_unit.intent_atom_ids
+            and not unit.intent_atom_ids
+            and existing_unit.mechanism_ids in {(), unit.mechanism_ids}
+            and unit.mechanism_ids in {(), existing_unit.mechanism_ids}
+            # 权限 / 实现状态 / 局部 reader goal / 同 ID 不同内容都不得被"合并"抹平。
+            # 同形空槽（无实现材料）允许统一 reader goal，但其它 goal 会进 trace。
+            and not _unit_merge_conflicts(
+                existing_unit,
+                unit,
+                allow_goal_variance=existing_unit.paragraph_kind
+                in {"structural_only", "unresolved"},
             )
+        )
+        if can_merge and existing_unit is not None:
+            units[existing_index] = _merge_units(existing_unit, unit)
             continue
         merge_index[key] = len(units)
         units.append(unit)
@@ -633,6 +899,9 @@ def build_intent_narrative_plan_v4(
     mechanism_binding_fallbacks: list[str] = []
     binding_fallbacks: list[str] = []
     required_binding_fallbacks: list[str] = []
+    optional_binding_fallbacks: list[str] = []
+    binding_decisions: list[dict[str, Any]] = []
+    typed_binding_gaps: list[dict[str, Any]] = []
     for row in section_rows:
         section_id = row["section_id"]
         slots: list[dict[str, Any]] = []
@@ -661,7 +930,25 @@ def build_intent_narrative_plan_v4(
         for unit_id in row["argument_unit_ids"]:
             unit = unit_by_id.get(unit_id)
             handles = set(_ids(_get(unit, "source_obligation_ids"))) | set(_ids(_get(unit, "claim_ids")))
-            _best_slot(slots, handles)["argument_unit_ids"].append(unit_id)
+            # 审计 §D.2：owner 选择必须经过 _slot_binding_decision；零 overlap 是
+            # organizational_fallback（组织落位），不能被当成证据授权。
+            decision = _slot_binding_decision(slots, handles)
+            _slot_for_decision(slots, decision)["argument_unit_ids"].append(unit_id)
+            binding_decisions.append(
+                _binding_decision_trace(
+                    subject_kind="argument_unit",
+                    subject_id=unit_id,
+                    decision=decision,
+                )
+            )
+            if decision.status != "grounded":
+                typed_binding_gaps.append({
+                    "kind": "argument_unit",
+                    "id": unit_id,
+                    "slot_id": decision.slot_id or "",
+                    "reason": "no_story_overlap",
+                    "requested_action": "bounded_planner_or_research",
+                })
 
     packages_by_mechanism: dict[str, list[Any]] = defaultdict(list)
     for package in formula_packages:
@@ -712,11 +999,42 @@ def build_intent_narrative_plan_v4(
             )
         # Formula sources must share one paragraph with every package that
         # consumes them. Other details can follow their own story anchors.
-        package_slot = _best_slot(
-            eligible,
-            set().union(*(_detail_handles(detail_by_id[did]) for did in package_detail_ids))
-            if package_detail_ids else set(),
-        ) if packages else None
+        package_handles = (
+            set().union(
+                *(_detail_handles(detail_by_id[did]) for did in package_detail_ids)
+            )
+            if package_detail_ids
+            else set()
+        )
+        package_decision = (
+            _slot_binding_decision(eligible, package_handles) if packages else None
+        )
+        package_slot = (
+            _slot_for_decision(eligible, package_decision)
+            if package_decision is not None
+            else None
+        )
+        for package in packages:
+            package_id = _text(_get(package, "package_id"))
+            if package_decision is None:  # pragma: no cover - packages 非空时必然有决策
+                continue
+            binding_decisions.append(
+                _binding_decision_trace(
+                    subject_kind="formula_package",
+                    subject_id=package_id,
+                    decision=package_decision,
+                )
+            )
+            if package_decision.status != "grounded":
+                # required 义务没有 grounded 归属：如实记为 typed gap/replan，
+                # 而不是假装 coverage 已经满足（审计 §D.2）。
+                typed_binding_gaps.append({
+                    "kind": "formula_package",
+                    "id": package_id,
+                    "slot_id": package_decision.slot_id or "",
+                    "reason": "no_story_overlap",
+                    "requested_action": "bounded_planner_or_research",
+                })
         for detail in details:
             detail_id = _text(_get(detail, "detail_id"))
             if not detail_id:
@@ -724,11 +1042,36 @@ def build_intent_narrative_plan_v4(
             if _text(_get(detail, "primary_mechanism_id")) not in {"", mechanism_id}:
                 raise ValueError(f"intent_plan_v4_detail_owner_mismatch:{detail_id}:{mechanism_id}")
             handles = _detail_handles(detail)
-            slot = package_slot if detail_id in package_detail_ids else _best_slot(eligible, handles)
+            if detail_id in package_detail_ids:
+                decision = package_decision
+                slot = package_slot
+            else:
+                decision = _slot_binding_decision(eligible, handles)
+                slot = _slot_for_decision(eligible, decision)
+            if decision is not None and detail_id not in package_detail_ids:
+                binding_decisions.append(
+                    _binding_decision_trace(
+                        subject_kind="detail",
+                        subject_id=detail_id,
+                        decision=decision,
+                        evidence_authority=_text(_get(detail, "evidence_authority")),
+                    )
+                )
             if not handles.intersection(slot["story_handles"]):
                 binding_fallbacks.append(detail_id)
                 if _detail_is_required(detail):
                     required_binding_fallbacks.append(detail_id)
+                    typed_binding_gaps.append({
+                        "kind": "required_detail",
+                        "id": detail_id,
+                        "slot_id": _text(slot.get("slot_id")),
+                        "reason": "no_story_overlap",
+                        "requested_action": "bounded_planner_or_research",
+                    })
+                else:
+                    # optional 材料没有合理归属：保留在候选上下文与 trace 中，
+                    # 但不升级为强制的 clean prose 义务（审计 §D.2）。
+                    optional_binding_fallbacks.append(detail_id)
             slot["required_details" if _detail_is_required(detail) else "optional_details"].append(detail)
         if package_slot is not None:
             for package in packages:
@@ -877,6 +1220,12 @@ def build_intent_narrative_plan_v4(
         "mechanism_binding_fallback_ids": mechanism_binding_fallbacks,
         "required_detail_binding_fallback_count": len(required_binding_fallbacks),
         "required_detail_binding_fallback_ids": required_binding_fallbacks,
+        "optional_detail_binding_fallback_count": len(optional_binding_fallbacks),
+        "optional_detail_binding_fallback_ids": optional_binding_fallbacks,
+        # 审计 §D.2：每条绑定都有可审计结论，叙事适配（narrative_binding）与代码
+        # 支持（evidence_authority）分开保存；零 overlap 的 required 义务另记 typed gap。
+        "binding_decisions": binding_decisions,
+        "typed_binding_gaps": typed_binding_gaps,
         "source_intent_digest_version": plan.source_intent_digest_version,
         "units": [unit.as_trace() for unit in all_units],
         "unit_kind_counts": {
