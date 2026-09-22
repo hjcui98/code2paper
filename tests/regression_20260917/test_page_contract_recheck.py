@@ -617,3 +617,128 @@ def test_atomic_page_over_budget_message_names_input_tokens_when_they_bind() -> 
     assert "paragraph_count:" not in message, (
         "只有一段时不得报告段数维度：" + message
     )
+
+
+# --------------------------------------------------------------------------- #
+# §G.4：类型边界必须在消费前报 contract error，而不是退化成空证据
+# --------------------------------------------------------------------------- #
+
+
+def test_wrong_narrative_plan_shape_is_a_contract_error() -> None:
+    from code2paper.agentic.unified_context_compiler import (
+        UNIFIED_NARRATIVE_PLAN_INVALID,
+        UnifiedCompilerError,
+        _narrative_plan_sections,
+    )
+
+    # 显式声明"没有计划"仍然是合法的 legacy 入口。
+    assert _narrative_plan_sections(None) == []
+    assert _narrative_plan_sections({"sections": []}) == []
+
+    for wrong in ({"mechanism_id": "x"}, ["not", "a", "plan"], "plan", 7):
+        with pytest.raises(UnifiedCompilerError) as excinfo:
+            _narrative_plan_sections(wrong)
+        assert excinfo.value.failure_code == UNIFIED_NARRATIVE_PLAN_INVALID, wrong
+
+
+def test_writer_worksets_refuse_an_unrecognized_plan() -> None:
+    """错误类型的计划不得静默变成空 workset 后继续写作。"""
+
+    from code2paper.agentic.unified_context_compiler import (
+        UNIFIED_NARRATIVE_PLAN_INVALID,
+        UnifiedCompilerError,
+        build_consumer_workset_manifest_v2,
+        extend_writer_worksets_from_narrative_plan,
+    )
+    from tests.test_agentic_unified_context_compiler import (
+        _budget_envelope,
+        _two_mechanism_fixture,
+    )
+
+    archive, obligations = _two_mechanism_fixture()
+    envelope = _budget_envelope()
+    base = build_consumer_workset_manifest_v2(
+        archive,
+        obligations,
+        max_page_input_tokens=envelope.max_page_input_tokens,
+        max_obligations_per_page=envelope.max_obligations_per_page,
+    )
+
+    with pytest.raises(UnifiedCompilerError) as excinfo:
+        extend_writer_worksets_from_narrative_plan(
+            base, "not a plan", max_page_input_tokens=envelope.max_page_input_tokens
+        )
+    assert excinfo.value.failure_code == UNIFIED_NARRATIVE_PLAN_INVALID
+
+
+def test_wrong_typed_argument_graph_is_reported_not_crashed() -> None:
+    from code2paper.agentic.paragraph_prose_composer import (
+        ProseSurfaceAuditV1,  # noqa: F401 - 仅确认模块可导入
+    )
+    from code2paper.llm.response_schemas import (
+        PublicationMethodSectionOutputV1,
+    )
+    from code2paper.llm.section_writer import (
+        WriterSectionInput,
+        _normalize_publication_paragraph_transaction,
+    )
+
+    section = WriterSectionInput(
+        section_id="MA-S1",
+        heading="H",
+        publication_mode=True,
+        argument_graph=["not", "a", "graph"],
+        prompt_payload={"section_id": "MA-S1"},
+    )
+    output = PublicationMethodSectionOutputV1(
+        section_id="MA-S1", section_markdown="text"
+    )
+    _normalized, failures = _normalize_publication_paragraph_transaction(
+        output, section=section, require_transactions=True
+    )
+    assert "paragraph_transaction_missing" in failures
+
+
+def test_empty_mechanism_context_compiles_to_an_empty_manifest() -> None:
+    """空 context 不得抛 `.model_dump` 之类的属性错误，也不得伪造材料。"""
+
+    from code2paper.agentic.mechanism_context_models import MechanismContextSetV1
+    from code2paper.agentic.unified_context_compiler import (
+        build_consumer_workset_manifest_v2,
+        build_unified_context_archive_v2,
+    )
+
+    empty = MechanismContextSetV1(
+        contexts=(),
+        repo_snapshot_id="snap",
+        project_tree_hash="sha256:tree",
+        intent_digest="sha256:intent",
+        alignment_digest="sha256:align",
+        research_digest="sha256:research",
+    )
+    archive = build_unified_context_archive_v2(
+        empty, source_manifest_digest="sha256:source"
+    )
+    assert archive.all_atoms() == ()
+    manifest = build_consumer_workset_manifest_v2(
+        archive, (), max_page_input_tokens=1000, max_obligations_per_page=2
+    )
+    assert manifest.pages == ()
+    assert manifest.worksets == ()
+    assert manifest.content_digest.startswith("sha256:")
+
+
+def test_namespace_formula_package_is_spliced_not_crashed() -> None:
+    from types import SimpleNamespace
+
+    from code2paper.agentic.publication_transaction_contract import (
+        splice_formula_placeholders,
+    )
+
+    markdown, witnesses = splice_formula_placeholders(
+        "See [[FORMULA:pkg:1]].",
+        [SimpleNamespace(package_id="pkg:1", markdown_block="$$\nx\n$$")],
+        required_package_ids=["pkg:1"],
+    )
+    assert "$$" in markdown and "[[FORMULA:pkg:1]]" not in markdown
+    assert witnesses == () or isinstance(witnesses, tuple)

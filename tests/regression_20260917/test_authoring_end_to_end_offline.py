@@ -1,6 +1,11 @@
-"""S8：离线端到端（方案 §12/§13）——产品路径 + 身份/索引/doctor 全链一致。
+"""S8：离线端到端 = **product admission / diagnostic smoke**（不是写作链证明）。
 
-不需要 live 授权：走产品入口的离线模式（provider=NONE），因此可纳入常规回归。
+范围声明（审计 §G.1）：本文件使用 ``provider=NONE`` 且 ``write_method_text=False``，
+覆盖产品入口、运行身份、summary、artifact index/registry、doctor 与"不伪造正文"这条边界；
+它**不能**代替 §G.2 的 fake-provider 写作链验收——这里没有任何一次 Writer/Binder/Realizer
+模型调用，也没有发布过 Method 正文。写作链结论只能来自 G.2/G.3 的测试。
+
+不需要 live 授权：走产品入口的离线模式，因此可纳入常规回归。
 """
 
 from __future__ import annotations
@@ -22,6 +27,12 @@ from code2paper.agentic.authoring_execution_identity import (
 )
 from code2paper.agentic.autonomous_method_agent import run_autonomous_method_agent
 from code2paper.llm.client import LLMConfig, LLMProvider
+
+#: 本文件的证明范围（供测试报告单列）。
+TEST_SCOPE = (
+    "product admission/diagnostic smoke: provider=NONE, write_method_text=False; "
+    "no writing-chain evidence"
+)
 
 FIXTURE_REPO = Path(__file__).resolve().parents[1] / "fixtures" / "research_loop_project"
 FIXTURE_INTENT = Path(__file__).resolve().parents[1] / "fixtures" / "author_intent.yaml"
@@ -167,3 +178,26 @@ def test_resume_does_not_rewrite_the_registration(offline_run) -> None:
     after = load_artifact_registry(out_root)
     assert after.active == before.active
     assert len(after.registrations) == len(before.registrations)
+
+
+def test_offline_run_scope_is_admission_only(offline_run) -> None:
+    """§G.1：这个 smoke 的证明范围必须能被断言，而不是只写在文档里。
+
+    provider=NONE + write_method_text=False ⇒ 没有 Writer 阶段、没有已接受页、
+    没有发布正文；写作链结论只能来自 fake-provider 全链测试。
+    """
+
+    out_root, result = offline_run
+    report = run_authoring_doctor(out_root)
+
+    # 没有任何逐页调用：Writer 阶段从未运行。
+    assert report.page_count == 0
+    assert report.accepted_page_count == 0
+    assert report.phases.get("writer") in {"not produced", "blocked"}
+    # 没有发布过的 Method 正文。
+    assert not (
+        out_root / "artifacts" / "06_authoring" / "repository_verified_method.md"
+    ).is_file()
+    # 范围声明可在测试报告里单列。
+    assert TEST_SCOPE.startswith("product admission/diagnostic smoke")
+    assert "no writing-chain evidence" in TEST_SCOPE

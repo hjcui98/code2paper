@@ -48,6 +48,7 @@ from code2paper.agentic.unified_context_models import (
     UNIFIED_INVOCATION_BUDGET_EXCEEDED,
     UNIFIED_INVOCATION_BUDGET_MISSING,
     UNIFIED_MECHANISM_OWNER_CONFLICT,
+    UNIFIED_NARRATIVE_PLAN_INVALID,
     UNIFIED_MECHANISM_OWNER_MISSING,
     UNIFIED_MECHANISM_PATH_DISCONNECTED,
     UNIFIED_PAGE_PROJECTION_INCOMPLETE,
@@ -3228,14 +3229,35 @@ def _minimal_page_cover(
 
 
 def _narrative_plan_sections(narrative_plan: Any) -> list[dict[str, Any]]:
+    """读取叙事计划的 sections；**类型不合法在消费前报 contract error**。
+
+    审计 §G.4：旧实现把"不认识的形状"一律当成空计划，于是错误类型的输入会在下游
+    变成空 workset/空证据继续写作。这里改为：
+
+    * ``None`` 仍是"调用方声明没有叙事计划"（legacy 路径自己处理）；
+    * ``{"sections": [...]}`` / 带 ``sections`` 的模型 → 正常读取（显式空列表合法）；
+    * 其它任何形状（dict 没有 sections、list、str、数字…）→ typed contract error。
+    """
+
     if narrative_plan is None:
         return []
     if isinstance(narrative_plan, BaseModel):
         narrative_plan = narrative_plan.model_dump(mode="json")
     if isinstance(narrative_plan, Mapping):
-        sections = narrative_plan.get("sections", ())
+        if "sections" not in narrative_plan:
+            raise UnifiedCompilerError(
+                UNIFIED_NARRATIVE_PLAN_INVALID,
+                "narrative plan mapping has no 'sections' key: "
+                f"keys={sorted(str(key) for key in narrative_plan)[:8]}",
+            )
+        sections = narrative_plan.get("sections") or ()
+    elif hasattr(narrative_plan, "sections"):
+        sections = getattr(narrative_plan, "sections") or ()
     else:
-        sections = getattr(narrative_plan, "sections", ())
+        raise UnifiedCompilerError(
+            UNIFIED_NARRATIVE_PLAN_INVALID,
+            f"unsupported narrative plan type: {type(narrative_plan).__name__}",
+        )
     result: list[dict[str, Any]] = []
     for section in sections or ():
         if isinstance(section, BaseModel):

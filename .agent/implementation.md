@@ -4471,3 +4471,34 @@ tokens）都标成"越少/越多越好"，于是"少一个必需公式""空候�
 测试：`test_quality_comparison.py` 新增 5 项负例/正例（少必需公式不给方向、空候选零 token
 不是效率、覆盖退化时隐藏 gap 不算改善且正例仍为 better、同 scope 效率方向仍生效、两侧未测
 原因都保留），并更新既有极性断言以反映"条件表"。比较器 + 报告 22 项全绿。
+
+## 2026-09-22 审计 PR G.1：离线 smoke 的范围声明必须可断言
+
+复现的审计论断（成立）：`test_authoring_end_to_end_offline.py` 名叫"端到端"，但用的是
+`provider=NONE` + `write_method_text=False`——它证明的是产品准入/诊断链，而不是写作链；
+文档里没说、测试里也没有任何断言能防止它被当成"写作链已验收"。
+
+修复：模块 docstring 明确写成 **product admission / diagnostic smoke**，新增
+`TEST_SCOPE` 常量，并新增 `test_offline_run_scope_is_admission_only`：
+`page_count == 0`、`accepted_page_count == 0`、Writer 阶段 not produced/blocked、
+没有 `repository_verified_method.md`。写作链结论只能来自 §G.2/§G.3。
+
+## 2026-09-22 审计 PR G.4：类型边界在消费前报 contract error
+
+复现的审计论断（部分成立）：叙事计划的形状识别是"猜"的——`_narrative_plan_sections`
+把任何不认识的输入（dict 没有 `sections`、list、str、数字）都当成**空计划**，于是错误
+类型会在下游变成空 workset / 空证据继续写作（"退化成空证据后继续写作"）。另外三处边界
+实测是安全的（Writer input 的 `argument_graph` 类型错 → typed failure；空 mechanism
+context → 空 manifest 不抛 `.model_dump`；SimpleNamespace formula package → 正常 splice），
+本轮把它们钉成回归。
+
+修复：
+
+- `unified_context_models` 新增 `UNIFIED_NARRATIVE_PLAN_INVALID`；
+  `_narrative_plan_sections` 改为显式形状校验：`None` = "没有计划"（legacy 入口，仍返回
+  空），带 `sections` 的映射/模型正常读取（显式空列表合法），其它形状一律 typed
+  contract error。
+
+测试：`test_page_contract_recheck.py` 新增 5 项（错误形状报 contract error、writer
+worksets 拒绝无法识别的计划、Writer input 类型错走 typed failure、空 context 编译成空
+manifest、SimpleNamespace 公式包正常 splice）。回归目录 + 编译器套件 336 项全绿。

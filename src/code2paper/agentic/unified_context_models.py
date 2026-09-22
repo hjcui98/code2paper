@@ -67,6 +67,8 @@ UNIFIED_ACTUAL_PAGE_BYTES_MISMATCH = "unified_actual_page_bytes_mismatch"
 UNIFIED_CONSUMER_RECEIPT_MISSING = "unified_consumer_receipt_missing"
 UNIFIED_CONSUMER_TASK_INCOMPLETE = "unified_consumer_task_incomplete"
 UNIFIED_RESUME_DIGEST_MISMATCH = "unified_resume_digest_mismatch"
+#: 审计 §G.4：叙事计划形状不合法（不是"没有计划"，而是给错了类型）。
+UNIFIED_NARRATIVE_PLAN_INVALID = "unified_narrative_plan_invalid"
 
 ARCHIVE_SCHEMA_VERSION = "2.0"
 WORKSET_SCHEMA_VERSION = "2.0"
