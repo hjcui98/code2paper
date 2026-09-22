@@ -204,6 +204,10 @@ class ArtifactIndexEntryV1(BaseModel):
     file_bytes_digest: str = ""
     upstream_digests: dict[str, str] = Field(default_factory=dict)
     detail: str = ""
+    #: 审计 §F.1：条目来自 producer 注册还是 legacy 扫描。
+    discovery: Literal["legacy_scan", "producer_registration"] = "legacy_scan"
+    #: producer 注册时声明的 upstream 引用（identity/digest 形式，原样保留）。
+    upstream_refs: tuple[str, ...] = ()
 
 
 class AuthoringArtifactIndexV1(BaseModel):
@@ -373,6 +377,157 @@ def assess_empty_artifact(
     )
 
 
+def _classify_artifact_entry(
+    root: Path,
+    *,
+    role: str,
+    phase: str,
+    generation: int,
+    relative: str,
+    detail: str,
+    discovery: Literal["legacy_scan", "producer_registration"] = "legacy_scan",
+    registered_bytes_digest: str = "",
+    registered_semantic_digest: str = "",
+    upstream_refs: Sequence[str] = (),
+) -> ArtifactIndexEntryV1:
+    """把一个产物文件分类为一条索引条目（legacy 扫描与 producer 注册共用）。
+
+    ``registered_*`` 非空时按注册值核对：目标缺失或字节变化一律 invalid，不静默降级
+    成"这次没产出"（审计 §F.1 的注册必须可验证）。
+    """
+
+    path = root / relative
+    if not path.is_file():
+        detail_text = (
+            "registry target missing" if discovery == "producer_registration"
+            else "not produced in this run"
+        )
+        return ArtifactIndexEntryV1(
+            logical_role=role,
+            phase=phase,
+            generation=generation,
+            path=relative,
+            status="invalid" if discovery == "producer_registration" else "missing",
+            detail=f"{detail} ({detail_text})" if detail else detail_text,
+            discovery=discovery,
+            upstream_refs=tuple(upstream_refs),
+        )
+    raw = path.read_bytes()
+    actual_digest = _sha256_file(path)
+    if registered_bytes_digest and actual_digest != registered_bytes_digest:
+        return ArtifactIndexEntryV1(
+            logical_role=role,
+            phase=phase,
+            generation=generation,
+            path=relative,
+            status="invalid",
+            file_bytes_digest=actual_digest,
+            detail=(
+                f"{detail} (registry_bytes_changed:"
+                f"{actual_digest}!={registered_bytes_digest})"
+            ),
+            discovery=discovery,
+            upstream_refs=tuple(upstream_refs),
+        )
+    try:
+        payload = json.loads(raw.decode("utf-8"))
+    except (UnicodeDecodeError, ValueError):
+        payload = None
+    schema_version = ""
+    if isinstance(payload, dict):
+        schema_version = str(payload.get("schema_version") or "")
+    status: ArtifactStatusV1 = "active"
+    detail_text = detail
+    if generation == 0:
+        status = "source_snapshot"
+    elif payload is None:
+        # 解析失败：文件存在但内容不可用。旧实现仍把它记成 active
+        # （审计 §F.2 的第一条反例）。
+        status = "invalid"
+        detail_text = f"{detail} (unparsable json)"
+    elif (
+        schema_version.strip()
+        and (role, phase) in _KNOWN_SCHEMA_VERSIONS
+        and schema_version.strip() not in _KNOWN_SCHEMA_VERSIONS[(role, phase)]
+    ):
+        # 声明了**不受支持**的 schema 版本 → invalid（未声明版本的 legacy 产物
+        # 仍可读，但 schema_version 会被如实记录为空）。
+        status = "invalid"
+        detail_text = f"{detail} (unsupported schema_version:{schema_version})"
+    elif _empty_manifest(payload):
+        status = "valid_empty"
+    semantic_digest = _semantic_digest(payload) or registered_semantic_digest
+    return ArtifactIndexEntryV1(
+        logical_role=role,
+        phase=phase,
+        schema_version=schema_version,
+        generation=generation,
+        path=relative,
+        status=status,
+        semantic_digest=semantic_digest,
+        file_bytes_digest=actual_digest,
+        upstream_digests={},
+        detail=detail_text,
+        discovery=discovery,
+        upstream_refs=tuple(upstream_refs),
+    )
+
+
+def _registry_entries(
+    root: Path,
+    *,
+    by_role_phase: dict[tuple[str, str], list[ArtifactIndexEntryV1]],
+) -> tuple[list[ArtifactIndexEntryV1], dict[str, str]]:
+    """把 producer 注册表投影成索引条目（审计 §F.1）。"""
+
+    from code2paper.agentic.authoring_artifact_registry import (
+        REGISTRY_DIR_NAME,
+        REGISTRY_POINTER_NAME,
+        ArtifactRegistryError,
+        load_artifact_registry,
+    )
+
+    try:
+        registry = load_artifact_registry(root)
+    except ArtifactRegistryError as exc:
+        entry = ArtifactIndexEntryV1(
+            logical_role="authoring_artifact_registry",
+            phase="research",
+            path=f"artifacts/{REGISTRY_DIR_NAME}/{REGISTRY_POINTER_NAME}",
+            status="invalid",
+            detail=str(exc),
+        )
+        by_role_phase.setdefault(
+            ("authoring_artifact_registry", "research"), []
+        ).append(entry)
+        return [entry], {}
+    entries: list[ArtifactIndexEntryV1] = []
+    active: dict[str, str] = {}
+    for registration in registry.active_registrations():
+        entry = _classify_artifact_entry(
+            root,
+            role=registration.logical_role,
+            phase=registration.phase,
+            generation=registration.generation,
+            relative=registration.path,
+            detail=f"registered by {registration.producer or 'producer'}",
+            discovery="producer_registration",
+            registered_bytes_digest=registration.file_bytes_digest,
+            registered_semantic_digest=registration.semantic_digest,
+            upstream_refs=registration.upstream_refs,
+        )
+        entries.append(entry)
+        by_role_phase.setdefault(
+            (registration.logical_role, registration.phase), []
+        ).append(entry)
+        if entry.status in {"missing", "invalid", "source_snapshot"}:
+            # 注册指向的内容不可用：该 key 显式不可解析，而不是回退到别的候选。
+            active[registration.key()] = ""
+        else:
+            active[registration.key()] = entry.path
+    return entries, active
+
+
 def build_artifact_index(
     out_root: str | Path,
     *,
@@ -380,7 +535,12 @@ def build_artifact_index(
     reference_digests: dict[str, str] | None = None,
     index_revision: int = 1,
 ) -> AuthoringArtifactIndexV1:
-    """扫描已知产物并给出分阶段 active 指针（只读）。"""
+    """扫描已知产物并给出分阶段 active 指针（只读）。
+
+    条目来源有两种：producer 发布时的**注册**（审计 §F.1，权威）与 legacy 文件扫描
+    （``_KNOWN_ARTIFACTS``，只读导入规则）。注册的 (role, phase) 直接决定当前对象，
+    因此新增一代不需要再往 ``_KNOWN_ARTIFACTS`` 里加分支。
+    """
 
     root = Path(out_root).expanduser().resolve()
     references = dict(reference_digests or {})
@@ -388,61 +548,36 @@ def build_artifact_index(
     by_role_phase: dict[tuple[str, str], list[ArtifactIndexEntryV1]] = {}
 
     for role, phase, generation, relative, detail in _KNOWN_ARTIFACTS:
-        path = root / relative
-        if not path.is_file():
-            entry = ArtifactIndexEntryV1(
-                logical_role=role,
-                phase=phase,
-                generation=generation,
-                path=relative,
-                status="missing",
-                detail="not produced in this run",
-            )
-            entries.append(entry)
-            by_role_phase.setdefault((role, phase), []).append(entry)
-            continue
-        raw = path.read_bytes()
-        try:
-            payload = json.loads(raw.decode("utf-8"))
-        except (UnicodeDecodeError, ValueError):
-            payload = None
-        schema_version = ""
-        if isinstance(payload, dict):
-            schema_version = str(payload.get("schema_version") or "")
-        status: ArtifactStatusV1 = "active"
-        detail_text = detail
-        if generation == 0:
-            status = "source_snapshot"
-        elif payload is None:
-            # 解析失败：文件存在但内容不可用。旧实现仍把它记成 active
-            # （审计 §F.2 的第一条反例）。
-            status = "invalid"
-            detail_text = f"{detail} (unparsable json)"
-        elif (
-            schema_version.strip()
-            and (role, phase) in _KNOWN_SCHEMA_VERSIONS
-            and schema_version.strip() not in _KNOWN_SCHEMA_VERSIONS[(role, phase)]
-        ):
-            # 声明了**不受支持**的 schema 版本 → invalid（未声明版本的 legacy 产物
-            # 仍可读，但 schema_version 会被如实记录为空）。
-            status = "invalid"
-            detail_text = f"{detail} (unsupported schema_version:{schema_version})"
-        elif _empty_manifest(payload):
-            status = "valid_empty"
-        entry = ArtifactIndexEntryV1(
-            logical_role=role,
+        entry = _classify_artifact_entry(
+            root,
+            role=role,
             phase=phase,
-            schema_version=schema_version,
             generation=generation,
-            path=relative,
-            status=status,
-            semantic_digest=_semantic_digest(payload),
-            file_bytes_digest=_sha256_file(path),
-            upstream_digests={},
-            detail=detail_text,
+            relative=relative,
+            detail=detail,
         )
         entries.append(entry)
         by_role_phase.setdefault((role, phase), []).append(entry)
+
+    registry_entries, registry_active = _registry_entries(
+        root, by_role_phase=by_role_phase
+    )
+    # 同一 (role, phase, path) 同时被扫描与注册命中时，保留注册条目（唯一权威），
+    # 避免同一份内容在索引里出现两种 discovery 结论。
+    registered_paths = {
+        (item.logical_role, item.phase, item.path)
+        for item in registry_entries
+        if item.discovery == "producer_registration"
+    }
+    entries = [
+        entry
+        for entry in entries
+        if (entry.logical_role, entry.phase, entry.path) not in registered_paths
+    ]
+    entries.extend(registry_entries)
+    by_role_phase = {}
+    for entry in entries:
+        by_role_phase.setdefault((entry.logical_role, entry.phase), []).append(entry)
 
     active: dict[str, str] = {}
     for (role, phase), candidates in by_role_phase.items():
@@ -465,6 +600,13 @@ def build_artifact_index(
         if chosen is None:
             chosen = max(usable, key=lambda item: (item.generation, item.path))
         active[f"{role}:{phase}"] = chosen.path
+
+    # 审计 §F.1：producer 注册是这个 (role, phase) 当前对象的权威结论；显式引用
+    # （reference_digests）仍然优先，因为它是调用方对"要读哪一份内容"的断言。
+    for key, registered_path in registry_active.items():
+        if references.get(key) or references.get(key.split(":", 1)[0]):
+            continue
+        active[key] = registered_path
 
     final_entries: list[ArtifactIndexEntryV1] = []
     for entry in entries:

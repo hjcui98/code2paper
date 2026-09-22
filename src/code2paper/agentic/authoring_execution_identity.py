@@ -1656,6 +1656,29 @@ def create_or_validate_execution_identity(
         path,
         (identity.model_dump_json(indent=2) + "\n").encode("utf-8"),
     )
+    # 审计 §F.1：producer 发布时向索引注册真实身份（role/phase/generation/schema/
+    # 字节与语义摘要/upstream refs），而不是让扫描器靠文件名后缀猜当前对象。
+    from code2paper.agentic.authoring_artifact_registry import (
+        register_authoring_artifact,
+    )
+
+    register_authoring_artifact(
+        out_root,
+        role="authoring_execution_identity",
+        phase="research",
+        path=path,
+        generation=1,
+        payload=identity.model_dump(mode="json"),
+        producer="authoring_execution_identity.create_or_validate_execution_identity",
+        upstream_refs=(
+            f"engine:{identity.engine_source_digest}",
+            f"target:{identity.target_repo_snapshot_digest}",
+            f"intent:{identity.intent_content_digest}",
+            f"profile:{identity.profile_digest}",
+            f"effective_config:{identity.effective_config_digest}",
+            f"validator_bundle:{identity.validator_bundle_digest}",
+        ),
+    )
     return str(path), "created"
 
 

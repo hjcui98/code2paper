@@ -4342,3 +4342,31 @@ Formalizer（本来就可能没有公式任务）与 Writer（要写正文）用
 测试：`test_artifact_index.py` 新增 3 项（按阶段+单元判定、空原因与 not_applicable 记录、
 reader 在冻结单元下 typed block）；`test_authoring_doctor.py` 新增 2 项（有必需段落时空
 manifest 成为 blocker 且可见、无必需单元时合法）。回归目录 278 项、writer 侧 277 项全绿。
+
+## 2026-09-22 审计 PR F.1：producer 发布时向索引注册
+
+复现的审计论断（成立）：索引的"当前生产对象"完全来自 `_KNOWN_ARTIFACTS` 文件名穷举 +
+目录扫描；新的一代只有再写一个 `.writer.N` 分支才会被认出来，注册信息（角色/phase/
+generation/schema/字节摘要/语义摘要/upstream refs）在整个链路里都不存在。
+
+修复：
+
+- 新增 `authoring_artifact_registry.py`：`ArtifactRegistrationV1`（不可变注册记录，
+  文件名带内容摘要、同内容幂等、同名不同内容拒绝）与 `ArtifactRegistryV1`（固定名指针，
+  每个 role:phase 指向当前一代）；`register_authoring_artifact(...)` 在产物已落盘后读取
+  真实字节，记录 role/phase/generation/相对路径/产物 schema/字节与语义摘要/producer/
+  upstream refs，并原子更新指针；路径越界、目标缺失、指针不可读一律 typed error。
+- `build_artifact_index` 现在有两条来源：producer 注册（权威）与 legacy 扫描
+  （`_KNOWN_ARTIFACTS` 退回为**只读导入规则**）。条目新增 `discovery`
+  （`producer_registration` / `legacy_scan`）与 `upstream_refs`；注册指向的内容缺失或
+  字节变化 → invalid，且该 key 显式不可解析（**不回退**到扫描出的另一代）；指针损坏 →
+  索引里出现 `authoring_artifact_registry:research` 的 invalid 条目（可诊断，不静默忽略）；
+  注册路径决定 active，因此新 generation 无需再改表。
+- 生产接线：`create_or_validate_execution_identity` 发布身份产物时注册它（producer 名 +
+  engine/target/intent/profile/effective_config/validator_bundle 引用）；resume 走
+  "校验既有身份"分支，不产生第二条注册。
+
+测试：新增 `test_artifact_registry.py` 8 项（注册身份与摘要、新 generation 无需改表、
+注册后字节变化必须 invalid 且不回退、目标缺失、指针损坏可诊断、路径越界拒绝、无注册时
+legacy 扫描不变、验证读取）；离线端到端新增 2 项（产品 run 留下 producer 注册且索引以
+注册为权威、resume 不重复注册）。回归目录 288 项全绿。

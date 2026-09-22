@@ -13,6 +13,7 @@ import pytest
 from code2paper.agentic.authoring_artifact_index import (
     build_artifact_index,
     publish_artifact_index,
+    read_artifact_validated,
 )
 from code2paper.agentic.authoring_doctor import run_authoring_doctor
 from code2paper.agentic.authoring_execution_identity import (
@@ -110,3 +111,59 @@ def test_offline_run_keeps_fail_closed_invariants(offline_run) -> None:
             assert candidate.read_text(encoding="utf-8").strip() == ""
     report = run_authoring_doctor(out_root)
     assert "resume_exhausted_invocation" not in report.critical_blockers
+
+
+def test_product_run_registers_its_identity_artifact(offline_run) -> None:
+    """§F.1 真实接线：产品入口发布身份产物时必须同时注册它。"""
+
+    from code2paper.agentic.authoring_artifact_registry import (
+        load_artifact_registry,
+    )
+
+    out_root, _result = offline_run
+    registry = load_artifact_registry(out_root)
+    registrations = registry.active_registrations()
+    assert registrations, "产品运行必须留下 producer 注册记录"
+
+    identity = next(
+        item
+        for item in registrations
+        if item.logical_role == "authoring_execution_identity"
+    )
+    assert identity.phase == "research"
+    assert identity.file_bytes_digest.startswith("sha256:")
+    assert identity.semantic_digest
+    assert identity.producer.endswith("create_or_validate_execution_identity")
+    assert any(ref.startswith("engine:") for ref in identity.upstream_refs)
+    assert any(ref.startswith("target:") for ref in identity.upstream_refs)
+
+    # 索引把注册当作权威：条目来源是 producer_registration，且能通过验证读取。
+    index = build_artifact_index(out_root)
+    entry = next(
+        item
+        for item in index.entries
+        if item.logical_role == "authoring_execution_identity"
+        and item.discovery == "producer_registration"
+    )
+    assert entry.status == "active"
+    assert entry.upstream_refs == identity.upstream_refs
+    read = read_artifact_validated(
+        index, "authoring_execution_identity", "research", out_root=out_root
+    )
+    assert read.payload["content_digest"] == identity.semantic_digest
+    assert read.file_bytes_digest == identity.file_bytes_digest
+
+
+def test_resume_does_not_rewrite_the_registration(offline_run) -> None:
+    """resume/auto 走"校验既有身份"分支：不得产生第二条注册记录。"""
+
+    from code2paper.agentic.authoring_artifact_registry import (
+        load_artifact_registry,
+    )
+
+    out_root, _result = offline_run
+    before = load_artifact_registry(out_root)
+    _run(out_root, mode="auto")
+    after = load_artifact_registry(out_root)
+    assert after.active == before.active
+    assert len(after.registrations) == len(before.registrations)
