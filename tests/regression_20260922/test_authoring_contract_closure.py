@@ -609,6 +609,82 @@ def test_verified_verdict_is_decided_by_the_real_validator(tmp_path: Path) -> No
             str(reason).startswith("verified_review_block:review-sentence:")
             for reason in writer_result["verified_blocking_reasons"]
         ), writer_result["verified_blocking_reasons"]
+        # 逐句原因必须落到 claim 级：说明还差什么才算合法内容。
+        section_failures = [
+            failure
+            for result in writer_result["section_results"]
+            for failure in (result.get("failures") or ())
+        ]
+        assert any(
+            "reverse validation failed" in str(failure) for failure in section_failures
+        ), section_failures
+        assert any(
+            "no_semantically_matching_projected_claim" in str(failure)
+            or "direct_evidence_missing" in str(failure)
+            for failure in section_failures
+        ), section_failures
         assert Path(outputs["repository_verified_method"]).read_text(
             encoding="utf-8"
         ).strip() == ""
+
+
+def test_formalizer_phase_is_not_substituted_by_the_writer_manifest(
+    tmp_path: Path,
+) -> None:
+    """场景 7（产品层）：Formalizer 与 Writer 的 manifest 是两个阶段对象。
+
+    无公式任务的 no-probe 行为由 `test_formalizer_without_formula_obligations_does_not_probe_pages`
+    在单元层覆盖；这里断言产品产物层：两个阶段的 manifest 各自独立、按 (role, phase)
+    分别解析，并且"空是否合法"按阶段 + 冻结单元数判定（F.3），不允许拿 Writer 的
+    manifest 冒充 Formalizer 的。
+    """
+
+    import json as _json
+
+    from code2paper.agentic.authoring_artifact_index import (
+        assess_empty_artifact,
+        build_artifact_index,
+        resolve_artifact,
+    )
+
+    requests: list[LLMRequest] = []
+
+    def caller(config, request):
+        requests.append(request)
+        return _mock_writer_caller(config, request)
+
+    _result, outputs = _run(tmp_path, caller)
+
+    formalizer_manifest = Path(outputs["consumer_workset_manifest_v2"])
+    writer_manifest = Path(outputs["consumer_workset_manifest_v2.writer.2"])
+    assert formalizer_manifest.is_file() and writer_manifest.is_file()
+    assert formalizer_manifest != writer_manifest
+
+    formalizer_payload = _json.loads(formalizer_manifest.read_text(encoding="utf-8"))
+    writer_payload = _json.loads(writer_manifest.read_text(encoding="utf-8"))
+    assert formalizer_payload["content_digest"] != writer_payload["content_digest"]
+
+    index = build_artifact_index(tmp_path)
+    assert resolve_artifact(
+        index, "consumer_workset_manifest", "formalizer", out_root=tmp_path
+    ) == formalizer_manifest
+    assert resolve_artifact(
+        index, "consumer_workset_manifest", "writer", out_root=tmp_path
+    ) == writer_manifest
+
+    # 阶段语义：Formalizer 允许"没有任务"，Writer 在冻结了必需单元时不允许空。
+    formalizer_disposition = assess_empty_artifact(
+        "consumer_workset_manifest",
+        "formalizer",
+        {"schema_version": "2.0", "pages": [], "worksets": []},
+        required_units=0,
+    )
+    assert formalizer_disposition.allowed is True
+    assert formalizer_disposition.reason == "no_required_units"
+    writer_disposition = assess_empty_artifact(
+        "consumer_workset_manifest",
+        "writer",
+        {"schema_version": "2.0", "pages": [], "worksets": []},
+        required_units=1,
+    )
+    assert writer_disposition.allowed is False

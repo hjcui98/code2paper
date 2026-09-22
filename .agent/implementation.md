@@ -4639,3 +4639,25 @@ Verified 就成了"因为没人验"而不是"因为规则拒绝"。
 claim 上（semantic atom 句与 fenced 源码块目前都不被 claim 覆盖），不需要再动产品代码。
 
 writer/回归套件 485 项全绿。
+
+## 2026-09-22 审计 PR G.2（第五片）：Verified 判定链的具名原因 + Formalizer 阶段独立
+
+1) 把"decided verdict"测试收紧到 claim 级：当真实反向校验给出 failed 时，必须能在
+   section_results 里看到逐句原因（`Final claim FAC* reverse validation failed:
+   no_semantically_matching_projected_claim; direct_evidence_missing` /
+   `direct_evidence_excerpt_empty`）。实测结论：要让 Verified 真的 passed，还差两件事，
+   而且都在 fake provider/夹具一侧，不是产品门槛：
+   * 每个句子都要落在 projected claim 上（semantic atom 句与 fenced 源码块目前没有）；
+   * 冻结证据 span 必须能解析出 excerpt（`direct_evidence_excerpt_empty` 说明夹具的
+     span 没有可读的 path/line 信息）。
+   为做对照试过的变体记录在案：把 claim 文本与 semantic atom 合成一句会**破坏 detail
+   witness**（writer_content 仍接受，但 section 级段落义务判定报
+   `paragraph_missing:...:detail:...`），把 claim 当正文、excerpt 当 detail witness 也会
+   被 writer_content 拒绝——detail witness 必须由含 semantic atom 的句子承担。
+
+2) 场景 7 的产品层断言：Formalizer 与 Writer 的 manifest 是两个独立阶段对象
+   （不同路径、不同 content_digest，按 (role, phase) 分别解析），空合法性按阶段 + 冻结
+   单元数判定（Formalizer 允许"没有任务"，Writer 冻结必需单元时不允许空），不允许拿
+   Writer manifest 冒充 Formalizer 的；无公式任务时"零 probe"行为由既有单元测试覆盖。
+
+G.2 文件 9 项、回归 + unified 套件全绿。
