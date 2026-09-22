@@ -4622,3 +4622,178 @@ def test_production_repair_call_passes_the_canonical_classification(monkeypatch)
     assert repair_call["escalation"] == "repair_in_place"
     assert "detail_witness_missing" in repair_call["canonical_codes"]
     assert repair_call["failed_paragraph_ids"] == ("MA-S1:p1",)
+
+
+# --------------------------------------------------------------------------- #
+# 审计 §E.3：有界修复不得改动冻结的已接受段落
+# --------------------------------------------------------------------------- #
+
+
+def _two_paragraph_section() -> WriterSectionInput:
+    return WriterSectionInput(
+        section_id="MA-S1",
+        heading="Mechanism",
+        publication_mode=True,
+        argument_graph={
+            "paragraphs": [
+                {"paragraph_id": "MA-S1:p1"},
+                {"paragraph_id": "MA-S1:p2"},
+            ]
+        },
+        prompt_payload={
+            "section_id": "MA-S1",
+            "heading": "Mechanism",
+            "shared_contexts": [{"page": "frozen"}],
+            "shared_context_metadata": [{"v2_page_id": "page:1"}],
+            "paragraph_transaction_required": True,
+            "binding_contract": {
+                "allowed_paragraph_ids": ["MA-S1:p1", "MA-S1:p2"],
+            },
+        },
+    )
+
+
+def test_repair_rewriting_a_frozen_sibling_is_rejected() -> None:
+    """最小反例：模型"顺手"重写了一个本来有效的兄弟段 → 本次修复不得提交。"""
+
+    calls: list[LLMRequest] = []
+
+    def caller(_config: LLMConfig, request: LLMRequest) -> LLMResponse:
+        calls.append(request)
+        if "writer_section_repair" not in request.input_payload:
+            text = json.dumps({
+                "section_id": "MA-S1",
+                "section_markdown": "p1 body\n\np2 body",
+                "paragraphs": [
+                    {"paragraph_id": "MA-S1:p1", "paragraph_markdown": "p1 body"},
+                    {"paragraph_id": "MA-S1:p1", "paragraph_markdown": "p1 body"},
+                    {"paragraph_id": "MA-S1:p2", "paragraph_markdown": "p2 body"},
+                ],
+            })
+        else:
+            text = json.dumps({
+                "section_id": "MA-S1",
+                "paragraphs": [
+                    {"paragraph_id": "MA-S1:p1", "paragraph_markdown": "repaired p1 body"},
+                    # 越界：p2 本来有效，修复却重写了它。
+                    {"paragraph_id": "MA-S1:p2", "paragraph_markdown": "silently rewritten p2"},
+                ],
+            })
+        return LLMResponse(
+            text=text,
+            response_hash=f"sha256:frozen-{len(calls)}",
+            finish_reason="stop",
+            token_usage={"completion_tokens": 1},
+        )
+
+    result = write_publication_method_by_sections(
+        _base_config(),
+        [_two_paragraph_section()],
+        llm_caller=caller,
+        content_transaction_assessor=lambda *_args: (True, "transaction_gain"),
+    )
+
+    assert len(calls) == 2, "越界修复必须停止，不再继续同内容循环"
+    assert result.aggregate.writer_repair_rounds == 1
+    assert result.aggregate.writer_repair_commits == 0
+    assert result.aggregate.writer_repair_no_progress_stops == 1
+    rejections = result.aggregate.writer_repair_transaction_rejections
+    assert [item["reason"] for item in rejections] == ["frozen_sibling_changed"]
+    assert rejections[0]["paragraph_ids"] == ["MA-S1:p2"]
+    # 拒绝后 incumbent 原样保留（越界文本不得进入任何产物）。
+    output = result.outputs[0]
+    assert [p.paragraph_markdown for p in output.paragraphs] == [
+        "p1 body",
+        "p2 body",
+    ]
+    assert "silently rewritten p2" not in output.section_markdown
+    assert result.aggregate.incomplete_sections == ["MA-S1"]
+
+
+def test_repair_returning_only_the_failed_paragraph_commits() -> None:
+    """正例：只返回失败段落（其余落回 incumbent）→ 正常提交。"""
+
+    calls: list[LLMRequest] = []
+
+    def caller(_config: LLMConfig, request: LLMRequest) -> LLMResponse:
+        calls.append(request)
+        if "writer_section_repair" not in request.input_payload:
+            text = json.dumps({
+                "section_id": "MA-S1",
+                "section_markdown": "p1 body\n\np2 body",
+                "paragraphs": [
+                    {"paragraph_id": "MA-S1:p1", "paragraph_markdown": "p1 body"},
+                    {"paragraph_id": "MA-S1:p1", "paragraph_markdown": "p1 body"},
+                    {"paragraph_id": "MA-S1:p2", "paragraph_markdown": "p2 body"},
+                ],
+            })
+        else:
+            assert request.input_payload["writer_section_repair"][
+                "failed_paragraph_ids"
+            ] == ["MA-S1:p1"]
+            assert "frozen_paragraph_digests" not in request.input_payload[
+                "writer_section_repair"
+            ]
+            text = json.dumps({
+                "section_id": "MA-S1",
+                "paragraphs": [
+                    {"paragraph_id": "MA-S1:p1", "paragraph_markdown": "repaired p1 body"},
+                ],
+            })
+        return LLMResponse(
+            text=text,
+            response_hash=f"sha256:scoped-{len(calls)}",
+            finish_reason="stop",
+            token_usage={"completion_tokens": 1},
+        )
+
+    result = write_publication_method_by_sections(
+        _base_config(),
+        [_two_paragraph_section()],
+        llm_caller=caller,
+        content_transaction_assessor=lambda *_args: (True, "transaction_gain"),
+    )
+
+    assert len(calls) == 2
+    assert result.aggregate.writer_repair_commits == 1
+    assert result.aggregate.writer_repair_no_progress_stops == 0
+    # p1 被修复，p2 保持 incumbent 的字节（合并只补缺省段落）。
+    output = result.outputs[0]
+    assert [p.paragraph_markdown for p in output.paragraphs] == [
+        "repaired p1 body",
+        "p2 body",
+    ]
+
+
+def test_changed_frozen_paragraphs_helper_reports_scope_violations() -> None:
+    from code2paper.llm.section_writer import (
+        _publication_changed_frozen_paragraph_ids,
+        _publication_paragraph_digests,
+    )
+
+    output = PublicationMethodSectionOutputV1(
+        section_id="MA-S1",
+        paragraphs=(
+            PublicationMethodParagraphOutputV1(
+                paragraph_id="MA-S1:p1", paragraph_markdown="one"
+            ),
+            PublicationMethodParagraphOutputV1(
+                paragraph_id="MA-S1:p2", paragraph_markdown="two"
+            ),
+        ),
+    )
+    response = LLMResponse(
+        text="x",
+        response_hash="sha256:x",
+        finish_reason="stop",
+        metadata=output,
+    )
+    digests = _publication_paragraph_digests(response)
+    assert set(digests) == {"MA-S1:p1", "MA-S1:p2"}
+
+    frozen = {"MA-S1:p1": digests["MA-S1:p1"], "MA-S1:p2": "sha256:other"}
+    assert _publication_changed_frozen_paragraph_ids(response, frozen) == ("MA-S1:p2",)
+    assert _publication_changed_frozen_paragraph_ids(response, {}) == ()
+    assert _publication_changed_frozen_paragraph_ids(
+        response, {"MA-S1:p1": digests["MA-S1:p1"]}
+    ) == ()

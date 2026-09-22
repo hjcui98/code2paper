@@ -3112,8 +3112,14 @@ def write_method_by_sections(
                     action=repair_classification.action,
                     escalation=repair_classification.escalation,
                     failed_paragraph_ids=tuple(sorted(failed_paragraph_ids)),
-                    frozen_paragraph_digests=_publication_frozen_sibling_digests(
-                        section, accepted_response, failed_paragraph_ids
+                    # scope 不明确时不冻结任何段落：此时修复请求本来就是 section 级，
+                    # 谎报"冻结了别的段落"比不冻结更危险。
+                    frozen_paragraph_digests=(
+                        _publication_frozen_sibling_digests(
+                            accepted_response, failed_paragraph_ids
+                        )
+                        if failed_paragraph_ids
+                        else {}
                     ),
                 )
                 repair_payload["writer_section_repair"] = (
@@ -3168,6 +3174,26 @@ def write_method_by_sections(
                 )
                 result.traces.append(repair_trace)
                 result.cumulative_budget_consumed = cumulative
+                # 审计 §E.3：有界修复不得改动冻结的已接受段落。合并只保证"缺省段落
+                # 落回 incumbent"，不阻止模型重写一个本来有效的兄弟段落；这里用修复前
+                # 冻结的摘要核对，越界即拒绝本次尝试（不提交、不算进展）。
+                frozen_changed = _publication_changed_frozen_paragraph_ids(
+                    repair_response, repair_packet.frozen_paragraph_digests
+                )
+                if frozen_changed:
+                    record_rejected_content_attempt(
+                        section,
+                        repair_response,
+                        "frozen_sibling_changed:" + ",".join(frozen_changed),
+                    )
+                    result.writer_repair_transaction_rejections.append({
+                        "section_id": section.section_id,
+                        "repair_round": repair_round,
+                        "reason": "frozen_sibling_changed",
+                        "paragraph_ids": list(frozen_changed),
+                    })
+                    result.writer_repair_no_progress_stops += 1
+                    break
                 repair_transaction_failure = _is_writer_content_repairable_failure(
                     repair_response.blocked_reason
                 )
@@ -6439,19 +6465,31 @@ def _publication_failed_paragraph_ids(
             found.update(
                 paragraph_id for paragraph_id in planned_ids if paragraph_id in text
             )
+    # 公式占位符失败只带 placeholder token：用 package 的 consumer_paragraph_id
+    # 找到真正的 owner，否则段落 scope 会退化成"整段可改"。
+    payload = section.prompt_payload if isinstance(section.prompt_payload, Mapping) else {}
+    packages = payload.get("formula_packages") if isinstance(payload, Mapping) else ()
+    if packages:
+        for failure in failures or ():
+            text = str(failure or "")
+            for package in packages:
+                if not isinstance(package, Mapping):
+                    continue
+                placeholder = str(package.get("placeholder") or "")
+                package_id = str(package.get("package_id") or "")
+                if not (
+                    (placeholder and placeholder in text)
+                    or (package_id and package_id in text)
+                ):
+                    continue
+                consumer = str(package.get("consumer_paragraph_id") or "").strip()
+                if consumer:
+                    found.add(consumer)
     return tuple(sorted(found))
 
 
-def _publication_frozen_sibling_digests(
-    section: WriterSectionInput,
-    response: LLMResponse,
-    failed_paragraph_ids: set[str],
-) -> dict[str, str]:
-    """其它已接受段落的冻结摘要（审计 §E.2）。
-
-    修复只允许改失败段落；这个摘要集合是"其余段落不得变化"的机器可核对形式，
-    由调用方在合并/验收时比对，不发给模型。
-    """
+def _publication_paragraph_digests(response: LLMResponse) -> dict[str, str]:
+    """响应里每个段落正文的字节摘要（用于冻结/核对，不发给模型）。"""
 
     metadata = response.metadata
     if not isinstance(metadata, PublicationMethodSectionOutputV1):
@@ -6459,12 +6497,51 @@ def _publication_frozen_sibling_digests(
     digests: dict[str, str] = {}
     for paragraph in metadata.paragraphs or ():
         paragraph_id = str(paragraph.paragraph_id or "").strip()
-        if not paragraph_id or paragraph_id in failed_paragraph_ids:
+        if not paragraph_id:
             continue
         digests[paragraph_id] = hashlib.sha256(
             str(paragraph.paragraph_markdown or "").encode("utf-8")
         ).hexdigest()
     return digests
+
+
+def _publication_frozen_sibling_digests(
+    response: LLMResponse,
+    failed_paragraph_ids: set[str] | frozenset[str],
+) -> dict[str, str]:
+    """其它已接受段落的冻结摘要（审计 §E.2）。
+
+    修复只允许改失败段落；这个摘要集合是"其余段落不得变化"的机器可核对形式，
+    由调用方在合并/验收时比对（§E.3），不发给模型。
+    """
+
+    return {
+        paragraph_id: digest
+        for paragraph_id, digest in _publication_paragraph_digests(response).items()
+        if paragraph_id not in failed_paragraph_ids
+    }
+
+
+def _publication_changed_frozen_paragraph_ids(
+    response: LLMResponse,
+    frozen_paragraph_digests: Mapping[str, str] | None,
+) -> tuple[str, ...]:
+    """返回被修复响应改动的**冻结**段落（审计 §E.3）。
+
+    合并只保证"候选没返回的段落落回 incumbent"，并不阻止候选重写一个本来有效的
+    兄弟段落。这里用修复前冻结的摘要核对，越界即拒绝本次尝试——修复必须单调，
+    不能拿"顺手重写别的段落"当进展。
+    """
+
+    frozen = dict(frozen_paragraph_digests or {})
+    if not frozen:
+        return ()
+    current = _publication_paragraph_digests(response)
+    return tuple(sorted(
+        paragraph_id
+        for paragraph_id, digest in frozen.items()
+        if current.get(paragraph_id) != digest
+    ))
 
 
 def _publication_paragraph_repair_contract(

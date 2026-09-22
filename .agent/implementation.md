@@ -4243,3 +4243,26 @@ E.4 的 `writer_content` vs `final_bound` 负例矩阵、E.5 paragraph objects �
 结论交给 packet）；`test_repair_packet.py` 新增 2 项（生产 blocked_reason → canonical
 owner/action 全矩阵、可修动作集合恰好两条有界 lane）。回归目录 + writer 侧 393 项、
 publication writer 侧 197 项全绿。
+
+## 2026-09-22 审计 PR E.3：有界修复必须验证 scope 与冻结段落
+
+复现的审计论断（成立）：`_merge_publication_repair_response` 只保证"候选没返回的段落落回
+incumbent"，**不阻止**候选重写一个本来有效的兄弟段落——修复包虽然已经有冻结摘要，但没有任何
+调用点核对它，于是"顺手重写别的段落"会被当成进展提交。
+
+修复：
+
+- 新增 `_publication_paragraph_digests(response)` 与
+  `_publication_changed_frozen_paragraph_ids(response, frozen)`：用修复前冻结的字节摘要
+  核对合并后的候选，越界段落即拒绝本次尝试（不提交、不算进展），并记入
+  `writer_repair_transaction_rejections`（`reason=frozen_sibling_changed`，
+  `paragraph_ids=[...]`）与 attempt ledger（`writer_content_repair_rejected:` 前缀）。
+- 段落 scope 更准：`_publication_failed_paragraph_ids` 现在还会用
+  `formula_packages[].consumer_paragraph_id` 把"只带 placeholder token"的公式失败定位到
+  真正的 owner 段落；scope 无法确定时**不冻结**任何段落（此时请求本来就是 section 级，
+  谎报"已冻结"比不冻结更危险），修复包里的 `failed_paragraph_ids` 如实为空。
+
+测试：`tests/test_llm_section_writer.py` 新增 3 项——双段落最小反例（修复重写 p2 → 0 commit、
+1 no-progress stop、rejection 记录 p2、越界文本不进任何产物、section 仍 incomplete）、
+正例（只返回失败段落 → 正常提交且 p2 保持 incumbent 字节）、摘要辅助函数单元测试。
+回归目录 + writer 侧 396 项全绿。
