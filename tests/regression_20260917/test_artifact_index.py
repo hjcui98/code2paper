@@ -325,3 +325,139 @@ def test_registered_roles_recompute_the_semantic_digest(tmp_path: Path) -> None:
         index, "writer_section_receipts", "writer", out_root=root
     )
     assert other.semantic_digest_verification == "declared_only"
+
+
+# --------------------------------------------------------------------------- #
+# PR F / F.4：阶段快照不可覆盖（不可变证据 + 原子指针）
+# --------------------------------------------------------------------------- #
+
+
+def _snapshot(root: Path, *, plan_body: str = "a"):
+    """构造阶段快照：先真实发布索引，再按该索引冻结阶段输入。"""
+
+    from code2paper.agentic.authoring_artifact_index import (
+        build_resolved_authoring_snapshot,
+        publish_artifact_index,
+    )
+    from code2paper.agentic.method_architect import NarrativePlanV3
+
+    authoring = root / "artifacts" / "06_authoring"
+    authoring.mkdir(parents=True, exist_ok=True)
+    plan = NarrativePlanV3(
+        plan_id=f"plan:{plan_body}",
+        sections=(),
+        narrative_units=(),
+        context_set_digest="sha256:ctx",
+    )
+    (authoring / "narrative_plan_v3.json").write_text(
+        plan.model_dump_json(indent=2) + "\n", encoding="utf-8"
+    )
+    _path, index = publish_artifact_index(root, execution_identity_digest="exec-y")
+    return build_resolved_authoring_snapshot(
+        index,
+        out_root=root,
+        phase="writer",
+        required_roles=("narrative_plan:authoring",),
+    )
+
+
+def test_stage_snapshot_evidence_is_immutable_and_pointer_is_atomic(tmp_path: Path) -> None:
+    """审计 §F.4 反例：第二次运行不得抹掉第一次的输入证据。"""
+
+    from code2paper.agentic.authoring_artifact_index import (
+        frozen_snapshot_evidence,
+        resolved_snapshot_evidence_path,
+        write_resolved_authoring_snapshot,
+    )
+
+    root = tmp_path / "run"
+    first = _snapshot(root, plan_body="a")
+    pointer = Path(write_resolved_authoring_snapshot(root, first))
+    assert pointer.name == "resolved_authoring_snapshot_v1.writer.json"
+    evidence_first = resolved_snapshot_evidence_path(root, first)
+    assert evidence_first.is_file()
+    first_bytes = evidence_first.read_bytes()
+
+    # 同内容重复写入：幂等，证据字节不变。
+    assert Path(write_resolved_authoring_snapshot(root, first)) == pointer
+    assert evidence_first.read_bytes() == first_bytes
+
+    # 第二次运行（输入变了）→ 新证据文件，旧证据**原样保留**，指针指向新证据。
+    second = _snapshot(root, plan_body="b")
+    write_resolved_authoring_snapshot(root, second)
+    evidence_second = resolved_snapshot_evidence_path(root, second)
+    assert evidence_second.is_file() and evidence_second != evidence_first
+    assert evidence_first.read_bytes() == first_bytes, "历史证据不得被覆盖"
+
+    frozen = frozen_snapshot_evidence(root, "writer")
+    assert frozen.file_bytes_digest.startswith("sha256:")
+    assert (
+        frozen.payload["digests"]["narrative_plan:authoring"]
+        == second.digests["narrative_plan:authoring"]
+    )
+    assert frozen.payload["index_revision"] == second.index_revision == 2
+
+
+def test_stage_snapshot_evidence_change_is_detected(tmp_path: Path) -> None:
+    from code2paper.agentic.authoring_artifact_index import (
+        ArtifactIndexError,
+        frozen_snapshot_evidence,
+        resolved_snapshot_evidence_path,
+        write_resolved_authoring_snapshot,
+    )
+
+    root = tmp_path / "run"
+    snapshot = _snapshot(root, plan_body="a")
+    write_resolved_authoring_snapshot(root, snapshot)
+    evidence = resolved_snapshot_evidence_path(root, snapshot)
+
+    # 只改证据文件：指针与证据不再描述同一份快照，必须拒绝。
+    payload = json.loads(evidence.read_text(encoding="utf-8"))
+    payload["digests"] = {"narrative_plan:authoring": "sha256:tampered"}
+    evidence.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+    with pytest.raises(
+        ArtifactIndexError,
+        match="stage_snapshot_pointer_evidence_mismatch|stage_snapshot_evidence_changed",
+    ):
+        frozen_snapshot_evidence(root, "writer")
+
+    # 指针与证据一起改成"互相自洽"的内容：身份一致，但声明的语义摘要重算不上。
+    pointer = root / "artifacts/06_authoring/resolved_authoring_snapshot_v1.writer.json"
+    shared = {
+        "schema_version": "1.0",
+        "phase": "writer",
+        "execution_identity_digest": str(payload.get("execution_identity_digest") or ""),
+        "index_revision": int(payload.get("index_revision") or 0),
+        "index_digest": str(payload.get("index_digest") or ""),
+        "resolved": {"narrative_plan:authoring": "artifacts/06_authoring/other.json"},
+        "digests": dict(payload.get("digests") or {}),
+        "content_digest": str(payload.get("content_digest") or ""),
+    }
+    evidence.write_text(json.dumps(shared, indent=2) + "\n", encoding="utf-8")
+    (root / "artifacts/06_authoring/resolved_authoring_snapshot_v1.writer.json").write_text(
+        json.dumps({**shared, "evidence_path": str(evidence)}, indent=2) + "\n",
+        encoding="utf-8",
+    )
+    assert pointer.is_file()
+    with pytest.raises(ArtifactIndexError, match="stage_snapshot_evidence_changed"):
+        frozen_snapshot_evidence(root, "writer")
+
+
+def test_legacy_snapshot_without_evidence_is_reported(tmp_path: Path) -> None:
+    """旧格式（固定名、无证据副本）不得被当成"已冻结"。"""
+
+    from code2paper.agentic.authoring_artifact_index import (
+        ArtifactIndexError,
+        frozen_snapshot_evidence,
+    )
+
+    root = tmp_path / "run"
+    authoring = root / "artifacts" / "06_authoring"
+    authoring.mkdir(parents=True)
+    (authoring / "resolved_authoring_snapshot_v1.writer.json").write_text(
+        json.dumps({"schema_version": "1.0", "phase": "writer", "content_digest": "sha256:x"})
+        + "\n",
+        encoding="utf-8",
+    )
+    with pytest.raises(ArtifactIndexError, match="stage_snapshot_evidence_missing"):
+        frozen_snapshot_evidence(root, "writer")

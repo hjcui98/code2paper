@@ -604,6 +604,45 @@ def publish_artifact_index(
     return str(path), index
 
 
+_RESOLVED_SNAPSHOT_SCHEMA_VERSION = "1.0"
+
+_SNAPSHOT_IDENTITY_FIELDS = (
+    "schema_version",
+    "phase",
+    "execution_identity_digest",
+    "index_revision",
+    "index_digest",
+    "resolved",
+    "digests",
+)
+
+
+def _snapshot_digest_payload(
+    *,
+    phase: str,
+    execution_identity_digest: str,
+    index_revision: int,
+    index_digest: str,
+    resolved: dict[str, str],
+    digests: dict[str, str],
+) -> dict[str, Any]:
+    """阶段快照被摘要的字段集：读写两端必须一致，否则验证会失真。"""
+
+    return {
+        "schema_version": _RESOLVED_SNAPSHOT_SCHEMA_VERSION,
+        "phase": str(phase),
+        "execution_identity_digest": str(execution_identity_digest or ""),
+        "index_revision": int(index_revision),
+        "index_digest": str(index_digest or ""),
+        "resolved": dict(resolved or {}),
+        "digests": dict(digests or {}),
+    }
+
+
+def _snapshot_identity(payload: dict[str, Any]) -> dict[str, Any]:
+    return {field: payload.get(field) for field in _SNAPSHOT_IDENTITY_FIELDS}
+
+
 def build_resolved_authoring_snapshot(
     index: AuthoringArtifactIndexV1,
     *,
@@ -624,15 +663,14 @@ def build_resolved_authoring_snapshot(
         entry = index.entry_for(role, phase_name)
         resolved[key] = str(path.relative_to(root))
         digests[key] = entry.file_bytes_digest if entry is not None else ""
-    payload = {
-        "schema_version": "1.0",
-        "phase": str(phase),
-        "execution_identity_digest": index.execution_identity_digest,
-        "index_revision": index.index_revision,
-        "index_digest": index.content_digest,
-        "resolved": resolved,
-        "digests": digests,
-    }
+    payload = _snapshot_digest_payload(
+        phase=phase,
+        execution_identity_digest=index.execution_identity_digest,
+        index_revision=index.index_revision,
+        index_digest=index.content_digest,
+        resolved=resolved,
+        digests=digests,
+    )
     return ResolvedAuthoringSnapshotV1(
         phase=str(phase),
         execution_identity_digest=index.execution_identity_digest,
@@ -644,18 +682,133 @@ def build_resolved_authoring_snapshot(
     )
 
 
-def write_resolved_authoring_snapshot(
+def resolved_snapshot_evidence_path(
     out_root: str | Path, snapshot: ResolvedAuthoringSnapshotV1
-) -> str:
-    path = (
+) -> Path:
+    """不可变证据路径：文件名带 snapshot 摘要（审计 §F.4）。"""
+
+    token = str(snapshot.content_digest or "undigested").removeprefix("sha256:")[:16]
+    return (
         Path(out_root).expanduser().resolve()
         / "artifacts"
         / "06_authoring"
-        / f"resolved_authoring_snapshot_v1.{snapshot.phase}.json"
+        / f"resolved_authoring_snapshot_v1.{snapshot.phase}.{token}.json"
     )
-    path.parent.mkdir(parents=True, exist_ok=True)
-    atomic_write_bytes(path, (snapshot.model_dump_json(indent=2) + "\n").encode("utf-8"))
-    return str(path)
+
+
+def write_resolved_authoring_snapshot(
+    out_root: str | Path, snapshot: ResolvedAuthoringSnapshotV1
+) -> str:
+    """冻结阶段输入快照：**不可变证据 + 原子指针**（审计 §F.4）。
+
+    旧实现往固定文件名无条件覆盖写，于是同一 phase 的第二次运行会抹掉第一次的输入
+    证据。现在：
+
+    * 证据写进带 snapshot 摘要的文件名，**同内容重复写入幂等**，同名不同内容拒绝；
+    * 固定文件名（``...{phase}.json``）作为当前指针，内容仍是完整快照（兼容既有
+      reader），并额外带 ``evidence_path`` 指向不可变副本。
+
+    某一步中断只会留下 orphan 证据或旧指针，不会让指针指向半成品。
+    """
+
+    root = Path(out_root).expanduser().resolve()
+    authoring = root / "artifacts" / "06_authoring"
+    authoring.mkdir(parents=True, exist_ok=True)
+    payload = (snapshot.model_dump_json(indent=2) + "\n").encode("utf-8")
+
+    evidence_path = resolved_snapshot_evidence_path(root, snapshot)
+    if evidence_path.is_file():
+        if evidence_path.read_bytes() != payload:
+            # 同摘要不同内容意味着摘要被伪造或写入被截断：拒绝，不覆盖历史证据。
+            raise ArtifactIndexError(
+                f"stage_snapshot_content_conflict:{snapshot.phase}:{evidence_path.name}"
+            )
+    else:
+        atomic_write_bytes(evidence_path, payload)
+
+    pointer = authoring / f"resolved_authoring_snapshot_v1.{snapshot.phase}.json"
+    pointer_payload = {
+        **snapshot.model_dump(mode="json"),
+        "evidence_path": str(evidence_path),
+    }
+    atomic_write_bytes(
+        pointer,
+        (json.dumps(pointer_payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n").encode(
+            "utf-8"
+        ),
+    )
+    return str(pointer)
+
+
+def frozen_snapshot_evidence(
+    out_root: str | Path, phase: str
+) -> ValidatedArtifactReadV1:
+    """读取某 phase 的**不可变**输入快照证据（不经过可变的固定名指针）。"""
+
+    root = Path(out_root).expanduser().resolve()
+    pointer = (
+        root
+        / "artifacts"
+        / "06_authoring"
+        / f"resolved_authoring_snapshot_v1.{phase}.json"
+    )
+    if not pointer.is_file():
+        raise ArtifactIndexError(f"stage_snapshot_missing:{phase}")
+    try:
+        payload = json.loads(pointer.read_text(encoding="utf-8"))
+    except (OSError, ValueError) as exc:
+        raise ArtifactIndexError(f"stage_snapshot_pointer_unreadable:{phase}") from exc
+    evidence_value = str(payload.get("evidence_path") or "")
+    if not evidence_value:
+        # 旧格式（无证据副本）：只能如实报告"没有不可变证据"。
+        raise ArtifactIndexError(f"stage_snapshot_evidence_missing:{phase}")
+    evidence = Path(evidence_value)
+    if not evidence.is_file():
+        raise ArtifactIndexError(f"stage_snapshot_evidence_missing:{phase}")
+    raw = evidence.read_bytes()
+    try:
+        evidence_payload = json.loads(raw.decode("utf-8"))
+    except (OSError, ValueError, UnicodeDecodeError) as exc:  # pragma: no cover - 磁盘异常
+        raise ArtifactIndexError(f"stage_snapshot_evidence_unreadable:{phase}") from exc
+    if not isinstance(evidence_payload, dict):
+        raise ArtifactIndexError(f"stage_snapshot_evidence_unreadable:{phase}")
+
+    # 指针与证据必须描述同一份快照（否则指针可以被悄悄指向别的快照）。
+    if _snapshot_identity(payload) != _snapshot_identity(evidence_payload):
+        raise ArtifactIndexError(f"stage_snapshot_pointer_evidence_mismatch:{phase}")
+
+    # 证据内容必须自洽地重算出它声明的语义摘要：只比较声明值等于文件字节摘要会
+    # 把"文件字节 sha256"和"规范化 JSON 摘要"混为一谈，从而永真或永假。
+    declared = str(payload.get("content_digest") or "")
+    evidence_declared = str(evidence_payload.get("content_digest") or "")
+    recomputed = digest_json(
+        _snapshot_digest_payload(
+            phase=str(evidence_payload.get("phase") or phase),
+            execution_identity_digest=str(
+                evidence_payload.get("execution_identity_digest") or ""
+            ),
+            index_revision=int(evidence_payload.get("index_revision") or 0),
+            index_digest=str(evidence_payload.get("index_digest") or ""),
+            resolved=evidence_payload.get("resolved") or {},
+            digests=evidence_payload.get("digests") or {},
+        )
+    )
+    if not declared or recomputed != declared or evidence_declared != declared:
+        raise ArtifactIndexError(
+            f"stage_snapshot_evidence_changed:{phase}:{recomputed}!={declared or evidence_declared}"
+        )
+    digest = "sha256:" + hashlib.sha256(raw).hexdigest()
+    return ValidatedArtifactReadV1(
+        logical_role="resolved_authoring_snapshot",
+        phase=phase,
+        path=str(evidence),
+        schema_version=str(payload.get("schema_version") or ""),
+        status="frozen",
+        file_bytes_digest=digest,
+        semantic_digest=declared,
+        semantic_digest_verification="pointer_declared_sha256",
+        payload=json.loads(raw.decode("utf-8")),
+    )
 
 
 
@@ -674,6 +827,8 @@ __all__ = [
     "build_resolved_authoring_snapshot",
     "publish_artifact_index",
     "write_resolved_authoring_snapshot",
+    "resolved_snapshot_evidence_path",
+    "frozen_snapshot_evidence",
     "resolve_artifact",
     "read_artifact_validated",
     "ValidatedArtifactReadV1",
