@@ -194,3 +194,134 @@ def test_resolved_snapshot_freezes_phase_inputs_and_fails_closed(tmp_path) -> No
             phase="writer",
             required_roles=("binder_receipts:binder",),
         )
+
+
+# --------------------------------------------------------------------------- #
+# PR F / F.2：索引必须验证它声称冻结的字节（变异测试）
+# --------------------------------------------------------------------------- #
+
+
+def _synthetic_root(tmp_path: Path, *, plan_id: str = "plan:index-test") -> Path:
+    """用真实 producer 模型生成产物（自带自洽的 content_digest）。"""
+
+    from code2paper.agentic.method_architect import NarrativePlanV3
+
+    root = tmp_path / "run"
+    authoring = root / "artifacts" / "06_authoring"
+    authoring.mkdir(parents=True)
+    plan = NarrativePlanV3(
+        plan_id=plan_id,
+        sections=(),
+        narrative_units=(),
+        context_set_digest="sha256:ctx",
+    )
+    (authoring / "narrative_plan_v3.json").write_text(
+        plan.model_dump_json(indent=2) + "\n", encoding="utf-8"
+    )
+    return root
+
+
+def _entry(index, role: str, needle: str):
+    """按路径片段取条目（`entry_for` 只返回 active，非 active 状态要直接扫 entries）。"""
+
+    return next(
+        entry
+        for entry in index.entries
+        if entry.logical_role == role and entry.path.endswith(needle)
+    )
+
+
+def test_unparsable_artifact_is_invalid_and_never_active(tmp_path: Path) -> None:
+    """审计 §F.2 反例：非法 JSON 不得获得 active 状态。"""
+
+    root = _synthetic_root(tmp_path)
+    (root / "artifacts/06_authoring/narrative_plan_v3.json").write_text(
+        "{ not json", encoding="utf-8"
+    )
+    index = build_artifact_index(root)
+    entry = _entry(index, "narrative_plan", "narrative_plan_v3.json")
+    assert entry.status == "invalid"
+    assert "narrative_plan:authoring" not in index.active or not index.active[
+        "narrative_plan:authoring"
+    ]
+    with pytest.raises(ArtifactIndexError):
+        resolve_artifact(index, "narrative_plan", "authoring", out_root=root)
+
+
+def test_unsupported_schema_version_is_invalid(tmp_path: Path) -> None:
+    root = _synthetic_root(tmp_path)
+    (root / "artifacts/06_authoring/consumer_workset_manifest_v2.json").write_text(
+        json.dumps({"schema_version": "9.9", "pages": [], "worksets": []}) + "\n",
+        encoding="utf-8",
+    )
+    index = build_artifact_index(root)
+    entry = _entry(index, "consumer_workset_manifest", "consumer_workset_manifest_v2.json")
+    assert entry.status == "invalid"
+
+
+def test_explicit_reference_with_zero_matches_does_not_fall_back(tmp_path: Path) -> None:
+    """审计 §F.2 反例：指定了不存在的摘要时不得回退到最高代。"""
+
+    root = _synthetic_root(tmp_path)
+    authoring = root / "artifacts" / "06_authoring"
+    revision_root = _synthetic_root(tmp_path / "rev", plan_id="plan:revision-2")
+    (authoring / "narrative_plan_v3.revision.2.json").write_text(
+        (revision_root / "artifacts/06_authoring/narrative_plan_v3.json").read_text(),
+        encoding="utf-8",
+    )
+
+    # 默认解析：最高代。
+    default_index = build_artifact_index(root)
+    assert default_index.entry_for("narrative_plan", "authoring").path.endswith(
+        "revision.2.json"
+    )
+
+    # 显式引用一个不存在的摘要：必须零命中 → 不可解析，而不是"回退选最高代"。
+    referenced = build_artifact_index(
+        root, reference_digests={"narrative_plan:authoring": "sha256:" + "0" * 64}
+    )
+    assert not referenced.active.get("narrative_plan:authoring")
+    with pytest.raises(ArtifactIndexError):
+        resolve_artifact(referenced, "narrative_plan", "authoring", out_root=root)
+
+
+def test_mutating_the_active_file_after_indexing_is_detected(tmp_path: Path) -> None:
+    """F.5 变异测试：索引发布后改动文件，reader 必须在使用内容前失败。"""
+
+    from code2paper.agentic.authoring_artifact_index import read_artifact_validated
+
+    root = _synthetic_root(tmp_path)
+    index = build_artifact_index(root)
+    first = read_artifact_validated(index, "narrative_plan", "authoring", out_root=root)
+    assert first.semantic_digest_verification == "recomputed"
+    assert first.payload["plan_id"] == "plan:index-test"
+
+    # 改动内容但保留原来的 content_digest 声明（最隐蔽的篡改）。
+    path = root / "artifacts/06_authoring/narrative_plan_v3.json"
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    payload["plan_id"] = "plan:tampered"
+    path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+
+    with pytest.raises(ArtifactIndexError, match="artifact_bytes_changed_since_index"):
+        read_artifact_validated(index, "narrative_plan", "authoring", out_root=root)
+
+
+def test_registered_roles_recompute_the_semantic_digest(tmp_path: Path) -> None:
+    from code2paper.agentic.authoring_artifact_index import read_artifact_validated
+
+    root = _synthetic_root(tmp_path)
+    index = build_artifact_index(root)
+    result = read_artifact_validated(index, "narrative_plan", "authoring", out_root=root)
+    assert result.semantic_digest_verification == "recomputed"
+
+    # 未注册 producer 模型的 role 如实标为 declared_only，不假装已复算。
+    authoring = root / "artifacts" / "06_authoring"
+    (authoring / "writer_section_receipts_v2.json").write_text(
+        json.dumps({"schema_version": "2.0", "content_digest": "sha256:declared"}) + "\n",
+        encoding="utf-8",
+    )
+    index = build_artifact_index(root)
+    other = read_artifact_validated(
+        index, "writer_section_receipts", "writer", out_root=root
+    )
+    assert other.semantic_digest_verification == "declared_only"

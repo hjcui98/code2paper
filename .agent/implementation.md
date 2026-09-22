@@ -4001,3 +4001,38 @@ package/obligation 不双计、标定门槛与完整 profile），并更新原�
 
 **仍缺（下一轮）**：真正的**重分页**——在同一 owner 上把超限页拆成多页并重建
 worksets/invocation plan/预算预留/阶段快照（§C.5）；本轮是"早失败"而不是"自动拆页"。
+
+## 2026-09-22 审计 PR F 第一片：索引必须验证它声称冻结的字节（F.2/F.5）
+
+复现的审计论断（全部成立）：
+
+- 非法 JSON → `payload=None`，文件仍拿到 `active`；
+- 显式 `reference_digests` 零命中 → 回退选最高 generation；
+- `resolve_artifact` 不重算字节，只比较索引缓存里的 semantic digest；
+- `upstream_digests` 恒为空。
+
+修复：
+
+- 新增 `invalid` 状态：解析失败 → invalid；声明了**不受支持** schema 版本 →
+  invalid（`_KNOWN_SCHEMA_VERSIONS` 白名单，版本来自归档实测；未声明版本的 legacy
+  产物照旧可读）。invalid 不参与 active、不被标 superseded、不可解析。
+- 显式引用改为**必须唯一命中**，零命中即 active 置空 → `resolve_artifact` 抛错，
+  不再"回退选最高代"。
+- 新增 `read_artifact_validated(index, role, phase, *, out_root, expected_digest=None,
+  allow_empty=True) -> ValidatedArtifactReadV1`：解析路径后**读取一次字节**，重算
+  `file_bytes_digest` 与索引记录比对，并用 producer 模型（已注册 3 个 role）**复算**
+  语义摘要；未注册 producer 的 role 如实标 `semantic_digest_verification="declared_only"`，
+  不假装已复算。返回的 `payload` 就是被验证过的那份字节解码结果（避免 TOCTOU）。
+
+测试（含 F.5 要求的变异测试）：`test_artifact_index.py` 新增 5 项——非法 JSON 不得 active、
+不支持 schema 不得 active、显式引用零命中不得回退、**索引发布后改动文件在使用前失败**
+（`artifact_bytes_changed_since_index`）、已注册 role 复算 vs 未注册 role 如实标注。
+全量离线 3826 passed、3 deselected、12 subtests passed、exit 0。
+
+**PR F 仍缺**：F.1 producer 注册制（`_KNOWN_ARTIFACTS` 退出生产穷举角色）、
+F.3 `valid_empty` 的按阶段 required 语义、F.4 阶段快照不可覆盖（generation/摘要命名 +
+发布事务的 orphan/incomplete 状态）、F.5 生产 consumer 迁移到 validated read
+（主 writer/Realizer/Binder/replay/doctor/quality/summary）。
+
+**PR C 仍缺**：自动重分页（§C.5 拆页并重建 worksets/invocation/预算/阶段快照）——
+机制已在上一节记录，当前以 typed failure 早失败代替。

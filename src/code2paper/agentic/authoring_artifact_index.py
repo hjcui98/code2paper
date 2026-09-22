@@ -28,7 +28,25 @@ ArtifactStatusV1 = Literal[
     "superseded",
     "source_snapshot",
     "conflict",
+    #: 审计 §F.2：非法 JSON / 不支持的 schema → invalid，**不得**进入 active。
+    "invalid",
 ]
+
+#: 已观测到的 schema 版本白名单（按 role+phase）。仅用于识别**声明了不受支持版本**的
+#: 产物；未声明版本的 legacy 产物照旧可读。新版本必须先在此登记（或改成 producer 注册制）。
+_KNOWN_SCHEMA_VERSIONS: dict[tuple[str, str], tuple[str, ...]] = {
+    ("consumer_invocation_plan", "formalizer"): ("1.0",),
+    ("consumer_invocation_plan", "realizer"): ("1.0",),
+    ("consumer_invocation_plan", "writer"): ("1.0",),
+    ("consumer_workset_manifest", "formalizer"): ("2.0",),
+    ("consumer_workset_manifest", "writer"): ("2.0",),
+    ("formula_packages", "formalizer"): ("1.0",),
+    ("realizer_receipts", "realizer"): ("2.0",),
+    ("run_identity", "research"): ("1.0",),
+    ("run_summary", "terminal"): ("1.0",),
+    ("writer_aggregate_receipt", "writer"): ("2.0",),
+    ("writer_section_receipts", "writer"): ("2.0",),
+}
 
 #: (logical_role, phase, generation, relative path, 说明)
 #: ``generation`` 只描述代际，不描述新旧；当前对象由同一 (role, phase) 的规则解析。
@@ -267,8 +285,23 @@ def build_artifact_index(
         if isinstance(payload, dict):
             schema_version = str(payload.get("schema_version") or "")
         status: ArtifactStatusV1 = "active"
+        detail_text = detail
         if generation == 0:
             status = "source_snapshot"
+        elif payload is None:
+            # 解析失败：文件存在但内容不可用。旧实现仍把它记成 active
+            # （审计 §F.2 的第一条反例）。
+            status = "invalid"
+            detail_text = f"{detail} (unparsable json)"
+        elif (
+            schema_version.strip()
+            and (role, phase) in _KNOWN_SCHEMA_VERSIONS
+            and schema_version.strip() not in _KNOWN_SCHEMA_VERSIONS[(role, phase)]
+        ):
+            # 声明了**不受支持**的 schema 版本 → invalid（未声明版本的 legacy 产物
+            # 仍可读，但 schema_version 会被如实记录为空）。
+            status = "invalid"
+            detail_text = f"{detail} (unsupported schema_version:{schema_version})"
         elif _empty_manifest(payload):
             status = "valid_empty"
         entry = ArtifactIndexEntryV1(
@@ -281,7 +314,7 @@ def build_artifact_index(
             semantic_digest=_semantic_digest(payload),
             file_bytes_digest=_sha256_file(path),
             upstream_digests={},
-            detail=detail,
+            detail=detail_text,
         )
         entries.append(entry)
         by_role_phase.setdefault((role, phase), []).append(entry)
@@ -290,19 +323,20 @@ def build_artifact_index(
     for (role, phase), candidates in by_role_phase.items():
         usable = [
             item for item in candidates
-            if item.status not in {"missing", "source_snapshot"}
+            if item.status not in {"missing", "source_snapshot", "invalid"}
         ]
         if not usable:
             continue
         reference = references.get(f"{role}:{phase}") or references.get(role) or ""
         chosen: ArtifactIndexEntryV1 | None = None
         if reference:
+            # 审计 §F.2：给了显式引用就必须**唯一命中**；零命中不得回退到最高代
+            # （否则"指定了一个不存在的摘要"会静默变成"选了另一份内容"）。
             matching = [item for item in usable if item.semantic_digest == reference]
-            if len(matching) == 1:
-                chosen = matching[0]
-            elif len(matching) > 1:
+            if len(matching) != 1:
                 active[f"{role}:{phase}"] = ""
                 continue
+            chosen = matching[0]
         if chosen is None:
             chosen = max(usable, key=lambda item: (item.generation, item.path))
         active[f"{role}:{phase}"] = chosen.path
@@ -311,7 +345,7 @@ def build_artifact_index(
     for entry in entries:
         key = f"{entry.logical_role}:{entry.phase}"
         if active.get(key) and entry.path != active[key]:
-            if entry.status not in {"missing", "source_snapshot"}:
+            if entry.status not in {"missing", "source_snapshot", "invalid"}:
                 entry = entry.model_copy(update={"status": "superseded"})
         final_entries.append(entry)
 
@@ -367,6 +401,139 @@ def resolve_artifact(
                     f"{entry.semantic_digest}!={expected_digest}"
                 )
     return path
+
+
+class ValidatedArtifactReadV1(BaseModel):
+    """一次**已验证字节**的读取结果（审计 §F.2）。
+
+    返回字节而不是路径：调用方拿到的就是被验证过的那一份内容，避免"验证路径之后
+    再重新打开另一份内容"的 TOCTOU 缺口。
+    """
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    logical_role: str
+    phase: str
+    path: str
+    schema_version: str = ""
+    status: str = "active"
+    file_bytes_digest: str = ""
+    semantic_digest: str = ""
+    #: 语义摘要的验证级别：recomputed（用 producer 模型复算）/ declared_only（只在
+    #: 同一份字节里读到声明值，未复算）/ bytes_only（该产物不带语义摘要）。
+    semantic_digest_verification: str = "bytes_only"
+    payload: Any = None
+
+
+#: 能用 producer 模型**复算**语义摘要的 role（审计 §F.2）。未注册的 role 会以
+#: declared_only 如实标注，不假装已复算。
+_SEMANTIC_RESEAL_MODELS: dict[tuple[str, str], tuple[str, str]] = {
+    ("narrative_plan", "authoring"): (
+        "code2paper.agentic.method_architect",
+        "NarrativePlanV3",
+    ),
+    ("consumer_workset_manifest", "writer"): (
+        "code2paper.agentic.unified_context_models",
+        "ConsumerWorksetManifestV2",
+    ),
+    ("consumer_workset_manifest", "formalizer"): (
+        "code2paper.agentic.unified_context_models",
+        "ConsumerWorksetManifestV2",
+    ),
+}
+
+
+def _reseal_semantic_digest(role: str, phase: str, payload: Any) -> str:
+    """用 producer 模型重新封装语义摘要；未注册/不可用时返回空串。"""
+
+    target = _SEMANTIC_RESEAL_MODELS.get((role, phase))
+    if target is None or not isinstance(payload, dict):
+        return ""
+    import importlib
+
+    module_name, class_name = target
+    try:
+        model = getattr(importlib.import_module(module_name), class_name)
+        stripped = {key: value for key, value in payload.items() if key != "content_digest"}
+        instance = model.model_validate(stripped)
+    except Exception:  # noqa: BLE001 - 不可复算时退回 declared_only
+        return ""
+    return str(getattr(instance, "content_digest", "") or "")
+
+
+def read_artifact_validated(
+    index: AuthoringArtifactIndexV1,
+    role: str,
+    phase: str,
+    *,
+    out_root: str | Path,
+    expected_digest: str | None = None,
+    allow_empty: bool = True,
+) -> ValidatedArtifactReadV1:
+    """解析 + 读取 + **重算**字节与语义摘要，然后返回同一份已验证内容。
+
+    审计 §F.2 的确定行为：``resolve_artifact`` 只比较索引缓存里的摘要，不重算当前
+    字节，因此"建索引后改动 active 文件"不会被发现。本函数在消费点重算：
+    字节摘要必须等于索引记录值，语义摘要（若记录）也必须在同一份字节上复算一致。
+    """
+
+    path = resolve_artifact(
+        index,
+        role,
+        phase,
+        out_root=out_root,
+        expected_digest=expected_digest,
+        allow_empty=allow_empty,
+    )
+    entry = index.entry_for(role, phase)
+    if entry is None or entry.path != str(
+        path.relative_to(Path(out_root).expanduser().resolve())
+    ):
+        raise ArtifactIndexError(f"artifact_active_entry_mismatch:{role}:{phase}")
+    raw = path.read_bytes()
+    actual_file_digest = "sha256:" + hashlib.sha256(raw).hexdigest()
+    if entry.file_bytes_digest and actual_file_digest != entry.file_bytes_digest:
+        raise ArtifactIndexError(
+            f"artifact_bytes_changed_since_index:{role}:{phase}:"
+            f"{actual_file_digest}!={entry.file_bytes_digest}"
+        )
+    payload: Any = None
+    try:
+        payload = json.loads(raw.decode("utf-8"))
+    except (UnicodeDecodeError, ValueError):
+        if entry.status != "valid_empty":
+            raise ArtifactIndexError(f"artifact_unparsable_at_read:{role}:{phase}")
+    verification = "bytes_only"
+    if entry.semantic_digest:
+        resealed = _reseal_semantic_digest(role, phase, payload)
+        if resealed:
+            if resealed != entry.semantic_digest:
+                raise ArtifactIndexError(
+                    f"artifact_semantic_digest_changed:{role}:{phase}:"
+                    f"{resealed}!={entry.semantic_digest}"
+                )
+            verification = "recomputed"
+        else:
+            # 该 role 还没有注册 producer 模型：只能确认"同一份字节里声明了同一个摘要"，
+            # 如实标为 declared_only，而不是假装已经复算过。
+            declared = _semantic_digest(payload)
+            if declared != entry.semantic_digest:
+                raise ArtifactIndexError(
+                    f"artifact_semantic_digest_changed:{role}:{phase}:"
+                    f"{declared}!={entry.semantic_digest}"
+                )
+            verification = "declared_only"
+    return ValidatedArtifactReadV1(
+        logical_role=role,
+        phase=phase,
+        path=str(path),
+        schema_version=entry.schema_version,
+        status=entry.status,
+        file_bytes_digest=actual_file_digest,
+        semantic_digest=entry.semantic_digest,
+        semantic_digest_verification=verification,
+        payload=payload,
+    )
 
 
 class ResolvedAuthoringSnapshotV1(BaseModel):
@@ -508,5 +675,7 @@ __all__ = [
     "publish_artifact_index",
     "write_resolved_authoring_snapshot",
     "resolve_artifact",
+    "read_artifact_validated",
+    "ValidatedArtifactReadV1",
     "resolve_role_phase_keys",
 ]
