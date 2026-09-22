@@ -4315,3 +4315,30 @@ highest/lowest、largest/smallest、top-k/bottom-k、ascending/descending），�
 负例、以及 spy 断言生产归一化真的调用共享 audit 且 `plan_paragraph_ids` 来自冻结计划），
 并把两条既有断言升级为"发布字节 == 共享 composer 派生结果"（含修复合并路径）。
 回归目录 + writer 侧 402 项全绿。
+
+## 2026-09-22 审计 PR F.3：空产物按阶段 required units 判定
+
+复现的审计论断（成立）：是否允许空产物由调用方一个**共用**的 `allow_empty=True` 决定，
+Formalizer（本来就可能没有公式任务）与 Writer（要写正文）用同一条规则；空对象也不记录
+"为什么为空、哪些任务 not_applicable"。
+
+修复：
+
+- `authoring_artifact_index` 新增 `PHASE_EMPTY_POLICY`（按 role+phase 区分
+  `requires_units` / `allowed_when_no_required_units`）与
+  `assess_empty_artifact(role, phase, payload, required_units=...)`，返回
+  `EmptyArtifactDispositionV1`（empty/allowed/reason/declared_not_applicable_task_ids/
+  failures）；not_applicable 任务既支持 `not_applicable_task_ids` 字段，也支持
+  `projection_diagnostics` 里的 `kind=not_applicable` 条目。
+- `resolve_artifact` / `read_artifact_validated` 接受 `required_units`：该阶段策略为
+  `requires_units` 且冻结单元 >0 时，`valid_empty` 直接 typed block
+  （`artifact_empty_with_required_units:<role>:<phase>:<n>`），不再默认放行；读取结果
+  额外带 `empty_disposition`，把空的原因与 not_applicable 任务一起交给调用方。
+- 生产接线（doctor）：`run_authoring_doctor` 现在对 Formalizer/Writer manifest 与 Writer
+  invocation plan 计算空产物处置，把"该阶段需要单元却为空"升级为 critical blocker，
+  并在 `render()` 里打印 `EMPTY ARTIFACT` / `CRITICAL` 行；Writer 的 required units 由
+  冻结 plan 的段落数推导。
+
+测试：`test_artifact_index.py` 新增 3 项（按阶段+单元判定、空原因与 not_applicable 记录、
+reader 在冻结单元下 typed block）；`test_authoring_doctor.py` 新增 2 项（有必需段落时空
+manifest 成为 blocker 且可见、无必需单元时合法）。回归目录 278 项、writer 侧 277 项全绿。

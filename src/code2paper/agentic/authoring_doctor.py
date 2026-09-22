@@ -17,6 +17,8 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from code2paper.agentic.authoring_artifact_index import (
     ArtifactIndexError,
+    EmptyArtifactDispositionV1,
+    assess_empty_artifact,
     build_artifact_index,
     resolve_artifact,
 )
@@ -71,6 +73,8 @@ class AuthoringDoctorReportV1(BaseModel):
     downstream_not_run: tuple[str, ...] = ()
     empty_semantic_paragraph_count: int = 0
     binder_owned_writer_target_count: int = 0
+    #: 审计 §F.3：空产物是否合法、为什么为空、哪些任务 not_applicable。
+    empty_artifacts: tuple[EmptyArtifactDispositionV1, ...] = ()
     critical_blockers: tuple[str, ...] = ()
     next_action: str = ""
 
@@ -97,6 +101,21 @@ class AuthoringDoctorReportV1(BaseModel):
         lines.append(
             f"WITNESS OWNER   {self.binder_owned_writer_target_count} Binder-owned target(s) still shown to Writer"
         )
+        # 审计 §F.3：空产物（尤其"该阶段需要单元却为空"）必须一条命令就能看见。
+        for disposition in self.empty_artifacts:
+            state = "allowed" if disposition.allowed else "BLOCKED"
+            not_applicable = (
+                f"; not_applicable={','.join(disposition.declared_not_applicable_task_ids)}"
+                if disposition.declared_not_applicable_task_ids
+                else ""
+            )
+            lines.append(
+                f"EMPTY ARTIFACT  {disposition.logical_role}:{disposition.phase} "
+                f"{state} ({disposition.reason}; required_units="
+                f"{disposition.required_units}){not_applicable}"
+            )
+        for blocker in self.critical_blockers:
+            lines.append(f"CRITICAL        {blocker}")
         if self.first_root_cause:
             lines.append(f"FIRST CAUSE     {self.first_root_cause}")
         if self.downstream_not_run:
@@ -230,9 +249,11 @@ def run_authoring_doctor(out_root: str | Path) -> AuthoringDoctorReportV1:
         first_cause = "resume_exhausted_invocation"
         next_action = "fork_authoring_with_new_contract"
 
+    empty_artifacts, empty_blockers = _empty_artifact_dispositions(index, root)
     critical: list[str] = []
     if blocked:
         critical.append("resume_exhausted_invocation")
+    critical.extend(empty_blockers)
     if paragraph_stats["empty"] > 0:
         critical.append("intent_surface_gaps")
     if paragraph_stats["binder_owned_targets"] > 0:
@@ -257,12 +278,65 @@ def run_authoring_doctor(out_root: str | Path) -> AuthoringDoctorReportV1:
         downstream_not_run=downstream,
         empty_semantic_paragraph_count=paragraph_stats["empty"],
         binder_owned_writer_target_count=paragraph_stats["binder_owned_targets"],
+        empty_artifacts=empty_artifacts,
         critical_blockers=tuple(critical),
         next_action=next_action,
     )
 
 
-def _paragraph_surface_stats(root: Path) -> dict[str, int]:
+
+#: 空产物需要冻结单元数的阶段：Writer 需要实现正文，Formalizer 本来就可能没有公式任务。
+_EMPTY_POLICY_KEYS: tuple[tuple[str, str], ...] = (
+    ("consumer_workset_manifest", "formalizer"),
+    ("consumer_workset_manifest", "writer"),
+    ("consumer_invocation_plan", "writer"),
+)
+
+
+def _planned_unit_count(root: Path) -> int:
+    """Writer 阶段的冻结必需单元数 = 计划里的段落数（审计 §F.3）。"""
+
+    candidates = (
+        "narrative_plan_v3.revision.2.json",
+        "narrative_plan_v3.json",
+    )
+    for name in candidates:
+        payload = _read_json(root / "artifacts" / "06_authoring" / name)
+        if not isinstance(payload, dict):
+            continue
+        count = sum(
+            len((section or {}).get("paragraphs") or ())
+            for section in (payload.get("sections") or ())
+        )
+        if count:
+            return count
+    return 0
+
+
+def _empty_artifact_dispositions(
+    index: Any, root: Path
+) -> tuple[tuple[EmptyArtifactDispositionV1, ...], list[str]]:
+    """列出空产物的处置，并把"该阶段需要单元却为空"升级为 critical blocker。"""
+
+    planned_units = _planned_unit_count(root)
+    dispositions: list[EmptyArtifactDispositionV1] = []
+    blockers: list[str] = []
+    for role, phase in _EMPTY_POLICY_KEYS:
+        entry = index.entry_for(role, phase)
+        if entry is None or entry.status != "valid_empty":
+            continue
+        payload = _read_json(root / entry.path)
+        required_units = planned_units if phase == "writer" else 0
+        disposition = assess_empty_artifact(
+            role, phase, payload, required_units=required_units
+        )
+        dispositions.append(disposition)
+        blockers.extend(disposition.failures)
+    return tuple(dispositions), blockers
+
+
+def _paragraph_surface_stats(
+    root: Path) -> dict[str, int]:
     """空语义段落数与"Binder 责任仍暴露给 Writer"的目标数（§15.1 的两行）。"""
 
     candidates = (

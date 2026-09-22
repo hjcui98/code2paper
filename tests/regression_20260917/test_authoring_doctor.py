@@ -81,3 +81,95 @@ def test_doctor_cli_renders_and_emits_json(capsys) -> None:
     assert payload["page_count"] == 20
     assert len(payload["blocked_pages"]) == 1
     assert "resume_exhausted_invocation" in payload["critical_blockers"]
+
+
+# --------------------------------------------------------------------------- #
+# §F.3：doctor 必须说明空产物是否合法、为什么为空
+# --------------------------------------------------------------------------- #
+
+
+def _empty_manifest() -> dict:
+    return {
+        "schema_version": "2.0",
+        "archive_digest": "sha256:archive",
+        "source_manifest_digest": "sha256:source",
+        "pages": [],
+        "worksets": [],
+    }
+
+
+def _plan_with_paragraphs(count: int) -> dict:
+    return {
+        "schema_version": "3.0",
+        "sections": [
+            {
+                "section_id": "MA-S1",
+                "heading": "Architecture",
+                "paragraphs": [
+                    {"paragraph_id": f"MA-S1:P{index}"} for index in range(1, count + 1)
+                ],
+            }
+        ],
+    }
+
+
+def test_doctor_reports_an_empty_writer_manifest_as_a_blocker(tmp_path) -> None:
+    import json
+
+    root = tmp_path / "run"
+    authoring = root / "artifacts" / "06_authoring"
+    authoring.mkdir(parents=True)
+    (authoring / "consumer_workset_manifest_v2.json").write_text(
+        json.dumps(_empty_manifest()) + "\n", encoding="utf-8"
+    )
+    (authoring / "consumer_workset_manifest_v2.writer.2.json").write_text(
+        json.dumps(_empty_manifest()) + "\n", encoding="utf-8"
+    )
+    (authoring / "narrative_plan_v3.json").write_text(
+        json.dumps(_plan_with_paragraphs(3)) + "\n", encoding="utf-8"
+    )
+
+    report = run_authoring_doctor(root)
+
+    by_key = {
+        (item.logical_role, item.phase): item for item in report.empty_artifacts
+    }
+    # Formalizer 没有公式任务：空合法。
+    formalizer = by_key[("consumer_workset_manifest", "formalizer")]
+    assert formalizer.allowed is True
+    assert formalizer.reason == "no_required_units"
+    # Writer 冻结了 3 个必需段落：空 manifest 必须成为 critical blocker。
+    writer = by_key[("consumer_workset_manifest", "writer")]
+    assert writer.allowed is False
+    assert writer.required_units == 3
+    assert writer.reason == "empty_with_required_units"
+    assert (
+        "artifact_empty_with_required_units:consumer_workset_manifest:writer:3"
+        in report.critical_blockers
+    )
+    assert "artifact_empty_with_required_units" in report.render()
+
+
+def test_doctor_allows_an_empty_writer_manifest_without_required_units(tmp_path) -> None:
+    import json
+
+    root = tmp_path / "run"
+    authoring = root / "artifacts" / "06_authoring"
+    authoring.mkdir(parents=True)
+    (authoring / "consumer_workset_manifest_v2.writer.2.json").write_text(
+        json.dumps(_empty_manifest()) + "\n", encoding="utf-8"
+    )
+
+    report = run_authoring_doctor(root)
+
+    writer = next(
+        item
+        for item in report.empty_artifacts
+        if (item.logical_role, item.phase) == ("consumer_workset_manifest", "writer")
+    )
+    assert writer.allowed is True
+    assert writer.reason == "no_required_units"
+    assert not any(
+        "artifact_empty_with_required_units" in item
+        for item in report.critical_blockers
+    )

@@ -461,3 +461,106 @@ def test_legacy_snapshot_without_evidence_is_reported(tmp_path: Path) -> None:
     )
     with pytest.raises(ArtifactIndexError, match="stage_snapshot_evidence_missing"):
         frozen_snapshot_evidence(root, "writer")
+
+
+# --------------------------------------------------------------------------- #
+# PR F / F.3：空产物是否合法取决于该阶段冻结的 required units
+# --------------------------------------------------------------------------- #
+
+
+def _empty_manifest_payload(*, diagnostics: tuple = ()) -> dict:
+    return {
+        "schema_version": "2.0",
+        "archive_digest": "sha256:archive",
+        "source_manifest_digest": "sha256:source",
+        "pages": [],
+        "worksets": [],
+        "projection_diagnostics": list(diagnostics),
+    }
+
+
+def test_empty_artifact_is_judged_by_phase_and_required_units() -> None:
+    from code2paper.agentic.authoring_artifact_index import assess_empty_artifact
+
+    # Formalizer 没有公式任务：空是合法的，并记录原因。
+    formalizer = assess_empty_artifact(
+        "consumer_workset_manifest", "formalizer", _empty_manifest_payload(), required_units=0
+    )
+    assert formalizer.allowed is True
+    assert formalizer.empty is True
+    assert formalizer.reason == "no_required_units"
+    assert formalizer.policy == "allowed_when_no_required_units"
+
+    # Writer 阶段冻结了 3 个必需单元：同样的空 payload 不再合法。
+    writer = assess_empty_artifact(
+        "consumer_workset_manifest", "writer", _empty_manifest_payload(), required_units=3
+    )
+    assert writer.allowed is False
+    assert writer.reason == "empty_with_required_units"
+    assert writer.failures == (
+        "artifact_empty_with_required_units:consumer_workset_manifest:writer:3",
+    )
+
+    # 同一阶段但没有必需单元：空仍是合法的（不是所有 phase 共用 allow_empty）。
+    writer_idle = assess_empty_artifact(
+        "consumer_workset_manifest", "writer", _empty_manifest_payload(), required_units=0
+    )
+    assert writer_idle.allowed is True
+
+
+def test_empty_artifact_records_why_it_is_empty() -> None:
+    from code2paper.agentic.authoring_artifact_index import assess_empty_artifact
+
+    payload = _empty_manifest_payload(
+        diagnostics=(
+            {"kind": "not_applicable", "task_ids": ["formula:ob-1", "formula:ob-2"]},
+            {"kind": "other", "task_ids": ["ignored"]},
+        )
+    )
+    payload["note"] = "no formula obligations in this run"
+
+    disposition = assess_empty_artifact(
+        "consumer_workset_manifest", "formalizer", payload, required_units=0
+    )
+    assert disposition.allowed is True
+    assert disposition.declared_not_applicable_task_ids == (
+        "formula:ob-1",
+        "formula:ob-2",
+    )
+
+
+def test_reader_blocks_empty_artifacts_with_frozen_required_units(tmp_path: Path) -> None:
+    from code2paper.agentic.authoring_artifact_index import (
+        ArtifactIndexError,
+        build_artifact_index,
+        read_artifact_validated,
+    )
+
+    root = tmp_path / "run"
+    authoring = root / "artifacts/06_authoring"
+    authoring.mkdir(parents=True)
+    (authoring / "consumer_workset_manifest_v2.writer.2.json").write_text(
+        json.dumps(_empty_manifest_payload()) + "\n", encoding="utf-8"
+    )
+    index = build_artifact_index(root)
+    entry = _entry(index, "consumer_workset_manifest", "writer.2.json")
+    assert entry.status == "valid_empty"
+
+    # 没有冻结单元：读得出来，并如实标注为什么为空。
+    read = read_artifact_validated(
+        index, "consumer_workset_manifest", "writer", out_root=root, required_units=0
+    )
+    assert read.empty_disposition is not None
+    assert read.empty_disposition.allowed is True
+
+    # 冻结了必需单元：使用前 typed block，而不是拿空 manifest 继续写。
+    with pytest.raises(
+        ArtifactIndexError, match="artifact_empty_with_required_units"
+    ):
+        read_artifact_validated(
+            index,
+            "consumer_workset_manifest",
+            "writer",
+            out_root=root,
+            required_units=2,
+        )

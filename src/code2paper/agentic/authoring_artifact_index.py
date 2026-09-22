@@ -13,7 +13,9 @@ from __future__ import annotations
 
 import hashlib
 import json
+from collections.abc import Mapping
 from pathlib import Path
+from types import MappingProxyType
 from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -248,6 +250,129 @@ def _empty_manifest(payload: Any) -> bool:
     return not (payload.get("worksets") or ()) and not (payload.get("pages") or ())
 
 
+#: 审计 §F.3：空产物是否合法取决于**该阶段冻结的 required units**，而不是所有 phase
+#: 共用 ``allow_empty=True``。``requires_units`` 表示"有必需单元时不得为空"；
+#: ``allowed_when_no_required_units`` 表示该阶段本来就可能没有任务（例如 Formalizer
+#: 没有公式义务）。
+PHASE_EMPTY_POLICY: Mapping[tuple[str, str], str] = MappingProxyType({
+    ("consumer_workset_manifest", "formalizer"): "allowed_when_no_required_units",
+    ("consumer_workset_manifest", "writer"): "requires_units",
+    ("consumer_invocation_plan", "formalizer"): "allowed_when_no_required_units",
+    ("consumer_invocation_plan", "writer"): "requires_units",
+    ("consumer_invocation_plan", "realizer"): "allowed_when_no_required_units",
+    ("formula_obligations", "formalizer"): "allowed_when_no_required_units",
+    ("mechanism_formula_packages", "formalizer"): "allowed_when_no_required_units",
+    ("binder_receipts", "binder"): "requires_units",
+})
+
+#: 未在表里登记的 (role, phase)：保守地按"允许为空但必须能说明原因"处理，
+#: 由调用方按冻结 required units 收紧。
+DEFAULT_PHASE_EMPTY_POLICY = "allowed_when_no_required_units"
+
+
+def _not_applicable_task_ids(payload: Any) -> tuple[str, ...]:
+    """空产物必须说明"为什么为空、哪些任务 not_applicable"（审计 §F.3）。"""
+
+    if not isinstance(payload, Mapping):
+        return ()
+    found: list[str] = []
+    for key in ("not_applicable_task_ids", "not_applicable_ids"):
+        value = payload.get(key)
+        if isinstance(value, str):
+            value = [value]
+        if isinstance(value, (list, tuple)):
+            found.extend(str(item).strip() for item in value if str(item).strip())
+    diagnostics = payload.get("projection_diagnostics") or ()
+    if isinstance(diagnostics, (list, tuple)):
+        for item in diagnostics:
+            if not isinstance(item, Mapping):
+                continue
+            if str(item.get("kind") or "") not in {"not_applicable", "empty_manifest"}:
+                continue
+            for key in ("task_ids", "not_applicable_task_ids", "ids"):
+                value = item.get(key) or ()
+                if isinstance(value, str):
+                    value = [value]
+                found.extend(
+                    str(entry).strip() for entry in value if str(entry).strip()
+                )
+    return tuple(dict.fromkeys(found))
+
+
+class EmptyArtifactDispositionV1(BaseModel):
+    """空产物的处置结论（审计 §F.3）。"""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    logical_role: str
+    phase: str
+    empty: bool = False
+    policy: str = DEFAULT_PHASE_EMPTY_POLICY
+    required_units: int = 0
+    allowed: bool = True
+    reason: str = ""
+    declared_not_applicable_task_ids: tuple[str, ...] = ()
+    failures: tuple[str, ...] = ()
+
+    def as_trace(self) -> dict[str, Any]:
+        return self.model_dump(mode="json")
+
+
+def assess_empty_artifact(
+    role: str,
+    phase: str,
+    payload: Any,
+    *,
+    required_units: int = 0,
+) -> EmptyArtifactDispositionV1:
+    """判断某个阶段的空产物是否合法，并如实记录为空的原因。"""
+
+    key = (str(role), str(phase))
+    policy = PHASE_EMPTY_POLICY.get(key, DEFAULT_PHASE_EMPTY_POLICY)
+    not_applicable = _not_applicable_task_ids(payload)
+    if not _empty_manifest(payload):
+        return EmptyArtifactDispositionV1(
+            logical_role=key[0],
+            phase=key[1],
+            empty=False,
+            policy=policy,
+            required_units=int(required_units),
+            reason="not_empty",
+            declared_not_applicable_task_ids=not_applicable,
+        )
+    required = max(0, int(required_units))
+    if required > 0 and policy == "requires_units":
+        return EmptyArtifactDispositionV1(
+            logical_role=key[0],
+            phase=key[1],
+            empty=True,
+            policy=policy,
+            required_units=required,
+            allowed=False,
+            reason="empty_with_required_units",
+            declared_not_applicable_task_ids=not_applicable,
+            failures=(
+                f"artifact_empty_with_required_units:{key[0]}:{key[1]}:{required}",
+            ),
+        )
+    return EmptyArtifactDispositionV1(
+        logical_role=key[0],
+        phase=key[1],
+        empty=True,
+        policy=policy,
+        required_units=required,
+        allowed=True,
+        reason=(
+            "no_required_units"
+            if required == 0
+            else "declared_not_applicable"
+            if not_applicable
+            else "empty_allowed_by_policy"
+        ),
+        declared_not_applicable_task_ids=not_applicable,
+    )
+
+
 def build_artifact_index(
     out_root: str | Path,
     *,
@@ -373,8 +498,14 @@ def resolve_artifact(
     out_root: str | Path,
     expected_digest: str | None = None,
     allow_empty: bool = True,
+    required_units: int | None = None,
 ) -> Path:
-    """按 (role, phase) 解析当前产物；歧义/缺失/摘要不符/路径逃逸一律阻断。"""
+    """按 (role, phase) 解析当前产物；歧义/缺失/摘要不符/路径逃逸一律阻断。
+
+    审计 §F.3：``required_units`` 给出该阶段**冻结的必需单元数**；>0 时该阶段的空产物
+    不再是"合法空"，而是 typed block——空是否合法取决于阶段与冻结单元，不取决于
+    所有 phase 共用的 ``allow_empty=True``。
+    """
 
     key = f"{role}:{phase}"
     if key not in index.active:
@@ -390,8 +521,18 @@ def resolve_artifact(
         raise ArtifactIndexError(f"artifact_missing:{key}:{path_value}")
     entry = index.entry_for(role, phase)
     if entry is not None:
-        if entry.status == "valid_empty" and not allow_empty:
-            raise ArtifactIndexError(f"artifact_empty_not_allowed:{key}")
+        if entry.status == "valid_empty":
+            if not allow_empty:
+                raise ArtifactIndexError(f"artifact_empty_not_allowed:{key}")
+            if required_units is not None and int(required_units) > 0:
+                policy = PHASE_EMPTY_POLICY.get(
+                    (str(role), str(phase)), DEFAULT_PHASE_EMPTY_POLICY
+                )
+                if policy == "requires_units":
+                    raise ArtifactIndexError(
+                        f"artifact_empty_with_required_units:{key}:"
+                        f"{int(required_units)}"
+                    )
         if expected_digest:
             if not entry.semantic_digest:
                 raise ArtifactIndexError(f"artifact_semantic_digest_missing:{key}")
@@ -423,6 +564,8 @@ class ValidatedArtifactReadV1(BaseModel):
     #: 同一份字节里读到声明值，未复算）/ bytes_only（该产物不带语义摘要）。
     semantic_digest_verification: str = "bytes_only"
     payload: Any = None
+    #: 审计 §F.3：空产物是否合法、为什么为空、哪些任务 not_applicable。
+    empty_disposition: EmptyArtifactDispositionV1 | None = None
 
 
 #: 能用 producer 模型**复算**语义摘要的 role（审计 §F.2）。未注册的 role 会以
@@ -469,12 +612,16 @@ def read_artifact_validated(
     out_root: str | Path,
     expected_digest: str | None = None,
     allow_empty: bool = True,
+    required_units: int | None = None,
 ) -> ValidatedArtifactReadV1:
     """解析 + 读取 + **重算**字节与语义摘要，然后返回同一份已验证内容。
 
     审计 §F.2 的确定行为：``resolve_artifact`` 只比较索引缓存里的摘要，不重算当前
-    字节，因此"建索引后改动 active 文件"不会被发现。本函数在消费点重算：
+    字节，因此"建索引后改动 active 文件"不会被发觉。本函数在消费点重算：
     字节摘要必须等于索引记录值，语义摘要（若记录）也必须在同一份字节上复算一致。
+
+    审计 §F.3：``required_units`` 给出该阶段冻结的必需单元数；空产物在该阶段需要
+    单元时直接 typed block，并把"为什么为空 / 哪些任务 not_applicable"写进返回结果。
     """
 
     path = resolve_artifact(
@@ -484,6 +631,7 @@ def read_artifact_validated(
         out_root=out_root,
         expected_digest=expected_digest,
         allow_empty=allow_empty,
+        required_units=required_units,
     )
     entry = index.entry_for(role, phase)
     if entry is None or entry.path != str(
@@ -533,6 +681,9 @@ def read_artifact_validated(
         semantic_digest=entry.semantic_digest,
         semantic_digest_verification=verification,
         payload=payload,
+        empty_disposition=assess_empty_artifact(
+            role, phase, payload, required_units=int(required_units or 0)
+        ),
     )
 
 
