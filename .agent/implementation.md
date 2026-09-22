@@ -4943,3 +4943,23 @@ engine commit/source digest、`validator_bundle_digest`、必测集合（4/4）�
 
 **操作注意**：回执同时绑定 `engine_commit_sha`，因此**任何新提交都会让它失效**；最后一次
 提交之后必须重新生成（本轮已在最后一次提交后重跑）。
+
+## 2026-09-22 审计 §3：F01–F12 收口核对（代码 owner + 生产接线 + 证据）
+
+| 缺陷 | 代码 owner（修复点） | 生产接线 | 证据 |
+|---|---|---|---|
+| F01 分页未覆盖最终 Writer 合同 | `unified_context_compiler`（所有可写段落进同一候选页构建器、`assert_page_paragraph_set_within_limit`、`compare_actual_request_to_page_contract` 发送前复核） | 主 writer 的 page adapter + pre-send | `test_narrative_only_section_is_paged_by_the_candidate_contract`（7 段 vs 上限 6）、`test_final_page_paragraph_set_is_checked_against_the_limit`（1 技术+15 叙事）、`test_adapter_appending_paragraphs_is_rejected` |
+| F02 目标内容身份漏变更 | `capture_target_identity` 改为内容快照（commit/porcelain 仅诊断） | `build_run_open_identity` + 预检 | `test_target_dirty_content_change_invalidates_resume`、`test_same_target_content_in_another_path_has_same_content_identity`、`test_target_identity_carries_content_not_commit` |
+| F03 fork 恢复与锁内二次准入 | `autonomous_method_agent.open_authoring_execution`：预检 → **取锁 → 锁内重新解析身份 + `validate_run_open`** → bind → 建/校身份，异常释放锁；fork 分支保留 birth/导入摘要 | 产品入口 | `test_two_new_openers_cannot_both_admit_same_root`、`test_run_lease_released_on_success_and_exception`、`test_lease_is_exclusive_across_processes`、`test_fork_authoring_can_resume_without_changing_birth_metadata` |
+| F04 账本四口径不一致 | 单一 reducer `reduce_invocation_recovery`（8 状态 + typed blocks），doctor/CLI/发送包装器只消费同一结论 | 主 writer 页面循环、doctor、replay | `test_ledger_recovery_matrix.py`（19 项：两次真实失败、只有 started/request/response、completed 缺 response、损坏 acceptance、旧拒发后合法接受、超时未知）、`test_all_readers_agree_on_the_same_conclusion` |
+| F05 索引不验证冻结字节 | `authoring_artifact_index`：字节 digest 复算、显式 digest 零命中不回退、非法 JSON/不支持 schema 不 active、generation 显式消歧、阶段快照不可覆盖；`authoring_artifact_registry` + `authoring_artifact_publication` | doctor/summary/replay/doctor 读取路径 | `test_artifact_index.py`(17)、`test_artifact_registry.py`(8)、`test_publication_transaction.py`(5)、`test_authoring_doctor.py`(8) |
+| F06 合并丢信息 + 绑定决策未接线 | `intent_narrative_compiler._merge_units`（optional details/formula/reader goal 守恒、冲突拒绝）；`_slot_binding_decision` 驱动 `_slot_for_decision` | `compile_authoring_units` → narrative 计划 | `test_authoring_unit_merge.py`(12)、`test_production_path_calls_the_binding_decision` |
+| F07 语义摘要/权限/输入消费守恒 | `_story_intent_payload` 纳入 `reader_question`；`_surface_with_status` 重建 surface 并让 digest 自洽 | 意图摘要 → 页身份/复用 | `test_reader_question_changes_the_intent_digest`、`test_surface_status_update_rebuilds_the_sealed_digest`、`test_paragraph_surface_digest_follows_the_rebuilt_surface` |
+| F08 失败码不统一 | `publication_transaction_contract` canonical 表 + legacy 别名 + owner/action/escalation；未知 code → typed block；`input_material_missing` → Research/Planner | repair packet 构造 + 主 writer 路由 | `test_repair_packet.py`(12)、`test_canonical_action_selection_table`、`test_unknown_failure_code_is_a_typed_block` |
+| F09 输出估量未覆盖真实结构 | `writer_output_workload`：witness 出现次数独立计费、公式不重复计、未知预算 fail-closed、calibrated profile 需证据 | 分页与页准入 | `test_output_feasibility.py`(13)、`test_writer_witness_occurrences_are_charged_to_the_estimate`、`test_unknown_output_budget_is_fail_closed` |
+| F10 单正文未进出版物 | `section_writer._normalize_publication_paragraph_transaction` → `_compose_publication_section_markdown` + `_publication_prose_surface_failures`（**委托** `paragraph_prose_composer.audit_prose_surface`，顺序取冻结计划 `expected_ids`），失败即 transaction incomplete | 真实 Writer 页解析路径（5425 行） | `test_prose_surface.py`(9)、`test_writer_surface_contract.py`(5)、`test_frozen_plan_order_is_the_order_authority`、`test_plan_order_violation_is_reported` |
+| F11 离线准入/端到端证明范围不足 | G.1/G.2 假 provider 真实链路；`live_admission_preflight` 分 offline-ready/live-ready 两组门 + 回执绑定规则/必测集合 | 产品入口 + CLI | `test_authoring_contract_closure.py`(11)、`test_live_admission.py`(18) |
+| F12 质量比较方向奖励错误行为 | `authoring_quality_comparison`：默认 direction=unknown、覆盖/分母/任务集合门控、both-sides not-measured | 质量对照 CLI/报告 | `test_quality_comparison.py`(14) |
+
+约束复核（本轮实测）：`git diff --check` 干净；段数上限仍为默认 **6**（`source=default, disabled=False`，
+未提高也未关闭）；自冻结基线以来**没有任何** ledger/回执/产物文件被删除；未执行任何 live。
