@@ -4502,3 +4502,39 @@ context → 空 manifest 不抛 `.model_dump`；SimpleNamespace formula package 
 测试：`test_page_contract_recheck.py` 新增 5 项（错误形状报 contract error、writer
 worksets 拒绝无法识别的计划、Writer input 类型错走 typed failure、空 context 编译成空
 manifest、SimpleNamespace 公式包正常 splice）。回归目录 + 编译器套件 336 项全绿。
+
+## 2026-09-22 审计 PR G.2（第一片）：fake-provider 全链 + 发现"空合同 → 真空验收"
+
+新增 `tests/regression_20260922/test_authoring_contract_closure.py`：复用真实产品入口
+`run_publication_method_writer`、真实 adapter/assessor/Binder/composer 与真实产物写入，
+只把模型/网络边界换成按请求生成合法响应的 fake provider（不返回"全局通过"）。
+
+**复现的真实缺陷**（写场景 3 时发现，比文档描述更严重）：生产 writer 内容验收
+`assess_publication_writer_response` 只从 `section.argument_graph["paragraphs"]` 取计划行，
+而 V2 page lane 的 section 是空的（页内计划在 `prompt_payload["narrative_plan"]`）——
+于是 `plans == ()`，循环体一次都不执行，**任何"段落有正文"的响应都被接受**：实测一个
+detail witness 都没有、只声明 atom、还自带 `rendered_detail_ids` 的响应拿到了
+`content_acceptance_status=accepted`。同一处还用默认的 `final_bound` 阶段打分，与页面
+gate 的"writer_content"意图不一致。
+
+修复（`section_writer.assess_publication_writer_response`）：
+
+- 计划行按"section 合同 → 页内 `narrative_plan.paragraphs`"顺序解析；
+- 两者都取不到、但响应确实返回了段落 → 记 `writer_acceptance_plan_missing` 并计入
+  invalid_count（fail-closed，不做真空验收）；
+- 段落事务打分显式使用 `validation_stage="writer_content"`（Writer 不必枚举
+  Binder-owned atom，但 detail/公式/正文义务必须成立）。
+
+新增测试 4 项（均为真实接线）：
+
+1. 首次合法内容 → 真实验收 accepted + 发布文本来自共享 composer；
+2. atom-only（丢光 detail witness）→ rejected、聚合回执不计完成、`repository_verified_method`
+   为空（Candidate checkpoint 可保留被拒正文供复核，但不得冒充已验证内容）；
+3. 模型追加计划外段落 → 拒绝且注入正文永不进入发布产物（composer 不得静默吞掉）；
+4. 被拒页面 → 有界 repair（2 次 writer 调用，`build_writer_section_repair_packet` 间谍
+   证实生产调用；packet 带 canonical owner/action 与 `failed_paragraph_ids`；请求仍然携带
+   同一冻结 page id / 段落集合 / binding contract；内部冻结摘要不进入请求），并留下
+   `repair_committed=True` 的可复用接受记录。repair 需要 run 显式声明 retry reserve
+   （没有免费重试），测试里如实声明。
+
+writer/publication/回归套件 610 项全绿。

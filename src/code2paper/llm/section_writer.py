@@ -6108,10 +6108,26 @@ def assess_publication_writer_response(
             ),
         }
 
+    # 审计 §E.4/§G.2：验收必须落在**请求实际携带的冻结页面合同**上。V2 page lane 的
+    # section.argument_graph 是空的（page-local 计划在 prompt_payload.narrative_plan 里），
+    # 旧实现因此得到空 plans → 什么都没验 → 任何"段落有正文"的响应都被接受
+    # （实测：只声明 atom、一个 detail witness 都没有也能通过内容关卡）。
     plans = tuple(
         item for item in (section.argument_graph.get("paragraphs") or ())
         if isinstance(item, Mapping)
     )
+    plan_source = "argument_graph"
+    if not plans:
+        prompt_payload = (
+            section.prompt_payload if isinstance(section.prompt_payload, Mapping) else {}
+        )
+        page_plan = prompt_payload.get("narrative_plan")
+        if isinstance(page_plan, Mapping):
+            plans = tuple(
+                item for item in (page_plan.get("paragraphs") or ())
+                if isinstance(item, Mapping)
+            )
+            plan_source = "page_narrative_plan"
     transactions = {
         str(item.paragraph_id): item
         for item in (output.paragraphs or ())
@@ -6133,6 +6149,12 @@ def assess_publication_writer_response(
         "missing": [],
         "failures": [],
     }
+    if not plans and transactions:
+        # 没有可核对的冻结合同却拿到了段落：不能"零要求 → 通过"。
+        metrics["invalid_count"] += 1
+        metrics["invalid_witness_count"] += 1
+        metrics["missing"].append("writer_acceptance_plan_missing")
+        metrics["failures"].append("writer_acceptance_plan_missing")
     assessments: dict[str, Any] = {}
     for plan_row in plans:
         paragraph_id = str(plan_row.get("paragraph_id") or "")
@@ -6165,6 +6187,7 @@ def assess_publication_writer_response(
             plan_row=plan_row,
             formula_routes=formula_routes,
             required_anchors=required_anchors_from_plan_row(plan_row),
+            validation_stage="writer_content",
         )
         assessments[paragraph_id] = assessment
         required_count = sum(
