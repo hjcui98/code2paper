@@ -345,3 +345,56 @@ def test_writer_acceptance_alone_does_not_publish_verified_text(tmp_path: Path) 
     # Writer 阶段的回执可以如实报"内容阶段完成"（§E.4：这不是 publication acceptance），
     # 但整条 run 必须因为下游失败而保持 incomplete。
     assert _result.status == "incomplete"
+
+
+def test_section_headings_are_reader_facing_not_internal_identifiers(
+    tmp_path: Path,
+) -> None:
+    """审计 §D/§I：内部机制标识符不得进入读者可见标题。
+
+    实测缺陷：统一链路的 section 标题直接取机制显示名 ``Sym:Encoder``，于是
+    candidate authority 门报 `candidate_contains_internal_audit_terms`，整条干净候选
+    路径被自己的内部标识符挡住。
+    """
+
+    import json as _json
+
+    from code2paper.agentic.intent_spine_models import (
+        heading_is_internal_identifier,
+    )
+    from code2paper.agentic.method_architect import (
+        _reader_facing_section_heading,
+    )
+
+    # 单元：内部标识符被投影成人类标题；人类标题原样保留。
+    assert _reader_facing_section_heading("Sym:Encoder") == "Encoder"
+    assert _reader_facing_section_heading("mech_sym:encoder") == "Encoder"
+    assert _reader_facing_section_heading("Sym:InfoNCE_Loss") == "Info NCE Loss"
+    assert _reader_facing_section_heading("Encoder") == "Encoder"
+    assert _reader_facing_section_heading("MA-S1") == "MA-S1"
+
+    requests: list[LLMRequest] = []
+
+    def caller(config, request):
+        requests.append(request)
+        return _mock_writer_caller(config, request)
+
+    _result, outputs = _run(tmp_path, caller)
+
+    for key in ("narrative_plan_v3", "method_section_plan_v2"):
+        data = _json.loads(Path(outputs[key]).read_text(encoding="utf-8"))
+        for section in data.get("sections") or ():
+            heading = str(section.get("heading") or "")
+            assert heading and not heading_is_internal_identifier(heading), (
+                f"{key} 的标题仍是内部标识符：{heading}"
+            )
+
+    authority = _json.loads(
+        Path(outputs["candidate_authority_validation_v1"]).read_text(
+            encoding="utf-8"
+        )
+    )
+    assert authority["validation"]["status"] == "passed", authority["validation"]
+    assert "candidate_contains_internal_audit_terms" not in (
+        authority["validation"]["violations"]
+    )

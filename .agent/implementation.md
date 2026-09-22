@@ -4549,3 +4549,30 @@ acceptance"在真实接线上成立。Writer 聚合回执仍如实报内容阶�
 的 fake writer，才能让确定性 Binder 真正绑定并过 candidate authority 门）、作者-only
 段落路径（场景 5）、Formalizer 无任务（场景 7）、损坏索引下的 writing lane（场景 8）。
 G.3 崩溃注入与 G.5 准入加强同样未做。
+
+## 2026-09-22 审计 PR G.2/D（第二片）：内部机制标识符泄漏进正文标题
+
+写正向写作链场景时发现（比 G.2 表格里的任何一条都更靠前）：统一链路的 section 标题
+直接取机制显示名——实测 `narrative_plan_v3` 与 `method_section_plan_v2` 的 heading 都是
+`Sym:Encoder`，而作者/架构计划的标题本来是干净的 `Encoder`。后果有两个：
+
+1. 读者可见正文标题里出现内部标识符（违反 I1/D 的"内部标识符不得进入正文"）；
+2. `validate_candidate_authority` 如实报 `candidate_contains_internal_audit_terms`，
+   于是**干净候选路径被自己的内部标识符挡住**（实测 authority status=error）。
+
+修复：`method_architect` 新增 `_reader_facing_section_heading(heading, mechanism_id,
+mechanism_name)`：仅当标题被 `heading_is_internal_identifier` 判定为内部标识符时，剥掉
+`Sym:`/`mech_sym:` 前缀、按 camelCase/下划线拆词并首字母大写（`Sym:InfoNCE_Loss` →
+`Info NCE Loss`），人类标题原样保留；四处 heading 赋值点（V3 主路径的 prior/新 section、
+第二处 prior/新 section）全部改用该投影。
+
+实测效果：`narrative_plan_v3`/`method_section_plan_v2` 标题变成 `Encoder`，
+`candidate_authority_validation_v1` 从 `error` 变为 **passed**（violations 为空）。
+run 仍为 incomplete——那是确定性 Binder 的闭集拒绝了 mock 声明的 atom witness
+（`binder_target_outside_closed_contract`），属于两阶段分工的正常结果。
+
+测试：G.2 文件新增 1 项（单元 + 真实接线：标题不是内部标识符、candidate authority 通过）。
+writer/publication/回归套件 482 项全绿。
+
+**G.2 仍缺**：正向 Verified 全链需要一个"只声明 detail witness、并把页面 atom 的
+exact excerpt 原样写进正文"的 fake writer，让确定性 Binder 真正绑定成功。

@@ -8579,6 +8579,52 @@ def _v3_section_slug(value: str) -> str:
     return slug[:80] or "mechanism"
 
 
+#: 内部机制标识符前缀（``Sym:`` / ``mech_sym:`` / ``mech-sym/`` …）。
+_MECHANISM_IDENTIFIER_PREFIX_RE = re.compile(
+    r"(?i)^\s*(?:mech[_-]?)?sym\s*[:/]\s*"
+)
+
+
+def _reader_facing_section_heading(
+    heading: Any,
+    *,
+    mechanism_id: str = "",
+    mechanism_name: str = "",
+) -> str:
+    """把内部机制标识符投影成读者可读标题（审计 §D/§I）。
+
+    事故与本次实测都出现过"标题直接是 ``Sym:Encoder``"这种内部标识符：它会被
+    candidate authority 门当成 `candidate_contains_internal_audit_terms` 拒绝，更糟的是
+    它本来就不该出现在读者可见的正文标题里。这里只改**表示**：剥掉机制标识符前缀、
+    按 camelCase/下划线拆词并首字母大写；已经是人类标题的一律原样保留。
+    """
+
+    from code2paper.agentic.intent_spine_models import (
+        heading_is_internal_identifier,
+    )
+    from code2paper.agentic.publication_transaction_contract import (
+        _humanize_source_identifier,
+    )
+
+    raw = str(heading or "").strip()
+    if raw and not heading_is_internal_identifier(raw):
+        return raw
+
+    def _humanize(value: str) -> str:
+        text = _MECHANISM_IDENTIFIER_PREFIX_RE.sub("", str(value or "").strip())
+        text = _humanize_source_identifier(text)
+        if not text:
+            return ""
+        # 全小写词首字母大写（"encoder" → "Encoder"）；含大写或数字的标识保持原样。
+        return text[:1].upper() + text[1:] if text.islower() else text
+
+    for candidate in (raw, mechanism_name, mechanism_id):
+        humanized = _humanize(candidate)
+        if humanized and not heading_is_internal_identifier(humanized):
+            return humanized
+    return raw
+
+
 def _prior_section_owners(
     prior_sections: Any,
 ) -> tuple[dict[str, str], list[dict[str, Any]]]:
@@ -8954,14 +9000,20 @@ def build_narrative_plan_v3(
             row_detail_list = row_details.get(row_index, [])
             if prior_sec is not None:
                 section_id = str(prior_sec.section_id)
-                heading = str(
+                heading = _reader_facing_section_heading(
                     getattr(prior_sec, "heading", "")
-                    or getattr(candidate, "mechanism_name", mechanism_id)
+                    or getattr(candidate, "mechanism_name", mechanism_id),
+                    mechanism_id=mechanism_id,
+                    mechanism_name=str(getattr(candidate, "mechanism_name", "")),
                 )
                 prior_paras = getattr(prior_sec, "paragraphs", ()) or ()
             else:
                 section_id = f"MA-REV-{_v3_section_slug(mechanism_id)}"
-                heading = str(getattr(candidate, "mechanism_name", mechanism_id))
+                heading = _reader_facing_section_heading(
+                    getattr(candidate, "mechanism_name", mechanism_id),
+                    mechanism_id=mechanism_id,
+                    mechanism_name=str(getattr(candidate, "mechanism_name", "")),
+                )
                 prior_paras = ()
 
             chunks: list[list[Any]] = []
@@ -9168,14 +9220,20 @@ def build_narrative_plan_v3(
                 )
             if prior_sec is not None:
                 section_id = str(prior_sec.section_id)
-                heading = str(
-                    getattr(prior_sec, "heading", "") or f"{ctx.mechanism_name}"
+                heading = _reader_facing_section_heading(
+                    getattr(prior_sec, "heading", "") or f"{ctx.mechanism_name}",
+                    mechanism_id=str(ctx.mechanism_id),
+                    mechanism_name=str(ctx.mechanism_name),
                 )
                 prior_paras = getattr(prior_sec, "paragraphs", ()) or ()
                 consumed_prior_sections.add(section_id)
             else:
                 section_id = f"sec_method_{sec_idx}"
-                heading = f"{ctx.mechanism_name}"
+                heading = _reader_facing_section_heading(
+                    f"{ctx.mechanism_name}",
+                    mechanism_id=str(ctx.mechanism_id),
+                    mechanism_name=str(ctx.mechanism_name),
+                )
                 prior_paras = ()
                 if prior_plan is not None:
                     identity_diagnostics["revision_sections"].append({
