@@ -3753,3 +3753,33 @@ new 不继承旧出生、导入变更拒绝续跑、两个 new 打开者不能�
 把 `build_run_open_identity`/`capture_target_identity`/`RunLease` 等函数整段删掉；
 已 `git checkout --` 还原该文件后改用定点编辑重做（后续同类改动一律小步定点 + 每步
 compile/定向测试）。
+
+### PR A.4：研究导入的闭包校验（本轮）
+
+审计 §A.4 指出 `verify_research_import` 只验证 checkpoint 外壳。新增
+`verify_research_import_closure(checkpoint, *, expected_project_tree_hash=None)`：
+
+- **外壳**（既有）：文件存在、可解析、含 run_id / repo_snapshot_id / project_tree_hash；
+- **provenance 绑定**：checkpoint 的 `project_tree_hash` 必须等于当前目标仓库的**内容**
+  tree hash（实测事故归档的 `sha256:9b4f1a34…` 与本机真实 EBCAR 目标完全一致 → 严格校验
+  不影响合法 L2 fork）；
+- **必备权威材料**（8 项，封闭集合 + 各自模型校验）：intent_graph / agenda /
+  atomic_claims / evidence_packets / code_facts / source_manifest / symbol_index /
+  implementation_scope；
+- **内容一致性**：会自封摘要的模型做"删 digest 重算必须等于原值"；声明了
+  repo_snapshot_id/project_tree_hash 的产物必须与顶层一致；facts→packets→claims 的
+  digest 引用链必须闭合；
+- **路径安全**：manifest / symbol index 中声明的仓库路径必须相对、无 `..`/`~`/绝对路径；
+- **禁止继承**：出现 `writer_*` / `content_acceptance*` / `binder_receipt*` /
+  `publication_candidate*` / `invocation_budget*` / `active_pointer*` / `run_lease*`
+  等 payload 即拒绝。
+
+接线：`resolve_open_identity` 的 fork 分支使用闭包（并复用同一份 target 快照，
+不重复计算）；`preflight_run_open` 与 CLI 得到类型化拒绝码；回放脚本的导入校验同样升级为闭包。
+
+新增 `tests/regression_20260917/research_import_fixture.py`：以归档 checkpoint 为基、
+**只对改写过的产物重新封装摘要**，生成"内容与摘要自洽"的真实形状 fixture（空壳 JSON 正是
+审计要求拒绝的对象）。负面用例：缺失依赖、摘要链断裂、路径越界、夹带写作 payload。
+另加 skip-guarded 端到端正例：真实 EBCAR 目标 + 事故归档导入 → 准入允许（本机已跑通）。
+
+验证：regression 185 项全绿；全量离线 3786 passed、3 deselected、12 subtests passed、exit 0。

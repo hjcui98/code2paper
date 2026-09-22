@@ -295,20 +295,31 @@ def test_effective_config_digest_covers_protocol_and_tokenizer() -> None:
 
 
 def _research_checkpoint(tmp_path: Path, *, name: str = "checkpoint.json") -> Path:
-    path = tmp_path / name
-    path.write_text(
-        json.dumps(
-            {
-                "run_id": "research-1",
-                "repo_snapshot_id": "repo:snap",
-                "project_tree_hash": "sha256:tree",
-                "execution_id": "exec-parent-1",
-            }
-        )
-        + "\n",
-        encoding="utf-8",
+    """完整形状的 checkpoint（以冻结归档为基、内联摘要自洽）。"""
+
+    from .research_import_fixture import write_research_checkpoint
+
+    return write_research_checkpoint(
+        tmp_path / name, extra={"execution_id": "exec-parent-1"}
     )
-    return path
+
+
+def _fork_birth(checkpoint: Path):
+    """按 fork 语义构造出生信息（provenance 另测；此处测出生信息与准入）。"""
+
+    from code2paper.agentic.authoring_execution_identity import (
+        BirthMetadataV1,
+        research_import_parent_execution_id,
+        verify_research_import_closure,
+    )
+
+    closure = verify_research_import_closure(checkpoint)
+    assert closure.verifiable, closure.codes
+    return BirthMetadataV1(
+        creation_mode="fork_authoring",
+        parent_execution_id=research_import_parent_execution_id(checkpoint),
+        research_import_digest=closure.digest,
+    )
 
 
 def test_fork_authoring_can_resume_without_changing_birth_metadata(tmp_path: Path) -> None:
@@ -324,18 +335,15 @@ def test_fork_authoring_can_resume_without_changing_birth_metadata(tmp_path: Pat
     out_root = tmp_path / "fork-run"
     out_root.mkdir()
 
-    fork_identity, verifiable, _detail = resolve_open_identity(
-        out_root,
-        run_open_mode="fork_authoring",
+    fork_identity = build_run_open_identity(
         repo_path=target,
-        research_stage_checkpoint=checkpoint,
+        run_open_mode="fork_authoring",
+        birth_metadata=_fork_birth(checkpoint),
     )
     assert fork_identity.creation_mode == "fork_authoring"
     assert fork_identity.parent_execution_id == "exec-parent-1"
     assert fork_identity.research_import_digest
-    decision = validate_run_open(
-        out_root, "fork_authoring", fork_identity, research_import_verifiable=verifiable
-    )
+    decision = validate_run_open(out_root, "fork_authoring", fork_identity)
     assert decision.allowed is True
     create_or_validate_execution_identity(out_root, fork_identity)
 
@@ -344,7 +352,6 @@ def test_fork_authoring_can_resume_without_changing_birth_metadata(tmp_path: Pat
         out_root,
         run_open_mode="resume",
         repo_path=target,
-        research_stage_checkpoint=checkpoint,
     )
     assert resumed.birth_metadata == fork_identity.birth_metadata
     assert resumed.creation_mode == "fork_authoring"
@@ -370,11 +377,10 @@ def test_new_execution_does_not_inherit_a_previous_birth(tmp_path: Path) -> None
     out_root = tmp_path / "run"
     out_root.mkdir()
 
-    fork_identity, verifiable, _ = resolve_open_identity(
-        out_root,
-        run_open_mode="fork_authoring",
+    fork_identity = build_run_open_identity(
         repo_path=target,
-        research_stage_checkpoint=checkpoint,
+        run_open_mode="fork_authoring",
+        birth_metadata=_fork_birth(checkpoint),
     )
     create_or_validate_execution_identity(out_root, fork_identity)
 
@@ -394,10 +400,51 @@ def test_new_execution_does_not_inherit_a_previous_birth(tmp_path: Path) -> None
 
 
 def test_fork_resume_rejects_changed_research_import(tmp_path: Path) -> None:
-    """导入内容变了就不能冒充同一 fork 执行的续跑。"""
+    """导入内容变了就不能冒充同一 fork 执行的续跑（审计 §A.4/§A.5）。"""
 
     from code2paper.agentic.authoring_execution_identity import (
         create_or_validate_execution_identity,
+        resolve_open_identity,
+    )
+    from .research_import_fixture import write_research_checkpoint
+
+    target = _git_repo(tmp_path)
+    checkpoint = _research_checkpoint(tmp_path)
+    out_root = tmp_path / "run"
+    out_root.mkdir()
+
+    fork_identity = build_run_open_identity(
+        repo_path=target,
+        run_open_mode="fork_authoring",
+        birth_metadata=_fork_birth(checkpoint),
+    )
+    create_or_validate_execution_identity(out_root, fork_identity)
+
+    # 内容被改写（facts 摘要链断裂）→ 闭包校验拒绝。
+    tampered = write_research_checkpoint(
+        tmp_path / "tampered.json", corrupt_digest=("code_facts",)
+    )
+    from code2paper.agentic.authoring_execution_identity import (
+        verify_research_import_closure,
+    )
+
+    closure = verify_research_import_closure(tampered)
+    assert closure.verifiable is False
+    assert any("digest_chain_broken" in code for code in closure.codes)
+
+    # 出生信息继承自既有身份：resume 仍然匹配（导入不会被重新发明）。
+    resumed, _, _ = resolve_open_identity(
+        out_root, run_open_mode="resume", repo_path=target
+    )
+    assert resumed.birth_metadata == fork_identity.birth_metadata
+    assert validate_run_open(out_root, "resume", resumed).allowed is True
+
+
+def test_fork_with_mismatched_target_is_rejected(tmp_path: Path) -> None:
+    """导入的 provenance 必须属于当前目标仓库（审计 §A.4）。"""
+
+    from code2paper.agentic.authoring_execution_identity import (
+        RunOpenRejected,
         resolve_open_identity,
     )
 
@@ -406,42 +453,14 @@ def test_fork_resume_rejects_changed_research_import(tmp_path: Path) -> None:
     out_root = tmp_path / "run"
     out_root.mkdir()
 
-    fork_identity, verifiable, _ = resolve_open_identity(
-        out_root,
-        run_open_mode="fork_authoring",
-        repo_path=target,
-        research_stage_checkpoint=checkpoint,
-    )
-    create_or_validate_execution_identity(out_root, fork_identity)
-
-    changed = _research_checkpoint(tmp_path, name="checkpoint_v2.json")
-    payload = json.loads(changed.read_text(encoding="utf-8"))
-    payload["run_id"] = "research-2"
-    changed.write_text(json.dumps(payload) + "\n", encoding="utf-8")
-
-    # 续跑时显式提供了另一份 checkpoint：不能静默忽略，必须拒绝。
-    from code2paper.agentic.authoring_execution_identity import RunOpenRejected
-
     with pytest.raises(RunOpenRejected) as excinfo:
         resolve_open_identity(
             out_root,
-            run_open_mode="resume",
+            run_open_mode="fork_authoring",
             repo_path=target,
-            research_stage_checkpoint=changed,
+            research_stage_checkpoint=checkpoint,
         )
-    assert excinfo.value.decision.code == "research_import_digest_mismatch"
-
-    # 同一份 checkpoint 续跑则通过（出生信息一致）。
-    resumed, verifiable, _ = resolve_open_identity(
-        out_root,
-        run_open_mode="resume",
-        repo_path=target,
-        research_stage_checkpoint=checkpoint,
-    )
-    assert resumed.birth_metadata == fork_identity.birth_metadata
-    assert validate_run_open(
-        out_root, "resume", resumed, research_import_verifiable=verifiable
-    ).allowed is True
+    assert excinfo.value.decision.code == "research_import_target_mismatch"
 
 
 # --------------------------------------------------------------------------- #
@@ -535,3 +554,46 @@ def test_run_lease_released_on_success_and_exception(tmp_path: Path) -> None:
     probe = acquire_run_lease(out_bad, execution_id="exec-probe")
     probe.release()
     assert isinstance(module._ACTIVE_RUN_LEASES, set)
+
+
+def test_import_rejects_missing_or_mutated_dependency(tmp_path: Path) -> None:
+    """审计 §A.5：导入的依赖缺失/被改写/路径越界/夹带写作产物都必须拒绝。"""
+
+    from code2paper.agentic.authoring_execution_identity import (
+        verify_research_import_closure,
+    )
+    from .research_import_fixture import write_research_checkpoint
+
+    good = write_research_checkpoint(tmp_path / "good.json")
+    assert verify_research_import_closure(good).verifiable is True
+
+    missing = write_research_checkpoint(
+        tmp_path / "missing.json", drop=("evidence_packets",)
+    )
+    closure = verify_research_import_closure(missing)
+    assert closure.verifiable is False
+    assert "research_import_artifact_missing:evidence_packets" in closure.codes
+
+    mutated = write_research_checkpoint(
+        tmp_path / "mutated.json", corrupt_digest=("code_facts",)
+    )
+    closure = verify_research_import_closure(mutated)
+    assert closure.verifiable is False
+    assert any("digest_chain_broken" in code for code in closure.codes)
+
+    escaped = write_research_checkpoint(
+        tmp_path / "escaped.json", unsafe_path="../../etc/passwd"
+    )
+    closure = verify_research_import_closure(escaped)
+    assert closure.verifiable is False
+    assert "research_import_unsafe_path" in closure.codes
+    assert "../../etc/passwd" in closure.path_violations
+
+    inherited = write_research_checkpoint(
+        tmp_path / "inherited.json",
+        extra={"content_acceptance_receipts_v1": [{"accepted": True}]},
+    )
+    closure = verify_research_import_closure(inherited)
+    assert closure.verifiable is False
+    assert "research_import_forbidden_payload" in closure.codes
+    assert "content_acceptance_receipts_v1" in closure.forbidden_payload_keys

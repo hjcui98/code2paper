@@ -1126,6 +1126,7 @@ def build_run_open_identity(
     environment: Mapping[str, str] | None = None,
     require_usable_inputs: bool = True,
     birth_metadata: BirthMetadataV1 | None = None,
+    target_identity: TargetRepoIdentity | None = None,
 ) -> AuthoringExecutionIdentityV2:
     """从产品入口输入构造执行身份（预检与正式准入共用同一实现）。
 
@@ -1149,7 +1150,7 @@ def build_run_open_identity(
         else {"llm_config": "absent" if llm_config is None else str(llm_config)}
     )
     engine = engine_snapshot or capture_engine_source_snapshot()
-    target = capture_target_identity(repo_path)
+    target = target_identity or capture_target_identity(repo_path)
     bundle = validator_bundle or capture_validator_bundle_snapshot()
     tokenizer = str(tokenizer_identity or "").strip() or "unspecified"
 
@@ -1209,6 +1210,203 @@ def build_run_open_identity(
     )
 
 
+#: fork 导入必须齐备的研究权威材料：(key, module, model)。缺失/无法校验/摘要不符
+#: 都视为导入不完整——"checkpoint 外壳正确"不等于证据可用（审计 §A.4）。
+RESEARCH_IMPORT_REQUIRED_ARTIFACTS: tuple[tuple[str, str, str], ...] = (
+    ("intent_graph", "code2paper.agentic.intent_compiler_v2", "IntentObligationGraphV2"),
+    ("agenda", "code2paper.agentic.research_models", "ResearchAgendaV1"),
+    ("atomic_claims", "code2paper.agentic.evidence_compiler_v3", "AtomicClaimSetV3"),
+    ("evidence_packets", "code2paper.agentic.evidence_compiler_v3", "EvidencePacketSetV3"),
+    ("code_facts", "code2paper.agentic.evidence_compiler_v3", "CodeFactSetV1"),
+    ("source_manifest", "code2paper.agentic.source_inventory", "RepositorySourceManifestV1"),
+    ("symbol_index", "code2paper.agentic.behavior_graph", "SymbolIndexV2"),
+    ("implementation_scope", "code2paper.agentic.implementation_scope", "ImplementationScopeV1"),
+)
+
+#: fork 默认**不得**继承的 payload 前缀：写作尝试、内容验收、Binder/Realizer 回执、
+#: 已发布 candidate、旧调用预算、活动指针与租约。
+RESEARCH_IMPORT_FORBIDDEN_PREFIXES: tuple[str, ...] = (
+    "writer_",
+    "writer",
+    "content_acceptance",
+    "binder_receipt",
+    "realizer_receipt",
+    "publication_candidate",
+    "repository_verified_method",
+    "invocation_budget",
+    "run_budget",
+    "active_pointer",
+    "run_lease",
+)
+
+
+class ResearchImportClosureV1(BaseModel):
+    """研究导入的闭包校验结果（审计 §A.4）。"""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    verifiable: bool = False
+    digest: str = ""
+    detail: str = ""
+    codes: tuple[str, ...] = ()
+    validated_artifacts: tuple[str, ...] = ()
+    forbidden_payload_keys: tuple[str, ...] = ()
+    path_violations: tuple[str, ...] = ()
+    project_tree_hash: str = ""
+    repo_snapshot_id: str = ""
+
+
+def _unsafe_relative_path(value: str) -> bool:
+    text = str(value or "").strip()
+    if not text:
+        return True
+    if text.startswith("/") or text.startswith("\\") or ":" in text.split("/")[0]:
+        return True
+    normalized = text.replace("\\", "/")
+    return any(part in {"..", "~"} for part in normalized.split("/"))
+
+
+def verify_research_import_closure(
+    checkpoint_path: str | Path | None,
+    *,
+    expected_project_tree_hash: str | None = None,
+) -> ResearchImportClosureV1:
+    """校验研究导入的可用性、路径安全与内容一致性，并拒绝写作/发布类继承。"""
+
+    verifiable, digest, detail = verify_research_import(checkpoint_path)
+    if not verifiable:
+        return ResearchImportClosureV1(
+            verifiable=False, digest=digest, detail=detail, codes=(RESEARCH_IMPORT_UNVERIFIABLE,)
+        )
+    path = Path(checkpoint_path).expanduser()
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return ResearchImportClosureV1(
+            verifiable=False,
+            digest=digest,
+            detail="research checkpoint unreadable",
+            codes=(RESEARCH_IMPORT_UNVERIFIABLE,),
+        )
+    if not isinstance(payload, Mapping):
+        return ResearchImportClosureV1(
+            verifiable=False,
+            digest=digest,
+            detail="research checkpoint is not an object",
+            codes=(RESEARCH_IMPORT_UNVERIFIABLE,),
+        )
+
+    codes: list[str] = []
+    validated: list[str] = []
+    project_tree_hash = str(payload.get("project_tree_hash") or "")
+    repo_snapshot_id = str(payload.get("repo_snapshot_id") or "")
+
+    # 1) provenance：导入必须属于当前目标仓库（同内容同 tree hash）。
+    if expected_project_tree_hash and project_tree_hash != expected_project_tree_hash:
+        codes.append("research_import_target_mismatch")
+
+    # 2) required authority artifacts：存在 + 可用模型校验 + 内联摘要自洽。
+    import importlib
+
+    artifacts: dict[str, Mapping[str, Any]] = {}
+    for key, module_name, class_name in RESEARCH_IMPORT_REQUIRED_ARTIFACTS:
+        artifact = payload.get(key)
+        if not isinstance(artifact, Mapping) or not artifact:
+            codes.append(f"research_import_artifact_missing:{key}")
+            continue
+        model = getattr(importlib.import_module(module_name), class_name)
+        try:
+            instance = model.model_validate(dict(artifact))
+        except Exception as exc:  # noqa: BLE001 - 导入校验必须报告而不是抛穿
+            codes.append(f"research_import_artifact_invalid:{key}:{type(exc).__name__}")
+            continue
+        recorded = str(artifact.get("content_digest") or "")
+        # 会自封摘要的模型：删掉 digest 重新校验，若模型能算出摘要就必须与原值一致
+        # （篡改内容会导致不一致）。要求显式 digest 的模型无法重算，由下面的
+        # identity/链一致性检查兜住。
+        rebuilt = {k: v for k, v in artifact.items() if k != "content_digest"}
+        try:
+            resealed = str(getattr(model.model_validate(rebuilt), "content_digest", "") or "")
+        except Exception:  # noqa: BLE001 - 该模型要求显式 digest，跳过重算
+            resealed = ""
+        if recorded and resealed and resealed != recorded:
+            codes.append(f"research_import_artifact_digest_mismatch:{key}")
+            continue
+        # 声明了目标身份的产物必须与 checkpoint 顶层一致。
+        declared_tree = str(artifact.get("project_tree_hash") or "")
+        declared_snapshot = str(artifact.get("repo_snapshot_id") or "")
+        if declared_tree and project_tree_hash and declared_tree != project_tree_hash:
+            codes.append(f"research_import_identity_inconsistent:{key}")
+            continue
+        if declared_snapshot and repo_snapshot_id and declared_snapshot != repo_snapshot_id:
+            codes.append(f"research_import_identity_inconsistent:{key}")
+            continue
+        artifacts[key] = artifact
+        validated.append(key)
+
+    # digest 链闭合：facts → packets → claims 之间的引用必须互相指对。
+    packets_digest = str((artifacts.get("evidence_packets") or {}).get("content_digest") or "")
+    facts_digest = str((artifacts.get("code_facts") or {}).get("content_digest") or "")
+    chain = (
+        ("code_facts", "evidence_packet_digest", packets_digest),
+        ("atomic_claims", "evidence_packet_digest", packets_digest),
+        ("atomic_claims", "code_fact_digest", facts_digest),
+    )
+    for key, field, expected in chain:
+        artifact = artifacts.get(key)
+        if artifact is None or not expected:
+            continue
+        declared = str(artifact.get(field) or "")
+        if declared and declared != expected:
+            codes.append(f"research_import_digest_chain_broken:{key}.{field}")
+
+    # 3) path safety：manifest/symbol index 里声明的仓库内路径必须相对且无穿越。
+    violations: list[str] = []
+    manifest = payload.get("source_manifest")
+    if isinstance(manifest, Mapping):
+        for entry in manifest.get("entries") or ():
+            if isinstance(entry, Mapping):
+                candidate = str(entry.get("path") or "")
+                if _unsafe_relative_path(candidate):
+                    violations.append(candidate)
+    symbol_index = payload.get("symbol_index")
+    if isinstance(symbol_index, Mapping):
+        for entry in symbol_index.get("entries") or ():
+            if isinstance(entry, Mapping):
+                candidate = str(entry.get("path") or "")
+                if _unsafe_relative_path(candidate):
+                    violations.append(candidate)
+    if violations:
+        codes.append("research_import_unsafe_path")
+
+    # 4) 不得继承写作/验收/发布/预算/活动指针 payload。
+    forbidden = tuple(
+        sorted(
+            str(key)
+            for key in payload
+            if any(str(key).startswith(prefix) for prefix in RESEARCH_IMPORT_FORBIDDEN_PREFIXES)
+        )
+    )
+    if forbidden:
+        codes.append("research_import_forbidden_payload")
+
+    return ResearchImportClosureV1(
+        verifiable=not codes,
+        digest=digest,
+        detail=(
+            "研究导入闭包校验通过"
+            if not codes
+            else "研究导入闭包校验失败：" + ",".join(dict.fromkeys(codes))
+        ),
+        codes=tuple(dict.fromkeys(codes)),
+        validated_artifacts=tuple(validated),
+        forbidden_payload_keys=forbidden,
+        path_violations=tuple(dict.fromkeys(violations))[:8],
+        project_tree_hash=project_tree_hash,
+        repo_snapshot_id=repo_snapshot_id,
+    )
+
+
 def research_import_parent_execution_id(checkpoint_path: str | Path | None) -> str | None:
     """研究导入里若记录了来源执行 id，则用它作为 ``parent_execution_id``（可选）。"""
 
@@ -1261,10 +1459,31 @@ def resolve_open_identity(
 
     existing = load_execution_identity(out_root)
     verifiable, import_digest, detail = (True, "", "")
+    target_identity: TargetRepoIdentity | None = None
     if mode == "fork_authoring":
-        verifiable, import_digest, detail = verify_research_import(
-            research_stage_checkpoint
+        # 审计 §A.4：不只看 checkpoint 外壳，还要校验内联证据可验证、摘要自洽、
+        # 路径安全、且导入不属于当前目标仓库时拒绝。
+        target_identity = capture_target_identity(repo_path)
+        closure = verify_research_import_closure(
+            research_stage_checkpoint,
+            expected_project_tree_hash=target_identity.project_tree_hash or None,
         )
+        verifiable, import_digest, detail = (
+            closure.verifiable,
+            closure.digest,
+            closure.detail,
+        )
+        if not closure.verifiable:
+            raise RunOpenRejected(
+                RunOpenDecision(
+                    allowed=False,
+                    code=closure.codes[0] if closure.codes else RESEARCH_IMPORT_UNVERIFIABLE,
+                    requested_mode=mode,
+                    effective_mode=mode,
+                    allowed_next_action="provide_a_verified_research_checkpoint_for_this_target",
+                    detail=closure.detail[:320],
+                )
+            )
     elif research_import_digest:
         import_digest = str(research_import_digest)
 
@@ -1321,6 +1540,7 @@ def resolve_open_identity(
         research_import_digest=import_digest,
         birth_metadata=birth,
         require_usable_inputs=require_usable_inputs,
+        target_identity=target_identity,
         **identity_options,
     )
     return identity, verifiable, detail

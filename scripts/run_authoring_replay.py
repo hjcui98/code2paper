@@ -2828,7 +2828,7 @@ def _open_replay_execution_identity(
     from code2paper.agentic.authoring_execution_identity import (
         RESEARCH_IMPORT_UNVERIFIABLE,
         RunOpenRejected,
-        verify_research_import,
+        verify_research_import_closure,
     )
 
     mode = str(getattr(arguments, "run_open_mode", "") or "").strip().casefold()
@@ -2859,9 +2859,21 @@ def _open_replay_execution_identity(
 
     # 回放永远从冻结研究证据出发（§14.2 L1/L2）：所有模式都要求可校验的导入，
     # 并把导入摘要绑进身份，否则两份不同冻结输入会得到同一个 execution_id。
-    verifiable, import_digest, import_detail = verify_research_import(import_path)
+    # 审计 §A.4：闭包校验（内联证据可验证、摘要自洽、路径安全），而不是只看外壳。
+    closure = verify_research_import_closure(import_path)
+    verifiable, import_digest, import_detail = (
+        closure.verifiable,
+        closure.digest,
+        closure.detail,
+    )
     if not verifiable:
-        raise RunOpenRejected(_rejected_decision(mode, RESEARCH_IMPORT_UNVERIFIABLE, import_detail))
+        raise RunOpenRejected(
+            _rejected_decision(
+                mode,
+                closure.codes[0] if closure.codes else RESEARCH_IMPORT_UNVERIFIABLE,
+                import_detail,
+            )
+        )
 
     identity, _lease = open_authoring_execution(
         out_root=fresh,

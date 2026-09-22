@@ -60,14 +60,11 @@ def _frozen_root(tmp_path: Path, *, with_checkpoint: bool = True, with_intent: b
             '{"run_id": "research-1", "must_cover": []}\n', encoding="utf-8"
         )
     if with_checkpoint:
-        checkpoint = frozen / "artifacts" / "research_product"
-        checkpoint.mkdir(parents=True, exist_ok=True)
-        (checkpoint / "research_stage_checkpoint_v1.json").write_text(
-            (
-                '{"run_id": "research-1", "repo_snapshot_id": "repo:snap", '
-                '"project_tree_hash": "sha256:tree"}\n'
-            ),
-            encoding="utf-8",
+        from .research_import_fixture import write_research_checkpoint
+
+        write_research_checkpoint(
+            frozen / "artifacts" / "research_product" / "research_stage_checkpoint_v1.json",
+            run_id="research-1",
         )
     return frozen
 
@@ -192,6 +189,8 @@ def test_replay_resume_requires_matching_identity(tmp_path: Path) -> None:
 
 
 def test_replay_fork_requires_verified_research_import(tmp_path: Path) -> None:
+    """回放 fork：空壳/缺失导入被拒；导入不属于当前目标同样被拒（审计 §A.4）。"""
+
     module = _load_script()
     repo = _target_repo(tmp_path)
     config = LLMConfig(provider=LLMProvider.NONE)
@@ -206,17 +205,17 @@ def test_replay_fork_requires_verified_research_import(tmp_path: Path) -> None:
         )
     assert excinfo.value.decision.code == "research_import_unverifiable"
 
-    verifiable = _frozen_root(tmp_path / "with-checkpoint")
-    report = module._open_replay_execution_identity(
-        frozen=verifiable,
-        fresh=tmp_path / "fork-b",
-        arguments=_arguments(verifiable, repo, run_open_mode="fork_authoring"),
-        llm_config=config,
-    )
-    assert report["status"] == "opened"
-    assert report["research_import_digest"]
-    identity = load_execution_identity(tmp_path / "fork-b")
-    assert identity is not None and identity.creation_mode == "fork_authoring"
+    # 完整形状但与合成目标 provenance 不同 → 必须在写入任何产物前拒绝。
+    mismatched = _frozen_root(tmp_path / "with-checkpoint")
+    with pytest.raises(RunOpenRejected) as excinfo:
+        module._open_replay_execution_identity(
+            frozen=mismatched,
+            fresh=tmp_path / "fork-b",
+            arguments=_arguments(mismatched, repo, run_open_mode="fork_authoring"),
+            llm_config=config,
+        )
+    assert excinfo.value.decision.code == "research_import_target_mismatch"
+    assert not (tmp_path / "fork-b" / "artifacts").exists(), "拒绝必须零写入"
 
 
 def test_replay_identity_requires_target_repo(tmp_path: Path) -> None:

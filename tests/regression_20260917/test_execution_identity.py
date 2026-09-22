@@ -450,9 +450,12 @@ def test_resume_refuses_unknown_engine_identity(tmp_path: Path) -> None:
 
 
 def test_fork_requires_verifiable_research_import(tmp_path: Path) -> None:
+    """审计 §A.4：外壳检查不足够，且导入必须属于当前目标仓库。"""
+
     from code2paper.agentic.authoring_execution_identity import (
         preflight_run_open,
         verify_research_import,
+        verify_research_import_closure,
     )
 
     checkpoint = (
@@ -460,18 +463,23 @@ def test_fork_requires_verifiable_research_import(tmp_path: Path) -> None:
         / "artifacts/research_product/research_stage_checkpoint_v1.json"
     )
     verifiable, digest, _detail = verify_research_import(checkpoint)
-    assert verifiable is True
-    assert digest.startswith("sha256:")
+    assert verifiable is True and digest.startswith("sha256:")
+    closure = verify_research_import_closure(
+        checkpoint, expected_project_tree_hash="sha256:9b4f1a34c70f10c2317f024df585e282c9d02371586a629e00ace26d8988c942"
+    )
+    assert closure.verifiable is True, closure.codes
+    assert len(closure.validated_artifacts) >= 8
 
+    # 目标仓库与导入的 provenance 不一致 → 拒绝（不能把别处的证据拿来 fork）。
     target = _engine_repo(tmp_path, "target")
-    allowed = preflight_run_open(
+    mismatched = preflight_run_open(
         tmp_path / "fork",
         "fork_authoring",
         repo_path=target,
         research_import_path=checkpoint,
     )
-    assert allowed.allowed is True
-    assert allowed.effective_mode == "fork_authoring"
+    assert mismatched.allowed is False
+    assert mismatched.code == "research_import_target_mismatch"
 
     stub = tmp_path / "stub.json"
     stub.write_text("{}", encoding="utf-8")
@@ -492,6 +500,28 @@ def test_fork_requires_verifiable_research_import(tmp_path: Path) -> None:
     )
     assert missing.allowed is False
     assert missing.code == RESEARCH_IMPORT_UNVERIFIABLE
+
+
+@pytest.mark.skipif(
+    not Path(incident_archive.TARGET_REPO_ROOT).is_dir(),
+    reason="真实 EBCAR 目标仓库不在本机（审计 §A.4 的端到端正例）",
+)
+def test_fork_against_the_real_target_admits(tmp_path: Path) -> None:
+    """同一份事故导入 + 真实目标内容 → provenance 通过、准入允许。"""
+
+    from code2paper.agentic.authoring_execution_identity import preflight_run_open
+
+    checkpoint = (
+        incident_archive.archive_root()
+        / "artifacts/research_product/research_stage_checkpoint_v1.json"
+    )
+    decision = preflight_run_open(
+        tmp_path / "real-fork",
+        "fork_authoring",
+        repo_path=incident_archive.TARGET_REPO_ROOT,
+        research_import_path=checkpoint,
+    )
+    assert decision.allowed is True, decision.code
 
 
 # --------------------------------------------------------------------------- #
