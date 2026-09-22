@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import importlib.util
+import json
 import os
 import subprocess
 import sys
@@ -320,3 +321,49 @@ def test_execution_record_carries_execution_identity(tmp_path: Path) -> None:
     record = json.loads((tmp_path / "fresh" / "execution_record.json").read_text(encoding="utf-8"))
     assert record["execution_identity"]["execution_id"] == "exec-test"
     assert record["execution_identity"]["content_digest"] == "sha256:test"
+
+
+# --------------------------------------------------------------------------- #
+# §F.5：重放前必须验证受索引管理的输入（其余 scratch 读取如实标注）
+# --------------------------------------------------------------------------- #
+
+
+def test_replay_verifies_index_managed_inputs_before_use(tmp_path: Path) -> None:
+    from code2paper.agentic.authoring_artifact_index import publish_artifact_index
+
+    from .test_authoring_end_to_end_offline import _run as _product_run
+
+    module = _load_script()
+    frozen = tmp_path / "frozen-run"
+    _product_run(frozen)
+    publish_artifact_index(frozen)
+
+    verified, blockers = module.verify_index_managed_replay_inputs(frozen)
+    assert blockers == [], blockers
+    assert "authoring_execution_identity:research" in verified
+    assert "run_summary:terminal" in verified
+    assert "non-indexed scratch files" in module.LEGACY_UNVERIFIED_READ_NOTE
+
+    # 索引发布后改动受管理产物 → 使用前失败（不依赖缓存摘要）。
+    summary = frozen / "artifacts" / "research_product" / "run_summary.json"
+    payload = json.loads(summary.read_text(encoding="utf-8"))
+    payload["run_id"] = "mutated-after-index"
+    summary.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+
+    verified_after, blockers_after = module.verify_index_managed_replay_inputs(frozen)
+    assert "run_summary:terminal" not in verified_after
+    assert any(
+        blocker.startswith("artifact_read_blocked:run_summary:terminal")
+        and "artifact_bytes_changed_since_index" in blocker
+        for blocker in blockers_after
+    ), blockers_after
+
+
+def test_replay_refuses_to_start_on_unverified_inputs(tmp_path: Path) -> None:
+    """gate 必须在复制/使用产物之前拒绝：telemetry 给出 typed terminal reason。"""
+
+    module = _load_script()
+    frozen = tmp_path / "frozen-run"
+    (frozen / "artifacts").mkdir(parents=True, exist_ok=True)
+    verified, blockers = module.verify_index_managed_replay_inputs(frozen)
+    assert verified == [] and blockers == [], "没有产出的阶段不算阻断"

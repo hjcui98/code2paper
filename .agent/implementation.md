@@ -4798,3 +4798,27 @@ G.2 文件 11 项全绿；回归 + unified 套件 350 项通过。
 新的不可变注册记录、指针前移属于预期。
 
 回归 + unified 套件 351 项通过。
+
+## 2026-09-22 审计 PR F.5（第三片）：重放入口验证受索引管理的输入
+
+复现的审计论断（成立）：`scripts/run_authoring_replay.py` 完全不使用产物索引——26 处
+`_read_json_mapping` 都按文件名直接读，包括身份、调用计划、回执这些**受索引管理**的产物，
+"改动消费文件后使用前失败"在重放路径上不成立。
+
+修复（区分"受管理"与"具名 legacy"两类读取）：
+
+- 新增 `INDEX_MANAGED_REPLAY_INPUTS`（身份/legacy 身份/叙事计划/两代 workset manifest/
+  调用计划/分节回执/聚合回执/run summary）与
+  `verify_index_managed_replay_inputs(frozen)`：优先已发布索引 revision（否则临时扫描），
+  逐个 `read_artifact_validated`；只验证**存在**的产物（没产出不算阻断），存在却验证失败 →
+  `artifact_read_blocked:<role>:<phase>:...`。
+- `_replay` 在"复制/使用冻结产物之前"调用该 gate：blocker 非空即 `terminal_reason =
+  artifact_read_blocked:...`、`error_code=artifact_read_blocked`、退出码 2，并在 telemetry
+  记录 `index_verified_inputs` / `index_blocked_inputs`。
+- 其余私有 scratch 读取保持按名读取，但在 telemetry 里用
+  `legacy_unverified_reads`（`LEGACY_UNVERIFIED_READ_NOTE`）**具名标注**未验证范围——
+  这正是 §F.5 允许的"仅历史归档读取可用有名称的 legacy resolver，并在报告里标注"。
+
+测试：真实产品 run + 发布索引 → 验证通过（身份/legacy 身份/run summary 在列）；
+发布索引后改动 run summary → `run_summary:terminal` 不再通过且 blocker 含
+`artifact_bytes_changed_since_index`；空目录不算阻断。回归 + 重放相关套件 375 项通过。

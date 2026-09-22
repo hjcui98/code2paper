@@ -890,6 +890,63 @@ TOKEN_USAGE_SUMMARY_FILENAME = "token_usage_summary_v1.json"
 REUSED_EVIDENCE_RECEIPTS_FILENAME = "reused_evidence_receipts_v1.json"
 
 
+#: 审计 §F.5：冻结 run 里**受索引管理**的输入。重放前必须验证字节；
+#: 其余私有 scratch 文件由 _read_json_mapping 读取，属于**具名 legacy resolver**，
+#: 其未验证范围必须在 telemetry 里如实标注。
+INDEX_MANAGED_REPLAY_INPUTS: tuple[tuple[str, str], ...] = (
+    ("authoring_execution_identity", "research"),
+    ("run_identity", "research"),
+    ("narrative_plan", "authoring"),
+    ("consumer_workset_manifest", "writer"),
+    ("consumer_invocation_plan", "writer"),
+    ("writer_section_receipts", "writer"),
+    ("writer_aggregate_receipt", "writer"),
+    ("run_summary", "terminal"),
+)
+
+#: 未验证读取的范围声明（写入 telemetry，供报告直接引用）。
+LEGACY_UNVERIFIED_READ_NOTE = (
+    "non-indexed scratch files are read by name without index verification "
+    "(named legacy resolver); index-managed artifacts are verified before use"
+)
+
+
+def verify_index_managed_replay_inputs(
+    frozen: Path,
+) -> tuple[list[str], list[str]]:
+    """验证冻结 run 的受索引管理输入，返回 ``(verified, blockers)``。
+
+    只验证**存在**的产物：某个阶段本来没产出不算阻断；存在却验证失败（字节被改动、
+    schema 不受支持、摘要不符…）一律记为 typed blocker，由调用方在使用前拒绝重放。
+    """
+
+    from code2paper.agentic.authoring_artifact_index import (
+        ArtifactIndexError,
+        build_artifact_index,
+        load_published_artifact_index,
+        read_artifact_validated,
+    )
+
+    root = Path(frozen).expanduser().resolve()
+    try:
+        index = load_published_artifact_index(root)
+    except ArtifactIndexError:
+        index = build_artifact_index(root)
+    verified: list[str] = []
+    blockers: list[str] = []
+    for role, phase in INDEX_MANAGED_REPLAY_INPUTS:
+        entry = index.entry_for(role, phase)
+        if entry is None or entry.status == "missing":
+            continue
+        try:
+            read_artifact_validated(index, role, phase, out_root=root)
+        except ArtifactIndexError as exc:
+            blockers.append(f"artifact_read_blocked:{role}:{phase}:{exc}")
+            continue
+        verified.append(f"{role}:{phase}")
+    return verified, blockers
+
+
 def _is_custom_env_configured() -> bool:
     """Return True if the user has already configured LLM endpoint/model in environment."""
     return bool(
@@ -3113,6 +3170,25 @@ def _replay(
             error_code="missing_frozen_artifacts",
         )
         print(f"[replay] FATAL missing frozen artifacts: {missing}")
+        return 2
+
+    # 审计 §F.5：受索引管理的输入必须在使用前验证；未验证的 scratch 读取如实标注。
+    verified_inputs, index_blockers = verify_index_managed_replay_inputs(frozen)
+    telemetry["index_verified_inputs"] = list(verified_inputs)
+    telemetry["index_blocked_inputs"] = list(index_blockers)
+    telemetry["legacy_unverified_reads"] = LEGACY_UNVERIFIED_READ_NOTE
+    if index_blockers:
+        telemetry["terminal_stage"] = "input"
+        telemetry["terminal_reason"] = "artifact_read_blocked:" + ";".join(
+            index_blockers[:3]
+        )
+        _remember_first_failure(
+            telemetry,
+            stage="input",
+            reason=telemetry["terminal_reason"],
+            error_code="artifact_read_blocked",
+        )
+        print(f"[replay] FATAL frozen inputs failed verification: {index_blockers[:3]}")
         return 2
 
     # Unified/shadow replay must use the same source closure as product runs.
