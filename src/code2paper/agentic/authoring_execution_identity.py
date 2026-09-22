@@ -33,7 +33,6 @@ from typing import Any, Literal
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from code2paper.agentic.digest import digest_json
-from code2paper.agentic.tool_runtime import atomic_write_bytes
 
 
 RunOpenMode = Literal["auto", "new", "resume", "fork_authoring"]
@@ -1628,6 +1627,16 @@ def _input_content_digest(path: str | Path | None) -> str:
     return "sha256:" + digest.hexdigest()
 
 
+def _identity_publication_failures(payload: Any) -> tuple[str, ...]:
+    """发布前严格验证：身份必须能被同一模型读回（审计 §F.4 的验证步）。"""
+
+    try:
+        AuthoringExecutionIdentityV2.model_validate(payload)
+    except ValueError as exc:
+        return (f"authoring_execution_identity_invalid:{type(exc).__name__}",)
+    return ()
+
+
 def create_or_validate_execution_identity(
     out_root: str | Path,
     identity: AuthoringExecutionIdentityV2,
@@ -1652,23 +1661,19 @@ def create_or_validate_execution_identity(
                 f"{RESUME_IDENTITY_MISMATCH}:" + ",".join(mismatched or ["content_digest"])
             )
         return str(path), "validated"
-    atomic_write_bytes(
-        path,
-        (identity.model_dump_json(indent=2) + "\n").encode("utf-8"),
-    )
-    # 审计 §F.1：producer 发布时向索引注册真实身份（role/phase/generation/schema/
-    # 字节与语义摘要/upstream refs），而不是让扫描器靠文件名后缀猜当前对象。
-    from code2paper.agentic.authoring_artifact_registry import (
-        register_authoring_artifact,
+    # 审计 §F.4：按"临时文件 → 严格验证 → 原子发布 → 注册 → 指针"的事务顺序发布，
+    # 每一步进 journal；中断只会留下 incomplete/orphan，active 不会指向半成品。
+    from code2paper.agentic.authoring_artifact_publication import (
+        publish_artifact_transaction,
     )
 
-    register_authoring_artifact(
+    transaction = publish_artifact_transaction(
         out_root,
         role="authoring_execution_identity",
         phase="research",
-        path=path,
+        target_path=path,
+        payload=(identity.model_dump_json(indent=2) + "\n").encode("utf-8"),
         generation=1,
-        payload=identity.model_dump(mode="json"),
         producer="authoring_execution_identity.create_or_validate_execution_identity",
         upstream_refs=(
             f"engine:{identity.engine_source_digest}",
@@ -1678,7 +1683,13 @@ def create_or_validate_execution_identity(
             f"effective_config:{identity.effective_config_digest}",
             f"validator_bundle:{identity.validator_bundle_digest}",
         ),
+        validator=_identity_publication_failures,
     )
+    if transaction.state != "complete":
+        raise ValueError(
+            "authoring_execution_identity_publish_incomplete:"
+            + ",".join(transaction.failures or (transaction.state,))
+        )
     return str(path), "created"
 
 

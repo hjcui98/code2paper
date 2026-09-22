@@ -4370,3 +4370,28 @@ generation/schema/字节摘要/语义摘要/upstream refs）在整个链路里�
 注册后字节变化必须 invalid 且不回退、目标缺失、指针损坏可诊断、路径越界拒绝、无注册时
 legacy 扫描不变、验证读取）；离线端到端新增 2 项（产品 run 留下 producer 注册且索引以
 注册为权威、resume 不重复注册）。回归目录 288 项全绿。
+
+## 2026-09-22 审计 PR F.4 收口：发布事务的 orphan/incomplete 状态
+
+复现的审计论断（成立）：产物写入只有一次 `atomic_write_bytes`（临时文件 + rename），
+没有"严格验证"这一步，也没有发布事务记录；一旦在"已落盘但尚未注册/指针未更新"之间中断，
+外部只能看到一个**没有任何状态**的文件——无法区分"这次没产出"和"产出到一半"。
+
+修复：
+
+- 新增 `authoring_artifact_publication.py`：`publish_artifact_transaction(...)` 严格按
+  §F.4 的顺序执行 `reserved → 临时文件 → 严格验证（JSON 可解析 + 可选 validator）→
+  validated → 原子 replace → published → 注册（§F.1）→ registered → complete`，
+  每一步写一条**不可变** journal 记录（append-only：5 个状态文件，读最新序号）。
+  验证失败 → `incomplete`，目标文件**不创建/不覆盖**，临时文件清理；
+  `scan_publication_transactions` / `incomplete_publications` / `scan_orphan_temp_files`
+  让未完成发布与残留临时文件可被一条命令发现。
+- 生产接线：`create_or_validate_execution_identity` 改用发布事务（validator 要求身份能被
+  同一模型读回），失败即 `authoring_execution_identity_publish_incomplete` fail-closed。
+- doctor：`AuthoringDoctorReportV1` 增加 `publications` / `orphan_publication_files`，
+  未完成发布与 orphan 临时文件都升级为 critical blocker，并在 `render()` 打印
+  `PUBLICATION` / `ORPHAN TEMP` 行。
+
+测试：新增 `test_publication_transaction.py` 5 项——成功发布走完五步且无残留临时文件、
+验证失败不发布、验证失败不覆盖既有内容、模拟"published 但未注册"中断时索引不把它当 active
+且 doctor 报 blocker、orphan 临时文件被报告。回归目录 293 项全绿。

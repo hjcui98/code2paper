@@ -22,6 +22,12 @@ from code2paper.agentic.authoring_artifact_index import (
     build_artifact_index,
     resolve_artifact,
 )
+from code2paper.agentic.authoring_artifact_publication import (
+    PublicationTransactionV1,
+    incomplete_publications,
+    scan_orphan_temp_files,
+    scan_publication_transactions,
+)
 from code2paper.agentic.writer_attempt_ledger import (
     read_invocation_ledger_state,
     reduce_invocation_recovery,
@@ -75,6 +81,9 @@ class AuthoringDoctorReportV1(BaseModel):
     binder_owned_writer_target_count: int = 0
     #: 审计 §F.3：空产物是否合法、为什么为空、哪些任务 not_applicable。
     empty_artifacts: tuple[EmptyArtifactDispositionV1, ...] = ()
+    #: 审计 §F.4：发布事务 journal（未完成的发布必须可见）。
+    publications: tuple[PublicationTransactionV1, ...] = ()
+    orphan_publication_files: tuple[str, ...] = ()
     critical_blockers: tuple[str, ...] = ()
     next_action: str = ""
 
@@ -114,6 +123,20 @@ class AuthoringDoctorReportV1(BaseModel):
                 f"{state} ({disposition.reason}; required_units="
                 f"{disposition.required_units}){not_applicable}"
             )
+        for publication in self.publications:
+            if publication.state == "complete":
+                continue
+            lines.append(
+                f"PUBLICATION     {publication.logical_role}:{publication.phase} "
+                f"{publication.state}"
+                + (
+                    f" ({','.join(publication.failures)})"
+                    if publication.failures
+                    else ""
+                )
+            )
+        for orphan in self.orphan_publication_files:
+            lines.append(f"ORPHAN TEMP     {orphan}")
         for blocker in self.critical_blockers:
             lines.append(f"CRITICAL        {blocker}")
         if self.first_root_cause:
@@ -250,10 +273,18 @@ def run_authoring_doctor(out_root: str | Path) -> AuthoringDoctorReportV1:
         next_action = "fork_authoring_with_new_contract"
 
     empty_artifacts, empty_blockers = _empty_artifact_dispositions(index, root)
+    publications = scan_publication_transactions(root)
+    unfinished = tuple(item for item in publications if item.state != "complete")
+    orphan_files = scan_orphan_temp_files(root)
     critical: list[str] = []
     if blocked:
         critical.append("resume_exhausted_invocation")
     critical.extend(empty_blockers)
+    critical.extend(
+        f"publication_incomplete:{item.logical_role}:{item.phase}:{item.state}"
+        for item in unfinished
+    )
+    critical.extend(f"publication_orphan_temp:{path}" for path in orphan_files)
     if paragraph_stats["empty"] > 0:
         critical.append("intent_surface_gaps")
     if paragraph_stats["binder_owned_targets"] > 0:
@@ -279,6 +310,8 @@ def run_authoring_doctor(out_root: str | Path) -> AuthoringDoctorReportV1:
         empty_semantic_paragraph_count=paragraph_stats["empty"],
         binder_owned_writer_target_count=paragraph_stats["binder_owned_targets"],
         empty_artifacts=empty_artifacts,
+        publications=publications,
+        orphan_publication_files=orphan_files,
         critical_blockers=tuple(critical),
         next_action=next_action,
     )
