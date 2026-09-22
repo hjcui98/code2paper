@@ -3973,3 +3973,31 @@ packing unit 的一个属性），并同步 C.5 的重建步骤；这是下一�
 package/obligation 不双计、标定门槛与完整 profile），并更新原先编码旧语义的
 `test_calibrated_profile_changes_estimate_and_confidence`。全量离线 3820 passed、
 3 deselected、12 subtests passed、exit 0。
+
+### PR C（F01）第六片：最终段落集合的复核 owner（§C.1/§C.4）
+
+**本轮查清了 F01 的完整机制**（用事故归档逐项核对）：
+
+- 技术 payload 的 `paragraph_ids` 只有 **1** 段（`MA-S3:P1__f1`），实际请求的
+  `narrative_plan.page_paragraph_ids` 有 **16** 段；
+- `publication_method_writer` 里的 `paragraph_page_id` 决定每段归哪一页：先看该段是否
+  出现在某页技术 payload 里，否则**按 detail 归属**路由到某一页；随后
+  `page_paragraph_id_set = 技术段落 ∪ 路由段落` —— 页的最终段落集合是在这里才确定的；
+- 候选页判定（段数上限/输出估量）发生在更早的技术分组阶段，看的是那 1 段。
+  所以"被验收的对象 ≠ 实际执行的对象"在事故里具体表现为：**16 段的页按 1 段通过了判定**。
+
+修复（在确定最终集合的同一 owner 上复核，§C.4 允许的"真实维度 typed failure"）：
+
+- 新增 `assert_page_paragraph_set_within_limit(page_id, paragraph_ids, *, limit_policy=None)`：
+  保序去重后按同一策略复核，超限即抛
+  `UNIFIED_PAGE_CONTRACT_EXCEEDED_AFTER_ASSIGNMENT`，消息给出真实维度
+  `paragraph_count:16>6`；`0=关闭上限` 的显式实验模式不做该检查（与 §C.2 一致）。
+- `publication_method_writer` 在算出 `page_paragraph_id_set` 后立即调用它——事故形状
+  （1 技术 + 15 叙事 = 16）现在会在发送前以明确理由失败，而不是进入一个注定写不完的请求。
+
+测试：`test_final_page_paragraph_set_is_checked_against_the_limit`（等于上限放行、
+事故形状 16 段被拒且消息带真实维度、去重不掩盖段数、实验模式放行）。全量离线 3821 passed、
+3 deselected、12 subtests passed、exit 0。
+
+**仍缺（下一轮）**：真正的**重分页**——在同一 owner 上把超限页拆成多页并重建
+worksets/invocation plan/预算预留/阶段快照（§C.5）；本轮是"早失败"而不是"自动拆页"。

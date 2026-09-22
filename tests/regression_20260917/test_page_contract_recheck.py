@@ -10,6 +10,8 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+import pytest
+
 from code2paper.agentic.page_contract_recheck import (
     ACTUAL_PAGE_CONTRACT_MISMATCH,
     capture_page_contract_snapshot,
@@ -432,3 +434,44 @@ def test_admission_blocks_an_unacknowledged_disabled_paragraph_limit(
     assert "semantic_paragraph_limit_policy_unacknowledged" not in acknowledged.blockers
     assert acknowledged.policy["semantic_paragraph_limit"]["experiment_acknowledged"] is True
     _json.dumps(acknowledged.model_dump(mode="json"))
+
+
+def test_final_page_paragraph_set_is_checked_against_the_limit() -> None:
+    """§C.1/§C.4：最终段落集合（技术 ∪ 路由来的计划段落）必须复核候选上限。
+
+    事故形状：技术 payload 只有 1 段（``MA-S3:P1__f1``），实际请求却有 16 段；
+    候选页判定当初是在 1 段上做的。
+    """
+
+    from code2paper.agentic.unified_context_compiler import (
+        UNIFIED_PAGE_CONTRACT_EXCEEDED_AFTER_ASSIGNMENT,
+        UnifiedCompilerError,
+        assert_page_paragraph_set_within_limit,
+        semantic_paragraph_limit_policy,
+    )
+
+    limit = int(semantic_paragraph_limit_policy({})["value"])
+    assert limit == 6
+
+    # 恰好等于上限：放行。
+    assert assert_page_paragraph_set_within_limit(
+        "page:ok", [f"MA-S3:P{index}" for index in range(limit)]
+    ) == limit
+
+    # 事故形状（1 个技术段 + 15 个叙事段 = 16）：必须早失败，并给出真实维度。
+    incident_ids = ["MA-S3:P1__f1", *(f"MA-S3:P{n}" for n in range(3, 18))]
+    assert len(incident_ids) == 16
+    with pytest.raises(UnifiedCompilerError) as excinfo:
+        assert_page_paragraph_set_within_limit("page:751aa8b5", incident_ids)
+    assert excinfo.value.failure_code == UNIFIED_PAGE_CONTRACT_EXCEEDED_AFTER_ASSIGNMENT
+    assert "paragraph_count:16>6" in excinfo.value.message
+
+    # 去重后再判定：重复段落不得把页撑爆，也不得掩盖真实段数。
+    assert assert_page_paragraph_set_within_limit(
+        "page:dupes", ["MA-S3:P1", "MA-S3:P1", "MA-S3:P2"]
+    ) == 2
+
+    # 显式实验（关闭上限）时不做该检查。
+    assert assert_page_paragraph_set_within_limit(
+        "page:experiment", incident_ids, limit_policy={"value": 0}
+    ) == 16

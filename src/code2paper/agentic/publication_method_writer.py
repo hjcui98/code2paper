@@ -21859,6 +21859,16 @@ def _writer_section_inputs_v2(
                 paragraph_id for paragraph_id, owner_page in paragraph_page_id.items()
                 if owner_page == page_id
             }
+            # 审计 §C.1/§C.4：候选页判定当初只看技术分组里的段落，而**实际请求**的段落
+            # 集合是"技术段落 ∪ 按 detail 归属路由来的计划段落"（事故页因此从 1 段变成
+            # 16 段，超过候选上限却照样发出）。在真正确定最终集合的 owner 处复核一次；
+            # 无法在此重分页时，按 §C.4 给出说明真实限制维度的 typed failure，而不是
+            # 让一个注定写不完的页进入发送。
+            from code2paper.agentic.unified_context_compiler import (
+                assert_page_paragraph_set_within_limit,
+            )
+
+            assert_page_paragraph_set_within_limit(page_id, sorted(page_paragraph_id_set))
             page_detail_set = page_details[page_id]
             page_obligation_set = set(page_formula_ids[page_id])
             page_payload = getattr(page, "technical_payload", {}) or {}

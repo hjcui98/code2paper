@@ -2489,6 +2489,39 @@ def semantic_paragraph_limit_policy(
     }
 
 
+#: 审计 §C.1：最终段落集合超出候选上限时的 typed failure code。
+UNIFIED_PAGE_CONTRACT_EXCEEDED_AFTER_ASSIGNMENT = (
+    "unified_page_contract_exceeded_after_assignment"
+)
+
+
+def assert_page_paragraph_set_within_limit(
+    page_id: str,
+    paragraph_ids: Sequence[str],
+    *,
+    limit_policy: Mapping[str, Any] | None = None,
+) -> int:
+    """在**最终段落集合**上复核候选页上限（审计 §C.1/§C.4）。
+
+    候选页判定发生在技术分组阶段，而实际请求的段落集合是"技术段落 ∪ 按 detail 归属
+    路由来的计划段落"（事故页因此从 1 段变成 16 段）。这个函数是最终集合的复核 owner：
+    超过上限即抛 typed failure，并如实给出限制维度；无法在此重分页时，宁可早失败，
+    也不让一个注定写不完的页进入发送。
+
+    返回实际段落数（便于调用方记录诊断）。
+    """
+
+    policy = dict(limit_policy or semantic_paragraph_limit_policy())
+    limit = int(policy.get("value") or 0)
+    unique = list(dict.fromkeys(str(item) for item in paragraph_ids if str(item).strip()))
+    if limit > 0 and len(unique) > limit:
+        raise UnifiedCompilerError(
+            UNIFIED_PAGE_CONTRACT_EXCEEDED_AFTER_ASSIGNMENT,
+            f"page {page_id} paragraph_count:{len(unique)}>{limit}",
+        )
+    return len(unique)
+
+
 def _max_semantic_paragraphs_per_page() -> int:
     """WP4 §8.2/§8.3：单页语义段落上限（待标定候选，可用环境变量覆盖）。
 
