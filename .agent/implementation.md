@@ -4612,3 +4612,30 @@ writer/binder/回归套件 622 项全绿。
 
 **G.2 仍缺**：把 candidate 门也走通（渲染 argument unit、epistemic safety gate、
 verified review block）以拿到真正的 Verified 产物；场景 5/7/8 与 G.3/G.5 同样未做。
+
+## 2026-09-22 审计 PR G.2（第四片）：Verified 结论必须由真实反向校验判定
+
+上一片留下的最后一个"看起来像隐藏门槛"的东西查清了：`quality.safety.hard_gate_passed`
+为 false 的直接原因是 `final_text_validation_status = "pending"`，而 `pending` 的来源是
+`_maybe_validate_final_text` 需要**同时**拿到 `evidence_packets_v3` 与
+`method_evidence`（或 `evidence`）——测试夹具只有前者，所以反向校验从未运行，
+Verified 就成了"因为没人验"而不是"因为规则拒绝"。
+
+修复（测试夹具 + 断言，不改产品语义）：
+
+- G.2 harness 新增 `with_method_evidence=True`：写一份最小 `MethodEvidence`
+  （`project_id/method_name/method_goal/implementation_scope`）并挂到 artifact_paths；
+- 新增测试 `test_verified_verdict_is_decided_by_the_real_validator`：断言
+  `final_text_validation_status ∈ {passed, failed, error}`（**不允许 pending**），
+  candidate 链完整（`writer_transaction_status=success`、聚合回执
+  `all_required_sections_complete=True`），然后分支断言：
+  * `passed` → `repository_verified_method` 必须有正文；
+  * `failed` → 必须具名（`reverse_validation_failed` + `unsupported_positive_claims>0` +
+    逐句 `verified_review_block:review-sentence:*`），且 Verified 正文为空。
+
+实测结论：当前 contract-faithful fake writer 的句子尚未逐句 claim 对齐，因此真实反向
+校验给出 **failed**（6 个 unsupported positive + FTU2..FTU7 逐句 review block）。这正是
+"verified 与否由原规则决定"的证据；下一步只需让 fake provider 的每个句子都落在冻结
+claim 上（semantic atom 句与 fenced 源码块目前都不被 claim 覆盖），不需要再动产品代码。
+
+writer/回归套件 485 项全绿。

@@ -40,10 +40,28 @@ def _run(
     caller: Callable[[Any, LLMRequest], LLMResponse],
     *,
     retry_reserve_tokens: int = 0,
+    with_method_evidence: bool = False,
 ):
     import os
 
     paths = _unified_artifacts(tmp_path)
+    if with_method_evidence:
+        # 最终反向校验只在同时提供 evidence packets 与 frozen MethodEvidence 时运行；
+        # 少了它，quality report 永远停在 pending，Verified 就不是"由规则决定"。
+        from code2paper.schemas import MethodEvidence
+
+        evidence = MethodEvidence(
+            project_id="repo:writer",
+            method_name="Encoder",
+            method_goal="Explain the encoder.",
+            implementation_scope="sym:encoder",
+        )
+        evidence_path = tmp_path / "artifacts" / "method_evidence.json"
+        evidence_path.parent.mkdir(parents=True, exist_ok=True)
+        evidence_path.write_text(
+            evidence.model_dump_json(indent=2) + "\n", encoding="utf-8"
+        )
+        paths = dict(paths) | {"method_evidence": str(evidence_path)}
     if retry_reserve_tokens:
         # 有界 repair 必须由 run 显式声明 retry reserve（没有免费重试）。
         os.environ["CODE2PAPER_UNIFIED_RETRY_RESERVE_INPUT_TOKENS_WRITER"] = str(
@@ -540,3 +558,57 @@ def test_binder_closed_set_comes_from_the_frozen_contract(tmp_path: Path) -> Non
         "argument_units_unrendered" in str(reason)
         for reason in writer_result["candidate_blocking_reasons"]
     ), writer_result["candidate_blocking_reasons"]
+
+
+def test_verified_verdict_is_decided_by_the_real_validator(tmp_path: Path) -> None:
+    """§G.2：完整 candidate 之后，Verified 必须由**真实反向校验**判定。
+
+    提供 frozen MethodEvidence 后，quality report 不再停在 `pending`：反向校验真的跑，
+    并给出具名结论。本 fake provider 的句子还没有逐句 claim 对齐，因此结论是 failed +
+    `unsupported_positive_claims` + 逐句 review block——这是"原规则决定"，不是隐藏门槛。
+    """
+
+    import json as _json
+
+    requests: list[LLMRequest] = []
+
+    def caller(config, request):
+        requests.append(request)
+        return _contract_faithful_writer(config, request)
+
+    _result, outputs = _run(tmp_path, caller, with_method_evidence=True)
+
+    quality = _json.loads(
+        Path(outputs["publication_quality_report_v1"]).read_text(encoding="utf-8")
+    )
+    safety = quality.get("safety") or {}
+    status = safety.get("final_text_validation_status")
+    assert status in {"passed", "failed", "error"}, status
+    assert status != "pending", "提供冻结证据后反向校验必须真的运行"
+
+    writer_result = _json.loads(
+        Path(outputs["publication_writer_result_v1"]).read_text(encoding="utf-8")
+    )
+    # candidate 链已经完整走完：writer_content + Binder + composition 都通过。
+    assert writer_result["writer_transaction_status"] == "success"
+    aggregate = _json.loads(
+        Path(outputs["writer_aggregate_receipt_v2"]).read_text(encoding="utf-8")
+    )
+    assert aggregate["all_required_sections_complete"] is True
+
+    if status == "passed":
+        # 一旦 fake provider 逐句 claim 对齐，Verified 就该真的产出。
+        assert Path(outputs["repository_verified_method"]).read_text(
+            encoding="utf-8"
+        ).strip()
+    else:
+        # 未对齐时必须具名拒绝，并且不得产出 Verified 正文。
+        assert "reverse_validation_failed" in writer_result["verified_blocking_reasons"]
+        assert int(safety.get("unsupported_positive_claims") or 0) > 0
+        assert any(
+            str(reason).startswith("verified_review_block:review-sentence:")
+            for reason in writer_result["verified_blocking_reasons"]
+        ), writer_result["verified_blocking_reasons"]
+        assert Path(outputs["repository_verified_method"]).read_text(
+            encoding="utf-8"
+        ).strip() == ""
