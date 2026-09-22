@@ -6,6 +6,7 @@ import io
 import importlib
 import json
 import signal
+import subprocess
 from pathlib import Path
 
 import pytest
@@ -451,11 +452,29 @@ def test_supervisor_preserves_real_worker_exception_finalizer(
         fail_impl,
     )
 
+    real_popen = subprocess.Popen
+
     class _WorkerThatFinalizesInProcess:
-        pid = 91238
+        """只拦截"监督器拉起 worker"这一次 spawn；其余（git 等）走真实 Popen。
+
+        PR A 之后身份构造 fail-closed：引擎快照不可用即拒绝。若这个 fixture 把 git
+        子进程也一起拦掉，身份会因为"git 跑不了"而失败，测到的就不是 worker 异常
+        终结器本身了。
+        """
 
         def __init__(self, *args: object, **kwargs: object) -> None:
-            env = kwargs["env"]
+            # ``subprocess.run`` 会读取 ``process.args``：代理对象必须提供它。
+            self.args = args[0] if args else kwargs.get("args")
+            env = kwargs.get("env") or {}
+            if "CODE2PAPER_METHOD_AGENT_ATTEMPT_ID" not in env:
+                self._delegate = real_popen(*args, **kwargs)  # type: ignore[arg-type]
+                self.pid = self._delegate.pid
+                self.returncode = None
+                self.stdout = self._delegate.stdout
+                self.stderr = self._delegate.stderr
+                return
+            self._delegate = None
+            self.pid = 91238
             attempt_id = str(env["CODE2PAPER_METHOD_AGENT_ATTEMPT_ID"])
             captured["attempt_id"] = attempt_id
             monkeypatch.setenv("CODE2PAPER_METHOD_AGENT_ATTEMPT_ID", attempt_id)
@@ -474,16 +493,39 @@ def test_supervisor_preserves_real_worker_exception_finalizer(
             except RuntimeError:
                 pass
 
+        def communicate(self, input: object = None, timeout: float | None = None):
+            if self._delegate is not None:
+                return self._delegate.communicate(input=input, timeout=timeout)  # type: ignore[arg-type]
+            return (b"", b"")
+
+        def __enter__(self) -> "_WorkerThatFinalizesInProcess":
+            if self._delegate is not None:
+                self._delegate.__enter__()
+            return self
+
+        def __exit__(self, *exc: object) -> bool:
+            if self._delegate is not None:
+                return bool(self._delegate.__exit__(*exc))  # type: ignore[arg-type]
+            return False
+
         def poll(self) -> int:
+            if self._delegate is not None:
+                return int(self._delegate.poll() or 0)
             return self.returncode
 
         def wait(self, timeout: float | None = None) -> int:
+            if self._delegate is not None:
+                return int(self._delegate.wait(timeout=timeout))
             return self.returncode
 
         def terminate(self) -> None:
+            if self._delegate is not None:
+                self._delegate.terminate()
             return None
 
         def kill(self) -> None:
+            if self._delegate is not None:
+                self._delegate.kill()
             return None
 
     monkeypatch.setattr(agentic_run.subprocess, "Popen", _WorkerThatFinalizesInProcess)

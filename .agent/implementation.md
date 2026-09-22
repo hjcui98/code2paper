@@ -3662,3 +3662,56 @@ I10 修复：新增 `VALIDATOR_BUNDLE_SOURCES`（封闭集合：`publication_tra
 验证：`tests/regression_20260917/test_validator_bundle_identity.py` 5 项（含"改验收规则 →
 指纹与执行身份都变""缺失来源如实报失败码而非留空"）；全量离线 3767 passed、
 3 deselected、12 subtests passed、exit 0。
+
+## 2026-09-22 审计方案接手：PR A（运行身份与 new/resume/fork 语义）
+
+依据 `docs/Code2Paper_代码审计与修复执行方案_20260922.md`（冻结基线 `3aa9db8`）。
+本轮完成 PR A 的 A.1（目标内容身份、失败码消费、有效配置身份）与 A.1.6 的未知模式拒绝；
+A.2/A.3（出生信息与锁内二次准入）、A.4（导入闭包）留待下一轮。
+
+### 已核实的审计论断（在当前工作树复现）
+
+- **F02 成立**：`capture_target_identity` 用 `dirty_manifest_digest`（只含路径状态、不含
+  文件内容），而 `build_run_open_identity` 把 target HEAD 写进
+  `target_repo_snapshot_digest`、把 porcelain 摘要写进 `target_project_tree_hash`。
+  最小反例：同一文件保持 `M`、HEAD 不变，仅内容 A→B，旧实现得到**同一身份**。
+- **A.1.5 成立**：`build_run_open_identity` 只取 `validator_bundle.digest`，不消费
+  `failure_code`——来源缺失时也给出"看起来可用"的指纹。
+- **A.1.6 成立**：`publication_method_writer._build_narrative_plan_v3` 对未知
+  `CODE2PAPER_INTENT_NARRATIVE_PLAN` **静默回退 v3**；有效配置（context mode、输出协议、
+  tokenizer）也未进入身份。
+
+### 本轮修复
+
+1. `TargetRepoIdentity` 改为**内容**身份：复用既有 `build_repo_snapshot` +
+   `build_repository_source_manifest` 的文件选择规则，新增
+   `source_snapshot_digest` / `project_tree_hash` / `source_manifest_digest` / `file_count` /
+   `failure_code`；`commit_sha` 与 porcelain 摘要降为诊断。
+   路径不存在或零源文件 → `target_snapshot_unavailable:*`（没有字节就没有内容身份）。
+2. 身份模型新增 `effective_config_digest`（进 payload：模式变了就不能 resume）与
+   `target_git_commit`（诊断，**不**进 payload：同内容换 commit 不应失效）。
+3. `build_run_open_identity` 新增 `require_usable_inputs=True`：引擎/目标/验收规则来源
+   任一不可用即抛错（在任何模型发送之前）；预检传 `False` 把这些事实报成阻断项。
+4. 新增 `authoring_run_config.py` 作为**唯一 owner**：
+   `normalize_narrative_plan_mode`（未知值抛 `unknown_narrative_plan_mode`）与
+   `capture_effective_config_digest`（narrative/context/输出协议/prompt/tokenizer/
+   验收规则身份）。writer 与身份构造消费同一实现。
+5. 接线复核（审计 §0.1 提醒的调用点核对）：`autonomous_method_agent` 的 runtime 复查
+   原先拿 `target_repo_snapshot_digest` 与 runtime commit 比较——现在改用诊断字段比 commit、
+   用 `project_tree_hash` 比内容；replay 身份报告补充 manifest/commit/effective config 字段。
+6. live 准入新增 `validator_bundle_identity` gate 与有效配置失败路径（不可比即拒绝，
+   不再解引用空身份）。
+
+### 测试
+
+新增 `tests/regression_20260917/test_run_identity_content.py`（10 项），含审计点名的
+`test_target_dirty_content_change_invalidates_resume`、
+`test_same_target_content_in_another_path_has_same_content_identity`、
+`test_missing_validator_source_blocks_before_provider_send`、
+`test_unknown_narrative_mode_is_rejected`（含真实 builder 路径）。
+
+**测试夹具缺陷（已修）**：`tests/test_agentic_candidate_handoff.py::test_supervisor_preserves_real_worker_exception_finalizer`
+把**全局** `subprocess.Popen` 换成假对象，连 git 子进程一起拦掉。PR A 之前引擎快照
+不可用只是被静默容忍，所以没暴露；现在 fail-closed 会让 worker 抛 `ValueError` 而不是
+预期的 `RuntimeError`。夹具改为只拦截监督器的 worker spawn（其余委托真实 Popen，
+并补齐 `args`/`communicate`/上下文管理），这样它测的仍是"worker 异常终结器"。

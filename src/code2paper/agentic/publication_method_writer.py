@@ -21306,14 +21306,13 @@ def _build_narrative_plan_v3(
     # builder——否则每次运行都会白建一份 V3（可能带 proposal 调用）再丢弃它。
     # ``shadow`` 是显式影子模式：两者都建，但只有一个可执行，且影子调用必须在
     # 自己的 trace/budget 下计量。
-    selection = (
-        str(os.environ.get("CODE2PAPER_INTENT_NARRATIVE_PLAN", "v3") or "v3")
-        .strip()
-        .casefold()
-        or "v3"
+    # 审计 §A.1.6 / 不变量 I2：未知配置必须显式拒绝，不得静默回退 V3。
+    # 选择规则只有一个 owner（authoring_run_config），入口身份与 builder 消费同一结果。
+    from code2paper.agentic.authoring_run_config import normalize_narrative_plan_mode
+
+    selection = normalize_narrative_plan_mode(
+        os.environ.get("CODE2PAPER_INTENT_NARRATIVE_PLAN", "v3")
     )
-    if selection not in {"v3", "v4", "shadow"}:
-        selection = "v3"
 
     plan: Any = None
     trace: dict[str, Any] = {}

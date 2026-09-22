@@ -21,9 +21,12 @@ from code2paper.agentic.authoring_doctor import run_authoring_doctor
 from code2paper.agentic.authoring_execution_identity import (
     RESEARCH_IMPORT_UNVERIFIABLE,
     EngineSourceSnapshot,
+    RunOpenDecision,
+    ValidatorBundleSnapshot,
     build_run_open_identity,
     capture_engine_source_snapshot,
     capture_target_identity,
+    capture_validator_bundle_snapshot,
     validate_run_open,
     verify_research_import,
 )
@@ -200,6 +203,7 @@ class LiveAdmissionReportV1(BaseModel):
     run_open_mode: str = "auto"
     execution_id: str = ""
     execution_identity_digest: str = ""
+    effective_config_digest: str = ""
     engine: dict[str, Any] = Field(default_factory=dict)
     run_open_decision: dict[str, Any] = Field(default_factory=dict)
     gates: tuple[LiveAdmissionGateV1, ...] = ()
@@ -214,6 +218,7 @@ class LiveAdmissionReportV1(BaseModel):
             f"RUN OPEN MODE   {self.run_open_mode}",
             f"EXECUTION ID    {self.execution_id or '(unresolved)'}",
             f"IDENTITY DIGEST {self.execution_identity_digest or '(unresolved)'}",
+            f"EFFECTIVE CONFIG {self.effective_config_digest or '(unresolved)'}",
         ]
         for gate in self.gates:
             lines.append(
@@ -252,6 +257,9 @@ def preflight_live_admission(
     max_total_input_tokens: int = 0,
     transport_policy: TransportRetryPolicyV1 | None = None,
     engine_snapshot: EngineSourceSnapshot | None = None,
+    validator_bundle: ValidatorBundleSnapshot | None = None,
+    narrative_plan_mode: Any | None = None,
+    authoring_context_mode: Any | None = None,
     runtime_probe: RuntimeProbeSummaryV1 | Mapping[str, Any] | None = None,
     offline_suite_receipt: OfflineSuiteReceiptV1 | Mapping[str, Any] | str | Path | None = None,
     research_import_path: str | Path | None = None,
@@ -306,16 +314,38 @@ def preflight_live_admission(
     if snapshot.unstable:
         warnings.append("engine source snapshot marked unstable (concurrent writes observed)")
 
+    # 目标身份必须是**内容**身份（审计 F02）：commit/porcelain 只作诊断。
     try:
         target = capture_target_identity(repo_path)
-        target_ok = target.commit_sha not in {"", "unknown"}
-        target_detail = f"commit={target.commit_sha[:12]} tree={target.dirty_digest[:19]}"
+        target_ok = target.is_usable
+        target_detail = (
+            f"commit={target.commit_sha[:12]} snapshot={target.source_snapshot_digest[:19]} "
+            f"files={target.file_count}"
+            if target_ok
+            else f"unusable:{target.failure_code}"
+        )
     except Exception as exc:  # noqa: BLE001 - 预检报告失败而不是抛穿
         target_ok = False
         target_detail = f"{type(exc).__name__}: {exc}"
     gates.append(LiveAdmissionGateV1(name="target_identity", passed=target_ok, detail=target_detail))
     if not target_ok:
         blockers.append("target_identity_unresolved")
+
+    # 验收规则来源不可用 → 非空 digest 也不等于可用 bundle（审计 §A.1.5）。
+    bundle = validator_bundle or capture_validator_bundle_snapshot()
+    gates.append(
+        LiveAdmissionGateV1(
+            name="validator_bundle_identity",
+            passed=bundle.is_usable,
+            detail=(
+                f"{len(bundle.entries)} source(s) {bundle.digest[:19]}"
+                if bundle.is_usable
+                else f"unusable:{bundle.failure_code} missing={list(bundle.missing)}"
+            ),
+        )
+    )
+    if not bundle.is_usable:
+        blockers.append("validator_bundle_unavailable")
 
     # §14.1 "目标仓库和作者材料身份一致"：作者意图是必需输入；claims 在产品入口
     # 是可选的，未声明只告警，**声明了却缺失/为空**才阻断（不静默降级身份）。
@@ -449,20 +479,47 @@ def preflight_live_admission(
         if not import_verifiable:
             blockers.append(RESEARCH_IMPORT_UNVERIFIABLE)
 
-    identity = build_run_open_identity(
-        repo_path=repo_path,
-        author_intent_path=author_intent_path,
-        claims_path=claims_path,
-        llm_config=llm_config,
-        run_open_mode=mode,
-        engine_snapshot=snapshot,
-        research_import_digest=import_digest,
-    )
-    decision = validate_run_open(
-        root,
-        mode,
-        identity,
-        research_import_verifiable=import_verifiable,
+    try:
+        identity = build_run_open_identity(
+            repo_path=repo_path,
+            author_intent_path=author_intent_path,
+            claims_path=claims_path,
+            llm_config=llm_config,
+            run_open_mode=mode,
+            engine_snapshot=snapshot,
+            validator_bundle=bundle,
+            research_import_digest=import_digest,
+            narrative_plan_mode=narrative_plan_mode,
+            authoring_context_mode=authoring_context_mode,
+            require_usable_inputs=False,
+        )
+    except ValueError as exc:
+        # 有效配置非法（例如未知 narrative mode）→ 预检直接判不可进入。
+        identity = None
+        gates.append(
+            LiveAdmissionGateV1(
+                name="effective_config_identity",
+                passed=False,
+                detail=str(exc)[:160],
+            )
+        )
+        blockers.append(str(exc).split(":", 1)[0] or "effective_config_invalid")
+    decision = (
+        validate_run_open(
+            root,
+            mode,
+            identity,
+            research_import_verifiable=import_verifiable,
+        )
+        if identity is not None
+        else RunOpenDecision(
+            allowed=False,
+            code="effective_config_invalid",
+            requested_mode=mode,
+            effective_mode=mode,
+            allowed_next_action="fix_the_requested_effective_configuration",
+            detail="有效配置身份无法构造（见 effective_config_identity）",
+        )
     )
     gates.append(
         LiveAdmissionGateV1(
@@ -499,8 +556,8 @@ def preflight_live_admission(
         ready=not blockers,
         out_root=str(root),
         run_open_mode=mode,
-        execution_id=identity.execution_id,
-        execution_identity_digest=identity.content_digest,
+        execution_id=(identity.execution_id if identity is not None else ""),
+        execution_identity_digest=(identity.content_digest if identity is not None else ""),
         engine=snapshot.as_diagnostics(),
         run_open_decision=decision.as_diagnostics(),
         gates=tuple(gates),

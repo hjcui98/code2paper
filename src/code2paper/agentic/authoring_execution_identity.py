@@ -47,6 +47,10 @@ RESUME_IDENTITY_LEGACY = "resume_identity_legacy_incompatible"
 RESUME_ENGINE_UNAVAILABLE = "resume_engine_identity_unavailable"
 RESUME_EXHAUSTED_INVOCATION = "resume_exhausted_invocation"
 RESEARCH_IMPORT_UNVERIFIABLE = "research_import_unverifiable"
+#: 目标 source snapshot 不可用（审计 §A.1.4）：不得用"错误状态也有 sha256"伪装身份。
+TARGET_SNAPSHOT_UNAVAILABLE = "target_snapshot_unavailable"
+#: 验收规则来源不可用（审计 §A.1.5）：非空 digest 不等于可用 bundle。
+VALIDATOR_BUNDLE_UNAVAILABLE = "validator_bundle_unavailable"
 ENGINE_SNAPSHOT_UNSTABLE = "engine_snapshot_unstable"
 ENGINE_ROOT_UNRESOLVED = "engine_root_unresolved"
 RUN_LEASE_HELD = "run_lease_held"
@@ -352,14 +356,19 @@ class AuthoringExecutionIdentityV2(BaseModel):
     intent_content_digest: str
     claims_digest: str
     profile_digest: str
+    #: 实际生效的配置（narrative mode / context mode / 输出协议 / prompt / tokenizer /
+    #: 验收规则身份）——同一输入在不同模式下不得共享身份（审计 §A.1.6）。
+    effective_config_digest: str = "unspecified"
     model_identity_digest: str
     prompt_bundle_digest: str
     tokenizer_contract_digest: str
     validator_bundle_digest: str
     research_import_digest: str | None = None
 
-    #: 仅诊断用，不参与 content_digest：源码搬到别的绝对路径不应失去兼容性。
+    #: 仅诊断用，不参与 content_digest：源码/目标搬到别的绝对路径、或同一内容换了
+    #: commit 不应失去兼容性（审计 §A.1.3）。
     engine_root: str = ""
+    target_git_commit: str = ""
     content_digest: str = ""
 
     @model_validator(mode="after")
@@ -373,6 +382,7 @@ class AuthoringExecutionIdentityV2(BaseModel):
             "intent_content_digest",
             "claims_digest",
             "profile_digest",
+            "effective_config_digest",
             "model_identity_digest",
             "prompt_bundle_digest",
             "tokenizer_contract_digest",
@@ -388,7 +398,13 @@ class AuthoringExecutionIdentityV2(BaseModel):
 
     def _payload(self) -> dict[str, Any]:
         return self.model_dump(
-            mode="json", exclude={"content_digest", "engine_root", "execution_id"}
+            mode="json",
+            exclude={
+                "content_digest",
+                "engine_root",
+                "execution_id",
+                "target_git_commit",
+            },
         )
 
     def compatible_fields(self) -> dict[str, str]:
@@ -460,6 +476,8 @@ def build_execution_identity(
     engine_root: str | Path | None = None,
     engine_snapshot: EngineSourceSnapshot | None = None,
     target_source_manifest_digest: str = "",
+    effective_config_digest: str = "unspecified",
+    target_git_commit: str = "",
     creation_mode: CreationMode = "new",
     parent_execution_id: str | None = None,
     research_import_digest: str | None = None,
@@ -486,6 +504,7 @@ def build_execution_identity(
         "target_repo_snapshot_digest": str(target_repo_snapshot_digest),
         "target_project_tree_hash": str(target_project_tree_hash),
         "target_source_manifest_digest": str(target_source_manifest_digest or ""),
+        "effective_config_digest": str(effective_config_digest or "unspecified"),
         "intent_content_digest": str(intent_content_digest),
         "claims_digest": str(claims_digest),
         "profile_digest": str(profile_digest),
@@ -499,6 +518,7 @@ def build_execution_identity(
     return AuthoringExecutionIdentityV2(
         execution_id=execution_id,
         engine_root=snapshot.engine_root,
+        target_git_commit=str(target_git_commit or ""),
         **payload,
     )
 
@@ -854,19 +874,44 @@ class RunOpenRejected(RuntimeError):
 
 @dataclass(frozen=True)
 class TargetRepoIdentity:
-    """目标（被研究）仓库的准入代理身份。
+    """目标（被研究）仓库的身份：**内容**身份 + 诊断字段（审计 §A.1）。
 
-    完整 ``RepoSnapshot`` 由研究 runtime 稍后才计算；目录准入必须先于它完成，
-    因此这里用目标仓库的 commit + dirty 摘要作为准入代理，并在 runtime 建立后
-    复查 commit 是否一致。
+    旧实现把 target HEAD 塞进 ``target_repo_snapshot_digest``、把不含文件内容的
+    porcelain 摘要塞进 ``target_project_tree_hash``——同一文件从实现 A 改成 B，
+    HEAD 与路径状态都不变，身份就不变（审计 F02 最小反例）。
+
+    现在复用既有 ``RepoSnapshot`` / source manifest 的文件选择规则得到真实内容摘要；
+    ``commit_sha`` 与 ``dirty_digest`` 只作诊断，不参与"相同内容能否复用"的判断。
     """
 
     project_root: str
     commit_sha: str
     dirty_digest: str
+    source_snapshot_digest: str = ""
+    project_tree_hash: str = ""
+    source_manifest_digest: str = ""
+    file_count: int = 0
+    failure_code: str = ""
+
+    @property
+    def is_usable(self) -> bool:
+        return not self.failure_code and bool(self.source_snapshot_digest)
+
+    def as_diagnostics(self) -> dict[str, Any]:
+        return {
+            "project_root": self.project_root,
+            "commit_sha": self.commit_sha,
+            "source_snapshot_digest": self.source_snapshot_digest,
+            "project_tree_hash": self.project_tree_hash,
+            "source_manifest_digest": self.source_manifest_digest,
+            "file_count": self.file_count,
+            "failure_code": self.failure_code,
+        }
 
 
 def capture_target_identity(repo_path: str | Path) -> TargetRepoIdentity:
+    """构建目标仓库的内容身份；不可用时如实给失败码，不伪造摘要。"""
+
     from code2paper.agentic.authoring_context_contract import dirty_manifest_digest
 
     root = Path(repo_path).expanduser()
@@ -876,8 +921,49 @@ def capture_target_identity(repo_path: str | Path) -> TargetRepoIdentity:
         dirty = dirty_manifest_digest(root)
     except Exception:  # pragma: no cover - 非 git 目标仓库
         dirty = digest_json({"target_repo": "not-a-git-worktree"})
+
+    failure_code = ""
+    snapshot_digest = ""
+    tree_hash = ""
+    manifest_digest = ""
+    file_count = 0
+    if not root.is_dir():
+        # 路径不存在/不可读：没有字节就没有内容身份（审计 §A.1.4）。
+        return TargetRepoIdentity(
+            project_root=str(root),
+            commit_sha=commit,
+            dirty_digest=dirty,
+            failure_code=f"{TARGET_SNAPSHOT_UNAVAILABLE}:path_missing",
+        )
+    try:
+        from code2paper.agentic.repo_snapshot import build_repo_snapshot
+        from code2paper.agentic.source_inventory import build_repository_source_manifest
+
+        snapshot = build_repo_snapshot(root)
+        manifest = build_repository_source_manifest(snapshot)
+        snapshot_digest = str(snapshot.content_digest)
+        tree_hash = str(snapshot.project_tree_hash)
+        manifest_digest = str(getattr(manifest, "content_digest", "") or "")
+        file_count = len(snapshot.included_files)
+        if not snapshot_digest or not tree_hash:
+            failure_code = TARGET_SNAPSHOT_UNAVAILABLE
+        if not manifest_digest:
+            failure_code = failure_code or TARGET_SNAPSHOT_UNAVAILABLE
+        if file_count == 0:
+            # 空目录不是"内容相同"，而是没有可研究内容：不得给出可用身份。
+            failure_code = failure_code or f"{TARGET_SNAPSHOT_UNAVAILABLE}:no_source_files"
+    except Exception as exc:  # noqa: BLE001 - 身份不可用必须显式，不得静默
+        failure_code = f"{TARGET_SNAPSHOT_UNAVAILABLE}:{type(exc).__name__}"
+
     return TargetRepoIdentity(
-        project_root=str(root), commit_sha=commit, dirty_digest=dirty
+        project_root=str(root),
+        commit_sha=commit,
+        dirty_digest=dirty,
+        source_snapshot_digest=snapshot_digest,
+        project_tree_hash=tree_hash,
+        source_manifest_digest=manifest_digest,
+        file_count=file_count,
+        failure_code=failure_code,
     )
 
 
@@ -961,6 +1047,11 @@ def build_run_open_identity(
     research_import_digest: str | None = None,
     validator_bundle: ValidatorBundleSnapshot | None = None,
     tokenizer_identity: str | None = None,
+    narrative_plan_mode: Any | None = None,
+    authoring_context_mode: Any | None = None,
+    response_protocol: Any | None = None,
+    environment: Mapping[str, str] | None = None,
+    require_usable_inputs: bool = True,
 ) -> AuthoringExecutionIdentityV2:
     """从产品入口输入构造执行身份（预检与正式准入共用同一实现）。
 
@@ -975,14 +1066,48 @@ def build_run_open_identity(
         if llm_config is not None and hasattr(llm_config, "model_dump")
         else {"llm_config": "absent" if llm_config is None else str(llm_config)}
     )
+    engine = engine_snapshot or capture_engine_source_snapshot()
     target = capture_target_identity(repo_path)
+    bundle = validator_bundle or capture_validator_bundle_snapshot()
+    tokenizer = str(tokenizer_identity or "").strip() or "unspecified"
+
+    # 审计 §A.1.4/§A.1.5：引擎/目标/验收规则来源不可用时必须在**任何模型发送之前**停止，
+    # 不能因为"失败状态也带一个 sha256 字符串"就当成可用身份。预检传
+    # ``require_usable_inputs=False`` 以便把失败码作为阻断项如实报出，而不是抛穿。
+    if require_usable_inputs:
+        if not engine.is_usable:
+            raise ValueError(
+                f"{ENGINE_ROOT_UNRESOLVED if not engine.engine_root else ENGINE_SNAPSHOT_UNSTABLE}"
+                f":{engine.failure_code or 'engine_commit_unknown'}"
+            )
+        if not target.is_usable:
+            raise ValueError(f"{target.failure_code or TARGET_SNAPSHOT_UNAVAILABLE}")
+        if not bundle.is_usable:
+            raise ValueError(
+                f"{VALIDATOR_BUNDLE_UNAVAILABLE}:{bundle.failure_code or 'unknown'}"
+            )
+
+    from code2paper.agentic.authoring_run_config import capture_effective_config_digest
+
+    effective_config = capture_effective_config_digest(
+        llm_config=llm_config,
+        narrative_plan_mode=narrative_plan_mode,
+        authoring_context_mode=authoring_context_mode,
+        response_protocol=response_protocol,
+        tokenizer_identity=tokenizer,
+        validator_bundle_digest=bundle.digest,
+        environment=environment,
+    )
     return build_execution_identity(
-        engine_snapshot=engine_snapshot or capture_engine_source_snapshot(),
-        target_repo_snapshot_digest=target.commit_sha,
-        target_project_tree_hash=target.dirty_digest,
+        engine_snapshot=engine,
+        target_repo_snapshot_digest=target.source_snapshot_digest or "unavailable",
+        target_project_tree_hash=target.project_tree_hash or "unavailable",
+        target_source_manifest_digest=target.source_manifest_digest,
+        target_git_commit=target.commit_sha,
         intent_content_digest=_input_content_digest(author_intent_path),
         claims_digest=_input_content_digest(claims_path),
         profile_digest=digest_json(llm_payload),
+        effective_config_digest=effective_config["digest"],
         model_identity_digest=digest_json({
             "provider": str(getattr(llm_config, "provider", "") or ""),
             "model": str(getattr(llm_config, "model", "") or ""),
@@ -993,17 +1118,11 @@ def build_run_open_identity(
                 getattr(llm_config, "prompt_template_version", "") or ""
             ),
         }),
-        tokenizer_contract_digest=digest_json({
-            "tokenizer": str(tokenizer_identity or "").strip() or "unspecified"
-        }),
-        validator_bundle_digest=(
-            validator_bundle or capture_validator_bundle_snapshot()
-        ).digest,
+        tokenizer_contract_digest=digest_json({"tokenizer": tokenizer}),
+        validator_bundle_digest=bundle.digest,
+        require_usable_engine=require_usable_inputs,
         creation_mode="fork_authoring" if is_fork else "new",
         research_import_digest=(str(research_import_digest or "") or None),
-        # 引擎指纹不可用时允许"新执行"继续（并如实记录 unknown），
-        # 但 validate_run_open 会拒绝把它当作严格 resume（方案 §5.2）。
-        require_usable_engine=False,
     )
 
 
@@ -1023,14 +1142,25 @@ def preflight_run_open(
     verifiable, import_digest, _detail = (True, "", "")
     if mode.strip().casefold() == "fork_authoring":
         verifiable, import_digest, _detail = verify_research_import(research_import_path)
-    identity = build_run_open_identity(
-        repo_path=repo_path,
-        author_intent_path=author_intent_path,
-        claims_path=claims_path,
-        llm_config=llm_config,
-        run_open_mode=mode,
-        research_import_digest=import_digest,
-    )
+    try:
+        identity = build_run_open_identity(
+            repo_path=repo_path,
+            author_intent_path=author_intent_path,
+            claims_path=claims_path,
+            llm_config=llm_config,
+            run_open_mode=mode,
+            research_import_digest=import_digest,
+        )
+    except ValueError as exc:
+        # 身份输入不可用（引擎/目标/验收规则来源）→ 类型化拒绝，不抛穿给调用方。
+        return RunOpenDecision(
+            allowed=False,
+            code=str(exc).split(":", 1)[0] or "run_open_identity_unavailable",
+            requested_mode=mode,
+            effective_mode=mode,
+            allowed_next_action="repair_engine_target_or_validator_inputs",
+            detail=str(exc)[:320],
+        )
     return validate_run_open(
         out_root,
         mode,
@@ -1120,6 +1250,8 @@ __all__ = [
     "RESUME_IDENTITY_MISSING",
     "RESUME_ENGINE_UNAVAILABLE",
     "RUN_DIRECTORY_NOT_EMPTY",
+    "TARGET_SNAPSHOT_UNAVAILABLE",
+    "VALIDATOR_BUNDLE_UNAVAILABLE",
     "VALIDATOR_BUNDLE_SOURCES",
     "ValidatorBundleSnapshot",
     "capture_validator_bundle_snapshot",

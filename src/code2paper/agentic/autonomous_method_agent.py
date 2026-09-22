@@ -3340,16 +3340,32 @@ def _run_autonomous_method_agent_impl(
         runtime_target_commit = str(
             getattr(runtime.repo_snapshot, "git_commit", "") or ""
         )
-        admitted = str(execution_identity.target_repo_snapshot_digest or "")
+        admitted_commit = str(execution_identity.target_git_commit or "")
         if (
             runtime_target_commit
-            and admitted
-            and admitted != "unknown"
-            and runtime_target_commit != admitted
+            and admitted_commit
+            and admitted_commit != "unknown"
+            and runtime_target_commit != admitted_commit
         ):
             raise ValueError(
                 "resume_identity_mismatch:target_repo_commit:"
-                f"admitted={admitted}:runtime={runtime_target_commit}"
+                f"admitted={admitted_commit}:runtime={runtime_target_commit}"
+            )
+        # 审计 §A.1.2：准入绑定的目标身份是**内容**身份，runtime 建立后必须复核
+        # project tree hash；commit 只作诊断（同一内容换 commit 不应失效）。
+        runtime_tree_hash = str(
+            getattr(runtime.repo_snapshot, "project_tree_hash", "") or ""
+        )
+        admitted_tree_hash = str(execution_identity.target_project_tree_hash or "")
+        if (
+            runtime_tree_hash
+            and admitted_tree_hash
+            and admitted_tree_hash != "unavailable"
+            and runtime_tree_hash != admitted_tree_hash
+        ):
+            raise ValueError(
+                "resume_identity_mismatch:target_project_tree_hash:"
+                f"admitted={admitted_tree_hash}:runtime={runtime_tree_hash}"
             )
     run_identity = build_run_identity(
         run_id=effective_run_id,
