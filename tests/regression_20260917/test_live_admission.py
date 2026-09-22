@@ -428,3 +428,159 @@ def test_incident_archive_cannot_be_admitted_for_resume() -> None:
     assert "model_identity_unresolved" not in report.blockers
     assert report.run_open_decision["effective_mode"] == "resume"
     assert report.render().splitlines()[0] == "LIVE ADMISSION  NOT READY"
+
+
+# --------------------------------------------------------------------------- #
+# §G.5：offline-ready 与 live-ready 必须是两组门
+# --------------------------------------------------------------------------- #
+
+
+def test_offline_ready_does_not_imply_live_ready(tmp_path: Path) -> None:
+    """没有部署探测/角色预算/停止条件时：offline-ready，但明确不是 live-ready。"""
+
+    report = _preflight(tmp_path, tmp_path / "out-scope", runtime_probe=None)
+
+    assert report.ready is True
+    assert report.live_ready is False
+    assert report.readiness_scope == "offline_ready"
+    assert "runtime_probe_missing" in report.live_blockers
+    assert "role_call_budgets_not_declared" in report.live_blockers
+    assert "output_limits_not_declared" in report.live_blockers
+    assert "stop_conditions_not_declared" in report.live_blockers
+    # 部署侧缺失不得被当成"服务可用"。
+    assert "不证明当前服务可用" in report.scope_note
+    rendered = report.render()
+    assert "READINESS SCOPE offline_ready" in rendered
+    assert "LIVE BLOCKER" in rendered
+    # live 专属门必须标注 scope。
+    scopes = {gate.name: gate.scope for gate in report.gates}
+    assert "runtime_model_identity" not in scopes, "没有探测就不该有该门"
+    assert scopes["role_call_budgets"] == "live"
+    assert scopes["output_limits"] == "live"
+    assert scopes["stop_conditions"] == "live"
+    assert scopes["offline_suite_receipt"] == "offline"
+
+
+def test_live_ready_requires_deployment_probe_budgets_and_stop_conditions(
+    tmp_path: Path,
+) -> None:
+    report = _preflight(
+        tmp_path,
+        tmp_path / "out-live",
+        role_call_budgets={
+            "formalizer": 8,
+            "writer": 40,
+            "realizer": 40,
+            "binder": 8,
+        },
+        role_output_limits={
+            "formalizer": 4096,
+            "writer": 8192,
+            "realizer": 8192,
+            "binder": 2048,
+        },
+        stop_conditions=("budget_exhausted", "unknown_send_outcome"),
+    )
+
+    assert report.ready is True
+    assert report.live_ready is True
+    assert report.readiness_scope == "live_ready"
+    assert report.live_blockers == ()
+    assert "READINESS SCOPE live_ready" in report.render()
+    assert report.policy["role_call_budgets"]["writer"] == 40
+    assert report.policy["stop_conditions"] == [
+        "budget_exhausted",
+        "unknown_send_outcome",
+    ]
+
+
+def test_offline_receipt_must_bind_validator_and_test_plan_identity(
+    tmp_path: Path,
+) -> None:
+    """§14.4：规则身份或必测集合变化后，旧回执必须失效。"""
+
+    stale_bundle = _preflight(
+        tmp_path,
+        tmp_path / "out-stale-bundle",
+        offline_suite_receipt=_offline_receipt().model_copy(
+            update={"validator_bundle_digest": "sha256:an-older-rule-bundle"}
+        ),
+    )
+    assert stale_bundle.ready is False
+    assert "offline_suite_receipt_stale" in stale_bundle.blockers
+
+    partial_plan = _preflight(
+        tmp_path,
+        tmp_path / "out-partial-plan",
+        offline_suite_receipt=_offline_receipt(
+            test_plan_ids=("tests/test_llm_section_writer.py",)
+        ),
+    )
+    assert partial_plan.ready is False
+    assert any(
+        blocker.startswith("offline_suite_test_plan_incomplete:")
+        for blocker in partial_plan.blockers
+    ), partial_plan.blockers
+    assert "tests/regression_20260922" in " ".join(partial_plan.blockers)
+
+    # 未绑定规则/测试集合身份的旧回执：offline 只警告，live 阻断。
+    legacy = _preflight(
+        tmp_path,
+        tmp_path / "out-legacy",
+        offline_suite_receipt=_offline_receipt().model_copy(
+            update={"validator_bundle_digest": "", "test_plan_ids": (), "test_plan_digest": ""}
+        ),
+    )
+    assert legacy.ready is True
+    assert "offline_suite_receipt_identities_unbound" in legacy.live_blockers
+    assert any(
+        "does not bind validator/test-plan identity" in warning
+        for warning in legacy.warnings
+    )
+
+
+def test_cli_separates_offline_ready_from_live_ready(tmp_path: Path, capsys) -> None:
+    """§G.5：CLI 必须能用退出码区分 offline-ready 与 live-ready。"""
+
+    from code2paper.cli.agentic_run import method_agent_main
+
+    repo = _authored_repo(tmp_path)
+    intent, claims = _materials(tmp_path)
+    receipt_path = tmp_path / "receipt.json"
+    write_offline_suite_receipt(receipt_path, _offline_receipt())
+    common = [
+        "live-admission",
+        "--repo",
+        str(repo),
+        "--out",
+        str(tmp_path / "out-cli"),
+        "--author-intent",
+        str(intent),
+        "--claims",
+        str(claims),
+        "--llm-provider",
+        "openai",
+        "--llm-model",
+        LIVE_MODEL,
+        "--run-open-mode",
+        "new",
+        "--context-tokens",
+        "131072",
+        "--max-writer-calls",
+        "40",
+        "--max-input-tokens",
+        "4000000",
+        "--offline-receipt",
+        str(receipt_path),
+    ]
+
+    # 没有部署探测：默认仍允许 offline-ready（退出码 0），但报告必须写明 scope。
+    assert method_agent_main(list(common)) == 0
+    offline_output = capsys.readouterr().out
+    assert "READINESS SCOPE offline_ready" in offline_output
+
+    # 显式要求 live-ready 时：同一条件下退出码 4，且列出 live 阻断项。
+    assert method_agent_main([*common, "--require-live-ready"]) == 4
+    live_output = capsys.readouterr().out
+    assert "LIVE BLOCKER" in live_output
+    assert "runtime_probe_missing" in live_output

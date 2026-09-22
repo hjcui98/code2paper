@@ -9,9 +9,11 @@ out 目录身份合法、doctor 无 critical 阻断。本模块把这些条件�
 
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import re
+from collections.abc import Sequence
 from pathlib import Path
 from typing import Any, Mapping
 
@@ -50,8 +52,22 @@ __all__ = [
 _SUMMARY_PATTERN = re.compile(r"(\d+)\s+(passed|failed|error|errors|deselected)")
 
 
+#: §14.4：live 准入要求的**必测集合**。回执必须证明这些集合真的跑过，
+#: 而不是"某条命令有 1 passed"。
+REQUIRED_OFFLINE_TEST_PLAN: tuple[str, ...] = (
+    "tests/regression_20260917",
+    "tests/regression_20260922",
+    "tests/test_agentic_publication_method_writer_unified.py",
+    "tests/test_llm_section_writer.py",
+)
+
+
 class OfflineSuiteReceiptV1(BaseModel):
-    """§14.1 "offline 全链通过" 的可复算证据：结果 + 引擎内容指纹绑定。"""
+    """§14.1/§14.4 "offline 全链通过" 的可复算证据。
+
+    必须绑定：引擎内容指纹、验收规则身份、有效配置身份、**必测集合**身份与原始输出摘要。
+    引擎/validator/config/测试集合任一变化，旧回执即失效。
+    """
 
     model_config = ConfigDict(extra="forbid", frozen=True)
 
@@ -66,14 +82,52 @@ class OfflineSuiteReceiptV1(BaseModel):
     engine_commit_sha: str = ""
     engine_source_digest: str = ""
     worktree_dirty_entry_count: int = 0
+    #: §14.4：回执必须绑定验收规则、有效配置与必测集合身份。
+    validator_bundle_digest: str = ""
+    effective_config_digest: str = ""
+    test_plan_ids: tuple[str, ...] = ()
+    test_plan_digest: str = ""
+    output_digest: str = ""
 
-    def matches(self, snapshot: EngineSourceSnapshot) -> bool:
-        """回执必须绑定同一引擎身份；否则"之前跑过"不能当作现状。"""
+    def matches(
+        self,
+        snapshot: EngineSourceSnapshot,
+        *,
+        validator_bundle_digest: str = "",
+        effective_config_digest: str = "",
+        required_test_plan: tuple[str, ...] = (),
+    ) -> bool:
+        """回执必须绑定同一引擎/规则/配置/测试集合身份；否则"之前跑过"不能当作现状。"""
 
-        return (
-            self.engine_source_digest == snapshot.source_digest
-            and self.engine_commit_sha == snapshot.commit_sha
-        )
+        if (
+            self.engine_source_digest != snapshot.source_digest
+            or self.engine_commit_sha != snapshot.commit_sha
+        ):
+            return False
+        if (
+            validator_bundle_digest
+            and self.validator_bundle_digest
+            and self.validator_bundle_digest != validator_bundle_digest
+        ):
+            return False
+        if (
+            effective_config_digest
+            and self.effective_config_digest != effective_config_digest
+        ):
+            return False
+        if required_test_plan and self.test_plan_ids:
+            # 声明了测试集合就必须覆盖必测集合；旧格式回执（完全没有该字段）由准入
+            # 侧单独记为"身份未绑定"，而不是伪装成"集合不完整"。
+            covered = set(self.test_plan_ids)
+            if not set(required_test_plan).issubset(covered):
+                return False
+        return True
+
+    def missing_test_plan_ids(
+        self, required_test_plan: tuple[str, ...] = REQUIRED_OFFLINE_TEST_PLAN
+    ) -> tuple[str, ...]:
+        covered = set(self.test_plan_ids)
+        return tuple(item for item in required_test_plan if item not in covered)
 
 
 def _parse_pytest_summary(output: str) -> dict[str, int]:
@@ -88,17 +142,30 @@ def _parse_pytest_summary(output: str) -> dict[str, int]:
     return counts
 
 
+def _digest_text(value: str) -> str:
+    return "sha256:" + hashlib.sha256(str(value or "").encode("utf-8")).hexdigest()
+
+
 def build_offline_suite_receipt(
     *,
     command: str,
     exit_code: int,
     output: str = "",
     engine_snapshot: EngineSourceSnapshot | None = None,
+    validator_bundle_digest: str | None = None,
+    effective_config_digest: str = "",
+    test_plan_ids: Sequence[str] = REQUIRED_OFFLINE_TEST_PLAN,
 ) -> OfflineSuiteReceiptV1:
     """从一次离线全链运行的实际结果构造回执（结果来自真实输出，不接受声明值）。"""
 
     snapshot = engine_snapshot or capture_engine_source_snapshot()
+    if validator_bundle_digest is None:
+        # §14.4：回执默认绑定**当前**验收规则身份（而不是留空）。
+        validator_bundle_digest = capture_validator_bundle_snapshot().digest
     counts = _parse_pytest_summary(output)
+    plan_ids = tuple(
+        dict.fromkeys(str(item).strip() for item in test_plan_ids if str(item).strip())
+    )
     return OfflineSuiteReceiptV1(
         passed=bool(
             int(exit_code) == 0
@@ -115,6 +182,11 @@ def build_offline_suite_receipt(
         engine_commit_sha=snapshot.commit_sha,
         engine_source_digest=snapshot.source_digest,
         worktree_dirty_entry_count=len(snapshot.entries),
+        validator_bundle_digest=str(validator_bundle_digest or ""),
+        effective_config_digest=str(effective_config_digest or ""),
+        test_plan_ids=plan_ids,
+        test_plan_digest=_digest_text("\n".join(sorted(plan_ids))),
+        output_digest=_digest_text(output),
     )
 
 
@@ -140,6 +212,8 @@ class LiveAdmissionGateV1(BaseModel):
     name: str
     passed: bool
     detail: str = ""
+    #: 审计 §G.5：offline-ready 与 live-ready 的门是**两组**，不能混为一谈。
+    scope: str = "offline"
 
 
 class RuntimeProbeSummaryV1(BaseModel):
@@ -198,7 +272,16 @@ class LiveAdmissionReportV1(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
 
     schema_version: str = "1.0"
+    #: ``ready`` 保留原义：**offline-ready**（不证明当前服务可用）。
     ready: bool = False
+    #: 审计 §G.5：live-ready 额外要求部署探测、角色预算、输出上限与停止条件。
+    live_ready: bool = False
+    readiness_scope: str = "not_ready"
+    scope_note: str = (
+        "offline-ready 只证明离线全链与身份/账本/页面检查通过，"
+        "不证明当前服务可用；live-ready 需要本轮部署探测与预算声明。"
+    )
+    live_blockers: tuple[str, ...] = ()
     out_root: str
     run_open_mode: str = "auto"
     execution_id: str = ""
@@ -214,6 +297,8 @@ class LiveAdmissionReportV1(BaseModel):
     def render(self) -> str:
         lines = [
             f"LIVE ADMISSION  {'READY' if self.ready else 'NOT READY'}",
+            f"READINESS SCOPE {self.readiness_scope}"
+            + ("  (live-ready)" if self.live_ready else ""),
             f"OUT ROOT        {self.out_root}",
             f"RUN OPEN MODE   {self.run_open_mode}",
             f"EXECUTION ID    {self.execution_id or '(unresolved)'}",
@@ -226,6 +311,10 @@ class LiveAdmissionReportV1(BaseModel):
             )
         for blocker in self.blockers:
             lines.append(f"BLOCKER         {blocker}")
+        for blocker in self.live_blockers:
+            lines.append(f"LIVE BLOCKER    {blocker}")
+        if self.scope_note:
+            lines.append(f"SCOPE           {self.scope_note}")
         for warning in self.warnings:
             lines.append(f"WARNING         {warning}")
         return "\n".join(lines)
@@ -263,6 +352,10 @@ def preflight_live_admission(
     runtime_probe: RuntimeProbeSummaryV1 | Mapping[str, Any] | None = None,
     offline_suite_receipt: OfflineSuiteReceiptV1 | Mapping[str, Any] | str | Path | None = None,
     research_import_path: str | Path | None = None,
+    # 审计 §G.5：live-ready 需要的部署侧声明（offline-ready 不要求）。
+    role_call_budgets: Mapping[str, int] | None = None,
+    role_output_limits: Mapping[str, int] | None = None,
+    stop_conditions: Sequence[str] = (),
 ) -> LiveAdmissionReportV1:
     """逐条检查 §14.1 的 live 准入条件（只读、零模型调用）。"""
 
@@ -289,6 +382,7 @@ def preflight_live_admission(
         receipt = None
     gates: list[LiveAdmissionGateV1] = []
     blockers: list[str] = []
+    live_blockers: list[str] = []
     warnings: list[str] = []
 
     snapshot = engine_snapshot or capture_engine_source_snapshot()
@@ -451,25 +545,51 @@ def preflight_live_admission(
         )
         blockers.append("offline_suite_receipt_missing")
     else:
-        receipt_fresh = receipt.matches(snapshot)
-        receipt_ok = bool(receipt.passed and receipt_fresh)
+        receipt_fresh = receipt.matches(
+            snapshot,
+            validator_bundle_digest=bundle.digest if bundle.is_usable else "",
+            effective_config_digest="",
+            required_test_plan=REQUIRED_OFFLINE_TEST_PLAN,
+        )
+        missing_plan = (
+            receipt.missing_test_plan_ids() if receipt.test_plan_ids else ()
+        )
+        receipt_ok = bool(receipt.passed and receipt_fresh and not missing_plan)
         gates.append(
             LiveAdmissionGateV1(
                 name="offline_suite_receipt",
                 passed=receipt_ok,
                 detail=(
                     f"passed={receipt.passed_count} failed={receipt.failed_count} "
-                    f"exit={receipt.exit_code} engine_bound={receipt_fresh}"
+                    f"exit={receipt.exit_code} identities_bound={receipt_fresh} "
+                    f"test_plan={len(receipt.test_plan_ids)}/{len(REQUIRED_OFFLINE_TEST_PLAN)}"
                 ),
             )
         )
         if not receipt.passed:
             blockers.append("offline_suite_not_passed")
+        elif missing_plan:
+            # §14.4：某条命令有 passed 不代表必测集合跑完。
+            blockers.append(
+                "offline_suite_test_plan_incomplete:"
+                + ",".join(missing_plan[:4])
+            )
         elif not receipt_fresh:
             blockers.append("offline_suite_receipt_stale")
+        if not receipt.validator_bundle_digest or not receipt.test_plan_ids:
+            # 旧格式回执没有绑定规则/测试集合身份：offline 只警告，live 直接阻断。
+            warnings.append(
+                "offline suite receipt does not bind validator/test-plan identity"
+            )
+            live_blockers.append("offline_suite_receipt_identities_unbound")
 
     if probe is None:
-        warnings.append("runtime probe not supplied: record /health and /v1/models before live")
+        # §G.5：offline-ready 允许没有部署探测，但 live-ready 不行——两者必须分开报。
+        warnings.append(
+            "runtime probe not supplied: offline-ready only; live-ready requires "
+            "/health and /v1/models from this round"
+        )
+        live_blockers.append("runtime_probe_missing")
     else:
         serves_ok = bool(probe.health_ok and probe.serves(model))
         gates.append(
@@ -484,6 +604,7 @@ def preflight_live_admission(
         )
         if not serves_ok:
             blockers.append("runtime_model_identity_mismatch")
+            live_blockers.append("runtime_model_identity_mismatch")
 
     # L2（fork_authoring）必须导入"已校验研究证据"：预检与启动器使用同一
     # verify_research_import，因此预检给出的 execution_id 与随后真实 run 一致。
@@ -558,6 +679,57 @@ def preflight_live_admission(
             "exhausted invocation(s) present: " + ", ".join(decision.exhausted_invocations)
         )
 
+    # 审计 §G.5：live-ready 必须显式声明各角色调用预算、输出上限与停止条件；
+    # 这些门属于 live scope，不阻断 offline-ready。
+    required_roles = ("formalizer", "writer", "realizer", "binder")
+    budgets = {
+        str(role): int((role_call_budgets or {}).get(role, 0) or 0)
+        for role in required_roles
+    }
+    budgets_ok = all(value > 0 for value in budgets.values())
+    gates.append(
+        LiveAdmissionGateV1(
+            name="role_call_budgets",
+            passed=budgets_ok,
+            scope="live",
+            detail=", ".join(f"{role}={value}" for role, value in budgets.items()),
+        )
+    )
+    if not budgets_ok:
+        live_blockers.append("role_call_budgets_not_declared")
+
+    output_limits = {
+        str(role): int((role_output_limits or {}).get(role, 0) or 0)
+        for role in required_roles
+    }
+    limits_ok = all(value > 0 for value in output_limits.values())
+    gates.append(
+        LiveAdmissionGateV1(
+            name="output_limits",
+            passed=limits_ok,
+            scope="live",
+            detail=", ".join(
+                f"{role}={value}" for role, value in output_limits.items()
+            ),
+        )
+    )
+    if not limits_ok:
+        live_blockers.append("output_limits_not_declared")
+
+    stops = tuple(
+        dict.fromkeys(str(item).strip() for item in stop_conditions if str(item).strip())
+    )
+    gates.append(
+        LiveAdmissionGateV1(
+            name="stop_conditions",
+            passed=bool(stops),
+            scope="live",
+            detail="; ".join(stops) or "none declared",
+        )
+    )
+    if not stops:
+        live_blockers.append("stop_conditions_not_declared")
+
     if (root / "artifacts").is_dir():
         report = run_authoring_doctor(root)
         doctor_ok = not report.critical_blockers
@@ -575,8 +747,14 @@ def preflight_live_admission(
     elif decision.allowed and mode in {"new", "fork_authoring"}:
         warnings.append("doctor skipped: fresh run directory")
 
+    offline_ready = not blockers
+    live_ready = offline_ready and not live_blockers
+    scope = "live_ready" if live_ready else "offline_ready" if offline_ready else "not_ready"
     return LiveAdmissionReportV1(
-        ready=not blockers,
+        ready=offline_ready,
+        live_ready=live_ready,
+        readiness_scope=scope,
+        live_blockers=tuple(dict.fromkeys(live_blockers)),
         out_root=str(root),
         run_open_mode=mode,
         execution_id=(identity.execution_id if identity is not None else ""),
@@ -592,6 +770,10 @@ def preflight_live_admission(
             "max_total_input_tokens": int(max_total_input_tokens),
             "transport": policy.as_diagnostics(),
             "semantic_paragraph_limit": paragraph_policy,
+            "readiness_scope": scope,
+            "role_call_budgets": budgets,
+            "role_output_limits": output_limits,
+            "stop_conditions": list(stops),
             "offline_suite_receipt": (
                 receipt.model_dump(mode="json") if receipt is not None else None
             ),

@@ -4728,3 +4728,32 @@ resume，断言"零重复发送 + 状态与 ledger 一致 + 不发布未验证�
 - 崩溃点 6（Writer 已接受、Binder 未跑）仍只重跑确定性 Binder。
 
 回归 + writer 套件 492 项全绿。
+
+## 2026-09-22 审计 PR G.5：offline-ready 与 live-ready 分成两组门
+
+复现的审计论断（成立）：预检只有一个 `ready`，且部署探测缺失时只是 warning——"离线全链
+通过"与"当前服务可用"混在同一个结论里；离线回执也只绑定引擎指纹，validator/有效配置/
+**必测集合**变化后旧回执照样算通过（§14.4 明确禁止"某条命令有 1 passed 就算跑完"）。
+
+修复：
+
+- `OfflineSuiteReceiptV1` 增加 `validator_bundle_digest` / `effective_config_digest` /
+  `test_plan_ids` / `test_plan_digest` / `output_digest`；`matches(...)` 同时核对引擎、
+  规则、有效配置与**必测集合**（`REQUIRED_OFFLINE_TEST_PLAN`：两个审计回归目录 +
+  unified writer + section writer）。`build_offline_suite_receipt` 默认绑定当前
+  validator bundle 身份与原始输出摘要。
+- 预检新增 scope：`LiveAdmissionGateV1.scope`（offline/live）、报告新增
+  `live_ready` / `readiness_scope` / `live_blockers` / `scope_note`（明说"offline-ready
+  不证明当前服务可用"），`render()` 打印 `READINESS SCOPE` 与 `LIVE BLOCKER`。
+  live 专属门：部署探测（health + 服务模型身份）、`role_call_budgets`、
+  `output_limits`、`stop_conditions`（四角色预算/输出上限必须为正，停止条件必须显式声明）；
+  这些门不阻断 offline-ready。
+- 回执门细分：`offline_suite_test_plan_incomplete:<ids>`（声明了集合但没覆盖必测集合）、
+  `offline_suite_receipt_stale`（引擎/规则身份变化）、旧格式回执（完全没绑定规则/测试集合）
+  在 offline 只警告，在 live 记为 `offline_suite_receipt_identities_unbound`。
+- CLI：新增 `--require-live-ready`；退出码区分 0=live-ready、3=不可进入、
+  4=仅 offline-ready（未加该 flag 时仍返回 0，保持既有脚本兼容）。
+
+测试：`test_live_admission.py` 新增 4 项（offline≠live 的四类 live blocker 与 scope 标注、
+补齐 live 声明后 `live_ready=True` 且 policy 记录预算/停止条件、回执的规则与必测集合绑定
+三类判定、CLI 退出码 0/4 与 scope 行）。回归目录 18 项 live 准入测试 + 两套审计回归全绿。

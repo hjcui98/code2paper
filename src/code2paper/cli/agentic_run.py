@@ -767,8 +767,14 @@ def _live_admission_main(args: argparse.Namespace) -> int:
         print(report.model_dump_json(indent=2))
     else:
         print(report.render())
-    # 0 = 可以进入 live；3 = 明确不可进入（阻断项已打印），便于脚本判定。
-    return 0 if report.ready else 3
+    # 审计 §G.5：offline-ready 与 live-ready 用不同退出码区分，脚本无法把
+    # "离线全链通过"误当成"当前服务可用"。
+    #   0 = live-ready；3 = 不可进入；4 = 仅 offline-ready（未声明 --require-live-ready 时）
+    if report.live_ready:
+        return 0
+    if not report.ready:
+        return 3
+    return 0 if not bool(getattr(args, "require_live_ready", False)) else 4
 
 
 def _record_offline_receipt_main(args: argparse.Namespace) -> int:
@@ -899,6 +905,15 @@ def _method_agent_parser() -> argparse.ArgumentParser:
         help="Receipt JSON from `record-offline-receipt`, bound to the current engine digest",
     )
     admission_parser.add_argument("--health-json", dest="health_json", default="")
+    admission_parser.add_argument(
+        "--require-live-ready",
+        dest="require_live_ready",
+        action="store_true",
+        help=(
+            "Require live-ready (deployment probe + role budgets + output limits + "
+            "stop conditions), not just offline-ready"
+        ),
+    )
     admission_parser.add_argument("--models-json", dest="models_json", default="")
     admission_parser.add_argument(
         "--research-import",
