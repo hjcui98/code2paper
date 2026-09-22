@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from types import SimpleNamespace
 
+from code2paper.agentic.intent_spine_models import AuthorIntentSurfaceV1
 from code2paper.agentic.intent_narrative_compiler import (
     _slot_binding_decision,
     build_intent_narrative_plan_v4,
@@ -255,3 +256,252 @@ def test_must_cover_unresolved_story_stays_unresolved_not_repository_claim() -> 
     assert paragraph.implementation_status == "unresolved"
     assert paragraph.unresolved_ids
     assert "story:no-owner" in trace["unresolved_story_ids"]
+
+
+# --------------------------------------------------------------------------- #
+# §D.2：owner 选择必须经过 binding decision；叙事适配与代码支持分两条轴
+# --------------------------------------------------------------------------- #
+
+
+def _zero_overlap_inputs(*, publication_policy: str) -> tuple[tuple[SimpleNamespace, ...], SimpleNamespace]:
+    story = _story("story:author-only", "The encoder adds document identity.")
+    contexts = SimpleNamespace(contexts=(
+        SimpleNamespace(
+            mechanism_id="mech_sym:encoder",
+            mechanism_name="Encoder",
+            story_node_ids=(),
+            details=(
+                SimpleNamespace(
+                    detail_id="detail:orphan",
+                    primary_mechanism_id="mech_sym:encoder",
+                    importance="core",
+                    publication_policy=publication_policy,
+                    active_path_status="active_default",
+                    evidence_authority="repository_verified",
+                    source_claim_ids=("claim:elsewhere",),
+                ),
+            ),
+            evidence_closure=SimpleNamespace(
+                fact_ids=(), claim_ids=("claim:elsewhere",), equation_ids=(),
+                exact_span_ids=(), seed_obligation_ids=(),
+            ),
+        ),
+    ))
+    return (story,), contexts
+
+
+def test_zero_overlap_required_detail_becomes_a_typed_gap_but_keeps_coverage() -> None:
+    stories, contexts = _zero_overlap_inputs(publication_policy="clean_candidate")
+    prior = _prior_plan([{"section_id": "MA-S1", "heading": "Architecture", "argument_unit_ids": ()}])
+    plan, _bindings, trace = build_intent_narrative_plan_v4(
+        story_spine=stories, prior_plan=prior, contexts=contexts
+    )
+
+    gaps = [
+        entry for entry in trace["typed_binding_gaps"] if entry["id"] == "detail:orphan"
+    ]
+    assert gaps, "零 overlap 的 required detail 必须留下 typed gap/replan 记录"
+    assert gaps[0]["kind"] == "required_detail"
+    assert gaps[0]["reason"] == "no_story_overlap"
+    assert gaps[0]["requested_action"] == "bounded_planner_or_research"
+
+    decisions = [
+        entry
+        for entry in trace["binding_decisions"]
+        if entry["subject_id"] == "detail:orphan"
+    ]
+    assert decisions and decisions[0]["narrative_binding"] == "organizational_fallback"
+    # 两条轴分开：叙事适配不确定，不代表代码支持缺失（也不把它升级成作者主张）。
+    assert decisions[0]["evidence_authority"] == "repository_verified"
+
+    # coverage 不丢：detail 仍在某个段落里，但不被写成"仓库已验证实现"。
+    carried = [
+        paragraph
+        for section in plan.sections
+        for paragraph in section.paragraphs
+        if paragraph.required_detail_ids
+    ]
+    assert [paragraph.required_detail_ids for paragraph in carried] == [
+        ("detail:orphan",)
+    ]
+    assert carried[0].authority_surface != "repository_statement", (
+        "组织落位不得把段落升级为仓库实现主张"
+    )
+    assert "detail:orphan" in trace["required_detail_binding_fallback_ids"]
+
+
+def test_zero_overlap_optional_detail_is_kept_in_context_not_forced() -> None:
+    stories, contexts = _zero_overlap_inputs(publication_policy="annotated_only")
+    prior = _prior_plan([{"section_id": "MA-S1", "heading": "Architecture", "argument_unit_ids": ()}])
+    _plan, _bindings, trace = build_intent_narrative_plan_v4(
+        story_spine=stories, prior_plan=prior, contexts=contexts
+    )
+
+    assert trace["typed_binding_gaps"] == [], "optional 材料不是 required gap"
+    assert trace["optional_detail_binding_fallback_ids"] == ["detail:orphan"]
+    assert trace["detail_binding_fallback_ids"] == ["detail:orphan"]
+
+
+def test_production_path_calls_the_binding_decision(monkeypatch) -> None:
+    """真实接线：plan 编译必须真的进入 _slot_binding_decision（不是只 import）。"""
+
+    from code2paper.agentic import intent_narrative_compiler as compiler
+
+    calls: list[tuple[str, ...]] = []
+    real = compiler._slot_binding_decision
+
+    def _spy(slots, handles):
+        calls.append(tuple(sorted(handles)))
+        return real(slots, handles)
+
+    monkeypatch.setattr(compiler, "_slot_binding_decision", _spy)
+    stories, contexts = _incident_shaped_inputs()
+    prior = _prior_plan([{"section_id": "MA-S1", "heading": "Architecture", "argument_unit_ids": ("AU-1",)}])
+    build_intent_narrative_plan_v4(story_spine=stories, prior_plan=prior, contexts=contexts)
+
+    assert calls, "生产路径必须调用绑定决策"
+    assert any("claim:doc" in call for call in calls)
+
+
+# --------------------------------------------------------------------------- #
+# §D.3：局部指纹与 sealed 模型更新
+# --------------------------------------------------------------------------- #
+
+
+def test_reader_question_changes_the_intent_digest() -> None:
+    """reader_question 被消费成段落 reader_goal，只改它也必须改指纹。"""
+
+    base = [_story("story:a", "The encoder adds document identity.")]
+    changed = [
+        SimpleNamespace(
+            **{
+                **base[0].__dict__,
+                "reader_question": "Which tensor carries the identity signal?",
+            }
+        )
+    ]
+    assert compile_intent_content_digest(base) != compile_intent_content_digest(changed)
+
+
+def test_surface_status_update_rebuilds_the_sealed_digest() -> None:
+    from code2paper.agentic.intent_narrative_compiler import _surface_with_status
+
+    surface = compile_author_intent_surfaces(
+        [_story("story:a", "The encoder adds document identity.")]
+    )["story:a"]
+    assert surface.implementation_status == "unresolved"
+
+    # model_copy 绕过 validator：digest 停在旧内容上（这正是审计 §D.3 的反例）。
+    stale = surface.model_copy(update={"implementation_status": "supported"})
+    assert stale.content_digest == surface.content_digest
+    assert stale.implementation_status == "supported"
+
+    # 重建并验证：digest 与"同字段重新构造"的 surface 完全一致。
+    rebuilt = _surface_with_status(surface, "supported")
+    fresh = AuthorIntentSurfaceV1.model_validate(
+        {**surface.model_dump(mode="json", exclude={"content_digest"}),
+         "implementation_status": "supported"}
+    )
+    assert rebuilt.content_digest == fresh.content_digest
+    assert rebuilt.content_digest != surface.content_digest
+
+
+def test_unit_surfaces_are_rebuilt_with_the_slot_status() -> None:
+    """生产路径：unit 的 surface 必须重建验证，而不是带旧 digest 的 model_copy。"""
+
+    from code2paper.agentic.intent_narrative_compiler import (
+        compile_author_intent_surfaces,
+        compile_authoring_units,
+    )
+
+    story = _story("story:grounded", "The encoder adds document identity.", claims=("claim:doc",))
+    base = compile_author_intent_surfaces([story])["story:grounded"]
+    assert base.implementation_status == "unresolved"
+
+    slot = {
+        "slot_id": "MA-S1:slot1",
+        "story_id": "story:grounded",
+        "mechanism_id": "mech_sym:encoder",
+        "required_details": [
+            SimpleNamespace(
+                detail_id="detail:encoder:1",
+                publication_policy="clean_candidate",
+                active_path_status="active_default",
+            )
+        ],
+        "optional_details": [],
+        "argument_unit_ids": [],
+        "intent_atom_ids": [],
+        "formula_obligation_ids": [],
+        "formula_package_ids": [],
+    }
+    units = compile_authoring_units(
+        [slot],
+        section_id="MA-S1",
+        story_by_id={"story:grounded": story},
+        binding_by_story={"story:grounded": SimpleNamespace(binding_status="exact")},
+        surfaces_by_story={"story:grounded": base},
+    )
+
+    assert len(units) == 1
+    surface = units[0].surfaces[0]
+    assert surface.implementation_status == "supported"
+    fresh = AuthorIntentSurfaceV1.model_validate(
+        {
+            **base.model_dump(mode="json", exclude={"content_digest"}),
+            "implementation_status": "supported",
+        }
+    )
+    assert surface.content_digest == fresh.content_digest, (
+        "unit 的 surface 必须按新 status 重新验证；带旧 digest 的 model_copy 会在这里失败"
+    )
+    assert surface.content_digest != base.content_digest
+
+
+def test_paragraph_surface_digest_follows_the_rebuilt_surface() -> None:
+    """端到端：status 更新后段落 surface_digest 不得停留在旧摘要。"""
+
+    stories = (
+        _story("story:grounded", "The encoder adds document identity.", claims=("claim:doc",)),
+    )
+    contexts = SimpleNamespace(contexts=(
+        SimpleNamespace(
+            mechanism_id="mech_sym:encoder",
+            mechanism_name="Encoder",
+            story_node_ids=(),
+            details=(
+                SimpleNamespace(
+                    detail_id="detail:encoder:1",
+                    primary_mechanism_id="mech_sym:encoder",
+                    importance="core",
+                    publication_policy="clean_candidate",
+                    active_path_status="active_default",
+                    source_claim_ids=("claim:doc",),
+                ),
+            ),
+            evidence_closure=SimpleNamespace(
+                fact_ids=(), claim_ids=("claim:doc",), equation_ids=(),
+                exact_span_ids=(), seed_obligation_ids=(),
+            ),
+        ),
+    ))
+    prior = _prior_plan([{"section_id": "MA-S1", "heading": "Architecture", "argument_unit_ids": ()}])
+    plan, _bindings, _trace = build_intent_narrative_plan_v4(
+        story_spine=stories, prior_plan=prior, contexts=contexts
+    )
+
+    paragraph = next(
+        item for section in plan.sections for item in section.paragraphs
+        if item.author_intent_surfaces
+    )
+    surface = paragraph.author_intent_surfaces[0]
+    assert surface.content_digest == AuthorIntentSurfaceV1.model_validate(
+        surface.model_dump(mode="json")
+    ).content_digest, "surface 必须是可重建验证的 sealed 对象"
+    assert paragraph.surface_digest == _surface_digest_of(paragraph)
+
+
+def _surface_digest_of(paragraph) -> str:
+    from code2paper.agentic.intent_spine_models import _digest
+
+    return _digest([item.content_digest for item in paragraph.author_intent_surfaces])
