@@ -3906,3 +3906,22 @@ failure（`paragraph_count:N>limit` 或 `input_tokens:N>limit`），不再只打
 - C.2 段数上限的显式策略标注（0=关闭只能是显式实验配置，生产准入需标注）；
 - C.3 输出估量补 witness span 与 schema 骨架计量；C.4 拆段义务映射；C.5 重分页后重建
   invocation/预算/快照。
+
+### PR C（F01）第三片：页内段落顺序改为叙述顺序（§C.1 / I5）
+
+**复现的机制**：`_section_page_payload` 与打包循环内的 `_payload` 都写
+`"paragraph_ids": list(sorted(set(...)))` —— 段落顺序被换成**字典序**，计划的叙述顺序
+（以及 narrative unit 的 paragraph 顺序）在进入请求前就丢了。这正是事故请求里
+`P10..P17, P1__f1, P3..P9` 的来源。
+
+修复：两处都改为保序去重（`dict.fromkeys`），页内段落顺序从此等于计划顺序。回归
+`test_page_payload_preserves_the_narrative_paragraph_order` 用"字典序 ≠ 叙述顺序"的 id
+夹具（`p1__f1, p3, p10`）钉住；旧实现下该断言必然失败。全量离线 3816 passed。
+
+**本轮查清、下一轮要改的机制（混合 section）**：页面对外的段落清单来自
+**adapter 对 narrative plan 的挂载**（事故请求的 `narrative_plan.page_paragraph_ids` 有 16 段），
+而编译器打包时只看到技术分组里的 1 段（`not group_atoms: continue` 把叙事段落跳过，注释
+里说"由 adapter 挂到 residual page"——但 `publication_method_writer` 里没有这段逻辑，
+compiler 里也没有 residual 组装）。因此候选页判定看到的段落数与实际请求的段落数仍然不同。
+要按 §C.1 统一 packing unit，必须把"计划层面的段落归属"前移到打包循环（技术闭包降为
+packing unit 的一个属性），并同步 C.5 的重建步骤；这是下一轮 PR C 的主任务。

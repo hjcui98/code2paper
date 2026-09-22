@@ -1670,7 +1670,12 @@ def _section_page_payload(
         "mechanism_header": dict(header),
         "section_id": section_id,
         "obligation_ids": list(sorted(set(str(item) for item in task_ids))),
-        "paragraph_ids": list(sorted(set(str(item) for item in paragraph_ids if str(item).strip()))),
+        # 审计 §C.1 / 不变量 I5：段落顺序是**叙述顺序**，必须保序去重。
+        # 旧实现 sorted(...) 把计划顺序换成字典序（实测事故请求先给 P10..P17 再给
+        # P1__f1, P3..P9），于是"实际请求的顺序"与冻结 page contract 表达的不是同一件事。
+        "paragraph_ids": list(dict.fromkeys(
+            str(item) for item in paragraph_ids if str(item).strip()
+        )),
         "detail_ids": list(sorted(set(str(item) for item in detail_ids if str(item).strip()))),
         "formula_obligation_ids": list(sorted(set(str(item) for item in obligation_ids if str(item).strip()))),
         "formula_package_ids": list(sorted(set(
@@ -2825,7 +2830,12 @@ def extend_writer_worksets_from_narrative_plan(
                 "mechanism_header": header,
                 "section_id": section_id,
                 "obligation_ids": list(sorted(set(str(item) for item in task_ids))),
-                "paragraph_ids": list(sorted(set(str(item) for item in paragraph_ids if str(item).strip()))),
+                # 审计 §C.1 / 不变量 I5：段落顺序是**叙述顺序**，必须保序去重。
+        # 旧实现 sorted(...) 把计划顺序换成字典序（实测事故请求先给 P10..P17 再给
+        # P1__f1, P3..P9），于是"实际请求的顺序"与冻结 page contract 表达的不是同一件事。
+        "paragraph_ids": list(dict.fromkeys(
+            str(item) for item in paragraph_ids if str(item).strip()
+        )),
                 "detail_ids": list(sorted(set(str(item) for item in detail_ids if str(item).strip()))),
                 "formula_obligation_ids": list(sorted(set(str(item) for item in obligation_ids if str(item).strip()))),
                 # Formula packages are response-binding metadata for the

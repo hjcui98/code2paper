@@ -249,3 +249,93 @@ def test_narrative_only_section_is_paged_by_the_candidate_contract() -> None:
         landed.extend(str(item) for item in ids)
     assert set(landed) == set(paragraph_ids), "分页不得丢段落"
     assert len(landed) == len(paragraph_ids), "分页不得重复段落"
+
+
+def test_page_payload_preserves_the_narrative_paragraph_order() -> None:
+    """§C.1 / I5：页内段落顺序是**叙述顺序**，不是字典序（事故里两者不同）。"""
+
+    from code2paper.agentic.method_architect import (
+        NarrativeParagraphPlanV3,
+        NarrativePlanV3,
+        NarrativeSectionPlanV3,
+        NarrativeUnitV1,
+    )
+    from code2paper.agentic.unified_context_compiler import (
+        build_consumer_workset_manifest_v2,
+        extend_writer_worksets_from_narrative_plan,
+    )
+    from tests.test_agentic_unified_context_compiler import (
+        _budget_envelope,
+        _two_mechanism_fixture,
+    )
+
+    archive, obligations = _two_mechanism_fixture()
+    envelope = _budget_envelope()
+
+    # 故意构造"字典序 != 叙述顺序"的 id（事故里是 P10..P17 排在 P1__f1/P3..P9 之前）。
+    paragraph_ids = ("MA-S9_p1__f1", "MA-S9_p3", "MA-S9_p10")
+    assert list(paragraph_ids) != sorted(paragraph_ids), "夹具必须让两种顺序不同"
+
+    paragraphs = tuple(
+        NarrativeParagraphPlanV3(
+            paragraph_id=paragraph_id,
+            section_id="MA-S9",
+            role="motivation",
+            mechanism_id="",
+            required_detail_ids=(),
+            witness_contract={
+                "schema_version": "1.0",
+                "paragraph_id": paragraph_id,
+                "rhetorical_goal": "motivation",
+                "targets": [],
+            },
+        )
+        for paragraph_id in paragraph_ids
+    )
+    plan = NarrativePlanV3(
+        plan_id="plan:order",
+        sections=(
+            NarrativeSectionPlanV3(
+                section_id="MA-S9",
+                heading="Motivation",
+                mechanism_ids=(),
+                paragraphs=paragraphs,
+            ),
+        ),
+        narrative_units=(
+            NarrativeUnitV1(
+                unit_id="unit_motivation",
+                section_id="MA-S9",
+                mechanism_context_ids=(),
+                rhetorical_role="motivation",
+                reader_question="Why does this matter?",
+                paragraph_ids=paragraph_ids,
+                required_detail_ids=(),
+                optional_detail_ids=(),
+                formula_obligation_ids=(),
+                suggested_depth="standard",
+            ),
+        ),
+        context_set_digest=archive.content_digest,
+    )
+
+    base_manifest = build_consumer_workset_manifest_v2(
+        archive,
+        obligations,
+        max_page_input_tokens=envelope.max_page_input_tokens,
+        max_obligations_per_page=envelope.max_obligations_per_page,
+    )
+    writer_manifest = extend_writer_worksets_from_narrative_plan(
+        base_manifest,
+        plan,
+        max_page_input_tokens=envelope.max_page_input_tokens,
+        archive=archive,
+    )
+    pages = [page for page in writer_manifest.pages if "MA-S9" in str(page.mechanism_id)]
+    assert pages
+    landed = [
+        str(item)
+        for page in pages
+        for item in (page.technical_payload.get("paragraph_ids") or ())
+    ]
+    assert landed == list(paragraph_ids), "页内顺序必须是叙述顺序而不是字典序"
