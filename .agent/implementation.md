@@ -4036,3 +4036,112 @@ F.3 `valid_empty` 的按阶段 required 语义、F.4 阶段快照不可覆盖（
 
 **PR C 仍缺**：自动重分页（§C.5 拆页并重建 worksets/invocation/预算/阶段快照）——
 机制已在上一节记录，当前以 typed failure 早失败代替。
+
+## 2026-09-22 审计 PR F.4 收口：阶段快照不可覆盖 + 证据可验证
+
+复现的审计论断（成立）：`write_resolved_authoring_snapshot` 往**固定文件名**无条件覆盖写，
+同一 phase 的第二次运行会抹掉第一次的输入证据；`frozen_snapshot_evidence` 的校验把
+"证据文件字节 sha256"与"规范化 JSON 语义摘要"混为一谈，实际上永假（几乎必然报错）。
+
+修复：
+
+- 证据写进带 snapshot 摘要的不可变文件名（`resolved_authoring_snapshot_v1.<phase>.<digest16>.json`）：
+  同内容重复写入幂等；同名不同内容 → `stage_snapshot_content_conflict`，拒绝覆盖历史证据。
+- 固定文件名降级为**显式指针**：内容仍是完整快照（兼容既有 reader）并额外带
+  `evidence_path`；指针与证据的 identity 字段必须一致，否则
+  `stage_snapshot_pointer_evidence_mismatch`。
+- `frozen_snapshot_evidence` 用读写两端共享的 `_snapshot_digest_payload` **重算**语义摘要，
+  再与证据/指针声明比对：篡改（即使指针与证据一起改到"互相自洽"）→
+  `stage_snapshot_evidence_changed`；旧格式无证据副本 → `stage_snapshot_evidence_missing`。
+
+测试：`test_artifact_index.py` 新增 3 项（不可变+原子指针、篡改检测、旧格式如实报告），
+14 项全绿。
+
+**PR F 仍缺**：F.1 producer 注册制、F.3 `valid_empty` 的按阶段 required 语义、
+F.4 发布事务的 orphan/incomplete 显式状态、F.5 生产 consumer 迁移到 validated read。
+
+## 2026-09-22 审计 PR C.4：超限失败只报真实维度
+
+复现的审计论断（成立）：技术页判定已把"段数上限"并入 `candidate_over_budget`，但失败文案
+用三元表达式在 request/page 两个 token 不等式中二选一，**段数超限时会打印一个其实并未成立的
+input token 不等式**。
+
+修复：新增 `_page_contract_dimension_codes`，只列出真正越界的维度
+（`input_tokens` / `request_input_tokens` / `paragraph_count`），三者都不越界时返回空元组，
+调用方必须报 `unknown_dimension` 而不是编造；header 页与技术页两条失败路径都改用它。
+header 路径现在会一次报出全部被违反的维度（旧实现只报第一个）。
+
+测试：`test_page_contract_recheck.py` 新增 2 项（维度函数单元测试；真实接线：页预算小到单段
+都装不下时报 `input_tokens:` 且不得出现 `paragraph_count:`）。16 项全绿；全量离线
+3831 passed、3 deselected、12 subtests passed、exit 0。
+
+## 2026-09-22 审计 PR D.1：authoring unit 合并必须无损
+
+复现的审计论断（成立，逐条以 legacy 变体实测）：
+
+- `compile_authoring_units` 的 merge 只拼接 story/slot/surface/argument/intent/unresolved，
+  被合并槽位的 **optional detail、formula obligation、formula package 全部静默丢弃**；
+- 合并键只有 (kind, role, authority)：**相隔多个槽位**的同键单元会被跨段并回前面的单元
+  （A, B, A → [A+C, B]，叙述顺序被改）；
+- 同键但 **implementation status / 局部 reader goal 不同**的单元也会被合并；
+- 同一 detail ID 承载**不同内容**时静默保留第一个。
+
+修复：
+
+- `can_merge` 收紧：必须**相邻**（`existing_index == len(units) - 1`）、同 section、同
+  implementation status、兼容 reader goal（相等或一方为空）、同 ID 同内容；
+- 新增 `_merge_units`：surface/detail 按 canonical ID + 内容摘要保序合并（同 ID 不同内容 →
+  `*_conflict`，不合并）；required/optional/formula obligation/formula package 保序去重全量保留；
+  同一 detail 一侧 required 一侧 optional 时**提升为 required**（不是丢弃）；mechanism_ids 取并集；
+- 同形空槽（`structural_only`/`unresolved`，无实现材料）仍可折叠：此时其它局部 reader goal
+  记录进新字段 `merged_local_reader_goals` 并出现在 `as_trace()`；
+- `as_trace()` 补齐 optional detail / formula obligation / formula package / mechanism / 统一掉的 goal，
+  使"合并是否丢东西"可以直接从产物回答。
+
+测试：新增 `tests/regression_20260917/test_authoring_unit_merge.py` 13 项；其中 5 项在
+legacy merge 变体下失败（optional 丢弃、跨段合并、status 冲突、同 ID 不同内容、goal 冲突），
+在新实现下全绿。
+
+## 2026-09-22 审计 PR D.2：绑定决策进入真实 owner 选择
+
+复现的审计论断（成立）：`_slot_binding_decision` 已存在但**没有任何生产调用**；argument
+unit、detail、formula package 三处 owner 选择全部直接调用 `_best_slot`，零 overlap 的
+组织落位与"证据完全缺失"混为一谈，也没有 typed gap/replan 记录。
+
+修复：
+
+- 三处 owner 选择改为"先 `_slot_binding_decision`，再 `_slot_for_decision` 落位"；
+  `_slot_binding_decision` 内部复用同一个 `_best_slot` 原语（只剩一个选择器）。
+- 新增 `binding_decisions` 与 `typed_binding_gaps` trace：每条绑定记录
+  `narrative_binding`（grounded / organizational_fallback）与 `evidence_authority`
+  两条**分开**的轴；零 overlap 的 required detail / formula package / argument unit
+  另记 `reason=no_story_overlap`、`requested_action=bounded_planner_or_research`。
+- zero-overlap 的段落权限不得被升级：实测该段落 `authority_surface=author_specification`
+  （不是 `repository_statement`），coverage 仍保留 detail。
+- optional 材料零 overlap 时单独记 `optional_detail_binding_fallback_ids`，留在候选
+  上下文与 trace，不升级为强制 clean prose 义务。
+
+测试：`test_intent_writer_surface.py` 新增 3 项——typed gap + 双轴 + coverage 保留、
+optional 不进 gap、以及用 `wraps` 间谍断言**生产路径真的进入** `_slot_binding_decision`
+（不是只 import）。
+
+## 2026-09-22 审计 PR D.3：局部指纹与 sealed 模型更新
+
+复现的审计论断（成立）：
+
+- `_story_intent_payload` 不含 `reader_question`，而它会被消费成段落 `reader_goal`；
+  只改 reader_question 时意图指纹不变（已用单元测试实测）；
+- 更新 surface 的 implementation status 用 `surface.model_copy(update=...)`，绕过 model
+  validator，`content_digest` 停在旧内容上（实测：copy digest == 旧 digest，重建后的
+  digest 不同），而段落 `surface_digest` 是这些摘要的摘要。
+
+修复：
+
+- `_story_intent_payload` 纳入 `reader_question`；
+- 新增 `_surface_with_status`：`model_dump(exclude={"content_digest"}) → 覆盖 status →
+  model_validate` 重建验证，替换 `model_copy(update=...)`。
+
+测试：`test_intent_writer_surface.py` 新增 3 项——reader_question 改指纹、重建 digest 与
+"同字段重新构造"一致（并记录 model_copy 的旧 digest 反例）、unit 级生产路径必须拿到
+重建后的 digest（该测试在 legacy `model_copy` 变体下失败）。13 项全绿；全量离线（含
+D.1）3844 passed、3 deselected、12 subtests passed、exit 0。
