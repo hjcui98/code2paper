@@ -475,3 +475,145 @@ def test_final_page_paragraph_set_is_checked_against_the_limit() -> None:
     assert assert_page_paragraph_set_within_limit(
         "page:experiment", incident_ids, limit_policy={"value": 0}
     ) == 16
+
+
+# --------------------------------------------------------------------------- #
+# §C.4：超限失败必须报**真实**维度，不能打印一个其实未成立的不等式
+# --------------------------------------------------------------------------- #
+
+
+def test_over_budget_dimensions_are_only_the_violated_ones() -> None:
+    from code2paper.agentic.unified_context_compiler import (
+        _page_contract_dimension_codes,
+    )
+
+    # 事故形状：token 装得下，只有段数超限 → 只能报段数维度。
+    assert _page_contract_dimension_codes(
+        input_tokens=100,
+        max_input_tokens=800,
+        request_tokens=120,
+        max_request_input_tokens=900,
+        paragraph_count=16,
+        paragraph_limit=6,
+    ) == ("paragraph_count:16>6",)
+
+    # 都不越界 → 空元组（调用方必须报 unknown_dimension，而不是编造不等式）。
+    assert (
+        _page_contract_dimension_codes(
+            input_tokens=100,
+            max_input_tokens=800,
+            request_tokens=120,
+            max_request_input_tokens=900,
+            paragraph_count=6,
+            paragraph_limit=6,
+        )
+        == ()
+    )
+
+    # 两个 token 维度与段数同时越界 → 三个都如实报出。
+    assert _page_contract_dimension_codes(
+        input_tokens=900,
+        max_input_tokens=800,
+        request_tokens=1000,
+        max_request_input_tokens=900,
+        paragraph_count=7,
+        paragraph_limit=6,
+    ) == (
+        "input_tokens:900>800",
+        "request_input_tokens:1000>900",
+        "paragraph_count:7>6",
+    )
+
+    # 没有 request 估量时不报 request 维度（不能凭空造一个上限）。
+    assert _page_contract_dimension_codes(
+        input_tokens=900,
+        max_input_tokens=800,
+        request_tokens=None,
+        max_request_input_tokens=0,
+        paragraph_count=1,
+        paragraph_limit=6,
+    ) == ("input_tokens:900>800",)
+
+
+def test_atomic_page_over_budget_message_names_input_tokens_when_they_bind() -> None:
+    """真实接线：技术页在 token 维度超限时，错误文本必须给出该不等式。"""
+
+    from code2paper.agentic.method_architect import (
+        NarrativeParagraphPlanV3,
+        NarrativePlanV3,
+        NarrativeSectionPlanV3,
+        NarrativeUnitV1,
+    )
+    from code2paper.agentic.unified_context_compiler import (
+        UnifiedCompilerError,
+        build_consumer_workset_manifest_v2,
+        extend_writer_worksets_from_narrative_plan,
+    )
+    from tests.test_agentic_unified_context_compiler import (
+        _budget_envelope,
+        _two_mechanism_fixture,
+    )
+
+    archive, obligations = _two_mechanism_fixture()
+    envelope = _budget_envelope()
+    paragraph_id = "MA-S7_p1"
+    paragraph = NarrativeParagraphPlanV3(
+        paragraph_id=paragraph_id,
+        section_id="MA-S7",
+        role="mechanism",
+        mechanism_id="mech_alpha:compute_step",
+        required_detail_ids=("d:alpha",),
+        witness_contract={
+            "schema_version": "1.0",
+            "paragraph_id": paragraph_id,
+            "rhetorical_goal": "mechanism",
+            "targets": [],
+        },
+    )
+    plan = NarrativePlanV3(
+        plan_id="plan:over-budget-dimension",
+        sections=(
+            NarrativeSectionPlanV3(
+                section_id="MA-S7",
+                heading="Mechanism",
+                mechanism_ids=("mech_alpha:compute_step",),
+                paragraphs=(paragraph,),
+            ),
+        ),
+        narrative_units=(
+            NarrativeUnitV1(
+                unit_id="unit_mechanism",
+                section_id="MA-S7",
+                mechanism_context_ids=("mech_alpha:compute_step",),
+                rhetorical_role="mechanism",
+                reader_question="How does it work?",
+                paragraph_ids=(paragraph_id,),
+                required_detail_ids=("d:alpha",),
+                optional_detail_ids=(),
+                formula_obligation_ids=(),
+                suggested_depth="standard",
+            ),
+        ),
+        context_set_digest=archive.content_digest,
+    )
+    base_manifest = build_consumer_workset_manifest_v2(
+        archive,
+        obligations,
+        max_page_input_tokens=envelope.max_page_input_tokens,
+        max_obligations_per_page=envelope.max_obligations_per_page,
+    )
+
+    # 页预算小到单个技术段落都装不下 → 真实限制维度是 input token。
+    with pytest.raises(UnifiedCompilerError) as excinfo:
+        extend_writer_worksets_from_narrative_plan(
+            base_manifest,
+            plan,
+            max_page_input_tokens=1,
+            archive=archive,
+        )
+    message = excinfo.value.message
+    assert "unknown_dimension" not in message, message
+    assert "input_tokens:" in message, message
+    assert "paragraph_count:" not in message, (
+        "只有一段时不得报告段数维度：" + message
+    )

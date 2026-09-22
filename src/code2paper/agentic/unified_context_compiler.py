@@ -262,6 +262,41 @@ def _detail_atom_id(detail_id: str) -> str:
     return _qualified_atom_id("detail", detail_id)
 
 
+def _page_contract_dimension_codes(
+    *,
+    input_tokens: int,
+    max_input_tokens: int,
+    request_tokens: int | None = None,
+    max_request_input_tokens: int = 0,
+    paragraph_count: int = 0,
+    paragraph_limit: int = 0,
+) -> tuple[str, ...]:
+    """如实列出**实际**被违反的候选页维度（审计 §C.4）。
+
+    事故里 `ATOMIC_PAGE_OVER_BUDGET` 在"段数超限"时只打印了一个其实并未成立的
+    input token 不等式，于是失败原因被误导到错误的维度上。这里只报告真正越界的
+    不等式；三者都不越界时返回空元组，调用方必须据此报"未知维度"而不是编造。
+    """
+
+    codes: list[str] = []
+    if int(input_tokens) > int(max_input_tokens):
+        codes.append(f"input_tokens:{int(input_tokens)}>{int(max_input_tokens)}")
+    if (
+        request_tokens is not None
+        and int(max_request_input_tokens) > 0
+        and int(request_tokens) > int(max_request_input_tokens)
+    ):
+        codes.append(
+            f"request_input_tokens:{int(request_tokens)}>"
+            f"{int(max_request_input_tokens)}"
+        )
+    if int(paragraph_limit) > 0 and int(paragraph_count) > int(paragraph_limit):
+        codes.append(
+            f"paragraph_count:{int(paragraph_count)}>{int(paragraph_limit)}"
+        )
+    return tuple(codes)
+
+
 def _budget_contribution_codes(
     *,
     subject: str,
@@ -2776,13 +2811,14 @@ def extend_writer_worksets_from_narrative_plan(
                         mechanism_ids=mechanism_ids,
                     )
                 )
-                if payload_tokens > max_page_input_tokens:
-                    return f"input_tokens:{payload_tokens}>{max_page_input_tokens}"
-                if paragraph_limit > 0 and len(set(ids)) > paragraph_limit:
-                    return (
-                        f"paragraph_count:{len(set(ids))}>{paragraph_limit}"
+                return "; ".join(
+                    _page_contract_dimension_codes(
+                        input_tokens=payload_tokens,
+                        max_input_tokens=max_page_input_tokens,
+                        paragraph_count=len(set(ids)),
+                        paragraph_limit=paragraph_limit,
                     )
-                return ""
+                )
 
             for paragraph_id in ordered_paragraph_ids:
                 candidate_ids = [*current_ids, paragraph_id]
@@ -3062,11 +3098,20 @@ def extend_writer_worksets_from_narrative_plan(
                         ),
                     )[:3]
                 )
+                # 审计 §C.4：只报告真正越界的维度。旧实现无条件打印 input token
+                # 不等式，段数超限时会给出一个其实并未成立的不等式。
+                dimensions = _page_contract_dimension_codes(
+                    input_tokens=candidate_tokens,
+                    max_input_tokens=max_page_input_tokens,
+                    request_tokens=candidate_request_tokens,
+                    max_request_input_tokens=int(max_request_input_tokens or 0),
+                    paragraph_count=len(set(candidate_paragraph_ids)),
+                    paragraph_limit=paragraph_limit,
+                )
                 raise UnifiedCompilerError(
                     UNIFIED_ATOMIC_PAGE_OVER_BUDGET,
-                    f"section {section_id} paragraph closure exceeds page budget "
-                    f"{candidate_request_tokens if candidate_request_tokens is not None and candidate_request_tokens > int(max_request_input_tokens or 0) else candidate_tokens}>"
-                    f"{int(max_request_input_tokens) if candidate_request_tokens is not None and candidate_request_tokens > int(max_request_input_tokens or 0) else max_page_input_tokens}; "
+                    f"section {section_id} paragraph closure exceeds the page "
+                    f"contract ({'; '.join(dimensions) or 'unknown_dimension'}); "
                     f"largest atoms {contributions}",
                 )
             current_atoms = candidate_atoms
