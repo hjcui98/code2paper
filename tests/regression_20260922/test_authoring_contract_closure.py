@@ -306,11 +306,13 @@ def test_rejected_page_enters_one_bounded_repair_and_commits(
 
 
 def test_writer_acceptance_alone_does_not_publish_verified_text(tmp_path: Path) -> None:
-    """场景 4：Writer 阶段接受 ≠ publication acceptance；final-bound/Binder 说了算。
+    """场景 4：Writer 阶段接受 ≠ publication acceptance；后面的门必须具名拒绝。
 
-    默认 fake provider 的正文能过 writer_content，但确定性 Binder 的闭集不允许它声明的
-    atom witness，因此不得产出任何"已验证正文"。
+    默认 fake provider 能过 writer_content 与确定性 Binder，但 candidate/verified 门
+    仍然拒绝，并给出**具名**原因——不接受"内容有了就发布"。
     """
+
+    import json as _json
 
     requests: list[LLMRequest] = []
 
@@ -324,27 +326,25 @@ def test_writer_acceptance_alone_does_not_publish_verified_text(tmp_path: Path) 
     assert any(
         row.get("content_acceptance_status") == "accepted" for row in rows
     ), "Writer 内容阶段应当接受"
-    verified = Path(outputs["repository_verified_method"])
-    assert verified.read_text(encoding="utf-8").strip() == "", (
-        "Writer 接受不等于发布验收"
-    )
-
-    import json as _json
 
     receipts = _json.loads(
         Path(outputs["binder_receipts_v2"]).read_text(encoding="utf-8")
     )
-    failures = [
-        code
-        for receipt in receipts.get("receipts", [])
-        for code in (receipt.get("failure_codes") or ())
-    ]
-    assert any(
-        "binder_" in str(code) for code in failures
-    ), f"下游 Binder 失败必须被记录：{failures}"
-    # Writer 阶段的回执可以如实报"内容阶段完成"（§E.4：这不是 publication acceptance），
-    # 但整条 run 必须因为下游失败而保持 incomplete。
-    assert _result.status == "incomplete"
+    for receipt in receipts["receipts"]:
+        assert not (receipt.get("failure_codes") or ()), receipt.get("failure_codes")
+        assert not (receipt.get("missing_target_keys") or ())
+
+    verified = Path(outputs["repository_verified_method"])
+    assert verified.read_text(encoding="utf-8").strip() == "", (
+        "Writer 接受不等于发布验收"
+    )
+    writer_result = _json.loads(
+        Path(outputs["publication_writer_result_v1"]).read_text(encoding="utf-8")
+    )
+    assert writer_result["writer_transaction_status"] == "success"
+    assert writer_result["publication_ready"] is False
+    assert "verified_output_empty" in writer_result["verified_blocking_reasons"]
+    assert writer_result["candidate_blocking_reasons"], writer_result
 
 
 def test_section_headings_are_reader_facing_not_internal_identifiers(
@@ -398,3 +398,145 @@ def test_section_headings_are_reader_facing_not_internal_identifiers(
     assert "candidate_contains_internal_audit_terms" not in (
         authority["validation"]["violations"]
     )
+
+
+#: 被授权的源码片段：Binder 绑定 atom 需要它在正文里唯一出现。
+AUTHORIZED_EXCERPT = "class Encoder:\n    def read(self, configured_input):"
+
+
+def _contract_faithful_writer(config, request):
+    """按页面冻结合同写正文的 fake writer（只声明 detail witness）。
+
+    正文包含 required detail 的 semantic atom 与被授权的源码片段；atom witness 留给
+    确定性 Binder，因为页面合同把 atom 声明为 binder-owned。
+    """
+
+    if getattr(request, "prompt_template_id", "") != WRITER_TEMPLATE:
+        return _mock_writer_caller(config, request)
+    page = (request.input_payload.get("shared_contexts") or [{}])[0]
+    atoms = {
+        str(atom.get("detail_id") or atom.get("_atom_id") or ""): atom
+        for atom in (page.get("atoms") or ())
+        if isinstance(atom, dict)
+    }
+    paragraphs = []
+    for row in request.input_payload["narrative_plan"]["paragraphs"]:
+        required = list(row.get("required_detail_ids") or ())
+        sentences: list[str] = []
+        witnesses: list[dict] = []
+        for detail_id in required:
+            text = str((atoms.get(detail_id) or {}).get("semantic_atom") or "").strip()
+            if not text:
+                continue
+            sentences.append(f"The implementation performs {text}.")
+            witnesses.append(
+                {"witness_kind": "detail", "target_id": detail_id, "exact_text": text}
+            )
+        sentences.append(
+            "The source defines the read path:\n\n```python\n"
+            f"{AUTHORIZED_EXCERPT}\n```"
+        )
+        paragraphs.append({
+            "paragraph_id": row["paragraph_id"],
+            "paragraph_markdown": "\n\n".join(sentences),
+            "rendered_detail_ids": required,
+            "witnesses": witnesses,
+        })
+    return LLMResponse(
+        text=json.dumps({
+            "section_id": request.input_payload.get("section_id", ""),
+            "paragraphs": paragraphs,
+        }),
+        response_hash="sha256:contract-faithful",
+        finish_reason="stop",
+        token_usage={"completion_tokens": 50},
+    )
+
+
+def test_binder_closed_set_comes_from_the_frozen_contract(tmp_path: Path) -> None:
+    """§E.4：闭集必须来自冻结合同，不能"已绑定就变成越界"。
+
+    实测缺陷：闭集用 `paragraph_binding_targets(...)`（它会跳过已声明/已绑定的 key）
+    计算，于是 Binder 一旦按合同绑定 atom，那些 atom 立刻被报成
+    `binder_target_outside_closed_contract` —— 页面永远无法通过 final-bound。
+    """
+
+    import json as _json
+
+    from code2paper.agentic.publication_transaction_contract import (
+        closed_binding_target_keys,
+        paragraph_binding_targets,
+    )
+
+    plan_row = {
+        "paragraph_id": "P1",
+        "required_detail_ids": ("d:1",),
+        "witness_contract": {
+            "targets": (
+                {"target_kind": "detail", "target_id": "d:1", "required": True},
+                {"target_kind": "atom", "target_id": "atom:d:1:op", "required": True},
+            )
+        },
+    }
+    transaction = {
+        "paragraph_id": "P1",
+        "paragraph_markdown": "body",
+        "witnesses": [
+            {"witness_kind": "atom", "target_id": "atom:d:1:op", "exact_text": "body"}
+        ],
+    }
+    # 旧语义：已声明的 atom 从"还能绑什么"里消失。
+    bindable = {
+        (item["witness_kind"], item["target_id"])
+        for item in paragraph_binding_targets(transaction, plan_row=plan_row)
+    }
+    assert ("atom", "atom:d:1:op") not in bindable
+    # 新语义：闭集只由冻结合同决定，已声明/已绑定的目标仍在闭集里。
+    closed = closed_binding_target_keys(plan_row=plan_row)
+    assert ("atom", "atom:d:1:op") in closed
+    assert ("detail", "d:1") in closed
+
+    requests: list[LLMRequest] = []
+
+    def caller(config, request):
+        requests.append(request)
+        return _contract_faithful_writer(config, request)
+
+    result, outputs = _run(tmp_path, caller)
+
+    receipts = _json.loads(
+        Path(outputs["binder_receipts_v2"]).read_text(encoding="utf-8")
+    )
+    for receipt in receipts["receipts"]:
+        assert not [
+            code
+            for code in (receipt.get("failure_codes") or ())
+            if "outside_closed_contract" in str(code)
+        ], receipt.get("failure_codes")
+        # 冻结合同里的每个目标都被见证（detail + 三个 atom）。
+        witnessed = set(receipt.get("witnessed_target_keys") or ())
+        assert any(key.startswith("detail:") for key in witnessed), witnessed
+        assert sum(1 for key in witnessed if key.startswith("atom:")) >= 3, witnessed
+        assert receipt.get("missing_target_keys") in (None, [], ())
+
+    aggregate = _json.loads(
+        Path(outputs["writer_aggregate_receipt_v2"]).read_text(encoding="utf-8")
+    )
+    assert aggregate["all_required_sections_complete"] is True
+    authority = _json.loads(
+        Path(outputs["candidate_authority_validation_v1"]).read_text(encoding="utf-8")
+    )
+    assert authority["validation"]["status"] == "passed"
+
+    # Verified 仍由原规则决定：本 fake writer 没有渲染 argument unit，因此
+    # candidate/verified 门如实报出**具名**原因，而不是静默通过。
+    writer_result = _json.loads(
+        Path(outputs["publication_writer_result_v1"]).read_text(encoding="utf-8")
+    )
+    assert writer_result["writer_transaction_status"] == "success"
+    assert writer_result["publication_ready"] is False
+    assert "verified_output_empty" in writer_result["verified_blocking_reasons"]
+    assert any(
+        "argument_units_unrendered" in str(reason)
+        for reason in writer_result["candidate_blocking_reasons"]
+    ), writer_result["candidate_blocking_reasons"]

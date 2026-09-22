@@ -4576,3 +4576,39 @@ writer/publication/回归套件 482 项全绿。
 
 **G.2 仍缺**：正向 Verified 全链需要一个"只声明 detail witness、并把页面 atom 的
 exact excerpt 原样写进正文"的 fake writer，让确定性 Binder 真正绑定成功。
+
+## 2026-09-22 审计 PR G.2/E.4（第三片）：Binder 闭集自我否定
+
+写正向写作链场景时发现第二个真实缺陷（比"Binder 缺失/失败"更靠前）：确定性 Binder 的
+**闭集**是用 `paragraph_binding_targets(transaction, plan_row=...)` 算出来的，而那个函数
+会跳过 transaction 里**已声明/已绑定**的 key（它本来是"Binder 还能绑什么"的输入）。
+于是 Binder 一旦按冻结合同绑定 atom，这些 atom 立刻从闭集里消失，随后被
+`_reverse_failures` 报成 `binder_target_outside_closed_contract:atom:...`——**按合同做对
+的事反而成了违规**，页面永远无法通过 final-bound。
+
+实测证据（修复前）：page plan 的冻结合同有 4 个 required target（1 detail + 3 atom，
+atom 的 `allowed_exact_excerpts` 是被授权的源码片段），但 `allowed_target_keys` 只有
+`['detail:detail:mech_sym:encoder:1']`，`failure_codes` 是三条
+`binder_target_outside_closed_contract:atom:...`。
+
+修复：
+
+- `publication_transaction_contract` 新增并导出 `closed_binding_target_keys(plan_row,
+  formula_packages)`：闭集只由**冻结合同**决定（required targets + typed contract atoms +
+  formula package 别名），与 transaction 已声明什么无关；
+- Binder 的 `allowed_keys` 在该处补上这个闭集（保留原有 allowed_pairs/required_pairs）。
+
+修复后实测：`allowed_target_keys` = detail + 3 atom，`failure_codes` 为空，
+`missing_target_keys` 为空，4 个目标全部 witnessed；writer aggregate
+`all_required_sections_complete=True`，candidate authority `passed`。
+
+测试：G.2 新增 1 项（单元对比"还能绑什么"与"闭集"的语义差异 + 真实接线：用只声明
+detail witness、正文引用 required semantic atom 与被授权源码片段的 contract-faithful
+fake writer，断言 Binder 无失败、四目标全见证、聚合完成、authority 通过；同时断言
+Verified 仍由原规则决定——本 writer 未渲染 argument unit，candidate/verified 门如实给出
+具名原因）。原场景 4 按新事实更新：默认 fake provider 过 writer_content 与 Binder，
+但 `publication_ready=False` 且 `verified_blocking_reasons` 具名（`verified_output_empty` 等）。
+writer/binder/回归套件 622 项全绿。
+
+**G.2 仍缺**：把 candidate 门也走通（渲染 argument unit、epistemic safety gate、
+verified review block）以拿到真正的 Verified 产物；场景 5/7/8 与 G.3/G.5 同样未做。

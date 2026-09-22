@@ -2101,6 +2101,55 @@ class ParagraphTransactionAssessmentV1(BaseModel):
         return self
 
 
+def closed_binding_target_keys(
+    *,
+    plan_row: Mapping[str, Any] | None = None,
+    formula_packages: tuple[Mapping[str, Any], ...] | list[Mapping[str, Any]] = (),
+) -> set[tuple[str, str]]:
+    """该段落**冻结合同**允许的 witness key 集合（审计 §E.4）。
+
+    与 :func:`paragraph_binding_targets` 的区别：后者是"Binder 还能绑哪些目标"的输入，
+    会跳过 transaction 里**已声明/已绑定**的 key；把它的输出当成"闭集"会让检查自我
+    否定——Binder 一旦按合同绑定，目标就从闭集里消失，随后被报成
+    `binder_target_outside_closed_contract`。闭集只能由冻结计划决定。
+    """
+
+    row = plan_row or {}
+    keys: set[tuple[str, str]] = set()
+    required = required_targets_from_plan_row(row)
+    package_by_id, package_by_obligation = _formula_package_indexes(
+        tuple(item for item in formula_packages if isinstance(item, Mapping))
+    )
+    for kind, target_ids in required.items():
+        for target_id in target_ids:
+            value = str(target_id or "").strip()
+            if not value:
+                continue
+            keys.add((kind, value))
+            if kind == "formula":
+                package = package_by_obligation.get(value)
+                package_id = (
+                    str(package.get("package_id") or "").strip() if package else ""
+                )
+                if package_id:
+                    keys.add((kind, package_id))
+    constraints = _witness_constraints_from_plan_row(row)
+    keys.update(
+        key for key, local in constraints.items()
+        if key[0] != "atom" or local.get("required", True)
+    )
+    # 显式声明的 formula package 同样属于闭集（consumer 归属由调用方另行校验）。
+    keys.update(
+        ("formula", package_id)
+        for package_id in (
+            str(item.get("package_id") or "").strip()
+            for item in package_by_id.values()
+        )
+        if package_id
+    )
+    return keys
+
+
 def required_targets_from_plan_row(plan_row: Mapping[str, Any] | None) -> dict[str, tuple[str, ...]]:
     """Return the exact target sets owned by a paragraph plan row."""
 
@@ -3140,6 +3189,7 @@ __all__ = [
     "ParagraphTransactionAssessmentV1",
     "assess_paragraph_transaction",
     "insert_formula_blocks_verbatim",
+    "closed_binding_target_keys",
     "paragraph_binding_targets",
     "required_anchors_from_plan_row",
     "required_targets_from_plan_row",

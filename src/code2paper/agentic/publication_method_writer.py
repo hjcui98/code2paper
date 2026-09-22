@@ -27501,6 +27501,20 @@ def _write_unified_v2_binder_receipts(
             allowed_keys.update(
                 _witness_key(kind, target) for kind, target in required_pairs if kind and target
             )
+            # 审计 §E.4：闭集必须来自**冻结合同**。`paragraph_binding_targets` 会跳过
+            # 已经声明/已绑定的 key（那是 Binder 的"还能绑什么"输入），拿它当闭集会让
+            # 检查自我否定：Binder 一按合同绑定，目标就被报成 outside_closed_contract。
+            from code2paper.agentic.publication_transaction_contract import (
+                closed_binding_target_keys as _closed_binding_target_keys,
+            )
+
+            allowed_keys.update(
+                _witness_key(kind, target)
+                for kind, target in _closed_binding_target_keys(
+                    plan_row=row, formula_packages=packages
+                )
+                if kind and target
+            )
             witnesses = _raw_witnesses(transaction) if transaction is not None else ()
             witness_pairs = {(item["witness_kind"], item["target_id"]) for item in witnesses}
             witnessed_pairs = set(witness_pairs)
