@@ -3849,3 +3849,37 @@ realizer/writer 调用，本地即可结算）/ 1 `content_budget_exhausted`（M
   "真实 0 tokens"。
 
 测试：`test_ledger_recovery_matrix.py` 扩到 19 项。
+
+## 2026-09-22 审计 PR C（F01）第一片：发送前实际请求复核（§C.6）
+
+新增 `src/code2paper/agentic/page_contract_recheck.py`：
+
+- `capture_page_contract_snapshot(out_root, invocation_id)`：从该 invocation **最早一次
+  持久化请求**提取冻结契约（page_id / section_id / 段落 id **顺序** / detail·formula·
+  rhetorical scope / 输出上限 / request digest）；
+- `page_contract_snapshot_from_payload(...)`：同一次运行内，primary 的 provider-request 可能
+  在响应处理之后才落盘，而 content repair 在响应处理中就已构造——因此 primary 用**内存中的
+  实际请求**建立契约快照并缓存，repair 才回读磁盘（实测：不做这一步，repair 会因
+  `frozen_page_contract_missing` 被误拒）；
+- `compare_actual_request_to_page_contract(...)`：段落集合与**顺序**必须逐一相等、
+  page/section 一致、scope 相等、输出上限不得超过冻结值；**repair 没有冻结契约即拒绝**
+  （primary 由 envelope digest 兜底）。
+
+接线：`_capturing_writer_caller` 在既有 page bytes/page id/tasks/prompt/schema/envelope
+检查之后追加这一层，失败码 `actual_page_contract_mismatch:<detail>`，在发送前拒绝，
+不消耗 content repair。
+
+**新复现的事实（待 PR C 后续修）**：事故归档第一次 Writer 请求里的段落顺序是**字典序**
+（`P10…P17, P1__f1, P3…P9`），而计划的叙述顺序是 `P1__f1, P3…P17`（归档
+`INCIDENT_PAGE_PARAGRAPH_IDS`）。审计 §C.1 要求 packing unit 携带 explicit narrative order、
+§4 的 I5 要求实际请求顺序与冻结契约一致——这是 C.1/C.4 的修复目标，已用
+`test_frozen_request_order_is_lexical_not_narrative` 固定为"当前事实"。
+
+测试：`tests/regression_20260917/test_page_contract_recheck.py` 9 项（真实归档请求上的
+追加段落/重排/缩小 scope/抬高输出上限/repair 缺契约/只读确定性）。全量离线 3814 passed、
+3 deselected、12 subtests passed、exit 0。
+
+**PR C 剩余（下一轮）**：C.1 统一 packing unit（header 提前返回、无 atom 段落跳过）、
+C.2 统一候选页判定并让段数上限成为辅助安全限、C.3 输出估量补齐 witness span 与 schema
+骨架、C.4 页重组优先于拆段并记录 fragment 义务映射、C.5 重分页后重建 invocation/预算/
+快照。

@@ -4611,6 +4611,9 @@ def _run_publication_method_writer_impl(
                 )
                 return blocked_result, _write_result_only(out_root, blocked_result)
 
+        # 审计 §C.6：每个 invocation 的冻结契约只解析一次（同一进程内复用）。
+        _page_contract_cache: dict[str, Any] = {}
+
         def _capturing_writer_caller(config: Any, request: Any) -> Any:
             payload = getattr(request, "input_payload", None)
             v2_rows = tuple(
@@ -4762,6 +4765,44 @@ def _run_publication_method_writer_impl(
                 request, "response_json_schema", None
             ):
                 request_failures.append("unified_actual_request_schema_missing")
+
+            # 审计 §C.6：用**最终实际请求**复核冻结 page contract。primaries 有 envelope
+            # digest 兜底，但 content repair 按设计不走同一 envelope——没有这一步，
+            # adapter 在 repair 里追加/重排段落会直接发出去。
+            from code2paper.agentic.page_contract_recheck import (
+                capture_page_contract_snapshot,
+                compare_actual_request_to_page_contract,
+                page_contract_snapshot_from_payload,
+            )
+
+            if not is_writer_content_repair:
+                # primary：当前请求就是契约来源，立即缓存（repair 可能在本请求落盘前构造）。
+                _page_contract_cache[invocation_id] = page_contract_snapshot_from_payload(
+                    invocation_id=invocation_id,
+                    payload=getattr(request, "input_payload", None),
+                    request_digest=str(getattr(request, "input_hash", "") or ""),
+                )
+            elif invocation_id not in _page_contract_cache:
+                # repair（例如进程重启后的续跑）：回读最早持久化的请求。
+                # 用 ledger_root 反推 run 根：闭包里的 out_root 在 repair 路径可能被
+                # 重新绑定，而 ledger_root 始终指向 <run>/artifacts/06_authoring/invocations。
+                _page_contract_cache[invocation_id] = capture_page_contract_snapshot(
+                    Path(ledger_root).parent.parent.parent, invocation_id
+                )
+            actual_max_output = int(
+                getattr(getattr(request, "config", None), "max_output_tokens", 0) or 0
+            )
+            request_failures.extend(
+                compare_actual_request_to_page_contract(
+                    _page_contract_cache[invocation_id],
+                    invocation_id=invocation_id,
+                    payload=getattr(request, "input_payload", None),
+                    page_id=page_id,
+                    section_id=actual_section_id,
+                    max_output_tokens=actual_max_output,
+                    is_repair=is_writer_content_repair,
+                )
+            )
 
             if not request_failures:
                 actual_envelope_digest = consumer_request_envelope_digest(
