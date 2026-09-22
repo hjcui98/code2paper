@@ -203,3 +203,88 @@ def test_canonical_action_selection_table() -> None:
     empty = select_failure_action(())
     assert empty.escalation == "typed_block"
     assert empty.owner == "system"
+
+
+# --------------------------------------------------------------------------- #
+# §E.1 生产 blocked_reason → canonical 归属（读取边界）
+# --------------------------------------------------------------------------- #
+
+
+def test_production_blocked_reasons_map_to_canonical_owners() -> None:
+    from code2paper.agentic.publication_transaction_contract import (
+        canonical_failure_codes_from_blocked_reason,
+        classify_blocked_reason,
+    )
+
+    cases = {
+        # 段落事务 lane 是内容 lane：细码决定 retry 类型，缺省仍是内容补写。
+        "publication_paragraph_transaction_failed:MA-S1:P1:invalid_count": (
+            ("detail_semantic_mismatch",),
+            "writer_content_repair",
+        ),
+        "publication_paragraph_transaction_failed:response_blocked:paragraph_transaction": (
+            ("paragraph_missing",),
+            "writer_content_repair",
+        ),
+        # 段落 lane 里的 formula closure 字符串 = 占位符缺失（Writer 补引用）。
+        "publication_paragraph_transaction_failed:MA-S1:P1:formula_consumer_mismatch": (
+            ("formula_placeholder_missing",),
+            "writer_content_repair",
+        ),
+        # 段落 lane 里的重复 witness 是表示缺陷，不是跨段权限问题。
+        "publication_paragraph_transaction_failed:MA-S1:P1:duplicate_witness:detail:d1": (
+            ("witness_representation_invalid",),
+            "writer_content_repair",
+        ),
+        "publication_section_binding_failed:formula_placeholder:MA-S1:P1": (
+            ("formula_placeholder_missing",),
+            "writer_content_repair",
+        ),
+        # 闭集外 id / 缺材料归 planner / research，不能原地补写。
+        "publication_section_binding_failed:unknown_claims": (
+            ("target_out_of_scope",),
+            "replan_required",
+        ),
+        "publication_section_binding_failed:missing_writing_research_callback:a,b": (
+            ("input_material_missing",),
+            "research_then_recompile",
+        ),
+        # 表示层损伤归 execution owner：有界补发，不算内容 repair。
+        "provider_stream_ended_before_complete_json": (
+            ("representation_damage",),
+            "representation_repair",
+        ),
+        # 未注册的 reason 一律 typed block。
+        "publication_section_schema_failed:section_markdown_empty": (
+            ("unknown_failure",),
+            "typed_block",
+        ),
+        "": (("unknown_failure",), "typed_block"),
+    }
+    for reason, (codes, action) in cases.items():
+        assert canonical_failure_codes_from_blocked_reason(reason) == codes, reason
+        selection = classify_blocked_reason(reason)
+        assert selection.action == action, reason
+        assert selection.owner == (
+            "system" if action == "typed_block" else selection.owner
+        )
+
+
+def test_writer_repairable_actions_are_exactly_the_two_bounded_lanes() -> None:
+    from code2paper.agentic.publication_transaction_contract import (
+        WRITER_REPAIRABLE_ACTIONS,
+        classify_blocked_reason,
+    )
+
+    assert WRITER_REPAIRABLE_ACTIONS == {
+        "writer_content_repair",
+        "representation_repair",
+    }
+    assert (
+        classify_blocked_reason("provider_stream_done_without_json_content").action
+        in WRITER_REPAIRABLE_ACTIONS
+    )
+    assert (
+        classify_blocked_reason("publication_section_binding_failed:unknown_claims").action
+        not in WRITER_REPAIRABLE_ACTIONS
+    )

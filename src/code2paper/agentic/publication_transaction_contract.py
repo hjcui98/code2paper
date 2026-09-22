@@ -1737,6 +1737,11 @@ CANONICAL_FAILURE_OWNERS: Mapping[str, str] = MappingProxyType({
     "atom_witness_missing": "binder",
     "transport_failure": "execution_owner",
     "send_outcome_unknown": "execution_owner",
+    # 表示层损伤（流被截断/未产出 JSON）：harness 负责有界补发，不花内容 repair，
+    # 也不能算成 Writer 的内容失败（审计 §E.1 第 8 行）。
+    "representation_damage": "execution_owner",
+    # 段落事务 lane 里"模型自己把 witness 写重复/写错位"是表示缺陷，不是跨段权限问题。
+    "witness_representation_invalid": "writer_content",
     "ledger_corrupt": "system",
     "unknown_failure": "system",
 })
@@ -1748,6 +1753,7 @@ CANONICAL_FAILURE_ALLOWED_EDITS: Mapping[str, tuple[str, ...]] = MappingProxyTyp
     "formula_placeholder_missing": ("paragraph_content", "formula_references"),
     "exact_span_not_in_body": ("paragraph_content", "detail_witnesses"),
     "detail_semantic_mismatch": ("paragraph_content", "detail_witnesses"),
+    "witness_representation_invalid": ("paragraph_content", "detail_witnesses"),
 })
 
 #: owner → 执行层允许的动作。
@@ -1761,11 +1767,24 @@ CANONICAL_FAILURE_OWNER_ACTIONS: Mapping[str, str] = MappingProxyType({
     "system": "typed_block",
 })
 
+#: 具体 code 的动作覆盖（默认取 owner 的动作）。
+CANONICAL_FAILURE_CODE_ACTIONS: Mapping[str, str] = MappingProxyType({
+    "representation_damage": "representation_repair",
+})
+
+#: 允许 Writer 有界重试（含 harness 的表示层补发）的动作集合。其它动作不得改正文。
+WRITER_REPAIRABLE_ACTIONS: frozenset[str] = frozenset({
+    "writer_content_repair",
+    "representation_repair",
+})
+
 #: 多个失败同时出现时的动作优先级：未知/损坏与升级类先决定动作，然后是材料与依赖，
 #: 最后才是内容补写与传输对账。绝不能只按 ``codes[0]`` 决定整个 repair_kind。
 FAILURE_ACTION_PRIORITY: tuple[str, ...] = (
     "ledger_corrupt",
     "unknown_failure",
+    # 表示层损伤说明响应从未完整到达：先补发，不用半份响应判断内容。
+    "representation_damage",
     "authority_surface_violation",
     "target_out_of_scope",
     "formula_consumer_mismatch",
@@ -1776,6 +1795,7 @@ FAILURE_ACTION_PRIORITY: tuple[str, ...] = (
     "formula_placeholder_missing",
     "exact_span_not_in_body",
     "detail_semantic_mismatch",
+    "witness_representation_invalid",
     "send_outcome_unknown",
     "transport_failure",
 )
@@ -1806,12 +1826,157 @@ def canonical_failure_owner(code: str) -> str:
 
 
 def canonical_failure_escalation(code: str) -> str:
-    action = CANONICAL_FAILURE_OWNER_ACTIONS[canonical_failure_owner(code)]
+    action = canonical_failure_action(code)
     if action == "typed_block":
         return "typed_block"
     if action in {"replan_required", "replan_or_recompile", "research_then_recompile"}:
         return "replan_required"
+    if action == "representation_repair":
+        return "representation_retry"
     return "repair_in_place"
+
+
+def canonical_failure_action(code: str) -> str:
+    canonical = canonical_failure_code(code)
+    return CANONICAL_FAILURE_CODE_ACTIONS.get(
+        canonical, CANONICAL_FAILURE_OWNER_ACTIONS[CANONICAL_FAILURE_OWNERS[canonical]]
+    )
+
+
+#: 生产 ``blocked_reason`` 前缀 → canonical 缺省码。前缀之后的细码优先。
+BLOCKED_REASON_LANE_DEFAULTS: Mapping[str, str] = MappingProxyType({
+    "publication_paragraph_transaction_failed": "detail_witness_missing",
+    "publication_section_binding_failed:formula_placeholder": "formula_placeholder_missing",
+    "publication_section_binding_failed": "target_out_of_scope",
+    "provider_stream": "representation_damage",
+})
+
+#: blocked_reason 里的非 canonical 标记 → canonical code。
+_BLOCKED_REASON_TOKEN_CODES: Mapping[str, str] = MappingProxyType({
+    "invalid_count": "detail_semantic_mismatch",
+    "invalid_witness_count": "detail_semantic_mismatch",
+    "response_blocked:paragraph_transaction": "paragraph_missing",
+    "non_substantive": "paragraph_missing",
+    "missing_writing_research_callback": "input_material_missing",
+    "unknown_argument_units": "target_out_of_scope",
+    "unknown_claims": "target_out_of_scope",
+    "unknown_equations": "target_out_of_scope",
+    "unknown_configurations": "target_out_of_scope",
+    "missing_argument_units": "input_material_missing",
+    "missing_claims": "input_material_missing",
+    "missing_equations": "input_material_missing",
+    "missing_configurations": "input_material_missing",
+    "duplicate_witness": "witness_representation_invalid",
+})
+
+
+def _canonical_code_from_blocked_token(token: str, *, lane: str = "") -> str:
+    value = str(token or "").strip()
+    if not value:
+        return ""
+    resolved = ""
+    if value in CANONICAL_FAILURE_OWNERS:
+        resolved = value
+    elif value in _BLOCKED_REASON_TOKEN_CODES:
+        resolved = _BLOCKED_REASON_TOKEN_CODES[value]
+    else:
+        # "<paragraph_id>:<code>" 形状：段落 id 自身带冒号，因此逐段匹配已知标记，
+        # 这样 "missing_writing_research_callback:a,b" 也能识别出所属类别。
+        for segment in (part.strip() for part in value.split(":")):
+            if not segment:
+                continue
+            if segment in CANONICAL_FAILURE_OWNERS:
+                resolved = segment
+                break
+            if segment in _BLOCKED_REASON_TOKEN_CODES:
+                resolved = _BLOCKED_REASON_TOKEN_CODES[segment]
+                break
+    if not resolved:
+        return ""
+    overrides = _BLOCKED_REASON_LANE_TOKEN_OVERRIDES.get(lane)
+    if overrides:
+        return overrides.get(resolved, resolved)
+    return resolved
+
+
+#: lane 内的语义修正：同一个字符串在不同 lane 里的责任方不同。
+_BLOCKED_REASON_LANE_TOKEN_OVERRIDES: Mapping[str, Mapping[str, str]] = MappingProxyType({
+    # 段落事务 lane 是**内容 lane**：这里的 code 描述模型自己输出的表示缺陷，
+    # 不是跨段权限/归属问题，因此不得升级为 replan（审计 §E.1 第 1/3 行）。
+    "publication_paragraph_transaction_failed": MappingProxyType({
+        "formula_consumer_mismatch": "formula_placeholder_missing",
+        "target_out_of_scope": "witness_representation_invalid",
+    }),
+})
+
+
+def canonical_failure_codes_from_blocked_reason(reason: str) -> tuple[str, ...]:
+    """把生产 ``blocked_reason`` 投影为 canonical codes（审计 §E.1 读取边界）。
+
+    生产 reason 是 ``<lane>:<code;code;...>`` 形状；识别不出细码时退回该 lane 的
+    缺省码，而不是把整条 reason 当成未知失败。
+    """
+
+    value = str(reason or "").strip()
+    if not value:
+        return ("unknown_failure",)
+    if value.startswith("provider_stream"):
+        return ("representation_damage",)
+    lane_default = ""
+    lane = ""
+    payload = ""
+    for prefix, default in BLOCKED_REASON_LANE_DEFAULTS.items():
+        if value == prefix or value.startswith(prefix + ":"):
+            lane_default = default
+            lane = prefix
+            payload = value[len(prefix) :].lstrip(":")
+            break
+    if not lane_default:
+        return ("unknown_failure",)
+    codes: list[str] = []
+    for token in payload.split(";"):
+        canonical = _canonical_code_from_blocked_token(token, lane=lane)
+        if canonical and canonical not in codes:
+            codes.append(canonical)
+    if not codes:
+        codes.append(lane_default)
+    return tuple(codes)
+
+
+def _matches_known_lane(value: str) -> bool:
+    text = str(value or "").strip()
+    if text.startswith("provider_stream"):
+        return True
+    return any(
+        text == prefix or text.startswith(prefix + ":")
+        for prefix in BLOCKED_REASON_LANE_DEFAULTS
+    )
+
+
+def canonical_failure_codes_from_text(value: str) -> tuple[str, ...]:
+    """canonical code、``<id>:<code>`` 或生产 blocked_reason 都能解析。
+
+    已知 lane 的 reason **先**按 lane 解析，避免"最后一段恰好是某个 canonical 码"时
+    丢掉 lane 内语义（例如段落 lane 的 formula_consumer_mismatch 属于内容补写）。
+    """
+
+    text = str(value or "").strip()
+    if not text:
+        return ("unknown_failure",)
+    if _matches_known_lane(text):
+        return canonical_failure_codes_from_blocked_reason(text)
+    if text in CANONICAL_FAILURE_OWNERS or text in LEGACY_FAILURE_CODE_ALIASES:
+        return (canonical_failure_code(text),)
+    tail = text.rsplit(":", 1)[-1].strip()
+    if tail in CANONICAL_FAILURE_OWNERS or tail in LEGACY_FAILURE_CODE_ALIASES:
+        return (canonical_failure_code(tail),)
+    return canonical_failure_codes_from_blocked_reason(text)
+
+
+def classify_blocked_reason(reason: str) -> FailureActionSelectionV1:
+    """生产 blocked_reason / 单条失败文本的**唯一**归属结论（审计 §E.1）。"""
+
+    return select_failure_action(canonical_failure_codes_from_text(reason))
 
 
 class FailureActionSelectionV1(BaseModel):
@@ -1847,7 +2012,7 @@ def select_failure_action(codes: Sequence[str]) -> FailureActionSelectionV1:
     return FailureActionSelectionV1(
         code=chosen,
         owner=owner,
-        action=CANONICAL_FAILURE_OWNER_ACTIONS[owner],
+        action=canonical_failure_action(chosen),
         escalation=canonical_failure_escalation(chosen),
         codes=tuple(normalized),
     )

@@ -4206,3 +4206,40 @@ detail/unresolved/disposition 真正到达）、技术材料不得被复制进�
 `as_request_payload`）、E.3 原子提交与单调进展（repair 接受后 scope/冻结段/义务复核）、
 E.4 的 `writer_content` vs `final_bound` 负例矩阵、E.5 paragraph objects 单一正文源的
 生产路径复核。
+
+## 2026-09-22 审计 PR E.2 接线：生产写侧消费 canonical 归属与局部修复合同
+
+复现的审计论断（成立）：生产写侧自带第二套判定——`section_writer` 维护
+`_WRITER_CONTENT_REPAIRABLE_FAILURE_PREFIXES` 前缀表来决定"能不能修"，与
+`publication_transaction_contract` 的 code/owner 表平行；生产修复包
+（`WriterSectionRepairPacketV1`）也没有 canonical owner/action，也没有"其余已接受段落"
+的冻结摘要。
+
+修复：
+
+- `publication_transaction_contract` 增加生产 blocked_reason 的读取边界：
+  `BLOCKED_REASON_LANE_DEFAULTS`、`_BLOCKED_REASON_TOKEN_CODES`、
+  lane 内语义修正 `_BLOCKED_REASON_LANE_TOKEN_OVERRIDES`、
+  `canonical_failure_codes_from_blocked_reason`、`canonical_failure_codes_from_text`、
+  `classify_blocked_reason`；新增 canonical code `representation_damage`
+  （owner=execution_owner，action=`representation_repair`，escalation=`representation_retry`）
+  与 `witness_representation_invalid`（段落 lane 里模型自己写重复 witness 是表示缺陷，
+  不是跨段权限问题，不得升级为 replan）。
+- 段落 lane 的语义：`formula_consumer_mismatch` → `formula_placeholder_missing`
+  （占位符缺失是 Writer 补引用），`invalid_count`/`invalid_witness_count` →
+  `detail_semantic_mismatch`，`response_blocked:paragraph_transaction`/`non_substantive`
+  → `paragraph_missing`，`duplicate_witness` → `witness_representation_invalid`。
+- `section_writer`：删除前缀表，`_is_writer_content_repairable_failure` 改为查表
+  （`WRITER_REPAIRABLE_ACTIONS = {writer_content_repair, representation_repair}`，
+  即原有四条前缀的行为不变）；新增 `_classify_writer_repair_failure(s)`。
+- 生产修复包与请求：`WriterSectionRepairPacketV1` 增加 `canonical_codes/owner/action/
+  escalation/failed_paragraph_ids/frozen_paragraph_digests` 与 `as_request_payload()`
+  （隐藏内部冻结摘要，保留正文/目标/允许段落等修复必需内容）；调用边界传入
+  canonical 结论、失败段落集合（合同优先，section 级失败回退到"失败文本里的计划内
+  段落 id"，不放大范围）与冻结的已接受兄弟段落摘要。
+
+测试：`tests/test_llm_section_writer.py` 新增 5 项（可修复矩阵不变、归属结论、
+冻结摘要不入请求、失败段落范围、以及用 `wraps` 间谍断言生产调用真的把 canonical
+结论交给 packet）；`test_repair_packet.py` 新增 2 项（生产 blocked_reason → canonical
+owner/action 全矩阵、可修动作集合恰好两条有界 lane）。回归目录 + writer 侧 393 项、
+publication writer 侧 197 项全绿。

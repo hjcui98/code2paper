@@ -70,6 +70,21 @@ class WriterSectionRepairPacketV1(_RepairModel):
     formula_placeholder_instruction: str = ""
     previous_progress: dict[str, int]
     transaction_failure: str = ""
+    #: 审计 §E.1/E.2：这次修复的 canonical 归属结论（谁修、允许什么动作）。
+    canonical_codes: tuple[str, ...] = Field(default_factory=tuple)
+    owner: str = ""
+    action: str = ""
+    escalation: str = ""
+    #: 本次允许改写的段落集合；其余段落以冻结摘要形式保留在私有侧。
+    failed_paragraph_ids: tuple[str, ...] = Field(default_factory=tuple)
+    frozen_paragraph_digests: dict[str, str] = Field(default_factory=dict)
+
+    def as_request_payload(self) -> dict[str, Any]:
+        """给模型的修复载荷：隐藏内部冻结摘要，保留修复必需的局部内容。"""
+
+        payload = self.model_dump(mode="json")
+        payload.pop("frozen_paragraph_digests", None)
+        return payload
 
 
 def build_writer_section_repair_packet(
@@ -81,6 +96,12 @@ def build_writer_section_repair_packet(
     progress: "WriterRepairProgressV1",
     failures: list[str] | tuple[str, ...],
     paragraph_transaction_repairs: Any = (),
+    canonical_codes: tuple[str, ...] = (),
+    owner: str = "",
+    action: str = "",
+    escalation: str = "",
+    failed_paragraph_ids: tuple[str, ...] = (),
+    frozen_paragraph_digests: dict[str, str] | None = None,
 ) -> WriterSectionRepairPacketV1:
     """Project deterministic Writer failures into a closed, typed packet."""
 
@@ -316,6 +337,17 @@ def build_writer_section_repair_packet(
             item.removeprefix("transaction:") for item in failures
             if item.startswith("transaction:")
         ), ""),
+        canonical_codes=tuple(canonical_codes or ()),
+        owner=str(owner or ""),
+        action=str(action or ""),
+        escalation=str(escalation or ""),
+        failed_paragraph_ids=tuple(
+            str(item) for item in (failed_paragraph_ids or ()) if str(item).strip()
+        ),
+        frozen_paragraph_digests={
+            str(key): str(value)
+            for key, value in (frozen_paragraph_digests or {}).items()
+        },
     )
 
 

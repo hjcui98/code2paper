@@ -284,6 +284,15 @@ def test_unified_v2_transaction_failure_uses_one_declared_writer_repair() -> Non
     assert "paragraph_transaction_repairs" in calls[1].input_payload[
         "writer_section_repair"
     ]
+    # 审计 §E.1/E.2：生产修复请求必须携带 canonical 归属结论与失败段落集合，
+    # 内部冻结摘要不出现在请求里。
+    repair = calls[1].input_payload["writer_section_repair"]
+    assert repair["owner"] == "writer_content"
+    assert repair["action"] == "writer_content_repair"
+    assert repair["escalation"] == "repair_in_place"
+    assert "detail_witness_missing" in repair["canonical_codes"]
+    assert repair["failed_paragraph_ids"] == ["MA-S1:p1"]
+    assert "frozen_paragraph_digests" not in repair
     assert result.aggregate.writer_repair_rounds == 1
     assert result.aggregate.writer_repair_commits == 1
     assert not result.aggregate.incomplete_sections
@@ -4395,3 +4404,221 @@ def test_transaction_condition_binding_rejects_structure_changes() -> None:
         assert bound_bad["witnesses"] == [], (declared, markdown)
         assert assessment_bad.valid is False, (declared, markdown)
         assert "slot:guard" in assessment_bad.missing_by_kind.get("slot", ())
+
+
+# --------------------------------------------------------------------------- #
+# 审计 §E.1/E.2：生产修复归属来自 canonical 表，载荷保留局部合同
+# --------------------------------------------------------------------------- #
+
+
+def test_writer_content_repairable_failure_matrix_is_unchanged() -> None:
+    from code2paper.llm.section_writer import (
+        _is_writer_content_repairable_failure,
+    )
+
+    # 原有四条前缀仍然可修（段落事务、公式占位符、三种流截断表示损伤）。
+    assert _is_writer_content_repairable_failure(
+        "publication_paragraph_transaction_failed:MA-S1:p1:invalid_count"
+    )
+    assert _is_writer_content_repairable_failure(
+        "publication_section_binding_failed:formula_placeholder:MA-S1:p1"
+    )
+    for code in (
+        "provider_stream_finished_before_complete_json",
+        "provider_stream_done_without_json_content",
+        "provider_stream_ended_before_complete_json",
+    ):
+        assert _is_writer_content_repairable_failure(code)
+
+    # 未知码 / 归属别的 owner 的失败仍然是终态：不得用内容补写掩盖。
+    assert not _is_writer_content_repairable_failure("")
+    assert not _is_writer_content_repairable_failure("something_nobody_registered")
+    assert not _is_writer_content_repairable_failure(
+        "publication_section_binding_failed:unknown_claims"
+    )
+    assert not _is_writer_content_repairable_failure(
+        "publication_section_schema_failed:section_markdown_empty"
+    )
+
+
+def test_repair_classification_names_the_owner_and_action() -> None:
+    from code2paper.llm.section_writer import (
+        _classify_writer_repair_failure,
+        _classify_writer_repair_failures,
+    )
+
+    paragraph = _classify_writer_repair_failure(
+        "publication_paragraph_transaction_failed:MA-S1:p1:invalid_count"
+    )
+    assert (paragraph.owner, paragraph.action) == ("writer_content", "writer_content_repair")
+    assert paragraph.codes == ("detail_semantic_mismatch",)
+
+    # 段落 lane 的 formula_consumer_mismatch 是"占位符缺失"的内容补写，
+    # 不是 planner 的 closure 问题。
+    formula = _classify_writer_repair_failure(
+        "publication_paragraph_transaction_failed:MA-S1:p1:formula_consumer_mismatch"
+    )
+    assert formula.action == "writer_content_repair"
+    assert formula.codes == ("formula_placeholder_missing",)
+
+    # 表示层损伤归 execution owner，但仍在有界补发集合里。
+    stream = _classify_writer_repair_failure(
+        "provider_stream_ended_before_complete_json"
+    )
+    assert (stream.owner, stream.action, stream.escalation) == (
+        "execution_owner",
+        "representation_repair",
+        "representation_retry",
+    )
+
+    # 多条失败时按责任/依赖选择，而不是第一条。
+    mixed = _classify_writer_repair_failures(
+        [
+            "transaction:publication_paragraph_transaction_failed:MA-S1:p1:invalid_count",
+            "publication_section_binding_failed:unknown_claims",
+        ]
+    )
+    assert mixed.code == "target_out_of_scope"
+    assert mixed.escalation == "replan_required"
+
+
+def test_repair_packet_keeps_frozen_siblings_private() -> None:
+    from code2paper.llm.writer_section_repair import (
+        WriterRepairProgressV1,
+        build_writer_section_repair_packet,
+    )
+
+    progress = WriterRepairProgressV1(
+        unsafe_uncaveated_positives=0,
+        constraint_failures=0,
+        negative_validated_propositions=0,
+        unrendered_required_propositions=0,
+        code_trace_style_failures=0,
+        duplicate_sentences=0,
+        missing_required_facets=0,
+        missing_formula_placeholders=0,
+    )
+    packet = build_writer_section_repair_packet(
+        section_id="MA-S1",
+        attempt=1,
+        incumbent_text="incumbent",
+        writer_view={},
+        progress=progress,
+        failures=["transaction:publication_paragraph_transaction_failed:MA-S1:p1:invalid_count"],
+        canonical_codes=("detail_semantic_mismatch",),
+        owner="writer_content",
+        action="writer_content_repair",
+        escalation="repair_in_place",
+        failed_paragraph_ids=("MA-S1:p1",),
+        frozen_paragraph_digests={"MA-S1:p2": "abc123"},
+    )
+
+    assert packet.owner == "writer_content"
+    assert packet.frozen_paragraph_digests == {"MA-S1:p2": "abc123"}
+    payload = packet.as_request_payload()
+    assert "frozen_paragraph_digests" not in payload
+    assert payload["failed_paragraph_ids"] == ["MA-S1:p1"]
+    assert payload["canonical_codes"] == ["detail_semantic_mismatch"]
+    assert payload["incumbent_text"] == "incumbent"
+
+
+def test_failed_paragraph_ids_stay_inside_the_plan() -> None:
+    from code2paper.llm.section_writer import _publication_failed_paragraph_ids
+
+    section = WriterSectionInput(
+        section_id="MA-S1",
+        heading="Mechanism",
+        publication_mode=True,
+        argument_graph={
+            "paragraphs": [
+                {"paragraph_id": "MA-S1:p1"},
+                {"paragraph_id": "MA-S1:p2"},
+            ]
+        },
+        prompt_payload={"section_id": "MA-S1"},
+    )
+
+    # 合同条目优先。
+    assert _publication_failed_paragraph_ids(
+        section, [{"paragraph_id": "MA-S1:p2"}], []
+    ) == ("MA-S1:p2",)
+    # section 级失败（合同无条目）时从失败文本恢复，且不接受计划外段落。
+    assert _publication_failed_paragraph_ids(
+        section,
+        [],
+        [
+            "transaction:publication_paragraph_transaction_failed:"
+            "MA-S1:p1:invalid_count;MA-S9:pX:invalid_count"
+        ],
+    ) == ("MA-S1:p1",)
+
+
+def test_production_repair_call_passes_the_canonical_classification(monkeypatch) -> None:
+    """真实接线：生产修复调用必须把 canonical 归属结论交给 repair packet。"""
+
+    from code2paper.llm import section_writer as writer_module
+
+    seen: list[dict] = []
+    real = writer_module.build_writer_section_repair_packet
+
+    def _spy(**kwargs):
+        seen.append(dict(kwargs))
+        return real(**kwargs)
+
+    monkeypatch.setattr(
+        writer_module, "build_writer_section_repair_packet", _spy
+    )
+
+    section = WriterSectionInput(
+        section_id="MA-S1",
+        heading="Mechanism",
+        publication_mode=True,
+        argument_graph={"paragraphs": [{"paragraph_id": "MA-S1:p1"}]},
+        prompt_payload={
+            "section_id": "MA-S1",
+            "heading": "Mechanism",
+            "shared_contexts": [{"page": "frozen"}],
+            "shared_context_metadata": [{"v2_page_id": "page:1"}],
+            "paragraph_transaction_required": True,
+            "binding_contract": {"allowed_paragraph_ids": ["MA-S1:p1"]},
+        },
+    )
+
+    def caller(_config: LLMConfig, request: LLMRequest) -> LLMResponse:
+        if "writer_section_repair" not in request.input_payload:
+            text = json.dumps({
+                "section_id": "MA-S1",
+                "paragraphs": [
+                    {"paragraph_id": "MA-S1:p1", "paragraph_markdown": "first"},
+                    {"paragraph_id": "MA-S1:p1", "paragraph_markdown": "first"},
+                ],
+            })
+        else:
+            text = json.dumps({
+                "section_id": "MA-S1",
+                "paragraphs": [{
+                    "paragraph_id": "MA-S1:p1",
+                    "paragraph_markdown": "repaired substantive Method prose.",
+                }],
+            })
+        return LLMResponse(
+            text=text,
+            response_hash=f"sha256:spy-{len(seen)}",
+            finish_reason="stop",
+            token_usage={"completion_tokens": 1},
+        )
+
+    write_publication_method_by_sections(
+        _base_config(),
+        [section],
+        llm_caller=caller,
+        content_transaction_assessor=lambda *_args: (True, "transaction_gain"),
+    )
+
+    assert seen, "生产路径必须调用 build_writer_section_repair_packet"
+    repair_call = seen[0]
+    assert repair_call["owner"] == "writer_content"
+    assert repair_call["action"] == "writer_content_repair"
+    assert repair_call["escalation"] == "repair_in_place"
+    assert "detail_witness_missing" in repair_call["canonical_codes"]
+    assert repair_call["failed_paragraph_ids"] == ("MA-S1:p1",)

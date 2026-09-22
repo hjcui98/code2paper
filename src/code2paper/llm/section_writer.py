@@ -3086,6 +3086,18 @@ def write_method_by_sections(
                     }
                 else:
                     repair_payload = dict(request.input_payload)
+                paragraph_repairs = _publication_paragraph_repair_contract(
+                    section,
+                    accepted_response,
+                )
+                failed_paragraph_ids = set(
+                    _publication_failed_paragraph_ids(
+                        section, paragraph_repairs, content_failures
+                    )
+                )
+                repair_classification = _classify_writer_repair_failures(
+                    content_failures
+                )
                 repair_packet = build_writer_section_repair_packet(
                     section_id=section.section_id,
                     attempt=repair_round,
@@ -3093,15 +3105,19 @@ def write_method_by_sections(
                     writer_view=writer_view,
                     progress=incumbent_progress,
                     failures=content_failures,
-                    paragraph_transaction_repairs=(
-                        _publication_paragraph_repair_contract(
-                            section,
-                            accepted_response,
-                        )
+                    paragraph_transaction_repairs=paragraph_repairs,
+                    # 审计 §E.1/E.2：canonical 归属结论 + 冻结的已接受兄弟段落。
+                    canonical_codes=repair_classification.codes,
+                    owner=repair_classification.owner,
+                    action=repair_classification.action,
+                    escalation=repair_classification.escalation,
+                    failed_paragraph_ids=tuple(sorted(failed_paragraph_ids)),
+                    frozen_paragraph_digests=_publication_frozen_sibling_digests(
+                        section, accepted_response, failed_paragraph_ids
                     ),
                 )
-                repair_payload["writer_section_repair"] = repair_packet.model_dump(
-                    mode="json"
+                repair_payload["writer_section_repair"] = (
+                    repair_packet.as_request_payload()
                 )
                 repair_request = LLMRequest(
                     prompt_template_id=(
@@ -6233,17 +6249,8 @@ def assess_publication_content_progress(
     return False, "no_content_gain"
 
 
-_WRITER_CONTENT_REPAIRABLE_FAILURE_PREFIXES = (
-    "publication_paragraph_transaction_failed:",
-    "publication_section_binding_failed:formula_placeholder:",
-    # The local structured stream may end before emitting a JSON object at
-    # all.  This is transport/representation damage, not content authority;
-    # route it through the same single Writer-owned V2 repair as other typed
-    # representation failures.  The empty primary is never accepted.
-    "provider_stream_finished_before_complete_json",
-    "provider_stream_done_without_json_content",
-    "provider_stream_ended_before_complete_json",
-)
+# 审计 §E.1：可修复性判定统一走 ``publication_transaction_contract`` 的 canonical
+# 表（``_is_writer_content_repairable_failure``）；写侧不再维护第二份前缀清单。
 
 
 def _response_rendered_formula_package_ids(
@@ -6401,6 +6408,63 @@ def _publication_missing_atom_targets(
             ),
         })
     return tuple(targets)
+
+
+def _publication_failed_paragraph_ids(
+    section: WriterSectionInput,
+    paragraph_repairs: Sequence[Mapping[str, Any]],
+    failures: Sequence[str],
+) -> tuple[str, ...]:
+    """本次修复允许改写的段落集合（审计 §E.2）。
+
+    段落事务合同的条目是首选来源；当失败发生在 section 级（例如重复声明同一个
+    段落 id）而合同没有条目时，回退到"失败文本里出现的**计划内**段落 id"，避免
+    把修复范围放大到计划外段落。
+    """
+
+    graph = section.argument_graph if isinstance(section.argument_graph, dict) else {}
+    planned_ids = [
+        str(item.get("paragraph_id") or "").strip()
+        for item in (graph.get("paragraphs") or ())
+        if isinstance(item, Mapping) and str(item.get("paragraph_id") or "").strip()
+    ]
+    found: set[str] = set()
+    for item in paragraph_repairs or ():
+        paragraph_id = str(item.get("paragraph_id") or "").strip()
+        if paragraph_id:
+            found.add(paragraph_id)
+    if planned_ids:
+        for failure in failures or ():
+            text = str(failure or "")
+            found.update(
+                paragraph_id for paragraph_id in planned_ids if paragraph_id in text
+            )
+    return tuple(sorted(found))
+
+
+def _publication_frozen_sibling_digests(
+    section: WriterSectionInput,
+    response: LLMResponse,
+    failed_paragraph_ids: set[str],
+) -> dict[str, str]:
+    """其它已接受段落的冻结摘要（审计 §E.2）。
+
+    修复只允许改失败段落；这个摘要集合是"其余段落不得变化"的机器可核对形式，
+    由调用方在合并/验收时比对，不发给模型。
+    """
+
+    metadata = response.metadata
+    if not isinstance(metadata, PublicationMethodSectionOutputV1):
+        return {}
+    digests: dict[str, str] = {}
+    for paragraph in metadata.paragraphs or ():
+        paragraph_id = str(paragraph.paragraph_id or "").strip()
+        if not paragraph_id or paragraph_id in failed_paragraph_ids:
+            continue
+        digests[paragraph_id] = hashlib.sha256(
+            str(paragraph.paragraph_markdown or "").encode("utf-8")
+        ).hexdigest()
+    return digests
 
 
 def _publication_paragraph_repair_contract(
@@ -6754,18 +6818,56 @@ def _merge_publication_repair_response(
     )
 
 
+def _classify_writer_repair_failure(reason: str | None) -> Any:
+    """把生产失败（blocked_reason 或单条 failure 文本）投影为 canonical 归属结论。
+
+    审计 §E.1/E.2：谁该修、能不能原地改正文，只由
+    ``publication_transaction_contract`` 的一张表决定，写侧不再维护前缀清单。
+    """
+
+    from code2paper.agentic.publication_transaction_contract import (
+        classify_blocked_reason,
+    )
+
+    return classify_blocked_reason(str(reason or ""))
+
+
+def _classify_writer_repair_failures(failures: Sequence[str]) -> Any:
+    """多条失败时的同一个结论（按责任/依赖选动作，而不是第一条）。"""
+
+    from code2paper.agentic.publication_transaction_contract import (
+        canonical_failure_codes_from_text,
+        select_failure_action,
+    )
+
+    codes: list[str] = []
+    for failure in failures or ():
+        value = str(failure or "").strip()
+        if value.startswith("transaction:"):
+            value = value.split(":", 1)[1].strip()
+        for code in canonical_failure_codes_from_text(value):
+            if code not in codes:
+                codes.append(code)
+    return select_failure_action(codes)
+
+
 def _is_writer_content_repairable_failure(reason: str | None) -> bool:
     """Return whether a typed representation/content failure may be repaired.
 
     Formula placeholder failures are emitted after the structured response has
     already parsed successfully and therefore still carry usable prose.  They
     belong in the same bounded Writer repair loop as paragraph transaction
-    failures.  Unknown-id, schema, transport, and authority failures remain
+    failures.  Unknown-id, schema, authority, and replan-owned failures remain
     terminal at this layer.
     """
 
-    value = str(reason or "")
-    return value.startswith(_WRITER_CONTENT_REPAIRABLE_FAILURE_PREFIXES)
+    from code2paper.agentic.publication_transaction_contract import (
+        WRITER_REPAIRABLE_ACTIONS,
+    )
+
+    return (
+        _classify_writer_repair_failure(reason).action in WRITER_REPAIRABLE_ACTIONS
+    )
 
 
 def _safe_call(
