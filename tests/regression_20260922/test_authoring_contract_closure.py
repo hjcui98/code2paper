@@ -303,3 +303,45 @@ def test_rejected_page_enters_one_bounded_repair_and_commits(
     ), rows
     assert result.status in {"success", "incomplete"}
     assert _published_text(outputs)
+
+
+def test_writer_acceptance_alone_does_not_publish_verified_text(tmp_path: Path) -> None:
+    """场景 4：Writer 阶段接受 ≠ publication acceptance；final-bound/Binder 说了算。
+
+    默认 fake provider 的正文能过 writer_content，但确定性 Binder 的闭集不允许它声明的
+    atom witness，因此不得产出任何"已验证正文"。
+    """
+
+    requests: list[LLMRequest] = []
+
+    def caller(config, request):
+        requests.append(request)
+        return _mock_writer_caller(config, request)
+
+    _result, outputs = _run(tmp_path, caller)
+
+    rows = _acceptance_rows(tmp_path)
+    assert any(
+        row.get("content_acceptance_status") == "accepted" for row in rows
+    ), "Writer 内容阶段应当接受"
+    verified = Path(outputs["repository_verified_method"])
+    assert verified.read_text(encoding="utf-8").strip() == "", (
+        "Writer 接受不等于发布验收"
+    )
+
+    import json as _json
+
+    receipts = _json.loads(
+        Path(outputs["binder_receipts_v2"]).read_text(encoding="utf-8")
+    )
+    failures = [
+        code
+        for receipt in receipts.get("receipts", [])
+        for code in (receipt.get("failure_codes") or ())
+    ]
+    assert any(
+        "binder_" in str(code) for code in failures
+    ), f"下游 Binder 失败必须被记录：{failures}"
+    # Writer 阶段的回执可以如实报"内容阶段完成"（§E.4：这不是 publication acceptance），
+    # 但整条 run 必须因为下游失败而保持 incomplete。
+    assert _result.status == "incomplete"

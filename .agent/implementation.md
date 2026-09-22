@@ -4538,3 +4538,14 @@ gate 的"writer_content"意图不一致。
    （没有免费重试），测试里如实声明。
 
 writer/publication/回归套件 610 项全绿。
+
+G.2 追加场景 4：默认 fake provider 的正文能过 writer_content，但确定性 Binder 的闭集
+不允许它声明的 atom witness（`binder_target_outside_closed_contract:*`），因此
+`repository_verified_method` 为空、run 保持 incomplete——"Writer 接受 ≠ publication
+acceptance"在真实接线上成立。Writer 聚合回执仍如实报内容阶段完成（§E.4 的两阶段分工），
+这一点在测试里明确写成预期，而不是被误当成缺陷。
+
+**G.2 仍缺**：正向 Verified 全链（需要一个"引用页面 atom exact excerpt、不写内部审计词"
+的 fake writer，才能让确定性 Binder 真正绑定并过 candidate authority 门）、作者-only
+段落路径（场景 5）、Formalizer 无任务（场景 7）、损坏索引下的 writing lane（场景 8）。
+G.3 崩溃注入与 G.5 准入加强同样未做。
