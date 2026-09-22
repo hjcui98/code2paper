@@ -4395,3 +4395,30 @@ legacy 扫描不变、验证读取）；离线端到端新增 2 项（产品 run
 测试：新增 `test_publication_transaction.py` 5 项——成功发布走完五步且无残留临时文件、
 验证失败不发布、验证失败不覆盖既有内容、模拟"published 但未注册"中断时索引不把它当 active
 且 doctor 报 blocker、orphan 临时文件被报告。回归目录 293 项全绿。
+
+## 2026-09-22 审计 PR F.5（第一片）：doctor 消费已发布索引 + 变异测试
+
+复现的审计论断（成立）：doctor 每次诊断都 `build_artifact_index(root)` **重新扫描**目录，
+等于把"索引发布之后被改动的文件"重新认证一遍——所以"发布索引 → 改文件 → reader 必须
+在使用前失败"这条要求在诊断路径上根本不成立（实测：改动回执后 doctor 仍按新内容给结论）。
+
+修复：
+
+- 新增 `load_published_artifact_index(out_root)`：读取**已发布**的索引 revision，并用
+  规范化载荷**复算**其自身 content_digest（不信任磁盘声明），不一致即
+  `artifact_index_digest_changed`。
+- doctor 优先消费已发布 revision（报告新增 `artifact_index_source`，render 打印
+  `INDEX SOURCE` 行），只有从未发布过索引时才退回临时扫描并如实标注；受索引管理的产物
+  （invocation plan、分节回执、阶段回执、空产物处置）统一走 `_validated_payload` →
+  `read_artifact_validated`，验证失败时该阶段显示 `blocked (...)`、blocker 升级为 critical，
+  **不退回**按文件名再读一份的隐式 fallback。
+- quality report 通过 doctor 自动继承同一行为（它不再自己读原始文件拼状态）。
+
+测试（`test_authoring_doctor.py` 新增 2 项，均为变异测试）：索引发布后改动分节回执 →
+doctor 报 `artifact_read_blocked:writer_section_receipts:writer:artifact_bytes_changed_since_index`，
+注入的 invocation id 不出现在结论里；改动聚合回执 → 该阶段显示 blocked 且不再报
+"sections complete"。回归目录 295 项全绿。
+
+**F.5 仍缺**：主 writer / Realizer / Binder / replay / run summary 这些**运行期** reader
+仍按 `method_output` 路径直接读文件；把它们迁到 validated read（或按阶段快照读取）需要
+在运行内传递索引/快照上下文，留待后续。

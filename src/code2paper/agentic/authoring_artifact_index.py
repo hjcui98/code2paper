@@ -632,6 +632,45 @@ def build_artifact_index(
     )
 
 
+def load_published_artifact_index(out_root: str | Path) -> AuthoringArtifactIndexV1:
+    """读取**已发布**的索引 revision（审计 §F.5：reader 不得临时重扫来自证清白）。
+
+    每个 reader 若重新扫描目录，就等于把"索引发布之后被改动的文件"重新认证一遍，
+    变异检测永远为假。已发布 revision 才是冻结的当前对象记录；读取时**复算**索引自身
+    摘要，不信任磁盘上的声明值。
+    """
+
+    path = artifact_index_path(out_root)
+    if not path.is_file():
+        raise ArtifactIndexError(f"artifact_index_missing:{path}")
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError) as exc:
+        raise ArtifactIndexError(f"artifact_index_unreadable:{path}") from exc
+    if not isinstance(payload, dict):
+        raise ArtifactIndexError(f"artifact_index_unreadable:{path}")
+    declared = str(payload.get("content_digest") or "")
+    recomputed = digest_json(
+        {
+            "schema_version": str(payload.get("schema_version") or "1.0"),
+            "execution_identity_digest": str(
+                payload.get("execution_identity_digest") or ""
+            ),
+            "index_revision": int(payload.get("index_revision") or 0),
+            "entries": list(payload.get("entries") or ()),
+            "active": dict(payload.get("active") or {}),
+        }
+    )
+    if declared != recomputed:
+        raise ArtifactIndexError(
+            f"artifact_index_digest_changed:{declared}!={recomputed}"
+        )
+    try:
+        return AuthoringArtifactIndexV1.model_validate(payload)
+    except ValueError as exc:
+        raise ArtifactIndexError(f"artifact_index_invalid:{path}") from exc
+
+
 def resolve_artifact(
     index: AuthoringArtifactIndexV1,
     role: str,
@@ -1118,6 +1157,7 @@ __all__ = [
     "artifact_index_path",
     "build_artifact_index",
     "build_resolved_authoring_snapshot",
+    "load_published_artifact_index",
     "publish_artifact_index",
     "write_resolved_authoring_snapshot",
     "resolved_snapshot_evidence_path",

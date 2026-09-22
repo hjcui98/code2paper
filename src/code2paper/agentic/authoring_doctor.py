@@ -20,6 +20,7 @@ from code2paper.agentic.authoring_artifact_index import (
     EmptyArtifactDispositionV1,
     assess_empty_artifact,
     build_artifact_index,
+    load_published_artifact_index,
     resolve_artifact,
 )
 from code2paper.agentic.authoring_artifact_publication import (
@@ -81,6 +82,8 @@ class AuthoringDoctorReportV1(BaseModel):
     binder_owned_writer_target_count: int = 0
     #: 审计 §F.3：空产物是否合法、为什么为空、哪些任务 not_applicable。
     empty_artifacts: tuple[EmptyArtifactDispositionV1, ...] = ()
+    #: 审计 §F.5：本次诊断消费的是已发布 revision 还是临时扫描。
+    artifact_index_source: str = ""
     #: 审计 §F.4：发布事务 journal（未完成的发布必须可见）。
     publications: tuple[PublicationTransactionV1, ...] = ()
     orphan_publication_files: tuple[str, ...] = ()
@@ -94,6 +97,8 @@ class AuthoringDoctorReportV1(BaseModel):
         ]
         if self.engine_fingerprint:
             lines.append(f"ENGINE          {self.engine_fingerprint}")
+        if self.artifact_index_source:
+            lines.append(f"INDEX SOURCE    {self.artifact_index_source}")
         for phase, status in sorted(self.phases.items()):
             lines.append(f"{phase.upper():15s} {status}")
         lines.append(
@@ -148,18 +153,53 @@ class AuthoringDoctorReportV1(BaseModel):
 
 
 def _read_json(path: Path) -> Any:
+    """legacy 归档读取（未经索引验证）；受索引管理的产物走 _validated_payload。"""
+
     try:
         return json.loads(path.read_text(encoding="utf-8"))
     except (OSError, ValueError):
         return None
 
 
-def _phase_status(index: Any, out_root: Path, role: str, phase: str) -> str:
+def _validated_payload(
+    index: Any,
+    out_root: Path,
+    role: str,
+    phase: str,
+    *,
+    required_units: int | None = None,
+) -> tuple[Any, str]:
+    """按 §F.5 读取受索引管理的产物：**使用前**验证字节与摘要。
+
+    返回 ``(payload, blocker)``：读不到或验证失败时 payload 为 ``None`` 并把 typed
+    blocker 交给调用方——绝不退回到"按无后缀文件名再读一份"的隐式 fallback。
+    """
+
+    from code2paper.agentic.authoring_artifact_index import read_artifact_validated
+
+    entry = index.entry_for(role, phase)
+    if entry is None or entry.status == "missing":
+        # 该阶段本来就没有产物：不算"读被阻断"。
+        return None, ""
     try:
-        path = resolve_artifact(index, role, phase, out_root=out_root)
-    except ArtifactIndexError:
+        read = read_artifact_validated(
+            index,
+            role,
+            phase,
+            out_root=out_root,
+            required_units=required_units,
+        )
+    except ArtifactIndexError as exc:
+        return None, f"artifact_read_blocked:{role}:{phase}:{exc}"
+    return read.payload, ""
+
+
+def _phase_status(index: Any, out_root: Path, role: str, phase: str) -> str:
+    payload, blocker = _validated_payload(index, out_root, role, phase)
+    if blocker:
+        return f"blocked ({blocker})"
+    if payload is None:
         return "not produced"
-    payload = _read_json(path)
     if not isinstance(payload, dict):
         return "unreadable"
     if role == "writer_aggregate_receipt":
@@ -180,7 +220,14 @@ def run_authoring_doctor(out_root: str | Path) -> AuthoringDoctorReportV1:
     """只读诊断一个 run 目录；不写文件、不发请求。"""
 
     root = Path(out_root).expanduser().resolve()
-    index = build_artifact_index(root)
+    # 审计 §F.5：优先消费**已发布**的索引 revision；没有发布过才退回临时扫描，
+    # 并如实标注来源（否则"发布后改动文件"会被重新扫描重新认证）。
+    index_source = "fresh scan (no published revision)"
+    try:
+        index = load_published_artifact_index(root)
+        index_source = f"published revision {index.index_revision}"
+    except ArtifactIndexError:
+        index = build_artifact_index(root)
 
     execution = index.entry_for("authoring_execution_identity", "research")
     legacy = index.entry_for("run_identity", "research")
@@ -206,14 +253,15 @@ def run_authoring_doctor(out_root: str | Path) -> AuthoringDoctorReportV1:
         (name, role.split(":")[0], role.split(":")[1]) for name, role in _PHASE_ROLES
     )}
 
-    plan_path = root / "artifacts" / "06_authoring" / "consumer_invocation_plan_v1.2.json"
-    plan = _read_json(plan_path)
+    plan, plan_blocker = _validated_payload(
+        index, root, "consumer_invocation_plan", "writer"
+    )
     invocations = (plan or {}).get("invocations") or () if isinstance(plan, dict) else ()
 
     # resume 复用页不会产生新的内容验收记录，因此"已接受"还要看分节回执。
     receipt_completed: set[str] = set()
-    receipts_payload = _read_json(
-        root / "artifacts" / "06_authoring" / "writer_section_receipts_v2.json"
+    receipts_payload, receipts_blocker = _validated_payload(
+        index, root, "writer_section_receipts", "writer"
     )
     if isinstance(receipts_payload, dict):
         for receipt in receipts_payload.get("receipts") or ():
@@ -285,6 +333,11 @@ def run_authoring_doctor(out_root: str | Path) -> AuthoringDoctorReportV1:
         for item in unfinished
     )
     critical.extend(f"publication_orphan_temp:{path}" for path in orphan_files)
+    # 审计 §F.5：受索引管理的产物验证失败时，doctor 必须报告"读被阻断"，
+    # 而不是继续用未验证内容拼结论。
+    critical.extend(
+        blocker for blocker in (plan_blocker, receipts_blocker) if blocker
+    )
     if paragraph_stats["empty"] > 0:
         critical.append("intent_surface_gaps")
     if paragraph_stats["binder_owned_targets"] > 0:
@@ -297,6 +350,7 @@ def run_authoring_doctor(out_root: str | Path) -> AuthoringDoctorReportV1:
 
     return AuthoringDoctorReportV1(
         out_root=str(root),
+        artifact_index_source=index_source,
         execution_identity=identity_text,
         engine_fingerprint=engine,
         target_identity=target,

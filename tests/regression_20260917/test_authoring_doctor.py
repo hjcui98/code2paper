@@ -173,3 +173,130 @@ def test_doctor_allows_an_empty_writer_manifest_without_required_units(tmp_path)
         "artifact_empty_with_required_units" in item
         for item in report.critical_blockers
     )
+
+
+# --------------------------------------------------------------------------- #
+# §F.5：受索引管理的产物必须在**使用前**验证（变异测试）
+# --------------------------------------------------------------------------- #
+
+
+def _indexed_run_root(tmp_path) -> Path:
+    import json
+
+    root = tmp_path / "run"
+    authoring = root / "artifacts" / "06_authoring"
+    authoring.mkdir(parents=True)
+    (authoring / "consumer_invocation_plan_v1.2.json").write_text(
+        json.dumps(
+            {
+                "schema_version": "1.0",
+                "content_digest": "sha256:plan",
+                "invocations": [
+                    {"invocation_id": "inv-1", "section_id": "MA-S1"},
+                ],
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    (authoring / "writer_section_receipts_v2.json").write_text(
+        json.dumps(
+            {
+                "schema_version": "2.0",
+                "content_digest": "sha256:receipts",
+                "receipts": [
+                    {"section_id": "MA-S1", "completed_invocation_ids": ["inv-1"]}
+                ],
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    (authoring / "writer_aggregate_receipt_v2.json").write_text(
+        json.dumps(
+            {
+                "schema_version": "2.0",
+                "content_digest": "sha256:aggregate",
+                "completed_section_ids": ["MA-S1"],
+                "required_section_ids": ["MA-S1"],
+                "all_required_sections_complete": True,
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    return root
+
+
+def test_doctor_verifies_index_managed_artifacts_before_use(tmp_path) -> None:
+    from code2paper.agentic.authoring_artifact_index import publish_artifact_index
+
+    root = _indexed_run_root(tmp_path)
+    publish_artifact_index(root)
+
+    before = run_authoring_doctor(root)
+    assert before.page_count == 1
+    assert before.accepted_page_count == 1
+    assert before.phases["writer"] == "1/1 sections complete"
+    assert before.artifact_index_source == "published revision 1", before.artifact_index_source
+    assert not any(
+        item.startswith("artifact_read_blocked") for item in before.critical_blockers
+    )
+
+    # 索引发布之后改动文件：reader 必须在**使用内容前**失败。
+    receipts = root / "artifacts/06_authoring/writer_section_receipts_v2.json"
+    receipts.write_text(
+        '{"schema_version": "2.0", "content_digest": "sha256:tampered",'
+        ' "receipts": [{"section_id": "MA-S1",'
+        ' "completed_invocation_ids": ["inv-1", "inv-injected"]}]}\n',
+        encoding="utf-8",
+    )
+
+    after = run_authoring_doctor(root)
+    blockers = [
+        item
+        for item in after.critical_blockers
+        if item.startswith("artifact_read_blocked:writer_section_receipts:writer")
+    ]
+    assert blockers, after.critical_blockers
+    assert "artifact_bytes_changed_since_index" in blockers[0]
+    # 不允许隐式 fallback：被注入的 id 不得进入结论。
+    assert "inv-injected" not in after.render()
+    assert "artifact_read_blocked" in after.render()
+
+    # 聚合回执同样受索引管理：改动后该阶段必须显示为 blocked，而不是继续报完成。
+    aggregate = root / "artifacts/06_authoring/writer_aggregate_receipt_v2.json"
+    aggregate.write_text(
+        '{"schema_version": "2.0", "content_digest": "sha256:aggregate",'
+        ' "completed_section_ids": ["MA-S1", "MA-S2"],'
+        ' "required_section_ids": ["MA-S1", "MA-S2"],'
+        ' "all_required_sections_complete": true}\n',
+        encoding="utf-8",
+    )
+    after_aggregate = run_authoring_doctor(root)
+    assert after_aggregate.phases["writer"].startswith("blocked"), (
+        after_aggregate.phases["writer"]
+    )
+    assert "2/2" not in after_aggregate.render()
+
+
+def test_doctor_blocks_on_a_mutated_invocation_plan(tmp_path) -> None:
+    from code2paper.agentic.authoring_artifact_index import publish_artifact_index
+
+    root = _indexed_run_root(tmp_path)
+    publish_artifact_index(root)
+
+    plan = root / "artifacts/06_authoring/consumer_invocation_plan_v1.2.json"
+    plan.write_text(
+        '{"schema_version": "1.0", "content_digest": "sha256:plan",'
+        ' "invocations": [{"invocation_id": "inv-1"}, {"invocation_id": "inv-2"}]}\n',
+        encoding="utf-8",
+    )
+
+    report = run_authoring_doctor(root)
+    assert any(
+        item.startswith("artifact_read_blocked:consumer_invocation_plan:writer")
+        for item in report.critical_blockers
+    ), report.critical_blockers
+    # 计划读取被阻断 → 不再拿未验证的计划列出逐页状态。
+    assert report.page_count == 0
