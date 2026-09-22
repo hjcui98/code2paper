@@ -54,13 +54,15 @@ from code2paper.agentic.authoring_context_contract import (
     write_run_identity,
 )
 from code2paper.agentic.authoring_execution_identity import (
+    PENDING_LEASE_OWNER,
     AuthoringExecutionIdentityV2,
     RunLease,
     RunOpenDecision,
     RunOpenRejected,
     acquire_run_lease,
-    build_run_open_identity,
     create_or_validate_execution_identity,
+    preflight_run_open,
+    resolve_open_identity,
     validate_run_open,
     verify_research_import,
 )
@@ -4324,39 +4326,61 @@ def open_authoring_execution(
 
     mode = str(run_open_mode or "auto")
     explicit_import = str(research_import_digest or "")
-    verifiable, import_digest, _detail = (True, "", "")
-    if mode.strip().casefold() == "fork_authoring":
-        verifiable, import_digest, _detail = verify_research_import(
-            research_stage_checkpoint
-        )
-        if verifiable and explicit_import and explicit_import != import_digest:
-            raise RunOpenRejected(
-                RunOpenDecision(
-                    allowed=False,
-                    code="research_import_digest_mismatch",
-                    requested_mode=mode,
-                    effective_mode=mode,
-                    allowed_next_action="recompute_the_import_digest_from_the_checkpoint",
-                    detail="显式研究导入摘要与 checkpoint 文件内容不一致",
-                )
-            )
-    elif explicit_import:
-        import_digest = explicit_import
-    identity = build_run_open_identity(
+    # 审计 §A.3：只读预检（不取锁、不写）先暴露明显错误；目录/身份判定留到锁内重做，
+    # 因为预检与取锁之间可能有别的进程结束并留下产物。
+    preflight_decision = preflight_run_open(
+        out_root,
+        mode,
         repo_path=repo_path,
         author_intent_path=author_intent_path,
         claims_path=claims_path,
         llm_config=llm_config,
-        run_open_mode=mode,
-        research_import_digest=import_digest,
+        research_import_path=research_stage_checkpoint,
     )
-    decision = validate_run_open(
-        out_root, mode, identity, research_import_verifiable=verifiable
-    )
-    if not decision.allowed:
-        raise RunOpenRejected(decision)
-    lease = acquire_run_lease(out_root, execution_id=identity.execution_id)
-    create_or_validate_execution_identity(out_root, identity)
+    if not preflight_decision.allowed:
+        raise RunOpenRejected(preflight_decision)
+
+    # 取锁（owner 待定），然后在锁内重新解析身份与目录状态，再判定一次。
+    lease = acquire_run_lease(out_root, execution_id=PENDING_LEASE_OWNER)
+    try:
+        if mode.strip().casefold() == "fork_authoring":
+            verifiable, import_digest, _detail = verify_research_import(
+                research_stage_checkpoint
+            )
+            if verifiable and explicit_import and explicit_import != import_digest:
+                raise RunOpenRejected(
+                    RunOpenDecision(
+                        allowed=False,
+                        code="research_import_digest_mismatch",
+                        requested_mode=mode,
+                        effective_mode=mode,
+                        allowed_next_action="recompute_the_import_digest_from_the_checkpoint",
+                        detail="显式研究导入摘要与 checkpoint 文件内容不一致",
+                    )
+                )
+        else:
+            verifiable, import_digest = True, explicit_import
+        identity, verifiable, _detail = resolve_open_identity(
+            out_root,
+            run_open_mode=mode,
+            repo_path=repo_path,
+            author_intent_path=author_intent_path,
+            claims_path=claims_path,
+            llm_config=llm_config,
+            research_stage_checkpoint=research_stage_checkpoint,
+            research_import_digest=import_digest,
+        )
+        decision = validate_run_open(
+            out_root, mode, identity, research_import_verifiable=verifiable
+        )
+        if not decision.allowed:
+            raise RunOpenRejected(decision)
+        lease.bind(identity.execution_id)
+        create_or_validate_execution_identity(out_root, identity)
+    except BaseException:
+        # 拒绝/异常都不留下锁：调用方拿不到 lease，后续尝试必须能重新取锁。
+        lease.release()
+        raise
     return identity, lease
 
 
@@ -4447,6 +4471,10 @@ def run_autonomous_method_agent(
         if can_install_handlers:
             for signum, handler in old_handlers.items():
                 signal.signal(signum, handler)
+        # 审计 §A.3：入口持有 lease、finally 释放——异常/失败/长寿命进程中的下一次任务
+        # 都不能泄漏 flock（否则同一进程的后续 run 会被自己的旧锁挡住）。
+        _ACTIVE_RUN_LEASES.discard(run_lease)
+        run_lease.release()
 
 
 def _writer_artifact_paths(

@@ -23,6 +23,7 @@ from code2paper.agentic.authoring_execution_identity import (
     capture_validator_bundle_snapshot,
     preflight_run_open,
     validate_run_open,
+    verify_research_import,
 )
 from code2paper.agentic.authoring_run_config import (
     UNKNOWN_NARRATIVE_PLAN_MODE,
@@ -286,3 +287,251 @@ def test_effective_config_digest_covers_protocol_and_tokenizer() -> None:
     assert base["digest"] != other_tokenizer["digest"]
     assert base["payload"]["narrative_plan_mode"] == "v3"
     json.dumps(base["payload"])  # 必须可序列化进身份/报告
+
+
+# --------------------------------------------------------------------------- #
+# A.2：出生信息（本次动作 vs 执行的出生）
+# --------------------------------------------------------------------------- #
+
+
+def _research_checkpoint(tmp_path: Path, *, name: str = "checkpoint.json") -> Path:
+    path = tmp_path / name
+    path.write_text(
+        json.dumps(
+            {
+                "run_id": "research-1",
+                "repo_snapshot_id": "repo:snap",
+                "project_tree_hash": "sha256:tree",
+                "execution_id": "exec-parent-1",
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    return path
+
+
+def test_fork_authoring_can_resume_without_changing_birth_metadata(tmp_path: Path) -> None:
+    """审计 F03：合法 fork 执行必须能以 resume 动作继续，出生信息不得被重造。"""
+
+    from code2paper.agentic.authoring_execution_identity import (
+        create_or_validate_execution_identity,
+        resolve_open_identity,
+    )
+
+    target = _git_repo(tmp_path)
+    checkpoint = _research_checkpoint(tmp_path)
+    out_root = tmp_path / "fork-run"
+    out_root.mkdir()
+
+    fork_identity, verifiable, _detail = resolve_open_identity(
+        out_root,
+        run_open_mode="fork_authoring",
+        repo_path=target,
+        research_stage_checkpoint=checkpoint,
+    )
+    assert fork_identity.creation_mode == "fork_authoring"
+    assert fork_identity.parent_execution_id == "exec-parent-1"
+    assert fork_identity.research_import_digest
+    decision = validate_run_open(
+        out_root, "fork_authoring", fork_identity, research_import_verifiable=verifiable
+    )
+    assert decision.allowed is True
+    create_or_validate_execution_identity(out_root, fork_identity)
+
+    # 同一个 fork 执行以 resume 动作继续：出生信息必须继承，而不是变成 new。
+    resumed, verifiable, detail = resolve_open_identity(
+        out_root,
+        run_open_mode="resume",
+        repo_path=target,
+        research_stage_checkpoint=checkpoint,
+    )
+    assert resumed.birth_metadata == fork_identity.birth_metadata
+    assert resumed.creation_mode == "fork_authoring"
+    assert resumed.content_digest == fork_identity.content_digest
+    assert "继承" in detail
+    decision = validate_run_open(
+        out_root, "resume", resumed, research_import_verifiable=verifiable
+    )
+    assert decision.allowed is True, decision.code
+    assert decision.mismatched_fields == ()
+
+
+def test_new_execution_does_not_inherit_a_previous_birth(tmp_path: Path) -> None:
+    """new 动作是新的出生；即便目标是同一份内容也不能继承旧身份。"""
+
+    from code2paper.agentic.authoring_execution_identity import (
+        create_or_validate_execution_identity,
+        resolve_open_identity,
+    )
+
+    target = _git_repo(tmp_path)
+    checkpoint = _research_checkpoint(tmp_path)
+    out_root = tmp_path / "run"
+    out_root.mkdir()
+
+    fork_identity, verifiable, _ = resolve_open_identity(
+        out_root,
+        run_open_mode="fork_authoring",
+        repo_path=target,
+        research_stage_checkpoint=checkpoint,
+    )
+    create_or_validate_execution_identity(out_root, fork_identity)
+
+    fresh, _, _ = resolve_open_identity(
+        out_root,
+        run_open_mode="new",
+        repo_path=target,
+    )
+    assert fresh.creation_mode == "new"
+    assert fresh.parent_execution_id is None
+    assert fresh.research_import_digest is None
+    assert fresh.content_digest != fork_identity.content_digest
+    # 目录已经有业务产物 → new 必须拒绝（即使内容相同）。
+    decision = validate_run_open(out_root, "new", fresh)
+    assert decision.allowed is False
+    assert decision.code == "run_directory_not_empty"
+
+
+def test_fork_resume_rejects_changed_research_import(tmp_path: Path) -> None:
+    """导入内容变了就不能冒充同一 fork 执行的续跑。"""
+
+    from code2paper.agentic.authoring_execution_identity import (
+        create_or_validate_execution_identity,
+        resolve_open_identity,
+    )
+
+    target = _git_repo(tmp_path)
+    checkpoint = _research_checkpoint(tmp_path)
+    out_root = tmp_path / "run"
+    out_root.mkdir()
+
+    fork_identity, verifiable, _ = resolve_open_identity(
+        out_root,
+        run_open_mode="fork_authoring",
+        repo_path=target,
+        research_stage_checkpoint=checkpoint,
+    )
+    create_or_validate_execution_identity(out_root, fork_identity)
+
+    changed = _research_checkpoint(tmp_path, name="checkpoint_v2.json")
+    payload = json.loads(changed.read_text(encoding="utf-8"))
+    payload["run_id"] = "research-2"
+    changed.write_text(json.dumps(payload) + "\n", encoding="utf-8")
+
+    # 续跑时显式提供了另一份 checkpoint：不能静默忽略，必须拒绝。
+    from code2paper.agentic.authoring_execution_identity import RunOpenRejected
+
+    with pytest.raises(RunOpenRejected) as excinfo:
+        resolve_open_identity(
+            out_root,
+            run_open_mode="resume",
+            repo_path=target,
+            research_stage_checkpoint=changed,
+        )
+    assert excinfo.value.decision.code == "research_import_digest_mismatch"
+
+    # 同一份 checkpoint 续跑则通过（出生信息一致）。
+    resumed, verifiable, _ = resolve_open_identity(
+        out_root,
+        run_open_mode="resume",
+        repo_path=target,
+        research_stage_checkpoint=checkpoint,
+    )
+    assert resumed.birth_metadata == fork_identity.birth_metadata
+    assert validate_run_open(
+        out_root, "resume", resumed, research_import_verifiable=verifiable
+    ).allowed is True
+
+
+# --------------------------------------------------------------------------- #
+# A.3：锁内二次准入与租约生命周期
+# --------------------------------------------------------------------------- #
+
+
+def test_two_new_openers_cannot_both_admit_same_root(tmp_path: Path) -> None:
+    """并发/连续打开同一个 root：第二个 `new` 即使身份相同也必须被拒绝。"""
+
+    from code2paper.agentic.autonomous_method_agent import open_authoring_execution
+
+    target = _git_repo(tmp_path)
+    out_root = tmp_path / "run"
+    out_root.mkdir()
+    config = LLMConfig(provider=LLMProvider.NONE)
+
+    first_identity, first_lease = open_authoring_execution(
+        out_root=out_root,
+        run_open_mode="new",
+        repo_path=target,
+        author_intent_path=None,
+        claims_path=None,
+        llm_config=config,
+    )
+    first_lease.release()
+
+    with pytest.raises(Exception) as excinfo:
+        open_authoring_execution(
+            out_root=out_root,
+            run_open_mode="new",
+            repo_path=target,
+            author_intent_path=None,
+            claims_path=None,
+            llm_config=config,
+        )
+    assert "run_directory_not_empty" in str(excinfo.value)
+
+    # 被拒的第二次打开不得留下锁：其他 owner 仍可取锁。
+    from code2paper.agentic.authoring_execution_identity import acquire_run_lease
+
+    lease = acquire_run_lease(out_root, execution_id="exec-after-refusal")
+    lease.release()
+    assert first_identity.execution_id
+
+
+def test_run_lease_released_on_success_and_exception(tmp_path: Path) -> None:
+    """长寿命进程里连续任务不得因为自己的旧锁被挡住。"""
+
+    from code2paper.agentic import autonomous_method_agent as module
+    from code2paper.agentic.autonomous_method_agent import (
+        _ACTIVE_RUN_LEASES,
+        open_authoring_execution,
+    )
+    from code2paper.agentic.authoring_execution_identity import _HELD_LEASES
+
+    target = _git_repo(tmp_path)
+    config = LLMConfig(provider=LLMProvider.NONE)
+
+    out_ok = tmp_path / "ok"
+    out_ok.mkdir()
+    _, lease = open_authoring_execution(
+        out_root=out_ok,
+        run_open_mode="new",
+        repo_path=target,
+        author_intent_path=None,
+        claims_path=None,
+        llm_config=config,
+    )
+    lease.release()
+    assert str(out_ok.resolve()) not in _HELD_LEASES
+
+    # 异常路径：拒绝时不返回 lease，且不留下进程内/文件锁。
+    out_bad = tmp_path / "bad"
+    out_bad.mkdir()
+    (out_bad / "leftover.json").write_text("{}\n", encoding="utf-8")
+    with pytest.raises(Exception):
+        open_authoring_execution(
+            out_root=out_bad,
+            run_open_mode="new",
+            repo_path=target,
+            author_intent_path=None,
+            claims_path=None,
+            llm_config=config,
+        )
+    assert str(out_bad.resolve()) not in _HELD_LEASES
+    assert not (out_bad / ".run_lease.lock").exists() or True  # 锁文件可留存，锁本身必须释放
+
+    from code2paper.agentic.authoring_execution_identity import acquire_run_lease
+
+    probe = acquire_run_lease(out_bad, execution_id="exec-probe")
+    probe.release()
+    assert isinstance(module._ACTIVE_RUN_LEASES, set)

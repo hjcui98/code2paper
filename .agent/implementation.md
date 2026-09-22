@@ -3715,3 +3715,41 @@ A.2/A.3（出生信息与锁内二次准入）、A.4（导入闭包）留待下�
 不可用只是被静默容忍，所以没暴露；现在 fail-closed 会让 worker 抛 `ValueError` 而不是
 预期的 `RuntimeError`。夹具改为只拦截监督器的 worker spawn（其余委托真实 Popen，
 并补齐 `args`/`communicate`/上下文管理），这样它测的仍是"worker 异常终结器"。
+
+### PR A.2 / A.3：出生信息与锁内二次准入（本轮）
+
+**A.2 出生信息（修 F03）**
+
+- 新增 `BirthMetadataV1`（creation_mode / parent_execution_id / research_import_digest）
+  与 `AuthoringExecutionIdentityV2.birth_metadata`；新增 `resolve_open_identity()` 作为
+  "本次动作 → 身份"的唯一 owner：
+  - `resume` / `auto` 且已有完整身份 → **继承**出生信息（实测 fork 执行现在可以 resume，
+    修复前 `resume_identity_mismatch: creation_mode`）；
+  - 其它动作 → 按本次动作新建出生信息；`fork_authoring` 的 `parent_execution_id` 取自
+    导入 checkpoint 的 `execution_id`（若存在）；
+  - `resume` 时**显式提供**另一份 checkpoint → 拒绝（`research_import_digest_mismatch`），
+    不静默忽略操作者提供的证据；
+  - 旧目录没有完整身份时不猜，仍由 `validate_run_open` 拒绝。
+- `preflight_run_open` 改用同一 resolver，并把输入不可用/导入不匹配翻译成类型化拒绝。
+
+**A.3 锁内二次准入与租约生命周期**
+
+- `acquire_run_lease` 的进程内幂等改为**校验 owner**：不同 execution 在同一 root 上
+  直接 `RunLeaseHeld`（旧行为只要 root 相同就返回别人的锁）。
+- 新增 `PENDING_LEASE_OWNER` 与 `RunLease.bind(execution_id)`：支持"先取锁 → 锁内解析身份 →
+  绑定 owner"的序列，绑定后再拒绝其它执行。
+- `open_authoring_execution` 重写为：只读预检（早退明显错误）→ 取锁 → **锁内**重新解析
+  身份与目录状态 → `validate_run_open` → 绑定 → create-or-validate；任一拒绝/异常都释放锁
+  （租约不泄漏给后续尝试）。
+- 产品入口 `run_autonomous_method_agent` 的 `finally` 释放 lease 并从 `_ACTIVE_RUN_LEASES`
+  移除：长寿命进程里的连续任务不再被自己的旧 flock 挡住。
+
+**测试**：`test_run_identity_content.py` 扩到 15 项（新增 5 项：fork resume 出生信息守恒、
+new 不继承旧出生、导入变更拒绝续跑、两个 new 打开者不能都准入、租约成功/异常都释放）；
+`test_execution_identity.py` 的租约用例改为审计语义（同 owner 幂等、异 owner 拒绝）并新增
+绑定用例。全量离线 3783 passed、3 deselected、12 subtests passed、exit 0。
+
+**本轮事故与纠正**：第一次改 `authoring_execution_identity.py` 时用大段字符串切片替换，
+把 `build_run_open_identity`/`capture_target_identity`/`RunLease` 等函数整段删掉；
+已 `git checkout --` 还原该文件后改用定点编辑重做（后续同类改动一律小步定点 + 每步
+compile/定向测试）。

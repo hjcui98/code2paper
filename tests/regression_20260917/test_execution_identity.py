@@ -354,14 +354,38 @@ def test_lease_is_idempotent_in_process_and_exclusive_after_release(
     out_root = tmp_path / "run"
     lease = acquire_run_lease(out_root, execution_id="exec-a")
     try:
-        # 同一进程重复获取返回同一租约（该进程本来就是写者）。
-        assert acquire_run_lease(out_root, execution_id="exec-b") is lease
+        # 同一 owner 重复获取返回同一租约（该进程本来就是写者）。
+        assert acquire_run_lease(out_root, execution_id="exec-a") is lease
+        # 审计 §A.3：进程内幂等必须校验 owner 一致——不能只看 root 就把别人的锁交给
+        # 另一个执行，否则同一进程里的第二个 run 会静默共享写者身份。
+        with pytest.raises(RunLeaseHeld):
+            acquire_run_lease(out_root, execution_id="exec-b")
     finally:
         lease.release()
 
     second = acquire_run_lease(out_root, execution_id="exec-b")
     assert second is not lease
     second.release()
+
+
+def test_lease_binds_execution_after_lock_and_refuses_other_executions(
+    tmp_path: Path,
+) -> None:
+    """先取锁（owner 待定）→ 锁内绑定身份；绑定后不得被别的执行复用。"""
+
+    from code2paper.agentic.authoring_execution_identity import PENDING_LEASE_OWNER
+
+    out_root = tmp_path / "run"
+    lease = acquire_run_lease(out_root, execution_id=PENDING_LEASE_OWNER)
+    try:
+        assert acquire_run_lease(out_root, execution_id=PENDING_LEASE_OWNER) is lease
+        bound = lease.bind("exec-locked-in")
+        assert bound is lease and lease.execution_id == "exec-locked-in"
+        assert acquire_run_lease(out_root, execution_id="exec-locked-in") is lease
+        with pytest.raises(RunLeaseHeld):
+            lease.bind("exec-someone-else")
+    finally:
+        lease.release()
 
 
 def test_lease_is_exclusive_across_processes(tmp_path: Path) -> None:

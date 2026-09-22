@@ -337,6 +337,25 @@ def capture_engine_source_snapshot(
     )
 
 
+class BirthMetadataV1(BaseModel):
+    """执行的**出生信息**：由创建动作决定，之后 resume 只继承、不重造（审计 §A.2）。
+
+    ``run_open_mode`` 是"本次打开动作"（new/resume/auto/fork）；``creation_mode`` 是
+    "这次执行出生时是什么"。旧实现让 resume 动作重新推导出生信息，于是合法的 fork
+    执行一旦 resume 就因 ``creation_mode`` 不匹配被拒（审计 F03 已复现）。
+    """
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    creation_mode: CreationMode = "new"
+    parent_execution_id: str | None = None
+    research_import_digest: str | None = None
+
+    @property
+    def is_fork(self) -> bool:
+        return self.creation_mode == "fork_authoring"
+
+
 class AuthoringExecutionIdentityV2(BaseModel):
     """一次明确授权的 authoring 执行身份（方案 §5.1）。"""
 
@@ -415,6 +434,16 @@ class AuthoringExecutionIdentityV2(BaseModel):
             for key, value in self._payload().items()
             if key not in {"schema_version"} and value is not None
         }
+
+    @property
+    def birth_metadata(self) -> BirthMetadataV1:
+        """本次执行的出生信息（不可变来源），供 resume 继承。"""
+
+        return BirthMetadataV1(
+            creation_mode=self.creation_mode,
+            parent_execution_id=self.parent_execution_id,
+            research_import_digest=self.research_import_digest,
+        )
 
 
 def capture_validator_bundle_snapshot(
@@ -813,6 +842,10 @@ def validate_run_open(
     return decision(True, "run_directory_empty", effective="new", next_action="run")
 
 
+#: 取锁时身份尚未解析（身份要在锁内读既有目录才能定）时的占位 owner。
+PENDING_LEASE_OWNER = "pending"
+
+
 @dataclass(eq=False)
 class RunLease:
     """单写者租约：持有 ``out_root`` 的排他 flock 直到释放或进程退出。
@@ -823,9 +856,36 @@ class RunLease:
     """
 
     path: Path
-    execution_id: str
+    execution_id: str = PENDING_LEASE_OWNER
     key: str = ""
     _handle: Any = field(default=None, repr=False)
+
+    def bind(self, execution_id: str) -> "RunLease":
+        """把租约绑定到实际执行身份（锁内解析出身份后调用）。
+
+        已绑定到另一个执行时拒绝：同一 out_root 上的两次不同执行不允许共享租约。
+        """
+
+        owner = str(execution_id or "").strip()
+        if not owner:
+            raise ValueError("run_lease_requires_execution_id")
+        current = str(self.execution_id or "")
+        if current not in {"", PENDING_LEASE_OWNER} and current != owner:
+            raise RunLeaseHeld(
+                f"{RUN_LEASE_HELD}:{self.path} (held_by={current} requested={owner})"
+            )
+        self.execution_id = owner
+        if self._handle is not None:
+            try:
+                self._handle.seek(0)
+                self._handle.truncate()
+                self._handle.write(
+                    json.dumps({"execution_id": owner, "pid": os.getpid()}) + "\n"
+                )
+                self._handle.flush()
+            except OSError:
+                pass
+        return self
 
     def release(self) -> None:
         if self._handle is None:
@@ -973,13 +1033,26 @@ def acquire_run_lease(
     execution_id: str,
     blocking: bool = False,
 ) -> RunLease:
+    """获取单写者租约。
+
+    审计 §A.3：进程内"幂等复用"必须校验 owner 一致，而不是只看 root——否则同一进程里
+    第二次、属于**另一个执行**的打开会静默复用别人的锁。``PENDING_LEASE_OWNER`` 只用于
+    "先取锁、再在锁内解析身份"的调用序列（见 ``open_authoring_execution``）。
+    """
+
     import fcntl
 
     root = Path(out_root).expanduser().resolve()
     key = str(root)
+    requested_owner = str(execution_id or PENDING_LEASE_OWNER)
     existing = _HELD_LEASES.get(key)
     if existing is not None and existing._handle is not None:
-        return existing
+        held_owner = str(existing.execution_id or "")
+        if requested_owner == PENDING_LEASE_OWNER or held_owner == requested_owner:
+            return existing
+        raise RunLeaseHeld(
+            f"{RUN_LEASE_HELD}:{root} (held_by={held_owner} requested={requested_owner})"
+        )
 
     root.mkdir(parents=True, exist_ok=True)
     path = root / RUN_LEASE_FILE
@@ -1052,15 +1125,24 @@ def build_run_open_identity(
     response_protocol: Any | None = None,
     environment: Mapping[str, str] | None = None,
     require_usable_inputs: bool = True,
+    birth_metadata: BirthMetadataV1 | None = None,
 ) -> AuthoringExecutionIdentityV2:
     """从产品入口输入构造执行身份（预检与正式准入共用同一实现）。
 
     I10：``validator_bundle_digest`` 绑定**验收规则来源**（``VALIDATOR_BUNDLE_SOURCES``
     的逐文件内容指纹），因此改变验收语义的修改一定会改变执行身份，历史
     accepted/rejected 不会在同一个 receipt digest 名义下被重新解释。
+
+    审计 §A.2：``birth_metadata`` 是"这次执行出生时是什么"。resume 必须由调用方
+    （``resolve_open_identity``）从既有身份继承后传入，而不是由 ``run_open_mode``
+    重新推导——后者会把合法的 fork 执行判成身份不匹配。
     """
 
-    is_fork = str(run_open_mode or "").strip().casefold() == "fork_authoring"
+    mode = str(run_open_mode or "auto").strip().casefold() or "auto"
+    birth = birth_metadata or BirthMetadataV1(
+        creation_mode="fork_authoring" if mode == "fork_authoring" else "new",
+        research_import_digest=(str(research_import_digest or "") or None),
+    )
     llm_payload: Mapping[str, Any] = (
         llm_config.model_dump(mode="json")
         if llm_config is not None and hasattr(llm_config, "model_dump")
@@ -1121,9 +1203,127 @@ def build_run_open_identity(
         tokenizer_contract_digest=digest_json({"tokenizer": tokenizer}),
         validator_bundle_digest=bundle.digest,
         require_usable_engine=require_usable_inputs,
-        creation_mode="fork_authoring" if is_fork else "new",
-        research_import_digest=(str(research_import_digest or "") or None),
+        creation_mode=birth.creation_mode,
+        parent_execution_id=birth.parent_execution_id,
+        research_import_digest=birth.research_import_digest,
     )
+
+
+def research_import_parent_execution_id(checkpoint_path: str | Path | None) -> str | None:
+    """研究导入里若记录了来源执行 id，则用它作为 ``parent_execution_id``（可选）。"""
+
+    if checkpoint_path is None:
+        return None
+    path = Path(checkpoint_path).expanduser()
+    if not path.is_file():
+        return None
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return None
+    if not isinstance(payload, Mapping):
+        return None
+    for key in ("parent_execution_id", "execution_id"):
+        value = str(payload.get(key) or "").strip()
+        if value:
+            return value
+    return None
+
+
+def resolve_open_identity(
+    out_root: str | Path,
+    *,
+    run_open_mode: str,
+    repo_path: str | Path,
+    author_intent_path: str | Path | None = None,
+    claims_path: str | Path | None = None,
+    llm_config: Any | None = None,
+    research_stage_checkpoint: str | Path | None = None,
+    research_import_digest: str | None = None,
+    require_usable_inputs: bool = True,
+    **identity_options: Any,
+) -> tuple[AuthoringExecutionIdentityV2, bool, str]:
+    """按"本次打开动作"解析执行身份（审计 §A.2）。
+
+    返回 ``(identity, research_import_verifiable, detail)``：
+
+    * ``resume`` / ``auto`` 且目录里已有完整身份 → **继承其出生信息**
+      （creation_mode / parent / import），不重新发明；
+    * 其它情况 → 按本次动作构造新的出生信息；``fork_authoring`` 必须提供可校验的
+      研究导入；
+    * 旧版本没有完整身份时不"猜"：继承失败后仍由 :func:`validate_run_open`
+      以 ``resume_identity_missing`` / ``resume_identity_legacy_incompatible`` 拒绝。
+    """
+
+    mode = str(run_open_mode or "auto").strip().casefold() or "auto"
+    if mode not in {"auto", "new", "resume", "fork_authoring"}:
+        raise ValueError(f"unknown run_open_mode:{mode}")
+
+    existing = load_execution_identity(out_root)
+    verifiable, import_digest, detail = (True, "", "")
+    if mode == "fork_authoring":
+        verifiable, import_digest, detail = verify_research_import(
+            research_stage_checkpoint
+        )
+    elif research_import_digest:
+        import_digest = str(research_import_digest)
+
+    if mode in {"resume", "auto"} and existing is not None:
+        birth = existing.birth_metadata
+        detail = detail or "出生信息继承自既有身份"
+        if research_stage_checkpoint is not None:
+            # 续跑不该重新导入；但调用方**显式提供**了 checkpoint 时不能静默忽略：
+            # 内容不同意味着操作者以为在跑另一份证据 → 必须拒绝（审计 §A.5）。
+            supplied_ok, supplied_digest, supplied_detail = verify_research_import(
+                research_stage_checkpoint
+            )
+            if not supplied_ok:
+                raise RunOpenRejected(
+                    RunOpenDecision(
+                        allowed=False,
+                        code=RESEARCH_IMPORT_UNVERIFIABLE,
+                        requested_mode=mode,
+                        effective_mode=mode,
+                        allowed_next_action="provide_verified_research_checkpoint",
+                        detail=str(supplied_detail)[:320],
+                    )
+                )
+            if (
+                birth.research_import_digest
+                and supplied_digest != birth.research_import_digest
+            ):
+                raise RunOpenRejected(
+                    RunOpenDecision(
+                        allowed=False,
+                        code="research_import_digest_mismatch",
+                        requested_mode=mode,
+                        effective_mode=mode,
+                        allowed_next_action="fork_authoring_with_the_new_research_import",
+                        detail="续跑提供的 checkpoint 与既有身份的出生导入不一致",
+                    )
+                )
+    else:
+        birth = BirthMetadataV1(
+            creation_mode="fork_authoring" if mode == "fork_authoring" else "new",
+            parent_execution_id=(
+                research_import_parent_execution_id(research_stage_checkpoint)
+                if mode == "fork_authoring"
+                else None
+            ),
+            research_import_digest=(import_digest or None),
+        )
+    identity = build_run_open_identity(
+        repo_path=repo_path,
+        author_intent_path=author_intent_path,
+        claims_path=claims_path,
+        llm_config=llm_config,
+        run_open_mode=mode,
+        research_import_digest=import_digest,
+        birth_metadata=birth,
+        require_usable_inputs=require_usable_inputs,
+        **identity_options,
+    )
+    return identity, verifiable, detail
 
 
 def preflight_run_open(
@@ -1135,22 +1335,27 @@ def preflight_run_open(
     claims_path: str | Path | None = None,
     llm_config: Any | None = None,
     research_import_path: str | Path | None = None,
+    **identity_options: Any,
 ) -> RunOpenDecision:
     """只读预检：在启动器写入任何进程产物之前给出准入决策。"""
 
     mode = str(requested_mode or "auto")
-    verifiable, import_digest, _detail = (True, "", "")
-    if mode.strip().casefold() == "fork_authoring":
-        verifiable, import_digest, _detail = verify_research_import(research_import_path)
     try:
-        identity = build_run_open_identity(
+        identity, verifiable, _detail = resolve_open_identity(
+            out_root,
+            run_open_mode=mode,
             repo_path=repo_path,
             author_intent_path=author_intent_path,
             claims_path=claims_path,
             llm_config=llm_config,
-            run_open_mode=mode,
-            research_import_digest=import_digest,
+            research_stage_checkpoint=research_import_path,
+            # 只读预检也必须 fail-closed：输入不可用就拒绝（live 准入报告走
+            # preflight_live_admission 的 require_usable_inputs=False 分支）。
+            require_usable_inputs=True,
+            **identity_options,
         )
+    except RunOpenRejected as rejected:
+        return rejected.decision
     except ValueError as exc:
         # 身份输入不可用（引擎/目标/验收规则来源）→ 类型化拒绝，不抛穿给调用方。
         return RunOpenDecision(
