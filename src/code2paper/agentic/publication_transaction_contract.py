@@ -693,6 +693,34 @@ def _constraint_semantic_anchors(
     return tuple(dict.fromkeys(value for value in values if value))
 
 
+#: 审计 §E.4：极值轴。词表覆盖 argmax/argmin 这一类"词汇重叠但关系相反"的失败：
+#: 只靠 select/include 之类的动作词无法区分"取最大"和"取最小"。
+_EXTREMUM_MAX_RE = re.compile(
+    r"(?<![a-z0-9_])(?:arg\s*max|maximum|max|highest|largest|greatest|"
+    r"top[-_ ]?k|descending|desc)(?![a-z0-9_])"
+)
+_EXTREMUM_MIN_RE = re.compile(
+    r"(?<![a-z0-9_])(?:arg\s*min|minimum|min|lowest|smallest|least|"
+    r"bottom[-_ ]?k|ascending|asc)(?![a-z0-9_])"
+)
+
+
+def _extremum_signature(value: Any) -> str:
+    """返回文本声明的极值方向（"" = 未声明）。"""
+
+    text = str(value or "").strip().casefold()
+    if not text:
+        return ""
+    has_max = bool(_EXTREMUM_MAX_RE.search(text))
+    has_min = bool(_EXTREMUM_MIN_RE.search(text))
+    if has_max and not has_min:
+        return "max"
+    if has_min and not has_max:
+        return "min"
+    # 同时出现（例如 "max minus min"）：方向不明确，不据此判定。
+    return ""
+
+
 def _polarity_signature(value: Any) -> tuple[str, str]:
     """Extract a conservative comparison direction and action from text."""
 
@@ -947,16 +975,29 @@ def _witness_condition_and_polarity_satisfied(
         return False
     expected_operators: set[str] = set()
     expected_actions: set[str] = set()
+    expected_extrema: set[str] = set()
     for value in (*conditions, *exact, polarity):
         operator, action = _polarity_signature(value)
         if operator:
             expected_operators.add(operator)
         if action and "_" in value:
             expected_actions.add(action)
+        extremum = _extremum_signature(value)
+        if extremum:
+            expected_extrema.add(extremum)
     observed_operator, observed_action = _polarity_signature(witness)
     if expected_operators and observed_operator not in expected_operators:
         return False
     if expected_actions and observed_action and observed_action not in expected_actions:
+        return False
+    # 审计 §E.4：argmax 写成 argmin 时动作词完全一致（都是 selects），只有极值轴
+    # 能发现关系被反转；观察到相反的极值即拒绝。
+    observed_extremum = _extremum_signature(witness)
+    if (
+        expected_extrema
+        and observed_extremum
+        and observed_extremum not in expected_extrema
+    ):
         return False
     return True
 

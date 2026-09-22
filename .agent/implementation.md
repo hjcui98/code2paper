@@ -4266,3 +4266,27 @@ incumbent"，**不阻止**候选重写一个本来有效的兄弟段落——修
 1 no-progress stop、rejection 记录 p2、越界文本不进任何产物、section 仍 incomplete）、
 正例（只返回失败段落 → 正常提交且 p2 保持 incumbent 字节）、摘要辅助函数单元测试。
 回归目录 + writer 侧 396 项全绿。
+
+## 2026-09-22 审计 PR E.4：两阶段验收负例矩阵（argmax/argmin 缺口）
+
+先用共享 assessor 探了审计点名的 7 个负例，结果是 **6 个已被拒绝、1 个漏过**：
+
+- 加了 target id 但没有对应正文 → 拒（`detail_semantic_mismatch`）
+- exact_text 不在段中 → 拒
+- 比较方向反转 → 拒（`condition_or_polarity_mismatch`）
+- 训练条件被写成无条件行为 → 拒
+- 维度/归一化轴错误 → 拒
+- 两个相似 operation 串错来源 → 拒
+- **argmax 写成 argmin → 漏过**（valid=True）
+
+原因：`_polarity_signature` 只有比较算子（gt/gte/lt/lte）与动作词（selects/excludes）
+两根轴，而 argmax→argmin 的动作词完全一致，于是"词汇重叠"替代了关系正确性。
+
+修复：新增极值轴 `_extremum_signature`（词边界正则覆盖 argmax/argmin、maximum/minimum、
+highest/lowest、largest/smallest、top-k/bottom-k、ascending/descending），在
+`_witness_condition_and_polarity_satisfied` 中"观察到相反极值"即拒绝；方向同时出现
+（如 "max minus min"）或词内出现（administered/minibatch）不判定，避免误报。
+
+测试：新增 `tests/regression_20260917/test_witness_relation_matrix.py` 8 项（7 个负例 +
+极值签名无误报）。其中 argmax 用例在去掉极值轴后**失败**（legacy 变体实测 valid=True），
+加上后全绿；assessor 相关套件 439 项全绿。
