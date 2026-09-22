@@ -4422,3 +4422,27 @@ doctor 报 `artifact_read_blocked:writer_section_receipts:writer:artifact_bytes_
 **F.5 仍缺**：主 writer / Realizer / Binder / replay / run summary 这些**运行期** reader
 仍按 `method_output` 路径直接读文件；把它们迁到 validated read（或按阶段快照读取）需要
 在运行内传递索引/快照上下文，留待后续。
+
+## 2026-09-22 审计 PR C.5 收口：admitted 的一代必须冻结阶段快照
+
+复现的审计论断（成立）：重分页会改变实际调用数、重复输入成本、repair lookahead 与 page ID；
+代码确实重建了 worksets（`extend_writer_worksets_from_narrative_plan`）、invocation plan
+（revision 2 + lookahead realizer plan）、admission（带 request material），但
+`write_resolved_authoring_snapshot` 在生产里**没有任何调用者**——"最终 admitted 的一代"
+没有冻结输入快照，事后无法证明某次 writer 执行消费的是哪一代 plan/manifest/plan revision。
+
+修复：在 unified writer 通过 admission 之后（即重分页循环结束、plan/admission 已按最终
+一代重建），用 `build_artifact_index` + `build_resolved_authoring_snapshot(phase="writer",
+required_roles=("narrative_plan:authoring","consumer_workset_manifest:writer",
+"consumer_invocation_plan:writer"))` 冻结阶段输入，并用 `write_resolved_authoring_snapshot`
+落盘（不可变证据 + 原子指针），路径记入 `paths["resolved_authoring_snapshot_v1.writer"]`。
+再次重分页只会追加新的证据文件（§F.4），不会覆盖旧证据。
+
+关于 §C.5 的"预算预留"：writer 阶段没有像 formalizer 那样单独的 phase reservation——
+它由 `unified_budget_envelope` + 全 run 累计 `cap` + 逐页 content attempt limit 共同约束，
+新 page ID 不会获得额外 token 预算；重分页后的 plan/admission 都要用同一 envelope 重新
+评估（本就在 admission 门里）。这一点在记录里如实说明，不假装存在一套独立预留机制。
+
+测试：`test_agentic_publication_method_writer_unified.py` 新增 1 项（真实跑 unified 模式：
+快照指针存在、三个 required role 都带字节摘要、证据文件与指针指向同一 snapshot 摘要）。
+unified + publication + 回归目录 466 项全绿。

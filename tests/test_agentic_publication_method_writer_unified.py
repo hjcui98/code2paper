@@ -542,6 +542,62 @@ def test_run_publication_method_writer_unified_mode(tmp_path: Path) -> None:
     assert "context_to_plan" in funnel.funnel_survival_rates
 
 
+def test_unified_writer_freezes_the_admitted_writer_phase_snapshot(
+    tmp_path: Path,
+) -> None:
+    """§C.5：重分页/admission 之后必须冻结"已 admitted 的一代"阶段输入快照。"""
+
+    from code2paper.agentic.authoring_artifact_index import (
+        frozen_snapshot_evidence,
+        resolved_snapshot_evidence_path,
+    )
+
+    paths = _unified_artifacts(tmp_path)
+    _result, outputs = run_publication_method_writer(
+        out_root=tmp_path,
+        artifact_paths=paths,
+        llm_config=_config(),
+        llm_caller=_mock_writer_caller,
+        authoring_context_mode="unified",
+    )
+
+    pointer = Path(outputs["resolved_authoring_snapshot_v1.writer"])
+    assert pointer.name == "resolved_authoring_snapshot_v1.writer.json"
+    assert pointer.is_file()
+
+    payload = json.loads(pointer.read_text(encoding="utf-8"))
+    # 三个 writer 阶段输入都被冻结到同一代，并各自带字节摘要。
+    assert set(payload["resolved"]) == {
+        "narrative_plan:authoring",
+        "consumer_workset_manifest:writer",
+        "consumer_invocation_plan:writer",
+    }
+    assert all(
+        str(digest).startswith("sha256:")
+        for digest in payload["digests"].values()
+    )
+    assert payload["index_digest"] == payload["index_digest"]
+    assert payload["evidence_path"]
+
+    frozen = frozen_snapshot_evidence(tmp_path, "writer")
+    assert frozen.file_bytes_digest.startswith("sha256:")
+    assert frozen.payload["phase"] == "writer"
+    assert frozen.payload["index_revision"] >= 1
+    # 不可变证据文件与指针指向同一份内容（证据文件名带 snapshot 摘要）。
+    snapshot = _snapshot_from_payload(frozen.payload)
+    assert Path(frozen.path) == resolved_snapshot_evidence_path(tmp_path, snapshot)
+    assert Path(frozen.path).name.startswith("resolved_authoring_snapshot_v1.writer.")
+    assert Path(frozen.path) != pointer
+
+
+def _snapshot_from_payload(payload: dict):
+    from code2paper.agentic.authoring_artifact_index import (
+        ResolvedAuthoringSnapshotV1,
+    )
+
+    return ResolvedAuthoringSnapshotV1.model_validate(payload)
+
+
 def test_unified_writer_reuses_completed_page_receipts_on_resume(
     tmp_path: Path,
 ) -> None:

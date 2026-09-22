@@ -3766,6 +3766,31 @@ def _run_publication_method_writer_impl(
                     + ",".join(unified_writer_admission.failure_codes)
                 )
 
+            # 审计 §C.5：重分页会改变实际调用数、重复输入成本、repair lookahead 与
+            # page ID，因此最终 admitted 的一代必须**冻结阶段输入快照**（不可变证据 +
+            # 指针）。所有摘要引用由此指向同一代；后续若再次重分页，只会在同一阶段下
+            # 追加新的证据文件，而不是覆盖旧证据（§F.4）。
+            from code2paper.agentic.authoring_artifact_index import (
+                build_artifact_index as _build_artifact_index,
+                build_resolved_authoring_snapshot as _build_resolved_snapshot,
+                write_resolved_authoring_snapshot as _write_resolved_snapshot,
+            )
+
+            writer_phase_index = _build_artifact_index(Path(out_root))
+            writer_phase_snapshot = _build_resolved_snapshot(
+                writer_phase_index,
+                out_root=Path(out_root),
+                phase="writer",
+                required_roles=(
+                    "narrative_plan:authoring",
+                    "consumer_workset_manifest:writer",
+                    "consumer_invocation_plan:writer",
+                ),
+            )
+            paths["resolved_authoring_snapshot_v1.writer"] = (
+                _write_resolved_snapshot(Path(out_root), writer_phase_snapshot)
+            )
+
             # From this boundary onward every transaction/quality helper must
             # see the same current Narrative section and paragraph IDs that
             # the Writer just admitted.  Keep the old Architect plan as a
