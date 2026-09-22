@@ -3783,3 +3783,52 @@ compile/定向测试）。
 另加 skip-guarded 端到端正例：真实 EBCAR 目标 + 事故归档导入 → 准入允许（本机已跑通）。
 
 验证：regression 185 项全绿；全量离线 3786 passed、3 deselected、12 subtests passed、exit 0。
+
+## 2026-09-22 审计 PR B：统一账本与恢复矩阵（F04）
+
+### 已复现的审计论断
+
+- `_attempt_records`/`read_attempt_outcomes` 只 glob `completed`（+started）：孤立
+  request/response、只有 started 的崩溃点不在 attempt 集合里；
+- `_invocation_directory` 用 substring 命中后取 `matches[0]`（审计禁止）；
+- `scan_exhausted_invocations` 只看"最新 completed 里有没有 attempt_limit_exhausted"，
+  两次真实失败但没有第三次拒发记录时不报告；
+- 发送侧 `_capturing_writer_caller` 用"事件号 > 上限 且（内容预算耗尽 或 没有拒发记录）"
+  的混合条件。
+
+### 本轮实现
+
+新增统一归约层（`writer_attempt_ledger.py`）：
+
+- `AttemptRecoveryStateV1` 八态 + `RECOVERY_ACTIONS`（每态自带允许/禁止动作）；
+- `InvocationRecoveryV1`（state / primary_cause / counters / unknown_reservation_attempts /
+  blocks / evidence / 契约 mismatch / allowed,forbidden actions）；
+- `reduce_invocation_recovery(out_root, invocation_id, *, content_attempt_limit,
+  contract_digests)`：attempt 集合来自**全部**事件文件的并集（正则解析
+  `attempt-0001.<kind>.json`，点分隔）；损坏文件进入 `blocks` 而不是静默跳过；验收按
+  execution/plan/validator 契约绑定，不匹配时记录 `contract_mismatch`。
+- 目录解析改为精确匹配（精确名或 `精确名-单段摘要`，且回执自称的 invocation_id 必须一致）。
+
+判定优先级（按信息量与可结算性）：`ledger_corrupt` > `accepted_reusable` >
+`response_missing_or_ledger_inconsistent` > `validation_pending`（有响应**从未验收**，
+可本地结算）> `content_budget_exhausted` > `response_received_unsettled` >
+`send_outcome_unknown` > `reserved_not_sent`。
+
+原有 reader 全部改为薄包装：`read_invocation_ledger_state`、`read_attempt_outcomes`、
+`unsettled_reservations`、`scan_exhausted_invocations`（新增 `required_invocation_ids`/
+`content_attempt_limit` 形参）、`authoring_doctor.DoctorPageV1`（新增
+`recovery_state`/`primary_cause`/`unknown_reservation_attempts`）。
+
+发送侧 `_capturing_writer_caller` 改为只消费归约结论：`content_budget_exhausted` →
+`attempt_limit_exhausted:…`（保持既有码），`send_outcome_unknown` /
+`response_received_unsettled` / `ledger_corrupt` → 各自的 typed 拒发码；删除
+"事件号 + 拒发存在性"混合条件。pre-send 分类器同步识别新码。
+
+事故归档实测分布：19 `accepted_reusable` / 20 `validation_pending`（已交付但从未验收的
+realizer/writer 调用，本地即可结算）/ 1 `content_budget_exhausted`（MA-S3 页，即事故本身），
+与归档事实一致；doctor 阻塞页由 1 变为正好 1（realizer 页不再被误判为阻塞）。
+
+测试：新增 `tests/regression_20260917/test_ledger_recovery_matrix.py`（14 项）覆盖 §B.3 八行
+状态表 + §B.6 补充反例（两次真实失败无拒发记录、两次纯拒发零发送、接受后残留拒发记录、
+同页不同 validator、所有 reader 结论一致）。全量离线 3800 passed、3 deselected、
+12 subtests passed、exit 0。

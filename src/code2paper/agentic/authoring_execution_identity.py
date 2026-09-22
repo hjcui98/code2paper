@@ -649,37 +649,56 @@ def _directory_entries(out_root: Path) -> list[Path]:
     return entries
 
 
-def scan_exhausted_invocations(out_root: str | Path) -> tuple[str, ...]:
-    """只读扫描：哪些 invocation 已在历史记录中耗尽内容重试预算。
+def scan_exhausted_invocations(
+    out_root: str | Path,
+    *,
+    required_invocation_ids: Sequence[str] | None = None,
+    content_attempt_limit: int | None = None,
+) -> tuple[str, ...]:
+    """只读扫描：哪些 invocation 已耗尽内容重试预算（审计 §B.4）。
 
-    判据取自持久回执本身：最新一条 ``*.completed.json`` 的
-    ``delivery_rejection_code`` 以 ``attempt_limit_exhausted:`` 开头。
-    这使"恢复一个已经烧掉预算的 run"可以被显式阻断，而不是再写一条
-    attempt-0005 之后才在末尾报 acceptance_count:0（事故 §1.1、§9.3）。
+    旧实现按"最新 completed 里有没有 attempt_limit_exhausted"判断，会漏判
+    "两次真实失败但没有第三次拒发记录"，也会被历史拒发误导。现在这里是统一归约层
+    :func:`writer_attempt_ledger.reduce_invocation_recovery` 的薄包装：
+    只有状态为 ``content_budget_exhausted`` 的 invocation 才算耗尽。
+
+    ``required_invocation_ids`` 给定时只汇总当前计划必需的调用，不受无关历史目录影响。
     """
 
+    from code2paper.agentic.writer_attempt_ledger import (
+        DEFAULT_CONTENT_ATTEMPT_LIMIT,
+        reduce_invocation_recovery,
+    )
+
     root = Path(out_root) / "artifacts" / "06_authoring" / "invocations"
-    if not root.is_dir():
+    if not root.is_dir() and required_invocation_ids is None:
         return ()
+    limit = int(content_attempt_limit or DEFAULT_CONTENT_ATTEMPT_LIMIT)
+
+    if required_invocation_ids is not None:
+        candidates: list[str] = [str(item) for item in required_invocation_ids if str(item)]
+    else:
+        candidates = []
+        for directory in sorted(path for path in root.iterdir() if path.is_dir()):
+            declared = ""
+            for receipt in sorted(directory.glob("attempt-*.json")):
+                try:
+                    payload = json.loads(receipt.read_text(encoding="utf-8"))
+                except (OSError, ValueError):
+                    continue
+                if isinstance(payload, Mapping):
+                    declared = str(payload.get("invocation_id") or "").strip()
+                if declared:
+                    break
+            candidates.append(declared or directory.name)
+
     exhausted: set[str] = set()
-    for directory in sorted(root.iterdir()):
-        if not directory.is_dir():
-            continue
-        latest: tuple[float, str] | None = None
-        for record in directory.glob("*.completed.json"):
-            try:
-                payload = json.loads(record.read_text(encoding="utf-8"))
-            except (OSError, ValueError):
-                continue
-            invocation_id = str(payload.get("invocation_id") or "")
-            code = str(payload.get("delivery_rejection_code") or "")
-            if not invocation_id or not code.startswith("attempt_limit_exhausted:"):
-                continue
-            stamp = record.stat().st_mtime
-            if latest is None or stamp >= latest[0]:
-                latest = (stamp, invocation_id)
-        if latest is not None:
-            exhausted.add(latest[1])
+    for invocation_id in candidates:
+        recovery = reduce_invocation_recovery(
+            out_root, invocation_id, content_attempt_limit=limit
+        )
+        if recovery.state == "content_budget_exhausted":
+            exhausted.add(recovery.invocation_id)
     return tuple(sorted(exhausted))
 
 

@@ -4872,20 +4872,37 @@ def _run_publication_method_writer_impl(
 
             attempt = last_started_attempt(ledger_root, invocation_id) + 1
             max_content_attempts = int(getattr(invocation, "max_attempts", 0) or 0)
-            # WP5 §9.2：内容预算按**真实内容尝试**（provider send）计数，不按事件序号。
-            # 拒发事件可以保留诊断收据，但不得消耗内容预算；否则连续两次预发送拒绝
-            # 就能把一个从未发送过请求的 invocation 永久锁死——这正是事故
-            # attempt-0003/0004 之后"重启即必死"的机制。
-            content_state = read_invocation_ledger_state(
-                out_root, invocation_id, content_attempt_limit=max_content_attempts
+            # 审计 §B.4：发送侧只消费**同一个**归约结论，不再用"事件号超限 + 是否存在
+            # 历史拒发"的混合条件（那条规则既会漏判两次真实失败、也会被历史拒发误导）。
+            # 每种崩溃点只有一种含义：
+            #   content_budget_exhausted    → 真实内容尝试用满（终态，不得换编号继续）
+            #   send_outcome_unknown        → 已可能发送但结果未知（不得免费重发）
+            #   response_received_unsettled → 有响应未结算（不得重复请求同一份正文）
+            #   ledger_corrupt              → 账本损坏（typed block，不得静默重试）
+            from code2paper.agentic.writer_attempt_ledger import (
+                reduce_invocation_recovery,
             )
-            if attempt > max_content_attempts and (
-                content_budget_exhausted(content_state, max_content_attempts)
-                or not content_state.counters.rejected_before_send_events
-            ):
+
+            recovery = reduce_invocation_recovery(
+                Path(ledger_root).parent.parent.parent,
+                invocation_id,
+                content_attempt_limit=max_content_attempts,
+            )
+            if recovery.state == "content_budget_exhausted":
                 request_failures.append(
-                    f"attempt_limit_exhausted:{invocation_id}:{attempt}>"
-                    f"{max_content_attempts}"
+                    f"attempt_limit_exhausted:{invocation_id}:"
+                    f"{recovery.counters.content_attempt_count}>{max_content_attempts}"
+                )
+            elif recovery.state == "send_outcome_unknown":
+                request_failures.append(
+                    f"send_outcome_unknown:{invocation_id}:"
+                    f"{list(recovery.unknown_reservation_attempts)}"
+                )
+            elif recovery.state == "response_received_unsettled":
+                request_failures.append(f"response_received_unsettled:{invocation_id}")
+            elif recovery.state == "ledger_corrupt":
+                request_failures.append(
+                    f"ledger_corrupt:{invocation_id}:{list(recovery.blocks[:1])}"
                 )
             started_at = time.time()
             # Primary attempts are bound to the immutable plan envelope.  A
@@ -20502,6 +20519,10 @@ def _run_unified_v2_realizer_phase(
                 if any(
                     "planned_request_input_tokens" in code
                     or "attempt_limit_exhausted" in code
+                    # 审计 §B.4：崩溃点类拒发同样是 pre-send block，不能被漏计。
+                    or "send_outcome_unknown" in code
+                    or "response_received_unsettled" in code
+                    or "ledger_corrupt" in code
                     for code in failure_codes
                 ):
                     chained_pre_send_attempts += 1

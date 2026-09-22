@@ -21,8 +21,8 @@ from code2paper.agentic.authoring_artifact_index import (
     resolve_artifact,
 )
 from code2paper.agentic.writer_attempt_ledger import (
-    content_budget_exhausted,
     read_invocation_ledger_state,
+    reduce_invocation_recovery,
 )
 
 #: 阶段 → 判据产物（logical_role:phase）
@@ -46,6 +46,10 @@ class DoctorPageV1(BaseModel):
     last_provider_attempt: int = 0
     rejected_before_send_events: tuple[int, ...] = ()
     failure_codes: tuple[str, ...] = ()
+    #: 审计 §B.4：doctor 必须展示**同一个**归约结论，而不是各自解释字符串。
+    recovery_state: str = ""
+    primary_cause: str = ""
+    unknown_reservation_attempts: tuple[int, ...] = ()
 
 
 class AuthoringDoctorReportV1(BaseModel):
@@ -181,6 +185,7 @@ def run_authoring_doctor(out_root: str | Path) -> AuthoringDoctorReportV1:
         if not invocation_id:
             continue
         state = read_invocation_ledger_state(root, invocation_id)
+        recovery = reduce_invocation_recovery(root, invocation_id)
         limit = state.content_attempt_limit
         record = DoctorPageV1(
             invocation_id=invocation_id,
@@ -188,7 +193,10 @@ def run_authoring_doctor(out_root: str | Path) -> AuthoringDoctorReportV1:
             accepted=bool(state.accepted or invocation_id in receipt_completed),
             content_attempts_used=state.counters.content_attempt_count,
             content_attempt_limit=limit,
-            exhausted=content_budget_exhausted(state, limit),
+            recovery_state=recovery.state,
+            primary_cause=recovery.primary_cause,
+            unknown_reservation_attempts=recovery.unknown_reservation_attempts,
+            exhausted=recovery.state == "content_budget_exhausted",
             last_provider_attempt=state.last_provider_attempt,
             rejected_before_send_events=state.counters.rejected_before_send_events,
             failure_codes=state.last_content_failure_codes,

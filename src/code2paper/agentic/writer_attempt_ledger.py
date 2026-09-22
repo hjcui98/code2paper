@@ -17,10 +17,11 @@
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
-from typing import Any, Literal
+from typing import Any, Literal, Mapping
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 RESUME_EXHAUSTED_INVOCATION = "resume_exhausted_invocation"
 DEFAULT_CONTENT_ATTEMPT_LIMIT = 2
@@ -142,79 +143,427 @@ def _invocation_directory(out_root: Path, invocation_id: str) -> Path:
     return matches[0] if matches else directory
 
 
+#: 统一恢复状态（审计 §B.3 的八种结论）。每个 invocation 在任一时刻只能落在其中之一，
+#: CLI / doctor / resume preflight / 发送包装器必须消费同一个值。
+AttemptRecoveryStateV1 = Literal[
+    "reserved_not_sent",
+    "send_outcome_unknown",
+    "response_received_unsettled",
+    "response_missing_or_ledger_inconsistent",
+    "validation_pending",
+    "ledger_corrupt",
+    "accepted_reusable",
+    "content_budget_exhausted",
+]
+
+#: 每种状态的允许/禁止动作（供 CLI/doctor 直接展示，避免各处再解释）。
+RECOVERY_ACTIONS: dict[str, tuple[tuple[str, ...], tuple[str, ...]]] = {
+    "reserved_not_sent": (
+        ("release_the_reservation", "record_an_audit_event"),
+        ("count_it_as_a_content_failure",),
+    ),
+    "send_outcome_unknown": (
+        ("reconcile_if_the_provider_supports_it",),
+        ("assume_not_sent", "silently_retry"),
+    ),
+    "response_received_unsettled": (
+        ("verify_request_and_response_digests_then_settle_locally",),
+        ("request_the_same_content_again",),
+    ),
+    "response_missing_or_ledger_inconsistent": (
+        ("block_with_a_recovery_reason",),
+        ("claim_offline_replay",),
+    ),
+    "validation_pending": (
+        ("validate_the_same_contract_locally_and_persist_the_result",),
+        ("treat_the_missing_acceptance_as_accepted",),
+    ),
+    "ledger_corrupt": (
+        ("block_with_a_typed_reason",),
+        ("ignore_the_file_and_take_a_fresh_budget",),
+    ),
+    "accepted_reusable": (
+        ("reuse_the_accepted_version",),
+        ("let_historical_refusals_override_it",),
+    ),
+    "content_budget_exhausted": (
+        ("summarize_the_primary_failures_and_stop",),
+        ("continue_with_a_higher_attempt_number_on_the_same_root",),
+    ),
+}
+
+#: 参与 attempt 集合构造的事件文件（审计 §B.4：所有已定义事件的并集，而不是只看 completed）。
+_ATTEMPT_EVENT_SUFFIXES: tuple[tuple[str, str], ...] = (
+    ("started", ".started.json"),
+    ("request", ".provider-request.json"),
+    ("response", ".provider-response.json"),
+    ("completed", ".completed.json"),
+    ("acceptance", ".content-acceptance.json"),
+    ("output_fragment", ".output-fragment-"),
+)
+
+
+class InvocationRecoveryV1(BaseModel):
+    """统一归约结论：状态 + 主要成因 + 计数器 + 允许/禁止动作（审计 §B.3/§B.4）。"""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    invocation_id: str
+    state: AttemptRecoveryStateV1
+    primary_cause: str = ""
+    counters: WriterAttemptCountersV1 = WriterAttemptCountersV1()
+    content_attempt_limit: int = DEFAULT_CONTENT_ATTEMPT_LIMIT
+    accepted: bool = False
+    primary_accepted: bool = False
+    #: 已可能发送但结果未确定的 attempt（不得免费重发）。
+    unknown_reservation_attempts: tuple[int, ...] = ()
+    #: 已落盘但无法结算/损坏的证据文件（相对 dir 的路径）。
+    blocks: tuple[str, ...] = ()
+    evidence: dict[str, str] = Field(default_factory=dict)
+    last_content_failure_codes: tuple[str, ...] = ()
+    last_rejection_code: str = ""
+    #: 最近一次**真实 provider 调用**的事件序号（与事件序号上限不同）。
+    last_provider_attempt: int = 0
+    allowed_actions: tuple[str, ...] = ()
+    forbidden_actions: tuple[str, ...] = ()
+    #: 契约绑定：验收只有在 execution/plan/request/response/validator 一致时才可复用。
+    contract_digest: str = ""
+    contract_mismatch: tuple[str, ...] = ()
+
+    @property
+    def content_attempts_remaining(self) -> int:
+        return max(0, int(self.content_attempt_limit) - int(self.counters.content_attempt_count))
+
+    @property
+    def exhausted(self) -> bool:
+        return self.state == "content_budget_exhausted"
+
+    def as_diagnostics(self) -> dict[str, Any]:
+        return self.model_dump(mode="json")
+
+
+def _attempt_event_files(invocation_dir: Path) -> tuple[dict[int, dict[str, Path]], tuple[str, ...]]:
+    """按 attempt 归集**所有**已定义事件文件（审计 §B.4 的并集，而不是只看 completed）。
+
+    文件名形态是 ``attempt-0001.<kind>.json``（点分隔，不是连字符）。
+    """
+
+    events: dict[int, dict[str, Path]] = {}
+    if not invocation_dir.is_dir():
+        return events, ()
+    pattern = re.compile(r"^attempt-(\d+)\.(.+)\.json$")
+    for path in sorted(invocation_dir.glob("attempt-*.json")):
+        match = pattern.match(path.name)
+        if not match:
+            continue
+        attempt = int(match.group(1))
+        remainder = match.group(2)
+        kind = ""
+        if remainder == "started":
+            kind = "started"
+        elif remainder == "provider-request":
+            kind = "request"
+        elif remainder == "provider-response":
+            kind = "response"
+        elif remainder == "completed":
+            kind = "completed"
+        elif remainder == "content-acceptance":
+            kind = "acceptance"
+        elif remainder.startswith("output-fragment-"):
+            kind = "output_fragment"
+        if not kind:
+            continue
+        events.setdefault(attempt, {})[kind] = path
+    return events, ()
+
+
+def _read_json_object(path: Path) -> tuple[dict[str, Any] | None, str]:
+    """严格读取：返回 (payload, error)。损坏必须作为事实报出，不能当成"没有这个文件"。"""
+
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError) as exc:
+        return None, f"{path.name}:{type(exc).__name__}"
+    if not isinstance(payload, dict):
+        return None, f"{path.name}:not_an_object"
+    return payload, ""
+
+
+def _resolve_invocation_directory(out_root: Path, invocation_id: str) -> tuple[Path, str]:
+    """精确解析 invocation 目录。
+
+    审计 §B.4：禁止 substring 选第一个目录。允许两种精确形态：目录名等于
+    ``invocation_id.replace(':', '-')``，或该名加一个 ``-<digest>`` 后缀；后者必须由
+    回执内的 ``invocation_id`` 字段确认。
+    """
+
+    ledger = Path(out_root) / "artifacts" / "06_authoring" / "invocations"
+    expected = invocation_id.replace(":", "-")
+    exact = ledger / expected
+    if exact.is_dir():
+        return exact, ""
+    candidates = sorted(
+        item
+        for item in ledger.glob(f"{expected}-*")
+        if item.is_dir() and item.name.startswith(expected + "-")
+    )
+    for candidate in candidates:
+        suffix = candidate.name[len(expected) + 1 :]
+        # 后缀必须是单段摘要式标识（无路径分隔、无额外 '-' 结构歧义）。
+        if not suffix or "/" in suffix:
+            continue
+        declared: set[str] = set()
+        for receipt in sorted(candidate.glob("attempt-*.json")):
+            payload, _error = _read_json_object(receipt)
+            if payload:
+                value = str(payload.get("invocation_id") or "").strip()
+                if value:
+                    declared.add(value)
+        if declared and declared != {invocation_id}:
+            # 回执自称是别的 invocation：绝不按目录名硬认。
+            return exact, f"invocation_directory_identity_conflict:{invocation_id}"
+        return candidate, ""
+    return exact, ("" if not candidates else f"invocation_directory_ambiguous:{invocation_id}")
+
+
+def reduce_invocation_recovery(
+    out_root: str | Path,
+    invocation_id: str,
+    *,
+    content_attempt_limit: int = DEFAULT_CONTENT_ATTEMPT_LIMIT,
+    contract_digests: Mapping[str, str] | None = None,
+) -> InvocationRecoveryV1:
+    """把一个 invocation 的所有已落盘事件归约成**唯一**恢复结论（审计 §B.3）。"""
+
+    directory, resolve_error = _resolve_invocation_directory(Path(out_root), invocation_id)
+    limit = int(content_attempt_limit) if int(content_attempt_limit) > 0 else DEFAULT_CONTENT_ATTEMPT_LIMIT
+    if resolve_error:
+        return _recovery(
+            invocation_id,
+            state="ledger_corrupt",
+            primary_cause=resolve_error,
+            limit=limit,
+            blocks=(resolve_error,),
+        )
+    if not directory.is_dir():
+        # 缺失目录是事实：没有事件、没有已用预算（由调用方决定是否必需）。
+        return _recovery(
+            invocation_id,
+            state="reserved_not_sent",
+            primary_cause="invocation_directory_missing",
+            limit=limit,
+        )
+
+    events, unparsable = _attempt_event_files(directory)
+    corrupt: list[str] = list(unparsable)
+    sends = 0
+    content_attempts = 0
+    repairs = 0
+    rejected_before_send: list[int] = []
+    last_provider_attempt = 0
+    last_rejection = ""
+    failure_codes: tuple[str, ...] = ()
+    accepted = False
+    primary_accepted = False
+    unknown_reservations: list[int] = []
+    #: 有响应/交付但**没有**验收记录 → 本地可结算。
+    unvalidated_attempts: list[int] = []
+    #: 有验收记录但未通过 → 已经评价过，不能靠本地重验"变绿"。
+    rejected_attempts: list[int] = []
+    response_unsettled: list[int] = []
+    response_missing: list[int] = []
+    reserved_not_sent: list[int] = []
+    contract_mismatch: list[str] = []
+
+    for attempt in sorted(events):
+        files = events[attempt]
+        completed_payload: dict[str, Any] = {}
+        if "completed" in files:
+            payload, error = _read_json_object(files["completed"])
+            if error:
+                corrupt.append(error)
+            else:
+                completed_payload = payload or {}
+
+        code = str(completed_payload.get("delivery_rejection_code") or "")
+        sent_flag = bool(completed_payload.get("sent_to_caller", True)) if completed_payload else None
+        if code.startswith("attempt_limit_exhausted:"):
+            rejected_before_send.append(attempt)
+            last_rejection = code
+            if ">" in code.rsplit(":", 1)[-1]:
+                try:
+                    limit = max(limit, int(code.rsplit(">", 1)[1]))
+                except ValueError:
+                    pass
+        elif sent_flag:
+            sends += 1
+            content_attempts += 1
+            last_provider_attempt = attempt
+            if bool(completed_payload.get("content_repair_attempt")):
+                repairs += 1
+
+        # 崩溃点：只有 request 没有 completed → 是否发送不可确定。
+        if "request" in files and not completed_payload:
+            unknown_reservations.append(attempt)
+        elif "started" in files and "request" not in files and not completed_payload:
+            reserved_not_sent.append(attempt)
+        if "response" in files and not completed_payload:
+            response_unsettled.append(attempt)
+        pre_send_refusal = bool(code.startswith("attempt_limit_exhausted:")) or (
+            completed_payload and sent_flag is False
+        )
+        if completed_payload and "response" not in files and not pre_send_refusal:
+            response_missing.append(attempt)
+
+        if "acceptance" in files:
+            acceptance_path = files["acceptance"]
+            payload, error = _read_json_object(acceptance_path)
+            if error:
+                corrupt.append(error)
+            else:
+                accepted_payload = payload or {}
+                if contract_digests:
+                    for key, expected in contract_digests.items():
+                        declared = str(accepted_payload.get(key) or "")
+                        if declared and expected and declared != expected:
+                            contract_mismatch.append(f"{attempt}:{key}")
+                if bool(accepted_payload.get("accepted")):
+                    accepted = True
+                    if not bool(completed_payload.get("content_repair_attempt")):
+                        primary_accepted = True
+                else:
+                    rejected_attempts.append(attempt)
+                # 只有**真实内容尝试**的验收失败才算"主要失败"：纯拒发事件的
+                # acceptance 文件（若存在）不得覆盖最近一次真实失败的原因。
+                if sent_flag or "response" in files:
+                    codes = _acceptance_failure_codes(acceptance_path)
+                    if codes:
+                        failure_codes = codes
+        elif completed_payload and not code.startswith("attempt_limit_exhausted:"):
+            # 有可评价响应但缺少验收记录 → 待本地验收，不得当成接受。
+            unvalidated_attempts.append(attempt)
+
+    if corrupt:
+        state: AttemptRecoveryStateV1 = "ledger_corrupt"
+        cause = "ledger_corrupt:" + ",".join(sorted(dict.fromkeys(corrupt))[:3])
+    elif accepted:
+        state = "accepted_reusable"
+        cause = "accepted_response_matches_contract" if not contract_mismatch else "accepted_but_contract_mismatch"
+    elif response_missing:
+        state = "response_missing_or_ledger_inconsistent"
+        cause = "completed_without_response_reference"
+    elif unvalidated_attempts:
+        # 有可评价响应但**从未验收**：先用本地验收把它结算掉（不产生新发送），而不是
+        # 直接判"预算耗尽"。若本地验收拒绝，下一次归约才会落到 exhausted。
+        state = "validation_pending"
+        cause = "response_present_without_acceptance"
+    elif content_attempts >= limit:
+        state = "content_budget_exhausted"
+        cause = "content_attempts_exhausted:" + (",".join(failure_codes) or "unknown")
+    elif response_unsettled:
+        # response 已落盘是信息最多的崩溃点：先按"待本地结算"处理，而不是
+        # 因为同一 attempt 也有 request 就退化成"发送结果未知"。
+        state = "response_received_unsettled"
+        cause = "response_persisted_without_completed"
+    elif unknown_reservations:
+        state = "send_outcome_unknown"
+        cause = "request_persisted_without_completed"
+    else:
+        state = "reserved_not_sent"
+        cause = "reserved_without_send_boundary" if reserved_not_sent else "no_events"
+
+    return _recovery(
+        invocation_id,
+        state=state,
+        primary_cause=cause,
+        limit=limit,
+        counters=WriterAttemptCountersV1(
+            event_seq=max(events) if events else 0,
+            provider_send_count=sends,
+            content_attempt_count=content_attempts,
+            content_repair_count=repairs,
+            rejected_before_send_events=tuple(rejected_before_send),
+        ),
+        accepted=accepted,
+        primary_accepted=primary_accepted,
+        unknown_reservation_attempts=tuple(unknown_reservations),
+        blocks=tuple(dict.fromkeys(corrupt)),
+        last_content_failure_codes=failure_codes,
+        last_rejection_code=last_rejection,
+        last_provider_attempt=last_provider_attempt,
+        contract_mismatch=tuple(dict.fromkeys(contract_mismatch)),
+        evidence={
+            f"attempt-{attempt:04d}": ",".join(sorted(events[attempt]))
+            for attempt in sorted(events)
+        },
+    )
+
+
+def _recovery(
+    invocation_id: str,
+    *,
+    state: AttemptRecoveryStateV1,
+    primary_cause: str,
+    limit: int,
+    counters: WriterAttemptCountersV1 | None = None,
+    accepted: bool = False,
+    primary_accepted: bool = False,
+    unknown_reservation_attempts: tuple[int, ...] = (),
+    blocks: tuple[str, ...] = (),
+    last_content_failure_codes: tuple[str, ...] = (),
+    last_rejection_code: str = "",
+    last_provider_attempt: int = 0,
+    contract_mismatch: tuple[str, ...] = (),
+    evidence: dict[str, str] | None = None,
+) -> InvocationRecoveryV1:
+    allowed, forbidden = RECOVERY_ACTIONS.get(state, ((), ()))
+    return InvocationRecoveryV1(
+        invocation_id=str(invocation_id),
+        state=state,
+        primary_cause=primary_cause,
+        counters=counters or WriterAttemptCountersV1(),
+        content_attempt_limit=int(limit),
+        accepted=bool(accepted),
+        primary_accepted=bool(primary_accepted),
+        unknown_reservation_attempts=unknown_reservation_attempts,
+        blocks=blocks,
+        evidence=dict(evidence or {}),
+        last_content_failure_codes=last_content_failure_codes,
+        allowed_actions=allowed,
+        forbidden_actions=forbidden,
+        last_rejection_code=last_rejection_code,
+        last_provider_attempt=int(last_provider_attempt),
+        contract_mismatch=contract_mismatch,
+    )
+
+
 def read_invocation_ledger_state(
     out_root: str | Path,
     invocation_id: str,
     *,
     content_attempt_limit: int = DEFAULT_CONTENT_ATTEMPT_LIMIT,
 ) -> WriterInvocationLedgerStateV1:
-    """从持久回执派生一个 invocation 的计数器与恢复状态（只读）。"""
+    """一个 invocation 的只读状态视图（审计 §B.1：统一由 reducer 派生）。
 
-    directory = _invocation_directory(Path(out_root), str(invocation_id))
+    保留既有字段供调用方渐进迁移；新增的权威结论在
+    :func:`reduce_invocation_recovery`（``state`` / ``unknown_reservation_attempts`` /
+    ``blocks``）。这里不再自己 glob 事件、也不再用事件序号判断预算。
+    """
 
-    sends = 0
-    content_attempts = 0
-    repairs = 0
-    rejected: list[int] = []
-    event_seq = 0
-    accepted = False
-    primary_accepted = False
-    last_provider_attempt = 0
-    last_rejection = ""
-    failure_codes: tuple[str, ...] = ()
-    limit = int(content_attempt_limit)
-
-    for attempt, payload in _attempt_records(directory):
-        event_seq = max(event_seq, attempt)
-        code = str(payload.get("delivery_rejection_code") or "")
-        if code.startswith("attempt_limit_exhausted:"):
-            rejected.append(attempt)
-            last_rejection = code
-            if ">" in code.rsplit(":", 1)[-1]:
-                try:
-                    limit = int(code.rsplit(">", 1)[1])
-                except ValueError:
-                    pass
-            continue
-        if bool(payload.get("sent_to_caller", True)):
-            sends += 1
-            content_attempts += 1
-            last_provider_attempt = attempt
-            if bool(payload.get("content_repair_attempt")):
-                repairs += 1
-        # 传输层的 delivery_status=accepted 不等于内容 accepted（事故里两次
-        # provider 调用的 delivery_status 都是 accepted，而内容验收都是 rejected），
-        # 因此 accepted 只取内容验收记录。
-        acceptance = directory / f"attempt-{attempt:04d}.content-acceptance.json"
-        if acceptance.is_file():
-            try:
-                acceptance_payload = json.loads(acceptance.read_text(encoding="utf-8"))
-            except (OSError, ValueError):
-                acceptance_payload = {}
-            if bool(acceptance_payload.get("accepted")):
-                # 页内容已完成（repair 后接受也算完成）。
-                accepted = True
-                if not bool(payload.get("content_repair_attempt")):
-                    primary_accepted = True
-        codes = _acceptance_failure_codes(acceptance)
-        if codes:
-            failure_codes = codes
-
+    recovery = reduce_invocation_recovery(
+        out_root,
+        invocation_id,
+        content_attempt_limit=content_attempt_limit,
+    )
     return WriterInvocationLedgerStateV1(
-        invocation_id=str(invocation_id),
-        counters=WriterAttemptCountersV1(
-            event_seq=event_seq,
-            provider_send_count=sends,
-            content_attempt_count=content_attempts,
-            content_repair_count=repairs,
-            rejected_before_send_events=tuple(rejected),
-        ),
-        content_attempt_limit=limit,
-        accepted=accepted,
-        primary_accepted=primary_accepted,
-        last_provider_attempt=last_provider_attempt,
-        last_content_failure_codes=failure_codes,
-        last_rejection_code=last_rejection,
+        invocation_id=recovery.invocation_id,
+        counters=recovery.counters,
+        content_attempt_limit=recovery.content_attempt_limit,
+        accepted=recovery.accepted,
+        primary_accepted=recovery.primary_accepted,
+        last_provider_attempt=recovery.last_provider_attempt,
+        last_content_failure_codes=recovery.last_content_failure_codes,
+        last_rejection_code=recovery.last_rejection_code,
     )
 
 
@@ -278,14 +627,11 @@ def read_attempt_outcomes(
 ) -> tuple[AttemptOutcomeV1, ...]:
     """按 attempt 汇总崩溃点状态；缺文件即事实，不按空集合处理。"""
 
-    directory = _invocation_directory(Path(out_root), str(invocation_id))
-    numbers: set[int] = set()
-    for pattern in ("attempt-*.started.json", "attempt-*.completed.json"):
-        for path in directory.glob(pattern):
-            try:
-                numbers.add(int(path.name.split("-")[1].split(".")[0]))
-            except (IndexError, ValueError):
-                continue
+    # 审计 §B.4：attempt 集合必须来自**所有**已定义事件的并集（started/request/
+    # response/completed/acceptance/fragment），否则孤立 request/response 会漏掉。
+    directory, _resolve_error = _resolve_invocation_directory(Path(out_root), str(invocation_id))
+    events, _unparsable = _attempt_event_files(directory)
+    numbers: set[int] = set(events)
 
     outcomes: list[AttemptOutcomeV1] = []
     for attempt in sorted(numbers):
