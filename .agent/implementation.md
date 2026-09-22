@@ -3944,3 +3944,32 @@ packing unit 的一个属性），并同步 C.5 的重建步骤；这是下一�
 测试：`test_page_contract_recheck.py` 扩到 13 项（策略取值/来源/实验声明/非法值 +
 有效配置身份绑定 + 准入阻断与声明后放行）。全量离线 3818 passed、3 deselected、
 12 subtests passed、exit 0。
+
+### PR C（F01）第五片：输出估量补齐 witness 成本与标定门槛（§C.3）
+
+复现的两个审计反例：
+
+1. **witness 不计入总量**：`writer_owned_witness_count` 只被统计，`estimated_output_tokens`
+   的求和里没有它 —— 保持段数/detail/goal 不变、只增加合法 Writer-owned witness，
+   估量**完全不变**。
+2. **非空字典即"已标定"**：`if not profile: uncalibrated else: calibrated`，因此只塞入
+   两个系数（甚至无关键）的字典就能把 confidence 升级成 `calibrated`。
+
+修复：
+
+- 新增 `writer_witness_tokens`：按 occurrence 计（对象骨架成本 `per_witness_object_tokens`）
+  加**预期 span 长度**（优先真实 span 文本，取字段
+  `exact_span/span_text/expected_span/witness_text/target_text`；缺失时用保守默认长度），
+  并计入总量；
+- formula 引用改为**并集去重**（package 与 obligation 同列一个引用只计一次），
+  另加 `formula_placeholder_count/tokens`（"义务"与"实际 placeholder 数"的显式映射）；
+- `confidence` 升级为 `calibrated` 需要 `CALIBRATION_REQUIRED_KEYS` 全部非空
+  （model_identity / tokenizer_identity / schema_or_prompt_identity / sample_scope /
+  method）；缺失时保持 `uncalibrated` 并报
+  `calibration_profile_incomplete:<keys>`；字符代理估算器仍单独标出
+  `token_estimator_is_character_proxy`（calibrated 只描述系数来源）。
+
+测试：`test_output_feasibility.py` 新增/更新 3 项（witness 计入且 atom 不计入、
+package/obligation 不双计、标定门槛与完整 profile），并更新原先编码旧语义的
+`test_calibrated_profile_changes_estimate_and_confidence`。全量离线 3820 passed、
+3 deselected、12 subtests passed、exit 0。

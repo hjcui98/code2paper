@@ -18,7 +18,10 @@ def _paragraph(
     reader_goal: str = "How does this setup work?",
     details: tuple[str, ...] = (),
     packages: tuple[str, ...] = (),
+    formulas: tuple[str, ...] = (),
+    placeholders: tuple[str, ...] = (),
     targets: tuple[dict[str, object], ...] = (),
+    witnesses: tuple[dict[str, object], ...] = (),
     surfaces: tuple[dict[str, str], ...] = (),
 ) -> dict[str, object]:
     return {
@@ -26,7 +29,9 @@ def _paragraph(
         "reader_goal": reader_goal,
         "required_detail_ids": list(details),
         "formula_package_ids": list(packages),
-        "witness_contract": {"targets": list(targets)},
+        "formula_obligation_ids": list(formulas),
+        "formula_placeholder_ids": list(placeholders),
+        "witness_contract": {"targets": [*targets, *witnesses]},
         "author_intent_surfaces": list(surfaces),
     }
 
@@ -155,20 +160,123 @@ def test_explicit_output_budget_can_reject_a_page() -> None:
 
 
 def test_calibrated_profile_changes_estimate_and_confidence() -> None:
+    """审计 §C.3：仅"非空字典"不算标定——profile 必须自证身份与方法。"""
+
     paragraphs = [_paragraph("MA-S1:P1", details=("detail:1",))]
     uncalibrated = estimate_writer_output_workload(paragraphs)
     assert uncalibrated.confidence == "uncalibrated"
     assert "no_calibrated_profile" in uncalibrated.unknown_reasons
 
-    calibrated = estimate_writer_output_workload(
+    # 只给系数、不给身份与样本范围 → 仍是 uncalibrated，且如实报出缺了什么。
+    bare = estimate_writer_output_workload(
         paragraphs,
         calibrated_profile={
             "per_paragraph_json_tokens": 200,
             "safety_reserve_tokens": 2_048,
         },
     )
+    assert bare.confidence == "uncalibrated"
+    assert any(
+        reason.startswith("calibration_profile_incomplete:")
+        for reason in bare.unknown_reasons
+    )
+    assert bare.estimated_output_tokens > uncalibrated.estimated_output_tokens
+
+    calibrated = estimate_writer_output_workload(
+        paragraphs,
+        calibrated_profile={
+            "per_paragraph_json_tokens": 200,
+            "safety_reserve_tokens": 2_048,
+            "model_identity": "qwen38-27b-nvfp4",
+            "tokenizer_identity": "vllm-openai-chat-template-v1",
+            "schema_or_prompt_identity": "unified_writer_page_v2/1.0",
+            "sample_scope": "2026-09-17 incident archive, 24 writer requests",
+            "method": "max successful paragraphs + provider token accounting",
+        },
+    )
     assert calibrated.confidence == "calibrated"
-    assert calibrated.estimated_output_tokens > uncalibrated.estimated_output_tokens
+    # 字符代理估算器仍被如实标出（calibrated 只描述系数来源，不假装 tokenizer 精确）。
+    assert "token_estimator_is_character_proxy" in calibrated.unknown_reasons
+    assert not any(
+        reason.startswith("calibration_profile_incomplete:")
+        for reason in calibrated.unknown_reasons
+    )
+    assert calibrated.estimated_output_tokens == bare.estimated_output_tokens
+
+    # 提供真实 tokenizer 估算器后，未标定原因应完全消失。
+    exact = estimate_writer_output_workload(
+        paragraphs,
+        calibrated_profile={
+            "model_identity": "qwen38-27b-nvfp4",
+            "tokenizer_identity": "vllm-openai-chat-template-v1",
+            "schema_or_prompt_identity": "unified_writer_page_v2/1.0",
+            "sample_scope": "2026-09-17 incident archive, 24 writer requests",
+            "method": "max successful paragraphs + provider token accounting",
+        },
+        token_estimator=lambda text: max(1, len(text) // 4),
+    )
+    assert exact.confidence == "calibrated"
+    assert exact.unknown_reasons == ()
+
+
+def test_writer_witness_occurrences_are_charged_to_the_estimate() -> None:
+    """审计最小反例：段数/detail/goal 不变，只增加合法 witness → 估量必须增加。"""
+
+    from code2paper.agentic.writer_output_workload import (
+        estimate_writer_output_workload,
+    )
+
+    plain = [_paragraph("MA-S1:P1", details=("detail:1",))]
+    with_witnesses = [_paragraph(
+        "MA-S1:P1",
+        details=("detail:1",),
+        witnesses=(
+            {"target_kind": "detail", "target_id": "detail:1", "exact_span": "encoder reads input"},
+            {"target_kind": "detail", "target_id": "detail:2", "exact_span": "decoder writes output"},
+        ),
+    )]
+    base = estimate_writer_output_workload(plain)
+    charged = estimate_writer_output_workload(with_witnesses)
+
+    assert charged.writer_owned_witness_count == 2
+    assert charged.writer_witness_tokens > 0
+    assert charged.estimated_output_tokens > base.estimated_output_tokens
+
+    # Binder-owned atom 不计入 Writer 负担：同一页增加 atom witness 不改变估量。
+    atoms_only = [_paragraph(
+        "MA-S1:P1",
+        details=("detail:1",),
+        witnesses=(
+            {"target_kind": "atom", "target_id": "atom:1", "required": True},
+            {"target_kind": "atom", "target_id": "atom:2", "required": True},
+        ),
+    )]
+    atom_estimate = estimate_writer_output_workload(atoms_only)
+    assert atom_estimate.writer_owned_witness_count == 0
+    assert atom_estimate.binder_owned_witness_count == 2
+    assert atom_estimate.estimated_output_tokens == base.estimated_output_tokens
+
+
+def test_formula_package_and_obligation_are_not_double_counted() -> None:
+    """同一输出引用同时出现在 package 与 obligation 列表时只能计一次。"""
+
+    from code2paper.agentic.writer_output_workload import (
+        estimate_writer_output_workload,
+    )
+
+    shared = estimate_writer_output_workload(
+        [_paragraph("MA-S1:P1", details=("detail:1",), packages=("pkg:1",), formulas=("pkg:1",))]
+    )
+    package_only = estimate_writer_output_workload(
+        [_paragraph("MA-S1:P1", details=("detail:1",), packages=("pkg:1",))]
+    )
+    assert shared.formula_reference_tokens == package_only.formula_reference_tokens
+
+    placeholders = estimate_writer_output_workload(
+        [_paragraph("MA-S1:P1", details=("detail:1",), placeholders=("ph:1", "ph:2"))]
+    )
+    assert placeholders.formula_placeholder_count == 2
+    assert placeholders.formula_placeholder_tokens > 0
 
 
 def test_narrative_ordinal_orders_p2_before_p10() -> None:

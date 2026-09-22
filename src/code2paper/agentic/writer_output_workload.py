@@ -42,6 +42,28 @@ DEFAULT_JSON_STRUCTURE_TOKENS = 48
 DEFAULT_PER_PARAGRAPH_JSON_TOKENS = 24
 DEFAULT_SAFETY_RESERVE_TOKENS = 512
 DEFAULT_MIN_PARAGRAPH_PROSE_TOKENS = 48
+#: 一个 Writer-owned witness 的对象骨架成本（键名/括号/引号等）。
+DEFAULT_PER_WITNESS_OBJECT_TOKENS = 24
+#: 没有给出精确 span 文本时的保守 span 长度（字符）。
+DEFAULT_WITNESS_SPAN_CHARS = 48
+#: 一个 formula placeholder 的输出成本。
+DEFAULT_PER_FORMULA_PLACEHOLDER_TOKENS = 16
+#: 审计 §C.3：calibrated profile 必须自证来源与适用范围；仅"非空字典"不算标定。
+CALIBRATION_REQUIRED_KEYS: tuple[str, ...] = (
+    "model_identity",
+    "tokenizer_identity",
+    "schema_or_prompt_identity",
+    "sample_scope",
+    "method",
+)
+#: span 文本可能出现的字段名（按顺序取第一个非空）。
+_WITNESS_SPAN_FIELDS: tuple[str, ...] = (
+    "exact_span",
+    "span_text",
+    "expected_span",
+    "witness_text",
+    "target_text",
+)
 _CHARS_PER_TOKEN = 4
 
 BINDER_OWNED_TARGET_KINDS = {"atom"}
@@ -97,6 +119,11 @@ class WriterOutputWorkloadV1(BaseModel):
     target_prose_tokens: int = 0
     detail_binding_tokens: int = 0
     formula_reference_tokens: int = 0
+    #: 审计 §C.3：Writer-owned witness 必须按 occurrence 与预期 span 长度计入输出负担
+    #: （旧实现只统计数量、从不计入总量，于是"增加合法 witness"估量不变）。
+    writer_witness_tokens: int = 0
+    formula_placeholder_count: int = 0
+    formula_placeholder_tokens: int = 0
     safety_reserve_tokens: int = 0
     estimated_output_tokens: int = 0
 
@@ -144,8 +171,11 @@ def estimate_writer_output_workload(
     writer_witnesses = 0
     binder_witnesses = 0
     formula_consumptions = 0
+    formula_references: set[str] = set()
+    formula_placeholders = 0
     prose_tokens = 0
     detail_tokens = 0
+    witness_tokens = 0
 
     for paragraph in paragraphs:
         required_details = _ids(_get(paragraph, "required_detail_ids"))
@@ -158,11 +188,35 @@ def estimate_writer_output_workload(
             if kind in BINDER_OWNED_TARGET_KINDS:
                 binder_witnesses += 1
                 continue
-            if required:
-                writer_witnesses += 1
+            if not required:
+                continue
+            writer_witnesses += 1
+            # occurrence + 预期 span 长度：span 文本可用时按真实长度估量，
+            # 否则用保守默认长度（不允许"witness 增多而估量不变"）。
+            span_text = ""
+            for field in _WITNESS_SPAN_FIELDS:
+                candidate = str(_get(target, field) or "").strip()
+                if candidate:
+                    span_text = candidate
+                    break
+            span_tokens = (
+                estimator(span_text)
+                if span_text
+                else max(1, DEFAULT_WITNESS_SPAN_CHARS // _CHARS_PER_TOKEN)
+            )
+            witness_tokens += int(
+                profile.get("per_witness_object_tokens", DEFAULT_PER_WITNESS_OBJECT_TOKENS)
+            ) + span_tokens
 
-        formula_consumptions += len(_ids(_get(paragraph, "formula_package_ids")))
-        formula_consumptions += len(_ids(_get(paragraph, "formula_obligation_ids")))
+        # §C.3：同一个输出引用不得因为"义务"与"package"都列了一次而被双计。
+        paragraph_formula_refs = set(_ids(_get(paragraph, "formula_package_ids"))) | set(
+            _ids(_get(paragraph, "formula_obligation_ids"))
+        )
+        formula_references |= paragraph_formula_refs
+        formula_consumptions += len(paragraph_formula_refs)
+        formula_placeholders += len(
+            _ids(_get(paragraph, "formula_placeholder_ids"))
+        )
 
         text_parts = [str(_get(paragraph, "reader_goal") or "")]
         for surface in _get(paragraph, "author_intent_surfaces") or ():
@@ -173,8 +227,11 @@ def estimate_writer_output_workload(
             profile.get("detail_binding_tokens", 12)
         )
 
-    formula_reference_tokens = formula_consumptions * int(
+    formula_reference_tokens = len(formula_references) * int(
         profile.get("formula_reference_tokens", 16)
+    )
+    formula_placeholder_tokens = formula_placeholders * int(
+        profile.get("formula_placeholder_tokens", DEFAULT_PER_FORMULA_PLACEHOLDER_TOKENS)
     )
     json_overhead = structure_tokens + per_paragraph_json * len(paragraphs)
     estimated = (
@@ -182,6 +239,8 @@ def estimate_writer_output_workload(
         + prose_tokens
         + detail_tokens
         + formula_reference_tokens
+        + formula_placeholder_tokens
+        + witness_tokens
         + safety_reserve
     )
 
@@ -190,7 +249,15 @@ def estimate_writer_output_workload(
     if not profile:
         unknown.append("no_calibrated_profile")
     else:
-        confidence = "calibrated"
+        # §C.3：仅"非空字典"不能升级 confidence——必须自证模型/tokenizer/schema 或
+        # prompt 身份、样本范围与估量方法。
+        missing = [
+            key for key in CALIBRATION_REQUIRED_KEYS if not str(profile.get(key) or "").strip()
+        ]
+        if missing:
+            unknown.append("calibration_profile_incomplete:" + ",".join(missing))
+        else:
+            confidence = "calibrated"
     if token_estimator is None:
         unknown.append("token_estimator_is_character_proxy")
 
@@ -205,6 +272,9 @@ def estimate_writer_output_workload(
         target_prose_tokens=prose_tokens,
         detail_binding_tokens=detail_tokens,
         formula_reference_tokens=formula_reference_tokens,
+        writer_witness_tokens=witness_tokens,
+        formula_placeholder_count=formula_placeholders,
+        formula_placeholder_tokens=formula_placeholder_tokens,
         safety_reserve_tokens=safety_reserve,
         estimated_output_tokens=estimated,
         confidence=confidence,
