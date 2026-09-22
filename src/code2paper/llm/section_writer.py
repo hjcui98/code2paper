@@ -4396,6 +4396,66 @@ def normalize_publication_heading(text: Any) -> str:
     return value.rstrip(":").rstrip()
 
 
+def _compose_publication_section_markdown(
+    output: PublicationMethodSectionOutputV1,
+    *,
+    assembled_parts: Sequence[str],
+    heading: str,
+) -> str:
+    """由有序段落派生正文（审计 §E.5：单一正文源）。
+
+    走共享 composer，保证"发布字节 = 段落对象的确定性函数"；模型自带的
+    ``section_markdown`` 只作为归档字段，不再参与拼接。
+    """
+
+    from code2paper.agentic.paragraph_prose_composer import compose_section_markdown
+
+    parts = [str(part).strip() for part in assembled_parts if str(part).strip()]
+    if not parts:
+        return ""
+    return compose_section_markdown(
+        {"paragraphs": [{"paragraph_markdown": part} for part in parts]},
+        heading=heading or str(getattr(output, "heading_text", "") or ""),
+    )
+
+
+def _publication_prose_surface_failures(
+    ordered_paragraphs: Sequence[PublicationMethodParagraphOutputV1],
+    *,
+    section_markdown: str,
+    expected_ids: Sequence[str],
+    heading: str,
+) -> tuple[str, ...]:
+    """用共享 audit 复核发布前正文表面（审计 §E.5）。
+
+    段落集合必须与冻结计划一致、顺序以计划为准、发布字节必须等于 composer 的派生
+    结果；任何一条不成立都返回 typed failure，由调用方按 transaction 失败处理。
+    """
+
+    from code2paper.agentic.paragraph_prose_composer import audit_prose_surface
+
+    payload = {
+        "paragraphs": [
+            {
+                "paragraph_id": str(item.paragraph_id or ""),
+                "paragraph_markdown": str(item.paragraph_markdown or ""),
+            }
+            for item in ordered_paragraphs
+        ],
+        "section_markdown": section_markdown,
+    }
+    audit = audit_prose_surface(
+        payload,
+        required_paragraph_ids=tuple(expected_ids),
+        plan_paragraph_ids=tuple(expected_ids),
+        heading=heading,
+    )
+    failures = list(audit.failures)
+    if not audit.derived_section_matches_response:
+        failures.append("prose_surface_not_derived_from_paragraphs")
+    return tuple(f"prose_surface:{failure}" for failure in failures)
+
+
 def _assembled_section_heading(
     section: WriterSectionInput,
     output: PublicationMethodSectionOutputV1,
@@ -4983,9 +5043,9 @@ def _normalize_publication_paragraph_transaction(
         # rendered, but dropping the body here would make a quality defect
         # indistinguishable from a transport failure.
         heading = _assembled_section_heading(section, output)
-        section_markdown = "\n\n".join(assembled_parts)
-        if heading and section_markdown:
-            section_markdown = f"## {heading}\n\n{section_markdown}"
+        section_markdown = _compose_publication_section_markdown(
+            output, assembled_parts=assembled_parts, heading=heading
+        )
         preserved = output.model_copy(update={
             "section_markdown": section_markdown or output.section_markdown,
             "paragraphs": [
@@ -4999,17 +5059,31 @@ def _normalize_publication_paragraph_transaction(
     # paragraph happens to be emitted first.  Assemble exactly one H2 here
     # and keep each transaction's body substantive; this makes the reverse
     # validator see the same heading/paragraph boundary on every retry.
+    # 审计 §E.5：正文由**共享 composer** 从有序 paragraph 对象派生（单一正文源），
+    # 并用同一 audit 复核闭集/顺序/派生物一致性；不一致即 fail-closed。
     heading = _assembled_section_heading(section, output)
-    section_markdown = "\n\n".join(assembled_parts)
-    if heading:
-        section_markdown = f"## {heading}\n\n{section_markdown}"
+    ordered_paragraphs = [
+        by_id[item_id]
+        for item_id in (expected_ids or tuple(by_id))
+        if item_id in by_id
+    ]
+    section_markdown = _compose_publication_section_markdown(
+        output, assembled_parts=assembled_parts, heading=heading
+    )
+    prose_failures = _publication_prose_surface_failures(
+        ordered_paragraphs,
+        section_markdown=section_markdown,
+        expected_ids=expected_ids,
+        heading=heading,
+    )
+    if prose_failures:
+        return output.model_copy(update={
+            "section_markdown": section_markdown,
+            "paragraphs": ordered_paragraphs,
+        }), prose_failures
     return output.model_copy(update={
         "section_markdown": section_markdown,
-        "paragraphs": [
-            by_id[item_id]
-            for item_id in (expected_ids or tuple(by_id))
-            if item_id in by_id
-        ],
+        "paragraphs": ordered_paragraphs,
         "rendered_paragraph_ids": list(expected_ids or tuple(by_id)),
         "rendered_detail_ids": sorted(aggregate_fields["rendered_detail_ids"]),
         "deferred_detail_ids": sorted(aggregate_fields["deferred_detail_ids"]),
@@ -6805,13 +6879,17 @@ def _merge_publication_repair_response(
         return candidate
     heading = str(old.heading_text or new.heading_text or section.heading or "").strip()
     heading = heading.lstrip("#").strip()
-    body = "\n\n".join(
-        str(merged_by_id[paragraph_id].paragraph_markdown or "").strip()
-        for paragraph_id in ordered_ids
-        if paragraph_id in merged_by_id
-        and str(merged_by_id[paragraph_id].paragraph_markdown or "").strip()
+    # 审计 §E.5：合并后的正文同样必须由共享 composer 从段落对象派生，否则修复路径
+    # 会重新引入第二个正文表面。
+    section_markdown = _compose_publication_section_markdown(
+        candidate,
+        assembled_parts=[
+            str(merged_by_id[paragraph_id].paragraph_markdown or "")
+            for paragraph_id in ordered_ids
+            if paragraph_id in merged_by_id
+        ],
+        heading=heading,
     )
-    section_markdown = f"## {heading}\n\n{body}" if heading and body else body
 
     def union(field_name: str) -> list[str]:
         values: list[str] = []

@@ -4290,3 +4290,28 @@ highest/lowest、largest/smallest、top-k/bottom-k、ascending/descending），�
 测试：新增 `tests/regression_20260917/test_witness_relation_matrix.py` 8 项（7 个负例 +
 极值签名无误报）。其中 argmax 用例在去掉极值轴后**失败**（legacy 变体实测 valid=True），
 加上后全绿；assessor 相关套件 439 项全绿。
+
+## 2026-09-22 审计 PR E.5：生产接收路径使用共享 composer + 消费 prose audit
+
+复现的审计论断（成立）：`normalize_writer_section_payload` / `audit_prose_surface` 只有测试
+调用，生产接收路径自带一份拼接逻辑（`"\n\n".join(parts)` + `## heading`），两个正文表面
+的规则因此可以各自漂移；audit 的顺序判据只有自然数字序，与"段落顺序以 plan 显式顺序为准"
+冲突（事故计划顺序 P10..P17 在 P1__f1/P3..P9 之前）。
+
+修复：
+
+- `audit_prose_surface` 增加顺序权威参数 `plan_paragraph_ids`：给了冻结计划顺序就以它为准
+  （`order_reference="frozen_plan_order"`、`order_matches_plan`），没有计划顺序时才退回
+  自然数字序并如实标注；`order_matches_narrative_ordinal` 仅作诊断保留。
+  `normalize_writer_section_payload` 同步透传。
+- 生产两处正文拼接（`_normalize_publication_paragraph_transaction` 的合法/保留分支、
+  `_merge_publication_repair_response` 的修复合并）都改为 `_compose_publication_section_markdown`
+  → 共享 `compose_section_markdown`，发布字节成为"有序 paragraph 对象的确定性函数"。
+- 新增 `_publication_prose_surface_failures`：发布前用共享 audit 复核闭集/顺序/派生物一致性，
+  不成立则返回 `prose_surface:*` typed failure 并 fail-closed（不再发布）。
+
+测试：`test_prose_surface.py` 新增 3 项（计划顺序是权威、违反计划顺序被报、归一化载荷携带
+按计划顺序的 audit）；`test_llm_section_writer.py` 新增 2 项（fail-closed 辅助函数四类
+负例、以及 spy 断言生产归一化真的调用共享 audit 且 `plan_paragraph_ids` 来自冻结计划），
+并把两条既有断言升级为"发布字节 == 共享 composer 派生结果"（含修复合并路径）。
+回归目录 + writer 侧 402 项全绿。

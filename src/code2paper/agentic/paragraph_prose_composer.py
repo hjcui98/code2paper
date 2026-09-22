@@ -31,6 +31,10 @@ class ProseSurfaceAuditV1(BaseModel):
     duplicate_paragraph_ids: tuple[str, ...] = ()
     missing_paragraph_ids: tuple[str, ...] = ()
     unexpected_paragraph_ids: tuple[str, ...] = ()
+    #: 段落顺序的参照物（审计 §E.5）：冻结计划的显式顺序优先，自然数字序只是
+    #: 没有计划顺序时的 legacy adapter。
+    order_reference: str = "narrative_ordinal"
+    order_matches_plan: bool | None = None
     order_matches_narrative_ordinal: bool = True
     section_markdown_present: bool = False
     section_markdown_is_derivative_only: bool = True
@@ -88,8 +92,13 @@ def audit_prose_surface(
     *,
     required_paragraph_ids: Sequence[str] = (),
     heading: str = "",
+    plan_paragraph_ids: Sequence[str] = (),
 ) -> ProseSurfaceAuditV1:
-    """本地闭集校验 + 派生物判定（不依赖 provider schema 能力）。"""
+    """本地闭集校验 + 派生物判定（不依赖 provider schema 能力）。
+
+    顺序权威（审计 §E.5）：给了 ``plan_paragraph_ids`` 就以**冻结计划的显式顺序**为准；
+    没有计划顺序时才退回自然数字序，并如实标注 ``order_reference``。
+    """
 
     if hasattr(payload, "model_dump"):
         payload = payload.model_dump(mode="json")
@@ -109,8 +118,22 @@ def audit_prose_surface(
     unexpected = tuple(
         item for item in dict.fromkeys(ids) if required and item not in set(required)
     )
+    plan_order = tuple(
+        str(item) for item in plan_paragraph_ids if str(item).strip()
+    )
     ordinal_order = sorted(ids, key=narrative_ordinal)
-    order_ok = ids == ordinal_order
+    order_matches_ordinal = ids == ordinal_order
+    order_matches_plan: bool | None = None
+    if plan_order:
+        plan_positions = {item: index for index, item in enumerate(plan_order)}
+        projected = [item for item in ids if item in plan_positions]
+        expected_projection = sorted(projected, key=lambda item: plan_positions[item])
+        order_matches_plan = projected == expected_projection
+        order_ok = order_matches_plan
+        order_reference = "frozen_plan_order"
+    else:
+        order_ok = order_matches_ordinal
+        order_reference = "narrative_ordinal"
 
     section_markdown = ""
     if isinstance(payload, Mapping):
@@ -133,7 +156,9 @@ def audit_prose_surface(
         duplicate_paragraph_ids=tuple(duplicates),
         missing_paragraph_ids=tuple(missing),
         unexpected_paragraph_ids=tuple(unexpected),
-        order_matches_narrative_ordinal=order_ok,
+        order_reference=order_reference,
+        order_matches_plan=order_matches_plan,
+        order_matches_narrative_ordinal=order_matches_ordinal,
         section_markdown_present=bool(section_markdown.strip()),
         section_markdown_is_derivative_only=True,
         derived_section_matches_response=(
@@ -149,18 +174,22 @@ def normalize_writer_section_payload(
     *,
     required_paragraph_ids: Sequence[str] = (),
     heading: str = "",
+    plan_paragraph_ids: Sequence[str] = (),
 ) -> dict[str, Any]:
     """把响应归一为"段落对象唯一真源"的载荷。
 
     ``section_markdown`` 一律替换为确定性派生结果，并显式标注为派生物；模型自带的那份
-    不再作为正文来源（避免两个表面漂移）。
+    不再作为正文来源（避免两个表面漂移）。``plan_paragraph_ids`` 是段落顺序的权威。
     """
 
     if hasattr(payload, "model_dump"):
         payload = payload.model_dump(mode="json")
     source = dict(payload) if isinstance(payload, Mapping) else {}
     audit = audit_prose_surface(
-        source, required_paragraph_ids=required_paragraph_ids, heading=heading
+        source,
+        required_paragraph_ids=required_paragraph_ids,
+        heading=heading,
+        plan_paragraph_ids=plan_paragraph_ids,
     )
     rows = sorted(_paragraphs_of(source), key=lambda row: narrative_ordinal(
         str(row.get("paragraph_id") or "")

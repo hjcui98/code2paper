@@ -4228,8 +4228,25 @@ class ParagraphTransactionTests(unittest.TestCase):
         )
         self.assertEqual(failures, [])
         self.assertEqual(normalized.rendered_paragraph_ids, ["MA-S1:p1", "MA-S1:p2"])
+        # 审计 §E.5：发布字节必须等于共享 composer 从有序段落派生的结果。
+        from code2paper.agentic.paragraph_prose_composer import (
+            compose_section_markdown,
+        )
+
         self.assertEqual(
             normalized.section_markdown,
+            compose_section_markdown(
+                {
+                    "paragraphs": [
+                        {"paragraph_markdown": "The input is encoded."},
+                        {"paragraph_markdown": "The output is emitted."},
+                    ]
+                },
+                heading="Encoder",
+            ),
+        )
+        self.assertEqual(
+            normalized.section_markdown.strip(),
             "## Encoder\n\nThe input is encoded.\n\nThe output is emitted.",
         )
 
@@ -4531,8 +4548,16 @@ def test_failed_paragraph_ids_stay_inside_the_plan() -> None:
         publication_mode=True,
         argument_graph={
             "paragraphs": [
-                {"paragraph_id": "MA-S1:p1"},
-                {"paragraph_id": "MA-S1:p2"},
+                {
+                    "paragraph_id": "MA-S1:p1",
+                    "required_facet_ids": ["facet:input"],
+                    "ordered_semantic_slot_ids": ["slot:input"],
+                },
+                {
+                    "paragraph_id": "MA-S1:p2",
+                    "required_facet_ids": ["facet:output"],
+                    "ordered_semantic_slot_ids": ["slot:output"],
+                },
             ]
         },
         prompt_payload={"section_id": "MA-S1"},
@@ -4763,6 +4788,18 @@ def test_repair_returning_only_the_failed_paragraph_commits() -> None:
         "repaired p1 body",
         "p2 body",
     ]
+    # §E.5：修复合并后的正文也必须等于共享 composer 的派生结果（单一正文源）。
+    from code2paper.agentic.paragraph_prose_composer import compose_section_markdown
+
+    assert output.section_markdown == compose_section_markdown(
+        {
+            "paragraphs": [
+                {"paragraph_markdown": "repaired p1 body"},
+                {"paragraph_markdown": "p2 body"},
+            ]
+        },
+        heading="Mechanism",
+    )
 
 
 def test_changed_frozen_paragraphs_helper_reports_scope_violations() -> None:
@@ -4797,3 +4834,163 @@ def test_changed_frozen_paragraphs_helper_reports_scope_violations() -> None:
     assert _publication_changed_frozen_paragraph_ids(
         response, {"MA-S1:p1": digests["MA-S1:p1"]}
     ) == ()
+
+
+# --------------------------------------------------------------------------- #
+# 审计 §E.5：发布前的正文表面必须经共享 audit 复核
+# --------------------------------------------------------------------------- #
+
+
+def _prose_surface_fixture():
+    from code2paper.llm.response_schemas import (
+        PublicationContentWitnessV1,
+        PublicationMethodParagraphOutputV1,
+        PublicationMethodSectionOutputV1,
+    )
+
+    section = WriterSectionInput(
+        section_id="MA-S1",
+        heading="Encoder",
+        publication_mode=True,
+        argument_graph={
+            "paragraphs": [
+                {
+                    "paragraph_id": "MA-S1:p1",
+                    "required_facet_ids": ["facet:input"],
+                    "ordered_semantic_slot_ids": ["slot:input"],
+                },
+                {
+                    "paragraph_id": "MA-S1:p2",
+                    "required_facet_ids": ["facet:output"],
+                    "ordered_semantic_slot_ids": ["slot:output"],
+                },
+            ]
+        },
+        prompt_payload={
+            "writer_view": {
+                "mechanism_authoring_packet": {
+                    "facets": [
+                        {"facet_id": "facet:input"},
+                        {"facet_id": "facet:output"},
+                    ]
+                }
+            }
+        },
+    )
+
+    def paragraph(paragraph_id: str, text: str, facet: str) -> Any:
+        return PublicationMethodParagraphOutputV1(
+            paragraph_id=paragraph_id,
+            paragraph_markdown=text,
+            rendered_from_facet_ids=[facet],
+            rendered_slot_ids=[f"slot:{facet.split(':')[1]}"],
+            witnesses=[
+                PublicationContentWitnessV1(
+                    witness_kind="facet", target_id=facet, exact_text=facet.split(":")[1]
+                ),
+                PublicationContentWitnessV1(
+                    witness_kind="slot",
+                    target_id=f"slot:{facet.split(':')[1]}",
+                    exact_text=facet.split(":")[1],
+                ),
+            ],
+        )
+
+    output = PublicationMethodSectionOutputV1(
+        section_id="MA-S1",
+        paragraphs=[
+            paragraph("MA-S1:p2", "The output is emitted.", "facet:output"),
+            paragraph("MA-S1:p1", "The input is encoded.", "facet:input"),
+        ],
+    )
+    return section, output
+
+
+def test_prose_surface_helper_is_fail_closed() -> None:
+    from code2paper.llm.response_schemas import (
+        PublicationMethodParagraphOutputV1,
+    )
+    from code2paper.llm.section_writer import _publication_prose_surface_failures
+
+    def row(paragraph_id: str, text: str) -> Any:
+        return PublicationMethodParagraphOutputV1(
+            paragraph_id=paragraph_id, paragraph_markdown=text
+        )
+
+    paragraphs = [row("MA-S1:p1", "one"), row("MA-S1:p2", "two")]
+    plan = ("MA-S1:p1", "MA-S1:p2")
+
+    # 顺序与计划一致、字节等于 composer 派生 → 无失败。
+    from code2paper.agentic.paragraph_prose_composer import compose_section_markdown
+
+    derived = compose_section_markdown(
+        {"paragraphs": [{"paragraph_markdown": "one"}, {"paragraph_markdown": "two"}]},
+        heading="Encoder",
+    )
+    assert _publication_prose_surface_failures(
+        paragraphs,
+        section_markdown=derived,
+        expected_ids=plan,
+        heading="Encoder",
+    ) == ()
+
+    # 顺序偏离计划 → typed failure。
+    reversed_failures = _publication_prose_surface_failures(
+        list(reversed(paragraphs)),
+        section_markdown=derived,
+        expected_ids=plan,
+        heading="Encoder",
+    )
+    assert any(
+        item.startswith("prose_surface:paragraph_order_mismatch")
+        for item in reversed_failures
+    ), reversed_failures
+
+    # 缺段落 / 多段落 → typed failure。
+    missing = _publication_prose_surface_failures(
+        paragraphs[:1],
+        section_markdown=derived,
+        expected_ids=plan,
+        heading="Encoder",
+    )
+    assert any("paragraph_missing" in item for item in missing), missing
+
+    # 正文不是段落对象的派生物（模型自带文本）→ typed failure。
+    not_derived = _publication_prose_surface_failures(
+        paragraphs,
+        section_markdown="MODEL WRITTEN SECTION TEXT",
+        expected_ids=plan,
+        heading="Encoder",
+    )
+    assert "prose_surface:prose_surface_not_derived_from_paragraphs" in not_derived
+
+
+def test_production_normalization_consults_the_shared_prose_audit(monkeypatch) -> None:
+    from code2paper.agentic import paragraph_prose_composer as composer
+
+    section, output = _prose_surface_fixture()
+    seen: list[dict] = []
+    real = composer.audit_prose_surface
+
+    def _spy(payload, **kwargs):
+        seen.append(dict(kwargs))
+        return real(payload, **kwargs)
+
+    monkeypatch.setattr(composer, "audit_prose_surface", _spy)
+
+    normalized, failures = _normalize_publication_paragraph_transaction(
+        output, section=section, require_transactions=True
+    )
+
+    assert failures == []
+    assert seen, "生产接收路径必须真的调用共享 prose audit"
+    assert seen[0]["plan_paragraph_ids"] == ("MA-S1:p1", "MA-S1:p2")
+    assert seen[0]["required_paragraph_ids"] == ("MA-S1:p1", "MA-S1:p2")
+    # 计划顺序胜出：p2 在响应里先出现，但发布顺序是 p1, p2。
+    assert [item.paragraph_id for item in normalized.paragraphs] == [
+        "MA-S1:p1",
+        "MA-S1:p2",
+    ]
+    assert normalized.section_markdown.index("input") < normalized.section_markdown.index(
+        "output"
+    )
