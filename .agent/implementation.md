@@ -4661,3 +4661,36 @@ writer/回归套件 485 项全绿。
    Writer manifest 冒充 Formalizer 的；无公式任务时"零 probe"行为由既有单元测试覆盖。
 
 G.2 文件 9 项、回归 + unified 套件全绿。
+
+## 2026-09-22 审计 PR G.3（第一片）：真实持久边界的崩溃注入
+
+新增 `tests/regression_20260922/test_crash_resume_boundaries.py`：先跑一遍真实产品入口得到
+真实 run root，再按崩溃点**截断 attempt 事件文件**（started / provider-request /
+provider-response / completed / content-acceptance），然后用计数 fake provider 走真正的
+resume，断言"零重复发送 + 状态与 ledger 一致 + 不发布未验证正文"。
+
+实测结果（每条都有断言）：
+
+- 崩溃点 2（request 已落盘、结果未知）：reducer = `send_outcome_unknown`
+  （primary_cause `request_persisted_without_completed`）；resume **0 次 writer 调用**，
+  且恢复后状态**仍是** `send_outcome_unknown`——"未知"不会被当成"未发送"重试。
+  （顺带发现：如果为了"别新开 attempt"而干脆不写 started marker，反而会把主因挤成
+  `reserved_not_sent`；保持既有 marker 语义才是对的，这一条已回退。）
+- 崩溃点 3（response 已落盘、completed 未落盘）：reducer = `response_received_unsettled`；
+  resume 0 次调用，状态保持 unsettled（不重复请求同一份正文）。
+- 崩溃点 4（completed 已落盘、acceptance 未落盘）：reducer = `validation_pending`；
+  resume 0 次调用、不发布任何 verified 正文。
+- 崩溃点 6（Writer 已接受、Binder 未跑）：删掉 binder 回执后 resume **0 次 writer 调用**，
+  确定性 Binder 被重跑并重新落回执。
+- 恢复运行的预算 profile 必须显式声明（复用冻结产物不等于复用环境）——测试里如实声明，
+  否则会以 `unified_invocation_budget_missing` 阻断。
+
+**已知缺口（strict xfail 钉住，修好后会自动提醒移除标记）**：崩溃点 4 目前没有"本地结算"
+生产者——`publish_validation_replay` 在 reducer 里被消费但**生产侧没有调用者**，于是恢复
+既没有结算已落盘的响应，又为一次从未发送的 attempt 写了拒绝 sidecar
+（`attempt-0002.content-acceptance.json` + `transaction_metadata_missing`）。
+下一步：在页面循环里对 `response_received_unsettled` / `validation_pending` 做本地结算
+（解析账本里的 response_text → 同一 assessor → 发布 validation replay，必要时补 completed），
+且**不新开 attempt**。
+
+回归 + writer 套件 491 项通过、1 xfailed。
