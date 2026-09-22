@@ -4446,3 +4446,28 @@ required_roles=("narrative_plan:authoring","consumer_workset_manifest:writer",
 测试：`test_agentic_publication_method_writer_unified.py` 新增 1 项（真实跑 unified 模式：
 快照指针存在、三个 required role 都带字节摘要、证据文件与指针指向同一 snapshot 摘要）。
 unified + publication + 回归目录 466 项全绿。
+
+## 2026-09-22 审计 PR G.6：质量比较器的极性修正
+
+复现的审计论断（成立）：`METRIC_POLARITY` 把任务集合/分母（`must_cover_obligations`、
+`formula.required`）与受分页策略影响的原始计数（accepted pages / invocations / sends /
+tokens）都标成"越少/越多越好"，于是"少一个必需公式""空候选的零 token""提前失败的少调用"
+"隐藏 gap"都会显示为改善。
+
+修复（`authoring_quality_comparison.py`）：
+
+- `METRIC_POLARITY` 只保留**无歧义**的缺陷计数与同分母比率；任务集合/分母移入
+  `TASK_SET_METRICS`（永远 `unknown`）。
+- 新增 `CONDITIONAL_EFFICIENCY_POLARITY`：调用/token/accepted 计数只有在
+  "同 scope（冻结目标集一致）+ 有效交付（接受页数不减少）+ 覆盖不退化"时才给方向，
+  否则 `unknown` 并在 scope notes 写明原因（空候选与提前失败天然落在这里）。
+- 新增 `DENOMINATOR_SENSITIVE` / `DENOMINATOR_GATED_POLARITY`：覆盖率、已解决数、
+  formula consumed 只在**同一冻结分母**下才有方向；分母不同只报告集合差异。
+- 新增 `COVERAGE_GATED_POLARITY`：`explicit_gaps` 只有覆盖不退化（支持率不降、未解决数不增）
+  时才把 gap 减少读成改善。
+- `dimensions_not_measured` 现在保留**两侧**原因（`baseline: ... | candidate: ...`），
+  后一侧不再覆盖前一侧。
+
+测试：`test_quality_comparison.py` 新增 5 项负例/正例（少必需公式不给方向、空候选零 token
+不是效率、覆盖退化时隐藏 gap 不算改善且正例仍为 better、同 scope 效率方向仍生效、两侧未测
+原因都保留），并更新既有极性断言以反映"条件表"。比较器 + 报告 22 项全绿。

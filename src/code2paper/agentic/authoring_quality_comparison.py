@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from types import MappingProxyType
 from typing import Any, Iterable, Mapping
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -32,38 +33,62 @@ __all__ = [
     "compare_authoring_quality_reports",
 ]
 
-#: 极性明确的机械指标：+1 = 越大越好，-1 = 越小越好。
-#: 只收录方向无歧义的计数/比率；语义质量指标一律不在此表（direction=unknown）。
+#: 极性**无歧义**的机械指标：同一冻结目标集下，减少/增加就是好/坏。
+#: 只收录"缺陷计数"或"同分母比率"；受分页策略影响的原始计数一律不在此表。
 METRIC_POLARITY: Mapping[str, int] = {
     "efficiency.first_attempt_acceptance_rate": 1,
     "efficiency.repair_acceptance_rate": 1,
+    "efficiency.rejected_before_send_events": -1,
+    "recovery_robustness.blocked_pages": -1,
+    "recovery_robustness.exhausted_invocations": -1,
+    "recovery_robustness.invocations_with_unsettled_reservation": -1,
+    "intent_coverage.paragraphs_without_per_paragraph_material": -1,
+    "intent_coverage.binder_owned_targets_shown_to_writer": -1,
+    "narrative_quality.paragraphs_without_per_paragraph_material": -1,
+    "narrative_quality.pages_blocked": -1,
+}
+
+#: 审计 §G.6：这些指标只有"同 scope + 有效交付 + 覆盖不退化"时才解释为效率差异。
+#: 原始 accepted pages / invocations 还额外受分页策略影响，默认 direction=unknown。
+CONDITIONAL_EFFICIENCY_POLARITY: Mapping[str, int] = {
     "efficiency.invocations_accepted": 1,
     "efficiency.provider_sends": -1,
     "efficiency.content_attempts": -1,
-    "efficiency.rejected_before_send_events": -1,
     "efficiency.input_tokens": -1,
     "efficiency.output_tokens": -1,
     "efficiency.total_tokens": -1,
     "efficiency.tokens_per_provider_send": -1,
     "efficiency.input_token_budget_utilization": -1,
     "recovery_robustness.pages_accepted": 1,
-    "recovery_robustness.blocked_pages": -1,
-    "recovery_robustness.exhausted_invocations": -1,
-    "recovery_robustness.invocations_with_unsettled_reservation": -1,
-    "intent_coverage.must_cover_obligations": 1,
+}
+
+#: 分母敏感指标 → 它依赖的"冻结分母"指标。分母不同时不给方向，只报告集合差异。
+DENOMINATOR_SENSITIVE: Mapping[str, str] = {
+    "intent_coverage.supported_must_cover": "intent_coverage.must_cover_obligations",
+    "intent_coverage.supported_must_cover_ratio": "intent_coverage.must_cover_obligations",
+    "intent_coverage.unresolved_must_cover": "intent_coverage.must_cover_obligations",
+    "intent_coverage.explicit_gaps": "intent_coverage.must_cover_obligations",
+    "information_utilization.formula.consumed": "information_utilization.formula.required",
+}
+
+#: 分母一致时这些指标才有方向（覆盖率与已解决数）。
+DENOMINATOR_GATED_POLARITY: Mapping[str, int] = {
     "intent_coverage.supported_must_cover": 1,
-    "intent_coverage.terminal_must_cover": 1,
     "intent_coverage.supported_must_cover_ratio": 1,
     "intent_coverage.unresolved_must_cover": -1,
-    "intent_coverage.explicit_gaps": -1,
-    "intent_coverage.paragraphs_without_per_paragraph_material": -1,
-    "intent_coverage.binder_owned_targets_shown_to_writer": -1,
     "information_utilization.formula.consumed": 1,
-    "information_utilization.formula.required": -1,
-    "information_utilization.consumer_invocation_acceptance_rate": 1,
-    "narrative_quality.paragraphs_without_per_paragraph_material": -1,
-    "narrative_quality.pages_blocked": -1,
 }
+
+#: 审计 §G.6："少报 gap 不等于变好"——gap 减少只有在**覆盖没有退化**时才解释为改善。
+COVERAGE_GATED_POLARITY: Mapping[str, int] = MappingProxyType({
+    "intent_coverage.explicit_gaps": -1,
+})
+
+#: 任务集合与分母本身：越少/越多都不是"更好"。
+TASK_SET_METRICS: frozenset[str] = frozenset({
+    "intent_coverage.must_cover_obligations",
+    "information_utilization.formula.required",
+})
 
 
 class QualityMetricDeltaV1(BaseModel):
@@ -141,14 +166,104 @@ def _flatten(report: AuthoringQualityReportV1) -> dict[str, Any]:
     return flat
 
 
-def _direction(metric: str, delta: float | None) -> str:
+def _direction(
+    metric: str,
+    delta: float | None,
+    *,
+    efficiency_ok: bool = True,
+    denominators_ok: bool = True,
+    coverage_ok: bool = True,
+) -> str:
+    """给出方向；方向依赖判断的指标一律 ``unknown``（审计 §G.6）。"""
+
     if delta is None:
         return "unknown"
+    if metric in TASK_SET_METRICS:
+        # 任务集合/分母本身：不标越少/越多越好。
+        return "unknown"
+    if metric in DENOMINATOR_SENSITIVE and not denominators_ok:
+        return "unknown"
     polarity = METRIC_POLARITY.get(metric)
-    if polarity is None or delta == 0:
-        return "unknown" if polarity is None else "same"
+    if polarity is None and metric in DENOMINATOR_GATED_POLARITY:
+        # 同分母时覆盖率/已解决数仍有明确方向。
+        polarity = DENOMINATOR_GATED_POLARITY[metric]
+    if polarity is None and metric in COVERAGE_GATED_POLARITY and coverage_ok:
+        polarity = COVERAGE_GATED_POLARITY[metric]
+    if polarity is None and efficiency_ok:
+        polarity = CONDITIONAL_EFFICIENCY_POLARITY.get(metric)
+    if polarity is None:
+        return "unknown"
+    if delta == 0:
+        return "same"
     improved = delta > 0 if polarity > 0 else delta < 0
     return "better" if improved else "worse"
+
+
+def _coverage_not_degraded(
+    left_flat: Mapping[str, Any], right_flat: Mapping[str, Any]
+) -> tuple[bool, str]:
+    """候选的 must-cover 支持率不得更低、未解决数不得更多。"""
+
+    left_ratio = left_flat.get("intent_coverage.supported_must_cover_ratio")
+    right_ratio = right_flat.get("intent_coverage.supported_must_cover_ratio")
+    if (
+        isinstance(left_ratio, (int, float))
+        and isinstance(right_ratio, (int, float))
+        and float(right_ratio) < float(left_ratio)
+    ):
+        return False, "覆盖退化：候选的 must-cover 支持率更低"
+    left_unresolved = left_flat.get("intent_coverage.unresolved_must_cover")
+    right_unresolved = right_flat.get("intent_coverage.unresolved_must_cover")
+    if (
+        isinstance(left_unresolved, (int, float))
+        and isinstance(right_unresolved, (int, float))
+        and float(right_unresolved) > float(left_unresolved)
+    ):
+        return False, "覆盖退化：候选未解决的 must-cover 更多"
+    return True, ""
+
+
+def _denominator_differences(
+    left_flat: Mapping[str, Any], right_flat: Mapping[str, Any]
+) -> tuple[bool, list[str]]:
+    """比较冻结分母（must-cover 集合与 formula required 集合）。"""
+
+    notes: list[str] = []
+    ok = True
+    for metric in ("intent_coverage.must_cover_obligations", "information_utilization.formula.required"):
+        left_value = left_flat.get(metric)
+        right_value = right_flat.get(metric)
+        if left_value == right_value:
+            continue
+        ok = False
+        notes.append(
+            f"分母不同（{metric}）：baseline={left_value} candidate={right_value}；"
+            "该集合上的比率/已解决数不给方向。"
+        )
+    return ok, notes
+
+
+def _efficiency_interpretable(
+    left_flat: Mapping[str, Any], right_flat: Mapping[str, Any]
+) -> tuple[bool, str]:
+    """只有同 scope + 有效交付 + 覆盖不退化时，才把少调用/少 token 解释为效率差异。"""
+
+    denominators_ok, _notes = _denominator_differences(left_flat, right_flat)
+    if not denominators_ok:
+        return False, "冻结目标集不同：调用与 token 差异不可解释为效率"
+    coverage_ok, coverage_reason = _coverage_not_degraded(left_flat, right_flat)
+    if not coverage_ok:
+        return False, coverage_reason
+    left_pages = left_flat.get("recovery_robustness.pages_accepted")
+    right_pages = right_flat.get("recovery_robustness.pages_accepted")
+    if (
+        isinstance(left_pages, (int, float))
+        and isinstance(right_pages, (int, float))
+        and float(right_pages) < float(left_pages)
+    ):
+        # 空候选/提前失败也落在这里：零 token、少调用不等于效率提升。
+        return False, "有效交付减少：候选接受的页数更少"
+    return True, ""
 
 
 def compare_authoring_quality_reports(
@@ -172,13 +287,18 @@ def compare_authoring_quality_reports(
         "candidate_execution_id": right.comparability.execution_id,
     }
 
-    not_measured: dict[str, str] = {}
+    not_measured: dict[str, list[str]] = {}
     for report, label in ((left, "baseline"), (right, "candidate")):
         for dimension in report.dimensions:
             if dimension.status == "not_measured":
-                not_measured[dimension.dimension] = (
+                not_measured.setdefault(dimension.dimension, []).append(
                     f"{label}: {dimension.not_measured_reason or 'not measured'}"
                 )
+    # 两侧都没测时保留**两份**原因，后一侧不覆盖前一侧（审计 §G.6）。
+    not_measured_reasons = {
+        dimension: " | ".join(reasons)
+        for dimension, reasons in not_measured.items()
+    }
 
     scope_notes: list[str] = []
     partial_evidence = False
@@ -200,6 +320,20 @@ def compare_authoring_quality_reports(
     if comparable:
         left_flat = _flatten(left)
         right_flat = _flatten(right)
+        denominators_ok, denominator_notes = _denominator_differences(
+            left_flat, right_flat
+        )
+        scope_notes.extend(denominator_notes)
+        coverage_ok, coverage_reason = _coverage_not_degraded(left_flat, right_flat)
+        if not coverage_ok:
+            scope_notes.append("覆盖判定：" + coverage_reason + "（少报 gap 不作为改善）")
+        efficiency_ok, efficiency_reason = _efficiency_interpretable(
+            left_flat, right_flat
+        )
+        if not efficiency_ok:
+            scope_notes.append(
+                "效率差异不解释：" + efficiency_reason + "（少调用/少 token 不作为改善）"
+            )
         for metric in sorted(set(left_flat) | set(right_flat)):
             baseline_value = left_flat.get(metric)
             candidate_value = right_flat.get(metric)
@@ -215,7 +349,13 @@ def compare_authoring_quality_reports(
                     baseline=baseline_value,
                     candidate=candidate_value,
                     delta=delta,
-                    direction=_direction(metric, delta),
+                    direction=_direction(
+                        metric,
+                        delta,
+                        efficiency_ok=efficiency_ok,
+                        denominators_ok=denominators_ok,
+                        coverage_ok=coverage_ok,
+                    ),
                 )
             )
 
@@ -226,7 +366,7 @@ def compare_authoring_quality_reports(
         "blockers": list(blockers),
         "anchors": anchors,
         "deltas": [item.model_dump(mode="json") for item in deltas],
-        "not_measured": not_measured,
+        "not_measured": not_measured_reasons,
         "scope_notes": scope_notes,
     }
     return AuthoringQualityComparisonV1(
@@ -236,7 +376,7 @@ def compare_authoring_quality_reports(
         candidate_root=right.out_root,
         anchors=anchors,
         metric_deltas=tuple(deltas),
-        dimensions_not_measured=not_measured,
+        dimensions_not_measured=not_measured_reasons,
         scope_notes=tuple(scope_notes),
         partial_evidence=partial_evidence,
         content_digest=sha256_digest(canonical_json_bytes(payload)),

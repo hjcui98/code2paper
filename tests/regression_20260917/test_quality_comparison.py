@@ -147,7 +147,14 @@ def test_polarity_table_directions_are_consistent() -> None:
     assert sends.baseline == 45 and sends.candidate == 90
     assert sends.delta == 45.0
     assert sends.direction == "worse", "发送数上升是变差"
-    assert METRIC_POLARITY["efficiency.provider_sends"] == -1
+    # 审计 §G.6：provider_sends 属于**条件**效率指标（同 scope + 有效交付 + 覆盖不退化），
+    # 不再放在无条件极性表里。
+    assert "efficiency.provider_sends" not in METRIC_POLARITY
+    from code2paper.agentic.authoring_quality_comparison import (
+        CONDITIONAL_EFFICIENCY_POLARITY,
+    )
+
+    assert CONDITIONAL_EFFICIENCY_POLARITY["efficiency.provider_sends"] == -1
 
 
 def test_compare_quality_cli_exit_codes(tmp_path: Path, capsys) -> None:
@@ -175,3 +182,140 @@ def test_compare_quality_cli_exit_codes(tmp_path: Path, capsys) -> None:
 
     assert method_agent_main(["compare-quality", "--baseline", root, "--candidate", str(tmp_path / "absent")]) == 2
     capsys.readouterr()
+
+
+# --------------------------------------------------------------------------- #
+# §G.6：负数不能被读成质量改善
+# --------------------------------------------------------------------------- #
+
+
+def _dimension_update(report, dimension: str, **metrics):
+    """替换某个维度的 metrics（保留 proxy 与状态）。"""
+
+    return report.model_copy(
+        update={
+            "dimensions": tuple(
+                item.model_copy(update={"metrics": {**item.metrics, **metrics}})
+                if item.dimension == dimension
+                else item
+                for item in report.dimensions
+            )
+        }
+    )
+
+
+def _metric(comparison, metric: str):
+    return next(
+        item for item in comparison.metric_deltas if item.metric == metric
+    )
+
+
+def test_fewer_required_formulas_is_not_an_improvement() -> None:
+    report = _report()
+    candidate = _dimension_update(
+        report, "information_utilization", **{"formula.required": 0}
+    )
+
+    comparison = compare_authoring_quality_reports(report, candidate)
+    required = _metric(comparison, "formula.required")
+    assert required.direction == "unknown", required
+    assert any("分母不同" in note for note in comparison.scope_notes)
+
+
+def test_empty_candidate_tokens_are_not_an_efficiency_gain() -> None:
+    """空候选/提前失败的零 token、少调用不得标成改善。"""
+
+    report = _report()
+    candidate = _dimension_update(
+        report,
+        "efficiency",
+        **{
+            "provider_sends": 0,
+            "total_tokens": 0,
+            "input_tokens": 0,
+            "output_tokens": 0,
+        },
+    )
+    candidate = _dimension_update(
+        candidate, "recovery_robustness", **{"pages_accepted": 0}
+    )
+
+    comparison = compare_authoring_quality_reports(report, candidate)
+    assert _metric(comparison, "provider_sends").direction == "unknown"
+    assert _metric(comparison, "total_tokens").direction == "unknown"
+    assert any("效率差异不解释" in note for note in comparison.scope_notes)
+    assert not any(
+        item.direction == "better" and item.metric in {"provider_sends", "total_tokens"}
+        for item in comparison.metric_deltas
+    )
+
+
+def test_hiding_gaps_while_coverage_regresses_is_not_an_improvement() -> None:
+    report = _report()
+    baseline = _dimension_update(
+        report,
+        "intent_coverage",
+        **{"explicit_gaps": 5, "supported_must_cover_ratio": 0.9},
+    )
+    candidate = _dimension_update(
+        report,
+        "intent_coverage",
+        **{
+            "explicit_gaps": 0,
+            "supported_must_cover_ratio": 0.25,
+            "provider_sends": 1,  # 提前失败带来的少调用
+        },
+    )
+
+    comparison = compare_authoring_quality_reports(baseline, candidate)
+    gaps = _metric(comparison, "explicit_gaps")
+    # 同一分母下 gap 归零但覆盖率退化：少报 gap 仍不得读成改善。
+    assert gaps.delta == -5.0
+    assert gaps.direction == "unknown", gaps
+    assert any("覆盖退化" in note for note in comparison.scope_notes)
+
+    # 正例：覆盖不退化时，gap 减少才是改善。
+    better = _dimension_update(
+        baseline,
+        "intent_coverage",
+        **{"explicit_gaps": 0, "supported_must_cover_ratio": 0.95},
+    )
+    improved = compare_authoring_quality_reports(baseline, better)
+    assert _metric(improved, "explicit_gaps").direction == "better"
+
+
+def test_same_scope_efficiency_direction_still_applies() -> None:
+    """同 scope + 交付不退化时，效率指标仍必须给出方向（否则规则形同废纸）。"""
+
+    report = _report()
+    candidate = _dimension_update(report, "efficiency", **{"provider_sends": 20})
+
+    comparison = compare_authoring_quality_reports(report, candidate)
+    assert _metric(comparison, "provider_sends").direction == "better"
+    assert not any("效率差异不解释" in note for note in comparison.scope_notes)
+
+
+def test_not_measured_reasons_from_both_sides_are_preserved() -> None:
+    report = _report()
+    edited = report.model_copy(
+        update={
+            "dimensions": tuple(
+                item.model_copy(
+                    update={
+                        "status": "not_measured",
+                        "not_measured_reason": "candidate-side reason"
+                        if item.dimension == "faithfulness"
+                        else item.not_measured_reason,
+                    }
+                )
+                if item.dimension == "faithfulness"
+                else item
+                for item in report.dimensions
+            )
+        }
+    )
+
+    comparison = compare_authoring_quality_reports(report, edited)
+    reason = comparison.dimensions_not_measured["faithfulness"]
+    assert "baseline:" in reason and "candidate:" in reason
+    assert "candidate-side reason" in reason
