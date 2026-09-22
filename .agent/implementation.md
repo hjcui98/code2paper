@@ -4842,3 +4842,36 @@ docstring 里写明**负责边界**（不新增门禁，只钉住已有 owner �
 | I10 | 质量对照：删任务（`formula.required=0`）与空候选（0 token / 0 页）方向均为 `unknown`；段数上限关闭时 `experiment_acknowledged=False`（准入据此阻断） |
 
 两条回归目录 340 项通过。
+
+## 2026-09-22 审计 §13：A01–G06 矩阵覆盖映射（可核对）
+
+新增 `tests/regression_20260922/test_matrix_coverage.py`：42 条矩阵行（A01–A08、B01–B08、
+C01–C07、D01–D06、E01–E06、F01–F06、G01–G06）各指向仓库里**真实存在**的测试节点，并由测试
+自身保证映射不腐烂：
+
+- `test_every_matrix_row_is_mapped`：行集合必须与 §13 完全一致（缺行/多行都失败）；
+- `test_every_mapped_evidence_exists`：每个节点必须存在（文件 + `def <name>(`），改名/删除即失败；
+- `test_matrix_row_declares_what_it_asserts`：每行至少一条证据且不重复凑数。
+
+映射要点（证据 = 审计点名的最小反例，尽量一一对应）：
+
+- A01–A08 → `test_execution_identity.py` / `test_run_identity_content.py`（dirty 内容变化、
+  目标内容身份与路径无关、fork birth 保持、导入依赖缺失/被改、validator 不可用、双 opener
+  锁、lease 异常释放）；
+- B01–B08 → `test_ledger_recovery_matrix.py` / `test_transport_policy.py` / 崩溃注入
+  （预算耗尽、pre-send 拒绝不扣内容预算、request-only=unknown、response-only 本地结算、
+  completed 无 response=inconsistent、acceptance 损坏=typed block、旧失败不覆盖新接受、
+  retry 尊重 run 预算且 unknown 不重试）；
+- C01/C02 → 审计点名的 7 个 atom-free 段落与"1 技术 + 15 叙事"事故形状测试；
+  C03–C07 → 输出估量/闭包/重分页 typed failure/adapter 追加段落/提高 output cap；
+- D01–D06 → merge 守恒、同 ID 异内容冲突、reader_question 与 surface digest 自洽、
+  零 overlap 不伪造 grounded、typed gap 不塞第一段；
+- E01–E06 → repair packet 的 canonical 路由、planner 而非 prose、有界 repair 提交、
+  final-bound 仍需 atom、双 surface 以段落为准、未知 code = typed block；
+- F01–F06 → 索引后改动被检测、显式 digest 无命中不回退、非法 JSON/schema 不 active、
+  新 generation 不靠固定后缀、快照不可覆盖、阶段语义（Formalizer 空 vs Writer 必需）；
+- G01–G06 → 假 provider 全链、局部 repair 全链、崩溃注入矩阵、空候选/删任务/隐藏失败
+  均不得标为改善。
+
+注意：本映射证明"每行有对应证据且证据存在"，证据本身的通过由完整离线套件保证
+（本轮 3952+49 项全绿）。两条回归目录 389 项通过。
