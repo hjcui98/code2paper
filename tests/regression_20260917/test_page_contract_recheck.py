@@ -150,3 +150,102 @@ def test_snapshot_is_read_only_and_deterministic() -> None:
     }
     assert before == after
     assert first == second
+
+
+# --------------------------------------------------------------------------- #
+# §C.1/§C.2：无 atom 的叙事段落也必须按同一候选页契约分页
+# --------------------------------------------------------------------------- #
+
+
+def test_narrative_only_section_is_paged_by_the_candidate_contract() -> None:
+    """审计最小反例 A：7 个无 atom 作者段落 + 上限 6 → 不能仍是一张 header 页。"""
+
+    from code2paper.agentic.method_architect import (
+        NarrativeParagraphPlanV3,
+        NarrativePlanV3,
+        NarrativeSectionPlanV3,
+        NarrativeUnitV1,
+    )
+    from code2paper.agentic.unified_context_compiler import (
+        _max_semantic_paragraphs_per_page,
+        build_consumer_workset_manifest_v2,
+        extend_writer_worksets_from_narrative_plan,
+    )
+    from tests.test_agentic_unified_context_compiler import (
+        _budget_envelope,
+        _two_mechanism_fixture,
+    )
+
+    archive, obligations = _two_mechanism_fixture()
+    envelope = _budget_envelope()
+
+    paragraph_ids = tuple(f"MA-S9_p{index}" for index in range(1, 8))
+    paragraphs = tuple(
+        NarrativeParagraphPlanV3(
+            paragraph_id=paragraph_id,
+            section_id="MA-S9",
+            role="motivation",
+            mechanism_id="",
+            required_detail_ids=(),
+            witness_contract={
+                "schema_version": "1.0",
+                "paragraph_id": paragraph_id,
+                "rhetorical_goal": "motivation",
+                "targets": [],
+            },
+        )
+        for paragraph_id in paragraph_ids
+    )
+    plan = NarrativePlanV3(
+        plan_id="plan:narrative-only",
+        sections=(
+            NarrativeSectionPlanV3(
+                section_id="MA-S9",
+                heading="Motivation",
+                mechanism_ids=(),
+                paragraphs=paragraphs,
+            ),
+        ),
+        narrative_units=(
+            NarrativeUnitV1(
+                unit_id="unit_motivation",
+                section_id="MA-S9",
+                mechanism_context_ids=(),
+                rhetorical_role="motivation",
+                reader_question="Why does this matter?",
+                paragraph_ids=paragraph_ids,
+                required_detail_ids=(),
+                optional_detail_ids=(),
+                formula_obligation_ids=(),
+                suggested_depth="standard",
+            ),
+        ),
+        context_set_digest=archive.content_digest,
+    )
+
+    base_manifest = build_consumer_workset_manifest_v2(
+        archive,
+        obligations,
+        max_page_input_tokens=envelope.max_page_input_tokens,
+        max_obligations_per_page=envelope.max_obligations_per_page,
+    )
+    writer_manifest = extend_writer_worksets_from_narrative_plan(
+        base_manifest,
+        plan,
+        max_page_input_tokens=envelope.max_page_input_tokens,
+        archive=archive,
+    )
+
+    pages = [page for page in writer_manifest.pages if "MA-S9" in str(page.mechanism_id)]
+    assert pages, "该 section 必须产生页"
+    limit = _max_semantic_paragraphs_per_page()
+    assert limit > 0 and limit < len(paragraph_ids), "夹具必须超过候选页段数上限"
+    assert len(pages) >= 2, "无 atom 的叙事段落也必须分页，而不是一张 header 页"
+
+    landed: list[str] = []
+    for page in pages:
+        ids = list(page.technical_payload.get("paragraph_ids") or ())
+        assert len(set(ids)) <= limit, f"单页段落数不得超过候选上限：{len(ids)} > {limit}"
+        landed.extend(str(item) for item in ids)
+    assert set(landed) == set(paragraph_ids), "分页不得丢段落"
+    assert len(landed) == len(paragraph_ids), "分页不得重复段落"

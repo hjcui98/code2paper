@@ -2632,6 +2632,11 @@ def extend_writer_worksets_from_narrative_plan(
     ) -> list[ConsumerTechnicalPageV2]:
         atom_ids = sorted(required_atoms)
         if not atom_ids:
+            # 审计 §C.1/§C.2：无 atom 不等于没有叙事任务或输出成本。旧实现在这里直接
+            # 返回**一张** header 页，把全部段落塞进去，候选页段数上限完全没被使用
+            # （审计最小反例 A：7 个无 atom 作者段落 + 上限 6 仍是一页）。
+            # 现在按同一套候选页判据分页：段数上限（辅助安全限）+ 输入 token 预算；
+            # 单个段落自身就超限时给出说明真实限制维度的 typed failure（§C.4）。
             page_kind = "header"
             page_mechanism_id = (
                 sorted(mechanism_ids)[0]
@@ -2640,40 +2645,92 @@ def extend_writer_worksets_from_narrative_plan(
                 else f"header:{section_id}"
             )
             header = _mechanism_header(mechanism_ids, section_id)
-            paragraph_ids = tuple(dict.fromkeys(
+            archive_digest_value = (
+                archive.content_digest if archive is not None else manifest.archive_digest
+            )
+            ordered_paragraph_ids = list(dict.fromkeys(
                 str(row.get("paragraph_id") or "")
                 for row in paragraph_rows
                 if isinstance(row, Mapping) and str(row.get("paragraph_id") or "").strip()
             ))
-            payload = _section_page_payload(
-                archive_digest=archive.content_digest if archive is not None else manifest.archive_digest,
-                header=header,
-                section_id=section_id,
-                task_ids=task_ids,
-                paragraph_ids=paragraph_ids,
-                detail_ids=(),
-                obligation_ids=(),
-                atom_ids=(),
-                atom_payloads=atom_payloads,
-                page_kind=page_kind,
-                mechanism_ids=mechanism_ids,
-            )
-            page_id, _page_bytes, bytes_digest = compute_technical_page_id(
-                archive_digest=archive.content_digest if archive is not None else manifest.archive_digest,
-                technical_payload=payload,
-            )
-            return [
-                ConsumerTechnicalPageV2(
+            paragraph_limit = _max_semantic_paragraphs_per_page()
+            header_pages: list[ConsumerTechnicalPageV2] = []
+            current_ids: list[str] = []
+
+            def _header_page(ids: Sequence[str]) -> ConsumerTechnicalPageV2:
+                payload = _section_page_payload(
+                    archive_digest=archive_digest_value,
+                    header=header,
+                    section_id=section_id,
+                    task_ids=task_ids,
+                    paragraph_ids=tuple(ids),
+                    detail_ids=(),
+                    obligation_ids=(),
+                    atom_ids=(),
+                    atom_payloads=atom_payloads,
+                    page_kind=page_kind,
+                    mechanism_ids=mechanism_ids,
+                )
+                page_id, _page_bytes, bytes_digest = compute_technical_page_id(
+                    archive_digest=archive_digest_value,
+                    technical_payload=payload,
+                )
+                return ConsumerTechnicalPageV2(
                     page_id=page_id,
                     page_kind=page_kind,
-                    archive_digest=archive.content_digest if archive is not None else manifest.archive_digest,
+                    archive_digest=archive_digest_value,
                     mechanism_id=page_mechanism_id,
                     atom_ids=(),
                     technical_payload=payload,
                     technical_bytes_digest=bytes_digest,
                     token_estimate=conservative_token_estimate(payload),
                 )
-            ]
+
+            def _header_over_budget(ids: Sequence[str]) -> str:
+                """返回超限维度（"" = 未超限）。段数是辅助限，token 是主限。"""
+
+                payload_tokens = conservative_token_estimate(
+                    _section_page_payload(
+                        archive_digest=archive_digest_value,
+                        header=header,
+                        section_id=section_id,
+                        task_ids=task_ids,
+                        paragraph_ids=tuple(ids),
+                        detail_ids=(),
+                        obligation_ids=(),
+                        atom_ids=(),
+                        atom_payloads=atom_payloads,
+                        page_kind=page_kind,
+                        mechanism_ids=mechanism_ids,
+                    )
+                )
+                if payload_tokens > max_page_input_tokens:
+                    return f"input_tokens:{payload_tokens}>{max_page_input_tokens}"
+                if paragraph_limit > 0 and len(set(ids)) > paragraph_limit:
+                    return (
+                        f"paragraph_count:{len(set(ids))}>{paragraph_limit}"
+                    )
+                return ""
+
+            for paragraph_id in ordered_paragraph_ids:
+                candidate_ids = [*current_ids, paragraph_id]
+                dimension = _header_over_budget(candidate_ids)
+                if dimension and current_ids:
+                    header_pages.append(_header_page(current_ids))
+                    current_ids = []
+                    candidate_ids = [paragraph_id]
+                    dimension = _header_over_budget(candidate_ids)
+                if dimension:
+                    # 单段自身超限：如实报出限制维度，不再只打印一个其实未超的不等式。
+                    raise UnifiedCompilerError(
+                        UNIFIED_ATOMIC_PAGE_OVER_BUDGET,
+                        f"section {section_id} paragraph {paragraph_id} alone exceeds "
+                        f"the header page contract ({dimension})",
+                    )
+                current_ids = candidate_ids
+            if current_ids or not header_pages:
+                header_pages.append(_header_page(current_ids))
+            return header_pages
         for atom_id in atom_ids:
             if atom_id not in atom_payloads:
                 raise UnifiedCompilerError(

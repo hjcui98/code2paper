@@ -3883,3 +3883,26 @@ realizer/writer 调用，本地即可结算）/ 1 `content_budget_exhausted`（M
 C.2 统一候选页判定并让段数上限成为辅助安全限、C.3 输出估量补齐 witness span 与 schema
 骨架、C.4 页重组优先于拆段并记录 fragment 义务映射、C.5 重分页后重建 invocation/预算/
 快照。
+
+### PR C（F01）第二片：无 atom 的叙事段落按同一候选页契约分页（§C.1/§C.2）
+
+复现的旧行为：`_build_section_pages` 在 `not atom_ids` 时**直接返回一张 header 页**，
+把该 section 的全部段落塞进去，候选页段数上限完全没被使用（审计最小反例 A：7 个无 atom
+作者段落 + 上限 6 仍是一页）。
+
+修复：header 分支改为按**同一套候选页判据**分页——段数上限（辅助安全限）+
+`max_page_input_tokens`（主限）；单个段落自身超限时给出说明**真实限制维度**的 typed
+failure（`paragraph_count:N>limit` 或 `input_tokens:N>limit`），不再只打印一个其实未超的
+不等式（§C.4 末条）。
+
+回归：`test_narrative_only_section_is_paged_by_the_candidate_contract`（7 段无 atom →
+≥2 页、每页 ≤ 上限、段落不丢不重）。全量离线 3815 passed、3 deselected、12 subtests passed。
+
+**PR C 仍缺少（下一轮）**：
+- C.1 混合 section：技术分组仍对 `not group_atoms` 执行 `continue`，叙事段落由 adapter
+  追加到 residual 页——最终请求的段落数因此仍可能超出候选上限（当前由 §C.6 发送前复核
+  fail-closed 拦住，但编译器本身还没统一 packing unit）；
+- C.1 段落顺序：实测冻结请求是字典序而不是叙述顺序（见上一节）；
+- C.2 段数上限的显式策略标注（0=关闭只能是显式实验配置，生产准入需标注）；
+- C.3 输出估量补 witness span 与 schema 骨架计量；C.4 拆段义务映射；C.5 重分页后重建
+  invocation/预算/快照。
