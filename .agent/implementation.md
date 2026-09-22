@@ -4875,3 +4875,51 @@ C01–C07、D01–D06、E01–E06、F01–F06、G01–G06）各指向仓库里**
 
 注意：本映射证明"每行有对应证据且证据存在"，证据本身的通过由完整离线套件保证
 （本轮 3952+49 项全绿）。两条回归目录 389 项通过。
+
+## 2026-09-22 审计 §16：完成定义自评（含禁止性验收逐条自查）
+
+### §16.1 代码修复完成
+
+| 要求 | 证据 | 结论 |
+|---|---|---|
+| A–F 关键反例通过 | §13 矩阵 42 行全部有证据（`test_matrix_coverage.py` 自检），逐条最小反例在各自 PR 记录里 | ✅ |
+| 修改点不是孤立 helper | 每个切片都有产品入口行为测试：离线 e2e（run summary/registry/journal）、unified writer 真实运行（G.1/G.2/G.4/G.6）、崩溃注入（G.3）、replay 入口（F.5）、CLI（G.5 scope/退出码） | ✅ |
+| 生产调用路径有行为测试 | `publish_artifact_transaction` 在 finalize/identity 真实调用；`closed_binding_target_keys` 在 Binder 真实调用；`_settle_recorded_writer_attempt` 在页面循环真实调用；`verify_index_managed_replay_inputs` 在 `_replay` 真实调用 | ✅ |
+| 已有离线测试无意外退化 | 本轮 `python -m pytest -q -m 'not live_llm'` = **4001 passed / 3 deselected / 12 subtests / exit 0**；另 `record-offline-receipt` 重新生成（绑定当前 engine+validator+必测集合） | ✅ |
+| 新 schema/身份语义迁移清楚 | 身份 `schema_version="2.0"` 为 `Literal`；旧 `run_identity_v1.json` 不被改写（模块 docstring 明示 I8）；legacy 身份 → `RESUME_IDENTITY_LEGACY` + `allowed_next_action=explicit_fork_authoring`（`test_legacy_identity_cannot_be_strictly_resumed`） | ✅ |
+| 旧归档字节保持不变 | 自冻结基线 `3aa9db8d` 起 85 个提交共 158 个改动路径，**全部**落在 `src/`(61)、`tests/`(54)、`.agent/`(40)、`scripts/`(3)；无任何 `artifacts/`、归档或文档文件被改动；工作树既有脏改动（docs/README.md、paperbanana_single_shot、未跟踪 docs/artifacts）原样保留 | ✅ |
+
+### §16.2 恢复机制完成
+
+崩溃矩阵（G.3 六个落盘点）、预算与 ledger 口径一致（`test_all_readers_agree_on_the_same_conclusion`）、
+未知发送不重复调用（`send_outcome_unknown` 保持且 0 次调用）、已收到响应本地继续
+（validation replay 生产者，`accepted_reusable`）、fork 按相同 birth metadata 恢复
+（`test_fork_authoring_can_resume_without_changing_birth_metadata`）、所有入口同一主因
+（reducer 单一结论 + doctor 一致）——均 ✅。
+
+### §16.3 质量改善得到证据
+
+**未完成，且按本轮授权范围无法完成**：L1/L2/L3 的实际 scope/结果需要**授权的 live 运行**
+（目标明确写"不做未授权 live"），可发表性需要指定盲评/人工核对。当前只有 offline-ready
+证据（G.5 已把 offline-ready 与 live-ready 分成两组门并给出 live 阻断清单：
+部署探测、四角色预算、输出上限、停止条件）。因此**不宣称质量改善已完成**。
+
+### §16.4 禁止性验收逐条自查
+
+| 禁止项 | 自查 |
+|---|---|
+| 只有新增模块和单元测试，没有生产接线 | 不适用：每个 PR 都有产品入口测试（见 §16.1 表） |
+| 只有 pytest 总数，没有测试范围/engine 绑定 | 不适用：离线回执绑定 engine digest + validator bundle + 必测集合 + 原始输出摘要 |
+| 只有 provider=NONE + write_method_text=False 的 smoke | 不适用：G.1/G.2 走真实 writer→binder→composition→发布边界（fake provider，真实链路） |
+| 只有 prepare 产物，没有 Writer/Binder/正文交付 | **部分适用**：candidate 已完整（writer_content accepted + Binder 全目标见证 + 聚合完成），Verified 正文仍为空——原因是夹具证据 span 无 excerpt 且句子未逐句 claim 对齐（已具名记录），不是产品门缺失 |
+| 只看到"6 段上限"，没有核对真实 request 中的全部段落 | 不适用：C02 核对**实际请求**段落集合/顺序与冻结契约 |
+| 只看到 index 存在，没有复核消费字节和 upstream | 不适用：F.5 的 validated read + 改动检测（doctor/summary/replay 三处） |
+| 只看到 accepted=true，没有对应 request/response/validator 绑定 | 不适用：acceptance sidecar 带 request/response digest 与 validator bundle；I6 证明 accepted ≠ published |
+| 只看到更少 tokens，没有同任务集合与有效交付条件 | 不适用：G.4/G.5 要求任务集合一致且覆盖不退化 |
+| 只在删除旧 ledger 后成功 | 不适用：崩溃注入只**截断到崩溃点**以构造现场，恢复过程不删账本（replay 亦为 append-only） |
+
+### 结论
+
+F01–F12 的代码修复与离线可验证部分（PR A–G、§4 不变量、§13 矩阵、§16.1/§16.2）已完成并有
+可复算证据；**§16.3（live 质量改善证据）因未获授权而保持未完成**，这是目标本身划定的边界，
+不是遗漏。
