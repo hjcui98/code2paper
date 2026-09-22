@@ -3832,3 +3832,20 @@ realizer/writer 调用，本地即可结算）/ 1 `content_budget_exhausted`（M
 状态表 + §B.6 补充反例（两次真实失败无拒发记录、两次纯拒发零发送、接受后残留拒发记录、
 同页不同 validator、所有 reader 结论一致）。全量离线 3800 passed、3 deselected、
 12 subtests passed、exit 0。
+
+### PR B 尾部：本地验证重放结算（§B.5）与未知发送预留（§B.2）
+
+- 新增 `ValidationReplayV1` + `publish_validation_replay` + `read_validation_replays`：
+  本地结算写成**新增**的 `attempt-XXXX.validation-replay.<validator>.json`，显式携带
+  `source_response_digest` / `validator_bundle_digest` / `contract_digest`；拒绝两种情况：
+  该 attempt 已有历史 `content-acceptance.json`（不得冒充历史结论）、同一 validator 的
+  重放已存在（重放自身幂等）。
+- reducer 消费重放：当前 validator 身份且 accepted → `accepted_reusable`；同一 attempt 已
+  结算过 → 不再算"待本地验收"；rejected 重放按其失败码计入内容预算；**旧 validator 身份**
+  的重放被标为 `stale_validation_replay:<attempt>:<digest>` 并拒绝复用。
+- §B.2 用测试钉住既有行为：`send_outcome_unknown` 的 attempt 在崩溃点视角
+  （`unsettled_reservations`）与预算视角（`unsettled_started_attempt_records`）都保留，
+  且 `acceptance_replayable=False` —— 未知结果既不能被当成"未发送"，也不能被当成
+  "真实 0 tokens"。
+
+测试：`test_ledger_recovery_matrix.py` 扩到 19 项。

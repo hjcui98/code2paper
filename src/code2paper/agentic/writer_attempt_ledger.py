@@ -443,6 +443,32 @@ def reduce_invocation_recovery(
             # 有可评价响应但缺少验收记录 → 待本地验收，不得当成接受。
             unvalidated_attempts.append(attempt)
 
+    # 本地验证重放（§B.5）：只认**当前 validator 身份**的重放；旧身份的重放不得复用。
+    replays = read_validation_replays(directory)
+    stale_replays: list[str] = []
+    for record, _path in replays:
+        expected_validator = str((contract_digests or {}).get("validator_bundle_digest") or "")
+        if expected_validator and record.validator_bundle_digest != expected_validator:
+            stale_replays.append(
+                f"stale_validation_replay:{record.attempt}:{record.validator_bundle_digest}"
+            )
+            continue
+        # 无论接受与否，该 attempt 都已经结算过 → 不再是"待本地验收"。
+        unvalidated_attempts = [a for a in unvalidated_attempts if a != record.attempt]
+        completed_payload = {}
+        if "completed" in events.get(record.attempt, {}):
+            completed_payload = (
+                _read_json_object(events[record.attempt]["completed"])[0] or {}
+            )
+        if record.accepted:
+            accepted = True
+            if not bool(completed_payload.get("content_repair_attempt")):
+                primary_accepted = True
+        else:
+            rejected_attempts.append(record.attempt)
+            if record.failure_codes:
+                failure_codes = tuple(record.failure_codes)
+
     if corrupt:
         state: AttemptRecoveryStateV1 = "ledger_corrupt"
         cause = "ledger_corrupt:" + ",".join(sorted(dict.fromkeys(corrupt))[:3])
@@ -491,7 +517,7 @@ def reduce_invocation_recovery(
         last_content_failure_codes=failure_codes,
         last_rejection_code=last_rejection,
         last_provider_attempt=last_provider_attempt,
-        contract_mismatch=tuple(dict.fromkeys(contract_mismatch)),
+        contract_mismatch=tuple(dict.fromkeys(contract_mismatch + stale_replays)),
         evidence={
             f"attempt-{attempt:04d}": ",".join(sorted(events[attempt]))
             for attempt in sorted(events)
@@ -535,6 +561,101 @@ def _recovery(
         last_provider_attempt=int(last_provider_attempt),
         contract_mismatch=contract_mismatch,
     )
+
+
+#: 本地验证重放记录的文件名模式（审计 §B.5）：**新增**证据，绝不改写历史 acceptance。
+VALIDATION_REPLAY_SUFFIX = ".validation-replay."
+
+
+class ValidationReplayV1(BaseModel):
+    """一次本地结算的只读记录（审计 §B.5）。
+
+    "缺失结算"与"validator/代码身份变化后的重验"必须能被区分：因此重放记录显式携带
+    ``source_response_digest`` 与 ``validator_bundle_digest``，并且**只新增、不覆盖**。
+    """
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    schema_version: str = "1.0"
+    invocation_id: str
+    attempt: int
+    accepted: bool
+    failure_codes: tuple[str, ...] = ()
+    source_response_digest: str = ""
+    validator_bundle_digest: str = ""
+    contract_digest: str = ""
+    detail: str = ""
+
+
+def validation_replay_path(
+    invocation_dir: Path, attempt: int, validator_bundle_digest: str
+) -> Path:
+    token = str(validator_bundle_digest or "unspecified").removeprefix("sha256:")[:16]
+    return invocation_dir / f"attempt-{attempt:04d}{VALIDATION_REPLAY_SUFFIX}{token}.json"
+
+
+def read_validation_replays(
+    invocation_dir: Path,
+) -> tuple[tuple[ValidationReplayV1, Path], ...]:
+    """读取全部本地验证重放记录（不解析/不删除，损坏的跳过并留给 reducer 报块）。"""
+
+    if not invocation_dir.is_dir():
+        return ()
+    found: list[tuple[ValidationReplayV1, Path]] = []
+    for path in sorted(invocation_dir.glob(f"attempt-*{VALIDATION_REPLAY_SUFFIX}*.json")):
+        payload, error = _read_json_object(path)
+        if error or payload is None:
+            continue
+        try:
+            found.append((ValidationReplayV1.model_validate(payload), path))
+        except Exception:  # noqa: BLE001 - 损坏记录由调用方按块报告
+            continue
+    return tuple(found)
+
+
+def publish_validation_replay(
+    out_root: str | Path,
+    invocation_id: str,
+    *,
+    attempt: int,
+    accepted: bool,
+    validator_bundle_digest: str,
+    source_response_digest: str = "",
+    contract_digest: str = "",
+    failure_codes: tuple[str, ...] = (),
+    detail: str = "",
+) -> Path:
+    """原子地追加一条本地结算记录（审计 §B.5）。
+
+    拒绝的两种情况：
+    * 该 attempt 已有**历史** ``content-acceptance.json`` —— 历史结论不可被本地重放冒充；
+    * 同一 validator 身份的重放已存在 —— 重放本身也必须幂等。
+    """
+
+    directory, resolve_error = _resolve_invocation_directory(Path(out_root), str(invocation_id))
+    if resolve_error or not directory.is_dir():
+        raise FileNotFoundError(f"invocation_directory_unresolved:{invocation_id}")
+    if (directory / f"attempt-{attempt:04d}.content-acceptance.json").is_file():
+        raise ValueError("validation_replay_refuses_to_shadow_historical_acceptance")
+    path = validation_replay_path(directory, int(attempt), validator_bundle_digest)
+    if path.is_file():
+        raise ValueError("validation_replay_already_published")
+    record = ValidationReplayV1(
+        invocation_id=str(invocation_id),
+        attempt=int(attempt),
+        accepted=bool(accepted),
+        failure_codes=tuple(failure_codes),
+        source_response_digest=str(source_response_digest or ""),
+        validator_bundle_digest=str(validator_bundle_digest or ""),
+        contract_digest=str(contract_digest or ""),
+        detail=str(detail or "")[:320],
+    )
+    path.write_text(
+        json.dumps(record.model_dump(mode="json"), ensure_ascii=False, sort_keys=True, indent=2)
+        + "\n",
+        encoding="utf-8",
+    )
+    return path
 
 
 def read_invocation_ledger_state(
@@ -781,4 +902,13 @@ __all__ = [
     "read_attempt_outcomes",
     "read_invocation_ledger_state",
     "unsettled_reservations",
+    "AttemptRecoveryStateV1",
+    "InvocationRecoveryV1",
+    "RECOVERY_ACTIONS",
+    "reduce_invocation_recovery",
+    "ValidationReplayV1",
+    "publish_validation_replay",
+    "read_validation_replays",
+    "validation_replay_path",
+    "VALIDATION_REPLAY_SUFFIX",
 ]

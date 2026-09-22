@@ -301,3 +301,171 @@ def test_all_readers_agree_on_the_same_conclusion(tmp_path: Path) -> None:
     assert unsettled == ()
     assert outcomes, "attempt 集合必须来自全部事件文件"
     assert {item.attempt for item in outcomes} == {1, 2}
+
+
+# --------------------------------------------------------------------------- #
+# §B.5：本地验证重放结算（只新增，不改写历史）
+# --------------------------------------------------------------------------- #
+
+
+def _pending_validation_ledger(tmp_path: Path) -> Path:
+    directory = _ledger(tmp_path)
+    _write(directory, 1, "started")
+    _write(directory, 1, "request", {})
+    _write(directory, 1, "response", {"response_digest": "sha256:resp"})
+    _write(directory, 1, "completed", _completed_payload())
+    return directory
+
+
+def test_local_replay_settles_a_pending_validation(tmp_path: Path) -> None:
+    from code2paper.agentic.writer_attempt_ledger import (
+        publish_validation_replay,
+        read_validation_replays,
+    )
+
+    directory = _pending_validation_ledger(tmp_path)
+    assert _reduce(tmp_path).state == "validation_pending"
+
+    path = publish_validation_replay(
+        tmp_path,
+        INVOCATION,
+        attempt=1,
+        accepted=True,
+        validator_bundle_digest="sha256:validator-current",
+        source_response_digest="sha256:resp",
+        contract_digest="sha256:plan",
+    )
+    assert path.is_file()
+    assert not (directory / "attempt-0001.content-acceptance.json").exists(), (
+        "本地重放不得改写/伪造历史 acceptance"
+    )
+
+    recovery = _reduce(
+        tmp_path, contract_digests={"validator_bundle_digest": "sha256:validator-current"}
+    )
+    assert recovery.state == "accepted_reusable"
+    assert recovery.accepted is True
+    assert len(read_validation_replays(directory)) == 1
+
+
+def test_replay_from_an_old_validator_is_not_reused(tmp_path: Path) -> None:
+    """validator 身份变了 → 旧重放不得冒充当前契约的接受（§B.5）。"""
+
+    from code2paper.agentic.writer_attempt_ledger import publish_validation_replay
+
+    _pending_validation_ledger(tmp_path)
+    publish_validation_replay(
+        tmp_path,
+        INVOCATION,
+        attempt=1,
+        accepted=True,
+        validator_bundle_digest="sha256:validator-old",
+        source_response_digest="sha256:resp",
+    )
+
+    recovery = _reduce(
+        tmp_path, contract_digests={"validator_bundle_digest": "sha256:validator-new"}
+    )
+    assert recovery.accepted is False
+    assert recovery.state == "validation_pending"
+    assert recovery.contract_mismatch == (
+        "stale_validation_replay:1:sha256:validator-old",
+    )
+
+
+def test_rejected_replay_consumes_budget_like_a_real_rejection(tmp_path: Path) -> None:
+    from code2paper.agentic.writer_attempt_ledger import publish_validation_replay
+
+    directory = _ledger(tmp_path)
+    for attempt in (1, 2):
+        _write(directory, attempt, "started")
+        _write(directory, attempt, "request", {})
+        _write(directory, attempt, "response", {})
+        _write(directory, attempt, "completed", _completed_payload(repair=attempt == 2))
+        publish_validation_replay(
+            tmp_path,
+            INVOCATION,
+            attempt=attempt,
+            accepted=False,
+            validator_bundle_digest="sha256:validator-current",
+            failure_codes=("detail_witness_missing",),
+        )
+
+    recovery = _reduce(
+        tmp_path, contract_digests={"validator_bundle_digest": "sha256:validator-current"}
+    )
+    assert recovery.state == "content_budget_exhausted"
+    assert recovery.last_content_failure_codes == ("detail_witness_missing",)
+
+
+def test_replay_publication_is_idempotent_and_history_protected(tmp_path: Path) -> None:
+    from code2paper.agentic.writer_attempt_ledger import publish_validation_replay
+
+    directory = _pending_validation_ledger(tmp_path)
+    publish_validation_replay(
+        tmp_path,
+        INVOCATION,
+        attempt=1,
+        accepted=True,
+        validator_bundle_digest="sha256:validator-current",
+    )
+    with pytest.raises(ValueError, match="already_published"):
+        publish_validation_replay(
+            tmp_path,
+            INVOCATION,
+            attempt=1,
+            accepted=False,
+            validator_bundle_digest="sha256:validator-current",
+        )
+
+    # 有历史 acceptance 的 attempt：本地重放必须拒绝，不能覆盖历史结论。
+    _write(directory, 2, "started")
+    _write(directory, 2, "completed", _completed_payload())
+    _write(directory, 2, "acceptance", {"accepted": False, "failures": []})
+    with pytest.raises(ValueError, match="shadow_historical_acceptance"):
+        publish_validation_replay(
+            tmp_path,
+            INVOCATION,
+            attempt=2,
+            accepted=True,
+            validator_bundle_digest="sha256:validator-current",
+        )
+
+
+# --------------------------------------------------------------------------- #
+# §B.2：未知发送结果必须保留预留，且不得记成"真实 0 tokens"
+# --------------------------------------------------------------------------- #
+
+
+def test_unknown_send_outcome_keeps_its_reservation(tmp_path: Path) -> None:
+    from code2paper.agentic.writer_attempt_ledger import (
+        SEND_OUTCOME_UNKNOWN,
+        read_attempt_outcomes,
+        unsettled_reservations,
+    )
+
+    directory = _ledger(tmp_path)
+    _write(directory, 1, "started")
+    _write(directory, 1, "request", {"reserved_input_tokens": 7258})
+
+    recovery = _reduce(tmp_path)
+    assert recovery.state == "send_outcome_unknown"
+    assert recovery.unknown_reservation_attempts == (1,)
+
+    outcomes = read_attempt_outcomes(tmp_path, INVOCATION)
+    assert [item.state for item in outcomes] == [SEND_OUTCOME_UNKNOWN]
+    assert outcomes[0].reservation_retained is True
+    assert outcomes[0].acceptance_replayable is False
+    assert unsettled_reservations(tmp_path, INVOCATION) == outcomes
+
+    # 未知结果不得被当成"已结算的 0 调用"：预算视角仍需保留它。
+    from code2paper.agentic.unified_invocation_ledger import (
+        unsettled_started_attempt_records,
+    )
+
+    class _Plan:
+        invocations = ()
+
+    records = unsettled_started_attempt_records(directory.parent, _Plan())
+    assert records, "started 但无 completed 的 attempt 必须保留在预算视角里"
+    assert any(getattr(item, "attempt", 0) == 1 for item in records)
