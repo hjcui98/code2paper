@@ -4923,3 +4923,23 @@ C01–C07、D01–D06、E01–E06、F01–F06、G01–G06）各指向仓库里**
 F01–F12 的代码修复与离线可验证部分（PR A–G、§4 不变量、§13 矩阵、§16.1/§16.2）已完成并有
 可复算证据；**§16.3（live 质量改善证据）因未获授权而保持未完成**，这是目标本身划定的边界，
 不是遗漏。
+
+### §14.4 离线回执重新生成（本轮）
+
+用真实命令重新生成 live 准入回执（不是声明值）：
+
+```
+python -c "from code2paper.cli.agentic_run import method_agent_main; ..."
+  → method_agent_main(['record-offline-receipt', '--out',
+     'artifacts/runs/2026-09-18-live-admission/offline-receipt.json'])
+```
+
+结果：`passed=True exit=0 passed_count=4001 failed=0 deselected=3`，并绑定当前
+engine commit/source digest、`validator_bundle_digest`、必测集合（4/4）与原始输出摘要。
+随后用 `live-admission` 预检复核：回执门 `PASS ... identities_bound=True test_plan=4/4`，
+报告为 `READINESS SCOPE offline_ready`，live 阻断项如实列出（部署探测、四角色预算、
+输出上限、停止条件）。该目录其余 BLOCKER（author materials/budget/run_open）来自它本身
+是旧目录且未提供材料，与回执无关。
+
+**操作注意**：回执同时绑定 `engine_commit_sha`，因此**任何新提交都会让它失效**；最后一次
+提交之后必须重新生成（本轮已在最后一次提交后重跑）。
