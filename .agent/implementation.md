@@ -4822,3 +4822,23 @@ G.2 文件 11 项全绿；回归 + unified 套件 350 项通过。
 测试：真实产品 run + 发布索引 → 验证通过（身份/legacy 身份/run summary 在列）；
 发布索引后改动 run summary → `run_summary:terminal` 不再通过且 blocker 含
 `artifact_bytes_changed_since_index`；空目录不算阻断。回归 + 重放相关套件 375 项通过。
+
+## 2026-09-22 审计 §4：I1–I10 不变量核对（可执行）
+
+新增 `tests/regression_20260922/test_invariants_i1_i10.py`：每个不变量一条最小断言，并在
+docstring 里写明**负责边界**（不新增门禁，只钉住已有 owner 的行为）：
+
+| 不变量 | 核对方式 |
+|---|---|
+| I1 | 产品级：作者-only story（v4 计划）→ 段落 `required_detail_ids=()`、witness targets 为空，且其页 `page_kind=header`、technical payload 无 atom/detail（作者意图不能证明实现） |
+| I2 | `normalize_narrative_plan_mode`：未知值抛 `unknown_narrative_plan_mode`，空值走显式默认 v3（不静默换主线） |
+| I3 | 产品级：`narrative_plan_v3` 里每个 required detail 恰好一个 owner 段落；页合同 required 集合无重复 |
+| I4 | 产品级：每页 atom ⊆ archive 闭包；workset 的 required atom 为集合语义（跨页共享不重复计成果） |
+| I5 | `compare_actual_request_to_page_contract`：重排/改序被拒（`ACTUAL_PAGE_CONTRACT_MISMATCH`）；实际发送的 `max_output_tokens` 超过冻结值 → `output_cap` |
+| I6 | 产品级：Writer 内容阶段 accepted、`writer_transaction_status=success`，但 `publication_ready=False`、`verified_blocking_reasons` 非空、verified 正文为空；同时证明闭集含 atom 义务而 writer_content 阶段不要求 Writer 枚举 |
+| I7 | transport policy：`unknown_outcome_retries<=0`、计入调用预算；`transport_failure_failure_code(sent=True)` 以 `send_outcome_unknown` 开头，`sent=False` 则不是 |
+| I8 | `publish_validation_replay` 拒绝覆盖历史 `content-acceptance`（`validation_replay_refuses_to_shadow_historical_acceptance`），历史文件保持原结论 |
+| I9 | 显式 `reference_digests` 无命中 → `ArtifactIndexError` 且 `active` 里没有该 key（不猜最新文件） |
+| I10 | 质量对照：删任务（`formula.required=0`）与空候选（0 token / 0 页）方向均为 `unknown`；段数上限关闭时 `experiment_acknowledged=False`（准入据此阻断） |
+
+两条回归目录 340 项通过。
