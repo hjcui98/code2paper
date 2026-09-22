@@ -19,6 +19,8 @@ from dataclasses import replace
 from pathlib import Path
 from typing import Any, Callable
 
+import pytest
+
 from code2paper.agentic.publication_method_writer import (
     run_publication_method_writer,
 )
@@ -123,6 +125,47 @@ def _published_text(outputs: dict[str, str]) -> str:
         if path and Path(path).is_file():
             return Path(path).read_text(encoding="utf-8")
     return ""
+
+
+
+def _run_with_paths(
+    tmp_path: Path,
+    caller: Callable[[Any, LLMRequest], LLMResponse],
+    paths: dict[str, str],
+):
+    """用给定 artifact_paths 跑一次产品入口（供注入夹具/变更输入的测试复用）。"""
+
+    from tests.test_agentic_publication_method_writer_unified import (
+        _unified_budget_env,
+    )
+
+    _unified_budget_env()
+    try:
+        return run_publication_method_writer(
+            out_root=tmp_path,
+            artifact_paths=paths,
+            llm_config=_config(),
+            llm_caller=caller,
+            authoring_context_mode="unified",
+        )
+    finally:
+        _clear_unified_budget_env()
+
+
+def _baseline_run(tmp_path: Path) -> tuple[dict[str, str], list[LLMRequest]]:
+    paths = _unified_artifacts(tmp_path)
+    calls: list[LLMRequest] = []
+    result, _outputs = _run_with_paths(tmp_path, _counting(calls), paths)
+    assert result.status in {"success", "incomplete"}
+    return paths, calls
+
+
+def _counting(calls: list[LLMRequest]):
+    def caller(config, request):
+        calls.append(request)
+        return _mock_writer_caller(config, request)
+
+    return caller
 
 
 def test_first_legal_content_runs_the_real_composition_path(tmp_path: Path) -> None:
@@ -688,3 +731,111 @@ def test_formalizer_phase_is_not_substituted_by_the_writer_manifest(
         required_units=1,
     )
     assert writer_disposition.allowed is False
+
+
+# --------------------------------------------------------------------------- #
+# §G.2 场景 5：只有作者说明、没有 implementation atom
+# --------------------------------------------------------------------------- #
+
+
+def test_author_only_paragraph_stays_bounded_without_implementation_proof(
+    tmp_path: Path, monkeypatch
+) -> None:
+    """作者-only 段落必须走"合法有界作者段落"路径：不伪造实现证明，也不因空 context 崩。"""
+
+    import json as _json
+    import os
+
+    from code2paper.agentic.method_architect import NarrativePlanV3
+
+    paths = _unified_artifacts(tmp_path)
+    spine_path = tmp_path / "artifacts" / "author_story_spine_v1.json"
+    spine_path.parent.mkdir(parents=True, exist_ok=True)
+    spine_path.write_text(
+        _json.dumps(
+            {
+                "author_story_spine": [
+                    {
+                        "story_node_id": "story:author-only",
+                        "title": "Motivation for the design.",
+                        "author_statement": "Motivation for the design.",
+                        "intended_role": "motivation",
+                        "notes": ["kind=stage", "priority=must_cover"],
+                        "linked_claim_ids": [],
+                        "linked_obligation_ids": [],
+                    }
+                ]
+            },
+            ensure_ascii=False,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    paths = dict(paths) | {"author_story_spine_v1": str(spine_path)}
+    monkeypatch.setenv("CODE2PAPER_INTENT_NARRATIVE_PLAN", "v4")
+
+    requests: list[LLMRequest] = []
+
+    def caller(config, request):
+        requests.append(request)
+        return _mock_writer_caller(config, request)
+
+    result, outputs = _run_with_paths(tmp_path, caller, paths)
+    assert result.status in {"success", "incomplete", "blocked"}, result.status
+
+    plan = NarrativePlanV3.model_validate_json(
+        Path(outputs["narrative_plan_v3"]).read_text(encoding="utf-8")
+    )
+    author_only = [
+        paragraph
+        for section in plan.sections
+        for paragraph in section.paragraphs
+        if not paragraph.required_detail_ids
+    ]
+    assert author_only, "作者-only 段落必须保留在计划里"
+    paragraph = author_only[0]
+    # 没有实现材料 → 不能有任何必需 target（否则就是在伪造实现证明）。
+    assert paragraph.required_detail_ids == ()
+    assert not (paragraph.witness_contract or {}).get("targets")
+
+    # 该段落到达 Writer 的页合同时同样不能要求实现义务。
+    for request in requests:
+        if getattr(request, "prompt_template_id", "") != WRITER_TEMPLATE:
+            continue
+        for row in (request.input_payload.get("narrative_plan") or {}).get(
+            "paragraphs", []
+        ):
+            if str(row.get("paragraph_id")) != paragraph.paragraph_id:
+                continue
+            assert not (row.get("required_detail_ids") or ())
+            assert not ((row.get("witness_contract") or {}).get("targets") or ())
+
+    assert os.environ.get("CODE2PAPER_INTENT_NARRATIVE_PLAN") == "v4"
+
+
+def test_mutating_a_consumed_artifact_blocks_resume_instead_of_reusing(
+    tmp_path: Path,
+) -> None:
+    """§G.2 场景 8：消费文件被改动 → resume 必须在使用前失败，而不是复用旧回执。"""
+
+    import json as _json
+
+    paths, _calls = _baseline_run(tmp_path)
+    facts = Path(paths["code_facts_v1"])
+    data = _json.loads(facts.read_text(encoding="utf-8"))
+    assert data.get("facts"), "夹具必须有可改动的 code facts"
+    data["facts"][0]["semantic_context"] = list(
+        data["facts"][0].get("semantic_context") or ()
+    ) + ["mutated"]
+    facts.write_text(
+        _json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
+    )
+
+    resume_calls: list[LLMRequest] = []
+    with pytest.raises(ValueError, match="unified_plan_corrupt|unified_resume_digest_mismatch"):
+        _run_with_paths(tmp_path, _counting(resume_calls), paths)
+
+    # 失败发生在"使用之前"：不得发布任何已验证正文。
+    verified = tmp_path / "artifacts" / "06_authoring" / "repository_verified_method.md"
+    if verified.is_file():
+        assert verified.read_text(encoding="utf-8").strip() == ""

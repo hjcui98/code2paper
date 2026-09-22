@@ -4757,3 +4757,20 @@ resume，断言"零重复发送 + 状态与 ledger 一致 + 不发布未验证�
 测试：`test_live_admission.py` 新增 4 项（offline≠live 的四类 live blocker 与 scope 标注、
 补齐 live 声明后 `live_ready=True` 且 policy 记录预算/停止条件、回执的规则与必测集合绑定
 三类判定、CLI 退出码 0/4 与 scope 行）。回归目录 18 项 live 准入测试 + 两套审计回归全绿。
+
+## 2026-09-22 审计 PR G.2（第六片）：场景 5 与场景 8
+
+场景 5（只有作者说明、无 implementation atom）：用 `author_story_spine_v1` 注入一个
+"只有作者说明、无 claim/obligation"的 story，并在 v4 intent 模式下跑真实产品入口。实测
+计划里出现 `MA-S1:P1`（`paragraph_kind=unresolved`、`required_detail_ids=()`、
+witness targets 为 0）与 `MA-S1:P2`（grounded，4 个 target）——作者-only 段落保留在计划里、
+**不要求任何实现义务**，到达 Writer 的页合同同样没有 required detail/target（不伪造实现证明），
+整条链路也没有出现空 context 的 `.model_dump` 崩溃。
+
+场景 8（消费文件被改动）：baseline 之后改动真正的输入产物 `code_facts_v1`
+（archive/plan 都由它派生），resume 必须在使用前失败——实测抛
+`unified_consumer_request_rejected:...:unified_plan_corrupt:...`（注册的冻结计划与重建
+内容不一致），且不发布任何已验证正文。测试断言 typed 失败 + verified 为空，杜绝"依赖缓存
+摘要继续跑"。
+
+G.2 文件 11 项全绿；回归 + unified 套件 350 项通过。
