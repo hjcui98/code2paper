@@ -632,6 +632,28 @@ def build_artifact_index(
     )
 
 
+def load_index_for_reading(
+    out_root: str | Path,
+) -> tuple[AuthoringArtifactIndexV1, str]:
+    """读者消费用的索引解析（审计 §F.5）。
+
+    * 有已发布 revision → 用它（``source="published"``）；
+    * **从未发布过**（``artifact_index_missing``）→ 临时扫描（``source="fresh_scan"``），
+      因为没有可比对的冻结对象记录；
+    * 已发布但**不可用**（读取失败/自身摘要变化/schema 不支持）→ 抛
+      ``ArtifactIndexError``，**绝不回退重扫**：重扫会把"发布后被改动的文件"重新认证，
+      变异检测将永远为假。
+    """
+
+    try:
+        index = load_published_artifact_index(out_root)
+    except ArtifactIndexError as exc:
+        if not str(exc).startswith("artifact_index_missing:"):
+            raise
+        return build_artifact_index(out_root), "fresh_scan"
+    return index, "published"
+
+
 def load_published_artifact_index(out_root: str | Path) -> AuthoringArtifactIndexV1:
     """读取**已发布**的索引 revision（审计 §F.5：reader 不得临时重扫来自证清白）。
 
@@ -1157,6 +1179,7 @@ __all__ = [
     "artifact_index_path",
     "build_artifact_index",
     "build_resolved_authoring_snapshot",
+    "load_index_for_reading",
     "load_published_artifact_index",
     "publish_artifact_index",
     "write_resolved_authoring_snapshot",

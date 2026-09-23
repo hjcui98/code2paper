@@ -61,7 +61,10 @@ MATRIX_EVIDENCE: dict[str, tuple[str, ...]] = {
         "tests/regression_20260917/test_output_feasibility.py::test_formula_package_and_obligation_are_not_double_counted",
         "tests/regression_20260917/test_page_contract_recheck.py::test_namespace_formula_package_is_spliced_not_crashed",
     ),
-    "C05": ("tests/regression_20260917/test_output_feasibility.py::test_repage_budget_failure_code_distinguishes_revised_plan",),
+    "C05": (
+        "tests/regression_20260917/test_output_feasibility.py::test_repage_budget_insufficiency_blocks_without_truncating_obligations",
+        "tests/regression_20260917/test_output_feasibility.py::test_repage_budget_failure_code_distinguishes_revised_plan",
+    ),
     "C06": ("tests/regression_20260917/test_page_contract_recheck.py::test_adapter_appending_paragraphs_is_rejected",),
     "C07": ("tests/regression_20260917/test_page_contract_recheck.py::test_raising_the_output_cap_is_rejected",),
     # D：作者/实现语义保真

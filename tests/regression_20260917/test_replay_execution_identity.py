@@ -367,3 +367,53 @@ def test_replay_refuses_to_start_on_unverified_inputs(tmp_path: Path) -> None:
     (frozen / "artifacts").mkdir(parents=True, exist_ok=True)
     verified, blockers = module.verify_index_managed_replay_inputs(frozen)
     assert verified == [] and blockers == [], "没有产出的阶段不算阻断"
+
+
+def test_replay_refuses_when_the_published_index_is_unusable(tmp_path: Path) -> None:
+    """§F.5：已发布索引损坏时不得回退重扫（重扫会把改动过的回执重新认证）。"""
+
+    from code2paper.agentic.authoring_artifact_index import (
+        artifact_index_path,
+        publish_artifact_index,
+    )
+
+    from .test_authoring_end_to_end_offline import _run as _product_run
+
+    module = _load_script()
+    frozen = tmp_path / "frozen-run"
+    _product_run(frozen)
+    publish_artifact_index(frozen)
+
+    # 1) 索引与当前字节一致 → 通过。
+    verified, blockers = module.verify_index_managed_replay_inputs(frozen)
+    assert blockers == [], blockers
+    assert "run_summary:terminal" in verified
+
+    # 2) 改动受管理产物 → 被拒绝（字节与索引不一致）。
+    summary = frozen / "artifacts" / "research_product" / "run_summary.json"
+    payload = json.loads(summary.read_text(encoding="utf-8"))
+    payload["run_id"] = "mutated-after-index"
+    summary.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+    verified_mutated, blockers_mutated = module.verify_index_managed_replay_inputs(
+        frozen
+    )
+    assert any(
+        "artifact_bytes_changed_since_index" in blocker
+        for blocker in blockers_mutated
+    ), blockers_mutated
+
+    # 3) 破坏索引自身摘要 → 仍然必须拒绝：不得重扫后"重新接受"。
+    index_path = artifact_index_path(frozen)
+    index_payload = json.loads(index_path.read_text(encoding="utf-8"))
+    index_payload["content_digest"] = "sha256:" + "0" * 64
+    index_path.write_text(
+        json.dumps(index_payload, indent=2) + "\n", encoding="utf-8"
+    )
+
+    verified_broken, blockers_broken = module.verify_index_managed_replay_inputs(frozen)
+    assert verified_broken == []
+    assert any(
+        blocker.startswith("artifact_index_unusable:")
+        and "artifact_index_digest_changed" in blocker
+        for blocker in blockers_broken
+    ), blockers_broken

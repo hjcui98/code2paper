@@ -21,6 +21,8 @@ __all__ = [
     "capture_page_contract_snapshot",
     "page_contract_snapshot_from_payload",
     "compare_actual_request_to_page_contract",
+    "page_output_cap_failures",
+    "resolve_frozen_page_output_cap",
     "ACTUAL_PAGE_CONTRACT_MISMATCH",
 ]
 
@@ -138,6 +140,47 @@ def page_contract_snapshot_from_payload(
         request_digest=str(request_digest or ""),
         source_path=str(source_path or ""),
     )
+
+
+def resolve_frozen_page_output_cap(
+    snapshot: PageContractSnapshotV1 | None,
+    invocation: Any | None = None,
+) -> int:
+    """该页**冻结**的输出上限（审计 §C.6）。
+
+    请求 payload 里显式声明的 ``config.max_output_tokens`` 优先；真实 unified 页请求
+    不携带 ``config``，此时以调用计划冻结的每页预算为准。两者都没有时返回 0，表示
+    "没有冻结值"（调用方不得据此放行一个未知的实际上限）。
+    """
+
+    declared = int(getattr(snapshot, "max_output_tokens", 0) or 0)
+    if declared > 0:
+        return declared
+    return int(getattr(invocation, "max_output_tokens", 0) or 0)
+
+
+def page_output_cap_failures(
+    snapshot: PageContractSnapshotV1 | None,
+    invocation: Any | None = None,
+    *,
+    actual_max_output_tokens: int,
+) -> tuple[str, ...]:
+    """比较冻结与**实际**输出上限（审计 §C.6/§C.7）。
+
+    * 冻结值未知（0）→ 没有可比对象，不产出失败（envelope digest 仍覆盖 primary）；
+    * 实际值未知（0）而冻结值 >0 → fail-closed：无法证明没超限，不得静默放行；
+    * 实际值 > 冻结值 → 契约不匹配（发送前拒绝）。
+    """
+
+    frozen = resolve_frozen_page_output_cap(snapshot, invocation)
+    if frozen <= 0:
+        return ()
+    actual = int(actual_max_output_tokens or 0)
+    if actual <= 0:
+        return ("unified_actual_output_cap_unknown",)
+    if actual > frozen:
+        return (f"{ACTUAL_PAGE_CONTRACT_MISMATCH}:output_cap:{actual}>{frozen}",)
+    return ()
 
 
 def compare_actual_request_to_page_contract(

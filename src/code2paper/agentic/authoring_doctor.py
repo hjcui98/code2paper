@@ -161,16 +161,16 @@ def load_run_summary_validated(out_root: str | Path) -> tuple[Any, str]:
 
     from code2paper.agentic.authoring_artifact_index import (
         ArtifactIndexError,
-        build_artifact_index,
-        load_published_artifact_index,
+        load_index_for_reading,
         read_artifact_validated,
     )
 
     root = Path(out_root).expanduser().resolve()
     try:
-        index = load_published_artifact_index(root)
-    except ArtifactIndexError:
-        index = build_artifact_index(root)
+        index, _source = load_index_for_reading(root)
+    except ArtifactIndexError as exc:
+        # 已发布索引不可用 → 不重扫、不返回被改动内容。
+        return None, f"artifact_index_unusable:{exc}"
     try:
         read = read_artifact_validated(
             index, "run_summary", "terminal", out_root=root
@@ -247,15 +247,27 @@ def _phase_status(index: Any, out_root: Path, role: str, phase: str) -> str:
 def run_authoring_doctor(out_root: str | Path) -> AuthoringDoctorReportV1:
     """只读诊断一个 run 目录；不写文件、不发请求。"""
 
+    from code2paper.agentic.authoring_artifact_index import (
+        ArtifactIndexError,
+        build_artifact_index,
+        load_index_for_reading,
+    )
+
     root = Path(out_root).expanduser().resolve()
     # 审计 §F.5：优先消费**已发布**的索引 revision；没有发布过才退回临时扫描，
-    # 并如实标注来源（否则"发布后改动文件"会被重新扫描重新认证）。
+    # 并如实标注来源（否则"发布后改动文件"会被重新扫描重新认证）。已发布但不可用
+    # 时**不回退**，直接记为 critical。
     index_source = "fresh scan (no published revision)"
+    index_unusable = ""
     try:
-        index = load_published_artifact_index(root)
-        index_source = f"published revision {index.index_revision}"
-    except ArtifactIndexError:
+        index, _source = load_index_for_reading(root)
+        if _source == "published":
+            index_source = f"published revision {index.index_revision}"
+    except ArtifactIndexError as exc:
+        # 审计 §F.5：已发布索引不可用 → 诊断为 CRITICAL，而不是重扫后"看起来正常"。
         index = build_artifact_index(root)
+        index_unusable = f"artifact_index_unusable:{exc}"
+        index_source = index_unusable
 
     execution = index.entry_for("authoring_execution_identity", "research")
     legacy = index.entry_for("run_identity", "research")
@@ -366,6 +378,8 @@ def run_authoring_doctor(out_root: str | Path) -> AuthoringDoctorReportV1:
     critical.extend(
         blocker for blocker in (plan_blocker, receipts_blocker) if blocker
     )
+    if index_unusable:
+        critical.append(index_unusable)
     if paragraph_stats["empty"] > 0:
         critical.append("intent_surface_gaps")
     if paragraph_stats["binder_owned_targets"] > 0:

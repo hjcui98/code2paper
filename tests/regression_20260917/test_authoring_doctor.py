@@ -300,3 +300,44 @@ def test_doctor_blocks_on_a_mutated_invocation_plan(tmp_path) -> None:
     ), report.critical_blockers
     # 计划读取被阻断 → 不再拿未验证的计划列出逐页状态。
     assert report.page_count == 0
+
+
+def test_doctor_fails_closed_when_the_published_index_is_unusable(tmp_path: Path) -> None:
+    """§F.5：索引损坏时 doctor 报 critical，且不返回被改动内容。"""
+
+    import json as _json
+
+    from code2paper.agentic.authoring_artifact_index import (
+        artifact_index_path,
+        publish_artifact_index,
+    )
+    from code2paper.agentic.authoring_doctor import (
+        load_run_summary_validated,
+        run_authoring_doctor,
+    )
+
+    from .test_authoring_end_to_end_offline import _run as _product_run
+
+    out_root = tmp_path / "run"
+    _product_run(out_root)
+    publish_artifact_index(out_root)
+    payload, blocker = load_run_summary_validated(out_root)
+    assert blocker == "" and payload["run_id"] == "e2e-offline"
+
+    index_path = artifact_index_path(out_root)
+    index_payload = _json.loads(index_path.read_text(encoding="utf-8"))
+    index_payload["content_digest"] = "sha256:" + "0" * 64
+    index_path.write_text(
+        _json.dumps(index_payload, indent=2) + "\n", encoding="utf-8"
+    )
+
+    payload_broken, blocker_broken = load_run_summary_validated(out_root)
+    assert payload_broken is None
+    assert blocker_broken.startswith("artifact_index_unusable:"), blocker_broken
+
+    report = run_authoring_doctor(out_root)
+    assert any(
+        item.startswith("artifact_index_unusable:")
+        for item in report.critical_blockers
+    ), report.critical_blockers
+    assert report.artifact_index_source.startswith("artifact_index_unusable:")

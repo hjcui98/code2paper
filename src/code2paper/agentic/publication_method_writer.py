@@ -4898,6 +4898,8 @@ def _run_publication_method_writer_impl(
                 capture_page_contract_snapshot,
                 compare_actual_request_to_page_contract,
                 page_contract_snapshot_from_payload,
+                page_output_cap_failures,
+                resolve_frozen_page_output_cap,
             )
 
             if not is_writer_content_repair:
@@ -4914,8 +4916,19 @@ def _run_publication_method_writer_impl(
                 _page_contract_cache[invocation_id] = capture_page_contract_snapshot(
                     Path(ledger_root).parent.parent.parent, invocation_id
                 )
+            # 审计 §C.6：真实 unified 页请求**不携带** ``config``，因此冻结上限必须回落到
+            # 调用计划里的每页预算；实际上限则是本次调用真正使用的 config（调用方会按
+            # 窗口/预算 clamp）。旧实现从并不存在的 ``request.config`` 读取，导致冻结值与
+            # 实际值恒为 0、整条上限复核形同虚设。
+            _frozen_output_cap = resolve_frozen_page_output_cap(
+                _page_contract_cache[invocation_id], invocation
+            )
+            if _frozen_output_cap > 0:
+                _page_contract_cache[invocation_id] = _page_contract_cache[
+                    invocation_id
+                ].model_copy(update={"max_output_tokens": _frozen_output_cap})
             actual_max_output = int(
-                getattr(getattr(request, "config", None), "max_output_tokens", 0) or 0
+                getattr(config, "max_output_tokens", 0) or 0
             )
             request_failures.extend(
                 compare_actual_request_to_page_contract(
@@ -4926,6 +4939,13 @@ def _run_publication_method_writer_impl(
                     section_id=actual_section_id,
                     max_output_tokens=actual_max_output,
                     is_repair=is_writer_content_repair,
+                )
+            )
+            request_failures.extend(
+                page_output_cap_failures(
+                    _page_contract_cache[invocation_id],
+                    invocation,
+                    actual_max_output_tokens=actual_max_output,
                 )
             )
 

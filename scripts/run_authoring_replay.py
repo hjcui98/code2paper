@@ -922,16 +922,17 @@ def verify_index_managed_replay_inputs(
 
     from code2paper.agentic.authoring_artifact_index import (
         ArtifactIndexError,
-        build_artifact_index,
-        load_published_artifact_index,
+        load_index_for_reading,
         read_artifact_validated,
     )
 
     root = Path(frozen).expanduser().resolve()
     try:
-        index = load_published_artifact_index(root)
-    except ArtifactIndexError:
-        index = build_artifact_index(root)
+        index, _source = load_index_for_reading(root)
+    except ArtifactIndexError as exc:
+        # 审计 §F.5：已发布索引**存在但不可用**时绝不回退重扫——重扫会把"发布后被
+        # 改动的文件"重新认证一遍，从而绕过本该发生的拒绝。
+        return [], [f"artifact_index_unusable:{exc}"]
     verified: list[str] = []
     blockers: list[str] = []
     for role, phase in INDEX_MANAGED_REPLAY_INPUTS:

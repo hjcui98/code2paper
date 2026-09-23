@@ -4963,3 +4963,60 @@ engine commit/source digest、`validator_bundle_digest`、必测集合（4/4）�
 
 约束复核（本轮实测）：`git diff --check` 干净；段数上限仍为默认 **6**（`source=default, disabled=False`，
 未提高也未关闭）；自冻结基线以来**没有任何** ledger/回执/产物文件被删除；未执行任何 live。
+
+## 2026-09-23 复核发现的缺口修复（C.6 上限复核接线 / F.5 索引回退 / C.05 证据强度）
+
+复核在 `315aff7` 上复现了三处问题，本轮逐一修复并给出修复前/后证据。
+
+### 1) §C.6 输出上限复核接线错误（真实缺陷）
+
+旧代码：`actual_max_output = getattr(getattr(request, "config", None), "max_output_tokens", 0)`
+——`LLMRequest` 是 dataclass，没有 `config` 字段；而真实 unified 页 payload 也不携带
+`config`，于是 `page_contract_snapshot_from_payload` 冻结到 0。实测：`compare_actual_request_to_page_contract`
+收到 `(frozen=0, actual=0)`，上限复核完全失效。
+
+修复：
+
+- `page_contract_recheck` 新增 `resolve_frozen_page_output_cap(snapshot, invocation)`
+  （payload 声明优先，否则用**调用计划冻结的每页预算**）与 `page_output_cap_failures(...)`
+  （实际值未知而冻结值 >0 → `unified_actual_output_cap_unknown` fail-closed；实际 > 冻结 →
+  `unified_actual_request_page_contract_mismatch:output_cap:<actual>><frozen>`）。
+- 页面循环：冻结上限解析后写回缓存快照；实际上限改为读取**本次调用真正使用的 config**
+  （`_capturing_writer_caller(config, request)` 的 `config`，即 `_apply_writer_context_clamp`
+  之后的 `call_config`），并追加 `page_output_cap_failures` 结果。
+
+证据：新增 `test_writer_page_output_cap_comparison_uses_real_values`（spy 真实页循环）。
+**修复前实测 `[(0, 0)]` 失败**；修复后冻结值等于计划预算（8192）、实际值非 0 且不高于冻结值。
+另加 `test_page_output_cap_failures_are_fail_closed` 覆盖三种判定。
+
+### 2) §F.5 已发布索引损坏被隐式回退绕过（真实缺陷）
+
+旧代码在 `load_published_artifact_index` 抛错时一律 `build_artifact_index` 重扫：索引自身
+摘要被破坏后，重扫会把**已经改动过的回执**重新认证一遍，原本的拒绝消失。
+
+修复：`authoring_artifact_index.load_index_for_reading(out_root) -> (index, source)`——
+只有 `artifact_index_missing` 才允许 `fresh_scan`；已发布但不可用（不可读/自身摘要变化/
+schema 不支持）直接抛错。三个 reader 全部改为不回退：
+
+- `scripts/run_authoring_replay.py::verify_index_managed_replay_inputs` → 返回
+  `artifact_index_unusable:<err>` blocker，重放在使用前拒绝；
+- `authoring_doctor.load_run_summary_validated` → 返回 `(None, artifact_index_unusable:...)`；
+- `run_authoring_doctor` → `artifact_index_source = unusable...` 并记入 `critical_blockers`。
+
+证据：`test_replay_refuses_when_the_published_index_is_unusable`（发布索引 → 改动 summary →
+拒绝；再破坏索引摘要 → **仍然拒绝**）。**修复前实测失败**（重扫后把改动过的产物重新列为
+verified），修复后 `artifact_index_unusable:artifact_index_digest_changed`；
+`test_doctor_fails_closed_when_the_published_index_is_unusable` 覆盖 doctor 两个入口。
+
+### 3) §C.05 映射证据过弱
+
+原 C05 只断言失败码转换函数。新增
+`test_repage_budget_insufficiency_blocks_without_truncating_obligations`：走真实准入评估器
+`evaluate_unified_live_admission_v1`，用 `plan_revision=2` + 压到不足的
+`max_total_input_tokens`，断言同时出现 `unified_invocation_budget_exceeded:total_input_tokens:...`
+与 `run_budget_insufficient_after_repage:total_input_tokens:...`、准入不通过、且 manifest 的
+义务集合**原样保留**（拒绝发送而非截尾）；对照组（`plan_revision=1`）不得冒充"拆页后不足"。
+矩阵映射已把该测试置于 C05 首位。
+
+本轮相关套件：`tests/regression_20260917` + `tests/regression_20260922` 394 项、
+writer/compiler/section-writer 330 项全绿；全程未调用真实模型。

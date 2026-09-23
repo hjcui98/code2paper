@@ -345,3 +345,105 @@ def test_repage_budget_failure_code_distinguishes_revised_plan() -> None:
         == UNIFIED_RUN_BUDGET_INSUFFICIENT_AFTER_REPAGE
     )
     assert _repage_budget_failure_code("bad", exceeded=True) == UNIFIED_INVOCATION_BUDGET_EXCEEDED
+
+
+def test_repage_budget_insufficiency_blocks_without_truncating_obligations() -> None:
+    """§C.05：重分页后**总预算不足**必须阻断（typed failure），且不得截尾义务。
+
+    走真实准入评估器 `evaluate_unified_live_admission_v1`：同一个 manifest/plan，
+    只把总输入预算压到不足以覆盖预留量，并对比 plan_revision=1 与 =2 的失败码。
+    """
+
+    from code2paper.agentic.unified_context_compiler import (
+        build_consumer_invocation_plan_v1,
+        build_consumer_workset_manifest_v2,
+        evaluate_unified_live_admission_v1,
+    )
+    from code2paper.agentic.unified_context_models import (
+        UNIFIED_INVOCATION_BUDGET_EXCEEDED,
+        UNIFIED_RUN_BUDGET_INSUFFICIENT_AFTER_REPAGE,
+    )
+    from tests.test_agentic_unified_context_compiler import (
+        _budget_envelope,
+        _two_mechanism_fixture,
+    )
+
+    archive, obligations = _two_mechanism_fixture()
+    envelope = _budget_envelope()
+    manifest = build_consumer_workset_manifest_v2(
+        archive,
+        obligations,
+        max_page_input_tokens=envelope.max_page_input_tokens,
+        max_obligations_per_page=envelope.max_obligations_per_page,
+    )
+    plan = build_consumer_invocation_plan_v1(
+        manifest,
+        envelope,
+        phase="formalizer",
+        profile_digest=envelope.profile_digest,
+        model_identity_digest=envelope.model_identity_digest,
+        model_context_tokens=envelope.model_context_tokens,
+    )
+    assert plan.invocations, "夹具必须真的产生 invocation 计划"
+    assert plan.reserved_input_tokens_by_role
+    required_before = {
+        page.page_id: tuple(page.atom_ids) for page in manifest.pages
+    }
+
+    # 把总输入预算压到低于预留总量 → 重分页后的计划装不下。
+    reserved_total = sum(int(value) for value in plan.reserved_input_tokens_by_role.values())
+    assert reserved_total > 0
+    squeezed = envelope.model_copy(
+        update={"max_total_input_tokens": max(1, reserved_total - 1)}
+    )
+    revised = plan.model_copy(update={"plan_revision": 2, "parent_plan_digest": plan.content_digest})
+
+    admission = evaluate_unified_live_admission_v1(
+        phase="formalizer",
+        plan=revised,
+        envelope=squeezed,
+        archive=archive,
+        manifest=manifest,
+        run_digest="sha256:run",
+        model_context_tokens=squeezed.model_context_tokens,
+    )
+    codes = [
+        code
+        for gate in admission.gates
+        for code in gate.failure_codes
+    ]
+    assert any(
+        code.startswith(UNIFIED_INVOCATION_BUDGET_EXCEEDED + ":total_input_tokens:")
+        for code in codes
+    ), codes
+    assert any(
+        code.startswith(
+            UNIFIED_RUN_BUDGET_INSUFFICIENT_AFTER_REPAGE + ":total_input_tokens:"
+        )
+        for code in codes
+    ), codes
+    assert admission.status != "pass"
+
+    # 不截尾：失败是"拒绝发送"，manifest 的义务集合原样保留。
+    required_after = {
+        page.page_id: tuple(page.atom_ids) for page in manifest.pages
+    }
+    assert required_after == required_before
+
+    # 对照：同样的超预算在初次计划（revision=1）只报普通超预算，不冒充"拆页后不足"。
+    first = evaluate_unified_live_admission_v1(
+        phase="formalizer",
+        plan=plan,
+        envelope=squeezed,
+        archive=archive,
+        manifest=manifest,
+        run_digest="sha256:run",
+        model_context_tokens=squeezed.model_context_tokens,
+    )
+    first_codes = [
+        code for gate in first.gates for code in gate.failure_codes
+    ]
+    assert not any(
+        code.startswith(UNIFIED_RUN_BUDGET_INSUFFICIENT_AFTER_REPAGE)
+        for code in first_codes
+    ), first_codes

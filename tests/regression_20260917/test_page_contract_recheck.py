@@ -742,3 +742,115 @@ def test_namespace_formula_package_is_spliced_not_crashed() -> None:
     )
     assert "$$" in markdown and "[[FORMULA:pkg:1]]" not in markdown
     assert witnesses == () or isinstance(witnesses, tuple)
+
+
+# --------------------------------------------------------------------------- #
+# §C.6 接线：冻结/实际上限都必须来自真实来源（旧实现两侧恒为 0）
+# --------------------------------------------------------------------------- #
+
+
+def test_writer_page_output_cap_comparison_uses_real_values(
+    tmp_path: Path, monkeypatch
+) -> None:
+    """真实 unified 页请求没有 ``config``：冻结值取调用计划，实际值取本次 config。
+
+    旧实现从 `request.config` 读取实际上限（该属性不存在），且 payload 无 config，
+    于是冻结值与实际值都是 0，上限复核从不触发。
+    """
+
+    import json as _json
+
+    from code2paper.agentic import publication_method_writer as pmw
+    from code2paper.agentic.page_contract_recheck import (
+        compare_actual_request_to_page_contract as real_compare,
+    )
+    from tests.test_agentic_publication_method_writer_unified import (
+        _clear_unified_budget_env,
+        _config,
+        _mock_writer_caller,
+        _unified_artifacts,
+        _unified_budget_env,
+    )
+
+    observed: list[tuple[int, int]] = []
+    module = __import__(
+        "code2paper.agentic.page_contract_recheck", fromlist=["compare"]
+    )
+
+    def spy(snapshot, **kwargs):
+        observed.append(
+            (
+                int(getattr(snapshot, "max_output_tokens", 0) or 0),
+                int(kwargs.get("max_output_tokens", 0) or 0),
+            )
+        )
+        return real_compare(snapshot, **kwargs)
+
+    monkeypatch.setattr(module, "compare_actual_request_to_page_contract", spy)
+
+    out_root = tmp_path / "run"
+    paths = _unified_artifacts(out_root)
+    _unified_budget_env()
+    try:
+        pmw.run_publication_method_writer(
+            out_root=out_root,
+            artifact_paths=paths,
+            llm_config=_config(),
+            llm_caller=_mock_writer_caller,
+            authoring_context_mode="unified",
+        )
+    finally:
+        _clear_unified_budget_env()
+
+    assert observed, "必须真的复核过页契约"
+    frozen_caps = {frozen for frozen, _actual in observed}
+    actual_caps = {actual for _frozen, actual in observed}
+    assert 0 not in frozen_caps, f"冻结上限不得为 0：{observed[:3]}"
+    assert 0 not in actual_caps, f"实际上限不得为 0：{observed[:3]}"
+    # 实际值来自本次调用 config，且不得高于冻结值（否则会被拒发）。
+    assert max(actual_caps) <= min(frozen_caps), (frozen_caps, actual_caps)
+
+    plan = _json.loads(
+        (out_root / "artifacts/06_authoring/consumer_invocation_plan_v1.2.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    planned = {int(item["max_output_tokens"]) for item in plan["invocations"]}
+    assert frozen_caps == planned, (frozen_caps, planned)
+
+
+def test_page_output_cap_failures_are_fail_closed() -> None:
+    """上限规则本身：未知实际值 fail-closed，超限拒绝，等于上限放行。"""
+
+    from code2paper.agentic.page_contract_recheck import (
+        PageContractSnapshotV1,
+        page_output_cap_failures,
+    )
+
+    class _Invocation:
+        max_output_tokens = 8192
+
+    class _UnplannedInvocation:
+        max_output_tokens = 0
+
+    invocation = _Invocation()
+    # 没有任何冻结值 → 没有可比对象，不产出失败。
+    assert page_output_cap_failures(
+        None, _UnplannedInvocation(), actual_max_output_tokens=0
+    ) == ()
+    # 冻结值来自调用计划而实际上限未知 → fail-closed。
+    assert page_output_cap_failures(
+        None, invocation, actual_max_output_tokens=0
+    ) == ("unified_actual_output_cap_unknown",)
+    assert page_output_cap_failures(
+        PageContractSnapshotV1(invocation_id="inv:1", max_output_tokens=0),
+        invocation,
+        actual_max_output_tokens=0,
+    ) == ("unified_actual_output_cap_unknown",)
+    over = page_output_cap_failures(
+        None, invocation, actual_max_output_tokens=16384
+    )
+    assert over and "output_cap:16384>8192" in over[0]
+    assert page_output_cap_failures(
+        None, invocation, actual_max_output_tokens=8192
+    ) == ()
