@@ -58,8 +58,10 @@ MATRIX_EVIDENCE: dict[str, tuple[str, ...]] = {
     ),
     "C03": ("tests/regression_20260917/test_output_feasibility.py::test_writer_witness_occurrences_are_charged_to_the_estimate",),
     "C04": (
+        "tests/regression_20260917/test_formula_dependency_closure.py::test_multi_detail_formula_keeps_its_closure_on_one_page",
+        "tests/regression_20260917/test_formula_dependency_closure.py::test_multi_detail_formula_closure_survives_a_tight_page_budget",
+        "tests/regression_20260917/test_formula_dependency_closure.py::test_indivisible_over_budget_formula_is_blocked_not_truncated",
         "tests/regression_20260917/test_output_feasibility.py::test_formula_package_and_obligation_are_not_double_counted",
-        "tests/regression_20260917/test_page_contract_recheck.py::test_namespace_formula_package_is_spliced_not_crashed",
     ),
     "C05": (
         "tests/regression_20260917/test_output_feasibility.py::test_repage_budget_insufficiency_blocks_without_truncating_obligations",

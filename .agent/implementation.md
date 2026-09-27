@@ -5072,3 +5072,31 @@ writer/compiler/section-writer 330 项全绿；全程未调用真实模型。
 
 矩阵映射同步加强（C06 加入作者目标与空白名单两条，C07 加入产品级降低上限一条）；
 本轮相关套件：两条回归目录 399 项 + writer/compiler 330 项全绿；全程未调用真实模型。
+
+## 2026-09-27 审计 §C.04：多 detail 公式的跨页依赖闭包（补齐验收证据）
+
+复核指出 C04 的映射只指向"公式成本去重"和"公式对象拼接"，不足以证明跨页依赖闭包。本轮
+补**实际分页行为测试**（`tests/regression_20260917/test_formula_dependency_closure.py`），
+用真实编译器 `build_unified_context_archive_v2` → `build_consumer_workset_manifest_v2`
+驱动一个"一个机制 + 两个 detail + 一个依赖两个 detail 的公式义务"的夹具：
+
+1. `test_multi_detail_formula_keeps_its_closure_on_one_page`：多 detail 公式**恰好**落在一页，
+   该页携带**全部** source detail atom（`detail:d:one`、`detail:d:two`），且分页后义务集合
+   守恒（每个义务只出现一次）。
+2. `test_multi_detail_formula_closure_survives_a_tight_page_budget`：预算压到必须单独成页时，
+   闭包仍完整（独占一页 + 两个 detail 都在），archive 里的 detail atom 一个不少。
+3. `test_indivisible_over_budget_formula_is_blocked_not_truncated`：预算低于该不可分单元自身
+   估算时 **typed failure**，报出真实限制维度与贡献 atom（`unified_atomic_page_over_budget:
+   obligation:ob:multi:<tokens>><budget>` + `contribution:...`），且不截尾（detail atom 与
+   义务集合原样保留）。
+
+顺带把失败码做成机器可读：`build_consumer_workset_manifest_v2` 在**全部**阻断原因都是
+"不可分单元超预算"时，失败码直接报 `unified_atomic_page_over_budget`（否则仍是
+`unified_page_projection_incomplete` umbrella）。这是审计"返回说明真实限制维度的 typed
+failure"的直接要求；修复前实测该场景只给 umbrella code + 消息。
+
+证据对照：闭包两条在改动前**已经通过**（说明闭包规则本身早已存在，缺的是验收证据），
+第三条在改动前失败（umbrella code），改动后按真实维度报错。矩阵 C04 映射已更新为这三条
+（保留成本去重一条作为补充）。
+
+两条回归目录 402 项通过；全程未调用真实模型。

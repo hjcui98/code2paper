@@ -1375,9 +1375,17 @@ def build_consumer_workset_manifest_v2(
         del page_index_base
 
     if blocking:
+        codes = sorted(set(blocking))
+        # 审计 §C.4/§C.04：若阻断原因**全部**是"不可分单元超预算"，失败码直接报真实
+        # 限制维度（`unified_atomic_page_over_budget`），而不是让调用方只能从 umbrella
+        # code 的消息里解析；其他投影缺口仍报 `unified_page_projection_incomplete`。
+        if all(code.startswith(UNIFIED_ATOMIC_PAGE_OVER_BUDGET) for code in codes):
+            raise UnifiedCompilerError(
+                UNIFIED_ATOMIC_PAGE_OVER_BUDGET, ";".join(codes)
+            )
         raise UnifiedCompilerError(
             UNIFIED_PAGE_PROJECTION_INCOMPLETE,
-            ";".join(sorted(set(blocking))),
+            ";".join(codes),
         )
 
     return ConsumerWorksetManifestV2(
