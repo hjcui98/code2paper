@@ -4923,10 +4923,26 @@ def _run_publication_method_writer_impl(
             _frozen_output_cap = resolve_frozen_page_output_cap(
                 _page_contract_cache[invocation_id], invocation
             )
+            _snapshot_updates: dict[str, Any] = {}
             if _frozen_output_cap > 0:
+                _snapshot_updates["max_output_tokens"] = _frozen_output_cap
+            # 审计 §C.6：本页技术字节摘要由编排层持有（payload 不声明时补上），
+            # 否则 repair 改技术材料也不会有可比对的冻结值。
+            if not str(
+                getattr(
+                    _page_contract_cache[invocation_id], "technical_bytes_digest", ""
+                )
+                or ""
+            ):
+                _technical_digest = str(
+                    getattr(page, "technical_bytes_digest", "") or ""
+                )
+                if _technical_digest:
+                    _snapshot_updates["technical_bytes_digest"] = _technical_digest
+            if _snapshot_updates:
                 _page_contract_cache[invocation_id] = _page_contract_cache[
                     invocation_id
-                ].model_copy(update={"max_output_tokens": _frozen_output_cap})
+                ].model_copy(update=_snapshot_updates)
             actual_max_output = int(
                 getattr(config, "max_output_tokens", 0) or 0
             )

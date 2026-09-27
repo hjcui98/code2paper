@@ -5020,3 +5020,55 @@ verified），修复后 `artifact_index_unusable:artifact_index_digest_changed`�
 
 本轮相关套件：`tests/regression_20260917` + `tests/regression_20260922` 394 项、
 writer/compiler/section-writer 330 项全绿；全程未调用真实模型。
+
+## 2026-09-27 复核复现的三个 C.6–C.7 缺口（62782ad 上仍到达假 provider 边界）
+
+复核指出：上限**降低**未阻断、**空**公式白名单可被扩充、作者目标（reader_goal）改写未检出。
+三处都在发送前复核这一层，逐条修复并给出修复前/后证据。
+
+### 1) 上限必须**等于**估量使用的上限（降低同样阻断）
+
+`compare_actual_request_to_page_contract` 原来只拒绝 `actual > frozen`；`page_output_cap_failures`
+同样只判"提高"。审计 §C.6 要求"实际输出上限 == 本页估量使用的上限"，§C.7 明确
+"实际 provider 输出 cap 降低 → 重编译/阻断，不能沿用旧页"。
+
+修复：两处都改为**相等**判定，失败码统一为
+`actual_page_contract_mismatch:output_cap:<actual>!=<frozen>`（冻结值 >0 而实际值未知时仍是
+`unified_actual_output_cap_unknown`）。
+
+### 2) 空 scope 也是契约
+
+`compare_actual_request_to_page_contract` 的 scope 循环里有 `if not expected: continue`，
+于是冻结为**空**的 `allowed_formula_package_ids` 被整段跳过，repair 往里塞未授权公式包
+不会被发现。
+
+修复：逐项比较**所有**冻结 scope 键（缺失视为空），失败码带上数量：
+`...:scope:allowed_formula_package_ids:expected=0:actual=1`；并新增整体
+`binding_contract` 摘要比较（仅当 scope 逐项未报错时，避免同一改动两种表述）。
+
+### 3) 作者 surface 必须被冻结并比较
+
+快照此前只冻结段落 ID/scope/上限，`reader_goal`/`role`/`transition_*`/`rhetorical_goal`
+完全没进契约，repair 改写作者目标不会被发现。
+
+修复：`PageContractSnapshotV1` 新增 `author_surface_digest` / `binding_contract_digest` /
+`technical_bytes_digest`；`author_surface_projection(payload)` 提取作者 surface（顺序敏感），
+比较时重算摘要并要求相等 → `...:author_surface`。编排层在 payload 未声明技术摘要时用
+`page.technical_bytes_digest` 注入冻结值（`...:technical_bytes` 比较）。
+
+### 证据（修复前复现 → 修复后通过）
+
+- `test_any_output_cap_change_is_rejected`：提高与**降低到 1** 都被拒（修复前降低不报错）。
+- `test_expanding_an_empty_formula_whitelist_is_rejected_before_send`：**修复前失败**。
+- `test_lowered_author_goal_is_rejected_before_send`：reader_goal 与 rhetorical_goal 改写
+  都被拒（**修复前失败**）；`test_repair_cannot_change_author_material_without_replanning`
+  证明 `is_repair=True` 不豁免。
+- 产品级 `test_lowered_writer_output_cap_is_refused_before_the_provider`：把
+  `_apply_writer_context_clamp` 改成"悄悄降到 4096"（事故形态），断言 Writer 页请求
+  **0 次到达 caller**、acceptance sidecar 里具名
+  `unified_actual_request_rejected:actual_page_contract_mismatch:output_cap:4096!=8192`、
+  `publication_ready=False`（**修复前实测请求确实发出**）。
+- 生产接线 spy 测试同时断言冻结快照确实带 `author_surface_digest` / `binding_contract_digest`。
+
+矩阵映射同步加强（C06 加入作者目标与空白名单两条，C07 加入产品级降低上限一条）；
+本轮相关套件：两条回归目录 399 项 + writer/compiler 330 项全绿；全程未调用真实模型。

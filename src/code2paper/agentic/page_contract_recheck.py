@@ -16,6 +16,8 @@ from typing import Any, Mapping, Sequence
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from code2paper.export.run_manifest import hash_text
+
 __all__ = [
     "PageContractSnapshotV1",
     "capture_page_contract_snapshot",
@@ -23,6 +25,7 @@ __all__ = [
     "compare_actual_request_to_page_contract",
     "page_output_cap_failures",
     "resolve_frozen_page_output_cap",
+    "author_surface_projection",
     "ACTUAL_PAGE_CONTRACT_MISMATCH",
 ]
 
@@ -49,6 +52,11 @@ class PageContractSnapshotV1(BaseModel):
     paragraph_ids: tuple[str, ...] = ()
     scope: dict[str, tuple[str, ...]] = Field(default_factory=dict)
     max_output_tokens: int = 0
+    #: 审计 §C.6：作者 surface（reader_goal/role/transition/rhetorical_goal）与输入合同的摘要。
+    author_surface_digest: str = ""
+    binding_contract_digest: str = ""
+    #: 本页技术字节摘要（payload 未声明时由调用方用 page.technical_bytes_digest 注入）。
+    technical_bytes_digest: str = ""
     request_digest: str = ""
     source_path: str = ""
 
@@ -104,9 +112,63 @@ def capture_page_contract_snapshot(
         paragraph_ids=tuple(str(item) for item in (plan.get("page_paragraph_ids") or ())),
         scope={key: _sorted_strings(binding.get(key)) for key in _CONTRACT_SCOPE_KEYS},
         max_output_tokens=int(config.get("max_output_tokens") or 0),
+        author_surface_digest=author_surface_digest(input_payload),
+        binding_contract_digest=binding_contract_digest(input_payload),
+        technical_bytes_digest=str(
+            (input_payload or {}).get("technical_bytes_digest")
+            or (input_payload or {}).get("page_bytes_digest")
+            or ""
+        ),
         request_digest=str(payload.get("request_digest") or ""),
         source_path=str(path),
     )
+
+
+#: 作者 surface 的冻结字段（审计 §C.6：作者目标与权限必须保持一致）。
+_AUTHOR_SURFACE_KEYS: tuple[str, ...] = (
+    "paragraph_id",
+    "reader_goal",
+    "role",
+    "transition_from",
+    "transition_to",
+)
+
+
+def author_surface_projection(
+    payload: Mapping[str, Any] | None,
+) -> list[dict[str, str]]:
+    """从实际 payload 提取**作者 surface**（顺序敏感）用于摘要比较。"""
+
+    plan = (payload or {}).get("narrative_plan") if isinstance(payload, Mapping) else None
+    plan = plan if isinstance(plan, Mapping) else {}
+    rows: list[dict[str, str]] = []
+    for row in plan.get("paragraphs") or ():
+        if not isinstance(row, Mapping):
+            continue
+        projected = {
+            key: str(row.get(key) or "").strip() for key in _AUTHOR_SURFACE_KEYS
+        }
+        contract = row.get("witness_contract")
+        projected["rhetorical_goal"] = str(
+            (contract or {}).get("rhetorical_goal")
+            if isinstance(contract, Mapping)
+            else ""
+        ).strip()
+        rows.append(projected)
+    return rows
+
+
+def author_surface_digest(payload: Mapping[str, Any] | None) -> str:
+    return hash_text(json.dumps(author_surface_projection(payload), ensure_ascii=False))
+
+
+def binding_contract_digest(payload: Mapping[str, Any] | None) -> str:
+    """输入合同（明细/公式/权限 scope）的摘要；空合同与缺失合同必须可区分。"""
+
+    binding = (payload or {}).get("binding_contract") if isinstance(payload, Mapping) else None
+    if not isinstance(binding, Mapping):
+        return ""
+    return hash_text(json.dumps(dict(binding), ensure_ascii=False, sort_keys=True))
 
 
 def page_contract_snapshot_from_payload(
@@ -137,6 +199,13 @@ def page_contract_snapshot_from_payload(
         paragraph_ids=tuple(str(item) for item in (plan.get("page_paragraph_ids") or ())),
         scope={key: _sorted_strings(binding.get(key)) for key in _CONTRACT_SCOPE_KEYS},
         max_output_tokens=int(config.get("max_output_tokens") or 0),
+        author_surface_digest=author_surface_digest(payload),
+        binding_contract_digest=binding_contract_digest(payload),
+        technical_bytes_digest=str(
+            (payload or {}).get("technical_bytes_digest")
+            or (payload or {}).get("page_bytes_digest")
+            or ""
+        ),
         request_digest=str(request_digest or ""),
         source_path=str(source_path or ""),
     )
@@ -178,8 +247,9 @@ def page_output_cap_failures(
     actual = int(actual_max_output_tokens or 0)
     if actual <= 0:
         return ("unified_actual_output_cap_unknown",)
-    if actual > frozen:
-        return (f"{ACTUAL_PAGE_CONTRACT_MISMATCH}:output_cap:{actual}>{frozen}",)
+    if actual != frozen:
+        # 降低与提高都是契约变更：事故里 cap 被调低后截断输出仍被当成有效页。
+        return (f"{ACTUAL_PAGE_CONTRACT_MISMATCH}:output_cap:{actual}!={frozen}",)
     return ()
 
 
@@ -226,14 +296,42 @@ def compare_actual_request_to_page_contract(
     if snapshot.section_id and actual_section != snapshot.section_id:
         failures.append(f"{ACTUAL_PAGE_CONTRACT_MISMATCH}:section_id")
     for key, expected in snapshot.scope.items():
-        if not expected:
-            continue
+        # 审计 §C.6：**空 scope 也是契约**（"本页不允许任何公式包"）。旧实现跳过空值，
+        # 于是 repair 可以往空白名单里塞未授权公式包而检查照旧通过。
         actual = _sorted_strings(binding.get(key))
-        if actual != expected:
-            failures.append(f"{ACTUAL_PAGE_CONTRACT_MISMATCH}:scope:{key}")
-    if snapshot.max_output_tokens and int(max_output_tokens) > int(snapshot.max_output_tokens):
-        failures.append(
-            f"{ACTUAL_PAGE_CONTRACT_MISMATCH}:output_cap:"
-            f"{int(max_output_tokens)}>{int(snapshot.max_output_tokens)}"
+        if actual != tuple(expected):
+            failures.append(
+                f"{ACTUAL_PAGE_CONTRACT_MISMATCH}:scope:{key}:"
+                f"expected={len(tuple(expected))}:actual={len(actual)}"
+            )
+    if snapshot.author_surface_digest:
+        actual_surface = author_surface_digest(payload)
+        if actual_surface != snapshot.author_surface_digest:
+            failures.append(f"{ACTUAL_PAGE_CONTRACT_MISMATCH}:author_surface")
+    if snapshot.binding_contract_digest and not any(
+        failure.startswith(f"{ACTUAL_PAGE_CONTRACT_MISMATCH}:scope:")
+        for failure in failures
+    ):
+        # scope 逐项比较已经报过时不再重复报整体摘要（同一处改动的两种表述）。
+        actual_contract = binding_contract_digest(payload)
+        if actual_contract != snapshot.binding_contract_digest:
+            failures.append(f"{ACTUAL_PAGE_CONTRACT_MISMATCH}:binding_contract")
+    if snapshot.technical_bytes_digest:
+        actual_technical = str(
+            (payload or {}).get("technical_bytes_digest")
+            or (payload or {}).get("page_bytes_digest")
+            or ""
         )
+        if actual_technical and actual_technical != snapshot.technical_bytes_digest:
+            failures.append(f"{ACTUAL_PAGE_CONTRACT_MISMATCH}:technical_bytes")
+    frozen_cap = int(snapshot.max_output_tokens or 0)
+    if frozen_cap:
+        actual_cap = int(max_output_tokens or 0)
+        # 审计 §C.6/§C.7：实际输出上限必须**等于**本页估量使用的上限。降低同样要阻断
+        # ——事故正是"cap 被调低后截断输出仍被当成有效页"。
+        if actual_cap != frozen_cap:
+            failures.append(
+                f"{ACTUAL_PAGE_CONTRACT_MISMATCH}:output_cap:"
+                f"{actual_cap}!={frozen_cap}"
+            )
     return tuple(failures)

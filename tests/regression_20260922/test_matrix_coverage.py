@@ -65,8 +65,15 @@ MATRIX_EVIDENCE: dict[str, tuple[str, ...]] = {
         "tests/regression_20260917/test_output_feasibility.py::test_repage_budget_insufficiency_blocks_without_truncating_obligations",
         "tests/regression_20260917/test_output_feasibility.py::test_repage_budget_failure_code_distinguishes_revised_plan",
     ),
-    "C06": ("tests/regression_20260917/test_page_contract_recheck.py::test_adapter_appending_paragraphs_is_rejected",),
-    "C07": ("tests/regression_20260917/test_page_contract_recheck.py::test_raising_the_output_cap_is_rejected",),
+    "C06": (
+        "tests/regression_20260917/test_page_contract_recheck.py::test_adapter_appending_paragraphs_is_rejected",
+        "tests/regression_20260917/test_page_contract_recheck.py::test_lowered_author_goal_is_rejected_before_send",
+        "tests/regression_20260917/test_page_contract_recheck.py::test_expanding_an_empty_formula_whitelist_is_rejected_before_send",
+    ),
+    "C07": (
+        "tests/regression_20260917/test_page_contract_recheck.py::test_any_output_cap_change_is_rejected",
+        "tests/regression_20260922/test_authoring_contract_closure.py::test_lowered_writer_output_cap_is_refused_before_the_provider",
+    ),
     # D：作者/实现语义保真
     "D01": ("tests/regression_20260917/test_authoring_unit_merge.py::test_merge_keeps_optional_details_and_obligations",),
     "D02": ("tests/regression_20260917/test_authoring_unit_merge.py::test_same_detail_id_with_different_content_is_a_conflict",),

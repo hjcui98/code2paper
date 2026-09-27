@@ -105,15 +105,23 @@ def test_shrinking_the_detail_scope_is_rejected() -> None:
     payload["binding_contract"]["allowed_detail_ids"] = []
 
     failures = _compare(payload)
-    assert failures == (f"{ACTUAL_PAGE_CONTRACT_MISMATCH}:scope:allowed_detail_ids",)
+    assert failures and failures[0].startswith(
+        f"{ACTUAL_PAGE_CONTRACT_MISMATCH}:scope:allowed_detail_ids"
+    )
 
 
-def test_raising_the_output_cap_is_rejected() -> None:
+def test_any_output_cap_change_is_rejected() -> None:
+    """审计 §C.6/§C.7：实际上限必须**等于**估量使用的上限；提高与降低都要阻断。"""
+
     snapshot = _snapshot()
-    failures = _compare(_payload(), max_output_tokens=snapshot.max_output_tokens + 1)
-    assert failures == (
+    raised = _compare(_payload(), max_output_tokens=snapshot.max_output_tokens + 1)
+    assert raised == (
         f"{ACTUAL_PAGE_CONTRACT_MISMATCH}:output_cap:"
-        f"{snapshot.max_output_tokens + 1}>{snapshot.max_output_tokens}",
+        f"{snapshot.max_output_tokens + 1}!={snapshot.max_output_tokens}",
+    )
+    lowered = _compare(_payload(), max_output_tokens=1)
+    assert lowered == (
+        f"{ACTUAL_PAGE_CONTRACT_MISMATCH}:output_cap:1!={snapshot.max_output_tokens}",
     )
 
 
@@ -778,12 +786,7 @@ def test_writer_page_output_cap_comparison_uses_real_values(
     )
 
     def spy(snapshot, **kwargs):
-        observed.append(
-            (
-                int(getattr(snapshot, "max_output_tokens", 0) or 0),
-                int(kwargs.get("max_output_tokens", 0) or 0),
-            )
-        )
+        observed.append((snapshot, int(kwargs.get("max_output_tokens", 0) or 0)))
         return real_compare(snapshot, **kwargs)
 
     monkeypatch.setattr(module, "compare_actual_request_to_page_contract", spy)
@@ -803,8 +806,15 @@ def test_writer_page_output_cap_comparison_uses_real_values(
         _clear_unified_budget_env()
 
     assert observed, "必须真的复核过页契约"
-    frozen_caps = {frozen for frozen, _actual in observed}
-    actual_caps = {actual for _frozen, actual in observed}
+    # 审计 §C.6：作者 surface 与输入合同也必须被冻结（否则 repair 改作者目标/白名单无感）。
+    frozen_snapshots = [snapshot for snapshot, _actual in observed]
+    assert all(snapshot.author_surface_digest for snapshot in frozen_snapshots)
+    assert all(snapshot.binding_contract_digest for snapshot in frozen_snapshots)
+    frozen_caps = {
+        int(getattr(snapshot, "max_output_tokens", 0) or 0)
+        for snapshot, _actual in observed
+    }
+    actual_caps = {actual for _snapshot, actual in observed}
     assert 0 not in frozen_caps, f"冻结上限不得为 0：{observed[:3]}"
     assert 0 not in actual_caps, f"实际上限不得为 0：{observed[:3]}"
     # 实际值来自本次调用 config，且不得高于冻结值（否则会被拒发）。
@@ -850,7 +860,63 @@ def test_page_output_cap_failures_are_fail_closed() -> None:
     over = page_output_cap_failures(
         None, invocation, actual_max_output_tokens=16384
     )
-    assert over and "output_cap:16384>8192" in over[0]
+    assert over and "output_cap:16384!=8192" in over[0]
     assert page_output_cap_failures(
         None, invocation, actual_max_output_tokens=8192
     ) == ()
+
+
+# --------------------------------------------------------------------------- #
+# 复核复现的三个缺口（真实 Writer 调用链，62782ad 上仍到达假 provider 边界）
+# --------------------------------------------------------------------------- #
+
+
+def test_frozen_contract_freezes_author_surface_and_empty_scopes() -> None:
+    """冻结值必须包含作者 surface 与**空** scope（空 = 本页不允许任何公式包）。"""
+
+    snapshot = _snapshot()
+    assert snapshot.author_surface_digest, "作者 surface 必须被冻结"
+    assert snapshot.binding_contract_digest, "输入合同必须被冻结"
+    assert snapshot.scope["allowed_formula_package_ids"] == ()
+
+
+def test_lowered_author_goal_is_rejected_before_send() -> None:
+    """缺口 3：repair 改写作者目标（reader_goal）必须在发送前拒绝。"""
+
+    payload = _payload()
+    payload["narrative_plan"]["paragraphs"][0]["reader_goal"] = (
+        "Explain a different goal the author never asked for."
+    )
+    failures = _compare(payload)
+    assert f"{ACTUAL_PAGE_CONTRACT_MISMATCH}:author_surface" in failures, failures
+
+    # 只改 transition/rhetorical_goal 同样属于作者 surface 变更。
+    payload2 = _payload()
+    payload2["narrative_plan"]["paragraphs"][0]["witness_contract"]["rhetorical_goal"] = (
+        "different_goal"
+    )
+    assert f"{ACTUAL_PAGE_CONTRACT_MISMATCH}:author_surface" in _compare(payload2)
+
+
+def test_expanding_an_empty_formula_whitelist_is_rejected_before_send() -> None:
+    """缺口 2：repair 往**空白名单**里塞未授权公式包必须在发送前拒绝。"""
+
+    payload = _payload()
+    assert payload["binding_contract"]["allowed_formula_package_ids"] == []
+    payload["binding_contract"]["allowed_formula_package_ids"] = ["formula:unauthorized"]
+    failures = _compare(payload)
+    assert any(
+        failure.startswith(
+            f"{ACTUAL_PAGE_CONTRACT_MISMATCH}:scope:allowed_formula_package_ids"
+        )
+        for failure in failures
+    ), failures
+
+
+def test_repair_cannot_change_author_material_without_replanning() -> None:
+    """repair 请求同样受作者 surface / 合同 / 上限约束（is_repair=True 不豁免）。"""
+
+    payload = _payload()
+    payload["narrative_plan"]["paragraphs"][0]["reader_goal"] = "rewritten in a repair"
+    failures = _compare(payload, is_repair=True)
+    assert f"{ACTUAL_PAGE_CONTRACT_MISMATCH}:author_surface" in failures, failures

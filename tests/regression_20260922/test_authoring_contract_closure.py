@@ -839,3 +839,63 @@ def test_mutating_a_consumed_artifact_blocks_resume_instead_of_reusing(
     verified = tmp_path / "artifacts" / "06_authoring" / "repository_verified_method.md"
     if verified.is_file():
         assert verified.read_text(encoding="utf-8").strip() == ""
+
+
+def test_lowered_writer_output_cap_is_refused_before_the_provider(
+    tmp_path: Path, monkeypatch
+) -> None:
+    """§C.6/§C.7：实际 provider 输出 cap 被调低 → 必须在假 provider 边界之前阻断。
+
+    复核在 62782ad 上复现：计划上限 8192、实际降到 1，请求仍然发出。这里把
+    `_apply_writer_context_clamp` 改成"悄悄调低 cap"（事故形态），断言 Writer 页请求
+    根本没有到达 caller，并且失败原因具名。
+    """
+
+    import json as _json
+
+    from code2paper.llm import section_writer as sw
+
+    real_clamp = sw._apply_writer_context_clamp
+    calls: list[LLMRequest] = []
+
+    def lowering_clamp(config, **kwargs):
+        clamped, blocked = real_clamp(config, **kwargs)
+        if blocked is not None:
+            return clamped, blocked
+        # 降到仍高于最小输出、但**不等于**计划上限的值：请求会走到契约复核。
+        return clamped.model_copy(update={"max_output_tokens": 4096}), None
+
+    monkeypatch.setattr(sw, "_apply_writer_context_clamp", lowering_clamp)
+
+    def caller(config, request):
+        calls.append(request)
+        return _mock_writer_caller(config, request)
+
+    paths = _unified_artifacts(tmp_path)
+    result, outputs = _run_with_paths(tmp_path, caller, paths)
+
+    assert not [
+        request
+        for request in calls
+        if getattr(request, "prompt_template_id", "") == WRITER_TEMPLATE
+    ], "上限被调低的请求不得发给 provider"
+
+    # 拒绝原因必须**具名**且落在不可变回执里（不是只留一个下游症状）。
+    acceptances = sorted(
+        (tmp_path / "artifacts" / "06_authoring" / "invocations").rglob(
+            "attempt-*.content-acceptance.json"
+        )
+    )
+    assert acceptances, "必须有内容验收 sidecar"
+    rows = [_json.loads(path.read_text(encoding="utf-8")) for path in acceptances]
+    failures = [str(item) for row in rows for item in (row.get("failures") or ())]
+    assert any(
+        "actual_page_contract_mismatch:output_cap:4096!=8192" in item
+        for item in failures
+    ), failures
+    assert any(row.get("content_acceptance_status") == "rejected" for row in rows)
+    assert result.status in {"incomplete", "blocked"}
+    writer_result = _json.loads(
+        Path(outputs["publication_writer_result_v1"]).read_text(encoding="utf-8")
+    )
+    assert writer_result["publication_ready"] is False

@@ -223,14 +223,20 @@ def test_i5_actual_request_must_match_the_frozen_page_contract() -> None:
         invocation_id="inv:1", payload=payload
     )
     assert compare_actual_request_to_page_contract(
-        snapshot, invocation_id="inv:1", payload=payload
+        snapshot,
+        invocation_id="inv:1",
+        payload=payload,
+        max_output_tokens=snapshot.max_output_tokens,
     ) == ()
 
     # 顺序/集合/权限/输出上限任一改变都必须被拒。
     mutated = json.loads(json.dumps(payload))
     mutated["narrative_plan"]["page_paragraph_ids"] = ["MA-S1:P2", "MA-S1:P1"]
     failures = compare_actual_request_to_page_contract(
-        snapshot, invocation_id="inv:1", payload=mutated
+        snapshot,
+        invocation_id="inv:1",
+        payload=mutated,
+        max_output_tokens=snapshot.max_output_tokens,
     )
     assert failures and failures[0].startswith(ACTUAL_PAGE_CONTRACT_MISMATCH)
 
