@@ -5100,3 +5100,20 @@ failure"的直接要求；修复前实测该场景只给 umbrella code + 消息�
 （保留成本去重一条作为补充）。
 
 两条回归目录 402 项通过；全程未调用真实模型。
+
+## 2026-09-27 基线标记：`0918ee7` = DSH 接入前的代码对照基线
+
+用户决定：以 **`0918ee7`**（`test: prove multi-detail formula closure across pages and its
+budget failure`）作为 DSH（DeepSeek Harness）接入**之前**的代码对照基线；接入完成后再验证
+集成行为与真实质量（§16.3 单列，需要授权 live）。
+
+该提交上的状态：
+
+- 全离线套件 `python -m pytest -q -m 'not live_llm'` = **4014 passed / 3 deselected /
+  12 subtests passed / exit 0**；
+- 离线准入回执 `artifacts/runs/2026-09-18-live-admission/offline-receipt.json`
+  绑定 `engine_commit_sha=0918ee76d079…`（该回执属于该基线，后续任何提交都会让它失效，
+  重新准入前必须重跑 `record-offline-receipt`）；
+- 本轮文档提交（审计方案、DSH 插件设计、`docs/README.md` 索引项）不改动 `src/`、`tests/`、
+  `scripts/` 的任何字节，因此**代码语义**仍等同 `0918ee7`；但 `docs/` 参与引擎 source
+  digest，提交后 digest/commit 会变化，回执需按上一条重新生成。

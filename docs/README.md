@@ -240,6 +240,13 @@
 
 ## 外部实现参考
 
+- [Code2Paper × DeepSeek Harness 插件集成设计（2026-09-22，本地复核修订）](code2paper_dsh_plugin_design_20260922.md)：
+  本轮以 `4146010` 快照重新核对流程代码、本地 09-18 产物和 DSH `c36a83ff` 的真实插件/LLM/子 Agent 接口；
+  补齐结构化工具输出、正文来源、独立验证、发送前预算、导入与事务恢复合同。
+  已确认 DSH 接管 Agent 执行，默认沿用现有 LangGraph 主流程，Code2Paper 保留领域内核、验收与提交；
+  主 Agent 在合法阶段和修复路径内行动。现已确定保留 LangGraph 库、持久任务与 interrupt/回执交接，
+  补齐节点映射和写作补证时序；并发默认关闭，开启默认 2 个任务，后端默认 1 个在途请求。
+  已做零网络库级跨进程恢复探针；插件接入、并发调度与模型兼容仍待实施验证，不授权生产切换。
 - [五个 Agent 仓库的代码级参考研究（2026-08-10）](reference_agent_framework_code_research_2026-08-10.md)：
   面向当前 Research Agent 与 Method Writer 目标，对 Hermes Agent、OpenClaw、OpenHands SDK、
   PydanticAI 和 PydanticAI Harness 的固定版本进行文件/核心代码级比较；属于架构参考，
