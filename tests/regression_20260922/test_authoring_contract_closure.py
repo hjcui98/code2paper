@@ -14,10 +14,11 @@ Binder/composer 与真实产物写入；fake provider **不返回"全局通过"*
 
 from __future__ import annotations
 
+import copy
 import json
 from dataclasses import replace
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any, Callable, Mapping
 
 import pytest
 
@@ -899,3 +900,743 @@ def test_lowered_writer_output_cap_is_refused_before_the_provider(
         Path(outputs["publication_writer_result_v1"]).read_text(encoding="utf-8")
     )
     assert writer_result["publication_ready"] is False
+
+
+def test_technical_bytes_digest_mismatch_is_refused_before_the_provider(
+    tmp_path: Path, monkeypatch
+) -> None:
+    """K04：冻结契约的技术字节摘要与调用方重算值不符 → 真实发送点零发送。
+
+    事故形态是"材料在准入之后被换掉、而请求仍带着旧的声明 hash"。K04 起公共复核不再读
+    payload 的声明字段，而是接收调用方**从实际材料字节重算**的摘要。这里让冻结契约的摘要
+    偏离真实材料（材料字节本身仍与页一致，因此只有这一道门能拦下它），断言 Writer 页请求
+    根本没有到达 caller，且失败具名落在不可变回执里。
+    """
+
+    import json as _json
+
+    from code2paper.agentic import page_contract_recheck as pcr
+
+    calls: list[LLMRequest] = []
+    real_from_payload = pcr.page_contract_snapshot_from_payload
+
+    def drifting_snapshot(*args, **kwargs):
+        snapshot = real_from_payload(*args, **kwargs)
+        return snapshot.model_copy(
+            update={"technical_bytes_digest": "sha256:" + "f" * 64}
+        )
+
+    monkeypatch.setattr(pcr, "page_contract_snapshot_from_payload", drifting_snapshot)
+
+    def caller(config, request):
+        calls.append(request)
+        return _mock_writer_caller(config, request)
+
+    paths = _unified_artifacts(tmp_path)
+    result, outputs = _run_with_paths(tmp_path, caller, paths)
+
+    assert not [
+        request
+        for request in calls
+        if getattr(request, "prompt_template_id", "") == WRITER_TEMPLATE
+    ], "技术字节摘要不符的请求不得发给 provider"
+
+    acceptances = sorted(
+        (tmp_path / "artifacts" / "06_authoring" / "invocations").rglob(
+            "attempt-*.content-acceptance.json"
+        )
+    )
+    rows = [_json.loads(path.read_text(encoding="utf-8")) for path in acceptances]
+    failures = [str(item) for row in rows for item in (row.get("failures") or ())]
+    assert any(
+        "actual_page_contract_mismatch:technical_bytes" in item for item in failures
+    ), failures
+    assert any(row.get("content_acceptance_status") == "rejected" for row in rows)
+    assert result.status in {"incomplete", "blocked"}
+    writer_result = _json.loads(
+        Path(outputs["publication_writer_result_v1"]).read_text(encoding="utf-8")
+    )
+    assert writer_result["publication_ready"] is False
+
+
+def test_missing_v2_page_metadata_under_unified_is_refused_before_the_provider(
+    tmp_path: Path, monkeypatch
+) -> None:
+    """G1：严格 unified 意图下缺 V2 页元数据 → 发送前具名拒绝，不自动降级直发。
+
+    修前 ``_capturing_writer_caller`` 在 ``not v2_rows`` 时直接走 base_caller：请求连同
+    页合同/技术字节复核一起被发出。这里在**请求构造点**只删掉 V2 页元数据
+    （``shared_context_metadata``），其余输入逐字不变；provider 边界仍是本测试的 caller，
+    因此"零发送"是在真实调用链上断言的。
+    """
+
+    import json as _json
+
+    from code2paper.agentic import publication_method_writer as pmw
+    from code2paper.llm import section_writer as sw
+
+    real_request = pmw.LLMRequest
+
+    def stripping_request(**kwargs):
+        payload = kwargs.get("input_payload")
+        if isinstance(payload, dict) and "shared_context_metadata" in payload:
+            kwargs["input_payload"] = {
+                key: value
+                for key, value in payload.items()
+                if key != "shared_context_metadata"
+            }
+        return real_request(**kwargs)
+
+    monkeypatch.setattr(pmw, "LLMRequest", stripping_request)
+    # Writer 页请求由 section_writer 构造后交给 writer 的 caller；请求构造点在这里。
+    monkeypatch.setattr(sw, "LLMRequest", stripping_request)
+
+    calls: list[LLMRequest] = []
+
+    def caller(config, request):
+        calls.append(request)
+        return _mock_writer_caller(config, request)
+
+    paths = _unified_artifacts(tmp_path)
+    result, outputs = _run_with_paths(tmp_path, caller, paths)
+
+    # 严格 unified：请求不得抵达 provider。
+    assert not [
+        request
+        for request in calls
+        if getattr(request, "prompt_template_id", "") == WRITER_TEMPLATE
+    ], "缺 V2 页元数据的 unified 请求不得发给 provider"
+
+    acceptances = sorted(
+        (tmp_path / "artifacts" / "06_authoring" / "invocations").rglob(
+            "attempt-*.content-acceptance.json"
+        )
+    )
+    rows = [_json.loads(path.read_text(encoding="utf-8")) for path in acceptances]
+    failures = [str(item) for row in rows for item in (row.get("failures") or ())]
+    writer_json = Path(outputs["publication_writer_result_v1"]).read_text(encoding="utf-8")
+    writer_result = _json.loads(writer_json)
+    # 具名拒绝：实测阻断节点是上游的 unified_unplanned_actual_request（缺 invocation id），
+    # 即"上游已拒"；本测试记录**实际**节点而不是注释里的期望节点。
+    reason = str(getattr(result, "blocked_reason", ""))
+    assert "unified_unplanned_actual_request" in reason or "unified_unplanned_actual_request" in writer_json or any(
+        "unified_unplanned_actual_request" in item for item in failures
+    ), (failures, reason, writer_json[:400])
+    assert result.status in {"incomplete", "blocked"}
+    assert writer_result["publication_ready"] is False
+
+
+def test_missing_writer_workset_manifest_under_unified_is_refused_before_the_provider(
+    tmp_path: Path, monkeypatch
+) -> None:
+    """G1：unified 意图不变而 workset manifest 缺失 → 具名发送前拒绝（零发送）。
+
+    修前以 AttributeError 派生的 ``unified_pipeline_failed`` 兜底；现在 manifest 解析点
+    直接抛出 ``unified_unplanned_actual_request:missing_writer_workset_manifest``。
+    """
+
+    import json as _json
+
+    from code2paper.agentic import unified_context_compiler as ucc
+
+    real_builder = ucc.extend_writer_worksets_from_narrative_plan
+    monkeypatch.setattr(
+        ucc, "extend_writer_worksets_from_narrative_plan", lambda *a, **k: None
+    )
+    calls: list[LLMRequest] = []
+
+    def caller(config, request):
+        calls.append(request)
+        return _mock_writer_caller(config, request)
+
+    paths = _unified_artifacts(tmp_path)
+    result, outputs = _run_with_paths(tmp_path, caller, paths)
+    monkeypatch.setattr(ucc, "extend_writer_worksets_from_narrative_plan", real_builder)
+
+    assert not [
+        request
+        for request in calls
+        if getattr(request, "prompt_template_id", "") == WRITER_TEMPLATE
+    ], "缺 workset manifest 的 unified 请求不得发给 provider"
+    acceptances = sorted(
+        (tmp_path / "artifacts" / "06_authoring" / "invocations").rglob(
+            "attempt-*.content-acceptance.json"
+        )
+    )
+    failures = [
+        str(item)
+        for path in acceptances
+        for item in (_json.loads(path.read_text(encoding="utf-8")).get("failures") or ())
+    ]
+    writer_json = Path(outputs["publication_writer_result_v1"]).read_text(encoding="utf-8")
+    writer_result = _json.loads(writer_json)
+    reason = str(getattr(result, "blocked_reason", ""))
+    assert (
+        "unified_unplanned_actual_request" in reason
+        or "unified_unplanned_actual_request" in writer_json
+        or any("unified_unplanned_actual_request" in item for item in failures)
+    ), (failures, reason, writer_json[:400])
+    assert writer_result["publication_ready"] is False
+    assert result.status in {"incomplete", "blocked"}
+
+
+def test_explicit_legacy_mode_still_sends_without_v2_page_metadata(tmp_path: Path) -> None:
+    """G1 对照：legacy 由可信入口显式选择时照常发送，不因缺 V2 字段被误拒。"""
+
+    from tests.test_agentic_publication_method_writer_unified import _unified_budget_env
+
+    calls: list[LLMRequest] = []
+
+    def caller(config, request):
+        calls.append(request)
+        return _mock_writer_caller(config, request)
+
+    paths = _unified_artifacts(tmp_path)
+    _unified_budget_env()
+    try:
+        run_publication_method_writer(
+            out_root=tmp_path,
+            artifact_paths=paths,
+            llm_config=_config(),
+            llm_caller=caller,
+            authoring_context_mode="legacy",
+        )
+    finally:
+        _clear_unified_budget_env()
+    assert calls, "显式 legacy 模式必须仍能发送"
+
+
+# --------------------------------------------------------------------------- #
+# K04-G2：实际发送侧六类单变量变异（冻结合同不重算，repair 与合法首发送分开计数）
+# --------------------------------------------------------------------------- #
+#
+# 这一组反例的共同前提是**冻结合同来自合法 primary、且不随变异重算**：
+#
+# * 合法 primary 先经真实入口发送一次并冻结页合同（内存缓存）；
+# * 变异只注入到**随后构造的 repair 请求**（同一个真实 `LLMRequest` 构造点，
+#   同一个 `_capturing_writer_caller` 复核点），primary 请求逐字不变；
+# * 因此"改材料/改 scope/改作者目标"都是**实际发送侧**的单变量改变，而冻结侧仍是
+#   primary 的合同。若在上游夹具上改，编译合同与请求会一起合法重算，那就不是漂移反例。
+#
+# 计数规则：`primary_arrivals` 是合法初次发送，`repair_arrivals` 是被变异的 repair 发送。
+# 六例都要求后者为零调用，而不是整轮零调用——否则无法区分"拒绝"与"根本没走到"。
+
+G2_REPAIR_RESERVE_TOKENS = 20000
+
+
+def _material_bytes_digest(payload: Mapping[str, Any]) -> str:
+    """与真实 Writer 调用点同规则：从 ``shared_contexts`` 的**实际材料字节**重算。"""
+
+    from code2paper.agentic.mechanism_context_models import (
+        canonical_json_bytes,
+        sha256_digest,
+    )
+
+    contexts = payload.get("shared_contexts") or ()
+    raw = contexts[0] if len(contexts) == 1 else b""
+    if isinstance(raw, bytes):
+        data = bytes(raw)
+    elif isinstance(raw, str):
+        data = raw.encode("utf-8")
+    elif isinstance(raw, Mapping):
+        data = canonical_json_bytes(dict(raw))
+    else:
+        data = b""
+    return sha256_digest(data) if data else ""
+
+
+class _WriterSendBoundary:
+    """真实 Writer 待发送请求边界上的只读观察 + 单变量注入。
+
+    * 只有 ``prompt_template_id`` 为 unified writer 页模板的请求会被观察；
+    * ``target`` 决定变异落在 primary 还是 repair 请求上（默认 repair：只有 repair
+      仍带着**先前已冻结**的 primary 合同，primary 自己的合同是从它自身捕获的）；
+    * `observed` 是生产 ``compare_actual_request_to_page_contract`` 的只读 spy：
+      记录冻结合同摘要、调用方从 bytes 重算的实测摘要与实际失败码，但不改行为。
+    """
+
+    def __init__(
+        self,
+        mutate: Callable[[dict, "_WriterSendBoundary"], None] | None = None,
+        *,
+        target: str = "repair",
+    ):
+        if target not in {"primary", "repair"}:
+            raise ValueError(f"unknown boundary target: {target}")
+        self._mutate = mutate
+        self._target = target
+        self.built_primary: list[dict] = []
+        self.built_repairs: list[dict] = []
+        self.injected: list[dict] = []
+        self.primary_arrivals: list[Any] = []
+        self.repair_arrivals: list[Any] = []
+        self.observed: list[dict] = []
+
+    def install(self, monkeypatch: pytest.MonkeyPatch) -> "_WriterSendBoundary":
+        from code2paper.agentic import page_contract_recheck as pcr
+        from code2paper.llm import section_writer as sw
+
+        boundary = self
+        real_request = sw.LLMRequest
+        real_compare = pcr.compare_actual_request_to_page_contract
+
+        def request_factory(**kwargs):
+            payload = kwargs.get("input_payload")
+            if (
+                isinstance(payload, dict)
+                and kwargs.get("prompt_template_id") == WRITER_TEMPLATE
+            ):
+                if "writer_section_repair" in payload:
+                    boundary.built_repairs.append(copy.deepcopy(payload))
+                    is_target = boundary._target == "repair"
+                else:
+                    boundary.built_primary.append(copy.deepcopy(payload))
+                    is_target = boundary._target == "primary"
+                if boundary._mutate is not None and is_target:
+                    mutated = copy.deepcopy(payload)
+                    boundary._mutate(mutated, boundary)
+                    boundary.injected.append(copy.deepcopy(mutated))
+                    kwargs = {**kwargs, "input_payload": mutated}
+            return real_request(**kwargs)
+
+        def compare_spy(snapshot, **kwargs):
+            failures = real_compare(snapshot, **kwargs)
+            checked_payload = kwargs.get("payload")
+            boundary.observed.append({
+                "frozen_technical": str(
+                    getattr(snapshot, "technical_bytes_digest", "") or ""
+                ),
+                "measured": str(
+                    kwargs.get("actual_technical_bytes_digest") or ""
+                ),
+                # 调用方交给公共复核的**实际请求载荷**必须真的携带那些材料字节：
+                # 这里按同一规则独立重算一次，作为实测摘要的 bytes 来源证明。
+                "payload_measured": _material_bytes_digest(
+                    checked_payload if isinstance(checked_payload, Mapping) else {}
+                ),
+                "is_repair": bool(kwargs.get("is_repair")),
+                "invocation_id": str(kwargs.get("invocation_id") or ""),
+                "page_id": str(getattr(snapshot, "page_id", "") or ""),
+                "failures": [str(item) for item in failures],
+            })
+            return failures
+
+        monkeypatch.setattr(sw, "LLMRequest", request_factory)
+        monkeypatch.setattr(
+            pcr, "compare_actual_request_to_page_contract", compare_spy
+        )
+        return self
+
+    @property
+    def frozen_digest(self) -> str:
+        """生产复核在合法 primary 上观察到的冻结技术字节摘要。"""
+
+        for row in self.observed:
+            if not row["is_repair"]:
+                return row["frozen_technical"]
+        return ""
+
+    def observations(self, *, is_repair: bool) -> list[dict]:
+        return [row for row in self.observed if row["is_repair"] is is_repair]
+
+
+def _payload_diff(before: Any, after: Any, path: str = "") -> list[str]:
+    """两次实际请求载荷的字段级差异（用于断言"只改目标条件"）。"""
+
+    if isinstance(before, Mapping) and isinstance(after, Mapping):
+        rows: list[str] = []
+        for key in sorted(set(before) | set(after)):
+            rows.extend(_payload_diff(before.get(key), after.get(key), f"{path}.{key}"))
+        return rows
+    if isinstance(before, list) and isinstance(after, list):
+        if len(before) != len(after):
+            return [f"{path}:len {len(before)}->{len(after)}"]
+        rows = []
+        for index, (left, right) in enumerate(zip(before, after)):
+            rows.extend(_payload_diff(left, right, f"{path}[{index}]"))
+        return rows
+    if before != after:
+        return [f"{path}:{before!r}->{after!r}"]
+    return []
+
+
+def _run_g2_case(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    mutate: Callable[[dict, _WriterSendBoundary], None] | None = None,
+    *,
+    target: str = "repair",
+) -> dict[str, Any]:
+    """跑一轮真实产品入口：合法 primary 触发一次有界 repair，变异只落在目标请求上。"""
+
+    boundary = _WriterSendBoundary(mutate, target=target).install(monkeypatch)
+    writer_attempts = {"count": 0}
+
+    def caller(config, request):
+        if getattr(request, "prompt_template_id", "") == WRITER_TEMPLATE:
+            payload = getattr(request, "input_payload", None)
+            payload = payload if isinstance(payload, Mapping) else {}
+            if "writer_section_repair" in payload:
+                boundary.repair_arrivals.append(request)
+            else:
+                boundary.primary_arrivals.append(request)
+        response = _mock_writer_caller(config, request)
+        if getattr(request, "prompt_template_id", "") == WRITER_TEMPLATE:
+            writer_attempts["count"] += 1
+            if writer_attempts["count"] == 1 and target == "repair":
+                # 第一次：段落正文只有标题 → 真实内容拒绝 → 生产触发有界 repair。
+                def _title_only(payload: dict) -> None:
+                    for paragraph in payload.get("paragraphs") or ():
+                        paragraph["paragraph_markdown"] = "## Method"
+
+                response = _mutate_writer(response, request, _title_only)
+        return response
+
+    result, outputs = _run(
+        tmp_path, caller, retry_reserve_tokens=G2_REPAIR_RESERVE_TOKENS
+    )
+    rows = _acceptance_rows(tmp_path)
+    writer_result = json.loads(
+        Path(outputs["publication_writer_result_v1"]).read_text(encoding="utf-8")
+    )
+    return {
+        "boundary": boundary,
+        "result": result,
+        "statuses": [row.get("content_acceptance_status") for row in rows],
+        "failures": [
+            str(item) for row in rows for item in (row.get("failures") or ())
+        ],
+        "publication_ready": writer_result["publication_ready"],
+    }
+
+
+def _assert_g2_refusal(
+    outcome: Mapping[str, Any],
+    *,
+    expected_code: str,
+    expected_diff: list[str],
+) -> None:
+    boundary: _WriterSendBoundary = outcome["boundary"]
+    # 合法初次发送与被变异的 repair 分开计数：前者恰好一次，后者零调用。
+    assert len(boundary.primary_arrivals) == 1, "合法 primary 必须恰好到达 provider 一次"
+    assert boundary.repair_arrivals == [], "被变异的 repair 请求不得发给 provider"
+    assert len(boundary.built_repairs) == 1, "生产路径必须真的构造了 repair 请求"
+    assert boundary.injected, "变异必须真的发生在实际发送侧"
+    assert _payload_diff(boundary.built_repairs[0], boundary.injected[0]) == (
+        expected_diff
+    ), "变异必须是目标条件的单变量改变"
+    # 冻结侧没有被重算：生产复核在 primary 与 repair 上看到同一份冻结摘要，
+    # 而该摘要等于调用方从**实际材料字节**重算的实测值（bytes 来源证明）。
+    primary_obs = boundary.observations(is_repair=False)
+    repair_obs = boundary.observations(is_repair=True)
+    assert primary_obs and repair_obs, boundary.observed
+    assert primary_obs[-1]["measured"] == primary_obs[-1]["payload_measured"] != ""
+    assert boundary.frozen_digest == primary_obs[-1]["measured"]
+    assert all(
+        row["frozen_technical"] == boundary.frozen_digest for row in repair_obs
+    ), repair_obs
+    # 具名目标拒绝：公共复核与不可变内容验收记录都必须点名同一个目标条件。
+    assert any(
+        expected_code in item for item in repair_obs[-1]["failures"]
+    ), repair_obs[-1]["failures"]
+    assert any(expected_code in item for item in outcome["failures"]), (
+        expected_code,
+        outcome["failures"],
+    )
+    assert "rejected" in outcome["statuses"], outcome["statuses"]
+    # 真实产品结果：不是 mock 推导，也不是"整轮没跑"。
+    assert outcome["publication_ready"] is False
+    assert outcome["result"].status in {"incomplete", "blocked"}
+
+
+def test_g2_legal_primary_and_legal_repair_reach_the_provider_exactly_once(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """G2 正对照：同一夹具、同一预算下，合法 primary 与合法 repair 各到达一次。"""
+
+    outcome = _run_g2_case(tmp_path, monkeypatch)
+    boundary: _WriterSendBoundary = outcome["boundary"]
+
+    assert len(boundary.primary_arrivals) == 1, "合法 primary 必须恰好发送一次"
+    assert len(boundary.repair_arrivals) == 1, "合法 repair 必须能到达 provider"
+    assert len(boundary.built_repairs) == 1
+    assert boundary.injected == []
+    assert outcome["statuses"] == ["rejected", "accepted"], outcome["statuses"]
+
+    # G6：生产 spy 的实测摘要非空、来源为实际材料 bytes，且与冻结值一致。
+    frozen = boundary.frozen_digest
+    assert frozen, boundary.observed
+    assert boundary.built_primary, "生产路径必须构造 primary 页请求"
+    for row in boundary.observed:
+        assert row["measured"] == frozen, row
+        assert row["payload_measured"] == frozen, row
+        assert row["failures"] == [], row
+    repair_obs = boundary.observations(is_repair=True)
+    assert repair_obs and repair_obs[0]["frozen_technical"] == frozen
+
+
+def test_g2_missing_measured_digest_is_refused_before_the_repair_provider(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """G2-1：实际侧拿不到可重算的材料 → ``technical_bytes_unknown``，零发送。"""
+
+    def _drop_material(payload: dict, boundary: _WriterSendBoundary) -> None:
+        payload["shared_contexts"] = []
+
+    outcome = _run_g2_case(tmp_path, monkeypatch, _drop_material)
+    _assert_g2_refusal(
+        outcome,
+        expected_code="actual_page_contract_mismatch:technical_bytes_unknown",
+        expected_diff=[".shared_contexts:len 1->0"],
+    )
+    boundary: _WriterSendBoundary = outcome["boundary"]
+    assert _material_bytes_digest(boundary.injected[0]) == "", "变异后确实无法重算"
+    assert boundary.observations(is_repair=True)[-1]["measured"] == ""
+
+
+def test_g2_changed_material_with_the_old_declaration_is_refused(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """G2-2：材料已改而请求仍声明旧摘要 → 声明值不能替代重算。"""
+
+    def _change_material_keep_old_declaration(
+        payload: dict, boundary: _WriterSendBoundary
+    ) -> None:
+        payload["shared_contexts"][0]["atoms"][0]["content_digest"] = (
+            "sha256:" + "0" * 64
+        )
+        # 旧声明：写回**冻结**摘要（payload 本身原本不声明该字段）。
+        payload["technical_bytes_digest"] = boundary.frozen_digest
+
+    outcome = _run_g2_case(tmp_path, monkeypatch, _change_material_keep_old_declaration)
+    _assert_g2_refusal(
+        outcome,
+        expected_code="actual_page_contract_mismatch:technical_bytes",
+        expected_diff=[
+            ".shared_contexts[0].atoms[0].content_digest:"
+            "'sha256:29859fa129d7c9aed719779931221d6c5e69093fb50038f0d35f838b9a7b8b7b'"
+            "->'sha256:0000000000000000000000000000000000000000000000000000000000000000'",
+            ".technical_bytes_digest:None->'" + outcome["boundary"].frozen_digest + "'",
+        ],
+    )
+    boundary: _WriterSendBoundary = outcome["boundary"]
+    # 声明保留旧值，实测已变 —— 拒绝来自"实测 vs 冻结"，不是来自声明。
+    assert boundary.injected[0]["technical_bytes_digest"] == boundary.frozen_digest
+    assert _material_bytes_digest(boundary.injected[0]) != boundary.frozen_digest
+
+
+def test_g2_forged_declaration_cannot_stand_in_for_the_measured_material(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """G2-3：声明被伪造成与**改后材料**自洽 → 仍按冻结合同拒绝（不是查内部矛盾）。"""
+
+    def _forge_self_consistent_declaration(
+        payload: dict, boundary: _WriterSendBoundary
+    ) -> None:
+        payload["shared_contexts"][0]["atoms"][0]["content_digest"] = (
+            "sha256:" + "1" * 64
+        )
+        payload["technical_bytes_digest"] = _material_bytes_digest(payload)
+
+    outcome = _run_g2_case(
+        tmp_path, monkeypatch, _forge_self_consistent_declaration
+    )
+    boundary: _WriterSendBoundary = outcome["boundary"]
+    forged = _material_bytes_digest(boundary.injected[0])
+    _assert_g2_refusal(
+        outcome,
+        expected_code="actual_page_contract_mismatch:technical_bytes",
+        expected_diff=[
+            ".shared_contexts[0].atoms[0].content_digest:"
+            "'sha256:29859fa129d7c9aed719779931221d6c5e69093fb50038f0d35f838b9a7b8b7b'"
+            "->'sha256:1111111111111111111111111111111111111111111111111111111111111111'",
+            ".technical_bytes_digest:None->'" + forged + "'",
+        ],
+    )
+    # 自洽伪造：声明 == 实测，且两者都不等于冻结值。
+    assert boundary.injected[0]["technical_bytes_digest"] == forged
+    assert forged != boundary.frozen_digest
+    assert boundary.observations(is_repair=True)[-1]["measured"] == forged
+
+
+def test_g2_repair_that_changes_the_page_material_is_refused_before_the_provider(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """G2-4：repair 请求改了页材料（payload 不声明任何摘要）→ 发送前拒绝。"""
+
+    def _change_page_material(payload: dict, boundary: _WriterSendBoundary) -> None:
+        atom = payload["shared_contexts"][0]["atoms"][0]
+        atom["semantic_atom"] = str(atom.get("semantic_atom") or "") + " MUTATED"
+
+    outcome = _run_g2_case(tmp_path, monkeypatch, _change_page_material)
+    boundary: _WriterSendBoundary = outcome["boundary"]
+    original = boundary.built_repairs[0]["shared_contexts"][0]["atoms"][0][
+        "semantic_atom"
+    ]
+    _assert_g2_refusal(
+        outcome,
+        expected_code="actual_page_contract_mismatch:technical_bytes",
+        expected_diff=[
+            f".shared_contexts[0].atoms[0].semantic_atom:{original!r}->{original + ' MUTATED'!r}"
+        ],
+    )
+    # repair 包本身合法（未被改），因此拒绝确实来自材料改变。
+    assert boundary.injected[0]["writer_section_repair"] == (
+        boundary.built_repairs[0]["writer_section_repair"]
+    )
+    assert _material_bytes_digest(boundary.injected[0]) != boundary.frozen_digest
+
+
+def test_g2_expanding_an_empty_formula_scope_on_the_repair_is_refused(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """G2-5：冻结的公式包白名单为空，repair 往空 scope 里塞包 → 具名 scope 拒绝。"""
+
+    def _expand_empty_formula_scope(
+        payload: dict, boundary: _WriterSendBoundary
+    ) -> None:
+        payload["binding_contract"]["allowed_formula_package_ids"] = [
+            "formula-package:injected-by-repair"
+        ]
+
+    outcome = _run_g2_case(tmp_path, monkeypatch, _expand_empty_formula_scope)
+    boundary: _WriterSendBoundary = outcome["boundary"]
+    assert boundary.built_repairs[0]["binding_contract"][
+        "allowed_formula_package_ids"
+    ] == [], "冻结侧必须确实是空白名单"
+    _assert_g2_refusal(
+        outcome,
+        expected_code=(
+            "actual_page_contract_mismatch:scope:allowed_formula_package_ids:"
+            "expected=0:actual=1"
+        ),
+        expected_diff=[".binding_contract.allowed_formula_package_ids:len 0->1"],
+    )
+
+
+def test_g2_changed_author_goal_on_the_repair_is_refused_before_the_provider(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """G2-6：repair 改了作者目标（reader_goal）→ author_surface 具名拒绝。"""
+
+    def _change_author_goal(payload: dict, boundary: _WriterSendBoundary) -> None:
+        payload["narrative_plan"]["paragraphs"][0]["reader_goal"] = (
+            "Summarize the encoder."
+        )
+
+    outcome = _run_g2_case(tmp_path, monkeypatch, _change_author_goal)
+    boundary: _WriterSendBoundary = outcome["boundary"]
+    original = boundary.built_repairs[0]["narrative_plan"]["paragraphs"][0][
+        "reader_goal"
+    ]
+    _assert_g2_refusal(
+        outcome,
+        expected_code="actual_page_contract_mismatch:author_surface",
+        expected_diff=[
+            f".narrative_plan.paragraphs[0].reader_goal:{original!r}->'Summarize the encoder.'"
+        ],
+    )
+    # 段落集合与页身份逐字未变：作者目标变化是唯一变量。
+    assert (
+        boundary.injected[0]["narrative_plan"]["page_paragraph_ids"]
+        == boundary.built_repairs[0]["narrative_plan"]["page_paragraph_ids"]
+    )
+    assert (
+        boundary.injected[0]["narrative_plan"]["page_id"]
+        == boundary.built_repairs[0]["narrative_plan"]["page_id"]
+    )
+
+
+# --------------------------------------------------------------------------- #
+# K04-G3：无 technical digest 的旧合同由哪个可信 owner 承担比较
+# --------------------------------------------------------------------------- #
+#
+# 真实的 unified writer 页请求**不声明**任何材料摘要（legacy envelope 形态）。因此必须
+# 说清是谁在比较实际材料，而不是靠注释宣称"envelope 兜底"：
+#
+# * primary：材料身份由**准入期**冻结的 ``expected_request_envelope_digest``（连同
+#   ``unified_actual_page_bytes_mismatch`` 的逐字页字节比较）承担。页合同在这一条上不是
+#   独立 owner —— 它是从**同一个** primary 请求捕获的，改 primary 会让两者一起重算。
+# * repair：由内存里冻结的 primary 页合同（技术字节门）与逐字页字节比较承担；primary 的
+#   envelope 按设计不复用于 repair。
+# * 冻结侧"确实没有材料摘要"的形态在 unified lane 结构性不可达：页与 invocation 的模型
+#   都拒绝空摘要（见 test_legacy_characterization 的 G3 构造拒绝回归）。
+
+
+def test_g3_primary_material_change_is_caught_by_the_frozen_page_identity(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """G3：primary 改材料 → 零发送；冻结材料身份来自**冻结页**，不随请求重算。
+
+    请求逐字不声明摘要（legacy envelope 形态），所以冻结值只可能有两个来源：请求自己
+    的声明（此例没有）或可信 adapter 从**冻结页**补的值。生产 spy 证明是后者：冻结值
+    等于变异**前**同页材料摘要，而实测值等于变异后的材料摘要。
+    """
+
+    def _change_primary_material(payload: dict, boundary: _WriterSendBoundary) -> None:
+        atom = payload["shared_contexts"][0]["atoms"][0]
+        atom["semantic_atom"] = str(atom.get("semantic_atom") or "") + " MUTATED"
+
+    outcome = _run_g2_case(
+        tmp_path, monkeypatch, _change_primary_material, target="primary"
+    )
+    boundary: _WriterSendBoundary = outcome["boundary"]
+
+    assert boundary.injected, "变异必须真的落在 primary 请求上"
+    assert boundary.primary_arrivals == [], "改材料的 primary 不得发给 provider"
+    assert boundary.repair_arrivals == []
+    assert all(
+        "technical_bytes_digest" not in payload for payload in boundary.built_primary
+    ), "legacy envelope 形态：请求不声明任何材料摘要"
+
+    observation = boundary.observations(is_repair=False)[-1]
+    page_id = observation["page_id"]
+    assert page_id
+    unmutated_digests = {
+        _material_bytes_digest(payload)
+        for payload in boundary.built_primary
+        if str((payload.get("narrative_plan") or {}).get("page_id") or "") == page_id
+    }
+    assert observation["measured"] == observation["payload_measured"] != ""
+    assert observation["frozen_technical"] in unmutated_digests, (
+        observation,
+        unmutated_digests,
+    )
+    assert observation["measured"] not in unmutated_digests, (
+        "变异后的材料摘要不得出现在冻结值里"
+    )
+    assert observation["frozen_technical"] != observation["measured"]
+    # 发送前具名拒绝，且三个独立 owner 各自点名。
+    assert (
+        "actual_page_contract_mismatch:technical_bytes" in observation["failures"]
+    ), observation["failures"]
+    failures = " ".join(outcome["failures"])
+    assert "unified_actual_page_bytes_mismatch" in failures, failures
+    assert "unified_actual_request_envelope_mismatch" in failures, failures
+    assert outcome["publication_ready"] is False
+    assert outcome["result"].status in {"incomplete", "blocked"}
+
+
+def test_g3_legacy_envelope_without_a_declared_digest_is_verified_by_frozen_bytes(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """G3：旧 envelope 形态（请求不声明摘要）→ 比较由冻结页字节 + 调用方重算承担。"""
+
+    outcome = _run_g2_case(tmp_path, monkeypatch)
+    boundary: _WriterSendBoundary = outcome["boundary"]
+
+    # 形态确认：请求逐字不声明任何材料摘要（legacy envelope）。
+    for payload in (*boundary.built_primary, *boundary.built_repairs):
+        assert "technical_bytes_digest" not in payload, payload.keys()
+        assert "page_bytes_digest" not in payload, payload.keys()
+    # 合法旧请求仍被发送（可信 adapter 从 bytes 补值，不因缺声明被拒）。
+    assert len(boundary.primary_arrivals) == 1
+    assert len(boundary.repair_arrivals) == 1
+    # 生产 spy：冻结值非空、等于调用方从实际材料 bytes 重算的值 —— 这就是承担比较的 owner。
+    frozen = boundary.frozen_digest
+    assert frozen
+    for row in boundary.observed:
+        assert row["frozen_technical"] == frozen
+        assert row["measured"] == frozen
+        assert row["payload_measured"] == frozen
+        assert row["failures"] == []

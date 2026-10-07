@@ -1,0 +1,71 @@
+{
+  "schema_version": "L01DshRuntimeProfileV1",
+  "candidate": "0.2.0-rc.1+loop-origin.1+tool-choice.2",
+  "backend_admission_candidate": "0.2.0-rc.1+loop-origin.1",
+  "base_url": "http://127.0.0.1:8006/v1",
+  "model": "qwen38-27b-nvfp4",
+  "context_tokens": 131072,
+  "input_token_cap": 32768,
+  "max_output_tokens": 4096,
+  "wall_seconds": 180,
+  "primary_requests": 1,
+  "retries": 0,
+  "parallel_agents": false,
+  "equivalent_to_python_profile": false,
+  "unsupported_sampling_fields": [
+    "top_p",
+    "top_k"
+  ],
+  "sampling_scope": "temperature=0.6; top_p/top_k use server defaults, no Python-profile equivalence claimed",
+  "thinking_scope": "explicit L01 nonthinking: chat_template_kwargs.enable_thinking=false; no reasoning_effort/thinking_token_budget; max_tokens=4096 remains total output cap",
+  "provider_config": {
+    "providers": {
+      "openai": {
+        "api": "openai-completions",
+        "toolChoice": {
+          "type": "function",
+          "function": {
+            "name": "c2p_terminal"
+          }
+        },
+        "baseURL": "http://127.0.0.1:8006/v1",
+        "models": [
+          {
+            "id": "qwen38-27b-nvfp4",
+            "contextWindow": 131072,
+            "maxTokens": 4096,
+            "input": [
+              "text"
+            ],
+            "reasoningEfforts": {
+              "low": "low",
+              "off": null
+            }
+          }
+        ],
+        "reasoning": "off",
+        "compat": {
+          "supportsStrictMode": false,
+          "supportsReasoningEffort": true,
+          "supportsUsageInStreaming": true,
+          "maxTokensField": "max_tokens",
+          "supportsThinkingTokenBudget": true,
+          "thinkingTokenBudgetField": "thinking_token_budget",
+          "supportsDeveloperRole": false,
+          "supportsStore": false,
+          "thinkingFormat": "chat-template",
+          "chatTemplateKwargs": {
+            "enable_thinking": false
+          }
+        },
+        "timeoutMs": 180000,
+        "streamIdleTimeoutMs": 60000,
+        "retryPolicy": {
+          "mode": "normal",
+          "maxRetries": 0
+        },
+        "apiKeyEnv": "C2P_L01_LOCAL_PLACEHOLDER"
+      }
+    }
+  }
+}

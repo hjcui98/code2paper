@@ -1,0 +1,11 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "noEmit": false,
+    "rootDir": ".",
+    "outDir": "build",
+    "declaration": false,
+    "sourceMap": false
+  },
+  "include": ["./peer-probe.ts"]
+}

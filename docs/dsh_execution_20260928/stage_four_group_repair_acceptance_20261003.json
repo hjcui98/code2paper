@@ -1,0 +1,4414 @@
+{
+  "schema_version": "c2p-dsh-independent-four-group-acceptance/1",
+  "reviewer": "Current Codex independent Gate-H reviewer; subsequent LEAD dependency registration, no product implementation",
+  "head": "d48b4e4b22c94c82b45d2179ba452d72b164102d",
+  "Gate-B": "PASS",
+  "Gate-H": "PASS",
+  "Gate-K": "PASS",
+  "Gate-K_basis": "Prior independent K01-K04 component PASS, no remaining component findings, current 791-source/test identity retention, actual Gate-H/H03/H04 prerequisites now satisfied; no new full kernel run",
+  "scope": "Explicit frozen development delivery candidate and source-built equivalence; original01/02 completion only; original03-08 not implemented",
+  "closed_findings": [
+    "QA-20261003-ACTIVATE",
+    "QA-20261003-AUDIT",
+    "QA-20261003-SMOKE-IDENTITY",
+    "QA-20261003-DELIVERY"
+  ],
+  "new_blocking_findings": [],
+  "raw_evidence_root": "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd",
+  "owner_seal_root": ".dsh-dev/run/w2-gate-h-repair-20261003-final-r2",
+  "candidate_identities": {
+    "0.1.5-default": {
+      "runtime_tree_sha256": "7e8f199b67027944d646e0c99f5041d4704360377e4d7466fce683c1d468d3ab",
+      "runtime_entries": 25478,
+      "manifest_sha256": "3b1ae12042aaa6b7c7edccb0d96f3a29f0ee5f262d5a0bc9c60858ada7ebfc73",
+      "runtime_unchanged_from_prior_QA": true
+    },
+    "0.2.0-rc.1": {
+      "runtime_tree_sha256": "43490765da460c4300cd7ad8ec75dbc5d5e6dbda93b74e37466c6709c1ab359c",
+      "runtime_entries": 26149,
+      "manifest_sha256": "63f65f77dd134c5d4bc14303266b9d3074ac977bd906621938066d1f968047eb",
+      "runtime_unchanged_from_prior_QA": true
+    },
+    "0.2.0-rc.1+loop-origin.1": {
+      "runtime_tree_sha256": "671daa1a7a06728d69a4bdec6da3d33a3616c4e788f63579ed07f3ae81e0e16c",
+      "runtime_entries": 26150,
+      "manifest_sha256": "5692b3bf210b56bd47d20ae7ad7e3a68134bb06ac5fb18af15dc6b878aedda09",
+      "runtime_unchanged_from_prior_QA": true,
+      "staging_tree_sha256": "30f18c5f31ed58a302c22d1996c699b45d2ab565325a57f92b1e8e9d50bfad98",
+      "staged_build_receipt_sha256": "b6d57b715301ca503be7afa8eec3339cb734545f9edfcff17c31e977b59b6c86",
+      "outputs_digest": "9c00688b090ab3bb744ba83975e5ab447fe75fd61798906d15ba13fa4e750e95",
+      "staged_entries": 18
+    },
+    "0.2.0-rc.1+loop-origin.1-built": {
+      "runtime_tree_sha256": "3076d2fcdbf6b2b49167e8132ce9b5801d95079a36f9bd05af17302e8482be97",
+      "runtime_entries": 26150,
+      "manifest_sha256": "e0e9eac5f46fa200a8557b9084c6a561abf37ef7f94e4fcf76796c79c21433dd",
+      "runtime_unchanged_from_prior_QA": true,
+      "staging_tree_sha256": "15bc87da05654b625f9c430830a41371a300a0b7e96d9d3007b0ff66d8c6e631",
+      "staged_build_receipt_sha256": "3993378a51bcbd4d4c19f5a19dca2b8a3e7c2f511b3b8174833e0b1bec192c91",
+      "outputs_digest": "9c00688b090ab3bb744ba83975e5ab447fe75fd61798906d15ba13fa4e750e95",
+      "staged_entries": 18
+    }
+  },
+  "at_matrix": {
+    "AT-B02": {
+      "original_python": "48 passed, exit0",
+      "node": [
+        "sandbox.test.ts",
+        "staging.test.ts",
+        "candidate-selection.test.ts"
+      ],
+      "normal_smoke": "Web and compat real HTTP/assets/closure and nonempty matching runtime/stage/receipt pass; environment-only default output route independently passed",
+      "doctor": "current delivery exit0",
+      "new_helpers": "Actual Node and Python CLI negative cases reject without changes; legal two-way switch passes; receipt commit failure rolls back peer; original missing-base audit counterexample rejects",
+      "conclusion": "PASS"
+    },
+    "AT-H01": {
+      "files": [
+        "loader.test.ts",
+        "composition.test.ts"
+      ],
+      "behavior": "actual loader, generation/scope/metadata/composition and tool entry assertions passed",
+      "conclusion": "PASS"
+    },
+    "AT-H02": {
+      "files": [
+        "binding.test.ts"
+      ],
+      "behavior": "creation-time trusted binding, stale-fence/provider/parent and cancellation assertions passed",
+      "conclusion": "PASS"
+    },
+    "AT-H03": {
+      "files": [
+        "terminal.test.ts",
+        "provenance.test.ts",
+        "joint-child.test.ts"
+      ],
+      "behavior": "raw/V4/schema/terminal/flush and real new-process reconstruction assertions passed",
+      "conclusion": "PASS"
+    },
+    "AT-H04": {
+      "files": [
+        "request-seam.test.ts",
+        "cancellation.test.ts",
+        "joint-child.test.ts"
+      ],
+      "behavior": "request/receipt/abort/material/accounting/resource, C25 prepared+fallback, C26 dual-runtime, C27 lifecycle passed",
+      "conclusion": "PASS"
+    },
+    "independent_old_counterexamples": "10 source-boundary + 3 lifecycle tests passed per candidate; GHS-1/GHS-2 closed for these frozen runtimes",
+    "source_types": "Previous independent types proof retained for unchanged runtime/declarations; new owner tsc source/compiler/config bindings and archives independently checked; source patch exact",
+    "scope": "delivery full stage; built runtime/source equivalence only, no built B02/doctor claim",
+    "Gate-H": "PASS",
+    "Gate-K": "PASS by subsequent LEAD prerequisite and retained-component registration",
+    "details": "original-at-node-matrix.json; independent-case-results.json"
+  },
+  "original_test_nodes": {
+    "rows": [
+      {
+        "file": "integrations/dsh/tests/binding.test.ts",
+        "line": 530,
+        "node": "the standard spawn path cannot bind inside the child creation window",
+        "ran_on": {
+          "0.2.0-rc.1+loop-origin.1": true,
+          "0.2.0-rc.1+loop-origin.1-built": true
+        }
+      },
+      {
+        "file": "integrations/dsh/tests/binding.test.ts",
+        "line": 570,
+        "node": "a blocked claim reads no material, calls no adapter and creates nothing",
+        "ran_on": {
+          "0.2.0-rc.1+loop-origin.1": true,
+          "0.2.0-rc.1+loop-origin.1-built": true
+        }
+      },
+      {
+        "file": "integrations/dsh/tests/binding.test.ts",
+        "line": 602,
+        "node": "a root binding exists before publication and a dispatched child inherits it",
+        "ran_on": {
+          "0.2.0-rc.1+loop-origin.1": true,
+          "0.2.0-rc.1+loop-origin.1-built": true
+        }
+      },
+      {
+        "file": "integrations/dsh/tests/binding.test.ts",
+        "line": 639,
+        "node": "a forged task id, unbound parent and unbound child are refused before creation",
+        "ran_on": {
+          "0.2.0-rc.1+loop-origin.1": true,
+          "0.2.0-rc.1+loop-origin.1-built": true
+        }
+      },
+      {
+        "file": "integrations/dsh/tests/binding.test.ts",
+        "line": 695,
+        "node": "a stale fence is refused while the current grant still works",
+        "ran_on": {
+          "0.2.0-rc.1+loop-origin.1": true,
+          "0.2.0-rc.1+loop-origin.1-built": true
+        }
+      },
+      {
+        "file": "integrations/dsh/tests/binding.test.ts",
+        "line": 723,
+        "node": "cancellation before the receipt and before creation both leave nothing behind",
+        "ran_on": {
+          "0.2.0-rc.1+loop-origin.1": true,
+          "0.2.0-rc.1+loop-origin.1-built": true
+        }
+      },
+      {
+        "file": "integrations/dsh/tests/binding.test.ts",
+        "line": 769,
+        "node": "bindings do not outlive their agents and the registry is not durable state",
+        "ran_on": {
+          "0.2.0-rc.1+loop-origin.1": true,
+          "0.2.0-rc.1+loop-origin.1-built": true
+        }
+      },
+      {
+        "file": "integrations/dsh/tests/binding.test.ts",
+        "line": 792,
+        "node": "the frozen request contract is consumable: reserve, dispatch, settle and unknown",
+        "ran_on": {
+          "0.2.0-rc.1+loop-origin.1": true,
+          "0.2.0-rc.1+loop-origin.1-built": true
+        }
+      },
+      {
+        "file": "integrations/dsh/tests/binding.test.ts",
+        "line": 844,
+        "node": "request recording refuses a stale grant and reports delay, refusal and cancellation",
+        "ran_on": {
+          "0.2.0-rc.1+loop-origin.1": true,
+          "0.2.0-rc.1+loop-origin.1-built": true
+        }
+      },
+      {
+        "file": "integrations/dsh/tests/binding.test.ts",
+        "line": 884,
+        "node": "a superseded parent binding stops delegating, with or without a fence hint",
+        "ran_on": {
+          "0.2.0-rc.1+loop-origin.1": true,
+          "0.2.0-rc.1+loop-origin.1-built": true
+        }
+      },
+      {
+        "file": "integrations/dsh/tests/binding.test.ts",
+        "line": 936,
+        "node": "the dispatch entry admits only provider objects this Host registered, before any start",
+        "ran_on": {
+          "0.2.0-rc.1+loop-origin.1": true,
+          "0.2.0-rc.1+loop-origin.1-built": true
+        }
+      },
+      {
+        "file": "integrations/dsh/tests/cancellation.test.ts",
+        "line": 466,
+        "node": "C0: a legal bound delegation reaches the seam and settles once (control)",
+        "ran_on": {
+          "0.2.0-rc.1+loop-origin.1": true,
+          "0.2.0-rc.1+loop-origin.1-built": true
+        }
+      },
+      {
+        "file": "integrations/dsh/tests/cancellation.test.ts",
+        "line": 481,
+        "node": "C1: cancelling a blocked reservation dispatches nothing and settles nothing",
+        "ran_on": {
+          "0.2.0-rc.1+loop-origin.1": true,
+          "0.2.0-rc.1+loop-origin.1-built": true
+        }
+      },
+      {
+        "file": "integrations/dsh/tests/cancellation.test.ts",
+        "line": 506,
+        "node": "C2: a refused reservation dispatches nothing",
+        "ran_on": {
+          "0.2.0-rc.1+loop-origin.1": true,
+          "0.2.0-rc.1+loop-origin.1-built": true
+        }
+      },
+      {
+        "file": "integrations/dsh/tests/cancellation.test.ts",
+        "line": 523,
+        "node": "C3: a healthy protected turn is dispatched once and settled once",
+        "ran_on": {
+          "0.2.0-rc.1+loop-origin.1": true,
+          "0.2.0-rc.1+loop-origin.1-built": true
+        }
+      },
+      {
+        "file": "integrations/dsh/tests/cancellation.test.ts",
+        "line": 543,
+        "node": "C4: a failing terminal record stays a named unsettled fact and is never retried",
+        "ran_on": {
+          "0.2.0-rc.1+loop-origin.1": true,
+          "0.2.0-rc.1+loop-origin.1-built": true
+        }
+      },
+      {
+        "file": "integrations/dsh/tests/cancellation.test.ts",
+        "line": 558,
+        "node": "C5: quiescence claims name their resource scope",
+        "ran_on": {
+          "0.2.0-rc.1+loop-origin.1": true,
+          "0.2.0-rc.1+loop-origin.1-built": true
+        }
+      },
+      {
+        "file": "integrations/dsh/tests/cancellation.test.ts",
+        "line": 571,
+        "node": "C7: stop without usage is not a zero-cost settlement",
+        "ran_on": {
+          "0.2.0-rc.1+loop-origin.1": true,
+          "0.2.0-rc.1+loop-origin.1-built": true
+        }
+      },
+      {
+        "file": "integrations/dsh/tests/cancellation.test.ts",
+        "line": 587,
+        "node": "C8: an iterator return that does not finish is bounded and unsettled",
+        "ran_on": {
+          "0.2.0-rc.1+loop-origin.1": true,
+          "0.2.0-rc.1+loop-origin.1-built": true
+        }
+      },
+      {
+        "file": "integrations/dsh/tests/cancellation.test.ts",
+        "line": 622,
+        "node": "C9: two live children each settle once, and a copied signal cannot spend the preparation",
+        "ran_on": {
+          "0.2.0-rc.1+loop-origin.1": true,
+          "0.2.0-rc.1+loop-origin.1-built": true
+        }
+      },
+      {
+        "file": "integrations/dsh/tests/cancellation.test.ts",
+        "line": 681,
+        "node": "C10: a public withInitiator cannot spend a prepare wait",
+        "ran_on": {
+          "0.2.0-rc.1+loop-origin.1": true,
+          "0.2.0-rc.1+loop-origin.1-built": true
+        }
+      },
+      {
+        "file": "integrations/dsh/tests/cancellation.test.ts",
+        "line": 735,
+        "node": "C11: one child preparing does not reject a sibling",
+        "ran_on": {
+          "0.2.0-rc.1+loop-origin.1": true,
+          "0.2.0-rc.1+loop-origin.1-built": true
+        }
+      },
+      {
+        "file": "integrations/dsh/tests/cancellation.test.ts",
+        "line": 776,
+        "node": "C13: a public listener re-entering with the real request object cannot take the origin",
+        "ran_on": {
+          "0.2.0-rc.1+loop-origin.1": true,
+          "0.2.0-rc.1+loop-origin.1-built": true
+        }
+      },
+      {
+        "file": "integrations/dsh/tests/cancellation.test.ts",
+        "line": 826,
+        "node": "C14: a real NO_ADAPTER fallback cannot be stolen by same-signal copies",
+        "ran_on": {
+          "0.2.0-rc.1+loop-origin.1": true,
+          "0.2.0-rc.1+loop-origin.1-built": true
+        }
+      },
+      {
+        "file": "integrations/dsh/tests/cancellation.test.ts",
+        "line": 909,
+        "node": "C14b: a genuinely absent adapter stays a named failure and stolen handles carry no origin",
+        "ran_on": {
+          "0.2.0-rc.1+loop-origin.1": true,
+          "0.2.0-rc.1+loop-origin.1-built": true
+        }
+      },
+      {
+        "file": "integrations/dsh/tests/cancellation.test.ts",
+        "line": 945,
+        "node": "C15: external material drift after the dispatch claim cannot dispatch",
+        "ran_on": {
+          "0.2.0-rc.1+loop-origin.1": true,
+          "0.2.0-rc.1+loop-origin.1-built": true
+        }
+      },
+      {
+        "file": "integrations/dsh/tests/cancellation.test.ts",
+        "line": 1007,
+        "node": "C16: an abort during the dispatch wait reaches no adapter and settles nothing",
+        "ran_on": {
+          "0.2.0-rc.1+loop-origin.1": true,
+          "0.2.0-rc.1+loop-origin.1-built": true
+        }
+      },
+      {
+        "file": "integrations/dsh/tests/cancellation.test.ts",
+        "line": 1036,
+        "node": "C17: a fence advance during the reserve wait reaches no adapter",
+        "ran_on": {
+          "0.2.0-rc.1+loop-origin.1": true,
+          "0.2.0-rc.1+loop-origin.1-built": true
+        }
+      },
+      {
+        "file": "integrations/dsh/tests/cancellation.test.ts",
+        "line": 1065,
+        "node": "C18: an unestablished output cap refuses the request before any receipt",
+        "ran_on": {
+          "0.2.0-rc.1+loop-origin.1": true,
+          "0.2.0-rc.1+loop-origin.1-built": true
+        }
+      },
+      {
+        "file": "integrations/dsh/tests/cancellation.test.ts",
+        "line": 1084,
+        "node": "C12: a synchronous iterator return after settle is a named unsettled cleanup",
+        "ran_on": {
+          "0.2.0-rc.1+loop-origin.1": true,
+          "0.2.0-rc.1+loop-origin.1-built": true
+        }
+      },
+      {
+        "file": "integrations/dsh/tests/cancellation.test.ts",
+        "line": 1119,
+        "node": "C12b: an async return rejection and an iteration throw both end in named facts",
+        "ran_on": {
+          "0.2.0-rc.1+loop-origin.1": true,
+          "0.2.0-rc.1+loop-origin.1-built": true
+        }
+      },
+      {
+        "file": "integrations/dsh/tests/cancellation.test.ts",
+        "line": 1174,
+        "node": "C6: a fence advance during dispatch reaches no adapter",
+        "ran_on": {
+          "0.2.0-rc.1+loop-origin.1": true,
+          "0.2.0-rc.1+loop-origin.1-built": true
+        }
+      },
+      {
+        "file": "integrations/dsh/tests/cancellation.test.ts",
+        "line": 1233,
+        "node": "C19: public dispatches initiated inside a live loop scope reach their own provider",
+        "ran_on": {
+          "0.2.0-rc.1+loop-origin.1": true,
+          "0.2.0-rc.1+loop-origin.1-built": true
+        }
+      },
+      {
+        "file": "integrations/dsh/tests/cancellation.test.ts",
+        "line": 1295,
+        "node": "C20: public prepareCall keeps the original NO_ADAPTER semantics while the loop fallback stays legal",
+        "ran_on": {
+          "0.2.0-rc.1+loop-origin.1": true,
+          "0.2.0-rc.1+loop-origin.1-built": true
+        }
+      },
+      {
+        "file": "integrations/dsh/tests/cancellation.test.ts",
+        "line": 1332,
+        "node": "C21: a public async-hook observer cannot consume, mint or preempt the loop origin",
+        "ran_on": {
+          "0.2.0-rc.1+loop-origin.1": true,
+          "0.2.0-rc.1+loop-origin.1-built": true
+        }
+      },
+      {
+        "file": "integrations/dsh/tests/cancellation.test.ts",
+        "line": 1436,
+        "node": "C22: a forwarding Proxy returned by the public service resolver cannot steal the loop capability",
+        "ran_on": {
+          "0.2.0-rc.1+loop-origin.1": true,
+          "0.2.0-rc.1+loop-origin.1-built": true
+        }
+      },
+      {
+        "file": "integrations/dsh/tests/cancellation.test.ts",
+        "line": 1487,
+        "node": "C23: a caller-provided custom Symbol.asyncIterator is constructed inside the cleared scope",
+        "ran_on": {
+          "0.2.0-rc.1+loop-origin.1": true,
+          "0.2.0-rc.1+loop-origin.1-built": true
+        }
+      },
+      {
+        "file": "integrations/dsh/tests/cancellation.test.ts",
+        "line": 1556,
+        "node": "C24: public boolean controls, public methods, or unproven callers cannot mint trusted loop dispatch",
+        "ran_on": {
+          "0.2.0-rc.1+loop-origin.1": true,
+          "0.2.0-rc.1+loop-origin.1-built": true
+        }
+      },
+      {
+        "file": "integrations/dsh/tests/cancellation.test.ts",
+        "line": 1635,
+        "node": "C25: resolver Proxy wrapping all members along the dispatch path cannot hijack or mint dispatch authority (prepared and fallback)",
+        "ran_on": {
+          "0.2.0-rc.1+loop-origin.1": true,
+          "0.2.0-rc.1+loop-origin.1-built": true
+        }
+      },
+      {
+        "file": "integrations/dsh/tests/cancellation.test.ts",
+        "line": 1763,
+        "node": "C26: concurrent dual-deployment: prepared dispatches route to respective runtimes without cross-dispatch; ambiguous fallback fails closed; post-disposal recovers",
+        "ran_on": {
+          "0.2.0-rc.1+loop-origin.1": true,
+          "0.2.0-rc.1+loop-origin.1-built": true
+        }
+      },
+      {
+        "file": "integrations/dsh/tests/cancellation.test.ts",
+        "line": 1853,
+        "node": "C27: deployment lifecycle sequence: destroy A -> create B -> B prepared & fallback both succeed; repeated disposal of A is safe",
+        "ran_on": {
+          "0.2.0-rc.1+loop-origin.1": true,
+          "0.2.0-rc.1+loop-origin.1-built": true
+        }
+      },
+      {
+        "file": "integrations/dsh/tests/candidate-selection.test.ts",
+        "line": 32,
+        "node": "a matching selection reports its candidate root and separates id from upstream",
+        "ran_on": {
+          "0.2.0-rc.1+loop-origin.1": true,
+          "0.2.0-rc.1+loop-origin.1-built": true
+        }
+      },
+      {
+        "file": "integrations/dsh/tests/candidate-selection.test.ts",
+        "line": 48,
+        "node": "a candidate flag that disagrees with the env or the root is refused",
+        "ran_on": {
+          "0.2.0-rc.1+loop-origin.1": true,
+          "0.2.0-rc.1+loop-origin.1-built": true
+        }
+      },
+      {
+        "file": "integrations/dsh/tests/composition.test.ts",
+        "line": 22,
+        "node": "the selected candidate matches its id and its profile whitelist is unchanged",
+        "ran_on": {
+          "0.2.0-rc.1+loop-origin.1": true,
+          "0.2.0-rc.1+loop-origin.1-built": true
+        }
+      },
+      {
+        "file": "integrations/dsh/tests/composition.test.ts",
+        "line": 53,
+        "node": "provider, title, retry, compaction, PTC, OTel and schedule are inventoried and network rows stay disabled",
+        "ran_on": {
+          "0.2.0-rc.1+loop-origin.1": true,
+          "0.2.0-rc.1+loop-origin.1-built": true
+        }
+      },
+      {
+        "file": "integrations/dsh/tests/composition.test.ts",
+        "line": 87,
+        "node": "the launcher network namespace cannot open an external connection",
+        "ran_on": {
+          "0.2.0-rc.1+loop-origin.1": true,
+          "0.2.0-rc.1+loop-origin.1-built": true
+        }
+      },
+      {
+        "file": "integrations/dsh/tests/joint-child.test.ts",
+        "line": 280,
+        "node": "one bound child accounts, commits, flushes, and rebuilds; a bare request does not pollute it",
+        "ran_on": {
+          "0.2.0-rc.1+loop-origin.1": true,
+          "0.2.0-rc.1+loop-origin.1-built": true
+        }
+      },
+      {
+        "file": "integrations/dsh/tests/loader.test.ts",
+        "line": 435,
+        "node": "real deployment patch and roster load from unchanged profile/staging inputs",
+        "ran_on": {
+          "0.2.0-rc.1+loop-origin.1": true,
+          "0.2.0-rc.1+loop-origin.1-built": true
+        }
+      },
+      {
+        "file": "integrations/dsh/tests/loader.test.ts",
+        "line": 451,
+        "node": "named exports preserve name/inject/Config on the actual Loader rows",
+        "ran_on": {
+          "0.2.0-rc.1+loop-origin.1": true,
+          "0.2.0-rc.1+loop-origin.1-built": true
+        }
+      },
+      {
+        "file": "integrations/dsh/tests/loader.test.ts",
+        "line": 471,
+        "node": "root setup awaits composition and the public ToolRuntime executes/renders its scoped tool",
+        "ran_on": {
+          "0.2.0-rc.1+loop-origin.1": true,
+          "0.2.0-rc.1+loop-origin.1-built": true
+        }
+      },
+      {
+        "file": "integrations/dsh/tests/loader.test.ts",
+        "line": 484,
+        "node": "sibling ledgers stay separate and the public ToolRuntime rejects a non-joined agent",
+        "ran_on": {
+          "0.2.0-rc.1+loop-origin.1": true,
+          "0.2.0-rc.1+loop-origin.1-built": true
+        }
+      },
+      {
+        "file": "integrations/dsh/tests/loader.test.ts",
+        "line": 507,
+        "node": "override and child report their actual preset and retain the parent standing generation after an edit",
+        "ran_on": {
+          "0.2.0-rc.1+loop-origin.1": true,
+          "0.2.0-rc.1+loop-origin.1-built": true
+        }
+      },
+      {
+        "file": "integrations/dsh/tests/loader.test.ts",
+        "line": 539,
+        "node": "missing package/inject, bad Config and one metadata-losing default export fail without live residue",
+        "ran_on": {
+          "0.2.0-rc.1+loop-origin.1": true,
+          "0.2.0-rc.1+loop-origin.1-built": true
+        }
+      },
+      {
+        "file": "integrations/dsh/tests/loader.test.ts",
+        "line": 558,
+        "node": "a new process-global service is rejected and fully removed after failed preset creation",
+        "ran_on": {
+          "0.2.0-rc.1+loop-origin.1": true,
+          "0.2.0-rc.1+loop-origin.1-built": true
+        }
+      },
+      {
+        "file": "integrations/dsh/tests/loader.test.ts",
+        "line": 573,
+        "node": "duplicate host service registration rejects without replacing the bridge or harming an existing agent",
+        "ran_on": {
+          "0.2.0-rc.1+loop-origin.1": true,
+          "0.2.0-rc.1+loop-origin.1-built": true
+        }
+      },
+      {
+        "file": "integrations/dsh/tests/loader.test.ts",
+        "line": 585,
+        "node": "agent disposal removes its live state but preserves the shared standing composition",
+        "ran_on": {
+          "0.2.0-rc.1+loop-origin.1": true,
+          "0.2.0-rc.1+loop-origin.1-built": true
+        }
+      },
+      {
+        "file": "integrations/dsh/tests/loader.test.ts",
+        "line": 599,
+        "node": "both real hosts remain model-free and shared profile/staging bytes stay unchanged with fixtures present",
+        "ran_on": {
+          "0.2.0-rc.1+loop-origin.1": true,
+          "0.2.0-rc.1+loop-origin.1-built": true
+        }
+      },
+      {
+        "file": "integrations/dsh/tests/provenance.test.ts",
+        "line": 65,
+        "node": "the capture keeps the raw text verbatim, per call and in arrival order",
+        "ran_on": {
+          "0.2.0-rc.1+loop-origin.1": true,
+          "0.2.0-rc.1+loop-origin.1-built": true
+        }
+      },
+      {
+        "file": "integrations/dsh/tests/provenance.test.ts",
+        "line": 90,
+        "node": "raw, normalized and parsed digests are distinct for the same value",
+        "ran_on": {
+          "0.2.0-rc.1+loop-origin.1": true,
+          "0.2.0-rc.1+loop-origin.1-built": true
+        }
+      },
+      {
+        "file": "integrations/dsh/tests/provenance.test.ts",
+        "line": 108,
+        "node": "whitespace, escape spelling and key order change the raw digest but not the parsed value",
+        "ran_on": {
+          "0.2.0-rc.1+loop-origin.1": true,
+          "0.2.0-rc.1+loop-origin.1-built": true
+        }
+      },
+      {
+        "file": "integrations/dsh/tests/provenance.test.ts",
+        "line": 123,
+        "node": "an unobserved raw source stays explicitly missing",
+        "ran_on": {
+          "0.2.0-rc.1+loop-origin.1": true,
+          "0.2.0-rc.1+loop-origin.1-built": true
+        }
+      },
+      {
+        "file": "integrations/dsh/tests/provenance.test.ts",
+        "line": 132,
+        "node": "the rebuild returns what the log holds and refuses to reconstruct the rest",
+        "ran_on": {
+          "0.2.0-rc.1+loop-origin.1": true,
+          "0.2.0-rc.1+loop-origin.1-built": true
+        }
+      },
+      {
+        "file": "integrations/dsh/tests/provenance.test.ts",
+        "line": 181,
+        "node": "a reused call id in a later stream does not merge two sources",
+        "ran_on": {
+          "0.2.0-rc.1+loop-origin.1": true,
+          "0.2.0-rc.1+loop-origin.1-built": true
+        }
+      },
+      {
+        "file": "integrations/dsh/tests/provenance.test.ts",
+        "line": 207,
+        "node": "a stream that fails or is abandoned yields an explicitly incomplete source",
+        "ran_on": {
+          "0.2.0-rc.1+loop-origin.1": true,
+          "0.2.0-rc.1+loop-origin.1-built": true
+        }
+      },
+      {
+        "file": "integrations/dsh/tests/provenance.test.ts",
+        "line": 238,
+        "node": "the rebuild validates a stored record instead of trusting it",
+        "ran_on": {
+          "0.2.0-rc.1+loop-origin.1": true,
+          "0.2.0-rc.1+loop-origin.1-built": true
+        }
+      },
+      {
+        "file": "integrations/dsh/tests/provenance.test.ts",
+        "line": 297,
+        "node": "attribution follows the trusted session, and an unattributable id is ambiguous",
+        "ran_on": {
+          "0.2.0-rc.1+loop-origin.1": true,
+          "0.2.0-rc.1+loop-origin.1-built": true
+        }
+      },
+      {
+        "file": "integrations/dsh/tests/provenance.test.ts",
+        "line": 332,
+        "node": "completeness is the call's own completion fact, not iterator completion",
+        "ran_on": {
+          "0.2.0-rc.1+loop-origin.1": true,
+          "0.2.0-rc.1+loop-origin.1-built": true
+        }
+      },
+      {
+        "file": "integrations/dsh/tests/provenance.test.ts",
+        "line": 381,
+        "node": "the rebuild refuses damaged structure by name and never throws",
+        "ran_on": {
+          "0.2.0-rc.1+loop-origin.1": true,
+          "0.2.0-rc.1+loop-origin.1-built": true
+        }
+      },
+      {
+        "file": "integrations/dsh/tests/provenance.test.ts",
+        "line": 430,
+        "node": "the rebuild validates every record and treats disagreement as a conflict",
+        "ran_on": {
+          "0.2.0-rc.1+loop-origin.1": true,
+          "0.2.0-rc.1+loop-origin.1-built": true
+        }
+      },
+      {
+        "file": "integrations/dsh/tests/provenance.test.ts",
+        "line": 476,
+        "node": "the rebuild attributes the record to a real successful call",
+        "ran_on": {
+          "0.2.0-rc.1+loop-origin.1": true,
+          "0.2.0-rc.1+loop-origin.1-built": true
+        }
+      },
+      {
+        "file": "integrations/dsh/tests/provenance.test.ts",
+        "line": 517,
+        "node": "V4 independent tool messages correspond by call, turn, step and isError",
+        "ran_on": {
+          "0.2.0-rc.1+loop-origin.1": true,
+          "0.2.0-rc.1+loop-origin.1-built": true
+        }
+      },
+      {
+        "file": "integrations/dsh/tests/request-seam.test.ts",
+        "line": 365,
+        "node": "S1: two live bound children - observed ranges and impersonation",
+        "ran_on": {
+          "0.2.0-rc.1+loop-origin.1": true,
+          "0.2.0-rc.1+loop-origin.1-built": true
+        }
+      },
+      {
+        "file": "integrations/dsh/tests/request-seam.test.ts",
+        "line": 488,
+        "node": "R-receipt: a mutated live receipt cannot replace the accepted snapshot",
+        "ran_on": {
+          "0.2.0-rc.1+loop-origin.1": true,
+          "0.2.0-rc.1+loop-origin.1-built": true
+        }
+      },
+      {
+        "file": "integrations/dsh/tests/request-seam.test.ts",
+        "line": 505,
+        "node": "R-receipt: mis-matched reservation receipts are refused by name",
+        "ran_on": {
+          "0.2.0-rc.1+loop-origin.1": true,
+          "0.2.0-rc.1+loop-origin.1-built": true
+        }
+      },
+      {
+        "file": "integrations/dsh/tests/request-seam.test.ts",
+        "line": 523,
+        "node": "R-receipt: dispatch is chained back to the accepted reservation",
+        "ran_on": {
+          "0.2.0-rc.1+loop-origin.1": true,
+          "0.2.0-rc.1+loop-origin.1-built": true
+        }
+      },
+      {
+        "file": "integrations/dsh/tests/request-seam.test.ts",
+        "line": 551,
+        "node": "R-cap: digest coverage is closed and named",
+        "ran_on": {
+          "0.2.0-rc.1+loop-origin.1": true,
+          "0.2.0-rc.1+loop-origin.1-built": true
+        }
+      },
+      {
+        "file": "integrations/dsh/tests/request-seam.test.ts",
+        "line": 584,
+        "node": "S2: only a proven loop origin obtains a dispatch authorization",
+        "ran_on": {
+          "0.2.0-rc.1+loop-origin.1": true,
+          "0.2.0-rc.1+loop-origin.1-built": true
+        }
+      },
+      {
+        "file": "integrations/dsh/tests/terminal.test.ts",
+        "line": 241,
+        "node": "a successful terminal commits with separated sources and survives a restart",
+        "ran_on": {
+          "0.2.0-rc.1+loop-origin.1": true,
+          "0.2.0-rc.1+loop-origin.1-built": true
+        }
+      },
+      {
+        "file": "integrations/dsh/tests/terminal.test.ts",
+        "line": 324,
+        "node": "closing text alone does not commit a terminal",
+        "ran_on": {
+          "0.2.0-rc.1+loop-origin.1": true,
+          "0.2.0-rc.1+loop-origin.1-built": true
+        }
+      },
+      {
+        "file": "integrations/dsh/tests/terminal.test.ts",
+        "line": 333,
+        "node": "a second terminal in one response does not commit and is refused",
+        "ran_on": {
+          "0.2.0-rc.1+loop-origin.1": true,
+          "0.2.0-rc.1+loop-origin.1-built": true
+        }
+      },
+      {
+        "file": "integrations/dsh/tests/terminal.test.ts",
+        "line": 351,
+        "node": "a bad schema or wrong arguments never commits",
+        "ran_on": {
+          "0.2.0-rc.1+loop-origin.1": true,
+          "0.2.0-rc.1+loop-origin.1-built": true
+        }
+      },
+      {
+        "file": "integrations/dsh/tests/terminal.test.ts",
+        "line": 367,
+        "node": "a tool call after the terminal is refused and cannot commit",
+        "ran_on": {
+          "0.2.0-rc.1+loop-origin.1": true,
+          "0.2.0-rc.1+loop-origin.1-built": true
+        }
+      },
+      {
+        "file": "integrations/dsh/tests/terminal.test.ts",
+        "line": 394,
+        "node": "a real adapter failing mid-arguments yields an incomplete raw source, never captured",
+        "ran_on": {
+          "0.2.0-rc.1+loop-origin.1": true,
+          "0.2.0-rc.1+loop-origin.1-built": true
+        }
+      },
+      {
+        "file": "integrations/dsh/tests/terminal.test.ts",
+        "line": 420,
+        "node": "the fallback path without an adapter produces no terminal",
+        "ran_on": {
+          "0.2.0-rc.1+loop-origin.1": true,
+          "0.2.0-rc.1+loop-origin.1-built": true
+        }
+      },
+      {
+        "file": "integrations/dsh/tests/terminal.test.ts",
+        "line": 431,
+        "node": "a failing flush never counts as durable recovery",
+        "ran_on": {
+          "0.2.0-rc.1+loop-origin.1": true,
+          "0.2.0-rc.1+loop-origin.1-built": true
+        }
+      },
+      {
+        "file": "integrations/dsh/tests/terminal.test.ts",
+        "line": 463,
+        "node": "a partial flush leaves a named unresolved, never a committed claim",
+        "ran_on": {
+          "0.2.0-rc.1+loop-origin.1": true,
+          "0.2.0-rc.1+loop-origin.1-built": true
+        }
+      },
+      {
+        "file": "integrations/dsh/tests/terminal.test.ts",
+        "line": 492,
+        "node": "the terminal schema keeps the union and its per-branch constraints",
+        "ran_on": {
+          "0.2.0-rc.1+loop-origin.1": true,
+          "0.2.0-rc.1+loop-origin.1-built": true
+        }
+      },
+      {
+        "file": "integrations/dsh/dev/toolchain/sandbox.test.ts",
+        "line": 13,
+        "node": "compat tests have an isolated DSH home, scrubbed credentials, and readonly runtime/source",
+        "ran_on": {
+          "0.2.0-rc.1+loop-origin.1": true,
+          "0.2.0-rc.1+loop-origin.1-built": true
+        }
+      },
+      {
+        "file": "integrations/dsh/dev/toolchain/sandbox.test.ts",
+        "line": 27,
+        "node": "offline namespace still supports a local fixture server",
+        "ran_on": {
+          "0.2.0-rc.1+loop-origin.1": true,
+          "0.2.0-rc.1+loop-origin.1-built": true
+        }
+      },
+      {
+        "file": "integrations/dsh/dev/toolchain/staging.test.ts",
+        "line": 60,
+        "node": "the bundle is staged at the profile install location with its build receipt",
+        "ran_on": {
+          "0.2.0-rc.1+loop-origin.1": true,
+          "0.2.0-rc.1+loop-origin.1-built": true
+        }
+      },
+      {
+        "file": "integrations/dsh/dev/toolchain/staging.test.ts",
+        "line": 77,
+        "node": "every declared peer resolves from the staged bundle into the frozen runtime",
+        "ran_on": {
+          "0.2.0-rc.1+loop-origin.1": true,
+          "0.2.0-rc.1+loop-origin.1-built": true
+        }
+      },
+      {
+        "file": "integrations/dsh/dev/toolchain/staging.test.ts",
+        "line": 91,
+        "node": "the staged package imports the shared cordis instance without shipping dev files",
+        "ran_on": {
+          "0.2.0-rc.1+loop-origin.1": true,
+          "0.2.0-rc.1+loop-origin.1-built": true
+        }
+      },
+      {
+        "file": "integrations/dsh/dev/toolchain/staging.test.ts",
+        "line": 104,
+        "node": "development dependencies did not modify the frozen runtime",
+        "ran_on": {
+          "0.2.0-rc.1+loop-origin.1": true,
+          "0.2.0-rc.1+loop-origin.1-built": true
+        }
+      }
+    ],
+    "summaries": {
+      "0.2.0-rc.1+loop-origin.1": {
+        "tests": 93,
+        "pass": 93,
+        "fail": 0,
+        "skipped": 0
+      },
+      "0.2.0-rc.1+loop-origin.1-built": {
+        "tests": 93,
+        "pass": 93,
+        "fail": 0,
+        "skipped": 0
+      }
+    },
+    "unmatched": []
+  },
+  "independent_cases": {
+    "0.2.0-rc.1+loop-origin.1": {
+      "capability-boundaries": {
+        "inner_exit": 0,
+        "tests_passed": 10,
+        "observations": [
+          {
+            "label": "prepared-control",
+            "result": {
+              "output": [
+                {
+                  "type": "text",
+                  "text": "ok"
+                }
+              ],
+              "stopReason": "completed"
+            },
+            "counts": {
+              "reserve": 1,
+              "dispatch": 1,
+              "settle": 1,
+              "adapter": 1
+            }
+          },
+          {
+            "label": "prepared-resolver-proxy",
+            "result": {
+              "output": [
+                {
+                  "type": "text",
+                  "text": "ok"
+                }
+              ],
+              "stopReason": "completed"
+            },
+            "counts": {
+              "reserve": 1,
+              "dispatch": 1,
+              "settle": 1,
+              "adapter": 1
+            },
+            "lookups": 1,
+            "calls": 1,
+            "admissions": 0,
+            "methods": [
+              "prepareCall"
+            ],
+            "oldSymbolExport": false,
+            "currentEntry": "function"
+          },
+          {
+            "label": "prepared-forged-observer",
+            "result": {
+              "output": [
+                {
+                  "type": "text",
+                  "text": "ok"
+                }
+              ],
+              "stopReason": "completed"
+            },
+            "counts": {
+              "reserve": 1,
+              "dispatch": 1,
+              "settle": 1,
+              "adapter": 1
+            },
+            "observed": 1,
+            "admissions": 0,
+            "attacks": [
+              {
+                "chunks": [
+                  {
+                    "type": "finish",
+                    "reason": {
+                      "kind": "error",
+                      "failure": {
+                        "message": "dispatch_origin_unproven",
+                        "code": "dispatch_origin_unproven"
+                      }
+                    }
+                  }
+                ],
+                "failures": [
+                  {
+                    "kind": "error",
+                    "failure": {
+                      "message": "dispatch_origin_unproven",
+                      "code": "dispatch_origin_unproven"
+                    }
+                  }
+                ]
+              },
+              {
+                "chunks": [
+                  {
+                    "type": "finish",
+                    "reason": {
+                      "kind": "error",
+                      "failure": {
+                        "message": "dispatch_origin_unproven",
+                        "code": "dispatch_origin_unproven"
+                      }
+                    }
+                  }
+                ],
+                "failures": [
+                  {
+                    "kind": "error",
+                    "failure": {
+                      "message": "dispatch_origin_unproven",
+                      "code": "dispatch_origin_unproven"
+                    }
+                  }
+                ]
+              },
+              {
+                "chunks": [
+                  {
+                    "type": "finish",
+                    "reason": {
+                      "kind": "error",
+                      "failure": {
+                        "message": "dispatch_origin_unproven",
+                        "code": "dispatch_origin_unproven"
+                      }
+                    }
+                  }
+                ],
+                "failures": [
+                  {
+                    "kind": "error",
+                    "failure": {
+                      "message": "dispatch_origin_unproven",
+                      "code": "dispatch_origin_unproven"
+                    }
+                  }
+                ]
+              },
+              {
+                "chunks": [
+                  {
+                    "type": "finish",
+                    "reason": {
+                      "kind": "error",
+                      "failure": {
+                        "message": "dispatch_origin_unproven",
+                        "code": "dispatch_origin_unproven"
+                      }
+                    }
+                  }
+                ],
+                "failures": [
+                  {
+                    "kind": "error",
+                    "failure": {
+                      "message": "dispatch_origin_unproven",
+                      "code": "dispatch_origin_unproven"
+                    }
+                  }
+                ]
+              },
+              {
+                "chunks": [
+                  {
+                    "type": "finish",
+                    "reason": {
+                      "kind": "error",
+                      "failure": {
+                        "message": "dispatch_origin_unproven",
+                        "code": "dispatch_origin_unproven"
+                      }
+                    }
+                  }
+                ],
+                "failures": [
+                  {
+                    "kind": "error",
+                    "failure": {
+                      "message": "dispatch_origin_unproven",
+                      "code": "dispatch_origin_unproven"
+                    }
+                  }
+                ]
+              },
+              {
+                "chunks": [
+                  {
+                    "type": "finish",
+                    "reason": {
+                      "kind": "error",
+                      "failure": {
+                        "message": "dispatch_origin_unproven",
+                        "code": "dispatch_origin_unproven"
+                      }
+                    }
+                  }
+                ],
+                "failures": [
+                  {
+                    "kind": "error",
+                    "failure": {
+                      "message": "dispatch_origin_unproven",
+                      "code": "dispatch_origin_unproven"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "label": "prepared-iterator-acquire",
+            "result": {
+              "output": [
+                {
+                  "type": "text",
+                  "text": "ok"
+                }
+              ],
+              "stopReason": "completed"
+            },
+            "counts": {
+              "reserve": 1,
+              "dispatch": 1,
+              "settle": 1,
+              "adapter": 2
+            },
+            "protectedCalls": 1,
+            "observations": [
+              {
+                "phase": "listener",
+                "seesOrigin": false
+              },
+              {
+                "phase": "iterator-acquire",
+                "seesOrigin": false
+              },
+              {
+                "phase": "next",
+                "seesOrigin": false
+              },
+              {
+                "phase": "next",
+                "seesOrigin": false
+              },
+              {
+                "phase": "next",
+                "seesOrigin": false
+              },
+              {
+                "phase": "next",
+                "seesOrigin": false
+              },
+              {
+                "phase": "next",
+                "seesOrigin": false
+              },
+              {
+                "phase": "next",
+                "seesOrigin": false
+              }
+            ],
+            "ordinaryFinish": [
+              {
+                "type": "finish",
+                "reason": {
+                  "kind": "stop"
+                }
+              }
+            ]
+          },
+          {
+            "label": "prepared-boolean-seam",
+            "result": {
+              "output": [
+                {
+                  "type": "text",
+                  "text": "ok"
+                }
+              ],
+              "stopReason": "completed"
+            },
+            "counts": {
+              "reserve": 1,
+              "dispatch": 1,
+              "settle": 1,
+              "adapter": 1
+            },
+            "seenAgent": false,
+            "trustedMethod": true,
+            "observed": {
+              "chunks": [
+                {
+                  "type": "finish",
+                  "reason": {
+                    "kind": "error",
+                    "failure": {
+                      "message": "dispatch_origin_unproven",
+                      "code": "dispatch_origin_unproven"
+                    }
+                  }
+                }
+              ],
+              "failures": [
+                {
+                  "kind": "error",
+                  "failure": {
+                    "message": "dispatch_origin_unproven",
+                    "code": "dispatch_origin_unproven"
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "label": "fallback-control",
+            "result": {
+              "output": [
+                {
+                  "type": "text",
+                  "text": "ok"
+                }
+              ],
+              "stopReason": "completed"
+            },
+            "counts": {
+              "reserve": 1,
+              "dispatch": 1,
+              "settle": 1,
+              "adapter": 1
+            }
+          },
+          {
+            "label": "fallback-resolver-proxy",
+            "result": {
+              "output": [
+                {
+                  "type": "text",
+                  "text": "ok"
+                }
+              ],
+              "stopReason": "completed"
+            },
+            "counts": {
+              "reserve": 1,
+              "dispatch": 1,
+              "settle": 1,
+              "adapter": 1
+            },
+            "lookups": 1,
+            "calls": 1,
+            "admissions": 0,
+            "methods": [
+              "prepareCall"
+            ],
+            "oldSymbolExport": false,
+            "currentEntry": "function"
+          },
+          {
+            "label": "fallback-forged-observer",
+            "result": {
+              "output": [
+                {
+                  "type": "text",
+                  "text": "ok"
+                }
+              ],
+              "stopReason": "completed"
+            },
+            "counts": {
+              "reserve": 1,
+              "dispatch": 1,
+              "settle": 1,
+              "adapter": 1
+            },
+            "observed": 1,
+            "admissions": 0,
+            "attacks": [
+              {
+                "chunks": [
+                  {
+                    "type": "finish",
+                    "reason": {
+                      "kind": "error",
+                      "failure": {
+                        "message": "dispatch_origin_unproven",
+                        "code": "dispatch_origin_unproven"
+                      }
+                    }
+                  }
+                ],
+                "failures": [
+                  {
+                    "kind": "error",
+                    "failure": {
+                      "message": "dispatch_origin_unproven",
+                      "code": "dispatch_origin_unproven"
+                    }
+                  }
+                ]
+              },
+              {
+                "chunks": [
+                  {
+                    "type": "finish",
+                    "reason": {
+                      "kind": "error",
+                      "failure": {
+                        "message": "dispatch_origin_unproven",
+                        "code": "dispatch_origin_unproven"
+                      }
+                    }
+                  }
+                ],
+                "failures": [
+                  {
+                    "kind": "error",
+                    "failure": {
+                      "message": "dispatch_origin_unproven",
+                      "code": "dispatch_origin_unproven"
+                    }
+                  }
+                ]
+              },
+              {
+                "chunks": [
+                  {
+                    "type": "finish",
+                    "reason": {
+                      "kind": "error",
+                      "failure": {
+                        "message": "dispatch_origin_unproven",
+                        "code": "dispatch_origin_unproven"
+                      }
+                    }
+                  }
+                ],
+                "failures": [
+                  {
+                    "kind": "error",
+                    "failure": {
+                      "message": "dispatch_origin_unproven",
+                      "code": "dispatch_origin_unproven"
+                    }
+                  }
+                ]
+              },
+              {
+                "chunks": [
+                  {
+                    "type": "finish",
+                    "reason": {
+                      "kind": "error",
+                      "failure": {
+                        "message": "dispatch_origin_unproven",
+                        "code": "dispatch_origin_unproven"
+                      }
+                    }
+                  }
+                ],
+                "failures": [
+                  {
+                    "kind": "error",
+                    "failure": {
+                      "message": "dispatch_origin_unproven",
+                      "code": "dispatch_origin_unproven"
+                    }
+                  }
+                ]
+              },
+              {
+                "chunks": [
+                  {
+                    "type": "finish",
+                    "reason": {
+                      "kind": "error",
+                      "failure": {
+                        "message": "dispatch_origin_unproven",
+                        "code": "dispatch_origin_unproven"
+                      }
+                    }
+                  }
+                ],
+                "failures": [
+                  {
+                    "kind": "error",
+                    "failure": {
+                      "message": "dispatch_origin_unproven",
+                      "code": "dispatch_origin_unproven"
+                    }
+                  }
+                ]
+              },
+              {
+                "chunks": [
+                  {
+                    "type": "finish",
+                    "reason": {
+                      "kind": "error",
+                      "failure": {
+                        "message": "dispatch_origin_unproven",
+                        "code": "dispatch_origin_unproven"
+                      }
+                    }
+                  }
+                ],
+                "failures": [
+                  {
+                    "kind": "error",
+                    "failure": {
+                      "message": "dispatch_origin_unproven",
+                      "code": "dispatch_origin_unproven"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "label": "fallback-iterator-acquire",
+            "result": {
+              "output": [
+                {
+                  "type": "text",
+                  "text": "ok"
+                }
+              ],
+              "stopReason": "completed"
+            },
+            "counts": {
+              "reserve": 1,
+              "dispatch": 1,
+              "settle": 1,
+              "adapter": 2
+            },
+            "protectedCalls": 1,
+            "observations": [
+              {
+                "phase": "listener",
+                "seesOrigin": false
+              },
+              {
+                "phase": "iterator-acquire",
+                "seesOrigin": false
+              },
+              {
+                "phase": "next",
+                "seesOrigin": false
+              },
+              {
+                "phase": "next",
+                "seesOrigin": false
+              },
+              {
+                "phase": "next",
+                "seesOrigin": false
+              },
+              {
+                "phase": "next",
+                "seesOrigin": false
+              },
+              {
+                "phase": "next",
+                "seesOrigin": false
+              },
+              {
+                "phase": "next",
+                "seesOrigin": false
+              }
+            ],
+            "ordinaryFinish": [
+              {
+                "type": "finish",
+                "reason": {
+                  "kind": "stop"
+                }
+              }
+            ]
+          },
+          {
+            "label": "fallback-boolean-seam",
+            "result": {
+              "output": [
+                {
+                  "type": "text",
+                  "text": "ok"
+                }
+              ],
+              "stopReason": "completed"
+            },
+            "counts": {
+              "reserve": 1,
+              "dispatch": 1,
+              "settle": 1,
+              "adapter": 1
+            },
+            "seenAgent": false,
+            "trustedMethod": true,
+            "observed": {
+              "chunks": [
+                {
+                  "type": "finish",
+                  "reason": {
+                    "kind": "error",
+                    "failure": {
+                      "message": "dispatch_origin_unproven",
+                      "code": "dispatch_origin_unproven"
+                    }
+                  }
+                }
+              ],
+              "failures": [
+                {
+                  "kind": "error",
+                  "failure": {
+                    "message": "dispatch_origin_unproven",
+                    "code": "dispatch_origin_unproven"
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "registry-lifecycle": {
+        "inner_exit": 0,
+        "tests_passed": 3,
+        "observations": [
+          {
+            "label": "initial-control",
+            "value": {
+              "fallback": false,
+              "result": {
+                "output": [
+                  {
+                    "type": "text",
+                    "text": "ok"
+                  }
+                ],
+                "stopReason": "completed"
+              },
+              "counts": {
+                "reserve": 1,
+                "dispatch": 1,
+                "settle": 1,
+                "adapter": 1
+              }
+            }
+          },
+          {
+            "label": "initial-control",
+            "value": {
+              "fallback": true,
+              "result": {
+                "output": [
+                  {
+                    "type": "text",
+                    "text": "ok"
+                  }
+                ],
+                "stopReason": "completed"
+              },
+              "counts": {
+                "reserve": 1,
+                "dispatch": 1,
+                "settle": 1,
+                "adapter": 1
+              }
+            }
+          },
+          {
+            "label": "fresh-prepared",
+            "value": {
+              "result": {
+                "output": [
+                  {
+                    "type": "text",
+                    "text": "ok"
+                  }
+                ],
+                "stopReason": "completed"
+              },
+              "counts": {
+                "reserve": 1,
+                "dispatch": 1,
+                "settle": 1,
+                "adapter": 1
+              }
+            }
+          },
+          {
+            "label": "fresh-fallback-after-disposal",
+            "value": {
+              "result": {
+                "output": [
+                  {
+                    "type": "text",
+                    "text": "ok"
+                  }
+                ],
+                "stopReason": "completed"
+              },
+              "counts": {
+                "reserve": 1,
+                "dispatch": 1,
+                "settle": 1,
+                "adapter": 1
+              },
+              "errors": []
+            }
+          }
+        ]
+      }
+    },
+    "0.2.0-rc.1+loop-origin.1-built": {
+      "capability-boundaries": {
+        "inner_exit": 0,
+        "tests_passed": 10,
+        "observations": [
+          {
+            "label": "prepared-control",
+            "result": {
+              "output": [
+                {
+                  "type": "text",
+                  "text": "ok"
+                }
+              ],
+              "stopReason": "completed"
+            },
+            "counts": {
+              "reserve": 1,
+              "dispatch": 1,
+              "settle": 1,
+              "adapter": 1
+            }
+          },
+          {
+            "label": "prepared-resolver-proxy",
+            "result": {
+              "output": [
+                {
+                  "type": "text",
+                  "text": "ok"
+                }
+              ],
+              "stopReason": "completed"
+            },
+            "counts": {
+              "reserve": 1,
+              "dispatch": 1,
+              "settle": 1,
+              "adapter": 1
+            },
+            "lookups": 1,
+            "calls": 1,
+            "admissions": 0,
+            "methods": [
+              "prepareCall"
+            ],
+            "oldSymbolExport": false,
+            "currentEntry": "function"
+          },
+          {
+            "label": "prepared-forged-observer",
+            "result": {
+              "output": [
+                {
+                  "type": "text",
+                  "text": "ok"
+                }
+              ],
+              "stopReason": "completed"
+            },
+            "counts": {
+              "reserve": 1,
+              "dispatch": 1,
+              "settle": 1,
+              "adapter": 1
+            },
+            "observed": 1,
+            "admissions": 0,
+            "attacks": [
+              {
+                "chunks": [
+                  {
+                    "type": "finish",
+                    "reason": {
+                      "kind": "error",
+                      "failure": {
+                        "message": "dispatch_origin_unproven",
+                        "code": "dispatch_origin_unproven"
+                      }
+                    }
+                  }
+                ],
+                "failures": [
+                  {
+                    "kind": "error",
+                    "failure": {
+                      "message": "dispatch_origin_unproven",
+                      "code": "dispatch_origin_unproven"
+                    }
+                  }
+                ]
+              },
+              {
+                "chunks": [
+                  {
+                    "type": "finish",
+                    "reason": {
+                      "kind": "error",
+                      "failure": {
+                        "message": "dispatch_origin_unproven",
+                        "code": "dispatch_origin_unproven"
+                      }
+                    }
+                  }
+                ],
+                "failures": [
+                  {
+                    "kind": "error",
+                    "failure": {
+                      "message": "dispatch_origin_unproven",
+                      "code": "dispatch_origin_unproven"
+                    }
+                  }
+                ]
+              },
+              {
+                "chunks": [
+                  {
+                    "type": "finish",
+                    "reason": {
+                      "kind": "error",
+                      "failure": {
+                        "message": "dispatch_origin_unproven",
+                        "code": "dispatch_origin_unproven"
+                      }
+                    }
+                  }
+                ],
+                "failures": [
+                  {
+                    "kind": "error",
+                    "failure": {
+                      "message": "dispatch_origin_unproven",
+                      "code": "dispatch_origin_unproven"
+                    }
+                  }
+                ]
+              },
+              {
+                "chunks": [
+                  {
+                    "type": "finish",
+                    "reason": {
+                      "kind": "error",
+                      "failure": {
+                        "message": "dispatch_origin_unproven",
+                        "code": "dispatch_origin_unproven"
+                      }
+                    }
+                  }
+                ],
+                "failures": [
+                  {
+                    "kind": "error",
+                    "failure": {
+                      "message": "dispatch_origin_unproven",
+                      "code": "dispatch_origin_unproven"
+                    }
+                  }
+                ]
+              },
+              {
+                "chunks": [
+                  {
+                    "type": "finish",
+                    "reason": {
+                      "kind": "error",
+                      "failure": {
+                        "message": "dispatch_origin_unproven",
+                        "code": "dispatch_origin_unproven"
+                      }
+                    }
+                  }
+                ],
+                "failures": [
+                  {
+                    "kind": "error",
+                    "failure": {
+                      "message": "dispatch_origin_unproven",
+                      "code": "dispatch_origin_unproven"
+                    }
+                  }
+                ]
+              },
+              {
+                "chunks": [
+                  {
+                    "type": "finish",
+                    "reason": {
+                      "kind": "error",
+                      "failure": {
+                        "message": "dispatch_origin_unproven",
+                        "code": "dispatch_origin_unproven"
+                      }
+                    }
+                  }
+                ],
+                "failures": [
+                  {
+                    "kind": "error",
+                    "failure": {
+                      "message": "dispatch_origin_unproven",
+                      "code": "dispatch_origin_unproven"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "label": "prepared-iterator-acquire",
+            "result": {
+              "output": [
+                {
+                  "type": "text",
+                  "text": "ok"
+                }
+              ],
+              "stopReason": "completed"
+            },
+            "counts": {
+              "reserve": 1,
+              "dispatch": 1,
+              "settle": 1,
+              "adapter": 2
+            },
+            "protectedCalls": 1,
+            "observations": [
+              {
+                "phase": "listener",
+                "seesOrigin": false
+              },
+              {
+                "phase": "iterator-acquire",
+                "seesOrigin": false
+              },
+              {
+                "phase": "next",
+                "seesOrigin": false
+              },
+              {
+                "phase": "next",
+                "seesOrigin": false
+              },
+              {
+                "phase": "next",
+                "seesOrigin": false
+              },
+              {
+                "phase": "next",
+                "seesOrigin": false
+              },
+              {
+                "phase": "next",
+                "seesOrigin": false
+              },
+              {
+                "phase": "next",
+                "seesOrigin": false
+              }
+            ],
+            "ordinaryFinish": [
+              {
+                "type": "finish",
+                "reason": {
+                  "kind": "stop"
+                }
+              }
+            ]
+          },
+          {
+            "label": "prepared-boolean-seam",
+            "result": {
+              "output": [
+                {
+                  "type": "text",
+                  "text": "ok"
+                }
+              ],
+              "stopReason": "completed"
+            },
+            "counts": {
+              "reserve": 1,
+              "dispatch": 1,
+              "settle": 1,
+              "adapter": 1
+            },
+            "seenAgent": false,
+            "trustedMethod": true,
+            "observed": {
+              "chunks": [
+                {
+                  "type": "finish",
+                  "reason": {
+                    "kind": "error",
+                    "failure": {
+                      "message": "dispatch_origin_unproven",
+                      "code": "dispatch_origin_unproven"
+                    }
+                  }
+                }
+              ],
+              "failures": [
+                {
+                  "kind": "error",
+                  "failure": {
+                    "message": "dispatch_origin_unproven",
+                    "code": "dispatch_origin_unproven"
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "label": "fallback-control",
+            "result": {
+              "output": [
+                {
+                  "type": "text",
+                  "text": "ok"
+                }
+              ],
+              "stopReason": "completed"
+            },
+            "counts": {
+              "reserve": 1,
+              "dispatch": 1,
+              "settle": 1,
+              "adapter": 1
+            }
+          },
+          {
+            "label": "fallback-resolver-proxy",
+            "result": {
+              "output": [
+                {
+                  "type": "text",
+                  "text": "ok"
+                }
+              ],
+              "stopReason": "completed"
+            },
+            "counts": {
+              "reserve": 1,
+              "dispatch": 1,
+              "settle": 1,
+              "adapter": 1
+            },
+            "lookups": 1,
+            "calls": 1,
+            "admissions": 0,
+            "methods": [
+              "prepareCall"
+            ],
+            "oldSymbolExport": false,
+            "currentEntry": "function"
+          },
+          {
+            "label": "fallback-forged-observer",
+            "result": {
+              "output": [
+                {
+                  "type": "text",
+                  "text": "ok"
+                }
+              ],
+              "stopReason": "completed"
+            },
+            "counts": {
+              "reserve": 1,
+              "dispatch": 1,
+              "settle": 1,
+              "adapter": 1
+            },
+            "observed": 1,
+            "admissions": 0,
+            "attacks": [
+              {
+                "chunks": [
+                  {
+                    "type": "finish",
+                    "reason": {
+                      "kind": "error",
+                      "failure": {
+                        "message": "dispatch_origin_unproven",
+                        "code": "dispatch_origin_unproven"
+                      }
+                    }
+                  }
+                ],
+                "failures": [
+                  {
+                    "kind": "error",
+                    "failure": {
+                      "message": "dispatch_origin_unproven",
+                      "code": "dispatch_origin_unproven"
+                    }
+                  }
+                ]
+              },
+              {
+                "chunks": [
+                  {
+                    "type": "finish",
+                    "reason": {
+                      "kind": "error",
+                      "failure": {
+                        "message": "dispatch_origin_unproven",
+                        "code": "dispatch_origin_unproven"
+                      }
+                    }
+                  }
+                ],
+                "failures": [
+                  {
+                    "kind": "error",
+                    "failure": {
+                      "message": "dispatch_origin_unproven",
+                      "code": "dispatch_origin_unproven"
+                    }
+                  }
+                ]
+              },
+              {
+                "chunks": [
+                  {
+                    "type": "finish",
+                    "reason": {
+                      "kind": "error",
+                      "failure": {
+                        "message": "dispatch_origin_unproven",
+                        "code": "dispatch_origin_unproven"
+                      }
+                    }
+                  }
+                ],
+                "failures": [
+                  {
+                    "kind": "error",
+                    "failure": {
+                      "message": "dispatch_origin_unproven",
+                      "code": "dispatch_origin_unproven"
+                    }
+                  }
+                ]
+              },
+              {
+                "chunks": [
+                  {
+                    "type": "finish",
+                    "reason": {
+                      "kind": "error",
+                      "failure": {
+                        "message": "dispatch_origin_unproven",
+                        "code": "dispatch_origin_unproven"
+                      }
+                    }
+                  }
+                ],
+                "failures": [
+                  {
+                    "kind": "error",
+                    "failure": {
+                      "message": "dispatch_origin_unproven",
+                      "code": "dispatch_origin_unproven"
+                    }
+                  }
+                ]
+              },
+              {
+                "chunks": [
+                  {
+                    "type": "finish",
+                    "reason": {
+                      "kind": "error",
+                      "failure": {
+                        "message": "dispatch_origin_unproven",
+                        "code": "dispatch_origin_unproven"
+                      }
+                    }
+                  }
+                ],
+                "failures": [
+                  {
+                    "kind": "error",
+                    "failure": {
+                      "message": "dispatch_origin_unproven",
+                      "code": "dispatch_origin_unproven"
+                    }
+                  }
+                ]
+              },
+              {
+                "chunks": [
+                  {
+                    "type": "finish",
+                    "reason": {
+                      "kind": "error",
+                      "failure": {
+                        "message": "dispatch_origin_unproven",
+                        "code": "dispatch_origin_unproven"
+                      }
+                    }
+                  }
+                ],
+                "failures": [
+                  {
+                    "kind": "error",
+                    "failure": {
+                      "message": "dispatch_origin_unproven",
+                      "code": "dispatch_origin_unproven"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "label": "fallback-iterator-acquire",
+            "result": {
+              "output": [
+                {
+                  "type": "text",
+                  "text": "ok"
+                }
+              ],
+              "stopReason": "completed"
+            },
+            "counts": {
+              "reserve": 1,
+              "dispatch": 1,
+              "settle": 1,
+              "adapter": 2
+            },
+            "protectedCalls": 1,
+            "observations": [
+              {
+                "phase": "listener",
+                "seesOrigin": false
+              },
+              {
+                "phase": "iterator-acquire",
+                "seesOrigin": false
+              },
+              {
+                "phase": "next",
+                "seesOrigin": false
+              },
+              {
+                "phase": "next",
+                "seesOrigin": false
+              },
+              {
+                "phase": "next",
+                "seesOrigin": false
+              },
+              {
+                "phase": "next",
+                "seesOrigin": false
+              },
+              {
+                "phase": "next",
+                "seesOrigin": false
+              },
+              {
+                "phase": "next",
+                "seesOrigin": false
+              }
+            ],
+            "ordinaryFinish": [
+              {
+                "type": "finish",
+                "reason": {
+                  "kind": "stop"
+                }
+              }
+            ]
+          },
+          {
+            "label": "fallback-boolean-seam",
+            "result": {
+              "output": [
+                {
+                  "type": "text",
+                  "text": "ok"
+                }
+              ],
+              "stopReason": "completed"
+            },
+            "counts": {
+              "reserve": 1,
+              "dispatch": 1,
+              "settle": 1,
+              "adapter": 1
+            },
+            "seenAgent": false,
+            "trustedMethod": true,
+            "observed": {
+              "chunks": [
+                {
+                  "type": "finish",
+                  "reason": {
+                    "kind": "error",
+                    "failure": {
+                      "message": "dispatch_origin_unproven",
+                      "code": "dispatch_origin_unproven"
+                    }
+                  }
+                }
+              ],
+              "failures": [
+                {
+                  "kind": "error",
+                  "failure": {
+                    "message": "dispatch_origin_unproven",
+                    "code": "dispatch_origin_unproven"
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "registry-lifecycle": {
+        "inner_exit": 0,
+        "tests_passed": 3,
+        "observations": [
+          {
+            "label": "initial-control",
+            "value": {
+              "fallback": false,
+              "result": {
+                "output": [
+                  {
+                    "type": "text",
+                    "text": "ok"
+                  }
+                ],
+                "stopReason": "completed"
+              },
+              "counts": {
+                "reserve": 1,
+                "dispatch": 1,
+                "settle": 1,
+                "adapter": 1
+              }
+            }
+          },
+          {
+            "label": "initial-control",
+            "value": {
+              "fallback": true,
+              "result": {
+                "output": [
+                  {
+                    "type": "text",
+                    "text": "ok"
+                  }
+                ],
+                "stopReason": "completed"
+              },
+              "counts": {
+                "reserve": 1,
+                "dispatch": 1,
+                "settle": 1,
+                "adapter": 1
+              }
+            }
+          },
+          {
+            "label": "fresh-prepared",
+            "value": {
+              "result": {
+                "output": [
+                  {
+                    "type": "text",
+                    "text": "ok"
+                  }
+                ],
+                "stopReason": "completed"
+              },
+              "counts": {
+                "reserve": 1,
+                "dispatch": 1,
+                "settle": 1,
+                "adapter": 1
+              }
+            }
+          },
+          {
+            "label": "fresh-fallback-after-disposal",
+            "value": {
+              "result": {
+                "output": [
+                  {
+                    "type": "text",
+                    "text": "ok"
+                  }
+                ],
+                "stopReason": "completed"
+              },
+              "counts": {
+                "reserve": 1,
+                "dispatch": 1,
+                "settle": 1,
+                "adapter": 1
+              },
+              "errors": []
+            }
+          }
+        ]
+      }
+    }
+  },
+  "activation_commands": {
+    "activation-real-clean-verify": {
+      "argv": [
+        "/home/cuihengjia/miniconda3/bin/node",
+        "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd/activation-complete-fixture/activation-real-input-fixture/integrations/dsh/dev/toolchain/toolchain.mjs",
+        "verify"
+      ],
+      "cwd": "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd/activation-complete-fixture/activation-real-input-fixture",
+      "selection_env": {
+        "C2P_DSH_CANDIDATE": "0.2.0-rc.1+loop-origin.1",
+        "C2P_DSH_DEV_ROOT": "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd/activation-complete-fixture/activation-real-input-fixture/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1"
+      },
+      "exit": 0,
+      "before": {
+        "peer": "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd/activation-complete-fixture/activation-real-input-fixture/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1/runtime/node_modules/@deepseek-ai",
+        "receipts": {
+          "0.2.0-rc.1+loop-origin.1": "7712744adccc8404ab0352cd206b32ad7b1e5b7b85b7564a05708109678e631a",
+          "0.2.0-rc.1+loop-origin.1-built": "3fbbb848101b453760d60814664cab170b0d1013b7567c1d9568b3b1d4ce68a0"
+        }
+      },
+      "after": {
+        "peer": "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd/activation-complete-fixture/activation-real-input-fixture/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1/runtime/node_modules/@deepseek-ai",
+        "receipts": {
+          "0.2.0-rc.1+loop-origin.1": "7712744adccc8404ab0352cd206b32ad7b1e5b7b85b7564a05708109678e631a",
+          "0.2.0-rc.1+loop-origin.1-built": "3fbbb848101b453760d60814664cab170b0d1013b7567c1d9568b3b1d4ce68a0"
+        }
+      },
+      "leftovers": []
+    },
+    "activation-real-positive-0.2.0-rc.1+loop-origin.1-built": {
+      "argv": [
+        "/home/cuihengjia/miniconda3/bin/node",
+        "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd/activation-complete-fixture/activation-real-input-fixture/integrations/dsh/dev/toolchain/toolchain.mjs",
+        "activate"
+      ],
+      "cwd": "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd/activation-complete-fixture/activation-real-input-fixture",
+      "selection_env": {
+        "C2P_DSH_CANDIDATE": "0.2.0-rc.1+loop-origin.1-built",
+        "C2P_DSH_DEV_ROOT": "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd/activation-complete-fixture/activation-real-input-fixture/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1-built"
+      },
+      "exit": 0,
+      "before": {
+        "peer": "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd/activation-complete-fixture/activation-real-input-fixture/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1/runtime/node_modules/@deepseek-ai",
+        "receipts": {
+          "0.2.0-rc.1+loop-origin.1": "7712744adccc8404ab0352cd206b32ad7b1e5b7b85b7564a05708109678e631a",
+          "0.2.0-rc.1+loop-origin.1-built": "3fbbb848101b453760d60814664cab170b0d1013b7567c1d9568b3b1d4ce68a0"
+        }
+      },
+      "after": {
+        "peer": "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd/activation-complete-fixture/activation-real-input-fixture/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1-built/runtime/node_modules/@deepseek-ai",
+        "receipts": {
+          "0.2.0-rc.1+loop-origin.1": "7712744adccc8404ab0352cd206b32ad7b1e5b7b85b7564a05708109678e631a",
+          "0.2.0-rc.1+loop-origin.1-built": "3fbbb848101b453760d60814664cab170b0d1013b7567c1d9568b3b1d4ce68a0"
+        }
+      },
+      "leftovers": []
+    },
+    "activation-real-positive-0.2.0-rc.1+loop-origin.1-built-verify": {
+      "argv": [
+        "/home/cuihengjia/miniconda3/bin/node",
+        "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd/activation-complete-fixture/activation-real-input-fixture/integrations/dsh/dev/toolchain/toolchain.mjs",
+        "verify"
+      ],
+      "cwd": "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd/activation-complete-fixture/activation-real-input-fixture",
+      "selection_env": {
+        "C2P_DSH_CANDIDATE": "0.2.0-rc.1+loop-origin.1-built",
+        "C2P_DSH_DEV_ROOT": "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd/activation-complete-fixture/activation-real-input-fixture/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1-built"
+      },
+      "exit": 0,
+      "before": {
+        "peer": "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd/activation-complete-fixture/activation-real-input-fixture/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1-built/runtime/node_modules/@deepseek-ai",
+        "receipts": {
+          "0.2.0-rc.1+loop-origin.1": "7712744adccc8404ab0352cd206b32ad7b1e5b7b85b7564a05708109678e631a",
+          "0.2.0-rc.1+loop-origin.1-built": "3fbbb848101b453760d60814664cab170b0d1013b7567c1d9568b3b1d4ce68a0"
+        }
+      },
+      "after": {
+        "peer": "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd/activation-complete-fixture/activation-real-input-fixture/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1-built/runtime/node_modules/@deepseek-ai",
+        "receipts": {
+          "0.2.0-rc.1+loop-origin.1": "7712744adccc8404ab0352cd206b32ad7b1e5b7b85b7564a05708109678e631a",
+          "0.2.0-rc.1+loop-origin.1-built": "3fbbb848101b453760d60814664cab170b0d1013b7567c1d9568b3b1d4ce68a0"
+        }
+      },
+      "leftovers": []
+    },
+    "activation-real-positive-0.2.0-rc.1+loop-origin.1": {
+      "argv": [
+        "/home/cuihengjia/miniconda3/bin/python",
+        "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd/activation-complete-fixture/activation-real-input-fixture/scripts/dsh_dev.py",
+        "--candidate",
+        "0.2.0-rc.1+loop-origin.1",
+        "activate"
+      ],
+      "cwd": "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd/activation-complete-fixture/activation-real-input-fixture",
+      "selection_env": {
+        "C2P_DSH_CANDIDATE": "0.2.0-rc.1+loop-origin.1",
+        "C2P_DSH_DEV_ROOT": "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd/activation-complete-fixture/activation-real-input-fixture/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1"
+      },
+      "exit": 0,
+      "before": {
+        "peer": "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd/activation-complete-fixture/activation-real-input-fixture/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1-built/runtime/node_modules/@deepseek-ai",
+        "receipts": {
+          "0.2.0-rc.1+loop-origin.1": "7712744adccc8404ab0352cd206b32ad7b1e5b7b85b7564a05708109678e631a",
+          "0.2.0-rc.1+loop-origin.1-built": "3fbbb848101b453760d60814664cab170b0d1013b7567c1d9568b3b1d4ce68a0"
+        }
+      },
+      "after": {
+        "peer": "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd/activation-complete-fixture/activation-real-input-fixture/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1/runtime/node_modules/@deepseek-ai",
+        "receipts": {
+          "0.2.0-rc.1+loop-origin.1": "7712744adccc8404ab0352cd206b32ad7b1e5b7b85b7564a05708109678e631a",
+          "0.2.0-rc.1+loop-origin.1-built": "3fbbb848101b453760d60814664cab170b0d1013b7567c1d9568b3b1d4ce68a0"
+        }
+      },
+      "leftovers": []
+    },
+    "activation-real-positive-0.2.0-rc.1+loop-origin.1-verify": {
+      "argv": [
+        "/home/cuihengjia/miniconda3/bin/node",
+        "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd/activation-complete-fixture/activation-real-input-fixture/integrations/dsh/dev/toolchain/toolchain.mjs",
+        "verify"
+      ],
+      "cwd": "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd/activation-complete-fixture/activation-real-input-fixture",
+      "selection_env": {
+        "C2P_DSH_CANDIDATE": "0.2.0-rc.1+loop-origin.1",
+        "C2P_DSH_DEV_ROOT": "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd/activation-complete-fixture/activation-real-input-fixture/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1"
+      },
+      "exit": 0,
+      "before": {
+        "peer": "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd/activation-complete-fixture/activation-real-input-fixture/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1/runtime/node_modules/@deepseek-ai",
+        "receipts": {
+          "0.2.0-rc.1+loop-origin.1": "7712744adccc8404ab0352cd206b32ad7b1e5b7b85b7564a05708109678e631a",
+          "0.2.0-rc.1+loop-origin.1-built": "3fbbb848101b453760d60814664cab170b0d1013b7567c1d9568b3b1d4ce68a0"
+        }
+      },
+      "after": {
+        "peer": "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd/activation-complete-fixture/activation-real-input-fixture/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1/runtime/node_modules/@deepseek-ai",
+        "receipts": {
+          "0.2.0-rc.1+loop-origin.1": "7712744adccc8404ab0352cd206b32ad7b1e5b7b85b7564a05708109678e631a",
+          "0.2.0-rc.1+loop-origin.1-built": "3fbbb848101b453760d60814664cab170b0d1013b7567c1d9568b3b1d4ce68a0"
+        }
+      },
+      "leftovers": []
+    },
+    "activation-real-compiler-verify-before": {
+      "argv": [
+        "/home/cuihengjia/miniconda3/bin/node",
+        "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd/activation-complete-fixture/activation-real-input-fixture/integrations/dsh/dev/toolchain/toolchain.mjs",
+        "verify"
+      ],
+      "cwd": "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd/activation-complete-fixture/activation-real-input-fixture",
+      "selection_env": {
+        "C2P_DSH_CANDIDATE": "0.2.0-rc.1+loop-origin.1",
+        "C2P_DSH_DEV_ROOT": "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd/activation-complete-fixture/activation-real-input-fixture/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1"
+      },
+      "exit": 1,
+      "before": {
+        "peer": "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd/activation-complete-fixture/activation-real-input-fixture/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1/runtime/node_modules/@deepseek-ai",
+        "receipts": {
+          "0.2.0-rc.1+loop-origin.1": "7712744adccc8404ab0352cd206b32ad7b1e5b7b85b7564a05708109678e631a",
+          "0.2.0-rc.1+loop-origin.1-built": "3fbbb848101b453760d60814664cab170b0d1013b7567c1d9568b3b1d4ce68a0"
+        }
+      },
+      "after": {
+        "peer": "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd/activation-complete-fixture/activation-real-input-fixture/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1/runtime/node_modules/@deepseek-ai",
+        "receipts": {
+          "0.2.0-rc.1+loop-origin.1": "7712744adccc8404ab0352cd206b32ad7b1e5b7b85b7564a05708109678e631a",
+          "0.2.0-rc.1+loop-origin.1-built": "3fbbb848101b453760d60814664cab170b0d1013b7567c1d9568b3b1d4ce68a0"
+        }
+      },
+      "leftovers": []
+    },
+    "activation-real-compiler-node": {
+      "argv": [
+        "/home/cuihengjia/miniconda3/bin/node",
+        "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd/activation-complete-fixture/activation-real-input-fixture/integrations/dsh/dev/toolchain/toolchain.mjs",
+        "activate"
+      ],
+      "cwd": "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd/activation-complete-fixture/activation-real-input-fixture",
+      "selection_env": {
+        "C2P_DSH_CANDIDATE": "0.2.0-rc.1+loop-origin.1-built",
+        "C2P_DSH_DEV_ROOT": "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd/activation-complete-fixture/activation-real-input-fixture/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1-built"
+      },
+      "exit": 1,
+      "before": {
+        "peer": "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd/activation-complete-fixture/activation-real-input-fixture/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1/runtime/node_modules/@deepseek-ai",
+        "receipts": {
+          "0.2.0-rc.1+loop-origin.1": "7712744adccc8404ab0352cd206b32ad7b1e5b7b85b7564a05708109678e631a",
+          "0.2.0-rc.1+loop-origin.1-built": "3fbbb848101b453760d60814664cab170b0d1013b7567c1d9568b3b1d4ce68a0"
+        }
+      },
+      "after": {
+        "peer": "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd/activation-complete-fixture/activation-real-input-fixture/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1/runtime/node_modules/@deepseek-ai",
+        "receipts": {
+          "0.2.0-rc.1+loop-origin.1": "7712744adccc8404ab0352cd206b32ad7b1e5b7b85b7564a05708109678e631a",
+          "0.2.0-rc.1+loop-origin.1-built": "3fbbb848101b453760d60814664cab170b0d1013b7567c1d9568b3b1d4ce68a0"
+        }
+      },
+      "leftovers": []
+    },
+    "activation-real-compiler-wrapper": {
+      "argv": [
+        "/home/cuihengjia/miniconda3/bin/python",
+        "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd/activation-complete-fixture/activation-real-input-fixture/scripts/dsh_dev.py",
+        "--candidate",
+        "0.2.0-rc.1+loop-origin.1-built",
+        "activate"
+      ],
+      "cwd": "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd/activation-complete-fixture/activation-real-input-fixture",
+      "selection_env": {
+        "C2P_DSH_CANDIDATE": "0.2.0-rc.1+loop-origin.1-built",
+        "C2P_DSH_DEV_ROOT": "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd/activation-complete-fixture/activation-real-input-fixture/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1-built"
+      },
+      "exit": 1,
+      "before": {
+        "peer": "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd/activation-complete-fixture/activation-real-input-fixture/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1/runtime/node_modules/@deepseek-ai",
+        "receipts": {
+          "0.2.0-rc.1+loop-origin.1": "7712744adccc8404ab0352cd206b32ad7b1e5b7b85b7564a05708109678e631a",
+          "0.2.0-rc.1+loop-origin.1-built": "3fbbb848101b453760d60814664cab170b0d1013b7567c1d9568b3b1d4ce68a0"
+        }
+      },
+      "after": {
+        "peer": "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd/activation-complete-fixture/activation-real-input-fixture/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1/runtime/node_modules/@deepseek-ai",
+        "receipts": {
+          "0.2.0-rc.1+loop-origin.1": "7712744adccc8404ab0352cd206b32ad7b1e5b7b85b7564a05708109678e631a",
+          "0.2.0-rc.1+loop-origin.1-built": "3fbbb848101b453760d60814664cab170b0d1013b7567c1d9568b3b1d4ce68a0"
+        }
+      },
+      "leftovers": []
+    },
+    "activation-real-compiler-verify-after": {
+      "argv": [
+        "/home/cuihengjia/miniconda3/bin/node",
+        "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd/activation-complete-fixture/activation-real-input-fixture/integrations/dsh/dev/toolchain/toolchain.mjs",
+        "verify"
+      ],
+      "cwd": "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd/activation-complete-fixture/activation-real-input-fixture",
+      "selection_env": {
+        "C2P_DSH_CANDIDATE": "0.2.0-rc.1+loop-origin.1",
+        "C2P_DSH_DEV_ROOT": "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd/activation-complete-fixture/activation-real-input-fixture/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1"
+      },
+      "exit": 1,
+      "before": {
+        "peer": "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd/activation-complete-fixture/activation-real-input-fixture/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1/runtime/node_modules/@deepseek-ai",
+        "receipts": {
+          "0.2.0-rc.1+loop-origin.1": "7712744adccc8404ab0352cd206b32ad7b1e5b7b85b7564a05708109678e631a",
+          "0.2.0-rc.1+loop-origin.1-built": "3fbbb848101b453760d60814664cab170b0d1013b7567c1d9568b3b1d4ce68a0"
+        }
+      },
+      "after": {
+        "peer": "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd/activation-complete-fixture/activation-real-input-fixture/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1/runtime/node_modules/@deepseek-ai",
+        "receipts": {
+          "0.2.0-rc.1+loop-origin.1": "7712744adccc8404ab0352cd206b32ad7b1e5b7b85b7564a05708109678e631a",
+          "0.2.0-rc.1+loop-origin.1-built": "3fbbb848101b453760d60814664cab170b0d1013b7567c1d9568b3b1d4ce68a0"
+        }
+      },
+      "leftovers": []
+    },
+    "activation-real-lock-verify-before": {
+      "argv": [
+        "/home/cuihengjia/miniconda3/bin/node",
+        "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd/activation-complete-fixture/activation-real-input-fixture/integrations/dsh/dev/toolchain/toolchain.mjs",
+        "verify"
+      ],
+      "cwd": "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd/activation-complete-fixture/activation-real-input-fixture",
+      "selection_env": {
+        "C2P_DSH_CANDIDATE": "0.2.0-rc.1+loop-origin.1",
+        "C2P_DSH_DEV_ROOT": "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd/activation-complete-fixture/activation-real-input-fixture/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1"
+      },
+      "exit": 1,
+      "before": {
+        "peer": "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd/activation-complete-fixture/activation-real-input-fixture/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1/runtime/node_modules/@deepseek-ai",
+        "receipts": {
+          "0.2.0-rc.1+loop-origin.1": "7712744adccc8404ab0352cd206b32ad7b1e5b7b85b7564a05708109678e631a",
+          "0.2.0-rc.1+loop-origin.1-built": "3fbbb848101b453760d60814664cab170b0d1013b7567c1d9568b3b1d4ce68a0"
+        }
+      },
+      "after": {
+        "peer": "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd/activation-complete-fixture/activation-real-input-fixture/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1/runtime/node_modules/@deepseek-ai",
+        "receipts": {
+          "0.2.0-rc.1+loop-origin.1": "7712744adccc8404ab0352cd206b32ad7b1e5b7b85b7564a05708109678e631a",
+          "0.2.0-rc.1+loop-origin.1-built": "3fbbb848101b453760d60814664cab170b0d1013b7567c1d9568b3b1d4ce68a0"
+        }
+      },
+      "leftovers": []
+    },
+    "activation-real-lock-node": {
+      "argv": [
+        "/home/cuihengjia/miniconda3/bin/node",
+        "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd/activation-complete-fixture/activation-real-input-fixture/integrations/dsh/dev/toolchain/toolchain.mjs",
+        "activate"
+      ],
+      "cwd": "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd/activation-complete-fixture/activation-real-input-fixture",
+      "selection_env": {
+        "C2P_DSH_CANDIDATE": "0.2.0-rc.1+loop-origin.1-built",
+        "C2P_DSH_DEV_ROOT": "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd/activation-complete-fixture/activation-real-input-fixture/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1-built"
+      },
+      "exit": 1,
+      "before": {
+        "peer": "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd/activation-complete-fixture/activation-real-input-fixture/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1/runtime/node_modules/@deepseek-ai",
+        "receipts": {
+          "0.2.0-rc.1+loop-origin.1": "7712744adccc8404ab0352cd206b32ad7b1e5b7b85b7564a05708109678e631a",
+          "0.2.0-rc.1+loop-origin.1-built": "3fbbb848101b453760d60814664cab170b0d1013b7567c1d9568b3b1d4ce68a0"
+        }
+      },
+      "after": {
+        "peer": "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd/activation-complete-fixture/activation-real-input-fixture/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1/runtime/node_modules/@deepseek-ai",
+        "receipts": {
+          "0.2.0-rc.1+loop-origin.1": "7712744adccc8404ab0352cd206b32ad7b1e5b7b85b7564a05708109678e631a",
+          "0.2.0-rc.1+loop-origin.1-built": "3fbbb848101b453760d60814664cab170b0d1013b7567c1d9568b3b1d4ce68a0"
+        }
+      },
+      "leftovers": []
+    },
+    "activation-real-lock-wrapper": {
+      "argv": [
+        "/home/cuihengjia/miniconda3/bin/python",
+        "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd/activation-complete-fixture/activation-real-input-fixture/scripts/dsh_dev.py",
+        "--candidate",
+        "0.2.0-rc.1+loop-origin.1-built",
+        "activate"
+      ],
+      "cwd": "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd/activation-complete-fixture/activation-real-input-fixture",
+      "selection_env": {
+        "C2P_DSH_CANDIDATE": "0.2.0-rc.1+loop-origin.1-built",
+        "C2P_DSH_DEV_ROOT": "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd/activation-complete-fixture/activation-real-input-fixture/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1-built"
+      },
+      "exit": 1,
+      "before": {
+        "peer": "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd/activation-complete-fixture/activation-real-input-fixture/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1/runtime/node_modules/@deepseek-ai",
+        "receipts": {
+          "0.2.0-rc.1+loop-origin.1": "7712744adccc8404ab0352cd206b32ad7b1e5b7b85b7564a05708109678e631a",
+          "0.2.0-rc.1+loop-origin.1-built": "3fbbb848101b453760d60814664cab170b0d1013b7567c1d9568b3b1d4ce68a0"
+        }
+      },
+      "after": {
+        "peer": "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd/activation-complete-fixture/activation-real-input-fixture/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1/runtime/node_modules/@deepseek-ai",
+        "receipts": {
+          "0.2.0-rc.1+loop-origin.1": "7712744adccc8404ab0352cd206b32ad7b1e5b7b85b7564a05708109678e631a",
+          "0.2.0-rc.1+loop-origin.1-built": "3fbbb848101b453760d60814664cab170b0d1013b7567c1d9568b3b1d4ce68a0"
+        }
+      },
+      "leftovers": []
+    },
+    "activation-real-lock-verify-after": {
+      "argv": [
+        "/home/cuihengjia/miniconda3/bin/node",
+        "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd/activation-complete-fixture/activation-real-input-fixture/integrations/dsh/dev/toolchain/toolchain.mjs",
+        "verify"
+      ],
+      "cwd": "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd/activation-complete-fixture/activation-real-input-fixture",
+      "selection_env": {
+        "C2P_DSH_CANDIDATE": "0.2.0-rc.1+loop-origin.1",
+        "C2P_DSH_DEV_ROOT": "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd/activation-complete-fixture/activation-real-input-fixture/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1"
+      },
+      "exit": 1,
+      "before": {
+        "peer": "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd/activation-complete-fixture/activation-real-input-fixture/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1/runtime/node_modules/@deepseek-ai",
+        "receipts": {
+          "0.2.0-rc.1+loop-origin.1": "7712744adccc8404ab0352cd206b32ad7b1e5b7b85b7564a05708109678e631a",
+          "0.2.0-rc.1+loop-origin.1-built": "3fbbb848101b453760d60814664cab170b0d1013b7567c1d9568b3b1d4ce68a0"
+        }
+      },
+      "after": {
+        "peer": "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd/activation-complete-fixture/activation-real-input-fixture/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1/runtime/node_modules/@deepseek-ai",
+        "receipts": {
+          "0.2.0-rc.1+loop-origin.1": "7712744adccc8404ab0352cd206b32ad7b1e5b7b85b7564a05708109678e631a",
+          "0.2.0-rc.1+loop-origin.1-built": "3fbbb848101b453760d60814664cab170b0d1013b7567c1d9568b3b1d4ce68a0"
+        }
+      },
+      "leftovers": []
+    },
+    "activation-real-active_receipt-node": {
+      "argv": [
+        "/home/cuihengjia/miniconda3/bin/node",
+        "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd/activation-complete-fixture/activation-real-input-fixture/integrations/dsh/dev/toolchain/toolchain.mjs",
+        "activate"
+      ],
+      "cwd": "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd/activation-complete-fixture/activation-real-input-fixture",
+      "selection_env": {
+        "C2P_DSH_CANDIDATE": "0.2.0-rc.1+loop-origin.1-built",
+        "C2P_DSH_DEV_ROOT": "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd/activation-complete-fixture/activation-real-input-fixture/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1-built"
+      },
+      "exit": 1,
+      "before": {
+        "peer": "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd/activation-complete-fixture/activation-real-input-fixture/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1/runtime/node_modules/@deepseek-ai",
+        "receipts": {
+          "0.2.0-rc.1+loop-origin.1": null,
+          "0.2.0-rc.1+loop-origin.1-built": "3fbbb848101b453760d60814664cab170b0d1013b7567c1d9568b3b1d4ce68a0"
+        }
+      },
+      "after": {
+        "peer": "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd/activation-complete-fixture/activation-real-input-fixture/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1/runtime/node_modules/@deepseek-ai",
+        "receipts": {
+          "0.2.0-rc.1+loop-origin.1": null,
+          "0.2.0-rc.1+loop-origin.1-built": "3fbbb848101b453760d60814664cab170b0d1013b7567c1d9568b3b1d4ce68a0"
+        }
+      },
+      "leftovers": []
+    },
+    "activation-real-active_receipt-wrapper": {
+      "argv": [
+        "/home/cuihengjia/miniconda3/bin/python",
+        "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd/activation-complete-fixture/activation-real-input-fixture/scripts/dsh_dev.py",
+        "--candidate",
+        "0.2.0-rc.1+loop-origin.1-built",
+        "activate"
+      ],
+      "cwd": "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd/activation-complete-fixture/activation-real-input-fixture",
+      "selection_env": {
+        "C2P_DSH_CANDIDATE": "0.2.0-rc.1+loop-origin.1-built",
+        "C2P_DSH_DEV_ROOT": "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd/activation-complete-fixture/activation-real-input-fixture/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1-built"
+      },
+      "exit": 1,
+      "before": {
+        "peer": "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd/activation-complete-fixture/activation-real-input-fixture/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1/runtime/node_modules/@deepseek-ai",
+        "receipts": {
+          "0.2.0-rc.1+loop-origin.1": null,
+          "0.2.0-rc.1+loop-origin.1-built": "3fbbb848101b453760d60814664cab170b0d1013b7567c1d9568b3b1d4ce68a0"
+        }
+      },
+      "after": {
+        "peer": "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd/activation-complete-fixture/activation-real-input-fixture/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1/runtime/node_modules/@deepseek-ai",
+        "receipts": {
+          "0.2.0-rc.1+loop-origin.1": null,
+          "0.2.0-rc.1+loop-origin.1-built": "3fbbb848101b453760d60814664cab170b0d1013b7567c1d9568b3b1d4ce68a0"
+        }
+      },
+      "leftovers": []
+    },
+    "activation-real-target_receipt-node": {
+      "argv": [
+        "/home/cuihengjia/miniconda3/bin/node",
+        "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd/activation-complete-fixture/activation-real-input-fixture/integrations/dsh/dev/toolchain/toolchain.mjs",
+        "activate"
+      ],
+      "cwd": "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd/activation-complete-fixture/activation-real-input-fixture",
+      "selection_env": {
+        "C2P_DSH_CANDIDATE": "0.2.0-rc.1+loop-origin.1-built",
+        "C2P_DSH_DEV_ROOT": "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd/activation-complete-fixture/activation-real-input-fixture/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1-built"
+      },
+      "exit": 1,
+      "before": {
+        "peer": "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd/activation-complete-fixture/activation-real-input-fixture/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1/runtime/node_modules/@deepseek-ai",
+        "receipts": {
+          "0.2.0-rc.1+loop-origin.1": "7712744adccc8404ab0352cd206b32ad7b1e5b7b85b7564a05708109678e631a",
+          "0.2.0-rc.1+loop-origin.1-built": null
+        }
+      },
+      "after": {
+        "peer": "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd/activation-complete-fixture/activation-real-input-fixture/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1/runtime/node_modules/@deepseek-ai",
+        "receipts": {
+          "0.2.0-rc.1+loop-origin.1": "7712744adccc8404ab0352cd206b32ad7b1e5b7b85b7564a05708109678e631a",
+          "0.2.0-rc.1+loop-origin.1-built": null
+        }
+      },
+      "leftovers": []
+    },
+    "activation-real-target_receipt-wrapper": {
+      "argv": [
+        "/home/cuihengjia/miniconda3/bin/python",
+        "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd/activation-complete-fixture/activation-real-input-fixture/scripts/dsh_dev.py",
+        "--candidate",
+        "0.2.0-rc.1+loop-origin.1-built",
+        "activate"
+      ],
+      "cwd": "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd/activation-complete-fixture/activation-real-input-fixture",
+      "selection_env": {
+        "C2P_DSH_CANDIDATE": "0.2.0-rc.1+loop-origin.1-built",
+        "C2P_DSH_DEV_ROOT": "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd/activation-complete-fixture/activation-real-input-fixture/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1-built"
+      },
+      "exit": 1,
+      "before": {
+        "peer": "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd/activation-complete-fixture/activation-real-input-fixture/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1/runtime/node_modules/@deepseek-ai",
+        "receipts": {
+          "0.2.0-rc.1+loop-origin.1": "7712744adccc8404ab0352cd206b32ad7b1e5b7b85b7564a05708109678e631a",
+          "0.2.0-rc.1+loop-origin.1-built": null
+        }
+      },
+      "after": {
+        "peer": "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd/activation-complete-fixture/activation-real-input-fixture/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1/runtime/node_modules/@deepseek-ai",
+        "receipts": {
+          "0.2.0-rc.1+loop-origin.1": "7712744adccc8404ab0352cd206b32ad7b1e5b7b85b7564a05708109678e631a",
+          "0.2.0-rc.1+loop-origin.1-built": null
+        }
+      },
+      "leftovers": []
+    },
+    "activation-real-node_version-node": {
+      "argv": [
+        "/home/cuihengjia/miniconda3/bin/node",
+        "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd/activation-complete-fixture/activation-real-input-fixture/integrations/dsh/dev/toolchain/toolchain.mjs",
+        "activate"
+      ],
+      "cwd": "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd/activation-complete-fixture/activation-real-input-fixture",
+      "selection_env": {
+        "C2P_DSH_CANDIDATE": "0.2.0-rc.1+loop-origin.1-built",
+        "C2P_DSH_DEV_ROOT": "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd/activation-complete-fixture/activation-real-input-fixture/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1-built"
+      },
+      "exit": 1,
+      "before": {
+        "peer": "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd/activation-complete-fixture/activation-real-input-fixture/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1/runtime/node_modules/@deepseek-ai",
+        "receipts": {
+          "0.2.0-rc.1+loop-origin.1": "7712744adccc8404ab0352cd206b32ad7b1e5b7b85b7564a05708109678e631a",
+          "0.2.0-rc.1+loop-origin.1-built": "3fbbb848101b453760d60814664cab170b0d1013b7567c1d9568b3b1d4ce68a0"
+        }
+      },
+      "after": {
+        "peer": "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd/activation-complete-fixture/activation-real-input-fixture/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1/runtime/node_modules/@deepseek-ai",
+        "receipts": {
+          "0.2.0-rc.1+loop-origin.1": "7712744adccc8404ab0352cd206b32ad7b1e5b7b85b7564a05708109678e631a",
+          "0.2.0-rc.1+loop-origin.1-built": "3fbbb848101b453760d60814664cab170b0d1013b7567c1d9568b3b1d4ce68a0"
+        }
+      },
+      "leftovers": []
+    },
+    "activation-real-node_version-wrapper": {
+      "argv": [
+        "/home/cuihengjia/miniconda3/bin/python",
+        "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd/activation-complete-fixture/activation-real-input-fixture/scripts/dsh_dev.py",
+        "--candidate",
+        "0.2.0-rc.1+loop-origin.1-built",
+        "activate"
+      ],
+      "cwd": "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd/activation-complete-fixture/activation-real-input-fixture",
+      "selection_env": {
+        "C2P_DSH_CANDIDATE": "0.2.0-rc.1+loop-origin.1-built",
+        "C2P_DSH_DEV_ROOT": "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd/activation-complete-fixture/activation-real-input-fixture/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1-built"
+      },
+      "exit": 1,
+      "before": {
+        "peer": "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd/activation-complete-fixture/activation-real-input-fixture/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1/runtime/node_modules/@deepseek-ai",
+        "receipts": {
+          "0.2.0-rc.1+loop-origin.1": "7712744adccc8404ab0352cd206b32ad7b1e5b7b85b7564a05708109678e631a",
+          "0.2.0-rc.1+loop-origin.1-built": "3fbbb848101b453760d60814664cab170b0d1013b7567c1d9568b3b1d4ce68a0"
+        }
+      },
+      "after": {
+        "peer": "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd/activation-complete-fixture/activation-real-input-fixture/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1/runtime/node_modules/@deepseek-ai",
+        "receipts": {
+          "0.2.0-rc.1+loop-origin.1": "7712744adccc8404ab0352cd206b32ad7b1e5b7b85b7564a05708109678e631a",
+          "0.2.0-rc.1+loop-origin.1-built": "3fbbb848101b453760d60814664cab170b0d1013b7567c1d9568b3b1d4ce68a0"
+        }
+      },
+      "leftovers": []
+    },
+    "activation-real-node_missing-node": {
+      "argv": [
+        "/home/cuihengjia/miniconda3/bin/node",
+        "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd/activation-complete-fixture/activation-real-input-fixture/integrations/dsh/dev/toolchain/toolchain.mjs",
+        "activate"
+      ],
+      "cwd": "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd/activation-complete-fixture/activation-real-input-fixture",
+      "selection_env": {
+        "C2P_DSH_CANDIDATE": "0.2.0-rc.1+loop-origin.1-built",
+        "C2P_DSH_DEV_ROOT": "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd/activation-complete-fixture/activation-real-input-fixture/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1-built"
+      },
+      "exit": 1,
+      "before": {
+        "peer": "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd/activation-complete-fixture/activation-real-input-fixture/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1/runtime/node_modules/@deepseek-ai",
+        "receipts": {
+          "0.2.0-rc.1+loop-origin.1": "7712744adccc8404ab0352cd206b32ad7b1e5b7b85b7564a05708109678e631a",
+          "0.2.0-rc.1+loop-origin.1-built": "3fbbb848101b453760d60814664cab170b0d1013b7567c1d9568b3b1d4ce68a0"
+        }
+      },
+      "after": {
+        "peer": "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd/activation-complete-fixture/activation-real-input-fixture/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1/runtime/node_modules/@deepseek-ai",
+        "receipts": {
+          "0.2.0-rc.1+loop-origin.1": "7712744adccc8404ab0352cd206b32ad7b1e5b7b85b7564a05708109678e631a",
+          "0.2.0-rc.1+loop-origin.1-built": "3fbbb848101b453760d60814664cab170b0d1013b7567c1d9568b3b1d4ce68a0"
+        }
+      },
+      "leftovers": []
+    },
+    "activation-real-node_missing-wrapper": {
+      "argv": [
+        "/home/cuihengjia/miniconda3/bin/python",
+        "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd/activation-complete-fixture/activation-real-input-fixture/scripts/dsh_dev.py",
+        "--candidate",
+        "0.2.0-rc.1+loop-origin.1-built",
+        "activate"
+      ],
+      "cwd": "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd/activation-complete-fixture/activation-real-input-fixture",
+      "selection_env": {
+        "C2P_DSH_CANDIDATE": "0.2.0-rc.1+loop-origin.1-built",
+        "C2P_DSH_DEV_ROOT": "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd/activation-complete-fixture/activation-real-input-fixture/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1-built"
+      },
+      "exit": 1,
+      "before": {
+        "peer": "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd/activation-complete-fixture/activation-real-input-fixture/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1/runtime/node_modules/@deepseek-ai",
+        "receipts": {
+          "0.2.0-rc.1+loop-origin.1": "7712744adccc8404ab0352cd206b32ad7b1e5b7b85b7564a05708109678e631a",
+          "0.2.0-rc.1+loop-origin.1-built": "3fbbb848101b453760d60814664cab170b0d1013b7567c1d9568b3b1d4ce68a0"
+        }
+      },
+      "after": {
+        "peer": "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd/activation-complete-fixture/activation-real-input-fixture/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1/runtime/node_modules/@deepseek-ai",
+        "receipts": {
+          "0.2.0-rc.1+loop-origin.1": "7712744adccc8404ab0352cd206b32ad7b1e5b7b85b7564a05708109678e631a",
+          "0.2.0-rc.1+loop-origin.1-built": "3fbbb848101b453760d60814664cab170b0d1013b7567c1d9568b3b1d4ce68a0"
+        }
+      },
+      "leftovers": []
+    },
+    "activation-real-node_different_bytes-node": {
+      "argv": [
+        "/home/cuihengjia/miniconda3/bin/node",
+        "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd/activation-complete-fixture/activation-real-input-fixture/integrations/dsh/dev/toolchain/toolchain.mjs",
+        "activate"
+      ],
+      "cwd": "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd/activation-complete-fixture/activation-real-input-fixture",
+      "selection_env": {
+        "C2P_DSH_CANDIDATE": "0.2.0-rc.1+loop-origin.1-built",
+        "C2P_DSH_DEV_ROOT": "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd/activation-complete-fixture/activation-real-input-fixture/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1-built"
+      },
+      "exit": 1,
+      "before": {
+        "peer": "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd/activation-complete-fixture/activation-real-input-fixture/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1/runtime/node_modules/@deepseek-ai",
+        "receipts": {
+          "0.2.0-rc.1+loop-origin.1": "7712744adccc8404ab0352cd206b32ad7b1e5b7b85b7564a05708109678e631a",
+          "0.2.0-rc.1+loop-origin.1-built": "3fbbb848101b453760d60814664cab170b0d1013b7567c1d9568b3b1d4ce68a0"
+        }
+      },
+      "after": {
+        "peer": "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd/activation-complete-fixture/activation-real-input-fixture/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1/runtime/node_modules/@deepseek-ai",
+        "receipts": {
+          "0.2.0-rc.1+loop-origin.1": "7712744adccc8404ab0352cd206b32ad7b1e5b7b85b7564a05708109678e631a",
+          "0.2.0-rc.1+loop-origin.1-built": "3fbbb848101b453760d60814664cab170b0d1013b7567c1d9568b3b1d4ce68a0"
+        }
+      },
+      "leftovers": []
+    },
+    "activation-real-node_different_bytes-wrapper": {
+      "argv": [
+        "/home/cuihengjia/miniconda3/bin/python",
+        "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd/activation-complete-fixture/activation-real-input-fixture/scripts/dsh_dev.py",
+        "--candidate",
+        "0.2.0-rc.1+loop-origin.1-built",
+        "activate"
+      ],
+      "cwd": "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd/activation-complete-fixture/activation-real-input-fixture",
+      "selection_env": {
+        "C2P_DSH_CANDIDATE": "0.2.0-rc.1+loop-origin.1-built",
+        "C2P_DSH_DEV_ROOT": "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd/activation-complete-fixture/activation-real-input-fixture/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1-built"
+      },
+      "exit": 1,
+      "before": {
+        "peer": "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd/activation-complete-fixture/activation-real-input-fixture/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1/runtime/node_modules/@deepseek-ai",
+        "receipts": {
+          "0.2.0-rc.1+loop-origin.1": "7712744adccc8404ab0352cd206b32ad7b1e5b7b85b7564a05708109678e631a",
+          "0.2.0-rc.1+loop-origin.1-built": "3fbbb848101b453760d60814664cab170b0d1013b7567c1d9568b3b1d4ce68a0"
+        }
+      },
+      "after": {
+        "peer": "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd/activation-complete-fixture/activation-real-input-fixture/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1/runtime/node_modules/@deepseek-ai",
+        "receipts": {
+          "0.2.0-rc.1+loop-origin.1": "7712744adccc8404ab0352cd206b32ad7b1e5b7b85b7564a05708109678e631a",
+          "0.2.0-rc.1+loop-origin.1-built": "3fbbb848101b453760d60814664cab170b0d1013b7567c1d9568b3b1d4ce68a0"
+        }
+      },
+      "leftovers": []
+    },
+    "activation-real-runtime_wrong-node": {
+      "argv": [
+        "/home/cuihengjia/miniconda3/bin/node",
+        "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd/activation-complete-fixture/activation-real-input-fixture/integrations/dsh/dev/toolchain/toolchain.mjs",
+        "activate"
+      ],
+      "cwd": "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd/activation-complete-fixture/activation-real-input-fixture",
+      "selection_env": {
+        "C2P_DSH_CANDIDATE": "0.2.0-rc.1+loop-origin.1-built",
+        "C2P_DSH_DEV_ROOT": "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd/activation-complete-fixture/activation-real-input-fixture/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1-built"
+      },
+      "exit": 1,
+      "before": {
+        "peer": "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd/activation-complete-fixture/activation-real-input-fixture/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1/runtime/node_modules/@deepseek-ai",
+        "receipts": {
+          "0.2.0-rc.1+loop-origin.1": "7712744adccc8404ab0352cd206b32ad7b1e5b7b85b7564a05708109678e631a",
+          "0.2.0-rc.1+loop-origin.1-built": "3fbbb848101b453760d60814664cab170b0d1013b7567c1d9568b3b1d4ce68a0"
+        }
+      },
+      "after": {
+        "peer": "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd/activation-complete-fixture/activation-real-input-fixture/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1/runtime/node_modules/@deepseek-ai",
+        "receipts": {
+          "0.2.0-rc.1+loop-origin.1": "7712744adccc8404ab0352cd206b32ad7b1e5b7b85b7564a05708109678e631a",
+          "0.2.0-rc.1+loop-origin.1-built": "3fbbb848101b453760d60814664cab170b0d1013b7567c1d9568b3b1d4ce68a0"
+        }
+      },
+      "leftovers": []
+    },
+    "activation-real-runtime_wrong-wrapper": {
+      "argv": [
+        "/home/cuihengjia/miniconda3/bin/python",
+        "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd/activation-complete-fixture/activation-real-input-fixture/scripts/dsh_dev.py",
+        "--candidate",
+        "0.2.0-rc.1+loop-origin.1-built",
+        "activate"
+      ],
+      "cwd": "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd/activation-complete-fixture/activation-real-input-fixture",
+      "selection_env": {
+        "C2P_DSH_CANDIDATE": "0.2.0-rc.1+loop-origin.1-built",
+        "C2P_DSH_DEV_ROOT": "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd/activation-complete-fixture/activation-real-input-fixture/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1-built"
+      },
+      "exit": 1,
+      "before": {
+        "peer": "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd/activation-complete-fixture/activation-real-input-fixture/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1/runtime/node_modules/@deepseek-ai",
+        "receipts": {
+          "0.2.0-rc.1+loop-origin.1": "7712744adccc8404ab0352cd206b32ad7b1e5b7b85b7564a05708109678e631a",
+          "0.2.0-rc.1+loop-origin.1-built": "3fbbb848101b453760d60814664cab170b0d1013b7567c1d9568b3b1d4ce68a0"
+        }
+      },
+      "after": {
+        "peer": "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd/activation-complete-fixture/activation-real-input-fixture/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1/runtime/node_modules/@deepseek-ai",
+        "receipts": {
+          "0.2.0-rc.1+loop-origin.1": "7712744adccc8404ab0352cd206b32ad7b1e5b7b85b7564a05708109678e631a",
+          "0.2.0-rc.1+loop-origin.1-built": "3fbbb848101b453760d60814664cab170b0d1013b7567c1d9568b3b1d4ce68a0"
+        }
+      },
+      "leftovers": []
+    },
+    "activation-real-candidate_identity-node": {
+      "argv": [
+        "/home/cuihengjia/miniconda3/bin/node",
+        "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd/activation-complete-fixture/activation-real-input-fixture/integrations/dsh/dev/toolchain/toolchain.mjs",
+        "activate"
+      ],
+      "cwd": "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd/activation-complete-fixture/activation-real-input-fixture",
+      "selection_env": {
+        "C2P_DSH_CANDIDATE": "0.2.0-rc.1+loop-origin.1-built",
+        "C2P_DSH_DEV_ROOT": "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd/activation-complete-fixture/activation-real-input-fixture/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1-built"
+      },
+      "exit": 1,
+      "before": {
+        "peer": "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd/activation-complete-fixture/activation-real-input-fixture/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1/runtime/node_modules/@deepseek-ai",
+        "receipts": {
+          "0.2.0-rc.1+loop-origin.1": "7712744adccc8404ab0352cd206b32ad7b1e5b7b85b7564a05708109678e631a",
+          "0.2.0-rc.1+loop-origin.1-built": "3fbbb848101b453760d60814664cab170b0d1013b7567c1d9568b3b1d4ce68a0"
+        }
+      },
+      "after": {
+        "peer": "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd/activation-complete-fixture/activation-real-input-fixture/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1/runtime/node_modules/@deepseek-ai",
+        "receipts": {
+          "0.2.0-rc.1+loop-origin.1": "7712744adccc8404ab0352cd206b32ad7b1e5b7b85b7564a05708109678e631a",
+          "0.2.0-rc.1+loop-origin.1-built": "3fbbb848101b453760d60814664cab170b0d1013b7567c1d9568b3b1d4ce68a0"
+        }
+      },
+      "leftovers": []
+    },
+    "activation-real-candidate_identity-wrapper": {
+      "argv": [
+        "/home/cuihengjia/miniconda3/bin/python",
+        "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd/activation-complete-fixture/activation-real-input-fixture/scripts/dsh_dev.py",
+        "--candidate",
+        "0.2.0-rc.1+loop-origin.1-built",
+        "activate"
+      ],
+      "cwd": "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd/activation-complete-fixture/activation-real-input-fixture",
+      "selection_env": {
+        "C2P_DSH_CANDIDATE": "0.2.0-rc.1+loop-origin.1-built",
+        "C2P_DSH_DEV_ROOT": "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd/activation-complete-fixture/activation-real-input-fixture/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1-built"
+      },
+      "exit": 1,
+      "before": {
+        "peer": "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd/activation-complete-fixture/activation-real-input-fixture/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1/runtime/node_modules/@deepseek-ai",
+        "receipts": {
+          "0.2.0-rc.1+loop-origin.1": "7712744adccc8404ab0352cd206b32ad7b1e5b7b85b7564a05708109678e631a",
+          "0.2.0-rc.1+loop-origin.1-built": "3fbbb848101b453760d60814664cab170b0d1013b7567c1d9568b3b1d4ce68a0"
+        }
+      },
+      "after": {
+        "peer": "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd/activation-complete-fixture/activation-real-input-fixture/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1/runtime/node_modules/@deepseek-ai",
+        "receipts": {
+          "0.2.0-rc.1+loop-origin.1": "7712744adccc8404ab0352cd206b32ad7b1e5b7b85b7564a05708109678e631a",
+          "0.2.0-rc.1+loop-origin.1-built": "3fbbb848101b453760d60814664cab170b0d1013b7567c1d9568b3b1d4ce68a0"
+        }
+      },
+      "leftovers": []
+    },
+    "activation-real-commit-failure": {
+      "argv": [
+        "/home/cuihengjia/miniconda3/bin/node",
+        "--import",
+        "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd/activation-complete-fixture/activation-rename-failure.mjs",
+        "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd/activation-complete-fixture/activation-real-input-fixture/integrations/dsh/dev/toolchain/toolchain.mjs",
+        "activate"
+      ],
+      "cwd": "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd/activation-complete-fixture/activation-real-input-fixture",
+      "selection_env": {
+        "C2P_DSH_CANDIDATE": "0.2.0-rc.1+loop-origin.1-built",
+        "C2P_DSH_DEV_ROOT": "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd/activation-complete-fixture/activation-real-input-fixture/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1-built"
+      },
+      "exit": 1,
+      "before": {
+        "peer": "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd/activation-complete-fixture/activation-real-input-fixture/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1/runtime/node_modules/@deepseek-ai",
+        "receipts": {
+          "0.2.0-rc.1+loop-origin.1": "7712744adccc8404ab0352cd206b32ad7b1e5b7b85b7564a05708109678e631a",
+          "0.2.0-rc.1+loop-origin.1-built": "3fbbb848101b453760d60814664cab170b0d1013b7567c1d9568b3b1d4ce68a0"
+        }
+      },
+      "after": {
+        "peer": "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd/activation-complete-fixture/activation-real-input-fixture/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1/runtime/node_modules/@deepseek-ai",
+        "receipts": {
+          "0.2.0-rc.1+loop-origin.1": "7712744adccc8404ab0352cd206b32ad7b1e5b7b85b7564a05708109678e631a",
+          "0.2.0-rc.1+loop-origin.1-built": "3fbbb848101b453760d60814664cab170b0d1013b7567c1d9568b3b1d4ce68a0"
+        }
+      },
+      "leftovers": []
+    }
+  },
+  "activation_commit_trace": [
+    {
+      "a": "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd/activation-complete-fixture/activation-real-input-fixture/integrations/dsh/node_modules/@deepseek-ai.activate-360",
+      "b": "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd/activation-complete-fixture/activation-real-input-fixture/integrations/dsh/node_modules/@deepseek-ai"
+    },
+    {
+      "a": "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd/activation-complete-fixture/activation-real-input-fixture/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1-built/toolchain.json.activate-360",
+      "b": "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd/activation-complete-fixture/activation-real-input-fixture/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1-built/toolchain.json"
+    },
+    {
+      "a": "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd/activation-complete-fixture/activation-real-input-fixture/integrations/dsh/node_modules/@deepseek-ai.activate-360",
+      "b": "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd/activation-complete-fixture/activation-real-input-fixture/integrations/dsh/node_modules/@deepseek-ai"
+    }
+  ],
+  "audit_commands": {
+    "audit-valid-control": {
+      "argv": [
+        "/usr/bin/bwrap",
+        "--die-with-parent",
+        "--new-session",
+        "--unshare-pid",
+        "--ro-bind",
+        "/",
+        "/",
+        "--bind",
+        "/home/cuihengjia/agent/Code2Paper copy/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1",
+        "/home/cuihengjia/agent/Code2Paper copy/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1",
+        "--ro-bind",
+        "/home/cuihengjia/agent/Code2Paper copy/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1/runtime",
+        "/home/cuihengjia/agent/Code2Paper copy/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1/runtime",
+        "--tmpfs",
+        "/tmp",
+        "--proc",
+        "/proc",
+        "--dev",
+        "/dev",
+        "--unshare-net",
+        "--chdir",
+        "/home/cuihengjia/agent/Code2Paper copy",
+        "--",
+        "/home/cuihengjia/miniconda3/bin/python",
+        "scripts/dsh_dev.py",
+        "--candidate",
+        "0.2.0-rc.1+loop-origin.1",
+        "audit"
+      ],
+      "cwd": "/home/cuihengjia/agent/Code2Paper copy",
+      "exit": 0,
+      "missing_declaration_in_manifest": false,
+      "base_unavailable": false,
+      "mutation_scope": "read-only namespace overlays; host files unchanged"
+    },
+    "audit-missing-declaration-control": {
+      "argv": [
+        "/usr/bin/bwrap",
+        "--die-with-parent",
+        "--new-session",
+        "--unshare-pid",
+        "--ro-bind",
+        "/",
+        "/",
+        "--bind",
+        "/home/cuihengjia/agent/Code2Paper copy/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1",
+        "/home/cuihengjia/agent/Code2Paper copy/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1",
+        "--ro-bind",
+        "/home/cuihengjia/agent/Code2Paper copy/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1/runtime",
+        "/home/cuihengjia/agent/Code2Paper copy/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1/runtime",
+        "--tmpfs",
+        "/tmp",
+        "--proc",
+        "/proc",
+        "--dev",
+        "/dev",
+        "--unshare-net",
+        "--ro-bind",
+        "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd/audit-omitted-declaration-manifest.json",
+        "/home/cuihengjia/agent/Code2Paper copy/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1/manifest.json",
+        "--chdir",
+        "/home/cuihengjia/agent/Code2Paper copy",
+        "--",
+        "/home/cuihengjia/miniconda3/bin/python",
+        "scripts/dsh_dev.py",
+        "--candidate",
+        "0.2.0-rc.1+loop-origin.1",
+        "audit"
+      ],
+      "cwd": "/home/cuihengjia/agent/Code2Paper copy",
+      "exit": 1,
+      "missing_declaration_in_manifest": true,
+      "base_unavailable": false,
+      "mutation_scope": "read-only namespace overlays; host files unchanged"
+    },
+    "audit-missing-declaration-and-base": {
+      "argv": [
+        "/usr/bin/bwrap",
+        "--die-with-parent",
+        "--new-session",
+        "--unshare-pid",
+        "--ro-bind",
+        "/",
+        "/",
+        "--bind",
+        "/home/cuihengjia/agent/Code2Paper copy/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1",
+        "/home/cuihengjia/agent/Code2Paper copy/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1",
+        "--ro-bind",
+        "/home/cuihengjia/agent/Code2Paper copy/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1/runtime",
+        "/home/cuihengjia/agent/Code2Paper copy/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1/runtime",
+        "--tmpfs",
+        "/tmp",
+        "--proc",
+        "/proc",
+        "--dev",
+        "/dev",
+        "--unshare-net",
+        "--ro-bind",
+        "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd/audit-omitted-declaration-manifest.json",
+        "/home/cuihengjia/agent/Code2Paper copy/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1/manifest.json",
+        "--ro-bind",
+        "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd/audit-unavailable-pristine-view",
+        "/home/cuihengjia/agent/Code2Paper copy/.dsh-dev/candidates/0.2.0-rc.1",
+        "--chdir",
+        "/home/cuihengjia/agent/Code2Paper copy",
+        "--",
+        "/home/cuihengjia/miniconda3/bin/python",
+        "scripts/dsh_dev.py",
+        "--candidate",
+        "0.2.0-rc.1+loop-origin.1",
+        "audit"
+      ],
+      "cwd": "/home/cuihengjia/agent/Code2Paper copy",
+      "exit": 1,
+      "missing_declaration_in_manifest": true,
+      "base_unavailable": true,
+      "mutation_scope": "read-only namespace overlays; host files unchanged"
+    }
+  },
+  "smoke": {
+    "web": {
+      "model_turns_submitted": 0,
+      "ready": true,
+      "port": 46813,
+      "http_status": 200,
+      "html_bytes": 34812,
+      "frontend_assets": [
+        {
+          "path": "/assets/index-Dy0OhsZ5.js",
+          "status": 200,
+          "bytes": 631135
+        },
+        {
+          "path": "/assets/vendor-CCJJTK99.js",
+          "status": 200,
+          "bytes": 740575
+        },
+        {
+          "path": "/assets/vendor-BNsW4eBh.css",
+          "status": 200,
+          "bytes": 29288
+        },
+        {
+          "path": "/assets/index-Cq6ljTv2.css",
+          "status": 200,
+          "bytes": 75665
+        }
+      ],
+      "bind_host": "127.0.0.1",
+      "shutdown_exit": -15,
+      "port_closed_after_shutdown": true,
+      "passed": true,
+      "composition": "web",
+      "profile": "code2paper-dev",
+      "candidate": "0.2.0-rc.1+loop-origin.1",
+      "runtime_tree_sha256": "671daa1a7a06728d69a4bdec6da3d33a3616c4e788f63579ed07f3ae81e0e16c",
+      "staging_proof_scope": "verified_staged_bundle",
+      "staging_tree_sha256": "30f18c5f31ed58a302c22d1996c699b45d2ab565325a57f92b1e8e9d50bfad98",
+      "staged_build_receipt_sha256": "b6d57b715301ca503be7afa8eec3339cb734545f9edfcff17c31e977b59b6c86",
+      "staging_receipt_sha256": "d071789c6923fc10dbbf70a1f96cbfc576fc2059b7ebba785a45ee60bf86879c"
+    },
+    "compat": {
+      "model_turns_submitted": 0,
+      "ready": true,
+      "port": 33861,
+      "http_status": 200,
+      "html_bytes": 34812,
+      "frontend_assets": [
+        {
+          "path": "/assets/index-Dy0OhsZ5.js",
+          "status": 200,
+          "bytes": 631135
+        },
+        {
+          "path": "/assets/vendor-CCJJTK99.js",
+          "status": 200,
+          "bytes": 740575
+        },
+        {
+          "path": "/assets/vendor-BNsW4eBh.css",
+          "status": 200,
+          "bytes": 29288
+        },
+        {
+          "path": "/assets/index-Cq6ljTv2.css",
+          "status": 200,
+          "bytes": 75665
+        }
+      ],
+      "bind_host": "127.0.0.1",
+      "shutdown_exit": -15,
+      "port_closed_after_shutdown": true,
+      "passed": true,
+      "composition": "compat",
+      "profile": "code2paper-dev-compat",
+      "candidate": "0.2.0-rc.1+loop-origin.1",
+      "runtime_tree_sha256": "671daa1a7a06728d69a4bdec6da3d33a3616c4e788f63579ed07f3ae81e0e16c",
+      "staging_proof_scope": "verified_staged_bundle",
+      "staging_tree_sha256": "30f18c5f31ed58a302c22d1996c699b45d2ab565325a57f92b1e8e9d50bfad98",
+      "staged_build_receipt_sha256": "b6d57b715301ca503be7afa8eec3339cb734545f9edfcff17c31e977b59b6c86",
+      "staging_receipt_sha256": "d071789c6923fc10dbbf70a1f96cbfc576fc2059b7ebba785a45ee60bf86879c"
+    }
+  },
+  "environment_default_smoke": {
+    "inner_exit": 0,
+    "returned": true,
+    "environment_only_selection": true,
+    "actual_default_evidence_path": "/home/cuihengjia/agent/Code2Paper copy/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1/evidence",
+    "expected_files_created": true,
+    "legacy_default_evidence_unchanged": true,
+    "result": {
+      "model_turns_submitted": 0,
+      "ready": true,
+      "port": 40031,
+      "http_status": 200,
+      "html_bytes": 34812,
+      "frontend_assets": [
+        {
+          "path": "/assets/index-Dy0OhsZ5.js",
+          "status": 200,
+          "bytes": 631135
+        },
+        {
+          "path": "/assets/vendor-CCJJTK99.js",
+          "status": 200,
+          "bytes": 740575
+        },
+        {
+          "path": "/assets/vendor-BNsW4eBh.css",
+          "status": 200,
+          "bytes": 29288
+        },
+        {
+          "path": "/assets/index-Cq6ljTv2.css",
+          "status": 200,
+          "bytes": 75665
+        }
+      ],
+      "bind_host": "127.0.0.1",
+      "shutdown_exit": -15,
+      "port_closed_after_shutdown": true,
+      "passed": true,
+      "composition": "web",
+      "profile": "code2paper-dev",
+      "candidate": "0.2.0-rc.1+loop-origin.1",
+      "runtime_tree_sha256": "671daa1a7a06728d69a4bdec6da3d33a3616c4e788f63579ed07f3ae81e0e16c",
+      "staging_proof_scope": "verified_staged_bundle",
+      "staging_tree_sha256": "30f18c5f31ed58a302c22d1996c699b45d2ab565325a57f92b1e8e9d50bfad98",
+      "staged_build_receipt_sha256": "b6d57b715301ca503be7afa8eec3339cb734545f9edfcff17c31e977b59b6c86",
+      "staging_receipt_sha256": "d071789c6923fc10dbbf70a1f96cbfc576fc2059b7ebba785a45ee60bf86879c"
+    }
+  },
+  "owner_evidence": {
+    "seal_count": 201,
+    "seal_mismatch": [],
+    "input_count": 108615,
+    "input_before_after_changes": [],
+    "probe_setup_changes": 9454,
+    "probe_setup_outside_peer_views": []
+  },
+  "owner_archive": {
+    "mapped_inputs": 108990,
+    "members_checked": 108990,
+    "uncompressed_bytes_hashed": 1802985187,
+    "member_mismatches": [],
+    "missing_members": [],
+    "hardlinks_validated": 52,
+    "archive_sha256": "49d0c2ba3c3264fc9cdb49d7083f62b358346615a92eb05d5c947427d6dd0a73"
+  },
+  "type_proof_retention": {
+    "declarations": {
+      "dsh-agent-loop/index.d.ts": {
+        "0.2.0-rc.1+loop-origin.1": "a3509f051a061ee2c6d6c7ac2fbf8f7d4a4acbce34dcfff9138557a84d7f2d40",
+        "0.2.0-rc.1+loop-origin.1-built": "a3509f051a061ee2c6d6c7ac2fbf8f7d4a4acbce34dcfff9138557a84d7f2d40",
+        "source": "a3509f051a061ee2c6d6c7ac2fbf8f7d4a4acbce34dcfff9138557a84d7f2d40"
+      },
+      "dsh-agent-loop/dispatch-origin.c2p.d.ts": {
+        "0.2.0-rc.1+loop-origin.1": "baadf757589e385085d3d8409d1ef3d7dbc5ede84a114ad121d5a44484e36188",
+        "0.2.0-rc.1+loop-origin.1-built": "baadf757589e385085d3d8409d1ef3d7dbc5ede84a114ad121d5a44484e36188",
+        "source": "baadf757589e385085d3d8409d1ef3d7dbc5ede84a114ad121d5a44484e36188"
+      },
+      "dsh-llm/index.d.ts": {
+        "0.2.0-rc.1+loop-origin.1": "320517790cd0770206834fbea83603e544b54f22dd1eb91000d1d5869fb1e20f",
+        "0.2.0-rc.1+loop-origin.1-built": "320517790cd0770206834fbea83603e544b54f22dd1eb91000d1d5869fb1e20f",
+        "source": "320517790cd0770206834fbea83603e544b54f22dd1eb91000d1d5869fb1e20f"
+      }
+    },
+    "owner_compile_dependencies_before_after_unchanged": [
+      257,
+      385
+    ],
+    "previous_independent_tsc_proof_retained_by_unchanged_runtime_types": true,
+    "new_tsc_run_in_this_review": false,
+    "current_owner_tsc_logs_and_inputs_independently_seal_archive_checked": true
+  },
+  "source_preservation": {
+    "compared_prior_business_source_and_tests": 789,
+    "changed_business_source_and_tests": [],
+    "compatibility_source_mismatches": [],
+    "source_patch_equals_fixed_worktree_diff": true,
+    "source_patch_sha256": "87941d847abb581abe65a924773b980b702b95f03cda4a23831bba9cce3bb46b",
+    "source_patch_check_argv": [
+      "git",
+      "diff",
+      "--binary",
+      "--full-index",
+      "HEAD",
+      "--",
+      "packages/core/agent-loop/src/agent.ts",
+      "packages/core/agent-loop/src/index.ts",
+      "packages/core/agent-loop/src/dispatch-origin.c2p.ts",
+      "packages/llm/llm/src/index.ts"
+    ],
+    "source_patch_exit": 0,
+    "preflight_note": "Initial git diff used abbreviated index hashes; rerun with the delivered full-index format matches exactly. No source change."
+  },
+  "kernel_preservation": {
+    "baseline": "/home/cuihengjia/agent/Code2Paper copy/.dsh-dev/run/qa-stage-repair-review-20260930-y7m330na/lead/inputs_before.json",
+    "entries": 791,
+    "mismatches": [],
+    "full_4129_rerun": false
+  },
+  "closing": {
+    "released_at": "2026-10-03T18:03:42.334137+08:00",
+    "main_input_entries": 109796,
+    "main_input_changes": [],
+    "supplemental_driver_entries": 3,
+    "supplemental_driver_changes": [],
+    "host_processes_scanned": 1765,
+    "related_validation_pids": [],
+    "unreadable_cmdline_pids": [],
+    "all_recorded_runtime_commands_returned": true,
+    "production_source_test_peer_runtime_owner_evidence_changes": false,
+    "Gate-H": "PASS",
+    "Gate-K": "kernel component unchanged and Gate-H prerequisite satisfied; coordination registration follows release",
+    "initial_diagnostics": "Archive hardlink support, complete temporary CLI profile and full-index diff format corrections retained. A three-process sandbox view was refused for global release; this record uses the host view. No product failure."
+  },
+  "main_input_manifest_sha256": "b063aba8b484ab8e3b782835d3c7726ce388860bf70b65c3c832a045e06659f6",
+  "after_input_manifest_sha256": "b063aba8b484ab8e3b782835d3c7726ce388860bf70b65c3c832a045e06659f6",
+  "supplemental_inputs": {
+    "activation-complete-fixture-driver-before.json": {
+      "entries": 2,
+      "changed": []
+    },
+    "smoke-default-route-driver-before.json": {
+      "entries": 1,
+      "changed": []
+    }
+  },
+  "runtime_results": {
+    "0.2.0-rc.1+loop-origin.1-original-suite.result.json": {
+      "inner_exit": 0,
+      "returned": true,
+      "elapsed_s": 59.342
+    },
+    "0.2.0-rc.1+loop-origin.1-activation-independent.result.json": {
+      "inner_exit": 1,
+      "returned": true,
+      "elapsed_s": 4.551
+    },
+    "0.2.0-rc.1+loop-origin.1-identity.result.json": {
+      "inner_exit": 0,
+      "returned": true,
+      "elapsed_s": 4.282
+    },
+    "0.2.0-rc.1+loop-origin.1-registry-lifecycle.result.json": {
+      "inner_exit": 0,
+      "returned": true,
+      "elapsed_s": 2.659
+    },
+    "0.2.0-rc.1+loop-origin.1-doctor.result.json": {
+      "inner_exit": 0,
+      "returned": true,
+      "elapsed_s": 4.702
+    },
+    "0.2.0-rc.1+loop-origin.1-web.result.json": {
+      "inner_exit": 0,
+      "returned": true,
+      "elapsed_s": 3.423
+    },
+    "0.2.0-rc.1+loop-origin.1-capability-boundaries.result.json": {
+      "inner_exit": 0,
+      "returned": true,
+      "elapsed_s": 2.236
+    },
+    "0.2.0-rc.1+loop-origin.1-compat.result.json": {
+      "inner_exit": 0,
+      "returned": true,
+      "elapsed_s": 3.461
+    },
+    "0.2.0-rc.1+loop-origin.1-b02.result.json": {
+      "inner_exit": 0,
+      "returned": true,
+      "elapsed_s": 23.105
+    },
+    "smoke-default-route.result.json": {
+      "inner_exit": 0,
+      "returned": true,
+      "environment_only_selection": true,
+      "actual_default_evidence_path": "/home/cuihengjia/agent/Code2Paper copy/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1/evidence",
+      "expected_files_created": true,
+      "legacy_default_evidence_unchanged": true,
+      "result": {
+        "model_turns_submitted": 0,
+        "ready": true,
+        "port": 40031,
+        "http_status": 200,
+        "html_bytes": 34812,
+        "frontend_assets": [
+          {
+            "path": "/assets/index-Dy0OhsZ5.js",
+            "status": 200,
+            "bytes": 631135
+          },
+          {
+            "path": "/assets/vendor-CCJJTK99.js",
+            "status": 200,
+            "bytes": 740575
+          },
+          {
+            "path": "/assets/vendor-BNsW4eBh.css",
+            "status": 200,
+            "bytes": 29288
+          },
+          {
+            "path": "/assets/index-Cq6ljTv2.css",
+            "status": 200,
+            "bytes": 75665
+          }
+        ],
+        "bind_host": "127.0.0.1",
+        "shutdown_exit": -15,
+        "port_closed_after_shutdown": true,
+        "passed": true,
+        "composition": "web",
+        "profile": "code2paper-dev",
+        "candidate": "0.2.0-rc.1+loop-origin.1",
+        "runtime_tree_sha256": "671daa1a7a06728d69a4bdec6da3d33a3616c4e788f63579ed07f3ae81e0e16c",
+        "staging_proof_scope": "verified_staged_bundle",
+        "staging_tree_sha256": "30f18c5f31ed58a302c22d1996c699b45d2ab565325a57f92b1e8e9d50bfad98",
+        "staged_build_receipt_sha256": "b6d57b715301ca503be7afa8eec3339cb734545f9edfcff17c31e977b59b6c86",
+        "staging_receipt_sha256": "d071789c6923fc10dbbf70a1f96cbfc576fc2059b7ebba785a45ee60bf86879c"
+      }
+    },
+    "0.2.0-rc.1+loop-origin.1-built-capability-boundaries.result.json": {
+      "inner_exit": 0,
+      "returned": true,
+      "elapsed_s": 2.29
+    },
+    "0.2.0-rc.1+loop-origin.1-built-registry-lifecycle.result.json": {
+      "inner_exit": 0,
+      "returned": true,
+      "elapsed_s": 2.704
+    },
+    "0.2.0-rc.1+loop-origin.1-built-original-suite.result.json": {
+      "inner_exit": 0,
+      "returned": true,
+      "elapsed_s": 58.896
+    }
+  },
+  "verification_diagnostics": [
+    {
+      "issue": "Archive verifier initially omitted valid tar hardlink members. No product test had run; initial diagnostics preserved.",
+      "resolution": "Resolve each hardlink to previously hashed archive member and verify content hash/size against its own frozen record; refresh reviewer baseline before runtime checks."
+    },
+    {
+      "initial_exit": 1,
+      "reason": "The independent temporary CLI candidate omitted home/profiles. Node positive control already passed; CLI readiness correctly refused the incomplete fixture before activation.",
+      "correction": "Fresh separate fixture exposes the real candidate profiles as a read-only symlink; production code and assertions are unchanged. Initial run logs and script retained.",
+      "new_driver_inputs": "activation-complete-fixture-driver-before.json"
+    }
+  ],
+  "operations": {
+    "production_changes": false,
+    "original_test_changes": false,
+    "owner_evidence_changes": false,
+    "host_peer_switch": false,
+    "rebuild_restage": false,
+    "model_calls": 0,
+    "later_stage_implementation": false
+  },
+  "report": "docs/dsh_execution_20260928/stage_four_group_repair_acceptance_20261003.md",
+  "result_selection_note": "Initial activation fixture CLI-readiness exit1 is retained as a reviewer setup diagnostic. The complete fresh fixture provides the final activation result; original product assertions were not changed.",
+  "final_activation_result": {
+    "inner_exit": 0,
+    "returned": true,
+    "elapsed_s": 47.969
+  },
+  "command_records": {
+    "0.2.0-rc.1+loop-origin.1-built-capability-boundaries.command.json": {
+      "argv": [
+        "/usr/bin/bwrap",
+        "--die-with-parent",
+        "--new-session",
+        "--unshare-pid",
+        "--ro-bind",
+        "/",
+        "/",
+        "--bind",
+        "/home/cuihengjia/agent/Code2Paper copy/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1-built",
+        "/home/cuihengjia/agent/Code2Paper copy/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1-built",
+        "--ro-bind",
+        "/home/cuihengjia/agent/Code2Paper copy/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1-built/runtime",
+        "/home/cuihengjia/agent/Code2Paper copy/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1-built/runtime",
+        "--tmpfs",
+        "/tmp",
+        "--proc",
+        "/proc",
+        "--dev",
+        "/dev",
+        "--unshare-net",
+        "--ro-bind",
+        "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd",
+        "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd",
+        "--chdir",
+        "/home/cuihengjia/agent/Code2Paper copy",
+        "--",
+        "/home/cuihengjia/miniconda3/bin/node",
+        "--test",
+        "--test-concurrency=1",
+        "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd/probes/0.2.0-rc.1+loop-origin.1-built/capability-boundaries.test.ts"
+      ],
+      "cwd": "/home/cuihengjia/agent/Code2Paper copy",
+      "candidate": "0.2.0-rc.1+loop-origin.1-built",
+      "run_root": "/home/cuihengjia/agent/Code2Paper copy/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1-built/run/c2p-gate-h-four-review-20261003-ciy9r4fd",
+      "offline": true
+    },
+    "0.2.0-rc.1+loop-origin.1-activation-independent.command.json": {
+      "argv": [
+        "/usr/bin/bwrap",
+        "--die-with-parent",
+        "--new-session",
+        "--unshare-pid",
+        "--ro-bind",
+        "/",
+        "/",
+        "--bind",
+        "/home/cuihengjia/agent/Code2Paper copy/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1",
+        "/home/cuihengjia/agent/Code2Paper copy/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1",
+        "--ro-bind",
+        "/home/cuihengjia/agent/Code2Paper copy/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1/runtime",
+        "/home/cuihengjia/agent/Code2Paper copy/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1/runtime",
+        "--tmpfs",
+        "/tmp",
+        "--proc",
+        "/proc",
+        "--dev",
+        "/dev",
+        "--unshare-net",
+        "--bind",
+        "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd",
+        "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd",
+        "--chdir",
+        "/home/cuihengjia/agent/Code2Paper copy",
+        "--",
+        "/home/cuihengjia/miniconda3/bin/python",
+        "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd/activation_probe.py"
+      ],
+      "cwd": "/home/cuihengjia/agent/Code2Paper copy",
+      "candidate": "0.2.0-rc.1+loop-origin.1",
+      "model_turns": 0,
+      "offline": true,
+      "smoke_profile_copy_only": false
+    },
+    "0.2.0-rc.1+loop-origin.1-b02.command.json": {
+      "argv": [
+        "/usr/bin/bwrap",
+        "--die-with-parent",
+        "--new-session",
+        "--unshare-pid",
+        "--ro-bind",
+        "/",
+        "/",
+        "--bind",
+        "/home/cuihengjia/agent/Code2Paper copy/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1",
+        "/home/cuihengjia/agent/Code2Paper copy/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1",
+        "--ro-bind",
+        "/home/cuihengjia/agent/Code2Paper copy/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1/runtime",
+        "/home/cuihengjia/agent/Code2Paper copy/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1/runtime",
+        "--tmpfs",
+        "/tmp",
+        "--proc",
+        "/proc",
+        "--dev",
+        "/dev",
+        "--unshare-net",
+        "--bind",
+        "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd",
+        "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd",
+        "--chdir",
+        "/home/cuihengjia/agent/Code2Paper copy",
+        "--",
+        "/home/cuihengjia/miniconda3/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "--basetemp",
+        "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd/b02-tmp",
+        "integrations/dsh/dev/tests"
+      ],
+      "cwd": "/home/cuihengjia/agent/Code2Paper copy",
+      "candidate": "0.2.0-rc.1+loop-origin.1",
+      "model_turns": 0,
+      "offline": true,
+      "smoke_profile_copy_only": false
+    },
+    "0.2.0-rc.1+loop-origin.1-built-original-suite.command.json": {
+      "argv": [
+        "/usr/bin/bwrap",
+        "--die-with-parent",
+        "--new-session",
+        "--unshare-pid",
+        "--ro-bind",
+        "/",
+        "/",
+        "--bind",
+        "/home/cuihengjia/agent/Code2Paper copy/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1-built",
+        "/home/cuihengjia/agent/Code2Paper copy/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1-built",
+        "--ro-bind",
+        "/home/cuihengjia/agent/Code2Paper copy/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1-built/runtime",
+        "/home/cuihengjia/agent/Code2Paper copy/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1-built/runtime",
+        "--tmpfs",
+        "/tmp",
+        "--proc",
+        "/proc",
+        "--dev",
+        "/dev",
+        "--unshare-net",
+        "--ro-bind",
+        "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd/peer-views/0.2.0-rc.1+loop-origin.1-built/node_modules",
+        "/home/cuihengjia/agent/Code2Paper copy/integrations/dsh/node_modules",
+        "--ro-bind",
+        "/home/cuihengjia/agent/Code2Paper copy/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1-built/home/profiles/node_modules/@code2paper/dsh-bundle/lib/build-receipt.json",
+        "/home/cuihengjia/agent/Code2Paper copy/integrations/dsh/lib/build-receipt.json",
+        "--chdir",
+        "/home/cuihengjia/agent/Code2Paper copy/integrations/dsh",
+        "--",
+        "/home/cuihengjia/miniconda3/bin/node",
+        "--test",
+        "--test-concurrency=1",
+        "/home/cuihengjia/agent/Code2Paper copy/integrations/dsh/dev/toolchain/sandbox.test.ts",
+        "/home/cuihengjia/agent/Code2Paper copy/integrations/dsh/dev/toolchain/staging.test.ts",
+        "/home/cuihengjia/agent/Code2Paper copy/integrations/dsh/tests/binding.test.ts",
+        "/home/cuihengjia/agent/Code2Paper copy/integrations/dsh/tests/cancellation.test.ts",
+        "/home/cuihengjia/agent/Code2Paper copy/integrations/dsh/tests/candidate-selection.test.ts",
+        "/home/cuihengjia/agent/Code2Paper copy/integrations/dsh/tests/composition.test.ts",
+        "/home/cuihengjia/agent/Code2Paper copy/integrations/dsh/tests/joint-child.test.ts",
+        "/home/cuihengjia/agent/Code2Paper copy/integrations/dsh/tests/loader.test.ts",
+        "/home/cuihengjia/agent/Code2Paper copy/integrations/dsh/tests/provenance.test.ts",
+        "/home/cuihengjia/agent/Code2Paper copy/integrations/dsh/tests/request-seam.test.ts",
+        "/home/cuihengjia/agent/Code2Paper copy/integrations/dsh/tests/terminal.test.ts"
+      ],
+      "cwd": "/home/cuihengjia/agent/Code2Paper copy",
+      "candidate": "0.2.0-rc.1+loop-origin.1-built",
+      "offline": true,
+      "test_files": [
+        "/home/cuihengjia/agent/Code2Paper copy/integrations/dsh/dev/toolchain/sandbox.test.ts",
+        "/home/cuihengjia/agent/Code2Paper copy/integrations/dsh/dev/toolchain/staging.test.ts",
+        "/home/cuihengjia/agent/Code2Paper copy/integrations/dsh/tests/binding.test.ts",
+        "/home/cuihengjia/agent/Code2Paper copy/integrations/dsh/tests/cancellation.test.ts",
+        "/home/cuihengjia/agent/Code2Paper copy/integrations/dsh/tests/candidate-selection.test.ts",
+        "/home/cuihengjia/agent/Code2Paper copy/integrations/dsh/tests/composition.test.ts",
+        "/home/cuihengjia/agent/Code2Paper copy/integrations/dsh/tests/joint-child.test.ts",
+        "/home/cuihengjia/agent/Code2Paper copy/integrations/dsh/tests/loader.test.ts",
+        "/home/cuihengjia/agent/Code2Paper copy/integrations/dsh/tests/provenance.test.ts",
+        "/home/cuihengjia/agent/Code2Paper copy/integrations/dsh/tests/request-seam.test.ts",
+        "/home/cuihengjia/agent/Code2Paper copy/integrations/dsh/tests/terminal.test.ts"
+      ],
+      "mode": "verify-existing-stage; no build/restage"
+    },
+    "0.2.0-rc.1+loop-origin.1-built-original-suite.peer-preflight.command.json": {
+      "argv": [
+        "/usr/bin/bwrap",
+        "--die-with-parent",
+        "--new-session",
+        "--unshare-pid",
+        "--ro-bind",
+        "/",
+        "/",
+        "--bind",
+        "/home/cuihengjia/agent/Code2Paper copy/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1-built",
+        "/home/cuihengjia/agent/Code2Paper copy/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1-built",
+        "--ro-bind",
+        "/home/cuihengjia/agent/Code2Paper copy/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1-built/runtime",
+        "/home/cuihengjia/agent/Code2Paper copy/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1-built/runtime",
+        "--tmpfs",
+        "/tmp",
+        "--proc",
+        "/proc",
+        "--dev",
+        "/dev",
+        "--unshare-net",
+        "--ro-bind",
+        "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd/peer-views/0.2.0-rc.1+loop-origin.1-built/node_modules",
+        "/home/cuihengjia/agent/Code2Paper copy/integrations/dsh/node_modules",
+        "--ro-bind",
+        "/home/cuihengjia/agent/Code2Paper copy/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1-built/home/profiles/node_modules/@code2paper/dsh-bundle/lib/build-receipt.json",
+        "/home/cuihengjia/agent/Code2Paper copy/integrations/dsh/lib/build-receipt.json",
+        "--chdir",
+        "/home/cuihengjia/agent/Code2Paper copy/integrations/dsh",
+        "--",
+        "/home/cuihengjia/miniconda3/bin/python",
+        "-c",
+        "import importlib.util;from pathlib import Path;s=importlib.util.spec_from_file_location('dev',Path('dev-root-unused'));s=importlib.util.spec_from_file_location('dev',r'/home/cuihengjia/agent/Code2Paper copy/scripts/dsh_dev.py');m=importlib.util.module_from_spec(s);s.loader.exec_module(m);m.select_candidate('0.2.0-rc.1+loop-origin.1-built');m.toolchain_state();m.verify_staging();print('candidate peer view and frozen staged receipt verified')"
+      ]
+    },
+    "smoke-default-route.command.json": {
+      "argv": [
+        "/usr/bin/bwrap",
+        "--die-with-parent",
+        "--new-session",
+        "--unshare-pid",
+        "--ro-bind",
+        "/",
+        "/",
+        "--bind",
+        "/home/cuihengjia/agent/Code2Paper copy/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1",
+        "/home/cuihengjia/agent/Code2Paper copy/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1",
+        "--ro-bind",
+        "/home/cuihengjia/agent/Code2Paper copy/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1/runtime",
+        "/home/cuihengjia/agent/Code2Paper copy/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1/runtime",
+        "--tmpfs",
+        "/tmp",
+        "--proc",
+        "/proc",
+        "--dev",
+        "/dev",
+        "--unshare-net",
+        "--bind",
+        "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd",
+        "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd",
+        "--bind",
+        "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd/default-route-profile",
+        "/home/cuihengjia/agent/Code2Paper copy/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1/home/profiles/code2paper-dev",
+        "--bind",
+        "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd/default-route-evidence",
+        "/home/cuihengjia/agent/Code2Paper copy/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1/evidence",
+        "--chdir",
+        "/home/cuihengjia/agent/Code2Paper copy",
+        "--",
+        "/home/cuihengjia/miniconda3/bin/python",
+        "scripts/dsh_dev_smoke.py",
+        "--composition",
+        "web"
+      ],
+      "cwd": "/home/cuihengjia/agent/Code2Paper copy",
+      "selected_only_by_environment": true,
+      "selection_env": {
+        "C2P_DSH_CANDIDATE": "0.2.0-rc.1+loop-origin.1",
+        "C2P_DSH_DEV_ROOT": "/home/cuihengjia/agent/Code2Paper copy/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1"
+      },
+      "default_evidence_path": "/home/cuihengjia/agent/Code2Paper copy/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1/evidence",
+      "temporary_output_mount": "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd/default-route-evidence",
+      "driver_sha256": "beeed3c399f5421400b02e0b00f868ffd99beb1997f28adb30c966d3dc7f7b8a"
+    },
+    "0.2.0-rc.1+loop-origin.1-compat.command.json": {
+      "argv": [
+        "/usr/bin/bwrap",
+        "--die-with-parent",
+        "--new-session",
+        "--unshare-pid",
+        "--ro-bind",
+        "/",
+        "/",
+        "--bind",
+        "/home/cuihengjia/agent/Code2Paper copy/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1",
+        "/home/cuihengjia/agent/Code2Paper copy/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1",
+        "--ro-bind",
+        "/home/cuihengjia/agent/Code2Paper copy/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1/runtime",
+        "/home/cuihengjia/agent/Code2Paper copy/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1/runtime",
+        "--tmpfs",
+        "/tmp",
+        "--proc",
+        "/proc",
+        "--dev",
+        "/dev",
+        "--unshare-net",
+        "--bind",
+        "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd",
+        "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd",
+        "--bind",
+        "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd/smoke-profile-views/compat",
+        "/home/cuihengjia/agent/Code2Paper copy/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1/home/profiles/code2paper-dev-compat",
+        "--chdir",
+        "/home/cuihengjia/agent/Code2Paper copy",
+        "--",
+        "/home/cuihengjia/miniconda3/bin/python",
+        "scripts/dsh_dev_smoke.py",
+        "--candidate",
+        "0.2.0-rc.1+loop-origin.1",
+        "--composition",
+        "compat",
+        "--evidence-dir",
+        "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd/normal-smoke"
+      ],
+      "cwd": "/home/cuihengjia/agent/Code2Paper copy",
+      "candidate": "0.2.0-rc.1+loop-origin.1",
+      "model_turns": 0,
+      "offline": true,
+      "smoke_profile_copy_only": true
+    },
+    "0.2.0-rc.1+loop-origin.1-capability-boundaries.command.json": {
+      "argv": [
+        "/usr/bin/bwrap",
+        "--die-with-parent",
+        "--new-session",
+        "--unshare-pid",
+        "--ro-bind",
+        "/",
+        "/",
+        "--bind",
+        "/home/cuihengjia/agent/Code2Paper copy/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1",
+        "/home/cuihengjia/agent/Code2Paper copy/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1",
+        "--ro-bind",
+        "/home/cuihengjia/agent/Code2Paper copy/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1/runtime",
+        "/home/cuihengjia/agent/Code2Paper copy/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1/runtime",
+        "--tmpfs",
+        "/tmp",
+        "--proc",
+        "/proc",
+        "--dev",
+        "/dev",
+        "--unshare-net",
+        "--ro-bind",
+        "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd",
+        "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd",
+        "--chdir",
+        "/home/cuihengjia/agent/Code2Paper copy",
+        "--",
+        "/home/cuihengjia/miniconda3/bin/node",
+        "--test",
+        "--test-concurrency=1",
+        "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd/probes/0.2.0-rc.1+loop-origin.1/capability-boundaries.test.ts"
+      ],
+      "cwd": "/home/cuihengjia/agent/Code2Paper copy",
+      "candidate": "0.2.0-rc.1+loop-origin.1",
+      "run_root": "/home/cuihengjia/agent/Code2Paper copy/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1/run/c2p-gate-h-four-review-20261003-ciy9r4fd",
+      "offline": true
+    },
+    "0.2.0-rc.1+loop-origin.1-original-suite.peer-preflight.command.json": {
+      "argv": [
+        "/usr/bin/bwrap",
+        "--die-with-parent",
+        "--new-session",
+        "--unshare-pid",
+        "--ro-bind",
+        "/",
+        "/",
+        "--bind",
+        "/home/cuihengjia/agent/Code2Paper copy/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1",
+        "/home/cuihengjia/agent/Code2Paper copy/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1",
+        "--ro-bind",
+        "/home/cuihengjia/agent/Code2Paper copy/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1/runtime",
+        "/home/cuihengjia/agent/Code2Paper copy/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1/runtime",
+        "--tmpfs",
+        "/tmp",
+        "--proc",
+        "/proc",
+        "--dev",
+        "/dev",
+        "--unshare-net",
+        "--ro-bind",
+        "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd/peer-views/0.2.0-rc.1+loop-origin.1/node_modules",
+        "/home/cuihengjia/agent/Code2Paper copy/integrations/dsh/node_modules",
+        "--ro-bind",
+        "/home/cuihengjia/agent/Code2Paper copy/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1/home/profiles/node_modules/@code2paper/dsh-bundle/lib/build-receipt.json",
+        "/home/cuihengjia/agent/Code2Paper copy/integrations/dsh/lib/build-receipt.json",
+        "--chdir",
+        "/home/cuihengjia/agent/Code2Paper copy/integrations/dsh",
+        "--",
+        "/home/cuihengjia/miniconda3/bin/python",
+        "-c",
+        "import importlib.util;from pathlib import Path;s=importlib.util.spec_from_file_location('dev',Path('dev-root-unused'));s=importlib.util.spec_from_file_location('dev',r'/home/cuihengjia/agent/Code2Paper copy/scripts/dsh_dev.py');m=importlib.util.module_from_spec(s);s.loader.exec_module(m);m.select_candidate('0.2.0-rc.1+loop-origin.1');m.toolchain_state();m.verify_staging();print('candidate peer view and frozen staged receipt verified')"
+      ]
+    },
+    "0.2.0-rc.1+loop-origin.1-original-suite.command.json": {
+      "argv": [
+        "/usr/bin/bwrap",
+        "--die-with-parent",
+        "--new-session",
+        "--unshare-pid",
+        "--ro-bind",
+        "/",
+        "/",
+        "--bind",
+        "/home/cuihengjia/agent/Code2Paper copy/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1",
+        "/home/cuihengjia/agent/Code2Paper copy/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1",
+        "--ro-bind",
+        "/home/cuihengjia/agent/Code2Paper copy/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1/runtime",
+        "/home/cuihengjia/agent/Code2Paper copy/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1/runtime",
+        "--tmpfs",
+        "/tmp",
+        "--proc",
+        "/proc",
+        "--dev",
+        "/dev",
+        "--unshare-net",
+        "--ro-bind",
+        "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd/peer-views/0.2.0-rc.1+loop-origin.1/node_modules",
+        "/home/cuihengjia/agent/Code2Paper copy/integrations/dsh/node_modules",
+        "--ro-bind",
+        "/home/cuihengjia/agent/Code2Paper copy/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1/home/profiles/node_modules/@code2paper/dsh-bundle/lib/build-receipt.json",
+        "/home/cuihengjia/agent/Code2Paper copy/integrations/dsh/lib/build-receipt.json",
+        "--chdir",
+        "/home/cuihengjia/agent/Code2Paper copy/integrations/dsh",
+        "--",
+        "/home/cuihengjia/miniconda3/bin/node",
+        "--test",
+        "--test-concurrency=1",
+        "/home/cuihengjia/agent/Code2Paper copy/integrations/dsh/dev/toolchain/sandbox.test.ts",
+        "/home/cuihengjia/agent/Code2Paper copy/integrations/dsh/dev/toolchain/staging.test.ts",
+        "/home/cuihengjia/agent/Code2Paper copy/integrations/dsh/tests/binding.test.ts",
+        "/home/cuihengjia/agent/Code2Paper copy/integrations/dsh/tests/cancellation.test.ts",
+        "/home/cuihengjia/agent/Code2Paper copy/integrations/dsh/tests/candidate-selection.test.ts",
+        "/home/cuihengjia/agent/Code2Paper copy/integrations/dsh/tests/composition.test.ts",
+        "/home/cuihengjia/agent/Code2Paper copy/integrations/dsh/tests/joint-child.test.ts",
+        "/home/cuihengjia/agent/Code2Paper copy/integrations/dsh/tests/loader.test.ts",
+        "/home/cuihengjia/agent/Code2Paper copy/integrations/dsh/tests/provenance.test.ts",
+        "/home/cuihengjia/agent/Code2Paper copy/integrations/dsh/tests/request-seam.test.ts",
+        "/home/cuihengjia/agent/Code2Paper copy/integrations/dsh/tests/terminal.test.ts"
+      ],
+      "cwd": "/home/cuihengjia/agent/Code2Paper copy",
+      "candidate": "0.2.0-rc.1+loop-origin.1",
+      "offline": true,
+      "test_files": [
+        "/home/cuihengjia/agent/Code2Paper copy/integrations/dsh/dev/toolchain/sandbox.test.ts",
+        "/home/cuihengjia/agent/Code2Paper copy/integrations/dsh/dev/toolchain/staging.test.ts",
+        "/home/cuihengjia/agent/Code2Paper copy/integrations/dsh/tests/binding.test.ts",
+        "/home/cuihengjia/agent/Code2Paper copy/integrations/dsh/tests/cancellation.test.ts",
+        "/home/cuihengjia/agent/Code2Paper copy/integrations/dsh/tests/candidate-selection.test.ts",
+        "/home/cuihengjia/agent/Code2Paper copy/integrations/dsh/tests/composition.test.ts",
+        "/home/cuihengjia/agent/Code2Paper copy/integrations/dsh/tests/joint-child.test.ts",
+        "/home/cuihengjia/agent/Code2Paper copy/integrations/dsh/tests/loader.test.ts",
+        "/home/cuihengjia/agent/Code2Paper copy/integrations/dsh/tests/provenance.test.ts",
+        "/home/cuihengjia/agent/Code2Paper copy/integrations/dsh/tests/request-seam.test.ts",
+        "/home/cuihengjia/agent/Code2Paper copy/integrations/dsh/tests/terminal.test.ts"
+      ],
+      "mode": "verify-existing-stage; no build/restage"
+    },
+    "0.2.0-rc.1+loop-origin.1-doctor.command.json": {
+      "argv": [
+        "/usr/bin/bwrap",
+        "--die-with-parent",
+        "--new-session",
+        "--unshare-pid",
+        "--ro-bind",
+        "/",
+        "/",
+        "--bind",
+        "/home/cuihengjia/agent/Code2Paper copy/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1",
+        "/home/cuihengjia/agent/Code2Paper copy/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1",
+        "--ro-bind",
+        "/home/cuihengjia/agent/Code2Paper copy/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1/runtime",
+        "/home/cuihengjia/agent/Code2Paper copy/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1/runtime",
+        "--tmpfs",
+        "/tmp",
+        "--proc",
+        "/proc",
+        "--dev",
+        "/dev",
+        "--unshare-net",
+        "--bind",
+        "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd",
+        "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd",
+        "--chdir",
+        "/home/cuihengjia/agent/Code2Paper copy",
+        "--",
+        "/home/cuihengjia/miniconda3/bin/python",
+        "scripts/dsh_dev.py",
+        "--candidate",
+        "0.2.0-rc.1+loop-origin.1",
+        "doctor"
+      ],
+      "cwd": "/home/cuihengjia/agent/Code2Paper copy",
+      "candidate": "0.2.0-rc.1+loop-origin.1",
+      "model_turns": 0,
+      "offline": true,
+      "smoke_profile_copy_only": false
+    },
+    "0.2.0-rc.1+loop-origin.1-web.command.json": {
+      "argv": [
+        "/usr/bin/bwrap",
+        "--die-with-parent",
+        "--new-session",
+        "--unshare-pid",
+        "--ro-bind",
+        "/",
+        "/",
+        "--bind",
+        "/home/cuihengjia/agent/Code2Paper copy/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1",
+        "/home/cuihengjia/agent/Code2Paper copy/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1",
+        "--ro-bind",
+        "/home/cuihengjia/agent/Code2Paper copy/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1/runtime",
+        "/home/cuihengjia/agent/Code2Paper copy/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1/runtime",
+        "--tmpfs",
+        "/tmp",
+        "--proc",
+        "/proc",
+        "--dev",
+        "/dev",
+        "--unshare-net",
+        "--bind",
+        "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd",
+        "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd",
+        "--bind",
+        "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd/smoke-profile-views/web",
+        "/home/cuihengjia/agent/Code2Paper copy/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1/home/profiles/code2paper-dev",
+        "--chdir",
+        "/home/cuihengjia/agent/Code2Paper copy",
+        "--",
+        "/home/cuihengjia/miniconda3/bin/python",
+        "scripts/dsh_dev_smoke.py",
+        "--candidate",
+        "0.2.0-rc.1+loop-origin.1",
+        "--composition",
+        "web",
+        "--evidence-dir",
+        "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd/normal-smoke"
+      ],
+      "cwd": "/home/cuihengjia/agent/Code2Paper copy",
+      "candidate": "0.2.0-rc.1+loop-origin.1",
+      "model_turns": 0,
+      "offline": true,
+      "smoke_profile_copy_only": true
+    },
+    "0.2.0-rc.1+loop-origin.1-built-registry-lifecycle.command.json": {
+      "argv": [
+        "/usr/bin/bwrap",
+        "--die-with-parent",
+        "--new-session",
+        "--unshare-pid",
+        "--ro-bind",
+        "/",
+        "/",
+        "--bind",
+        "/home/cuihengjia/agent/Code2Paper copy/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1-built",
+        "/home/cuihengjia/agent/Code2Paper copy/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1-built",
+        "--ro-bind",
+        "/home/cuihengjia/agent/Code2Paper copy/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1-built/runtime",
+        "/home/cuihengjia/agent/Code2Paper copy/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1-built/runtime",
+        "--tmpfs",
+        "/tmp",
+        "--proc",
+        "/proc",
+        "--dev",
+        "/dev",
+        "--unshare-net",
+        "--ro-bind",
+        "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd",
+        "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd",
+        "--chdir",
+        "/home/cuihengjia/agent/Code2Paper copy",
+        "--",
+        "/home/cuihengjia/miniconda3/bin/node",
+        "--test",
+        "--test-concurrency=1",
+        "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd/probes/0.2.0-rc.1+loop-origin.1-built/registry-lifecycle.test.ts"
+      ],
+      "cwd": "/home/cuihengjia/agent/Code2Paper copy",
+      "candidate": "0.2.0-rc.1+loop-origin.1-built",
+      "run_root": "/home/cuihengjia/agent/Code2Paper copy/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1-built/run/c2p-gate-h-four-review-20261003-ciy9r4fd",
+      "offline": true
+    },
+    "0.2.0-rc.1+loop-origin.1-registry-lifecycle.command.json": {
+      "argv": [
+        "/usr/bin/bwrap",
+        "--die-with-parent",
+        "--new-session",
+        "--unshare-pid",
+        "--ro-bind",
+        "/",
+        "/",
+        "--bind",
+        "/home/cuihengjia/agent/Code2Paper copy/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1",
+        "/home/cuihengjia/agent/Code2Paper copy/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1",
+        "--ro-bind",
+        "/home/cuihengjia/agent/Code2Paper copy/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1/runtime",
+        "/home/cuihengjia/agent/Code2Paper copy/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1/runtime",
+        "--tmpfs",
+        "/tmp",
+        "--proc",
+        "/proc",
+        "--dev",
+        "/dev",
+        "--unshare-net",
+        "--ro-bind",
+        "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd",
+        "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd",
+        "--chdir",
+        "/home/cuihengjia/agent/Code2Paper copy",
+        "--",
+        "/home/cuihengjia/miniconda3/bin/node",
+        "--test",
+        "--test-concurrency=1",
+        "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd/probes/0.2.0-rc.1+loop-origin.1/registry-lifecycle.test.ts"
+      ],
+      "cwd": "/home/cuihengjia/agent/Code2Paper copy",
+      "candidate": "0.2.0-rc.1+loop-origin.1",
+      "run_root": "/home/cuihengjia/agent/Code2Paper copy/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1/run/c2p-gate-h-four-review-20261003-ciy9r4fd",
+      "offline": true
+    },
+    "0.2.0-rc.1+loop-origin.1-identity.command.json": {
+      "argv": [
+        "/usr/bin/bwrap",
+        "--die-with-parent",
+        "--new-session",
+        "--unshare-pid",
+        "--ro-bind",
+        "/",
+        "/",
+        "--bind",
+        "/home/cuihengjia/agent/Code2Paper copy/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1",
+        "/home/cuihengjia/agent/Code2Paper copy/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1",
+        "--ro-bind",
+        "/home/cuihengjia/agent/Code2Paper copy/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1/runtime",
+        "/home/cuihengjia/agent/Code2Paper copy/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1/runtime",
+        "--tmpfs",
+        "/tmp",
+        "--proc",
+        "/proc",
+        "--dev",
+        "/dev",
+        "--unshare-net",
+        "--bind",
+        "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd",
+        "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd",
+        "--chdir",
+        "/home/cuihengjia/agent/Code2Paper copy",
+        "--",
+        "/home/cuihengjia/miniconda3/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "--basetemp",
+        "/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd/identity-tmp",
+        "tests/regression_20260917/test_execution_identity.py"
+      ],
+      "cwd": "/home/cuihengjia/agent/Code2Paper copy",
+      "candidate": "0.2.0-rc.1+loop-origin.1",
+      "model_turns": 0,
+      "offline": true,
+      "smoke_profile_copy_only": false
+    }
+  },
+  "review_drivers_sha256": {
+    "activation_probe.py": "e326a1193bd118add08c0314cdcae0836f380f873132f1c296a806b7e6d4d67b",
+    "close_review.py": "22ebe7eb2bd2929640c43e27fa70f8f15d99a3f17198d0263b3b98c3634c6e43",
+    "input_audit.py": "3c6a3e4c85c7aeda3189d3473088490cc741e75c31677d5933c5f9a18427cda9",
+    "archive-preflight-input_audit.py": "af43285389d14dbaa9000e5fc4e00364724c76c32895d5b1c38c6fdc9dbf06b7",
+    "review_driver.py": "6c78a622c773a9a6222d181179eff36101ab1314244c5df3a2736093dac9fb00",
+    "final_meta_audit.py": "ce5a3971fbfd3049f4bbe6c0c5e3fb59be4353e12d63ae007786c30a30571263",
+    "smoke_default_route_probe.py": "beeed3c399f5421400b02e0b00f868ffd99beb1997f28adb30c966d3dc7f7b8a",
+    "ops_driver.py": "22f6cccb16db919a1856460b0d103cef2981c21f1ffe7a26683ec406edd3ddaa",
+    "audit_failure_probe.py": "a8bfdd07d2c612c18955deccc82e62e0cb74fe91d6f2a1598591ffe056d5d6c4",
+    "activation-complete-fixture/activation_probe.py": "dd0370756b818c4edb033768196ad8450751daa8bbf3b5eef5886f51544e5e5f",
+    "activation-complete-fixture/ops_driver.py": "22f6cccb16db919a1856460b0d103cef2981c21f1ffe7a26683ec406edd3ddaa"
+  },
+  "documentation_validation": {
+    "task_counts": {
+      "done": 11,
+      "planned": 38
+    },
+    "completed_tasks": [
+      "B02",
+      "H01",
+      "H02",
+      "H03",
+      "H04",
+      "K01",
+      "K02",
+      "K03",
+      "K04"
+    ],
+    "all_original_dependencies_and_AT_unchanged": true,
+    "other_40_task_objects_unchanged": true,
+    "all_future_38_tasks_planned": true,
+    "next_stage_not_started": true,
+    "new_links_checked": 22,
+    "link_errors": [],
+    "json_parses": true,
+    "new_artifact_whitespace_ok": true,
+    "post_release_changed_files": [
+      ".agent/implementation.md",
+      "docs/README.md",
+      "docs/dsh_execution_20260928/01_baseline_and_dsh_compatibility.md",
+      "docs/dsh_execution_20260928/02_kernel_publication_and_request_guards.md",
+      "docs/dsh_execution_20260928/03_writer_contract_and_worker.md",
+      "docs/dsh_execution_20260928/README.md",
+      "docs/dsh_execution_20260928/h02_interface_freeze_020.md",
+      "docs/dsh_execution_20260928/remaining_work_and_batch_repair_guidance_20261003.md",
+      "docs/dsh_execution_20260928/task_board.json",
+      "docs/dsh_execution_20260928/verification.md"
+    ],
+    "post_release_unexpected_input_changes": []
+  }
+}

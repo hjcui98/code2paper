@@ -1,0 +1,51 @@
+{
+  "schema_version": "c2p-dsh-development-compatibility/1",
+  "candidate": "0.2.0-rc.1+loop-origin.1+tool-choice.1",
+  "dev_root": ".dsh-dev/candidates/0.2.0-rc.1+loop-origin.1+tool-choice.1",
+  "status": "development_not_qualified",
+  "purpose": "packet13 same-direction native tool choice interface repair; not a Gate-L pass or new live grant",
+  "dsh": {
+    "candidate_id": "0.2.0-rc.1+loop-origin.1+tool-choice.1",
+    "upstream_dsh_version": "0.2.0-rc.1",
+    "source_kind": "local-patched",
+    "base_runtime_tree_sha256": "43490765da460c4300cd7ad8ec75dbc5d5e6dbda93b74e37466c6709c1ab359c",
+    "runtime_tree_sha256": "ae1b7eb33a373009c48653821db8bc0c185158335c994136622fcff9fb34ed9a",
+    "package_lock_sha256": "67f3a677bb15ec9ef11aab15c24482cf053910ab5f67834223f6e96e70b3e3ba",
+    "patch": {
+      "script": "integrations/dsh/dev/runtime-0.2.0-rc.1/loop-origin/loop-origin.patch.py",
+      "script_sha256": "b36b887fc71e90de84080897169f79bddf370793a293ca1e54c03fbcb02c8e75",
+      "touched": [
+        "node_modules/@deepseek-ai/dsh-agent-loop/lib/index.js",
+        "node_modules/@deepseek-ai/dsh-agent-loop/lib/types/dispatch-origin.c2p.d.ts",
+        "node_modules/@deepseek-ai/dsh-agent-loop/lib/types/index.d.ts",
+        "node_modules/@deepseek-ai/dsh-llm-pi-ai/lib/index.js",
+        "node_modules/@deepseek-ai/dsh-llm-pi-ai/lib/types/config.d.ts",
+        "node_modules/@deepseek-ai/dsh-llm/lib/index.js",
+        "node_modules/@deepseek-ai/dsh-llm/lib/types/index.d.ts"
+      ],
+      "source": {
+        "repository": "deepseek-ai/deepseek-harness",
+        "tag": "dsh-v0.2.0-rc.1",
+        "commit": "4878cdabd87d4041bdaff61d04c966883b9fd07a",
+        "patch": "integrations/dsh/dev/runtime-0.2.0-rc.1/loop-origin/loop-origin-source.patch",
+        "patch_sha256": "87941d847abb581abe65a924773b980b702b95f03cda4a23831bba9cce3bb46b",
+        "source_worktree": ".dsh-dev/sources/loop-origin-020",
+        "build_verification_candidate": "0.2.0-rc.1+loop-origin.1-built",
+        "build_verification_tree_sha256": "3076d2fcdbf6b2b49167e8132ce9b5801d95079a36f9bd05af17302e8482be97",
+        "built_from": "monorepo source patch v9 (module-level capability-gated dispatch entry; private dispatch WeakMap; lifecycle unregister; unproxied raw instance resolution)"
+      }
+    },
+    "peer_link": ".dsh-dev/candidates/0.2.0-rc.1+loop-origin.1+tool-choice.1/runtime/node_modules/@deepseek-ai",
+    "tool_choice_patch": {
+      "script": "integrations/dsh/dev/runtime-0.2.0-rc.1/tool-choice/tool-choice.patch.py",
+      "script_sha256": "7cb1745aba7b54164c97cf57c6f7a36ee7dc375dea32bc9faacf69785a1aa61f",
+      "touched": [
+        "node_modules/@deepseek-ai/dsh-llm-pi-ai/lib/index.js",
+        "node_modules/@deepseek-ai/dsh-llm-pi-ai/lib/types/config.d.ts"
+      ],
+      "source_build_equivalence": "pending; not claimed",
+      "scope": "provider selection only; private loop origin and native response acceptance unchanged"
+    }
+  },
+  "verification": "isolated forwarding and negative fixtures only; original Loader/current full/cold/independent gate not yet qualified"
+}

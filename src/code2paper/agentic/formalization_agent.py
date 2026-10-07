@@ -2770,8 +2770,13 @@ def execute_formalizer_invocation_plan(
         response_digest = ""
         response_text = ""
         response_task_issue = False
-        actual_technical_bytes_digest = page.technical_bytes_digest
-        actual_request_envelope_digest = envelope_digest
+        # K04-G7:这两项描述**本次尝试真正越过边界的材料**，不得用计划里存储的冻结值
+        # 预填（旧实现把 page.technical_bytes_digest / 计划 envelope 写进 actual 字段，
+        # 于是一条没有发出任何请求的回执看起来像"本次实测过页材料"）。只有
+        # ``_inspect_actual_request``（从 caller 看到的可变请求对象重算）可以填它们；
+        # 连请求都没构造出来的尝试保持为空，并且不发行回执。
+        actual_technical_bytes_digest = ""
+        actual_request_envelope_digest = ""
         request_failures: tuple[str, ...] = ()
         token_accounting = None
         sent_to_caller = False
@@ -3036,6 +3041,11 @@ def execute_formalizer_invocation_plan(
                         ))
 
         finished_at = time.time()
+        if request is None:
+            # K04-G7：本函数的约定是"回执记录一次真实越过 caller 边界的请求"。请求根本
+            # 没构造出来（缺 caller/config 等构造前失败）时不得发行回执——既没有可实测的
+            # 材料，也不该让 reader 把计划里的存储摘要读成本次实测。
+            return pending, {}, False
         if failed_ids and succeeded_ids:
             task_status = "partial"
         elif failed_ids:
@@ -3249,7 +3259,18 @@ def execute_formalizer_invocation_plan(
             assertion_failures.append(
                 f"actual_page_mismatch:{row.get('invocation_id')}"
             )
-        if row.get("actual_technical_bytes_digest") != invocation.expected_technical_bytes_digest:
+        # K04-G7：只有**实测**的技术字节摘要才能作为"页材料已验证"的证据。no-send /
+        # 未实测回执（空值）不得被当作匹配放行；已经越过 caller 边界的回执则必须有实测值。
+        measured_bytes_digest = str(
+            row.get("actual_technical_bytes_digest") or ""
+        )
+        if not measured_bytes_digest:
+            if bool(row.get("sent_to_caller")):
+                assertion_failures.append(
+                    f"actual_page_bytes_unmeasured:{row.get('invocation_id')}"
+                )
+            continue
+        if measured_bytes_digest != invocation.expected_technical_bytes_digest:
             assertion_failures.append(
                 f"actual_page_bytes_mismatch:{row.get('invocation_id')}"
             )

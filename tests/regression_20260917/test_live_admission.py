@@ -7,6 +7,7 @@ import subprocess
 from pathlib import Path
 
 from code2paper.agentic.live_admission_preflight import (
+    REQUIRED_OFFLINE_TEST_PLAN,
     build_offline_suite_receipt,
     parse_runtime_probe,
     preflight_live_admission,
@@ -77,6 +78,8 @@ def _offline_receipt(**overrides: object):
         "command": OFFLINE_COMMAND,
         "exit_code": 0,
         "output": OFFLINE_OUTPUT,
+        # Explicit historical fixture scope; no default coverage inference.
+        "test_plan_ids": REQUIRED_OFFLINE_TEST_PLAN,
     }
     payload.update(overrides)
     return build_offline_suite_receipt(**payload)  # type: ignore[arg-type]
@@ -288,7 +291,8 @@ def test_offline_receipt_is_required_and_bound_to_engine_digest(tmp_path: Path) 
 
 def test_receipt_parses_real_pytest_summary_and_roundtrips(tmp_path: Path) -> None:
     receipt = build_offline_suite_receipt(
-        command=OFFLINE_COMMAND, exit_code=0, output=OFFLINE_OUTPUT
+        command=OFFLINE_COMMAND, exit_code=0, output=OFFLINE_OUTPUT,
+        test_plan_ids=REQUIRED_OFFLINE_TEST_PLAN,
     )
     assert (receipt.passed, receipt.passed_count, receipt.failed_count) == (True, 3714, 0)
     assert receipt.deselected_count == 3

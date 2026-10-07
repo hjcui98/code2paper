@@ -1,0 +1,76 @@
+--- a/packages/llm/llm-pi-ai/src/config.ts
++++ b/packages/llm/llm-pi-ai/src/config.ts
+@@ -154,6 +154,8 @@
+   reasoning?: ModelThinkingLevel
+   /** Token budgets used by reasoning providers that support them. */
+   thinkingBudgets?: ThinkingBudgets
++  /** Explicit native selection; omission preserves provider automatic selection. */
++  toolChoice?: "required" | { type: "function"; function: { name: string } }
+   /** Prompt-cache retention preference. */
+   cacheRetention?: CacheRetention
+   /** Streaming transport preference. */
+@@ -337,6 +339,7 @@
+   headers: z.dict(z.string()),
+   reasoning: z.union(THINKING_LEVELS),
+   thinkingBudgets,
++  toolChoice: z.union([z.const("required"), z.object({type: z.const("function").required(), function: z.object({name: z.string().required()}).required()})]),
+   cacheRetention: z.union(['none', 'short', 'long']),
+   transport: z.union(['sse', 'websocket', 'websocket-cached', 'auto']),
+   timeoutMs: z.natural(),
+@@ -426,6 +429,20 @@
+       throw new Error(`llm-pi-ai: provider "${provider}" has an empty displayName`)
+     }
+     assertValidHeaders(provider, source.headers)
++    let toolChoice: PiAiProviderProfile['toolChoice']
++    if (source.toolChoice !== undefined) {
++      const choice = source.toolChoice
++      if (choice === "required") toolChoice = choice
++      else if (choice !== null && typeof choice === "object" && !Array.isArray(choice)
++        && Object.keys(choice).sort().join(",") === "function,type" && choice.type === "function"
++        && choice.function !== null && typeof choice.function === "object" && !Array.isArray(choice.function)
++        && Object.keys(choice.function).join(",") === "name"
++        && typeof choice.function.name === "string" && choice.function.name.length > 0
++        && choice.function.name.trim() === choice.function.name) {
++        toolChoice = Object.freeze({type:"function" as const, function:Object.freeze({name:choice.function.name})})
++      } else throw new Error(`llm-pi-ai: provider "${provider}" invalid toolChoice`)
++    }
++
+     const streamIdleTimeoutMs = source.streamIdleTimeoutMs ?? DEFAULT_STREAM_IDLE_TIMEOUT_MS
+     if (!Number.isFinite(streamIdleTimeoutMs)
+       || streamIdleTimeoutMs <= 0
+@@ -500,6 +517,7 @@
+       retryPolicy: resolveRetryPolicy(retryPolicy, `llm-pi-ai: provider "${provider}" retryPolicy`),
+       ...rest.headers === undefined ? {} : { headers: { ...rest.headers } },
+       ...rest.thinkingBudgets === undefined ? {} : { thinkingBudgets: { ...rest.thinkingBudgets } },
++      ...toolChoice === undefined ? {} : { toolChoice },
+       configuredMaxTokens: catalog?.configuredMaxTokens ?? new Map(),
+       modelErrors: catalog?.modelErrors ?? new Map(),
+       ...piProvider === undefined ? {} : { piProvider },
+--- a/packages/llm/llm-pi-ai/src/adapter.ts
++++ b/packages/llm/llm-pi-ai/src/adapter.ts
+@@ -345,6 +345,12 @@
+       model,
+       options.reasoningEffort ?? profile.reasoning,
+     )
++    const toolChoice = profile.toolChoice
++    if (toolChoice !== undefined) {
++      if (model.api !== "openai-completions") throw new LlmError("toolChoice requires openai-completions", "UNSUPPORTED_OPTION")
++      if (!Array.isArray(options.tools) || options.tools.length === 0) throw new LlmError("toolChoice requires offered tools", "UNSUPPORTED_OPTION")
++      if (toolChoice !== "required" && options.tools.filter(tool => tool.name === toolChoice.function.name).length !== 1) throw new LlmError("toolChoice must name exactly one offered tool", "UNSUPPORTED_OPTION")
++    }
+     const apiKey = await this.config.resolveApiKey(options.provider, profile)
+ 
+     const consumer = new AbortController()
+@@ -377,10 +383,12 @@
+             maxBytes: profile.requestImageMaxBytes,
+           },
+         }, onReplayDegrade)
++      if (toolChoice !== undefined && (!Array.isArray(context.tools) || context.tools.length === 0 || (toolChoice !== "required" && context.tools.filter(tool => tool.name === toolChoice.function.name).length !== 1))) throw new LlmError("toolChoice missing from provider tool projection", "UNSUPPORTED_OPTION")
+       const events = snapshot.models.streamSimple(model, context, {
+         ...profileOptions(profile, reasoning, apiKey),
+         ...options.temperature === undefined ? {} : { temperature: options.temperature },
+         ...options.maxTokens === undefined ? {} : { maxTokens: options.maxTokens },
++        ...toolChoice === undefined ? {} : { samplingParams: {tool_choice: toolChoice} },
+         ...options.sessionId === undefined ? {} : { sessionId: String(options.sessionId) },
+         signal: watchdog.signal,
+         // Profile headers are deployment-owned; attribution names are

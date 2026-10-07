@@ -777,17 +777,88 @@ def _live_admission_main(args: argparse.Namespace) -> int:
     return 0 if not bool(getattr(args, "require_live_ready", False)) else 4
 
 
+def _record_versioned_offline_plan_main(args: argparse.Namespace) -> int:
+    from tempfile import mkdtemp
+    from code2paper.agentic.authoring_execution_identity import (
+        resolve_engine_root,capture_engine_source_snapshot,capture_validator_bundle_snapshot,
+    )
+    from code2paper.agentic.digest import canonical_json_bytes
+    from code2paper.agentic.live_admission_preflight import build_machine_offline_suite_receipt,write_offline_suite_receipt
+    from code2paper.integrations.dsh.protocol import ProtocolError
+    from code2paper.integrations.dsh.suite_plan import build_suite_plan
+    from code2paper.integrations.dsh.suite_runner import execute_suite_plan
+    root=resolve_engine_root() or Path.cwd()
+    try:
+        if str(args.marker) != 'not live_llm':raise ProtocolError('offline_registered_marker_required')
+        output=getattr(args,'output_root',None)
+        if output is None:output=Path(mkdtemp(prefix='c2p-offline-plan-'))
+        else:
+            if (not output.is_absolute() or output.resolve() != output or not output.is_relative_to(Path('/tmp'))
+                    or output == Path('/tmp')):raise ProtocolError('offline_output_root_invalid')
+            output.mkdir(parents=True,exist_ok=False)
+        if args.suite_plan == 'dsh-stage04':
+            if args.dsh_bootstrap is not None:
+                raise ProtocolError('offline_managed_operator_owns_bootstrap')
+            from code2paper.integrations.dsh.operator_suite import execute_managed_stage04
+            deadline=time.monotonic()+float(args.timeout_seconds)
+            plan,runs,final=execute_managed_stage04(engine_root=root,python_executable=sys.executable,
+                output_root=output,candidate=args.candidate,timeout_seconds=float(args.timeout_seconds))
+            receipt=build_machine_offline_suite_receipt(plan=plan,runs=runs,engine_snapshot=final)
+            path=write_offline_suite_receipt(args.receipt_out,receipt)
+            write_offline_suite_receipt(Path(plan['operator']['task_root'])/'operator-offline-receipt.json',receipt)
+            use=None
+            remaining=deadline-time.monotonic()
+            if receipt.passed and remaining > 0:
+                from code2paper.integrations.dsh.coverage_use import execute_coverage_use
+                use=execute_coverage_use(certificate_path=path.resolve(),output_root=output/'normal',
+                    python_executable=sys.executable,timeout_seconds=min(600,remaining))
+            if receipt.passed and use is None:
+                (output/'normal-use-receipt.json').write_bytes(canonical_json_bytes({
+                    'schema_version':'DshStage04CoverageUseReceiptV1','version':'dsh-stage04-cold-use/1',
+                    'passed':False,'coverage_failure_code':'coverage_use_deadline_exhausted',
+                    'coverage_receipt_path':str(path.resolve()),'machine_plan':None,'machine_run':None}))
+            print(f'[code2paper method-agent] offline plan={plan["version"]} path={path} passed={receipt.passed} '
+                f'passed_count={receipt.passed_count} failure={receipt.coverage_failure_code or "none"} output={output} '
+                f'cold_normal={use["passed"] if use is not None else "not-executed"}')
+            return 0 if receipt.passed and use is not None and use["passed"] else 1
+        engine=capture_engine_source_snapshot(root);validator=capture_validator_bundle_snapshot(root)
+        if not engine.is_usable or engine.unstable or not validator.is_usable:raise ProtocolError('offline_source_identity_unavailable')
+        config={'marker':'not live_llm','suite_plan':args.suite_plan}
+        plan=build_suite_plan(name=args.suite_plan,engine_root=root,python_executable=sys.executable,output_root=output,
+            effective_config=config,engine_digest=engine.source_digest,validator_digest=validator.digest,
+            candidate=args.candidate)
+        (output/'plan.json').write_bytes(canonical_json_bytes(plan))
+        runs,final=execute_suite_plan(plan,timeout_seconds=float(args.timeout_seconds))
+        (output/'suite-runs.json').write_bytes(canonical_json_bytes(runs))
+        receipt=build_machine_offline_suite_receipt(plan=plan,runs=runs,engine_snapshot=final)
+        path=write_offline_suite_receipt(args.receipt_out,receipt)
+        print(f'[code2paper method-agent] offline plan={plan["version"]} path={path} passed={receipt.passed} '
+            f'passed_count={receipt.passed_count} failure={receipt.coverage_failure_code or "none"} output={output}')
+        return 0 if receipt.passed else 1
+    except (ProtocolError,OSError,ValueError,KeyError,TypeError) as error:
+        code=error.code if isinstance(error,ProtocolError) else 'offline_plan_unavailable_or_invalid'
+        print(f'[code2paper method-agent] offline plan blocked: {code}',file=sys.stderr)
+        return 2
+
+
 def _record_offline_receipt_main(args: argparse.Namespace) -> int:
     """记录一次真实离线全链结果，并绑定当前 engine source digest。"""
+
+    if not str(getattr(args,"pytest_target","") or ""):
+        return _record_versioned_offline_plan_main(args)
 
     from code2paper.agentic.live_admission_preflight import (
         build_offline_suite_receipt,
         write_offline_suite_receipt,
     )
 
-    from code2paper.agentic.authoring_execution_identity import resolve_engine_root
+    from code2paper.agentic.authoring_execution_identity import (
+        resolve_engine_root,capture_engine_source_snapshot,capture_validator_bundle_snapshot,
+    )
 
     engine_root = resolve_engine_root() or Path.cwd()
+    before=capture_engine_source_snapshot(engine_root)
+    validator_before=capture_validator_bundle_snapshot(engine_root)
     command = [
         sys.executable,
         "-m",
@@ -820,11 +891,18 @@ def _record_offline_receipt_main(args: argparse.Namespace) -> int:
         command=f"cd {engine_root} && " + " ".join(command),
         exit_code=exit_code,
         output=output,
+        engine_snapshot=before,
+        validator_bundle_digest=validator_before.digest,
     )
+    after=capture_engine_source_snapshot(engine_root)
+    validator_after=capture_validator_bundle_snapshot(engine_root)
+    if (not before.is_usable or before.unstable or after.unstable or not validator_before.is_usable
+            or before.source_digest != after.source_digest or validator_before.digest != validator_after.digest):
+        receipt=receipt.model_copy(update={"passed":False,"coverage_failure_code":"offline_source_changed"})
     path = write_offline_suite_receipt(args.receipt_out, receipt)
     print(
         "[code2paper method-agent] offline receipt "
-        f"path={path} passed={receipt.passed} passed_count={receipt.passed_count} "
+        f"path={path} coverage=partial passed={receipt.passed} passed_count={receipt.passed_count} "
         f"failed={receipt.failed_count} exit={receipt.exit_code} "
         f"engine={receipt.engine_source_digest[:19]}"
     )
@@ -937,8 +1015,12 @@ def _method_agent_parser() -> argparse.ArgumentParser:
         "--timeout-seconds", dest="timeout_seconds", type=float, default=7200.0
     )
     receipt_parser.add_argument(
-        "--pytest-target", dest="pytest_target", default="tests", help="Path passed to pytest"
+        "--pytest-target", dest="pytest_target", default="", help="Explicit partial pytest target; cannot prove full plan coverage"
     )
+    receipt_parser.add_argument("--suite-plan",choices=("legacy","dsh-stage04"),default="legacy")
+    receipt_parser.add_argument("--output-root",type=Path,help="Fresh task output directory under /tmp")
+    receipt_parser.add_argument("--candidate",default="",help="Frozen DSH candidate for dsh-stage04")
+    receipt_parser.add_argument("--dsh-bootstrap",type=Path,help="Legacy external bootstrap option; managed dsh-stage04 rejects it")
     run_parser = subparsers.add_parser("run", help="Run the full product path.")
     run_parser.add_argument("--repo", dest="repo", required=True, help="Target code repository")
     run_parser.add_argument("--author-intent", dest="author_intent", default="", help="Author intent YAML/JSON file")

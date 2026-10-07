@@ -1,0 +1,36 @@
+# The Code2Paper bundle patch: the host-plane bridge row plus the preset roster
+# configuration that points the real `dsh-agent-preset-registry` row at this bundle's
+# own preset directory.
+#
+# This is a PATCH LIST (an array of patch entries), not an entry list: a bundle
+# contributes patch layers, and `dsh.profile.bundles` order decides which layer
+# wins a row. A patch REPLACES the targeted row's whole `config`; it is not a
+# field-level merge, so the `agent-presets` row below restates its complete
+# configuration.
+#
+# `!!js` expressions are evaluated against the activation context: `baseUrl` is
+# the composition directory (the profile directory a bundle is resolved from),
+# `dshHomePath` is the harness-home resolver, and `process.env` is reachable.
+
+- insert:
+    # Host plane: the bridge service and the composition entry points. It
+    # registers no model-facing tool; the preset owns those.
+    - id: code2paper-bridge
+      name: '@code2paper/dsh-bundle'
+      config:
+        presetId: code2paper
+        # The bundle is installed at the harness home's shared profile
+        # fallback, which is the same anchor the Loader resolves the bundle
+        # package name from (`$DSH_HOME/profiles/node_modules`).
+        presetRoot: !!js dshHomePath('profiles/node_modules/@code2paper/dsh-bundle/presets')
+        runRoot: !!js process.env.C2P_DSH_RUN_ROOT ?? dshHomePath('run')
+
+    # The real `@deepseek-ai/dsh-agent-preset-registry` row (inserted by the web-app
+    # bundle) is re-configured whole: the Code2Paper preset is the default, the
+    # only scanned root is this bundle's own `presets/` directory, and the
+    # shipped and harness-home user roots are off so this deployment composes
+    # exactly one roster. This is a separate top-level patch entry that TARGETS
+    # the existing row; it must not sit inside the `insert` list above.
+- id: agent-preset-registry
+  config:
+    default: code2paper

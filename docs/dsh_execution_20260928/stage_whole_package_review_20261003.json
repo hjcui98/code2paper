@@ -1,0 +1,2013 @@
+{
+  "schema_version": "c2p-dsh-independent-whole-package-review/1",
+  "reviewer": "Current Codex chat; independent of submitted implementation",
+  "released_at": "2026-10-03T16:05:42.956421+08:00",
+  "head": "d48b4e4b22c94c82b45d2179ba452d72b164102d",
+  "raw_evidence_root": "/tmp/c2p-gate-h-whole-20261003-as7rfjgg",
+  "Gate-H": "CHANGES_REQUESTED",
+  "Gate-K": "waiting for Gate-H",
+  "candidate_identities": {
+    "0.2.0-rc.1+loop-origin.1": {
+      "runtime_tree_sha256": "671daa1a7a06728d69a4bdec6da3d33a3616c4e788f63579ed07f3ae81e0e16c",
+      "build_receipt_sha256": "ea004d4592ce67bdeb26017eb4556e3f6fb601f375b2f7b8f3d32b9af33c4e89",
+      "staging_tree_sha256": "60acfbb2ec14fedca2880eb6a40b035ccb4df15851b175eb09a6741f9b1bb304",
+      "stage_receipt_matches": true,
+      "receipt_runtime_matches": true,
+      "everyday_protection": {
+        "applicable": false,
+        "hash_compared": false,
+        "reason": "this environment has no everyday installation snapshot",
+        "everyday_path": "/home/cuihengjia/.npm/_npx/1e7f6d9597241db0",
+        "everyday_present": true,
+        "shared_inodes": 0,
+        "write_path": false
+      }
+    },
+    "0.2.0-rc.1+loop-origin.1-built": {
+      "runtime_tree_sha256": "3076d2fcdbf6b2b49167e8132ce9b5801d95079a36f9bd05af17302e8482be97",
+      "build_receipt_sha256": "78292cbed43d15d4c436601e784de68934cf49bd27ecd95a9328e3e8b5fc6250",
+      "staging_tree_sha256": "b4c9e4454b8ba6b223b38861dbb9b91def444da12bd3dc9c67b95b9008a6b229",
+      "stage_receipt_matches": true,
+      "receipt_runtime_matches": true,
+      "everyday_protection": {
+        "applicable": false,
+        "hash_compared": false,
+        "reason": "this environment has no everyday installation snapshot",
+        "everyday_path": "/home/cuihengjia/.npm/_npx/1e7f6d9597241db0",
+        "everyday_present": true,
+        "shared_inodes": 0,
+        "write_path": false
+      }
+    }
+  },
+  "at_matrix": {
+    "AT-B02": {
+      "original_python": "26 passed / exit0",
+      "node": [
+        "sandbox.test.ts",
+        "staging.test.ts",
+        "candidate-selection.test.ts"
+      ],
+      "normal_smoke": "web and compat real HTTP/assets/port closure pass; staging identity field null",
+      "doctor": "current delivery exit0",
+      "new_helpers": "activate accepts dependency/lock drift and mutates peer before rejection; audit skips touched check if pristine missing",
+      "conclusion": "CHANGES_REQUESTED"
+    },
+    "AT-H01": {
+      "files": [
+        "loader.test.ts",
+        "composition.test.ts"
+      ],
+      "behavior": "actual loader, generation/scope/metadata/composition and tool entry assertions passed"
+    },
+    "AT-H02": {
+      "files": [
+        "binding.test.ts"
+      ],
+      "behavior": "creation-time trusted binding, stale-fence/provider/parent and cancellation assertions passed"
+    },
+    "AT-H03": {
+      "files": [
+        "terminal.test.ts",
+        "provenance.test.ts",
+        "joint-child.test.ts"
+      ],
+      "behavior": "raw/V4/schema/terminal/flush and real new-process reconstruction assertions passed"
+    },
+    "AT-H04": {
+      "files": [
+        "request-seam.test.ts",
+        "cancellation.test.ts",
+        "joint-child.test.ts"
+      ],
+      "behavior": "request/receipt/abort/material/accounting/resource, C25 prepared+fallback, C26 dual-runtime, C27 lifecycle passed"
+    },
+    "independent_old_counterexamples": "10 source-boundary + 3 lifecycle tests passed per candidate; GHS-1/GHS-2 closed for these frozen runtimes",
+    "source_types": "fresh declarations match both candidates; source patch/compiled JS match; detailed compiler inputs recorded",
+    "scope": "delivery full stage; built runtime/source equivalence only, no built B02/doctor claim",
+    "Gate-H": "CHANGES_REQUESTED",
+    "Gate-K": "waiting for Gate-H",
+    "details": "original-at-node-matrix.json; independent-case-results.json"
+  },
+  "original_node_mapping": {
+    "rows": 93,
+    "unmatched": [],
+    "summaries": {
+      "0.2.0-rc.1+loop-origin.1": {
+        "tests": 93,
+        "pass": 93,
+        "fail": 0,
+        "skipped": 0
+      },
+      "0.2.0-rc.1+loop-origin.1-built": {
+        "tests": 93,
+        "pass": 93,
+        "fail": 0,
+        "skipped": 0
+      }
+    },
+    "raw_file": "original-at-node-matrix.json"
+  },
+  "independent_behavior_results": {
+    "0.2.0-rc.1+loop-origin.1": {
+      "capability-boundaries": {
+        "exit": 0,
+        "cases": [
+          {
+            "label": "prepared-control",
+            "result": {
+              "output": [
+                {
+                  "type": "text",
+                  "text": "ok"
+                }
+              ],
+              "stopReason": "completed"
+            },
+            "counts": {
+              "reserve": 1,
+              "dispatch": 1,
+              "settle": 1,
+              "adapter": 1
+            }
+          },
+          {
+            "label": "prepared-resolver-proxy",
+            "result": {
+              "output": [
+                {
+                  "type": "text",
+                  "text": "ok"
+                }
+              ],
+              "stopReason": "completed"
+            },
+            "counts": {
+              "reserve": 1,
+              "dispatch": 1,
+              "settle": 1,
+              "adapter": 1
+            },
+            "lookups": 1,
+            "calls": 1,
+            "admissions": 0,
+            "methods": [
+              "prepareCall"
+            ],
+            "oldSymbolExport": false,
+            "currentEntry": "function"
+          },
+          {
+            "label": "prepared-forged-observer",
+            "result": {
+              "output": [
+                {
+                  "type": "text",
+                  "text": "ok"
+                }
+              ],
+              "stopReason": "completed"
+            },
+            "counts": {
+              "reserve": 1,
+              "dispatch": 1,
+              "settle": 1,
+              "adapter": 1
+            },
+            "observed": 1,
+            "admissions": 0,
+            "attacks": [
+              {
+                "chunks": [
+                  {
+                    "type": "finish",
+                    "reason": {
+                      "kind": "error",
+                      "failure": {
+                        "message": "dispatch_origin_unproven",
+                        "code": "dispatch_origin_unproven"
+                      }
+                    }
+                  }
+                ],
+                "failures": [
+                  {
+                    "kind": "error",
+                    "failure": {
+                      "message": "dispatch_origin_unproven",
+                      "code": "dispatch_origin_unproven"
+                    }
+                  }
+                ]
+              },
+              {
+                "chunks": [
+                  {
+                    "type": "finish",
+                    "reason": {
+                      "kind": "error",
+                      "failure": {
+                        "message": "dispatch_origin_unproven",
+                        "code": "dispatch_origin_unproven"
+                      }
+                    }
+                  }
+                ],
+                "failures": [
+                  {
+                    "kind": "error",
+                    "failure": {
+                      "message": "dispatch_origin_unproven",
+                      "code": "dispatch_origin_unproven"
+                    }
+                  }
+                ]
+              },
+              {
+                "chunks": [
+                  {
+                    "type": "finish",
+                    "reason": {
+                      "kind": "error",
+                      "failure": {
+                        "message": "dispatch_origin_unproven",
+                        "code": "dispatch_origin_unproven"
+                      }
+                    }
+                  }
+                ],
+                "failures": [
+                  {
+                    "kind": "error",
+                    "failure": {
+                      "message": "dispatch_origin_unproven",
+                      "code": "dispatch_origin_unproven"
+                    }
+                  }
+                ]
+              },
+              {
+                "chunks": [
+                  {
+                    "type": "finish",
+                    "reason": {
+                      "kind": "error",
+                      "failure": {
+                        "message": "dispatch_origin_unproven",
+                        "code": "dispatch_origin_unproven"
+                      }
+                    }
+                  }
+                ],
+                "failures": [
+                  {
+                    "kind": "error",
+                    "failure": {
+                      "message": "dispatch_origin_unproven",
+                      "code": "dispatch_origin_unproven"
+                    }
+                  }
+                ]
+              },
+              {
+                "chunks": [
+                  {
+                    "type": "finish",
+                    "reason": {
+                      "kind": "error",
+                      "failure": {
+                        "message": "dispatch_origin_unproven",
+                        "code": "dispatch_origin_unproven"
+                      }
+                    }
+                  }
+                ],
+                "failures": [
+                  {
+                    "kind": "error",
+                    "failure": {
+                      "message": "dispatch_origin_unproven",
+                      "code": "dispatch_origin_unproven"
+                    }
+                  }
+                ]
+              },
+              {
+                "chunks": [
+                  {
+                    "type": "finish",
+                    "reason": {
+                      "kind": "error",
+                      "failure": {
+                        "message": "dispatch_origin_unproven",
+                        "code": "dispatch_origin_unproven"
+                      }
+                    }
+                  }
+                ],
+                "failures": [
+                  {
+                    "kind": "error",
+                    "failure": {
+                      "message": "dispatch_origin_unproven",
+                      "code": "dispatch_origin_unproven"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "label": "prepared-iterator-acquire",
+            "result": {
+              "output": [
+                {
+                  "type": "text",
+                  "text": "ok"
+                }
+              ],
+              "stopReason": "completed"
+            },
+            "counts": {
+              "reserve": 1,
+              "dispatch": 1,
+              "settle": 1,
+              "adapter": 2
+            },
+            "protectedCalls": 1,
+            "observations": [
+              {
+                "phase": "listener",
+                "seesOrigin": false
+              },
+              {
+                "phase": "iterator-acquire",
+                "seesOrigin": false
+              },
+              {
+                "phase": "next",
+                "seesOrigin": false
+              },
+              {
+                "phase": "next",
+                "seesOrigin": false
+              },
+              {
+                "phase": "next",
+                "seesOrigin": false
+              },
+              {
+                "phase": "next",
+                "seesOrigin": false
+              },
+              {
+                "phase": "next",
+                "seesOrigin": false
+              },
+              {
+                "phase": "next",
+                "seesOrigin": false
+              }
+            ],
+            "ordinaryFinish": [
+              {
+                "type": "finish",
+                "reason": {
+                  "kind": "stop"
+                }
+              }
+            ]
+          },
+          {
+            "label": "prepared-boolean-seam",
+            "result": {
+              "output": [
+                {
+                  "type": "text",
+                  "text": "ok"
+                }
+              ],
+              "stopReason": "completed"
+            },
+            "counts": {
+              "reserve": 1,
+              "dispatch": 1,
+              "settle": 1,
+              "adapter": 1
+            },
+            "seenAgent": false,
+            "trustedMethod": true,
+            "observed": {
+              "chunks": [
+                {
+                  "type": "finish",
+                  "reason": {
+                    "kind": "error",
+                    "failure": {
+                      "message": "dispatch_origin_unproven",
+                      "code": "dispatch_origin_unproven"
+                    }
+                  }
+                }
+              ],
+              "failures": [
+                {
+                  "kind": "error",
+                  "failure": {
+                    "message": "dispatch_origin_unproven",
+                    "code": "dispatch_origin_unproven"
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "label": "fallback-control",
+            "result": {
+              "output": [
+                {
+                  "type": "text",
+                  "text": "ok"
+                }
+              ],
+              "stopReason": "completed"
+            },
+            "counts": {
+              "reserve": 1,
+              "dispatch": 1,
+              "settle": 1,
+              "adapter": 1
+            }
+          },
+          {
+            "label": "fallback-resolver-proxy",
+            "result": {
+              "output": [
+                {
+                  "type": "text",
+                  "text": "ok"
+                }
+              ],
+              "stopReason": "completed"
+            },
+            "counts": {
+              "reserve": 1,
+              "dispatch": 1,
+              "settle": 1,
+              "adapter": 1
+            },
+            "lookups": 1,
+            "calls": 1,
+            "admissions": 0,
+            "methods": [
+              "prepareCall"
+            ],
+            "oldSymbolExport": false,
+            "currentEntry": "function"
+          },
+          {
+            "label": "fallback-forged-observer",
+            "result": {
+              "output": [
+                {
+                  "type": "text",
+                  "text": "ok"
+                }
+              ],
+              "stopReason": "completed"
+            },
+            "counts": {
+              "reserve": 1,
+              "dispatch": 1,
+              "settle": 1,
+              "adapter": 1
+            },
+            "observed": 1,
+            "admissions": 0,
+            "attacks": [
+              {
+                "chunks": [
+                  {
+                    "type": "finish",
+                    "reason": {
+                      "kind": "error",
+                      "failure": {
+                        "message": "dispatch_origin_unproven",
+                        "code": "dispatch_origin_unproven"
+                      }
+                    }
+                  }
+                ],
+                "failures": [
+                  {
+                    "kind": "error",
+                    "failure": {
+                      "message": "dispatch_origin_unproven",
+                      "code": "dispatch_origin_unproven"
+                    }
+                  }
+                ]
+              },
+              {
+                "chunks": [
+                  {
+                    "type": "finish",
+                    "reason": {
+                      "kind": "error",
+                      "failure": {
+                        "message": "dispatch_origin_unproven",
+                        "code": "dispatch_origin_unproven"
+                      }
+                    }
+                  }
+                ],
+                "failures": [
+                  {
+                    "kind": "error",
+                    "failure": {
+                      "message": "dispatch_origin_unproven",
+                      "code": "dispatch_origin_unproven"
+                    }
+                  }
+                ]
+              },
+              {
+                "chunks": [
+                  {
+                    "type": "finish",
+                    "reason": {
+                      "kind": "error",
+                      "failure": {
+                        "message": "dispatch_origin_unproven",
+                        "code": "dispatch_origin_unproven"
+                      }
+                    }
+                  }
+                ],
+                "failures": [
+                  {
+                    "kind": "error",
+                    "failure": {
+                      "message": "dispatch_origin_unproven",
+                      "code": "dispatch_origin_unproven"
+                    }
+                  }
+                ]
+              },
+              {
+                "chunks": [
+                  {
+                    "type": "finish",
+                    "reason": {
+                      "kind": "error",
+                      "failure": {
+                        "message": "dispatch_origin_unproven",
+                        "code": "dispatch_origin_unproven"
+                      }
+                    }
+                  }
+                ],
+                "failures": [
+                  {
+                    "kind": "error",
+                    "failure": {
+                      "message": "dispatch_origin_unproven",
+                      "code": "dispatch_origin_unproven"
+                    }
+                  }
+                ]
+              },
+              {
+                "chunks": [
+                  {
+                    "type": "finish",
+                    "reason": {
+                      "kind": "error",
+                      "failure": {
+                        "message": "dispatch_origin_unproven",
+                        "code": "dispatch_origin_unproven"
+                      }
+                    }
+                  }
+                ],
+                "failures": [
+                  {
+                    "kind": "error",
+                    "failure": {
+                      "message": "dispatch_origin_unproven",
+                      "code": "dispatch_origin_unproven"
+                    }
+                  }
+                ]
+              },
+              {
+                "chunks": [
+                  {
+                    "type": "finish",
+                    "reason": {
+                      "kind": "error",
+                      "failure": {
+                        "message": "dispatch_origin_unproven",
+                        "code": "dispatch_origin_unproven"
+                      }
+                    }
+                  }
+                ],
+                "failures": [
+                  {
+                    "kind": "error",
+                    "failure": {
+                      "message": "dispatch_origin_unproven",
+                      "code": "dispatch_origin_unproven"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "label": "fallback-iterator-acquire",
+            "result": {
+              "output": [
+                {
+                  "type": "text",
+                  "text": "ok"
+                }
+              ],
+              "stopReason": "completed"
+            },
+            "counts": {
+              "reserve": 1,
+              "dispatch": 1,
+              "settle": 1,
+              "adapter": 2
+            },
+            "protectedCalls": 1,
+            "observations": [
+              {
+                "phase": "listener",
+                "seesOrigin": false
+              },
+              {
+                "phase": "iterator-acquire",
+                "seesOrigin": false
+              },
+              {
+                "phase": "next",
+                "seesOrigin": false
+              },
+              {
+                "phase": "next",
+                "seesOrigin": false
+              },
+              {
+                "phase": "next",
+                "seesOrigin": false
+              },
+              {
+                "phase": "next",
+                "seesOrigin": false
+              },
+              {
+                "phase": "next",
+                "seesOrigin": false
+              },
+              {
+                "phase": "next",
+                "seesOrigin": false
+              }
+            ],
+            "ordinaryFinish": [
+              {
+                "type": "finish",
+                "reason": {
+                  "kind": "stop"
+                }
+              }
+            ]
+          },
+          {
+            "label": "fallback-boolean-seam",
+            "result": {
+              "output": [
+                {
+                  "type": "text",
+                  "text": "ok"
+                }
+              ],
+              "stopReason": "completed"
+            },
+            "counts": {
+              "reserve": 1,
+              "dispatch": 1,
+              "settle": 1,
+              "adapter": 1
+            },
+            "seenAgent": false,
+            "trustedMethod": true,
+            "observed": {
+              "chunks": [
+                {
+                  "type": "finish",
+                  "reason": {
+                    "kind": "error",
+                    "failure": {
+                      "message": "dispatch_origin_unproven",
+                      "code": "dispatch_origin_unproven"
+                    }
+                  }
+                }
+              ],
+              "failures": [
+                {
+                  "kind": "error",
+                  "failure": {
+                    "message": "dispatch_origin_unproven",
+                    "code": "dispatch_origin_unproven"
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "registry-lifecycle": {
+        "exit": 0,
+        "cases": [
+          {
+            "label": "initial-control",
+            "value": {
+              "fallback": false,
+              "result": {
+                "output": [
+                  {
+                    "type": "text",
+                    "text": "ok"
+                  }
+                ],
+                "stopReason": "completed"
+              },
+              "counts": {
+                "reserve": 1,
+                "dispatch": 1,
+                "settle": 1,
+                "adapter": 1
+              }
+            }
+          },
+          {
+            "label": "initial-control",
+            "value": {
+              "fallback": true,
+              "result": {
+                "output": [
+                  {
+                    "type": "text",
+                    "text": "ok"
+                  }
+                ],
+                "stopReason": "completed"
+              },
+              "counts": {
+                "reserve": 1,
+                "dispatch": 1,
+                "settle": 1,
+                "adapter": 1
+              }
+            }
+          },
+          {
+            "label": "fresh-prepared",
+            "value": {
+              "result": {
+                "output": [
+                  {
+                    "type": "text",
+                    "text": "ok"
+                  }
+                ],
+                "stopReason": "completed"
+              },
+              "counts": {
+                "reserve": 1,
+                "dispatch": 1,
+                "settle": 1,
+                "adapter": 1
+              }
+            }
+          },
+          {
+            "label": "fresh-fallback-after-disposal",
+            "value": {
+              "result": {
+                "output": [
+                  {
+                    "type": "text",
+                    "text": "ok"
+                  }
+                ],
+                "stopReason": "completed"
+              },
+              "counts": {
+                "reserve": 1,
+                "dispatch": 1,
+                "settle": 1,
+                "adapter": 1
+              },
+              "errors": []
+            }
+          }
+        ]
+      }
+    },
+    "0.2.0-rc.1+loop-origin.1-built": {
+      "capability-boundaries": {
+        "exit": 0,
+        "cases": [
+          {
+            "label": "prepared-control",
+            "result": {
+              "output": [
+                {
+                  "type": "text",
+                  "text": "ok"
+                }
+              ],
+              "stopReason": "completed"
+            },
+            "counts": {
+              "reserve": 1,
+              "dispatch": 1,
+              "settle": 1,
+              "adapter": 1
+            }
+          },
+          {
+            "label": "prepared-resolver-proxy",
+            "result": {
+              "output": [
+                {
+                  "type": "text",
+                  "text": "ok"
+                }
+              ],
+              "stopReason": "completed"
+            },
+            "counts": {
+              "reserve": 1,
+              "dispatch": 1,
+              "settle": 1,
+              "adapter": 1
+            },
+            "lookups": 1,
+            "calls": 1,
+            "admissions": 0,
+            "methods": [
+              "prepareCall"
+            ],
+            "oldSymbolExport": false,
+            "currentEntry": "function"
+          },
+          {
+            "label": "prepared-forged-observer",
+            "result": {
+              "output": [
+                {
+                  "type": "text",
+                  "text": "ok"
+                }
+              ],
+              "stopReason": "completed"
+            },
+            "counts": {
+              "reserve": 1,
+              "dispatch": 1,
+              "settle": 1,
+              "adapter": 1
+            },
+            "observed": 1,
+            "admissions": 0,
+            "attacks": [
+              {
+                "chunks": [
+                  {
+                    "type": "finish",
+                    "reason": {
+                      "kind": "error",
+                      "failure": {
+                        "message": "dispatch_origin_unproven",
+                        "code": "dispatch_origin_unproven"
+                      }
+                    }
+                  }
+                ],
+                "failures": [
+                  {
+                    "kind": "error",
+                    "failure": {
+                      "message": "dispatch_origin_unproven",
+                      "code": "dispatch_origin_unproven"
+                    }
+                  }
+                ]
+              },
+              {
+                "chunks": [
+                  {
+                    "type": "finish",
+                    "reason": {
+                      "kind": "error",
+                      "failure": {
+                        "message": "dispatch_origin_unproven",
+                        "code": "dispatch_origin_unproven"
+                      }
+                    }
+                  }
+                ],
+                "failures": [
+                  {
+                    "kind": "error",
+                    "failure": {
+                      "message": "dispatch_origin_unproven",
+                      "code": "dispatch_origin_unproven"
+                    }
+                  }
+                ]
+              },
+              {
+                "chunks": [
+                  {
+                    "type": "finish",
+                    "reason": {
+                      "kind": "error",
+                      "failure": {
+                        "message": "dispatch_origin_unproven",
+                        "code": "dispatch_origin_unproven"
+                      }
+                    }
+                  }
+                ],
+                "failures": [
+                  {
+                    "kind": "error",
+                    "failure": {
+                      "message": "dispatch_origin_unproven",
+                      "code": "dispatch_origin_unproven"
+                    }
+                  }
+                ]
+              },
+              {
+                "chunks": [
+                  {
+                    "type": "finish",
+                    "reason": {
+                      "kind": "error",
+                      "failure": {
+                        "message": "dispatch_origin_unproven",
+                        "code": "dispatch_origin_unproven"
+                      }
+                    }
+                  }
+                ],
+                "failures": [
+                  {
+                    "kind": "error",
+                    "failure": {
+                      "message": "dispatch_origin_unproven",
+                      "code": "dispatch_origin_unproven"
+                    }
+                  }
+                ]
+              },
+              {
+                "chunks": [
+                  {
+                    "type": "finish",
+                    "reason": {
+                      "kind": "error",
+                      "failure": {
+                        "message": "dispatch_origin_unproven",
+                        "code": "dispatch_origin_unproven"
+                      }
+                    }
+                  }
+                ],
+                "failures": [
+                  {
+                    "kind": "error",
+                    "failure": {
+                      "message": "dispatch_origin_unproven",
+                      "code": "dispatch_origin_unproven"
+                    }
+                  }
+                ]
+              },
+              {
+                "chunks": [
+                  {
+                    "type": "finish",
+                    "reason": {
+                      "kind": "error",
+                      "failure": {
+                        "message": "dispatch_origin_unproven",
+                        "code": "dispatch_origin_unproven"
+                      }
+                    }
+                  }
+                ],
+                "failures": [
+                  {
+                    "kind": "error",
+                    "failure": {
+                      "message": "dispatch_origin_unproven",
+                      "code": "dispatch_origin_unproven"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "label": "prepared-iterator-acquire",
+            "result": {
+              "output": [
+                {
+                  "type": "text",
+                  "text": "ok"
+                }
+              ],
+              "stopReason": "completed"
+            },
+            "counts": {
+              "reserve": 1,
+              "dispatch": 1,
+              "settle": 1,
+              "adapter": 2
+            },
+            "protectedCalls": 1,
+            "observations": [
+              {
+                "phase": "listener",
+                "seesOrigin": false
+              },
+              {
+                "phase": "iterator-acquire",
+                "seesOrigin": false
+              },
+              {
+                "phase": "next",
+                "seesOrigin": false
+              },
+              {
+                "phase": "next",
+                "seesOrigin": false
+              },
+              {
+                "phase": "next",
+                "seesOrigin": false
+              },
+              {
+                "phase": "next",
+                "seesOrigin": false
+              },
+              {
+                "phase": "next",
+                "seesOrigin": false
+              },
+              {
+                "phase": "next",
+                "seesOrigin": false
+              }
+            ],
+            "ordinaryFinish": [
+              {
+                "type": "finish",
+                "reason": {
+                  "kind": "stop"
+                }
+              }
+            ]
+          },
+          {
+            "label": "prepared-boolean-seam",
+            "result": {
+              "output": [
+                {
+                  "type": "text",
+                  "text": "ok"
+                }
+              ],
+              "stopReason": "completed"
+            },
+            "counts": {
+              "reserve": 1,
+              "dispatch": 1,
+              "settle": 1,
+              "adapter": 1
+            },
+            "seenAgent": false,
+            "trustedMethod": true,
+            "observed": {
+              "chunks": [
+                {
+                  "type": "finish",
+                  "reason": {
+                    "kind": "error",
+                    "failure": {
+                      "message": "dispatch_origin_unproven",
+                      "code": "dispatch_origin_unproven"
+                    }
+                  }
+                }
+              ],
+              "failures": [
+                {
+                  "kind": "error",
+                  "failure": {
+                    "message": "dispatch_origin_unproven",
+                    "code": "dispatch_origin_unproven"
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "label": "fallback-control",
+            "result": {
+              "output": [
+                {
+                  "type": "text",
+                  "text": "ok"
+                }
+              ],
+              "stopReason": "completed"
+            },
+            "counts": {
+              "reserve": 1,
+              "dispatch": 1,
+              "settle": 1,
+              "adapter": 1
+            }
+          },
+          {
+            "label": "fallback-resolver-proxy",
+            "result": {
+              "output": [
+                {
+                  "type": "text",
+                  "text": "ok"
+                }
+              ],
+              "stopReason": "completed"
+            },
+            "counts": {
+              "reserve": 1,
+              "dispatch": 1,
+              "settle": 1,
+              "adapter": 1
+            },
+            "lookups": 1,
+            "calls": 1,
+            "admissions": 0,
+            "methods": [
+              "prepareCall"
+            ],
+            "oldSymbolExport": false,
+            "currentEntry": "function"
+          },
+          {
+            "label": "fallback-forged-observer",
+            "result": {
+              "output": [
+                {
+                  "type": "text",
+                  "text": "ok"
+                }
+              ],
+              "stopReason": "completed"
+            },
+            "counts": {
+              "reserve": 1,
+              "dispatch": 1,
+              "settle": 1,
+              "adapter": 1
+            },
+            "observed": 1,
+            "admissions": 0,
+            "attacks": [
+              {
+                "chunks": [
+                  {
+                    "type": "finish",
+                    "reason": {
+                      "kind": "error",
+                      "failure": {
+                        "message": "dispatch_origin_unproven",
+                        "code": "dispatch_origin_unproven"
+                      }
+                    }
+                  }
+                ],
+                "failures": [
+                  {
+                    "kind": "error",
+                    "failure": {
+                      "message": "dispatch_origin_unproven",
+                      "code": "dispatch_origin_unproven"
+                    }
+                  }
+                ]
+              },
+              {
+                "chunks": [
+                  {
+                    "type": "finish",
+                    "reason": {
+                      "kind": "error",
+                      "failure": {
+                        "message": "dispatch_origin_unproven",
+                        "code": "dispatch_origin_unproven"
+                      }
+                    }
+                  }
+                ],
+                "failures": [
+                  {
+                    "kind": "error",
+                    "failure": {
+                      "message": "dispatch_origin_unproven",
+                      "code": "dispatch_origin_unproven"
+                    }
+                  }
+                ]
+              },
+              {
+                "chunks": [
+                  {
+                    "type": "finish",
+                    "reason": {
+                      "kind": "error",
+                      "failure": {
+                        "message": "dispatch_origin_unproven",
+                        "code": "dispatch_origin_unproven"
+                      }
+                    }
+                  }
+                ],
+                "failures": [
+                  {
+                    "kind": "error",
+                    "failure": {
+                      "message": "dispatch_origin_unproven",
+                      "code": "dispatch_origin_unproven"
+                    }
+                  }
+                ]
+              },
+              {
+                "chunks": [
+                  {
+                    "type": "finish",
+                    "reason": {
+                      "kind": "error",
+                      "failure": {
+                        "message": "dispatch_origin_unproven",
+                        "code": "dispatch_origin_unproven"
+                      }
+                    }
+                  }
+                ],
+                "failures": [
+                  {
+                    "kind": "error",
+                    "failure": {
+                      "message": "dispatch_origin_unproven",
+                      "code": "dispatch_origin_unproven"
+                    }
+                  }
+                ]
+              },
+              {
+                "chunks": [
+                  {
+                    "type": "finish",
+                    "reason": {
+                      "kind": "error",
+                      "failure": {
+                        "message": "dispatch_origin_unproven",
+                        "code": "dispatch_origin_unproven"
+                      }
+                    }
+                  }
+                ],
+                "failures": [
+                  {
+                    "kind": "error",
+                    "failure": {
+                      "message": "dispatch_origin_unproven",
+                      "code": "dispatch_origin_unproven"
+                    }
+                  }
+                ]
+              },
+              {
+                "chunks": [
+                  {
+                    "type": "finish",
+                    "reason": {
+                      "kind": "error",
+                      "failure": {
+                        "message": "dispatch_origin_unproven",
+                        "code": "dispatch_origin_unproven"
+                      }
+                    }
+                  }
+                ],
+                "failures": [
+                  {
+                    "kind": "error",
+                    "failure": {
+                      "message": "dispatch_origin_unproven",
+                      "code": "dispatch_origin_unproven"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "label": "fallback-iterator-acquire",
+            "result": {
+              "output": [
+                {
+                  "type": "text",
+                  "text": "ok"
+                }
+              ],
+              "stopReason": "completed"
+            },
+            "counts": {
+              "reserve": 1,
+              "dispatch": 1,
+              "settle": 1,
+              "adapter": 2
+            },
+            "protectedCalls": 1,
+            "observations": [
+              {
+                "phase": "listener",
+                "seesOrigin": false
+              },
+              {
+                "phase": "iterator-acquire",
+                "seesOrigin": false
+              },
+              {
+                "phase": "next",
+                "seesOrigin": false
+              },
+              {
+                "phase": "next",
+                "seesOrigin": false
+              },
+              {
+                "phase": "next",
+                "seesOrigin": false
+              },
+              {
+                "phase": "next",
+                "seesOrigin": false
+              },
+              {
+                "phase": "next",
+                "seesOrigin": false
+              },
+              {
+                "phase": "next",
+                "seesOrigin": false
+              }
+            ],
+            "ordinaryFinish": [
+              {
+                "type": "finish",
+                "reason": {
+                  "kind": "stop"
+                }
+              }
+            ]
+          },
+          {
+            "label": "fallback-boolean-seam",
+            "result": {
+              "output": [
+                {
+                  "type": "text",
+                  "text": "ok"
+                }
+              ],
+              "stopReason": "completed"
+            },
+            "counts": {
+              "reserve": 1,
+              "dispatch": 1,
+              "settle": 1,
+              "adapter": 1
+            },
+            "seenAgent": false,
+            "trustedMethod": true,
+            "observed": {
+              "chunks": [
+                {
+                  "type": "finish",
+                  "reason": {
+                    "kind": "error",
+                    "failure": {
+                      "message": "dispatch_origin_unproven",
+                      "code": "dispatch_origin_unproven"
+                    }
+                  }
+                }
+              ],
+              "failures": [
+                {
+                  "kind": "error",
+                  "failure": {
+                    "message": "dispatch_origin_unproven",
+                    "code": "dispatch_origin_unproven"
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "registry-lifecycle": {
+        "exit": 0,
+        "cases": [
+          {
+            "label": "initial-control",
+            "value": {
+              "fallback": false,
+              "result": {
+                "output": [
+                  {
+                    "type": "text",
+                    "text": "ok"
+                  }
+                ],
+                "stopReason": "completed"
+              },
+              "counts": {
+                "reserve": 1,
+                "dispatch": 1,
+                "settle": 1,
+                "adapter": 1
+              }
+            }
+          },
+          {
+            "label": "initial-control",
+            "value": {
+              "fallback": true,
+              "result": {
+                "output": [
+                  {
+                    "type": "text",
+                    "text": "ok"
+                  }
+                ],
+                "stopReason": "completed"
+              },
+              "counts": {
+                "reserve": 1,
+                "dispatch": 1,
+                "settle": 1,
+                "adapter": 1
+              }
+            }
+          },
+          {
+            "label": "fresh-prepared",
+            "value": {
+              "result": {
+                "output": [
+                  {
+                    "type": "text",
+                    "text": "ok"
+                  }
+                ],
+                "stopReason": "completed"
+              },
+              "counts": {
+                "reserve": 1,
+                "dispatch": 1,
+                "settle": 1,
+                "adapter": 1
+              }
+            }
+          },
+          {
+            "label": "fresh-fallback-after-disposal",
+            "value": {
+              "result": {
+                "output": [
+                  {
+                    "type": "text",
+                    "text": "ok"
+                  }
+                ],
+                "stopReason": "completed"
+              },
+              "counts": {
+                "reserve": 1,
+                "dispatch": 1,
+                "settle": 1,
+                "adapter": 1
+              },
+              "errors": []
+            }
+          }
+        ]
+      }
+    }
+  },
+  "types": {
+    "dsh-llm": {
+      "independent_tsc_sha256": "320517790cd0770206834fbea83603e544b54f22dd1eb91000d1d5869fb1e20f",
+      "source_worktree_dts_sha256": "320517790cd0770206834fbea83603e544b54f22dd1eb91000d1d5869fb1e20f",
+      "generated_equals_worktree": true,
+      "dependency_entries": 257,
+      "dependencies_unchanged": true,
+      "candidates": {
+        "0.2.0-rc.1+loop-origin.1": {
+          "sha256": "320517790cd0770206834fbea83603e544b54f22dd1eb91000d1d5869fb1e20f",
+          "equals_generated": true
+        },
+        "0.2.0-rc.1+loop-origin.1-built": {
+          "sha256": "320517790cd0770206834fbea83603e544b54f22dd1eb91000d1d5869fb1e20f",
+          "equals_generated": true
+        }
+      }
+    },
+    "dsh-agent-loop": {
+      "independent_tsc_sha256": "a3509f051a061ee2c6d6c7ac2fbf8f7d4a4acbce34dcfff9138557a84d7f2d40",
+      "source_worktree_dts_sha256": "a3509f051a061ee2c6d6c7ac2fbf8f7d4a4acbce34dcfff9138557a84d7f2d40",
+      "generated_equals_worktree": true,
+      "dependency_entries": 385,
+      "dependencies_unchanged": true,
+      "candidates": {
+        "0.2.0-rc.1+loop-origin.1": {
+          "sha256": "a3509f051a061ee2c6d6c7ac2fbf8f7d4a4acbce34dcfff9138557a84d7f2d40",
+          "equals_generated": true
+        },
+        "0.2.0-rc.1+loop-origin.1-built": {
+          "sha256": "a3509f051a061ee2c6d6c7ac2fbf8f7d4a4acbce34dcfff9138557a84d7f2d40",
+          "equals_generated": true
+        }
+      }
+    }
+  },
+  "patch_and_source": {
+    "source_patch_equals_diff": true,
+    "candidate_diff": {
+      "0.2.0-rc.1+loop-origin.1": {
+        "files": [
+          "node_modules/@deepseek-ai/dsh-agent-loop/lib/index.js",
+          "node_modules/@deepseek-ai/dsh-agent-loop/lib/types/dispatch-origin.c2p.d.ts",
+          "node_modules/@deepseek-ai/dsh-agent-loop/lib/types/index.d.ts",
+          "node_modules/@deepseek-ai/dsh-llm/lib/index.js",
+          "node_modules/@deepseek-ai/dsh-llm/lib/types/index.d.ts"
+        ],
+        "manifest_matches": true
+      },
+      "0.2.0-rc.1+loop-origin.1-built": {
+        "files": [
+          "node_modules/@deepseek-ai/dsh-agent-loop/lib/index.js",
+          "node_modules/@deepseek-ai/dsh-agent-loop/lib/types/dispatch-origin.c2p.d.ts",
+          "node_modules/@deepseek-ai/dsh-agent-loop/lib/types/index.d.ts",
+          "node_modules/@deepseek-ai/dsh-llm/lib/index.js",
+          "node_modules/@deepseek-ai/dsh-llm/lib/types/index.d.ts"
+        ],
+        "manifest_matches": true
+      }
+    },
+    "origin_declaration": {
+      "0.2.0-rc.1+loop-origin.1": {
+        "generated_sha256": "baadf757589e385085d3d8409d1ef3d7dbc5ede84a114ad121d5a44484e36188",
+        "candidate_sha256": "baadf757589e385085d3d8409d1ef3d7dbc5ede84a114ad121d5a44484e36188",
+        "equal": true
+      },
+      "0.2.0-rc.1+loop-origin.1-built": {
+        "generated_sha256": "baadf757589e385085d3d8409d1ef3d7dbc5ede84a114ad121d5a44484e36188",
+        "candidate_sha256": "baadf757589e385085d3d8409d1ef3d7dbc5ede84a114ad121d5a44484e36188",
+        "equal": true
+      }
+    },
+    "source_built_js": {
+      "dsh-llm": {
+        "source_sha256": "10bd1ce31fbd297984d9b90d8ade111dd61c5b687f813f4dab91920061eaf126",
+        "built_sha256": "10bd1ce31fbd297984d9b90d8ade111dd61c5b687f813f4dab91920061eaf126",
+        "equal": true
+      },
+      "dsh-agent-loop": {
+        "source_sha256": "b463cc555b9e6a2770c75197238e0d21e7eae8a4b627a2121644a73c2820508e",
+        "built_sha256": "b463cc555b9e6a2770c75197238e0d21e7eae8a4b627a2121644a73c2820508e",
+        "equal": true
+      }
+    }
+  },
+  "owner_seal": {
+    "seal_files": 42,
+    "mismatches": []
+  },
+  "kernel_preservation": {
+    "baseline": "/home/cuihengjia/agent/Code2Paper copy/.dsh-dev/run/qa-stage-repair-review-20260930-y7m330na/lead/inputs_before.json",
+    "entries": 791,
+    "mismatches": [],
+    "full_4129_rerun": false
+  },
+  "activation_probe": {
+    "production_toolchain_sha256": "5bfd2e72f06da3cec1dd49417b410e7e5045d01cb67f4fca4fafa1b58963edf5",
+    "fixture_toolchain_sha256": "5bfd2e72f06da3cec1dd49417b410e7e5045d01cb67f4fca4fafa1b58963edf5",
+    "fixture_scope": "copies of actual toolchain and installed compiler; only temporary files changed",
+    "results": {
+      "activate-clean-control": {
+        "argv": [
+          "node",
+          "/tmp/c2p-gate-h-whole-20261003-as7rfjgg/activation-fixture/integrations/dsh/dev/toolchain/toolchain.mjs",
+          "verify"
+        ],
+        "cwd": "/tmp/c2p-gate-h-whole-20261003-as7rfjgg/activation-fixture",
+        "exit": 0,
+        "receipt_before": "cd157d3ed87e5f60582efe500fc1e0a2b79d761dc3b7d4a85b44af2ea80559d0",
+        "receipt_after": "cd157d3ed87e5f60582efe500fc1e0a2b79d761dc3b7d4a85b44af2ea80559d0",
+        "peer_before": "/tmp/c2p-gate-h-whole-20261003-as7rfjgg/activation-fixture/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1/runtime/node_modules/@deepseek-ai",
+        "peer_after": "/tmp/c2p-gate-h-whole-20261003-as7rfjgg/activation-fixture/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1/runtime/node_modules/@deepseek-ai"
+      },
+      "activate-compiler-drift-verify-before": {
+        "argv": [
+          "node",
+          "/tmp/c2p-gate-h-whole-20261003-as7rfjgg/activation-fixture/integrations/dsh/dev/toolchain/toolchain.mjs",
+          "verify"
+        ],
+        "cwd": "/tmp/c2p-gate-h-whole-20261003-as7rfjgg/activation-fixture",
+        "exit": 1,
+        "receipt_before": "cd157d3ed87e5f60582efe500fc1e0a2b79d761dc3b7d4a85b44af2ea80559d0",
+        "receipt_after": "cd157d3ed87e5f60582efe500fc1e0a2b79d761dc3b7d4a85b44af2ea80559d0",
+        "peer_before": "/tmp/c2p-gate-h-whole-20261003-as7rfjgg/activation-fixture/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1/runtime/node_modules/@deepseek-ai",
+        "peer_after": "/tmp/c2p-gate-h-whole-20261003-as7rfjgg/activation-fixture/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1/runtime/node_modules/@deepseek-ai"
+      },
+      "activate-compiler-drift-activation": {
+        "argv": [
+          "node",
+          "/tmp/c2p-gate-h-whole-20261003-as7rfjgg/activation-fixture/integrations/dsh/dev/toolchain/toolchain.mjs",
+          "activate"
+        ],
+        "cwd": "/tmp/c2p-gate-h-whole-20261003-as7rfjgg/activation-fixture",
+        "exit": 0,
+        "receipt_before": "cd157d3ed87e5f60582efe500fc1e0a2b79d761dc3b7d4a85b44af2ea80559d0",
+        "receipt_after": "1ddde38b2b771eae1d89dd277ee572abc65194ced752091dd5e4e0f8ea628b0c",
+        "peer_before": "/tmp/c2p-gate-h-whole-20261003-as7rfjgg/activation-fixture/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1/runtime/node_modules/@deepseek-ai",
+        "peer_after": "/tmp/c2p-gate-h-whole-20261003-as7rfjgg/activation-fixture/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1/runtime/node_modules/@deepseek-ai"
+      },
+      "activate-compiler-drift-verify-after": {
+        "argv": [
+          "node",
+          "/tmp/c2p-gate-h-whole-20261003-as7rfjgg/activation-fixture/integrations/dsh/dev/toolchain/toolchain.mjs",
+          "verify"
+        ],
+        "cwd": "/tmp/c2p-gate-h-whole-20261003-as7rfjgg/activation-fixture",
+        "exit": 0,
+        "receipt_before": "1ddde38b2b771eae1d89dd277ee572abc65194ced752091dd5e4e0f8ea628b0c",
+        "receipt_after": "1ddde38b2b771eae1d89dd277ee572abc65194ced752091dd5e4e0f8ea628b0c",
+        "peer_before": "/tmp/c2p-gate-h-whole-20261003-as7rfjgg/activation-fixture/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1/runtime/node_modules/@deepseek-ai",
+        "peer_after": "/tmp/c2p-gate-h-whole-20261003-as7rfjgg/activation-fixture/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1/runtime/node_modules/@deepseek-ai"
+      },
+      "activate-lock-drift-verify-before": {
+        "argv": [
+          "node",
+          "/tmp/c2p-gate-h-whole-20261003-as7rfjgg/activation-fixture/integrations/dsh/dev/toolchain/toolchain.mjs",
+          "verify"
+        ],
+        "cwd": "/tmp/c2p-gate-h-whole-20261003-as7rfjgg/activation-fixture",
+        "exit": 1,
+        "receipt_before": "cd157d3ed87e5f60582efe500fc1e0a2b79d761dc3b7d4a85b44af2ea80559d0",
+        "receipt_after": "cd157d3ed87e5f60582efe500fc1e0a2b79d761dc3b7d4a85b44af2ea80559d0",
+        "peer_before": "/tmp/c2p-gate-h-whole-20261003-as7rfjgg/activation-fixture/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1/runtime/node_modules/@deepseek-ai",
+        "peer_after": "/tmp/c2p-gate-h-whole-20261003-as7rfjgg/activation-fixture/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1/runtime/node_modules/@deepseek-ai"
+      },
+      "activate-lock-drift-activation": {
+        "argv": [
+          "node",
+          "/tmp/c2p-gate-h-whole-20261003-as7rfjgg/activation-fixture/integrations/dsh/dev/toolchain/toolchain.mjs",
+          "activate"
+        ],
+        "cwd": "/tmp/c2p-gate-h-whole-20261003-as7rfjgg/activation-fixture",
+        "exit": 0,
+        "receipt_before": "cd157d3ed87e5f60582efe500fc1e0a2b79d761dc3b7d4a85b44af2ea80559d0",
+        "receipt_after": "693527ebc98ca7bbed4af51abb9737a5d7947dd5047408f3a0e7c8162c4a2054",
+        "peer_before": "/tmp/c2p-gate-h-whole-20261003-as7rfjgg/activation-fixture/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1/runtime/node_modules/@deepseek-ai",
+        "peer_after": "/tmp/c2p-gate-h-whole-20261003-as7rfjgg/activation-fixture/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1/runtime/node_modules/@deepseek-ai"
+      },
+      "activate-lock-drift-verify-after": {
+        "argv": [
+          "node",
+          "/tmp/c2p-gate-h-whole-20261003-as7rfjgg/activation-fixture/integrations/dsh/dev/toolchain/toolchain.mjs",
+          "verify"
+        ],
+        "cwd": "/tmp/c2p-gate-h-whole-20261003-as7rfjgg/activation-fixture",
+        "exit": 0,
+        "receipt_before": "693527ebc98ca7bbed4af51abb9737a5d7947dd5047408f3a0e7c8162c4a2054",
+        "receipt_after": "693527ebc98ca7bbed4af51abb9737a5d7947dd5047408f3a0e7c8162c4a2054",
+        "peer_before": "/tmp/c2p-gate-h-whole-20261003-as7rfjgg/activation-fixture/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1/runtime/node_modules/@deepseek-ai",
+        "peer_after": "/tmp/c2p-gate-h-whole-20261003-as7rfjgg/activation-fixture/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1/runtime/node_modules/@deepseek-ai"
+      },
+      "activate-rejected-target-side-effect": {
+        "argv": [
+          "node",
+          "/tmp/c2p-gate-h-whole-20261003-as7rfjgg/activation-fixture/integrations/dsh/dev/toolchain/toolchain.mjs",
+          "activate"
+        ],
+        "cwd": "/tmp/c2p-gate-h-whole-20261003-as7rfjgg/activation-fixture",
+        "exit": 1,
+        "receipt_before": "cd157d3ed87e5f60582efe500fc1e0a2b79d761dc3b7d4a85b44af2ea80559d0",
+        "receipt_after": "cd157d3ed87e5f60582efe500fc1e0a2b79d761dc3b7d4a85b44af2ea80559d0",
+        "peer_before": "/tmp/c2p-gate-h-whole-20261003-as7rfjgg/activation-fixture/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1/runtime/node_modules/@deepseek-ai",
+        "peer_after": "/tmp/c2p-gate-h-whole-20261003-as7rfjgg/activation-fixture/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1-built/runtime/node_modules/@deepseek-ai"
+      }
+    }
+  },
+  "audit_failure_probe": {
+    "audit-valid-control": {
+      "argv": [
+        "/usr/bin/bwrap",
+        "--die-with-parent",
+        "--new-session",
+        "--unshare-pid",
+        "--ro-bind",
+        "/",
+        "/",
+        "--bind",
+        "/home/cuihengjia/agent/Code2Paper copy/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1",
+        "/home/cuihengjia/agent/Code2Paper copy/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1",
+        "--ro-bind",
+        "/home/cuihengjia/agent/Code2Paper copy/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1/runtime",
+        "/home/cuihengjia/agent/Code2Paper copy/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1/runtime",
+        "--tmpfs",
+        "/tmp",
+        "--proc",
+        "/proc",
+        "--dev",
+        "/dev",
+        "--unshare-net",
+        "--chdir",
+        "/home/cuihengjia/agent/Code2Paper copy",
+        "--",
+        "/home/cuihengjia/miniconda3/bin/python",
+        "scripts/dsh_dev.py",
+        "--candidate",
+        "0.2.0-rc.1+loop-origin.1",
+        "audit"
+      ],
+      "cwd": "/home/cuihengjia/agent/Code2Paper copy",
+      "exit": 0,
+      "missing_declaration_in_manifest": false,
+      "base_unavailable": false,
+      "mutation_scope": "read-only namespace overlays; host files unchanged"
+    },
+    "audit-missing-declaration-control": {
+      "argv": [
+        "/usr/bin/bwrap",
+        "--die-with-parent",
+        "--new-session",
+        "--unshare-pid",
+        "--ro-bind",
+        "/",
+        "/",
+        "--bind",
+        "/home/cuihengjia/agent/Code2Paper copy/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1",
+        "/home/cuihengjia/agent/Code2Paper copy/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1",
+        "--ro-bind",
+        "/home/cuihengjia/agent/Code2Paper copy/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1/runtime",
+        "/home/cuihengjia/agent/Code2Paper copy/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1/runtime",
+        "--tmpfs",
+        "/tmp",
+        "--proc",
+        "/proc",
+        "--dev",
+        "/dev",
+        "--unshare-net",
+        "--ro-bind",
+        "/tmp/c2p-gate-h-whole-20261003-as7rfjgg/audit-omitted-declaration-manifest.json",
+        "/home/cuihengjia/agent/Code2Paper copy/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1/manifest.json",
+        "--chdir",
+        "/home/cuihengjia/agent/Code2Paper copy",
+        "--",
+        "/home/cuihengjia/miniconda3/bin/python",
+        "scripts/dsh_dev.py",
+        "--candidate",
+        "0.2.0-rc.1+loop-origin.1",
+        "audit"
+      ],
+      "cwd": "/home/cuihengjia/agent/Code2Paper copy",
+      "exit": 1,
+      "missing_declaration_in_manifest": true,
+      "base_unavailable": false,
+      "mutation_scope": "read-only namespace overlays; host files unchanged"
+    },
+    "audit-missing-declaration-and-base": {
+      "argv": [
+        "/usr/bin/bwrap",
+        "--die-with-parent",
+        "--new-session",
+        "--unshare-pid",
+        "--ro-bind",
+        "/",
+        "/",
+        "--bind",
+        "/home/cuihengjia/agent/Code2Paper copy/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1",
+        "/home/cuihengjia/agent/Code2Paper copy/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1",
+        "--ro-bind",
+        "/home/cuihengjia/agent/Code2Paper copy/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1/runtime",
+        "/home/cuihengjia/agent/Code2Paper copy/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1/runtime",
+        "--tmpfs",
+        "/tmp",
+        "--proc",
+        "/proc",
+        "--dev",
+        "/dev",
+        "--unshare-net",
+        "--ro-bind",
+        "/tmp/c2p-gate-h-whole-20261003-as7rfjgg/audit-omitted-declaration-manifest.json",
+        "/home/cuihengjia/agent/Code2Paper copy/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1/manifest.json",
+        "--ro-bind",
+        "/tmp/c2p-gate-h-whole-20261003-as7rfjgg/audit-unavailable-pristine-view",
+        "/home/cuihengjia/agent/Code2Paper copy/.dsh-dev/candidates/0.2.0-rc.1",
+        "--chdir",
+        "/home/cuihengjia/agent/Code2Paper copy",
+        "--",
+        "/home/cuihengjia/miniconda3/bin/python",
+        "scripts/dsh_dev.py",
+        "--candidate",
+        "0.2.0-rc.1+loop-origin.1",
+        "audit"
+      ],
+      "cwd": "/home/cuihengjia/agent/Code2Paper copy",
+      "exit": 0,
+      "missing_declaration_in_manifest": true,
+      "base_unavailable": true,
+      "mutation_scope": "read-only namespace overlays; host files unchanged"
+    }
+  },
+  "normal_smoke": {
+    "web": {
+      "model_turns_submitted": 0,
+      "ready": true,
+      "port": 39113,
+      "http_status": 200,
+      "html_bytes": 34812,
+      "frontend_assets": [
+        {
+          "path": "/assets/index-Dy0OhsZ5.js",
+          "status": 200,
+          "bytes": 631135
+        },
+        {
+          "path": "/assets/vendor-CCJJTK99.js",
+          "status": 200,
+          "bytes": 740575
+        },
+        {
+          "path": "/assets/vendor-BNsW4eBh.css",
+          "status": 200,
+          "bytes": 29288
+        },
+        {
+          "path": "/assets/index-Cq6ljTv2.css",
+          "status": 200,
+          "bytes": 75665
+        }
+      ],
+      "bind_host": "127.0.0.1",
+      "shutdown_exit": -15,
+      "port_closed_after_shutdown": true,
+      "passed": true,
+      "composition": "web",
+      "profile": "code2paper-dev",
+      "candidate": "0.2.0-rc.1+loop-origin.1",
+      "runtime_tree_sha256": "671daa1a7a06728d69a4bdec6da3d33a3616c4e788f63579ed07f3ae81e0e16c",
+      "staging_tree_sha256": null
+    },
+    "compat": {
+      "model_turns_submitted": 0,
+      "ready": true,
+      "port": 36721,
+      "http_status": 200,
+      "html_bytes": 34812,
+      "frontend_assets": [
+        {
+          "path": "/assets/index-Dy0OhsZ5.js",
+          "status": 200,
+          "bytes": 631135
+        },
+        {
+          "path": "/assets/vendor-CCJJTK99.js",
+          "status": 200,
+          "bytes": 740575
+        },
+        {
+          "path": "/assets/vendor-BNsW4eBh.css",
+          "status": 200,
+          "bytes": 29288
+        },
+        {
+          "path": "/assets/index-Cq6ljTv2.css",
+          "status": 200,
+          "bytes": 75665
+        }
+      ],
+      "bind_host": "127.0.0.1",
+      "shutdown_exit": -15,
+      "port_closed_after_shutdown": true,
+      "passed": true,
+      "composition": "compat",
+      "profile": "code2paper-dev-compat",
+      "candidate": "0.2.0-rc.1+loop-origin.1",
+      "runtime_tree_sha256": "671daa1a7a06728d69a4bdec6da3d33a3616c4e788f63579ed07f3ae81e0e16c",
+      "staging_tree_sha256": null
+    }
+  },
+  "findings": [
+    {
+      "id": "QA-20261003-ACTIVATE",
+      "priority": "P2",
+      "owner_task": "B02",
+      "source": "integrations/dsh/dev/toolchain/toolchain.mjs:288",
+      "observed": "verify rejects compiler/lock drift; activate reseals it and subsequent verify succeeds. An invalid target Node version is rejected after peer mutation.",
+      "contract": "remaining_work_and_batch_repair_guidance_20261003.md §3.2",
+      "evidence": "activation-probe.json"
+    },
+    {
+      "id": "QA-20261003-AUDIT",
+      "priority": "P2",
+      "owner_task": "B02",
+      "source": "scripts/dsh_dev.py:1228",
+      "observed": "A manifest missing the fifth declaration is rejected with the pristine base present and accepted with the base unavailable.",
+      "contract": "remaining_work_and_batch_repair_guidance_20261003.md §§3.1,3.6",
+      "evidence": "audit-failure-probe.json"
+    },
+    {
+      "id": "QA-20261003-SMOKE-IDENTITY",
+      "priority": "P2",
+      "owner_task": "B02",
+      "source": "scripts/dsh_dev_smoke.py:128",
+      "observed": "Both normal smoke paths pass real HTTP and cleanup but return staging_tree_sha256 null by reading the wrong field.",
+      "contract": "remaining_work_and_batch_repair_guidance_20261003.md §3.3",
+      "evidence": "normal-smoke/web-smoke.json and normal-smoke/compat-smoke.json"
+    },
+    {
+      "id": "QA-20261003-DELIVERY",
+      "priority": "P2",
+      "owner_task": [
+        "B02",
+        "H02",
+        "H04"
+      ],
+      "observed": "Current/historical evidence and APIs remain mixed in w2_delivery/H04 evidence/loop-origin evidence/source comments; owner seal does not bind all tested sources/tests/fixtures/drivers. Added touched regression only compares local dictionaries, and smoke regression does not cover actual default output/staging fields.",
+      "contract": "remaining_work_and_batch_repair_guidance_20261003.md §§3.1,3.3,3.6,3.7",
+      "evidence": "stage_whole_package_review_20261003.md §3.4"
+    }
+  ],
+  "closing": {
+    "released_at": "2026-10-03T16:05:42.956421+08:00",
+    "input_check": {
+      "entries": 1275,
+      "changed": [],
+      "four_runtime_and_manifest_identities_unchanged": true
+    },
+    "process_check": {
+      "host_processes_scanned": 1766,
+      "related_validation_pids": [],
+      "unreadable_cmdline_pids": []
+    },
+    "all_recorded_commands_returned": true,
+    "product_sources_and_owner_records_modified": false,
+    "Gate-H": "CHANGES_REQUESTED",
+    "Gate-K": "waiting for Gate-H"
+  },
+  "frozen_input_manifest_sha256": "dedfb133351118da0faf09f079308082cec57c366f8dc68bc10347a8dce7a801",
+  "frozen_runtime_manifest_sha256": "a2d17f3b46a48a1df1cf297a108b24d5a679d3c531b35651665ff4f57a624823",
+  "operations": {
+    "production_changes": false,
+    "owner_evidence_changes": false,
+    "host_peer_switch": false,
+    "rebuild_restage": false,
+    "model_calls": 0
+  },
+  "fixture_corrections": [
+    "Initial outer sandbox NETLINK_ROUTE denial before product execution",
+    "Initial probe file absent from launcher tmpfs; fixed read-only mount before actual probes"
+  ],
+  "report": "docs/dsh_execution_20260928/stage_whole_package_review_20261003.md"
+}

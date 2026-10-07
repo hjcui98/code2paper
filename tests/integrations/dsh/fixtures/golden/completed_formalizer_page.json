@@ -1,0 +1,1115 @@
+{
+  "formalizer": {
+    "accepted_package_count": 1,
+    "accepted_packages": [
+      {
+        "assumptions": [],
+        "bound_equation_ids": [],
+        "bound_fact_ids": [],
+        "bound_operation_ids": [
+          "op:rescale"
+        ],
+        "consumer_request_digest": "sha256:4a8c39b8b8e82df952bbb52d28e4feee9e196e670baa9699c7f9d6a8c3e9f512",
+        "content_digest": "sha256:a6441eda1c9defbbe4f4c6a2657d5fb8f7ed5123dedf106c6ca8e121ac0ef8af",
+        "evidence_authority": "repository_verified",
+        "formula_lane": "repository_derived",
+        "latex": "y = a * x",
+        "markdown_block": "$$\ny = a * x\n$$",
+        "material_conditions": [],
+        "mechanism_id": "mech_rescale",
+        "package_id": "pkg:formula:llm:mech_rescale:ob:rescale",
+        "prose_explanation": "The output y is the scalar a times the input x.",
+        "review_question": "",
+        "review_status": "accepted",
+        "risks": [],
+        "satisfied_obligation_ids": [
+          "ob:rescale"
+        ],
+        "shared_payload_digest": "sha256:759bad46e55781f5d4708717e830d7644575382770f12cca895d7fb95cfe4eb0",
+        "slice_digests": [
+          "page:adf44907c11290148ba02b08f03eeb5930da3f46a31a3755b34e540f8f968804"
+        ],
+        "source_context_digest": "sha256:bcb0365d73cbb9bf06c242e094b9f823db4e10e72409d0c9c885afe79d09fd4a",
+        "source_detail_ids": [
+          "d:rescale"
+        ],
+        "symbol_definitions": [
+          [
+            "y",
+            "rescaled output"
+          ],
+          [
+            "a",
+            "scalar factor"
+          ],
+          [
+            "x",
+            "input"
+          ]
+        ],
+        "view_digest": "sha256:e346dca11741a5c9c325f1d3964ac17dccf0aa3bdd4da14edddbc2ca6a3ee230"
+      }
+    ],
+    "actual_main_calls": 1,
+    "actual_repair_calls": 0,
+    "assertion_failures": [],
+    "calls": [
+      {
+        "input_payload": {
+          "consumer_role": "formalizer",
+          "is_repair": false,
+          "mechanism_id": "mech_rescale",
+          "page_id": "page:adf44907c11290148ba02b08f03eeb5930da3f46a31a3755b34e540f8f968804",
+          "section_id": "",
+          "task_ids": [
+            "ob:rescale"
+          ],
+          "technical_bytes_digest": "sha256:759bad46e55781f5d4708717e830d7644575382770f12cca895d7fb95cfe4eb0",
+          "technical_payload": {
+            "archive_digest": "sha256:a4535d4428055fb10d06418022511cd5496e0c0f5d20efaeb6c14c8f36d343a2",
+            "atoms": [
+              {
+                "_atom_id": "detail:d:rescale",
+                "_atom_kind": "detail",
+                "activation_basis_ids": [],
+                "active_path_status": "active_default",
+                "author_statements": [],
+                "claim_kind": "formalization",
+                "conditions": [],
+                "content_digest": "sha256:8c683bab4e03355f6fcd6e07c1c3371ec658bf3bfa5e8d7056c6a032774c29b4",
+                "detail_id": "d:rescale",
+                "evidence_authority": "repository_verified",
+                "exact_excerpts": [],
+                "formalizable": true,
+                "formalizable_signatures": [],
+                "formula_role": "",
+                "importance": "core",
+                "mismatch_reason": "",
+                "operands": [
+                  "a",
+                  "x"
+                ],
+                "order_index": 0,
+                "polarity": "unknown",
+                "predecessor_detail_ids": [],
+                "predicate": "*",
+                "primary_mechanism_id": "mech_rescale",
+                "publication_policy": "clean_candidate",
+                "result": "y",
+                "role": "transformation",
+                "semantic_atom": "step for mech_rescale",
+                "shape_or_type_hints": [],
+                "shared_with_mechanism_ids": [],
+                "source_brief_ids": [],
+                "source_claim_ids": [],
+                "source_equation_ids": [],
+                "source_facet_ids": [],
+                "source_fact_ids": [],
+                "source_kind": "first_party_executable",
+                "source_obligation_ids": [],
+                "source_operation_ids": [
+                  "op:rescale"
+                ],
+                "source_span_ids": [
+                  "span:fixtures/synthetic_rescale.py:4:5"
+                ],
+                "subject": "",
+                "successor_detail_ids": [],
+                "witness_atoms": [
+                  {
+                    "atom_id": "atom:rescale",
+                    "atom_kind": "operation",
+                    "content_digest": "sha256:77d2f21b95f3ac6ce7405a199080c77c5bdf199598faaf324340f4a6050b8079",
+                    "exact_excerpts": [
+                      "return a * x"
+                    ],
+                    "required": true,
+                    "required_conditions": [],
+                    "required_polarity": "unknown",
+                    "semantic_anchor": "step for mech_rescale",
+                    "source_anchor_ids": [],
+                    "source_operation_ids": [
+                      "op:rescale"
+                    ]
+                  }
+                ]
+              },
+              {
+                "_atom_id": "operation:op:rescale",
+                "_atom_kind": "operation",
+                "activation_basis_ids": [],
+                "active_path_status": "active_default",
+                "content_digest": "sha256:24dbabc4c88f46f8ad381049539a7cb7d2ddb631a8407d260f7fc0699ca5a6ad",
+                "exact_excerpt": "",
+                "guard": "",
+                "operands": [
+                  "a",
+                  "x"
+                ],
+                "operation_id": "op:rescale",
+                "predicate": "*",
+                "relation_ids": [],
+                "result": "y",
+                "shape_or_type_hints": [],
+                "source_fact_ids": [],
+                "source_kind": "first_party_executable",
+                "source_span_id": "span:fixtures/synthetic_rescale.py:4:5",
+                "symbol_id": ""
+              }
+            ],
+            "mechanism_header": {
+              "importance": "core",
+              "mechanism_id": "mech_rescale",
+              "mechanism_name": "Rescale mechanism",
+              "purpose": "Explain scalar rescaling.",
+              "scientific_role": "core_model"
+            },
+            "obligation_ids": [
+              "ob:rescale"
+            ],
+            "projection_proof": {
+              "detail:d:rescale": "detail:d:rescale",
+              "operation:op:rescale": "operation:op:rescale"
+            }
+          }
+        },
+        "prompt_template_id": "unified_formalizer_page_v2",
+        "response_schema": {
+          "$defs": {
+            "UnifiedFormalizerResultV2": {
+              "additionalProperties": false,
+              "description": "Model-authored fields only; source authority is checked by Formalizer.",
+              "properties": {
+                "assumptions": {
+                  "items": {
+                    "maxLength": 2000,
+                    "minLength": 1,
+                    "type": "string"
+                  },
+                  "maxItems": 128,
+                  "title": "Assumptions",
+                  "type": "array"
+                },
+                "latex": {
+                  "maxLength": 12000,
+                  "minLength": 1,
+                  "title": "Latex",
+                  "type": "string"
+                },
+                "material_conditions": {
+                  "items": {
+                    "maxLength": 2000,
+                    "minLength": 1,
+                    "type": "string"
+                  },
+                  "maxItems": 128,
+                  "title": "Material Conditions",
+                  "type": "array"
+                },
+                "obligation_id": {
+                  "maxLength": 240,
+                  "minLength": 1,
+                  "title": "Obligation Id",
+                  "type": "string"
+                },
+                "prose_explanation": {
+                  "maxLength": 8000,
+                  "minLength": 1,
+                  "title": "Prose Explanation",
+                  "type": "string"
+                },
+                "symbol_definitions": {
+                  "items": {
+                    "items": {
+                      "maxLength": 2000,
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "maxItems": 2,
+                    "minItems": 2,
+                    "type": "array"
+                  },
+                  "maxItems": 128,
+                  "title": "Symbol Definitions",
+                  "type": "array"
+                }
+              },
+              "required": [
+                "obligation_id",
+                "latex",
+                "prose_explanation",
+                "symbol_definitions",
+                "material_conditions",
+                "assumptions"
+              ],
+              "title": "UnifiedFormalizerResultV2",
+              "type": "object"
+            }
+          },
+          "additionalProperties": false,
+          "properties": {
+            "results": {
+              "items": {
+                "$ref": "#/$defs/UnifiedFormalizerResultV2"
+              },
+              "maxItems": 64,
+              "minItems": 1,
+              "title": "Results",
+              "type": "array"
+            }
+          },
+          "required": [
+            "results"
+          ],
+          "title": "UnifiedFormalizerResponseV2",
+          "type": "object"
+        },
+        "response_sha256": "sha256:d53734e9b3f7f0fda1c52d3d04284c8d56ebc8a1e9ba95bdf16941b448f31696",
+        "response_text": "{\"results\": [{\"obligation_id\": \"ob:rescale\", \"latex\": \"y = a * x\", \"prose_explanation\": \"The output y is the scalar a times the input x.\", \"symbol_definitions\": [[\"y\", \"rescaled output\"], [\"a\", \"scalar factor\"], [\"x\", \"input\"]], \"material_conditions\": [], \"assumptions\": []}]}"
+      }
+    ],
+    "obligation": {
+      "claim_kind": "formalization",
+      "content_digest": "sha256:9e9a0238977b16ed2a3a6e0fe7802a21c3189de8c36fcbc33444ba387cf3fad7",
+      "expectation": "required",
+      "join_page_id": "",
+      "mathematical_goal": "Express scalar rescaling, preserving multiplication and both operands.",
+      "mechanism_id": "mech_rescale",
+      "notation_hints": [],
+      "obligation_id": "ob:rescale",
+      "primary_detail_id": "",
+      "primary_page_id": "",
+      "required_branch_conditions": [],
+      "required_conditions": [],
+      "required_denominator_terms": [],
+      "required_evidence_authority": [
+        "repository_verified"
+      ],
+      "required_normalization_terms": [],
+      "required_operand_sets": [
+        [
+          "a",
+          "x"
+        ]
+      ],
+      "required_operator_signatures": [
+        {
+          "predicate": "*"
+        }
+      ],
+      "required_reduction_terms": [],
+      "required_symbol_bindings": [],
+      "source_context_digest": "sha256:bcb0365d73cbb9bf06c242e094b9f823db4e10e72409d0c9c885afe79d09fd4a",
+      "source_detail_ids": [
+        "d:rescale"
+      ],
+      "source_equation_expression": "y = a * x",
+      "source_equation_ids": [],
+      "source_facet_ids": [],
+      "source_fact_ids": [],
+      "source_obligation_ids": [],
+      "source_operation_ids": [
+        "op:rescale"
+      ]
+    },
+    "receipt_projection_is_not_a_durable_receipt": true,
+    "receipt_projection_omitted_fields": [
+      "content_digest",
+      "finished_at_unix",
+      "started_at_unix"
+    ],
+    "receipts": [
+      {
+        "actual_request_envelope_digest": "sha256:4a8c39b8b8e82df952bbb52d28e4feee9e196e670baa9699c7f9d6a8c3e9f512",
+        "actual_technical_bytes_digest": "sha256:759bad46e55781f5d4708717e830d7644575382770f12cca895d7fb95cfe4eb0",
+        "attempt": 1,
+        "consumer_role": "formalizer",
+        "content_repair_attempt": false,
+        "delivery_rejection_code": "",
+        "delivery_status": "accepted",
+        "failed_task_ids": [],
+        "fragment_digests": [],
+        "invocation_id": "inv:formalizer:main:mech_rescale:page:adf44907c11290148ba02b08f03eeb5930da3f46a31a3755b34e540f8f968804",
+        "is_repair": false,
+        "mechanism_id": "mech_rescale",
+        "model_identity_digest": "sha256:b01-model",
+        "page_id": "page:adf44907c11290148ba02b08f03eeb5930da3f46a31a3755b34e540f8f968804",
+        "phase": "formalizer",
+        "provider_diagnostics_digest": "",
+        "provider_usage": null,
+        "reserved_input_tokens": 3304,
+        "response_digest": "sha256:d53734e9b3f7f0fda1c52d3d04284c8d56ebc8a1e9ba95bdf16941b448f31696",
+        "schema_version": "2.0",
+        "section_id": "",
+        "sent_to_caller": true,
+        "succeeded_task_ids": [
+          "ob:rescale"
+        ],
+        "task_failures": [],
+        "task_ids": [
+          "ob:rescale"
+        ],
+        "task_status": "complete",
+        "token_accounting": {
+          "accounting_version": "unified-request-token-accounting-v1",
+          "consumer_role": "formalizer",
+          "content_digest": "sha256:caaa37952d2efbd7d17bb22473ad18d2462a4865d5f0dd70b6a7e98e5d52123f",
+          "fits": true,
+          "input_payload_tokens": 677,
+          "input_tokens": 3304,
+          "invocation_id": "inv:formalizer:main:mech_rescale:page:adf44907c11290148ba02b08f03eeb5930da3f46a31a3755b34e540f8f968804",
+          "max_input_tokens": 60000,
+          "meter": {
+            "bytes_per_token": 4,
+            "content_digest": "sha256:87358927bc2105b97421083433d13cbaf86ee636252f7a6716e6776589fa60b5",
+            "measurement_basis": "canonical_json_utf8_bytes_ceil_div_4",
+            "meter_version": "unified-token-meter-v1",
+            "method": "conservative_utf8_bytes_div_4",
+            "tokenizer_identity": "",
+            "unit": "tokens"
+          },
+          "model_context_tokens": 131072,
+          "output_reserve_tokens": 4096,
+          "overflow_tokens": 0,
+          "page_id": "page:adf44907c11290148ba02b08f03eeb5930da3f46a31a3755b34e540f8f968804",
+          "rendered_prompt_tokens": 254,
+          "response_schema_tokens": 325,
+          "safety_margin_tokens": 1024,
+          "scaffolding_reserve_tokens": 0,
+          "system_prompt_tokens": 0,
+          "thinking_reserve_tokens": 0,
+          "wrapper_reserve_tokens": 2048
+        },
+        "upstream_archive_digest": "sha256:a4535d4428055fb10d06418022511cd5496e0c0f5d20efaeb6c14c8f36d343a2",
+        "upstream_plan_digest": "sha256:2dd1cc9378ab012c958c04a1db1e41b30a01c313b534c2c14cacd25667806b05",
+        "upstream_workset_manifest_digest": "sha256:5fe836a31a8bb6974f5c626f08f3c3b89833aa43fd6b7e204049f3207ae2742b",
+        "workset_id": "workset:formula:mech_rescale"
+      }
+    ],
+    "task_failures": []
+  },
+  "scenario": "completed_formalizer_page",
+  "schema_version": "b01-legacy-characterization/1",
+  "source": {
+    "authority": "synthetic_fixture_only",
+    "exact_excerpt": "\"\"\"Synthetic first-party source used only by the B01 formula fixture.\"\"\"\n\n\ndef rescale(x, a):\n    return a * x\n",
+    "manifest": {
+      "anomaly_codes": [],
+      "comparand_paths": [],
+      "content_digest": "sha256:0e5400475871124d89ae44d4adc1045ab824a3b901617f3041b33e499351f4de",
+      "entries": [
+        {
+          "classification_reason": "synthetic fixture source, not a researched product claim",
+          "content_digest": "sha256:a5343060315196159699d5d911703b19dc0e7518b73b3884db6906d4943a4ec9",
+          "executable_authority": true,
+          "ownership_role": "target_core",
+          "path": "fixtures/synthetic_rescale.py",
+          "source_kind": "first_party_executable",
+          "symbol_ids": []
+        }
+      ],
+      "evaluation_paths": [],
+      "excluded_paths": [],
+      "project_tree_hash": "sha256:a5343060315196159699d5d911703b19dc0e7518b73b3884db6906d4943a4ec9",
+      "repo_snapshot_id": "repo:b01-formula-synthetic",
+      "schema_version": "1.0",
+      "target_core_paths": [
+        "fixtures/synthetic_rescale.py"
+      ],
+      "target_support_paths": []
+    },
+    "path": "fixtures/synthetic_rescale.py",
+    "sha256": "sha256:a5343060315196159699d5d911703b19dc0e7518b73b3884db6906d4943a4ec9"
+  },
+  "writer": {
+    "formula_consumption": {
+      "derived_formula_witnesses": [],
+      "formalizer_package_digest": "sha256:a6441eda1c9defbbe4f4c6a2657d5fb8f7ed5123dedf106c6ca8e121ac0ef8af",
+      "offline_response_text_origin": "local representation after original splice and Binder; not provider raw",
+      "raw_writer_sha256": "sha256:2b15269b9f90abd1e7543c0c073fa62e201814d916429d0bb086b9c071637dba",
+      "raw_writer_text": "{\"section_id\": \"MA-L1\", \"heading_text\": \"Rescaling\", \"section_markdown\": \"This paragraph states that the frozen anchor step for mech_rescale is realized by return a * x, and keeps every claim on the material it was given.\\n\\n[[FORMULA:pkg:formula:llm:mech_rescale:ob:rescale]]\", \"paragraphs\": [{\"paragraph_id\": \"MA-L1_p1\", \"paragraph_markdown\": \"This paragraph states that the frozen anchor step for mech_rescale is realized by return a * x, and keeps every claim on the material it was given.\\n\\n[[FORMULA:pkg:formula:llm:mech_rescale:ob:rescale]]\", \"rendered_detail_ids\": [\"d:rescale\"], \"deferred_detail_ids\": [], \"used_formula_package_ids\": [\"pkg:formula:llm:mech_rescale:ob:rescale\"], \"witnesses\": [{\"witness_kind\": \"detail\", \"target_id\": \"d:rescale\", \"exact_text\": \"step for mech_rescale\"}]}], \"completed_rhetorical_moves\": []}",
+      "rendered_response_sha256": "sha256:622e99704d5b672fb18b50a0a86b3eefb11d1277517fbe73f2e61b0036c3e9bf",
+      "splice_failures": [],
+      "splice_owner": "publication_transaction_contract.splice_formula_placeholders"
+    },
+    "heading": "Rescaling",
+    "invocation": {
+      "invocation_id": "inv:writer:MA-L1:page:d80ca47651c3a6764ac507f772690ed13ecf2c42b61fd7a453f9720d3cde9ff5",
+      "is_repair": false,
+      "max_output_tokens": 4096,
+      "page_id": "page:d80ca47651c3a6764ac507f772690ed13ecf2c42b61fd7a453f9720d3cde9ff5",
+      "role": "writer",
+      "task_ids": [
+        "MA-L1"
+      ],
+      "workset_id": "workset:section:MA-L1"
+    },
+    "observed_local_gate": {
+      "binder_transaction_valid": true,
+      "content_accepted": true,
+      "metrics": {
+        "authority_failures": [],
+        "authority_violation_count": 0,
+        "failures": [],
+        "formula_consumed_count": 1,
+        "formula_exact_body_count": 1,
+        "invalid_count": 0,
+        "invalid_witness_count": 0,
+        "missing": [],
+        "missing_atom_count": 0,
+        "required_atom_count": 0,
+        "required_target_count": 2,
+        "valid_atom_count": 0,
+        "valid_paragraph_count": 1,
+        "valid_target_count": 2
+      },
+      "writer_transaction_valid": true
+    },
+    "offline_response": {
+      "paragraph_ids": [
+        "MA-L1_p1"
+      ],
+      "parse_trace_operations": [],
+      "parsed_ok": true,
+      "raw_text": "{\"section_id\": \"MA-L1\", \"heading_text\": \"Rescaling\", \"section_markdown\": \"This paragraph states that the frozen anchor step for mech_rescale is realized by return a * x, and keeps every claim on the material it was given.\\n\\n$$\\ny = a * x\\n$$\", \"paragraphs\": [{\"paragraph_id\": \"MA-L1_p1\", \"paragraph_markdown\": \"This paragraph states that the frozen anchor step for mech_rescale is realized by return a * x, and keeps every claim on the material it was given.\\n\\n$$\\ny = a * x\\n$$\", \"rendered_detail_ids\": [\"d:rescale\"], \"deferred_detail_ids\": [], \"used_formula_package_ids\": [\"pkg:formula:llm:mech_rescale:ob:rescale\"], \"witnesses\": [{\"witness_kind\": \"detail\", \"target_id\": \"d:rescale\", \"exact_text\": \"step for mech_rescale\"}, {\"witness_kind\": \"formula\", \"target_id\": \"pkg:formula:llm:mech_rescale:ob:rescale\", \"exact_text\": \"$$\\ny = a * x\\n$$\"}], \"rendered_from_facet_ids\": [], \"rendered_field_candidate_ids\": [], \"rendered_slot_ids\": [], \"rendered_edge_ids\": [], \"used_claim_ids\": [], \"used_equation_ids\": []}], \"completed_rhetorical_moves\": []}"
+    },
+    "page": {
+      "atom_ids": [
+        "detail:d:rescale",
+        "operation:op:rescale"
+      ],
+      "content_digest": "sha256:122e2fd9fa9c5f4e5b483e05e62db9c7ac5f9d6abe77865a38a32f7d27de3744",
+      "mechanism_id": "mech_rescale",
+      "page_id": "page:d80ca47651c3a6764ac507f772690ed13ecf2c42b61fd7a453f9720d3cde9ff5",
+      "page_kind": "technical",
+      "technical_bytes_digest": "sha256:568005a52418a6e40e0df8f2fe83ae0ac98c404d2bb414001f9a5ab87b831276",
+      "technical_bytes_sha256": "sha256:568005a52418a6e40e0df8f2fe83ae0ac98c404d2bb414001f9a5ab87b831276",
+      "technical_payload": {
+        "archive_digest": "sha256:a4535d4428055fb10d06418022511cd5496e0c0f5d20efaeb6c14c8f36d343a2",
+        "atoms": [
+          {
+            "_atom_id": "detail:d:rescale",
+            "_atom_kind": "detail",
+            "activation_basis_ids": [],
+            "active_path_status": "active_default",
+            "author_statements": [],
+            "claim_kind": "formalization",
+            "conditions": [],
+            "content_digest": "sha256:8c683bab4e03355f6fcd6e07c1c3371ec658bf3bfa5e8d7056c6a032774c29b4",
+            "detail_id": "d:rescale",
+            "evidence_authority": "repository_verified",
+            "exact_excerpts": [],
+            "formalizable": true,
+            "formalizable_signatures": [],
+            "formula_role": "",
+            "importance": "core",
+            "mismatch_reason": "",
+            "operands": [
+              "a",
+              "x"
+            ],
+            "order_index": 0,
+            "polarity": "unknown",
+            "predecessor_detail_ids": [],
+            "predicate": "*",
+            "primary_mechanism_id": "mech_rescale",
+            "publication_policy": "clean_candidate",
+            "result": "y",
+            "role": "transformation",
+            "semantic_atom": "step for mech_rescale",
+            "shape_or_type_hints": [],
+            "shared_with_mechanism_ids": [],
+            "source_brief_ids": [],
+            "source_claim_ids": [],
+            "source_equation_ids": [],
+            "source_facet_ids": [],
+            "source_fact_ids": [],
+            "source_kind": "first_party_executable",
+            "source_obligation_ids": [],
+            "source_operation_ids": [
+              "op:rescale"
+            ],
+            "source_span_ids": [
+              "span:fixtures/synthetic_rescale.py:4:5"
+            ],
+            "subject": "",
+            "successor_detail_ids": [],
+            "witness_atoms": [
+              {
+                "atom_id": "atom:rescale",
+                "atom_kind": "operation",
+                "content_digest": "sha256:77d2f21b95f3ac6ce7405a199080c77c5bdf199598faaf324340f4a6050b8079",
+                "exact_excerpts": [
+                  "return a * x"
+                ],
+                "required": true,
+                "required_conditions": [],
+                "required_polarity": "unknown",
+                "semantic_anchor": "step for mech_rescale",
+                "source_anchor_ids": [],
+                "source_operation_ids": [
+                  "op:rescale"
+                ]
+              }
+            ]
+          },
+          {
+            "_atom_id": "operation:op:rescale",
+            "_atom_kind": "operation",
+            "activation_basis_ids": [],
+            "active_path_status": "active_default",
+            "content_digest": "sha256:24dbabc4c88f46f8ad381049539a7cb7d2ddb631a8407d260f7fc0699ca5a6ad",
+            "exact_excerpt": "",
+            "guard": "",
+            "operands": [
+              "a",
+              "x"
+            ],
+            "operation_id": "op:rescale",
+            "predicate": "*",
+            "relation_ids": [],
+            "result": "y",
+            "shape_or_type_hints": [],
+            "source_fact_ids": [],
+            "source_kind": "first_party_executable",
+            "source_span_id": "span:fixtures/synthetic_rescale.py:4:5",
+            "symbol_id": ""
+          }
+        ],
+        "detail_ids": [
+          "d:rescale"
+        ],
+        "formula_obligation_ids": [
+          "ob:rescale"
+        ],
+        "formula_package_ids": [
+          "pkg:formula:llm:mech_rescale:ob:rescale"
+        ],
+        "formula_package_source_detail_ids": {
+          "pkg:formula:llm:mech_rescale:ob:rescale": []
+        },
+        "mechanism_header": {
+          "importance": "core",
+          "mechanism_id": "mech_rescale",
+          "mechanism_name": "Rescale mechanism",
+          "purpose": "Explain scalar rescaling.",
+          "scientific_role": "core_model"
+        },
+        "obligation_ids": [
+          "MA-L1"
+        ],
+        "paragraph_ids": [
+          "MA-L1_p1"
+        ],
+        "projection_proof": {
+          "detail:d:rescale": "detail:d:rescale",
+          "operation:op:rescale": "operation:op:rescale"
+        },
+        "section_id": "MA-L1"
+      },
+      "token_estimate": 662
+    },
+    "page_contract_frozen": {
+      "author_surface": [
+        {
+          "paragraph_id": "MA-L1_p1",
+          "reader_goal": "",
+          "rhetorical_goal": "core_transformations",
+          "role": "core_transformations"
+        }
+      ],
+      "declared_in_payload": 0,
+      "declared_technical_bytes_digest": "",
+      "effective_max_output_tokens": 4096,
+      "effective_technical_bytes_digest": "sha256:568005a52418a6e40e0df8f2fe83ae0ac98c404d2bb414001f9a5ab87b831276",
+      "scope": {
+        "allowed_detail_ids": [
+          "d:rescale"
+        ],
+        "allowed_formula_obligation_ids": [
+          "ob:rescale"
+        ],
+        "allowed_formula_package_ids": [
+          "pkg:formula:llm:mech_rescale:ob:rescale"
+        ],
+        "required_detail_ids": [
+          "d:rescale"
+        ],
+        "required_rhetorical_moves": []
+      }
+    },
+    "paragraphs": [
+      {
+        "closed_target_keys": [
+          "detail:d:rescale",
+          "formula:ob:rescale"
+        ],
+        "exact_excerpts": [
+          {
+            "exact_text": "step for mech_rescale",
+            "role": "writer_declaration_anchor",
+            "source": "page.shared_contexts atoms[].witness_atoms[].semantic_anchor",
+            "target_id": "d:rescale",
+            "target_kind": "detail"
+          },
+          {
+            "exact_text": "return a * x",
+            "role": "binder_exact_excerpt",
+            "source": "page.shared_contexts atoms[].exact_excerpts[0]",
+            "target_id": "d:rescale",
+            "target_kind": "atom"
+          }
+        ],
+        "observed": {
+          "binder_response_validation": {
+            "errors": [],
+            "unbound": [],
+            "valid_witnesses": []
+          },
+          "final_bound": {
+            "binder_attached_witnesses": [
+              {
+                "exact_text": "step for mech_rescale",
+                "target_id": "d:rescale",
+                "witness_kind": "detail"
+              },
+              {
+                "exact_text": "$$\ny = a * x\n$$",
+                "target_id": "pkg:formula:llm:mech_rescale:ob:rescale",
+                "witness_kind": "formula"
+              }
+            ],
+            "derived_rendered_detail_ids": [
+              "d:rescale"
+            ],
+            "failure_codes": [],
+            "status": "valid",
+            "valid": true,
+            "witnessed_by_kind": {
+              "detail": [
+                "d:rescale"
+              ],
+              "formula": [
+                "ob:rescale"
+              ]
+            }
+          },
+          "writer_content": {
+            "failure_codes": [],
+            "missing_by_kind": {},
+            "status": "valid",
+            "valid": true
+          }
+        },
+        "plan_row": {
+          "content_digest": "sha256:c6be039892788eec1abf1e0732ce98c08d552fc78c5aff227895cb8201a6a7d7",
+          "formula_obligation_ids": [
+            "ob:rescale"
+          ],
+          "formula_package_ids": [
+            "pkg:formula:llm:mech_rescale:ob:rescale"
+          ],
+          "mechanism_id": "mech_rescale",
+          "optional_detail_ids": [],
+          "paragraph_id": "MA-L1_p1",
+          "reader_goal": "",
+          "required_detail_ids": [
+            "d:rescale"
+          ],
+          "role": "core_transformations",
+          "section_id": "MA-L1",
+          "shared_detail_refs": [],
+          "suggested_depth": "standard",
+          "transition_from": "",
+          "transition_to": "",
+          "witness_contract": {
+            "paragraph_id": "MA-L1_p1",
+            "rhetorical_goal": "core_transformations",
+            "schema_version": "1.0",
+            "targets": []
+          }
+        },
+        "required_targets": {
+          "detail": [
+            "d:rescale"
+          ],
+          "formula": [
+            "ob:rescale"
+          ]
+        },
+        "response": {
+          "paragraph_id": "MA-L1_p1",
+          "paragraph_markdown": "This paragraph states that the frozen anchor step for mech_rescale is realized by return a * x, and keeps every claim on the material it was given.\n\n$$\ny = a * x\n$$",
+          "rendered_detail_ids": [
+            "d:rescale"
+          ],
+          "witnesses": [
+            {
+              "exact_text": "step for mech_rescale",
+              "target_id": "d:rescale",
+              "witness_kind": "detail"
+            },
+            {
+              "exact_text": "$$\ny = a * x\n$$",
+              "target_id": "pkg:formula:llm:mech_rescale:ob:rescale",
+              "witness_kind": "formula"
+            }
+          ]
+        },
+        "sentence_claim_map": [
+          {
+            "claim_kind": "author_prose",
+            "declared_detail_ids": [
+              "d:rescale"
+            ],
+            "sentence": "This paragraph states that the frozen anchor step for mech_rescale is realized by return a * x, and keeps every claim on the material it was given.",
+            "target_keys": [
+              "detail:d:rescale"
+            ]
+          },
+          {
+            "claim_kind": "author_prose",
+            "declared_detail_ids": [
+              "d:rescale"
+            ],
+            "sentence": "$$\ny = a * x\n$$",
+            "target_keys": [
+              "formula:pkg:formula:llm:mech_rescale:ob:rescale"
+            ]
+          }
+        ]
+      }
+    ],
+    "prompt_template_id": "unified_writer_page_v2",
+    "request": {
+      "author_surface_digest": "sha256:8836f8d330f75b6aebad8bd4739474b9a431183398533d5727ac8a1c7ef8e699",
+      "binding_contract_digest": "sha256:1fe440fbbb8b148025b8a724df4c3e30e4b8a5351d5f5c4f6a28aa11cded5602",
+      "input_payload": {
+        "binding_contract": {
+          "allowed_detail_ids": [
+            "d:rescale"
+          ],
+          "allowed_formula_obligation_ids": [
+            "ob:rescale"
+          ],
+          "allowed_formula_package_ids": [
+            "pkg:formula:llm:mech_rescale:ob:rescale"
+          ],
+          "atom_binding": {
+            "instruction": "Do not treat atom witness declarations as completed binding. The deterministic Binder attaches exact atom substrings after the Writer paragraph content is accepted.",
+            "owner": "binder",
+            "required_atom_count": 0
+          },
+          "required_detail_ids": [
+            "d:rescale"
+          ],
+          "required_rhetorical_moves": []
+        },
+        "candidate_partial_handoff": [],
+        "formula_generation_policy": "consume_only",
+        "formula_packages": [
+          {
+            "assumptions": [],
+            "authority_status": "code_verified",
+            "bound_equation_ids": [],
+            "bound_facet_ids": [],
+            "bound_fact_ids": [],
+            "bound_operation_ids": [
+              "op:rescale"
+            ],
+            "consumer_paragraph_id": "MA-L1_p1",
+            "content_digest": "sha256:4bb25309bc4b1e64ccbba7b9e2c63de538335acf5b33b08899e3224f417b9542",
+            "formula_lane": "repository_derived",
+            "latex": "y = a * x",
+            "markdown_block": "$$\ny = a * x\n$$",
+            "material_conditions": [],
+            "obligation_id": "ob:rescale",
+            "package_id": "pkg:formula:llm:mech_rescale:ob:rescale",
+            "prose_explanation": "The output y is the scalar a times the input x.",
+            "purpose": "The output y is the scalar a times the input x.",
+            "review_question": "",
+            "review_status": "accepted",
+            "risks": [],
+            "satisfied_obligation_ids": [
+              "ob:rescale"
+            ],
+            "schema_version": "2.0",
+            "section_id": "MA-L1",
+            "semantic_formula_digest": "sha256:bcd81eb6e86ef1131946a60d5bad91b6789aae243c0b51baad6b0c8d111ac4e1",
+            "symbol_definitions": [
+              [
+                "y",
+                "rescaled output"
+              ],
+              [
+                "a",
+                "scalar factor"
+              ],
+              [
+                "x",
+                "input"
+              ]
+            ],
+            "symbol_table": [
+              {
+                "conditions": [],
+                "fact_ids": [],
+                "meaning": "rescaled output",
+                "source_artifact_ids": [],
+                "symbol": "y"
+              },
+              {
+                "conditions": [],
+                "fact_ids": [],
+                "meaning": "scalar factor",
+                "source_artifact_ids": [],
+                "symbol": "a"
+              },
+              {
+                "conditions": [],
+                "fact_ids": [],
+                "meaning": "input",
+                "source_artifact_ids": [],
+                "symbol": "x"
+              }
+            ]
+          }
+        ],
+        "formula_placeholders_required": true,
+        "heading": "Rescaling",
+        "narrative_plan": {
+          "content_digest": "sha256:e7cd5ccf799a3fc4867c7b240a2821b52a05e57abf49d80c9eba32abe7cbc627",
+          "heading": "Rescaling",
+          "mechanism_ids": [
+            "mech_rescale"
+          ],
+          "page_id": "page:d80ca47651c3a6764ac507f772690ed13ecf2c42b61fd7a453f9720d3cde9ff5",
+          "page_paragraph_ids": [
+            "MA-L1_p1"
+          ],
+          "paragraphs": [
+            {
+              "content_digest": "sha256:c6be039892788eec1abf1e0732ce98c08d552fc78c5aff227895cb8201a6a7d7",
+              "formula_obligation_ids": [
+                "ob:rescale"
+              ],
+              "formula_package_ids": [
+                "pkg:formula:llm:mech_rescale:ob:rescale"
+              ],
+              "mechanism_id": "mech_rescale",
+              "optional_detail_ids": [],
+              "paragraph_id": "MA-L1_p1",
+              "reader_goal": "",
+              "required_detail_ids": [
+                "d:rescale"
+              ],
+              "role": "core_transformations",
+              "section_id": "MA-L1",
+              "suggested_depth": "standard",
+              "transition_from": "",
+              "transition_to": "",
+              "witness_contract": {
+                "paragraph_id": "MA-L1_p1",
+                "rhetorical_goal": "core_transformations",
+                "schema_version": "1.0",
+                "targets": []
+              }
+            }
+          ],
+          "section_id": "MA-L1"
+        },
+        "output_contract": "PublicationMethodSectionOutputV1",
+        "paragraph_transaction_required": true,
+        "section_id": "MA-L1",
+        "shared_context_metadata": [
+          {
+            "archive_digest": "sha256:a4535d4428055fb10d06418022511cd5496e0c0f5d20efaeb6c14c8f36d343a2",
+            "invocation_max_output_tokens": 4096,
+            "mechanism_id": "mech_rescale",
+            "page_bytes_digest": "sha256:568005a52418a6e40e0df8f2fe83ae0ac98c404d2bb414001f9a5ab87b831276",
+            "page_digest": "sha256:122e2fd9fa9c5f4e5b483e05e62db9c7ac5f9d6abe77865a38a32f7d27de3744",
+            "page_id": "page:d80ca47651c3a6764ac507f772690ed13ecf2c42b61fd7a453f9720d3cde9ff5",
+            "page_index": 0,
+            "page_manifest_digest": "sha256:9dc8b46b7ddf7063fc200560ca66fd525a2febb98766e944d3ddc363be728686",
+            "section_id": "MA-L1",
+            "task_ids": [
+              "MA-L1"
+            ],
+            "technical_bytes_digest": "sha256:568005a52418a6e40e0df8f2fe83ae0ac98c404d2bb414001f9a5ab87b831276",
+            "v2_page_id": "page:d80ca47651c3a6764ac507f772690ed13ecf2c42b61fd7a453f9720d3cde9ff5",
+            "writer_invocation_id": "inv:writer:MA-L1:page:d80ca47651c3a6764ac507f772690ed13ecf2c42b61fd7a453f9720d3cde9ff5",
+            "writer_prompt_digest": "sha256:a818862558c61a56f9125a10121afb64da87d074a18bf5cb5c50b0fff67ad791"
+          }
+        ],
+        "shared_contexts": [
+          {
+            "archive_digest": "sha256:a4535d4428055fb10d06418022511cd5496e0c0f5d20efaeb6c14c8f36d343a2",
+            "atoms": [
+              {
+                "_atom_id": "detail:d:rescale",
+                "_atom_kind": "detail",
+                "activation_basis_ids": [],
+                "active_path_status": "active_default",
+                "author_statements": [],
+                "claim_kind": "formalization",
+                "conditions": [],
+                "content_digest": "sha256:8c683bab4e03355f6fcd6e07c1c3371ec658bf3bfa5e8d7056c6a032774c29b4",
+                "detail_id": "d:rescale",
+                "evidence_authority": "repository_verified",
+                "exact_excerpts": [],
+                "formalizable": true,
+                "formalizable_signatures": [],
+                "formula_role": "",
+                "importance": "core",
+                "mismatch_reason": "",
+                "operands": [
+                  "a",
+                  "x"
+                ],
+                "order_index": 0,
+                "polarity": "unknown",
+                "predecessor_detail_ids": [],
+                "predicate": "*",
+                "primary_mechanism_id": "mech_rescale",
+                "publication_policy": "clean_candidate",
+                "result": "y",
+                "role": "transformation",
+                "semantic_atom": "step for mech_rescale",
+                "shape_or_type_hints": [],
+                "shared_with_mechanism_ids": [],
+                "source_brief_ids": [],
+                "source_claim_ids": [],
+                "source_equation_ids": [],
+                "source_facet_ids": [],
+                "source_fact_ids": [],
+                "source_kind": "first_party_executable",
+                "source_obligation_ids": [],
+                "source_operation_ids": [
+                  "op:rescale"
+                ],
+                "source_span_ids": [
+                  "span:fixtures/synthetic_rescale.py:4:5"
+                ],
+                "subject": "",
+                "successor_detail_ids": [],
+                "witness_atoms": [
+                  {
+                    "atom_id": "atom:rescale",
+                    "atom_kind": "operation",
+                    "content_digest": "sha256:77d2f21b95f3ac6ce7405a199080c77c5bdf199598faaf324340f4a6050b8079",
+                    "exact_excerpts": [
+                      "return a * x"
+                    ],
+                    "required": true,
+                    "required_conditions": [],
+                    "required_polarity": "unknown",
+                    "semantic_anchor": "step for mech_rescale",
+                    "source_anchor_ids": [],
+                    "source_operation_ids": [
+                      "op:rescale"
+                    ]
+                  }
+                ]
+              },
+              {
+                "_atom_id": "operation:op:rescale",
+                "_atom_kind": "operation",
+                "activation_basis_ids": [],
+                "active_path_status": "active_default",
+                "content_digest": "sha256:24dbabc4c88f46f8ad381049539a7cb7d2ddb631a8407d260f7fc0699ca5a6ad",
+                "exact_excerpt": "",
+                "guard": "",
+                "operands": [
+                  "a",
+                  "x"
+                ],
+                "operation_id": "op:rescale",
+                "predicate": "*",
+                "relation_ids": [],
+                "result": "y",
+                "shape_or_type_hints": [],
+                "source_fact_ids": [],
+                "source_kind": "first_party_executable",
+                "source_span_id": "span:fixtures/synthetic_rescale.py:4:5",
+                "symbol_id": ""
+              }
+            ],
+            "detail_ids": [
+              "d:rescale"
+            ],
+            "formula_obligation_ids": [
+              "ob:rescale"
+            ],
+            "formula_package_ids": [
+              "pkg:formula:llm:mech_rescale:ob:rescale"
+            ],
+            "formula_package_source_detail_ids": {
+              "pkg:formula:llm:mech_rescale:ob:rescale": []
+            },
+            "mechanism_header": {
+              "importance": "core",
+              "mechanism_id": "mech_rescale",
+              "mechanism_name": "Rescale mechanism",
+              "purpose": "Explain scalar rescaling.",
+              "scientific_role": "core_model"
+            },
+            "obligation_ids": [
+              "MA-L1"
+            ],
+            "paragraph_ids": [
+              "MA-L1_p1"
+            ],
+            "projection_proof": {
+              "detail:d:rescale": "detail:d:rescale",
+              "operation:op:rescale": "operation:op:rescale"
+            },
+            "section_id": "MA-L1"
+          }
+        ]
+      },
+      "page_contract_snapshot": {
+        "attempt": 0,
+        "author_surface_digest": "sha256:8836f8d330f75b6aebad8bd4739474b9a431183398533d5727ac8a1c7ef8e699",
+        "binding_contract_digest": "sha256:1fe440fbbb8b148025b8a724df4c3e30e4b8a5351d5f5c4f6a28aa11cded5602",
+        "invocation_id": "inv:writer:MA-L1:page:d80ca47651c3a6764ac507f772690ed13ecf2c42b61fd7a453f9720d3cde9ff5",
+        "max_output_tokens": 0,
+        "page_id": "page:d80ca47651c3a6764ac507f772690ed13ecf2c42b61fd7a453f9720d3cde9ff5",
+        "paragraph_ids": [
+          "MA-L1_p1"
+        ],
+        "request_digest": "",
+        "scope": {
+          "allowed_detail_ids": [
+            "d:rescale"
+          ],
+          "allowed_formula_obligation_ids": [
+            "ob:rescale"
+          ],
+          "allowed_formula_package_ids": [
+            "pkg:formula:llm:mech_rescale:ob:rescale"
+          ],
+          "required_detail_ids": [
+            "d:rescale"
+          ],
+          "required_rhetorical_moves": []
+        },
+        "section_id": "MA-L1",
+        "source_path": "",
+        "technical_bytes_digest": ""
+      },
+      "prompt_sha256": "sha256:a818862558c61a56f9125a10121afb64da87d074a18bf5cb5c50b0fff67ad791",
+      "prompt_template_id": "unified_writer_page_v2",
+      "response_schema_paragraph_id_enum": [
+        "MA-L1_p1"
+      ],
+      "response_schema_sha256": "sha256:524d1b09185c06ff08e367f008cd66f1ad97972c75b0741ffbdfb7773503b9ba"
+    },
+    "scenario": "completed_formalizer_page",
+    "section_id": "MA-L1",
+    "verified": {
+      "global_verified_complete": false,
+      "global_verified_status": "not_run",
+      "local_gate": "writer_content+final_bound page transaction"
+    }
+  }
+}

@@ -8,6 +8,7 @@ disagree about whether a planned paragraph was actually rendered.
 
 from __future__ import annotations
 
+import ast
 import hashlib
 import json
 import re
@@ -1132,6 +1133,102 @@ def _source_term_pattern(term: Any) -> str:
     )
 
 
+def _simple_product_relation_satisfied(witness: str, constraints: Mapping[str, Any]) -> bool:
+    """Keep both operands of a closed, simple source multiplication.
+
+    A semantic anchor alone cannot distinguish multiplying the authorized
+    input from multiplying a different symbol. Only recognize a single source
+    expression with two identifiers; other source shapes retain their existing
+    validation path. No project names or fixture answers enter this bridge.
+    """
+    if str(constraints.get("paper_role") or "").casefold() in {"condition", "operand"}:
+        return True
+    products: list[tuple[str, str]] = []
+    for source in _text_values(constraints.get("exact")):
+        if len(source) > 8192:
+            continue
+        try:
+            tree = ast.parse(source.strip())
+        except (SyntaxError, ValueError, RecursionError):
+            continue
+        if len(tree.body) != 1:
+            continue
+        statement = tree.body[0]
+        if not isinstance(statement, (ast.Return, ast.Assign, ast.AnnAssign, ast.Expr)):
+            continue
+        expression = statement.value
+        if (isinstance(expression, ast.BinOp) and isinstance(expression.op, ast.Mult)
+                and isinstance(expression.left, ast.Name) and isinstance(expression.right, ast.Name)):
+            products.append((expression.left.id, expression.right.id))
+    if not products:
+        return True
+    text = witness.replace("$", "").replace("`", "").strip().removesuffix(".").strip()
+    # Validate a complete source expression, or a bounded complete prose
+    # relation. A matching fragment cannot prove that extra arithmetic is
+    # absent. Unknown wording is left unbound for the owning Agent/Binder.
+    try:
+        tree = ast.parse(text)
+    except (SyntaxError, ValueError, RecursionError):
+        tree = None
+    observed = None
+    if tree is not None and len(tree.body) == 1:
+        statement = tree.body[0]
+        if isinstance(statement, (ast.Return, ast.Assign, ast.AnnAssign, ast.Expr)):
+            expression = statement.value
+            if (isinstance(expression, ast.BinOp) and isinstance(expression.op, ast.Mult)
+                    and isinstance(expression.left, ast.Name) and isinstance(expression.right, ast.Name)):
+                observed = (expression.left.id, expression.right.id)
+    identifier = r"[A-Za-z_][A-Za-z0-9_]*"
+    output_prefix = (
+        r"(?i:(?:the\s+)?(?:rescaled\s+)?output)"
+        + r"(?:\s+" + identifier + r")?\s+"
+        + r"(?i:equals|is(?:\s+(?:given|obtained)\s+(?:by|as))?)\s+"
+    )
+    # A complete active clause is another bounded rendering of the same
+    # source expression. Bind its result and operand roles to the closed
+    # semantic contract, rather than accepting a matching word fragment.
+    semantic = str(constraints.get("semantic_atom") or "").replace("$", "").replace("`", "")
+    result_ids = set(re.findall(
+        r"(?i:\b(?:output|result))\s+(" + identifier + r")\s+(?i:is|equals)\b", semantic,
+    ))
+    def active_operand(symbol: str) -> str:
+        literal = re.escape(symbol)
+        roles = []
+        for source_role, prose_role in (
+            (r"(?i:scalar(?:\s+factor)?)", r"(?i:scalar(?:\s+factor)?)"),
+            (r"(?i:input)", r"(?i:input)"),
+        ):
+            if re.search(r"\b" + source_role + r"\s+" + literal + r"(?![A-Za-z0-9_])", semantic):
+                roles.append(r"(?i:(?:the\s+)?)" + prose_role + r"\s+" + literal)
+        return "(?:" + "|".join([literal, *roles]) + ")"
+    for left, right in products:
+        matches = observed in ((left, right), (right, left))
+        for first, second in ((left, right), (right, left)):
+            # Identifier spelling and case are source identity, not plural
+            # prose aliases. In particular x, X and xs cannot interchange.
+            first_pattern = re.escape(first)
+            second_pattern = re.escape(second)
+            patterns = (
+                r"(?i:(?:the\s+)?(?:scalar\s+)?)" + first_pattern
+                + r"\s*(?i:\*|times|multiplied\s+by)\s*(?i:(?:the\s+)?(?:input\s+)?)" + second_pattern,
+                r"(?i:multiplying)\s+" + first_pattern + r"\s+(?i:and)\s+" + second_pattern,
+                first_pattern + r"\s+(?i:is\s+multiplied\s+by)\s+" + second_pattern,
+            )
+            matches = matches or any(re.fullmatch("(?:" + output_prefix + ")?(?:" + pattern + ")", text) for pattern in patterns)
+            if len(result_ids) == 1:
+                result_id = re.escape(next(iter(result_ids)))
+                active = (
+                    r"(?i:(?:the\s+)?(?:transformation|operation)\s+multiplies)\s+"
+                    + active_operand(first) + r"\s+(?i:by)\s+" + active_operand(second)
+                    + r",\s*(?i:yielding|producing)\s+(?i:(?:the\s+)?(?:rescaled\s+)?(?:output|result))\s+"
+                    + result_id
+                )
+                matches = matches or re.fullmatch(active, text) is not None
+        if not matches:
+            return False
+    return True
+
+
 def _arithmetic_relation_satisfied(
     witness: str, constraints: Mapping[str, Any],
 ) -> bool:
@@ -1142,6 +1239,8 @@ def _arithmetic_relation_satisfied(
     exact rendering; lexical similarity to source code is never sufficient.
     """
 
+    if not _simple_product_relation_satisfied(witness, constraints):
+        return False
     semantic = str(constraints.get("semantic_atom") or "")
     expression, terms = _arithmetic_relation_source(constraints)
     additive = bool(terms)
@@ -2299,6 +2398,29 @@ def bind_paragraph_witnesses(
         # deterministic path bind the same generic paragraph to unrelated
         # targets.
         candidates = exact_values
+        # An explicit Writer-owned detail witness can also prove one of
+        # that detail's Binder-owned atoms. Reuse its immutable substring,
+        # never trim a sentence or borrow a sibling detail's witness. Both
+        # closed target contracts must independently validate the clause.
+        if target_kind == "atom":
+            detail_id = str(local.get("detail_id") or "").strip()
+            detail_contract = constraints.get(("detail", detail_id))
+            if detail_id and detail_contract:
+                supplied = []
+                for raw in (source.get("witnesses", ()) or ()):
+                    if not isinstance(raw, Mapping):
+                        continue
+                    clause = str(raw.get("exact_text") or "").strip()
+                    if (
+                        raw.get("witness_kind") == "detail"
+                        and raw.get("target_id") == detail_id
+                        and clause and body.count(clause) == 1
+                        and _witness_satisfies_constraints(clause, detail_contract)
+                    ):
+                        supplied.append(clause)
+                supplied = list(dict.fromkeys(supplied))
+                if len(supplied) == 1:
+                    candidates = tuple(dict.fromkeys((*candidates, *supplied)))
         anchors = _binding_anchors(local)
         semantic_atom = str(local.get("semantic_atom") or "").strip()
         semantic_fallback_anchors = tuple(dict.fromkeys(

@@ -1,0 +1,169 @@
+{
+  "schema_version": "c2p-dsh-development-compatibility/1",
+  "purpose": "B00 development inputs; not a compatibility-test or live-admission receipt",
+  "source_inventory": "docs/dsh_execution_20260928/source_inventory.json",
+  "source_pointer": "/b00_freeze",
+  "source_freeze_digest": "abb0b4324de04f94c9c8f393d750f74d781530469d4b62d1d2ba0e13b3f72099",
+  "source_digest_algorithm": "SHA-256 of UTF-8 JSON with ensure_ascii=false, sorted keys and compact separators, excluding freeze_digest",
+  "code_baseline": {
+    "baseline_commit": "0918ee76d079b9392ec03400c0c4c9fdff5bc784",
+    "observed_head": "d48b4e4b22c94c82b45d2179ba452d72b164102d",
+    "tracked_scope": [
+      "src",
+      "tests",
+      "scripts"
+    ],
+    "tracked_file_count": 802,
+    "file_mode_and_bytes_equal": true,
+    "entries_digest": "05c7c4647edf7d66130247b7996b03fc49585dc42fd4ddf040fed3f2f63ec4a4",
+    "new_environment_scripts": [
+      "scripts/dsh_dev.py",
+      "scripts/dsh_dev_smoke.py"
+    ],
+    "baseline_to_head_paths": [
+      ".agent/implementation.md",
+      "docs/Code2Paper_代码审计与修复执行方案_20260922.md",
+      "docs/README.md",
+      "docs/code2paper_dsh_plugin_design_20260922.md"
+    ]
+  },
+  "dsh": {
+    "version": "0.1.5-rc.3",
+    "source_kind": "installed-npm-snapshot",
+    "upstream_commit": null,
+    "runtime_root": ".dsh-dev/runtime",
+    "original_installation": "/home/cuihengjia/.npm/_npx/1e7f6d9597241db0",
+    "runtime_tree_sha256": "7e8f199b67027944d646e0c99f5041d4704360377e4d7466fce683c1d468d3ab",
+    "runtime_entry_count": 25478,
+    "inventory_algorithm": "scripts/dsh_dev.py inventory/tree_digest: sha256(files), relative symlink text, sorted compact JSON",
+    "runtime_inventory": {
+      "path": ".dsh-dev/runtime-inventory.json",
+      "kind": "file",
+      "size": 4549855,
+      "sha256": "1c5fdd029d72721087388e95dcc2a071035cd7b384bb876eaa179b9fea74b3cf"
+    },
+    "package_lock_sha256": "1695fdb6e095d9d6af4210d30aa5c061c093ed8be7365913a61af9fa8027d76d",
+    "cli_sha256": "0ff7f1d72c4e0cbe14001709c81e20a04b70464118a7f78568952988e28f2ac5",
+    "dsh_package_count": 231,
+    "dsh_package_versions_digest": "d611fb9dc8242728b8e3e6102c38a151dde2b29e806d2dac154052671db5d63f",
+    "original_tree_equal": true,
+    "shared_original_file_inodes": 0
+  },
+  "node": {
+    "path": "/home/cuihengjia/miniconda3/bin/node",
+    "resolved_path": "/home/cuihengjia/miniconda3/bin/node",
+    "version": "v25.8.2",
+    "executable_sha256": "88faacab428ac9b1623c53d4f92e034f91f59d1e6de3202ebb04879be7fe56f0"
+  },
+  "configuration_inputs": [
+    {
+      "path": "tests/live/profiles/qwen38_vllm_budgeted.example.env",
+      "kind": "file",
+      "size": 6064,
+      "sha256": "eb76fd3df6593c8410a7e19455475556245caafb5e04019864f0c02cb86d35e1"
+    },
+    {
+      "path": "tests/live/profiles/qwen38_vllm_budgeted_capabilities.json",
+      "kind": "file",
+      "size": 352,
+      "sha256": "6efde371433837b65100a3ba365fb26ca7cfa0975edc77189d46b6692beccc4e"
+    },
+    {
+      "path": "integrations/dsh/dev/offline.patch.yml",
+      "kind": "file",
+      "size": 486,
+      "sha256": "5efac6d7b1b76011943fef344600b53a6c04210b88f66519050ea42699bb7265"
+    },
+    {
+      "path": ".dsh-dev/home/profiles/code2paper-dev/package.json",
+      "kind": "file",
+      "size": 236,
+      "sha256": "fd54205f59674ff224fc88b8a106cabd155d3386492a8024a103bef2bc9b3ed1"
+    },
+    {
+      "path": ".dsh-dev/home/profiles/code2paper-dev/cordis.patch.yml",
+      "kind": "file",
+      "size": 3,
+      "sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570"
+    },
+    {
+      "path": "pyproject.toml",
+      "kind": "file",
+      "size": 2430,
+      "sha256": "d9275b89fe9966bf281d58a4e886aeeaafc081b5f46acf5f291c808ad3f1063f"
+    },
+    {
+      "path": "scripts/dsh_dev.py",
+      "kind": "file",
+      "size": 10582,
+      "sha256": "98f8afa3d049dfd903d7274731a495780d8c63c7926b0ac9a06041180abc98f3"
+    },
+    {
+      "path": "scripts/dsh_dev_smoke.py",
+      "kind": "file",
+      "size": 4372,
+      "sha256": "9f2d5a0df15ac1ed10ab2c8d44edc6084963b7598ce5d7feb0abdb8dbe241457"
+    }
+  ],
+  "model_reference": {
+    "base_url": "http://127.0.0.1:8006/v1",
+    "model": "qwen38-27b-nvfp4",
+    "context_tokens": 131072,
+    "source": "tracked_example_profile_only",
+    "profile_loaded": false,
+    "runtime_probed": false,
+    "tool_calling_verified": false,
+    "live_authorized": false
+  },
+  "planned_policy": {
+    "status": "design_only_not_runtime_controls",
+    "protocol_target": "c2p-dsh/1",
+    "accounting_target": "c2p-dsh-task-loop-v1",
+    "parallel_agents": false,
+    "max_parallel_agents": 2,
+    "backend_max_inflight_requests": 1,
+    "first_writer_max_model_requests": 1,
+    "first_writer_automatic_retry": false,
+    "first_writer_compaction": false,
+    "first_writer_title_llm": false,
+    "task_token_limits": "not_frozen_until_C00_C02_exact_request_measurement"
+  },
+  "missing_components": {
+    "state": "not_implemented",
+    "observed_absent_paths": [
+      "integrations/dsh/package.json",
+      "integrations/dsh/package-lock.json",
+      "integrations/dsh/tsconfig.json",
+      "integrations/dsh/src",
+      "integrations/dsh/lib",
+      "integrations/dsh/presets",
+      "integrations/dsh/cordis.patch.yml",
+      "src/code2paper/integrations/dsh",
+      "tests/integrations/dsh"
+    ],
+    "bundle_build_digest": null,
+    "locked_worker_environment_digest": null,
+    "dsh_runtime_compatibility": "not_tested",
+    "composition_admission_owner": "I01_and_following_callers"
+  },
+  "historical_offline_receipt": {
+    "path": "artifacts/runs/2026-09-18-live-admission/offline-receipt.json",
+    "sha256": "9f2af73dd79e8d200bd29f79c9256e1b500b8fa6657d0e300b9e0f6e17977575",
+    "engine_commit_sha": "0918ee76d079b9392ec03400c0c4c9fdff5bc784",
+    "passed_count": 4014,
+    "failed_count": 0,
+    "deselected_count": 3,
+    "exit_code": 0,
+    "validates_this_freeze": false,
+    "rerun_performed": false
+  },
+  "drift_policy": {
+    "tracked_code": "compare path set, mode, Git blob and sha256 against code_file_entries",
+    "runtime": "recompute full tree and compare saved per-file inventory; never only CLI/lock",
+    "configuration": "recompute listed file digests; missing is a failure",
+    "new_bundle_or_worker": "creation of any observed_absent_paths is a new stage input, capture explicit new identity",
+    "future_enforcement": "I01/C02/R03/R04/A01; this file alone does not guard sends"
+  },
+  "runtime_compatibility_passed": false,
+  "live_admission_granted": false
+}

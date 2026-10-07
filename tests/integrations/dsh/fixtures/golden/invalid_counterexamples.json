@@ -1,0 +1,263 @@
+{
+  "cases": [
+    {
+      "base": "legal_page_with_atoms",
+      "expected": "actual_page_contract_mismatch:paragraph_ids",
+      "expected_kind": "page_contract",
+      "mutation": {
+        "operation": "append",
+        "pointer": "/narrative_plan/page_paragraph_ids",
+        "value": [
+          "MA-L1_p2"
+        ]
+      },
+      "name": "narrative_paragraph_appended",
+      "surface": "page_contract"
+    },
+    {
+      "base": "legal_page_with_atoms",
+      "expected": "actual_page_contract_mismatch:author_surface",
+      "expected_kind": "page_contract",
+      "mutation": {
+        "operation": "set",
+        "pointer": "/narrative_plan/paragraphs/0/paragraph_id",
+        "value": "MA-L1_p9"
+      },
+      "name": "author_surface_paragraph_id_renamed",
+      "surface": "page_contract"
+    },
+    {
+      "base": "legal_page_with_atoms",
+      "expected": "actual_page_contract_mismatch:scope:required_detail_ids",
+      "expected_kind": "page_contract",
+      "mutation": {
+        "operation": "set",
+        "pointer": "/binding_contract/required_detail_ids",
+        "value": []
+      },
+      "name": "detail_scope_shrunk",
+      "surface": "page_contract"
+    },
+    {
+      "base": "legal_page_with_atoms",
+      "expected": "actual_page_contract_mismatch:scope:allowed_formula_package_ids",
+      "expected_kind": "page_contract",
+      "mutation": {
+        "operation": "set",
+        "pointer": "/binding_contract/allowed_formula_package_ids",
+        "value": [
+          "pkg:not_authorized"
+        ]
+      },
+      "name": "empty_formula_whitelist_expanded",
+      "surface": "page_contract"
+    },
+    {
+      "base": "legal_page_with_atoms",
+      "expected": "actual_page_contract_mismatch:output_cap",
+      "expected_kind": "page_contract",
+      "mutation": {
+        "operation": "cap_delta",
+        "pointer": "",
+        "value": 1
+      },
+      "name": "output_cap_raised",
+      "surface": "page_contract"
+    },
+    {
+      "base": "legal_page_with_atoms",
+      "expected": "actual_page_contract_mismatch:output_cap",
+      "expected_kind": "page_contract",
+      "mutation": {
+        "operation": "cap_delta",
+        "pointer": "",
+        "value": -1
+      },
+      "name": "output_cap_lowered",
+      "surface": "page_contract"
+    },
+    {
+      "base": "legal_page_with_atoms",
+      "expected": "actual_page_contract_mismatch:author_surface",
+      "expected_kind": "page_contract",
+      "mutation": {
+        "operation": "set",
+        "pointer": "/narrative_plan/paragraphs/0/reader_goal",
+        "value": "Rewrite the author goal to something the author never asked for."
+      },
+      "name": "author_reader_goal_rewritten",
+      "surface": "page_contract"
+    },
+    {
+      "base": "legal_page_with_atoms",
+      "expected": "actual_page_contract_mismatch:author_surface",
+      "expected_kind": "page_contract",
+      "mutation": {
+        "operation": "set",
+        "pointer": "/narrative_plan/paragraphs/0/witness_contract/rhetorical_goal",
+        "value": "overview"
+      },
+      "name": "author_rhetorical_goal_rewritten",
+      "surface": "page_contract"
+    },
+    {
+      "base": "legal_page_with_atoms",
+      "expected": "actual_page_contract_mismatch:technical_bytes",
+      "expected_kind": "page_contract",
+      "mutation": {
+        "operation": "set",
+        "pointer": "/technical_bytes_digest",
+        "value": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "name": "technical_bytes_rewritten",
+      "surface": "page_contract"
+    },
+    {
+      "base": "legal_page_with_atoms",
+      "expected": "actual_page_contract_mismatch:frozen_page_contract_missing",
+      "expected_kind": "page_contract",
+      "mutation": {
+        "operation": "drop_frozen_contract",
+        "pointer": "",
+        "value": null
+      },
+      "name": "repair_without_frozen_contract",
+      "surface": "page_contract"
+    },
+    {
+      "base": "author_no_atom_page",
+      "expected": "actual_page_contract_mismatch:scope:required_detail_ids",
+      "expected_kind": "page_contract",
+      "mutation": {
+        "operation": "set",
+        "pointer": "/binding_contract/required_detail_ids",
+        "value": [
+          "d:rescale"
+        ]
+      },
+      "name": "author_no_atom_page_atom_obligation_injected",
+      "surface": "page_contract"
+    },
+    {
+      "base": "legal_page_with_atoms",
+      "expected": "unknown_paragraph_transaction:MA-L1_invented",
+      "expected_kind": "response_parser",
+      "mutation": {
+        "operation": "set",
+        "pointer": "/paragraphs/0/paragraph_id",
+        "value": "MA-L1_invented"
+      },
+      "name": "writer_invented_paragraph_id",
+      "surface": "response_parser"
+    },
+    {
+      "base": "legal_page_with_atoms",
+      "expected": "schema_validation_failed:ValidationError",
+      "expected_kind": "response_parser",
+      "mutation": {
+        "operation": "set",
+        "pointer": "/paragraphs/0/bogus_field",
+        "value": "not-permitted"
+      },
+      "name": "writer_unknown_field",
+      "surface": "response_parser"
+    },
+    {
+      "base": "legal_page_with_atoms",
+      "expected": "paragraph_transaction_missing",
+      "expected_kind": "response_parser",
+      "mutation": {
+        "operation": "set",
+        "pointer": "/paragraphs",
+        "value": []
+      },
+      "name": "writer_missing_paragraph_transaction",
+      "surface": "response_parser"
+    },
+    {
+      "base": "legal_page_with_atoms",
+      "expected": "paragraph_body_not_substantive:MA-L1_p1",
+      "expected_kind": "response_parser",
+      "mutation": {
+        "operation": "set",
+        "pointer": "/paragraphs/0/paragraph_markdown",
+        "value": "## Rescaling"
+      },
+      "name": "writer_heading_only_body",
+      "surface": "response_parser"
+    },
+    {
+      "base": "legal_page_with_atoms",
+      "expected": "detail_witness_missing",
+      "expected_kind": "paragraph_assessor",
+      "mutation": {
+        "operation": "set",
+        "pointer": "/paragraphs/0/witnesses",
+        "value": []
+      },
+      "name": "writer_detail_witness_removed",
+      "surface": "paragraph_assessor"
+    },
+    {
+      "base": "legal_page_with_atoms",
+      "expected": "exact_span_not_in_body",
+      "expected_kind": "paragraph_assessor",
+      "mutation": {
+        "operation": "set",
+        "pointer": "/paragraphs/0/witnesses/0/exact_text",
+        "value": "an anchor sentence that never appears in the frozen paragraph"
+      },
+      "name": "writer_witness_not_verbatim",
+      "surface": "paragraph_assessor"
+    },
+    {
+      "base": "legal_page_with_atoms",
+      "expected": "detail_witness_missing",
+      "expected_kind": "binder",
+      "mutation": {
+        "operation": "set",
+        "pointer": "/paragraphs/0/witnesses",
+        "value": []
+      },
+      "name": "binder_detail_obligation_unsatisfied_by_atom_excerpt",
+      "surface": "binder"
+    },
+    {
+      "base": "legal_page_with_atoms",
+      "expected": "exact_span_not_in_body",
+      "expected_kind": "binder",
+      "mutation": {
+        "operation": "set",
+        "pointer": "/paragraphs/0/paragraph_markdown",
+        "value": "This paragraph keeps every claim on the material it was given."
+      },
+      "name": "binder_frozen_prose_loses_the_declared_witness",
+      "surface": "binder"
+    },
+    {
+      "base": "legal_page_with_atoms",
+      "expected": "must carry atom IDs",
+      "expected_kind": "page_model",
+      "mutation": {
+        "operation": "page_kind_without_atoms",
+        "pointer": "",
+        "value": "technical"
+      },
+      "name": "technical_page_without_atoms",
+      "surface": "page_model"
+    },
+    {
+      "base": "legal_page_with_atoms",
+      "expected": "projection proof is not exact",
+      "expected_kind": "page_model",
+      "mutation": {
+        "operation": "projection_proof_mismatch",
+        "pointer": "",
+        "value": null
+      },
+      "name": "page_projection_proof_mismatch",
+      "surface": "page_model"
+    }
+  ],
+  "schema_version": "b01-legacy-characterization/1"
+}

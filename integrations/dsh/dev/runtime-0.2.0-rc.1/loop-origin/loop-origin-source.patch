@@ -1,0 +1,412 @@
+diff --git a/packages/core/agent-loop/src/agent.ts b/packages/core/agent-loop/src/agent.ts
+index 2f68565cef052f82ef6f2a740141962507654e02..14d877ba0b4477b2cb00f33743faad232c890646 100644
+--- a/packages/core/agent-loop/src/agent.ts
++++ b/packages/core/agent-loop/src/agent.ts
+@@ -17,6 +17,7 @@ import type {
+ } from '@deepseek-ai/dsh-agent'
+ import { agentEvents, assembleContextFor } from '@deepseek-ai/dsh-agent'
+ import type { GenerateOptions, LlmCallConfig, Message, PreparedLlmCall } from '@deepseek-ai/dsh-llm'
++import { runLoopDispatch } from '@deepseek-ai/dsh-llm'
+ import {
+   LlmError,
+   createAssistantMessage,
+@@ -25,6 +26,7 @@ import {
+   markAgentLoopRequest,
+ } from '@deepseek-ai/dsh-llm'
+ import { assertNever, deepFreeze } from '@deepseek-ai/dsh-util-values'
++import { establishLoopDispatchOrigin } from './dispatch-origin.c2p.ts'
+ import type { Scope } from '@deepseek-ai/dsh-scope'
+ import { createScope } from '@deepseek-ai/dsh-scope'
+ import type { EpochHeader, RequestContext, Session, SessionId, SessionSeq, TurnEndReason, UserMessage } from '@deepseek-ai/dsh-session'
+@@ -433,15 +435,30 @@ export class ReactLoopAgent implements Agent {
+       )
+       let started = false
+       try {
+-        const stream = preparedCall?.stream(request) ?? this.loopCtx.llm.stream(request)
+-        signal.throwIfAborted()
+-        live.start()
+-        started = true
+-        for await (const chunk of stream) {
++        // loop-origin.1: the whole stream consumption of this step runs inside
++        // the runtime-private dispatch origin. The admission (the stream
++        // entry -> streamWithRegistration) happens synchronously at the start
++        // of the callback, before any llm/stream listener body, so the
++        // admission window stays free of extension code. The llm/stream
++        // waterfall composes listener wrappers as lazy async generators whose
++        // bodies run on iteration, so a scope around the bare call site would
++        // close before any listener or adapter executes.
++        const loopDispatch = establishLoopDispatchOrigin({
++          sessionId: this.session.id,
++          signal,
++          request,
++        })
++        await loopDispatch.run(async () => {
++          const stream = runLoopDispatch(request, preparedCall, loopDispatch.capability)
+           signal.throwIfAborted()
+-          live.push(chunk)
+-        }
+-        signal.throwIfAborted()
++          live.start()
++          started = true
++          for await (const chunk of stream) {
++            signal.throwIfAborted()
++            live.push(chunk)
++          }
++          signal.throwIfAborted()
++        })
+       } catch (error: unknown) {
+         if (!started) throw error
+         try {
+diff --git a/packages/core/agent-loop/src/dispatch-origin.c2p.ts b/packages/core/agent-loop/src/dispatch-origin.c2p.ts
+new file mode 100644
+index 0000000000000000000000000000000000000000..470de6b20b29da947bc233243fbe19d868e11301
+--- /dev/null
++++ b/packages/core/agent-loop/src/dispatch-origin.c2p.ts
+@@ -0,0 +1,88 @@
++/**
++ * Runtime-private dispatch origin for the agent loop's own model dispatches
++ * (loop-origin.1 c2p patch on dsh-v0.2.0-rc.1, commit 4878cdabd87d4041bdaff61d04c966883b9fd07a).
++ *
++ * AgentLoop establishes each origin and holds its private capability through
++ * stream consumption. peekLoopDispatchOrigin exposes a frozen session/signal
++ * snapshot. admitLoopDispatchOrigin is exported but requires the exact private
++ * capability by object identity before it may consume the one-shot admission.
++ * runOutsideLoopDispatchOrigin clears the scope for public-equivalent calls.
++ * There is no exported entry acknowledgement or take operation. Establishment
++ * remains internal to agent.ts; the protected module-level dispatch consumes
++ * admission only after capability validation.
++ */
++import { AsyncLocalStorage } from 'node:async_hooks'
++import type { SessionId } from '@deepseek-ai/dsh-session'
++
++export interface LoopDispatchOrigin {
++  readonly sessionId: SessionId
++  readonly signal: AbortSignal
++  readonly request: unknown
++  capability: unknown
++  admitted: boolean
++}
++
++/** Frozen read-only view of a live origin. */
++export interface LoopDispatchOriginSnapshot {
++  readonly sessionId: SessionId
++  readonly signal: AbortSignal
++}
++
++const dispatchOrigin = new AsyncLocalStorage<LoopDispatchOrigin | undefined>()
++
++/** Establish the origin scope for one step's whole stream consumption. The
++ * returned capability is the live scope object itself: the loop passes it as
++ * an argument in its own call frame, and the capability-gated admission on
++ * the dispatch entry verifies it by object identity. Never exported. */
++export function establishLoopDispatchOrigin(
++  origin: Omit<LoopDispatchOrigin, 'capability' | 'admitted'>,
++): { run<T>(fn: () => T): T; capability: unknown } {
++  const full: LoopDispatchOrigin = { ...origin, capability: origin as unknown, admitted: false }
++  return {
++    run<T>(fn: () => T): T {
++      return dispatchOrigin.run(full, fn)
++    },
++    capability: full,
++  }
++}
++
++/**
++ * Frozen read-only snapshot; `undefined` outside a live dispatch scope. The
++ * snapshot deliberately excludes the request object and any mutable state:
++ * the same snapshot or request reference must not be able to preempt the
++ * legal dispatch.
++ */
++export function peekLoopDispatchOrigin(): LoopDispatchOriginSnapshot | undefined {
++  const origin = dispatchOrigin.getStore()
++  return origin === undefined
++    ? undefined
++    : Object.freeze({
++        sessionId: origin.sessionId,
++        signal: origin.signal,
++      })
++}
++
++/**
++ * Admit one stream entry as the loop's own. The capability is the live origin
++ * scope object created by the loop's dispatch site and passed in the loop's
++ * own call frame; it is verified by object identity against the live scope
++ * and consumed once. Without that exact object this call can consume, mint or
++ * reset nothing and returns false; a dispatch authorised this way still
++ * passes the Host middleware's read-only verification.
++ */
++export function admitLoopDispatchOrigin(capability: unknown): boolean {
++  const origin = dispatchOrigin.getStore()
++  if (origin === undefined || origin !== capability || origin.admitted) return false
++  origin.admitted = true
++  return true
++}
++
++/**
++ * Clear-only isolation runner: the callback runs with no loop dispatch origin
++ * visible. It can never establish, restore or mint an origin. dsh-llm's
++ * admission uses it so public dispatches initiated inside a live scope do not
++ * inherit the outer origin.
++ */
++export function runOutsideLoopDispatchOrigin<T>(fn: () => T): T {
++  return dispatchOrigin.run(undefined, fn)
++}
+\ No newline at end of file
+diff --git a/packages/core/agent-loop/src/index.ts b/packages/core/agent-loop/src/index.ts
+index 7541a5c4bf928f8f159900bb41a58ca04e4dc6da..9a66df2627f192217ad9d62f0ff99ed2384b3992 100644
+--- a/packages/core/agent-loop/src/index.ts
++++ b/packages/core/agent-loop/src/index.ts
+@@ -34,6 +34,11 @@ import type { SessionHandle, SessionPersistence } from '@deepseek-ai/dsh-session
+ import { ReactLoopAgent } from './agent.ts'
+ import { inboxProjectionDefinition } from './inbox.ts'
+ import { DEFAULT_MAX_PARALLEL_TOOL_CALLS } from './constants.ts'
++import {
++  admitLoopDispatchOrigin,
++  peekLoopDispatchOrigin,
++  runOutsideLoopDispatchOrigin,
++} from './dispatch-origin.c2p.ts'
+ import type {} from './runtime-context.ts'
+ 
+ /** Fiber states that cannot own or serve a new lifecycle. */
+@@ -890,4 +895,10 @@ export class AgentLoop extends Service implements AgentFactory {
+   }
+ }
+ 
++export {
++  admitLoopDispatchOrigin,
++  peekLoopDispatchOrigin,
++  runOutsideLoopDispatchOrigin,
++}
++
+ export default AgentLoop
+diff --git a/packages/llm/llm/src/index.ts b/packages/llm/llm/src/index.ts
+index d67245d216aec55b218f7852268382ff9e06810f..62cbe806578abd01c49b75d255f64ba978cf81e9 100644
+--- a/packages/llm/llm/src/index.ts
++++ b/packages/llm/llm/src/index.ts
+@@ -6,6 +6,8 @@
+  * @module @deepseek-ai/dsh-llm
+  */
+ 
++import { createRequire } from 'node:module'
++
+ import { Context } from '@deepseek-ai/cordis'
+ import { Remote, RemoteError, TypertRemoteService } from '@deepseek-ai/dsh-typert-protocol'
+ import { deepFreeze } from '@deepseek-ai/dsh-util-values'
+@@ -28,6 +30,114 @@ import type {
+   ToolUpdate,
+ } from './types.ts'
+ import { freezeMessage } from './message.ts'
++
++// loop-origin.1 (c2p patch): a lazy runtime-internal bridge to the agent
++// loop's origin module. A static import would create an init-time cycle (a
++// package in the loop's graph extends a class from a partially initialized
++// package), so the peer is resolved on first dispatch via createRequire,
++// after both packages have fully loaded.
++let loopOriginPeer: {
++  peekLoopDispatchOrigin(): {
++    readonly sessionId: string
++    readonly signal: AbortSignal
++  } | undefined
++  admitLoopDispatchOrigin(capability: unknown): boolean
++  runOutsideLoopDispatchOrigin<T>(fn: () => T): T
++} | undefined
++function loopOriginPeerModule() {
++  if (loopOriginPeer === undefined) {
++    loopOriginPeer = createRequire(import.meta.url)('@deepseek-ai/dsh-agent-loop') as never
++  }
++  return loopOriginPeer
++}
++/**
++ * loop-origin.1 (c2p patch): read-only query of the runtime-private dispatch
++ * origin; `undefined` unless the patched agent loop's dispatch scope is live.
++ * Public dispatches initiated inside a live scope are isolated by the runtime
++ * and therefore see no origin through this query.
++ */
++export function currentLoopDispatchOrigin() {
++  return loopOriginPeerModule().peekLoopDispatchOrigin()
++}
++
++const preparedDispatchRecords = new WeakMap<object, {
++  runtime: LlmRuntime
++  registration: AdapterRegistration
++  config: LlmCallConfig
++  modelInfo: LlmModelInfo
++  dispatch: (options: GenerateOptions) => AsyncIterable<StreamChunk>
++  dispatched: boolean
++}>()
++
++const loopDispatchRuntimes = new Set<LlmRuntime>()
++const privateLoopDispatchers = new WeakMap<
++  LlmRuntime,
++  (options: GenerateOptions, prepared?: PreparedDispatch) => AsyncIterable<StreamChunk>
++>()
++const kRootRuntime = Symbol('dsh.rootRuntime')
++
++function unwrapRuntime(runtime: unknown): LlmRuntime | undefined {
++  if (runtime == null || typeof runtime !== 'object') return undefined
++  const raw = ((runtime as any)[kRootRuntime] ?? runtime) as LlmRuntime
++  return loopDispatchRuntimes.has(raw) ? raw : undefined
++}
++
++/**
++ * loop-origin.1 (c2p patch): the loop's own trusted dispatch entry, reached
++ * through the static module import (never through the proxied service
++ * resolution). The capability is the live origin scope object created by the
++ * loop's dispatch site and passed in the loop's own call frame; the
++ * capability-gated admission verifies it by object identity inside
++ * dsh-agent-loop before anything else. Without that exact object the dispatch
++ * is isolated from the outer origin like any public call.
++ */
++export function runLoopDispatch(
++  options: GenerateOptions,
++  preparedCall: unknown,
++  capability: unknown,
++): AsyncIterable<StreamChunk> {
++  if (!loopOriginPeerModule().admitLoopDispatchOrigin(capability)) {
++    const runtime = preparedCall === undefined ? singleLoopRuntime() : undefined
++    if (runtime === undefined) {
++      throw new LlmError('loop dispatch origin admission refused', 'DISPATCH_ORIGIN_CONSUMED')
++    }
++    return runtime.stream(options)
++  }
++  let record:
++    | {
++        runtime: LlmRuntime
++        config: LlmCallConfig
++        dispatched: boolean
++      }
++    | undefined
++  if (preparedCall !== undefined) {
++    record = preparedDispatchRecords.get(preparedCall as object)
++    if (record === undefined || record.dispatched) {
++      throw new LlmError('a prepared LLM call can only be dispatched once', 'INVALID_PREPARED_CALL')
++    }
++    if (!callConfigEquals(options, record.config)) {
++      throw new LlmError('prepared LLM call config changed before adapter dispatch', 'INVALID_PREPARED_CALL')
++    }
++    record.dispatched = true
++  }
++  const runtime = record === undefined ? singleLoopRuntime() : unwrapRuntime(record.runtime)
++  if (runtime === undefined) {
++    throw new LlmError('loop dispatch origin admission refused', 'DISPATCH_ORIGIN_CONSUMED')
++  }
++  const dispatcher = privateLoopDispatchers.get(runtime)
++  if (dispatcher === undefined) {
++    throw new LlmError('loop dispatch origin admission refused', 'DISPATCH_ORIGIN_CONSUMED')
++  }
++  return dispatcher(
++    options,
++    record === undefined ? undefined : (record as unknown as PreparedDispatch),
++  )
++}
++
++function singleLoopRuntime(): LlmRuntime | undefined {
++  if (loopDispatchRuntimes.size !== 1) return undefined
++  return [...loopDispatchRuntimes][0]
++}
+ import { resolveRetryPolicy } from './retry-policy.ts'
+ import type { ResolvedRetryPolicy } from './retry-policy.ts'
+ import type { ProviderRequestId } from './brand.ts'
+@@ -349,6 +459,20 @@ export class LlmRuntime extends TypertRemoteService {
+ 
+   constructor(ctx: Context) {
+     super(ctx, 'llm')
++    ;(this as any)[kRootRuntime] = this
++    loopDispatchRuntimes.add(this)
++    privateLoopDispatchers.set(this, (options, prepared) => {
++      return this.ctx.waterfall(
++        this,
++        'llm/stream',
++        options,
++        () => this.adapterStream(options, prepared),
++      )
++    })
++    this.ctx.effect(() => () => {
++      loopDispatchRuntimes.delete(this)
++      privateLoopDispatchers.delete(this)
++    }, 'LlmRuntime.loopDispatchLifecycle')
+   }
+ 
+   /** Notify topology observers without letting one broken listener veto the commit. */
+@@ -950,8 +1074,16 @@ export class LlmRuntime extends TypertRemoteService {
+         ? { maxTokens: true }
+         : {},
+     })
++    const preparedRecord = {
++      runtime: unwrapRuntime(this) ?? this,
++      registration,
++      config: resolvedConfig,
++      modelInfo,
++      dispatch: (options: GenerateOptions) => adapterCall.stream(options),
++      dispatched: false,
++    }
+     let dispatched = false
+-    return Object.freeze({
++    const handle = Object.freeze({
+       config: resolvedConfig,
+       retryPolicy: registration.retryPolicy,
+       adapterDefaults,
+@@ -972,14 +1104,11 @@ export class LlmRuntime extends TypertRemoteService {
+           )
+         }
+         dispatched = true
+-        return this.streamWithRegistration(options, {
+-          registration,
+-          config: resolvedConfig,
+-          modelInfo,
+-          dispatch: options => adapterCall.stream(options),
+-        })
++        return this.streamWithRegistration(options, preparedRecord)
+       },
+     })
++    preparedDispatchRecords.set(handle, preparedRecord)
++    return handle
+   }
+ 
+   private registration(provider: string): AdapterRegistration {
+@@ -1136,10 +1265,45 @@ export class LlmRuntime extends TypertRemoteService {
+     return this.streamWithRegistration(options)
+   }
+ 
++
+   private streamWithRegistration(
+     options: GenerateOptions,
+     prepared?: PreparedDispatch,
+   ): AsyncIterable<StreamChunk> {
++    const peer = loopOriginPeerModule()
++    if (peer.peekLoopDispatchOrigin() !== undefined) {
++      // A public dispatch initiated inside a live loop scope (an async hook, a
++      // listener, a pre-held handle): isolate the whole construction and
++      // iteration from the outer origin. The llm/stream waterfall composes
++      // listener wrappers as lazy async generators whose bodies run on
++      // iteration, so the empty-store scope must cover the waterfall creation
++      // and be re-entered on every next()/return()/throw().
++      const runIsolated = peer.runOutsideLoopDispatchOrigin
++      const inner = runIsolated(() =>
++        this.ctx
++          .waterfall(this, 'llm/stream', options, () => this.adapterStream(options, prepared))
++          [Symbol.asyncIterator](),
++      )
++      const isolated: AsyncIterator<StreamChunk> = {
++        next: (...args: []) => runIsolated(() => inner.next(...args)),
++        return: (...args: []) =>
++          runIsolated(() =>
++            Promise.resolve<IteratorResult<StreamChunk>>(
++              inner.return === undefined ? { done: true, value: undefined } : inner.return(...args),
++            ),
++          ),
++        throw: (...args: []) =>
++          runIsolated(() =>
++            Promise.resolve<IteratorResult<StreamChunk>>(
++              inner.throw === undefined ? { done: true, value: undefined } : inner.throw(...args),
++            ),
++          ),
++      }
++      const isolatedIterable = isolated as unknown as AsyncIterable<StreamChunk>
++      isolatedIterable[Symbol.asyncIterator] = () => isolated
++      return isolatedIterable
++    }
++
+     return this.ctx.waterfall(
+       this,
+       'llm/stream',

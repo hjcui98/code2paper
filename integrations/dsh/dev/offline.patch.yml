@@ -1,0 +1,22 @@
+# Environment bootstrap only. Model execution is enabled by a later, reviewed
+# integration profile, not by copying the everyday Harness settings/credentials.
+- id: web-runtime
+  config:
+    printUrl: false
+    openBrowser: false
+- id: llm-deepseek
+  disabled: true
+- id: llm-pi-ai
+  disabled: true
+- id: llm-retry
+  disabled: true
+- id: session-title-llm
+  disabled: true
+- id: session-telemetry-otel
+  disabled: true
+- id: web-search-deepseek
+  disabled: true
+- id: web-fetch-http
+  disabled: true
+- id: plugin-package-inventory-deepseek
+  disabled: true

@@ -1,12 +1,12 @@
 # Code2Paper × DeepSeek Harness：插件化改造设计与执行方案
 
-> 审计与设计日期：2026-09-22；本次修订已核对本地代码与产物。
+> 初稿：2026-09-22；重基线与实施顺序修订：2026-09-27；实际安装接口核对与执行拆分：**2026-09-28**。
 >
-> Code2Paper：`hjcui98/code2paper`，本地分支 `codex/agentic-p4-benchmark-cutover`。首次审查为 `3aa9db8...`；本轮逐项设计研究基线为 **`4146010ac5c6ea21ace2bc0006741e4336242d1c`**。新增流程映射和 §21.2 绑定本轮快照，历史来源保留原 SHA；并行未提交修改另记于 §2.1。
+> **代码对照基线：`0918ee76d079b9392ec03400c0c4c9fdff5bc784`**。本次读取 HEAD 为 **`d48b4e4b22c94c82b45d2179ba452d72b164102d`**；两者之间仅 `.agent/implementation.md` 和三个 docs 文件变化，`src/`、`tests/`、`scripts/` 无差异。本文的当前能力与抽取锚点绑定该代码基线，不再以 `4146010` 作为实施基线。
 >
-> DeepSeek Harness：`deepseek-ai/deepseek-harness`，固定提交 **`c36a83ff6bb95e3f82cf79f9be7c724270a8aa61`**，包版本 **`0.1.7-alpha.1`**；本次 GitHub API 查询的 `master` 仍指向该提交。
+> DeepSeek Harness 原源码研究参考固定 **`c36a83ff6bb95e3f82cf79f9be7c724270a8aa61` / `0.1.7-alpha.1`**；2026-09-27 建立的隔离 `0.1.5-rc.3` 为旧开发对照。**2026-09-29 用户选定 `0.2.0-rc.1` 为新开发候选**（官方 tag SHA `4878cdabd87d4041bdaff61d04c966883b9fd07a`）；候选已隔离安装、基础适配尚未验收，日常 `0.1.7-rc.2` 保持使用。版本差异与候选迁移按 [执行文档 01](dsh_execution_20260928/01_baseline_and_dsh_compatibility.md) 复验；原源码引用、旧验收与新安装身份不得混用。
 >
-> 状态：**方向已确认；节点映射、LangGraph 状态机、非阻塞任务交接与并发默认配置已按本轮研究收敛。尚未实施插件或验证模型兼容性；库级恢复探针不代表集成或生产切换通过。**
+> 状态：**设计修订、隔离开发环境及分阶段执行计划已准备，尚未实施 Code2Paper 的 DSH 接入。** [执行入口](dsh_execution_20260928/README.md) 将本设计拆为 8 份执行文档、49 个单元。先做兼容性 mock、发布/注册边界修复及无模型 Writer 合同，再做串行单任务闭环；主图迁移、共享调度与 live 分别设门。已有 4014 passed 回执绑定 `0918ee7`，不能批准 `d48b4e4` 或后续 DSH live。
 
 ## 0. 结论与边界
 
@@ -20,11 +20,13 @@ DSH 的 Creator Mode 是开发、配置和安装 Harness 插件的工作环境�
 
 ### 0.1 本文的证据范围
 
-原稿读取了两边固定提交的关键代码、接口与测试源码，以及 2026-09-17 事故、2026-09-05 EBCAR 候选。此次补查本地 `publication_method_writer.py` 的实际调用链、独立请求/验收函数、语义验证 provider、authorship ledger，以及未提交的 2026-09-18 准入/用量产物；同时下载并核对 DSH 固定提交的 LLM seam、token meter、子 Agent driver 与结构化输出实现。不是两个仓库的逐行穷尽审计。[C11–C16][D18–D22][L01]
+本次以本地 `0918ee7` 代码及 `d48b4e4` 文档状态核对七项审核意见，读取当前身份/导入、invocation reducer、注册/发布/索引、Writer 实际请求和 Research/Authoring 图。对固定路径第二代发布中断、注册摘要读取和 technical digest 缺失做了零网络临时探针，结果与范围写在 §26。新增问题作为接入前修复项，不把旧审计的完成记录扩张为这些边界已经通过。[C23–C26][L05]
 
-原稿“连接器无法读取巨型 Writer”的限制已由本地定点读取补足，具体锚点见 §21.2。首次复核副本位于 `/tmp/c2p-dsh-design-review-20260922/`；本轮源码快照、外部读取与库级探针位于 `/tmp/c2p-dsh-decisions-20260922-96d0m5mc/`。仓库仅修改设计文档与导航，没有安装依赖/插件、修改 GitHub、运行项目 pytest 或调用模型。新增零网络 LangGraph 恢复探针的范围和结果见 §26；历史回执不等于本轮复测。
+4014 passed / 3 deselected / 12 subtests passed / exit 0 是代码基线的既有离线记录；本轮未重跑全套、未生成新回执、未调用模型。旧 09-05/09-17/09-18 产物仍只证明其绑定代码和输入。2026-09-22 的 LangGraph 跨进程探针是库级可行性证据，不能替代真实 Research 图或 DSH 桥接恢复。
 
-以下标注约定：**“现有”** 指已读取实现或接口；**“已确认”** 指用户确认的设计方向；**“本轮确定”** 指用户要求逐项研究后收敛的实现设计；两者均不代表已实现。**“建议/待定”** 指未收敛安排；**“待验证”** 指尚须编译、回归或真实模型验证。设计中的新增接口不是现有 API。文件级证据和链接列于文末。
+DSH 在线固定源码读取本轮未成功；复用了前轮下载的固定 SHA 源码，并复算 21 份文件摘要与保存清单一致。Loader、首请求绑定、terminal 参数来源、取消与 LLM seam 仍须由 WP2 实际 mock 验证，不把读源码等同于运行通过。[D18][D19][D26][L04]
+
+标注约定：**“现有”** 指已读取的代码能力；**“已确认”** 指已确定的设计方向；**“待实现/待验证”** 是工作包要求；**“本轮复现”** 只覆盖 §26 明列的最小反例。本文不声称两个仓库已完成逐行穷尽审计。
 
 ### 0.2 与现有架构规范的关系
 
@@ -36,15 +38,15 @@ DSH 的 Creator Mode 是开发、配置和安装 Harness 插件的工作环境�
 
 ### 0.3 本次关键修订
 
-| 原稿缺口 | 修订后的约束 |
+| 审核问题 | 本次决定 |
 |---|---|
-| 执行层接管与默认流程被混为同一选择 | DSH 接管 Agent 执行，默认沿用既有主流程；实现承载与生产切换分别说明 |
-| 主 Agent 可自由选择全局研究/写作阶段 | 阶段顺序、准入和修复路径来自现有合同，自主选择限定在合法动作内 |
-| `outputSchema` 易被理解为 provider JSON Schema | DSH 通过 `structured_output` 工具收取结果；独立验证 tool-calling 和正文来源 |
-| 模型 owner 表漏掉 Realizer、对齐与语义验证 | 登记全部模型路径；验证请求由独立角色执行，Python merge 保留裁决权 |
-| 预算/身份到 WP4 才建设 | 最低发送门、持久回执与取消合同必须先于 WP3 live |
-| “验收后提交”没有绑定实际模型输出 | 固定模型响应、tool-call 参数、字段来源与 lexical ledger 的映射 |
-| 历史 tokens 可能被算作新调用 | 保留 `reused_evidence` 与本次发送双口径，补 import 闭包验证 |
+| `4146010` 与历史回执落后 | 区分 `0918ee7` 代码对照基线、`d48b4e4` 文档 HEAD、实际准入身份；§2/§21.1 列出已落地 owner |
+| 首个 Writer 之前工作面过宽 | compatibility spike → 发布修复 → 无模型往返 → 串行 DSH mock → 单独授权的小型 live；完整图与共享公平调度后置 |
+| journal/注册存在被误当作完整事务 | generation/content-addressed 文件、不可变 registration 和跨正文/sidecar manifest、active 最后 CAS/fencing；前移 WP1a |
+| 宽泛 TaskEnvelope 重复描述既有合同 | Python 唯一生成 `WriterTaskContractV1`，组合真实请求、read-set、页合同、身份及有限 epoch 额度 |
+| 公共工具包含 prepare/dispatch/submit/export | 模型窄工具、Host 私有 RPC、操作者入口三分；Writer 只用 terminal 结果报告补证需求 |
+| DSH 可能形成第二本余额账 | Python 统一账本/reducer 是唯一权威；TS accounting 仅传递可信事件与调用 RPC |
+| Writer PoC 被误当作主图迁移 | opt-in 独立 Writer；WP5 单独验收严格路由、完整 handler、Research context 重建与逐节点跨进程恢复 |
 
 ### 0.4 已确认方向与本轮设计决议
 
@@ -66,11 +68,28 @@ DSH 的 Creator Mode 是开发、配置和安装 Harness 插件的工作环境�
 | 流程状态机承载 | 保留 Python LangGraph + 持久 SQLite checkpoint；图内只有确定性准备、等待回执与状态合并，DSH 在图外运行 Agent，见 §6.3 |
 | 任务交接和恢复 | 持久 outbox、受控 dispatch、结果入库、图恢复四步；正常写作与补证回路采用同一协议，见 §15.7–§15.8 |
 | 并发默认值与范围 | 默认关闭；开启时默认最多 2 个独立 Agent 任务，后端请求默认最多 1 个；run 内开关与部署共享后端上限分别执行，见 §15.6 |
-| 首次实现验证范围 | 采用 WP0 → WP1 → WP2 → WP4a → WP3 的独立 Writer 任务，先 mock/离线，再使用指定本地 Qwen 与冻结 EBCAR 小任务验证；本轮不启动实现或 live |
+| 首次实现验证范围 | WP0 → WP2 → WP1a → WP1b → WP4a → WP3a；先证明单 run、单 Writer、单请求的 mock 闭环，再经单独授权进入 WP3b Qwen live，见 §20–§21 |
 
-待实际验证的是 DSH Loader/工具调用兼容、端到端桥接、共享后端调度与故障恢复；生产切换仍按阶段证据评审。这些是验证事项，不再将已经收敛的四项设计悬置为待讨论。
+待实际验证的是 DSH Loader/工具调用兼容、端到端桥接和相应恢复边界。首个 Writer 不以共享公平调度、完整 Research 图改造为前置；这些分别在 WP4b/WP5 验收。生产切换仍需阶段证据，已确认的权威分离与默认业务流程不重开选型。
 
-具体 token 配额由 WP0 的实际请求计量和模型能力确定，并在首次发送前冻结有限上限。工作包规定实施与验证依赖，不是进度记录；本轮交付仍为设计文档。
+WP0 固定模型能力、计量版本和预算策略；具体 token 配额在 WP1b 根据实际 Writer/DSH 请求计量确定，并在首次发送前冻结有限上限。工作包规定实施与验证依赖，不是进度记录；本段记录设计定案，随后建立的隔离开发环境状态见 §7.3。
+
+### 0.5 执行文档与实际安装接口补充（2026-09-28）
+
+[分阶段执行计划](dsh_execution_20260928/README.md) 细化责任、文件范围、依赖、接口、反例与验收，不改变本文的架构权威。[任务表](dsh_execution_20260928/task_board.json) 包含 49 个实施与验收单元；[接口合同](dsh_execution_20260928/interfaces.md) 与 [验收追踪](dsh_execution_20260928/verification.md) 约束跨语言协作。负责人已完成 [B00 开发输入冻结](dsh_execution_20260928/b00_baseline_freeze.md)，独立 QA 通过；B01/B02 后续状态以阶段入口为准。H02 的实际导出及 mock recorder 按[交接要求](dsh_execution_20260928/h02_h04_handoff.md)冻结后才启动 H03/H04。2026-09-29 开发调度见执行入口 §3.1：窗口二将 B02/H01–H04 迁到独立 0.2 候选，先复验基础接口，再证明可信来源与联合接线；窗口一处理 K04-G1–G7。K04 全部本单元 AT/阻断项独立关闭且读集释放后才可提前开发 K01，首轮部分 PASS 不放行。K01/K04 完成仍要求 H03/H04 与 Gate-H，WP2→WP1a 的集成验收顺序和全部门不减少。任务不因文档存在或开发提前而自动通过。
+
+B00 时逐文件核对的 802 个已跟踪 `src/`、`tests/`、`scripts/` 文件与 `0918ee7` 字节相同；这是历史对照，后续 K04 已修改 Python 业务字节，须按新候选身份验收。DSH 结论直接核对隔离的 `0.1.5-rc.3` 已构建 JS/声明，文件摘要见 [清单](dsh_execution_20260928/source_inventory.json)，没有把静态阅读计为 WP2 运行通过。
+
+| 新核对项 | 实施约束 |
+|---|---|
+| 本机是复数 `dsh-agent-presets` 目录扫描 API | 修正 §7.1；H01 验证真实 Loader、preset mount 和作用域，不照搬研究版示例 |
+| 创建观察事件不等待异步绑定，`pre-step` 晚于 prompt assemble | 修正 §11.3；H02 在首次材料准备/请求前证明绑定，必要时用公开窄 provider |
+| pi-ai 会重新序列化 terminal 参数；终态不等于 flush | §11.2 与 H03 分别记录 arguments delta / normalized / parsed / prose 来源，并等待可验证持久化 |
+| 实际构建 JS/隔离运行包不由 Git 源码身份自动覆盖 | I01 绑定实际 Loader 字节、runtime/lock/Node/preset/schema 和构建输入；prepare/dispatch/resume/receipt 共用组成身份 |
+| DSH prompt assemble 不是最终 provider wire | C00 独立实现无模型投影握手，C02 计量后冻结合同；实际 pi-ai 对隔离假 HTTP/SSE 服务验证转换，不能仅用自建 mock adapter 自证 |
+| 离线 CLI 实际测试覆盖与默认 labels 脱节 | A01 先复现再修原准入 owner；阶段回执必须由实际 Python/Node 执行记录派生，不能只增加 label |
+
+最后一项是本轮静态发现：`src/code2paper/cli/agentic_run.py:780–823` 可只跑指定 pytest 目标，但调用回执 builder 时未传实际覆盖；`live_admission_preflight.py:149–175` 默认登记全部必测集合。该链条尚未在本轮执行最小反例，不据此否定原 4014 测试日志，但不能继续用声明的 label 证明新增 DSH 测试确已执行。A01 在首次 live 前修复，并核对测试前后代码/配置/组成身份；详见 [第 04 部分](dsh_execution_20260928/04_serial_writer_integration.md)。
 
 ## 1. 项目目标不能被通用 Harness 改写
 
@@ -80,39 +99,35 @@ DSH 的 Creator Mode 是开发、配置和安装 Harness 插件的工作环境�
 
 验收必须同时回答：是否产生完整可用正文；是否忠实表达实现；是否保留作者主线；是否减少重复和工程化叙述；是否正确消费公式；是否与方法图一致；是否在可比预算内完成。不能只报工具成功数、页面 accepted 比例或连续运行时长。
 
-## 2. 当前 Code2Paper 已经修了什么
+## 2. 当前 Code2Paper 已有能力与接入缺口
 
-首次审查从 `34ae0cf...` 对照到 `3aa9db8...`；下表保留当时确认的能力，本轮 `4146010...` 的流程补查见 §2.1、§6.4 和 §21.2。以下不应再作为“完全缺失能力”重建。
+下表绑定 `0918ee7`，不是早期 `3aa9db8`/`4146010` 的能力快照。WP0/WP1 应调用现有 owner 并补适配，不重复建设身份、导入、账本、failure taxonomy 或 producer 注册。[C23–C26]
 
-| 已读取位置 | 当前能力 | 迁移时的处理 |
+| 已有 owner | 已落地能力 | DSH 接入仍需完成 |
 |---|---|---|
-| `agentic/authoring_execution_identity.py` | 引擎/目标/输入/模型/validator 身份、new/resume/fork 准入、run lease | 复用；补充 DSH 组成与实际调用身份 |
-| `agentic/authoring_artifact_index.py` | `(logical_role, phase, generation)`、active 指针、字节摘要、合法空对象 | 扩展 producer 注册，不另建竞争索引 |
-| `agentic/writer_output_workload.py` | 输入预算 + 输出任务量评估、段落与 detail occurrence、atom 不算 Writer 负担 | 复用；为 DSH 响应协议重新标定 |
-| `agentic/writer_attempt_ledger.py` | 区分事件、发送、内容尝试和预发送拒绝；恢复状态与 unknown-send | 保留；适配 DSH 真实请求/响应回执 |
-| `tests/regression_20260917/test_intent_writer_surface.py` | 空槽处理、作者正文到达 compact 表面、稳定 ID 下内容摘要变化 | 作为必须迁移的行为规格，不能只迁移类定义 |
-| `agentic/product_authoring_graph.py` | 写作缺口回研究、问题 owner 路由、下游失效、独立修复预算 | 保留领域转换与失效规则；逐步替换旧执行驱动 |
-| `llm/section_writer.py` | Writer 输入/结果、调用 trace、分层重试/输出预算协议 | 拆开“构造/验收”与“实际模型执行” |
-| `build_publication_writer_request` / `assess_publication_content_acceptance` / `assess_publication_content_progress` | 已抽出的实际请求构造、局部内容验收与修复增益检查 | 首个 PoC 优先复用；局部接受不等于全文最终验收 |
-| `semantic_verifier_provider.py` / `method_proposition_alignment_provider.py` | 独立语义判断及各自模型调用 | 迁移时必须显式纳入调用 owner 和预算 |
-| `final_text_authorship.py` | 正文 lexical span 与允许生成角色、响应来源逐字绑定 | 增加 DSH 结构化工具参数来源，不用 closing message 代替 |
-| `authoring_quality_report.py` / `authoring_quality_comparison.py` | 可复算指标、不可比/未测量状态 | 复用报告；新增 DSH 账本适配与独立语义评价 |
+| `authoring_execution_identity.py`、`open_authoring_execution` | V2 引擎/目标/意图/claims/profile/model/validator 身份；预检、取锁、锁内再解析/准入与 bind；legacy 只读 | DSH composition、角色、协议和 accounting 版本进入新的兼容身份 |
+| `verify_research_import_closure` | 目标/snapshot 一致性、必需 authority 产物、声明摘要复算、引用链与路径校验；拒绝继承正文/预算等写作状态 | 复用现有拒绝原因；补 DSH 句柄重映射、实验材料白名单及新增 sidecar 引用的覆盖测试 |
+| `reduce_invocation_recovery`、`unified_invocation_ledger.py` | 同一归约处理 pre-send、unknown-send、response-unsettled、accepted、exhausted 等状态；本地结算已落盘响应 | 扩展原事件 schema 接收 DSH reserve/dispatch/usage/terminal/cancel 事实；不建 TS durable balance |
+| `authoring_artifact_registry.py` / `authoring_artifact_index.py` | producer 登记 role/phase/generation/upstream，字节验证读取；已发布索引损坏不得隐式重扫 | 修复注册摘要加载校验与固定路径覆盖窗口；以同一索引解析不可变 manifest，见 §15.3 |
+| `authoring_artifact_publication.py` | 已有 staged/validated/published/registered journal 和失败诊断 | 现有单文件 rename + register 尚不保证第二代发布保留旧 active，也非正文/sidecar 整体事务；WP1a 前置修复 |
+| `publication_transaction_contract.py`、`writer_repair_packet.py` | canonical failure owner/action/escalation、legacy 别名、未知错误阻断、有界 repair | Host 直接消费相同结果，DSH 不另写自然语言错误路由器 |
+| `writer_output_workload.py`、`unified_context_compiler.py` | 联合输入/输出估量、叙事段分页、多 detail 公式闭包及超预算 typed failure；C04 已有真实编译器测试 | DSH terminal 工具 schema、实际 Qwen wire、tokenizer 与辅助调用的新增负荷计量 |
+| `page_contract_recheck.py`、`_capturing_writer_caller` | 段落顺序、空 scope、作者 surface、binding 摘要和输出 cap 相等检查；外层另验真实 technical page bytes | 抽取时保留整个发送前边界；实际 technical digest 必须由真实字节导出且不可缺失，见 §9.3 |
+| `build_publication_writer_request` / `assess_publication_content_acceptance` / `assess_publication_content_progress` | 真实 Writer 请求、局部验收与修复增益的共同入口 | 无模型 prepare/ingest；DSH 输出协议与来源适配，不复制第二套 assessor |
+| `final_text_authorship.py`、Binder、共享 composer | 允许角色的 lexical 来源、闭集 witness 与单正文派生 | terminal 原始参数 → JSON pointer → prose span 的来源证明；与 acceptance 同事务提交 |
+| `product_authoring_graph.py` / `research_graph.py` | 阶段/owner/失效规则和 Research 实际拓扑已存在 | 默认 handler、静默路由回退、closure sidecar/`last_result` 仍是主图迁移阻断，WP5 独立验收 |
+| `live_admission_preflight.py`、质量报告 | offline-ready/live-ready 分组；回执绑定 engine/validator/必测集合；不可比与未测量状态 | 新 DSH 配置/协议的离线与 live 准入；既有回执不豁免接入测试或 §16.3 质量验证 |
 
-以上依据为源码与测试源码，**不是本轮测试运行结果**。本地 `offline-receipt.json` 记录了绑定 `3aa9db8...` 的 3767 passed、3 deselected；README 另记 12 subtests。这比只有提交说明更具体，但仍是历史回执，不是本轮复测。原稿不能再笼统写成“没有本地运行证据”，也不能据此宣布新 Writer live 通过。[C01–C07][C10–C16][L01]
+`prepare/execute-prepared` 是既有生产合同的重要基础，但依赖已完成的 Formalizer checkpoint，内部还有多角色构造/执行分支。首个 facade 只抽取冻结 Writer 单元的请求和验收路径，用网络/LLM 出口拦截证明无隐藏模型调用；不把整个函数直接注册为模型工具。
 
-还需要认识首次审查实现的范围：`authoring_artifact_index.py` 有已知文件名/代际表；`verify_research_import()` 当时主要检查 checkpoint 的身份字段存在并计算文件摘要；Writer 输出负荷有字符代理和经验系数。这些旧实现不能单独证明已有通用动态任务数据库、完整证据闭包认证和跨模型标定系统；身份/导入模块的并行增量须在 WP0 按实际完成的公共合同重新核对，避免重复建设。[C02][C03][C04]
+### 2.1 代码基线、文档 HEAD 与回执分别绑定
 
-现有 `prepare/execute-prepared` 是生产准备合同的重要基础，但不是可直接暴露的通用无模型 RPC；它依赖已完成 Formalizer checkpoint，且内部仍有多角色构造与执行分支。新 facade 必须明确输入前提，在测试中拦截所有 Python 模型/网络出口，证明所选 prepare/ingest 路径确实不发送。[C11]
+- **代码对照基线 `0918ee7`**：全离线记录 4014 passed / 3 deselected / 12 subtests passed / exit 0。它用于接入前后回归对照，不等于新 DSH 路径或发布边界已通过。
+- **本次读取 HEAD `d48b4e4`**：只提交 `.agent/implementation.md`、审计方案、本文和 README。已用 `git diff 0918ee7..d48b4e4 -- src tests scripts` 确认无代码差异；该比较不表示整个引擎身份相同。
+- **当前离线回执仍绑定 `0918ee7`**：`docs/` 也参与 engine source digest，文档提交及本轮工作树文档修改都会影响实际准入身份。不得手改回执 SHA/digest、把历史 4014 改标到新 HEAD，或用“代码语义相同”绕过准入。WP0/后续里程碑及 live 前对冻结的实际执行状态运行 `record-offline-receipt`；本轮不花约九分钟重跑一个马上又会随设计提交变化的回执。[L01]
+- 子模块 `paperbanana_single_shot` 的本地 dirty、`docs/1.txt` 草稿和未跟踪原始 run 目录保持原状；不纳入本次设计交付，不重写旧归档。
 
-### 2.1 复核期间的并行工作树增量
-
-本次文档修订过程中，其他工作向 `authoring_execution_identity.py`、`live_admission_preflight.py`、`autonomous_method_agent.py`、`publication_method_writer.py` 等写入了未提交修改：目标身份改为源码内容摘要，增加有效配置摘要和来源不可用的准入阻断，并收敛 Narrative 模式解析。这些 diff 已只读核对并保留；不是本次文档任务实施的修改，也未在本轮测试。
-
-首次复核的固定代码结论/行号绑定 `3aa9db8...`；后续 DSH adapter 应消费实际完成的公共身份/配置 owner，避免重复实现并行修复。DSH composition/角色/协议身份、研究导入引用闭包和实际模型 wire 仍须分别验证，不能从这些未提交增量推断已全部解决。WP0 开始时重取工作树内容摘要和通过回执。
-
-在上一次方向确认落稿时，HEAD 已前进至 `95c50b3f2f73257582454b394ad36f5666fb3c31`，上述源文件不再显示为未提交修改；前两段保留首次复核时点的记录。当时未重新审计新提交的完整差异，不能把旧固定锚点或历史回执改标为新 HEAD 的验收结果。
-
-后续逐项研究在 `4146010...` 建立新快照。Research、Authoring graph、产品入口、Writer、callback、checkpoint 及 section writer 的读取副本与该提交逐字一致，新增锚点见 §21.2。身份模块存在其他工作正在修改的内容；本文保存读取时哈希，不把该增量当已验证能力，也不改写它。读取后工作树仍可继续变化，实施须重新核对快照。旧产物仅支持恢复费用、历史失败与材料完整性分析，不证明当前 DSH 接入通过。[C18–C21][L04]
+此前 `3aa9db8`、`95c50b3`、`4146010` 的读取与未提交并行增量已成为历史记录。来源索引保留其时间边界；现有能力按本节与 §21.2 的 `0918ee7` 锚点解释。
 
 ## 3. 产物告诉我们应该优化什么
 
@@ -182,7 +197,7 @@ DSH code2paper preset
   ├─ tools、sessions、compaction、approval、provider、交付 UI
   └─ Code2Paper bundle
        ├─ host bridge + 身份/权限绑定
-       ├─ task/evidence/submit 工具
+       ├─ 模型窄读取/terminal 工具 + Host 私有任务 RPC
        ├─ 有界上下文与状态恢复投影
        └─ 请求计费/内容验收连接
                    │  版本化、受控 RPC
@@ -248,9 +263,9 @@ DSH code2paper preset
 
 ### 6.3 本轮选择：保留 LangGraph，Agent 执行移到图外
 
-**采用 Python LangGraph + 持久 SQLite checkpoint，不另写等价流程引擎。** 依据是现有 Research 已使用真实 `StateGraph`、仓库已有 checkpoint 封装和依赖，本机安装的 `langgraph 1.2.8 / langgraph-checkpoint 4.1.1 / langgraph-checkpoint-sqlite 3.1.0` 已能完成本轮零网络、跨进程暂停恢复探针。另写状态机没有解决新的业务需求，却要重新证明路由、恢复和失效行为。[C18][C21][D25][L04]
+**采用 Python LangGraph + 持久 SQLite checkpoint，不另写等价流程引擎。** 依据是现有 Research 已使用真实 `StateGraph`、仓库已有 checkpoint 封装和依赖，2026-09-22 本机安装的 `langgraph 1.2.8 / langgraph-checkpoint 4.1.1 / langgraph-checkpoint-sqlite 3.1.0` 曾完成零网络、跨进程暂停恢复探针。另写状态机没有解决新的业务需求，却要重新证明路由、恢复和失效行为。[C18][C21][D25][L04]
 
-这项选择不等于直接复用旧入口运行方式。`run_product_research_phase()` 当前构图未传 checkpointer，调用后依赖进程内 `last_result`；`persist_product_authoring_state_from_writer()` 主要从 Writer 已完成的产物重建 overlay，并只执行最终整理节点。旧 Authoring 默认 handler 多为状态推进，未知 route 还有回退到首个合法候选的逻辑。因此新 preset 必须注册完整领域 handler，拒绝缺失 handler、未知 route 和不可用 checkpoint；不能把现有 overlay 宣称为已经驱动全流程，也不能沿用静默后继回退。[C18–C20]
+这项选择不等于直接复用旧入口运行方式。`run_product_research_phase()` 当前构图未传 checkpointer，调用后依赖进程内 `last_result`；`persist_product_authoring_state_from_writer()` 主要从 Writer 已完成的产物重建 overlay，并只执行最终整理节点。旧 Authoring 默认 handler 多为状态推进，未知 route 还有回退到首个合法候选的逻辑。进入 WP5 的 DSH 主图入口必须注册完整领域 handler，拒绝缺失 handler、未知 route 和不可用 checkpoint；不能把现有 overlay 宣称为已经驱动全流程，也不能沿用静默后继回退。独立 Writer PoC 不要求提前改完主图。[C25]
 
 新适配器采用以下三个边界，合同拟定为 `c2p-dsh-workflow/1`：
 
@@ -269,7 +284,7 @@ LangGraph 在 `Command(resume=...)` 后会从等待节点开头重执行。因�
 
 ### 6.4 默认节点映射：实际驱动、领域 owner 与 DSH 任务
 
-映射绑定 `4146010...` 快照。下面的“并发”均指 §15.6 开启后的**可调度条件**；默认关闭。Python 的领域状态合并始终单写者，表中“纯内核”不会为了形式完整而新增模型 Agent。模型任务只提出候选，正式状态仍由内核决定。
+映射已按 `0918ee7` 重新定位；旧来源 [C18–C22] 保留历史语境，当前锚点见 §21.2。[C23–C26]下面的“并发”均指 §15.6 开启后的**可调度条件**；默认关闭。Python 的领域状态合并始终单写者，表中“纯内核”不会为了形式完整而新增模型 Agent。模型任务只提出候选，正式状态仍由内核决定。
 
 #### 6.4.1 输入与 Research 子图
 
@@ -311,12 +326,23 @@ LangGraph 在 `Command(resume=...)` 后会从等待节点开头重执行。因�
 | `reverse_validate` | 内核固定正文/claim/evidence；独立 DSH verify → 语义提案；内核 merge | qualifier、numeric/formula、authorship、reverse-validation 等仍 fail-closed | 独立验证可并行，裁决串行 |
 | `issue_owner_router` | 内核：验证问题 → 已定义 repair owner 与预算 | Research/Formalizer/Writer/Editor/Rewrite/review；未知 owner 阻断 | 无额外全局规划模型 |
 | `editor` / `rewrite_method_language` | DSH edit / rewrite → 新正文；内核做语义差分、来源登记与依赖失效 | 正文变更必需复验；不能沿用旧绑定直接到分流 | 涉及同一全文版本时串行 |
-| 最终 Binder（产品分流前） | 内核：最终接受的段落/公式/计划 → `_write_unified_v2_binder_receipts` | 当前实际调用在 `:8447`，位于最终验证处理后、publication status 计算前；缺少或失败回执不可被 Writer 成功掩盖 | 单写者；正文变化后必须重建 |
+| 最终 Binder（产品分流前） | 内核：最终接受的段落/公式/计划 → `_write_unified_v2_binder_receipts` | 当前实际调用在 `:8730`，位于最终验证处理后、publication status 计算前；缺少或失败回执不可被 Writer 成功掩盖 | 单写者；正文变化后必须重建 |
 | `split_candidate_verified` | 内核：已验收正文、资格、review 项 → 两种交付状态 | Candidate 与 Verified 分别判定；必需 final-integrity 未通过不得发布 | 单写者 |
 | `author_review_items` | 内核整理仍需作者/外部材料的事项与产品终态 | review 是明确终态/暂停依据，不能当作所有 gate 已通过 | 单写者 |
 | 正式提交与 Figure 后续 | 内核事务提交已接受正文/sidecar；DSH figure 消费同版本技术内容 | 先正文合同，再同源图文一致性；完成度由领域结果确定 | 首版在正文版本冻结后串行接入 |
 
 既有 owner 路由、Candidate 例外及 final-integrity 条件取自现行规范；表格只分配执行责任，不另写较宽松的验收。对不需模型的 `architect` 等路径使用确定性投影，对配置启用的模型 planner/semantic revision callback 则登记明确任务，不能既隐藏旧调用又报告“Python 无 LLM”。`fulfill_and_resume_writing_callbacks()` 当前包含循环及同步 Writer 续跑，须拆为回调验证、研究任务、依赖重编、写作任务四段，不能整体包装为 `c2p_request_research`。[C20–C22]
+
+### 6.5 WP5 主图迁移独立准入门
+
+Writer PoC 只运行独立 opt-in 任务，既不调用旧 Python Agent 循环，也不宣称已迁移 Research/Authoring 主流程。以下全部通过，才允许进入完整主图迁移：
+
+1. 新 DSH 图入口在启动时验证 handler 完整；缺 handler、未知 route/next node、不可用 checkpointer 都明确失败。`_graph_route` 当前的 `allowed[0]` 回退和默认推进不能进入新路径。
+2. `_ResearchGraphContext` 的行为图、loop/progress、observation、revision/callback 等恢复所需状态均有持久、schema 化引用及重建 owner；client/锁等运行对象由配置重建，不靠 Python closure 活对象续命。
+3. 对**真实 Research 图**的每个节点边界做新进程 interrupt/resume：核对状态/引用/合法下一步与未中断对照一致；外部请求和工具副作用由同一账本去重，未知发送阻断。2026-09-22 的玩具图探针不能代替此门。
+4. 结果从持久终态和 receipt 重建，不依赖 `last_result`；Authoring 16 节点、Research 条件边、Formalizer 后 Narrative 细化及补证失效回路均有行为证据。
+
+未通过时保留旧主入口与独立 Writer PoC，各自身份明确；不得默认切换或静默混跑。[C25]
 
 ## 7. 插件结构：一个可安装 bundle，不做“全模块插件化”
 
@@ -331,12 +357,13 @@ integrations/dsh/
     kernel-client.ts          # RPC、受控进程、取消、重连
     task-tools.ts             # schema 校验的 model-facing tools
     role-dispatch.ts          # 子 Agent 请求、persona/toolFilter/outputSchema
-    workflow-driver.ts        # run-owned pump、claim/result/receipt、图恢复
+    workflow-driver.ts        # 首版单 Writer pump；完整图恢复在 WP5
     context-policy.ts         # 有界语义投影及可重放状态恢复
-    request-accounting.ts     # DSH 调用 → domain reservation/receipt
-    execution-policy.ts       # 显式并发开关、任务队列与后端共享请求限流
+    request-accounting.ts     # 仅 hook/RPC adapter；Python 账本为唯一余额权威
+    execution-policy.ts       # 首版强制串行/拒绝开启；共享队列适配在 WP4b
     session-binding.ts        # session/child/task/execution 显式绑定
-  presets/                    # 生成配置的素材，不冒充 DSH 自动扫描路径
+  presets/code2paper/
+    agent.cordis.yml           # 实际 0.1.5-rc.3 的 preset 扫描文件
   skills/
     research-method-evidence/SKILL.md
     write-grounded-method/SKILL.md
@@ -353,26 +380,26 @@ src/code2paper/integrations/dsh/
   protocol.py                 # 新 transport models，不另造技术 IR
   worker.py                   # 无 LLM 的协议入口
   facade.py                   # 复用现有领域模块
-  workflow_adapter.py         # LangGraph prepare/interrupt/apply 与默认流程映射
+  workflow_adapter.py         # WP5：真实主图 prepare/interrupt/apply
   task_store.py               # 持久 task/outbox/claim，引用现有产物索引
-  backend_scheduler.py        # 同主机共享 SQLite 请求队列与 permit
-  task_projection.py          # 生成 TaskEnvelope
+  backend_scheduler.py        # WP4b：同主机共享 SQLite 请求队列；不另建费用账
+  writer_contract.py          # Python 唯一生成 WriterTaskContractV1 / 派生 TaskView
   result_ingest.py             # 验证、失效、提交
   invocation_adapter.py       # DSH request facts → 领域回执
 
 tests/integrations/dsh/
   test_wire_schemas.py
-  test_prepare_submit.py
+  test_writer_prepare_ingest.py
   test_recovery_identity.py
   test_snapshot_authority.py
   test_evidence_isolation.py
 ```
 
-逻辑上分四块：领域 service、工具、运行政策、展示；第一版仍可在一个包内。领域编译器无需全改成 Cordis Service，也不需要为每个 JSON schema 发布一个包。
+这是目标目录，不要求 WP1 一次建全；首个闭环仅实现兼容 spike、单 Writer 合同/Host pump 和必要发送/提交边界，图适配与共享 scheduler 按对应工作包增加。逻辑上分四块：领域 service、工具、运行政策、展示；第一版仍可在一个包内。领域编译器无需全改成 Cordis Service，也不需要为每个 JSON schema 发布一个包。
 
 ### 7.1 bundle 与 preset 配置草案
 
-下面采用已核对的 `dsh.bundle.patch` 和 `insert` 方言；包名与 export 路径是本次拟定，正式安装前须构建并通过固定 DSH 版本 Loader smoke。[D02][D03]
+下面保留旧 `0.1.5-rc.3` 的 `dsh.bundle.patch`、`insert` 和复数 `dsh-agent-presets` 目录扫描示例，供历史对照，不作 0.2 施工模板。**新候选改用 `dsh-agent-preset` / `dsh-agent-preset-registry` 的声明式组成**；旧“本机没有单数包”的限制不适用于新安装。包导出、配置与 Host/preset 权限在新版 H01 实测，不能直接照搬旧例。[D02][D03]
 
 ```json
 {
@@ -393,49 +420,80 @@ tests/integrations/dsh/
     - id: code2paper-kernel-bridge
       name: '@code2paper/dsh-bundle'
       config: {} # 新 Config 由实现定义；必须显式校验 worker 与存储配置
-    - id: preset-code2paper
-      name: '@deepseek-ai/dsh-agent-preset'
-      config:
-        id: code2paper
-        name: Code2Paper
-        description: Author-guided, implementation-grounded Method authoring
-        plugins:
-          - id: code2paper-tools
-            name: '@code2paper/dsh-bundle/tools'
-            config: {}
+- id: agent-presets          # base + web-app 已有的实际插件行
+  config:                    # 替换整个 config，不是字段深合并
+    default: code2paper
+    roots:
+      - path: '<absolute integration presets root>'
+        trust: system
+    includeShippedRoot: false
+    includeUserRoot: false
 ```
 
-这是集成骨架，不是可直接运行的完整 package：正式版本还须声明实际导入的 Service Definition 依赖/peer 依赖、构建与兼容范围，保证 preset registry/base 服务已存在。不要复制 DSH monorepo 的 `workspace:^` 到一个独立发布包里。
+`presets/code2paper/agent.cordis.yml` 是普通插件 entry list，不再包 `insert`：
+
+```yaml
+- id: code2paper-tools
+  name: '@code2paper/dsh-bundle/tools'
+  config: {}
+```
+
+根 Agent 在 `agents.create({ setup })` 中 `await agentPresets.mount(agentCtx, 'code2paper')`，child 通过 `composeFrom` 加入已有 standing composition；共享 preset 不保存单个 task 的可变状态。Host bridge service 位于 bundle 根，工具位于 preset，task/epoch 绑定位于 child 与 Python claim。不要照搬 shipped persona 的 `complete: true` 压掉其他 system prompt sections；必须验证 terminal 指令仍在真实 prompt。
+
+这是集成骨架，不是可直接运行的完整 package：正式版本还须声明实际导入的 Service Definition 依赖/peer 依赖、构建与兼容范围，保证 preset registry/base 服务已存在。不要复制 DSH monorepo 的 `workspace:^` 到一个独立发布包里，也不要把第二份 Cordis/service definitions 打进 bundle。Node 会按真实安装路径解析模块，不能假设链接到源码目录就能解析隔离 runtime 的 peer。
 
 现有 profile 的 matching override 会替换整个 `config`，不能把上面的片段当作任意字段深合并。先检查 composed config；不要覆盖用户的 provider、credentials 或已有插件。Creator 的安装应走 `plugin_manager` 的 `install_bundle`，安装新包、替换已安装包、HMR 和 restart-required 必须分别处理。[D03]
 
 ### 7.2 可复现安装与模型能力前置检查
 
-`private: true` 的首版通过本地目录/打包文件试装；若后续发布 npm，再定义发布清单与版本策略。`compatibility.json` 至少固定 DSH SHA、实际安装包版本/锁文件摘要、bundle 构建摘要、Python wheel/依赖与协议版本。当前 DSH 根包要求 Node `^22.19.0 || >=24.0.0`；不能只写“安装 Node”。冻结版本只声明此组合支持，不默认兼容后续 alpha。[D11][D23]
+`private: true` 的首版通过本地目录/打包文件试装；若后续发布 npm，再定义发布清单与版本策略。`compatibility.json` 至少固定可核实的 DSH SHA、实际安装包版本/锁文件摘要、bundle 构建摘要、Python wheel/依赖与协议版本。若只有已安装包，源码 SHA 须明确未知，不能借用研究参考 SHA。参考版本根包要求 Node `^22.19.0 || >=24.0.0`；实际隔离环境锁定 Node `v25.8.2` 并已验证启动，不能只写“安装 Node”。冻结组合不默认兼容其他发布版本。[D11][D23]
 
 加载检查须覆盖 `agent`/loop、preset registry、`llm`/adapter、tools、subagents/spawn、subprocess 与会话存储等实际依赖。目录中的 `skills/` 不会自行进入 prompt，必须显式挂载并检查可见内容；bundle 服务、preset 内工具、child 局部身份的作用域分别验证。
 
 现有 Qwen profile 声明 `native_json_schema` 和 131072 context，**没有由此证明 DSH 的 tool-calling 兼容性**。PoC 先用 mock 验证协议，再对指定的 `8006/qwen38-27b-nvfp4` 单独检验普通工具调用、`structured_output` 参数、usage/finish、取消与真实 tokenizer。Python 目前可发送 `top_p`、`chat_template_kwargs`、`thinking_token_budget`，DSH `GenerateOptions` 不直接提供这些字段；`llm-pi-ai` 已有 `compat`、`thinkingTokenBudgetField` 和模板参数配置，优先核对这些现有能力，再证明实际 wire/服务端配置等价或记录差异。缺能力就停止该模型的可比试验，不能静默改用另一模型或关闭要求。[C17][D15][D18][D20]
 
-## 8. 插件应暴露什么工具
+### 7.3 本机现有 DSH 的隔离开发环境（2026-09-27 已建立）
 
-不要把 `compile_v2`、`adapt_v3`、`revision_2` 一股脑暴露为模型选项。模型应选择“补证据、解释公式、写这一组段落、修复某项问题”，版本轴和投影过程由内核处理。
+**2026-09-29 追加决定：** 下文描述旧环境建立时点。旧 runtime/manifest/验收记录只读保留；
+新 `0.2.0-rc.1` 安装、依赖、home/profile、构建与 staging 在独立候选根冻结，复用同一套
+launcher/toolchain 代码，由窗口二单写。旧 H01/H02 PASS 不批准新版；新版基础接口和完整
+Gate-H 通过后才切开发选择器，不修改用户日常 `0.1.7-rc.2`。K04 七项复核意见由窗口一
+在 Python 原 owner 收口，K01 的启动须等全部本单元 AT/阻断项通过；见 [当前分工](dsh_execution_20260928/README.md)。
 
-### 8.1 公共工具集（均为设计名称）
+用户要求依据现有 DSH 开发且不影响日常使用。本机发现的是 npm 已安装包 `0.1.5-rc.3`，
+日常 home 为 `/home/cuihengjia/.dsh`，不是 Code2Paper 仓库里的完整上游源码 checkout。
+本轮独立复制运行包和完整依赖树到 `.dsh-dev/runtime/`，保存原 lock 和逐文件摘要；不升级、
+重装或修改原安装，也不复制其配置、凭据、会话和本地插件。
 
-| 工具 | 输入主项 | 输出主项 | 是否可推进领域状态 |
-|---|---|---|---|
-| `c2p_state` | 当前绑定 run；可选 section | 阶段、任务/验收状态、未解事项、预算、合法动作、并发有效值、产物 handles | 否 |
-| `c2p_prepare_task` | task kind、section/issue 目标、expected revision | TaskEnvelope、task digest、准备回执 | 是：预备，不调用模型 |
-| `c2p_read_artifact` | artifact handle、范围/cursor | 完整或明确分页的局部内容、来源/摘要 | 否 |
-| `c2p_submit_result` | task id、候选对象/受控 artifact handle、expected revision | accepted/rejected/pending_validation/补证状态、问题 owner、相应回执 | 是 |
-| `c2p_request_research` | 当前任务中的缺口、所需证据种类 | 有界研究任务及依赖影响 | 是，不等于补证成功 |
-| `c2p_dispatch_task` | 已准备且当前可派发的 task id | 立即返回 queued/running ticket；完成后按 handle 查结果/领域回执 | 是：请求同一个 Host pump，禁止递归全流程 |
-| `c2p_export` | artifact set / requested output tier | 可交付文件、验证状态、未解事项 | 仅对已获授权的产物发布 |
+开发实例采用独立 `DSH_HOME`、`code2paper-dev` profile、缓存、工作目录和 `3081` 端口。
+启动器强制 `bubblewrap` 根文件系统只读，仅开发目录及私有临时区域可写；标准模型适配器、
+遥测及辅助模型调用关闭。Web 真实启动/页面/静态资源与退出已验证；这不等于 WP2 的
+Agent/terminal/取消兼容验证，也不代表 Python facade 已实现。完整目录、命令、版本摘要与
+限制见 [隔离环境说明](../integrations/dsh/dev/README.md)。
 
-研究角色额外以独立、窄 schema 暴露现有 `find_entrypoints`、`search_symbols`、`read_symbol`、`find_references` 等，全部经 §6.4.1 的决策准入适配层进入现有 `execute_research_tool`。`record_gap`/stop 等控制提案由窄工具 `c2p_research_step` 承载；它只推进到下一个外部提案边界，不内部运行 Research Agent。现有 `close_search_frontier`、`record_explicit_code_gap` 的搜索闭合与负面结论规则也不能丢掉。[C08][C18]
+下文 [D01]–[D27] 仍绑定研究参考 `c36a83ff`，旧 WP0/WP2 证据绑定 `0.1.5-rc.3`；当前
+WP2 目标按第 01 份在新候选实际运行包上逐项复验。任何旧环境启动通过都不能改标新版通过。
+日常安装保持原入口，插件仅装入开发候选 profile。
 
-公共工具不代表所有角色均可见：读取按 task scope；prepare/dispatch/request_research 由流程角色或 Host 受控使用；Writer 通过 terminal 结果报告 draft/缺口；submit 统一进入验收。`workflow.resume`、claim 及后端 permit 只提供给已绑定 Host，不注册为模型工具。
+## 8. 三类接口与最小权限
+
+模型选择任务内行动，Host 执行受授权的调度，操作者管理运行。三个接口集合分别注册和鉴权；不能因共用 Python facade 就把全部 RPC 导出为模型工具。
+
+### 8.1 模型、Host 与操作者的接口清单（均为设计名称）
+
+| 调用者 | 接口/能力 | 返回与权限边界 |
+|---|---|---|
+| 模型：受限读取 | `c2p_state`、`c2p_read_artifact` | 当前绑定 task 的只读投影、范围/cursor 与摘要；不能读任意 run/path |
+| 模型：Research 角色，WP5 后 | `find_entrypoints`、`search_symbols`、`read_symbol`、`find_references` 等窄工具 | 经现有 policy admission → `execute_research_tool` → observation；证据晋升仍由 Python 决定 |
+| 模型：typed terminal | DSH child 局部 `structured_output` | Writer 返回 `draft`、`research_required` 或 `blocked`；工具完成仅是候选输出，不提交领域状态 |
+| Host 私有 | `task.prepare`、`task.claim`、`task.record_output`、`task.ingest` | 生成/领取冻结合同，记录来源事实，运行现有 assessor，返回正式 receipt 或依赖等待 |
+| Host 私有 | `request.reserve`、`request.dispatch`、`request.settle`、`request.mark_unknown` | Python lease 内更新同一 invocation 账本；模型不可伪造发送/usage/余额 |
+| Host 私有，WP5 后 | `workflow.advance`、`workflow.resume` | prepare/interrupt/apply 的短 RPC；只接受经验证的持久引用 |
+| 操作者 | export、配置、迁移、fork/recovery 管理 | CLI/UI 的显式管理入口；export 只导出已获准的产物，不能令候选升级 Verified |
+
+**第一版不把 prepare、dispatch、submit、export 注册为普通模型工具。** Host pump 自己领取就绪任务，无 `c2p_dispatch_task` 模型派发入口；没有主 Agent “手动提交正文”的旁路。Writer 通过 terminal `research_required` 返回 typed gap，不再同时提供能推进领域状态的 `c2p_request_research`。Host ingest 记录补证需求并返回领域 owner；完整补证回路在 WP5 前保持等待，不偷偷调用旧 Research Agent。
+
+WP3a/WP3b 的单请求 Writer 预载全部必要材料，仅开放 terminal 工具；WP3c 再开放 task 范围读取。Research 专用 `record_gap`/stop 等提案若包装为窄工具，也必须经过现有闭合/权限/预算校验，只推进到下一个外部提案边界，不在工具内部运行 Agent。[C08][C25]
 
 ### 8.2 身份不要由模型自报
 
@@ -449,42 +507,54 @@ DSH `defineTool` 的便捷参数描述（示例属性内 `required: true`）与�
 
 一期固定采用 **原生工具模式**，不同时引入 PTC、动态生成工作流和一整套 schema 改写。后续 PTC 可复用同一 typed tool registry，但每个子 dispatch 仍必须经过绑定/权限/记账，不能绕过原生通路。
 
-## 9. TaskEnvelope：新增的是执行载体，不是第五套方法表示
+## 9. WriterTaskContractV1：Python 生成的唯一任务合同
 
-下面是拟定的核心 wire model（字段语义规格，最终命名由实现冻结）。
+首版只注册 `write`，不先定义横跨九种角色的宽泛 TaskEnvelope。**Python 组合已有 owner 的真实产物和请求，生成唯一 `WriterTaskContractV1`；DSH 消费合同及派生 TaskView，回传同一合同引用和实际执行事实。** 不在 TS 再拼一份独立作者/证据/页义务合同。
+
+下面是字段语义草案；引用类型均须为严格 extra-forbid 的 schema，标识、digest、范围和跨字段关系由 Python 校验。它不是现有可直接导入的类。
 
 ```python
-class C2PTaskEnvelopeV1(BaseModel):
+class WriterTaskContractV1(BaseModel):
+    schema_version: Literal['1.0']
     protocol_version: Literal['c2p-dsh/1']
     execution_id: str
     task_id: str
-    workflow_version: Literal['c2p-dsh-workflow/1']
-    workflow_node: str
     task_epoch: int
-    task_kind: Literal['research', 'plan', 'formalize', 'write', 'realize',
-                       'edit', 'rewrite', 'verify', 'figure']
-    task_digest: str
     expected_state_revision: int
-    source_snapshot_digest: str
-    narrative_plan_digest: str | None
-    validator_bundle_digest: str
-    section_id: str | None
-    paragraph_ids: tuple[str, ...]
-    objective: str
-    local_author_surfaces: tuple[dict, ...]
-    evidence_handles: tuple[str, ...]
-    formula_handles: tuple[str, ...]
-    required_occurrences: tuple[dict, ...]
-    allowed_actions: tuple[str, ...]
-    response_schema_handle: str
-    max_request_input_tokens: int
-    max_output_tokens: int
-    remaining_content_attempts: int
+    writer_request_ref: FrozenWriterRequestRef
+    resolved_snapshot_ref: ResolvedArtifactSnapshotRef
+    read_set: tuple[ArtifactReadRef, ...]
+    page_contract_ref: WriterPageContractRef
+    author_surface_digest: str
+    binding_contract_digest: str
+    technical_bytes_digest: str
+    identity: WriterExecutionIdentityRefs
+    dsh_wire_contract_ref: DshWireContractRef
+    post_clamp_max_output_tokens: int
+    accounting_version: Literal['c2p-dsh-task-loop-v1']
+    epoch_limits: WriterEpochLimitsV1
+    budget_snapshot_ref: str
+    task_digest: str
 ```
 
-上述仅展示字段；实现要增加严格 extra-forbid、非空/范围约束、结构化 occurrence 类型与 schema 导出。不要把任意 `dict` 留作最终未校验通道。
+| 组合项 | 唯一来源与要求 |
+|---|---|
+| `writer_request_ref` | `build_publication_writer_request` 的实际 prompt/input/schema；保留作者、paragraph/detail/formula occurrence 及来源，禁止重造简化的语义副本 |
+| `resolved_snapshot_ref` / `read_set` | 已验证索引/registration/transaction manifest 的精确版本；绑定内容摘要和 upstream，不能只保存活动文件路径 |
+| 页合同与三个摘要 | 既有计划、作者 surface、binding/authority 闭集和本页真实技术字节；空白名单也是合同，缺失不表示豁免 |
+| `identity` | engine、target/intent/claims、validator、实际 provider/model/config、tokenizer，以及 DSH/bundle/角色/composed preset 身份 |
+| `dsh_wire_contract_ref` | 受控 renderer 版本、terminal schema、从旧 JSON 响应指令到 terminal 指令的明确转换；TaskView 为该合同的派生视图 |
+| `post_clamp_max_output_tokens` | 与本页可行性估量和最终 provider config 相等的实际有效上限；降低或提高均须重新编译/准入后产生新合同，不能原地改 frozen cap |
+| `epoch_limits` | 有限的请求数、输入/输出 token 总额、工具读取量、wall-clock 与 run/section 上限引用；首个闭环 `max_model_requests=1` |
+| `budget_snapshot_ref` | prepare 时的展示快照；`remaining_content_attempts` 即使出现也只作快照，不是 dispatch 余额权威 |
 
-`task_kind` 是设计全集，第一版只注册 `write`；未实现种类明确拒绝。Narrative 尚未产生的 Research/早期 plan 允许其 digest 为空，Writer 则必须具备当前合同要求的计划引用；这些约束按 kind 交叉验证，不用占位字符串绕过。技术依赖的 typed read-set、角色合同、期望输出 tier 和证据 scope digest 必须进入 task digest，定义 schema 后与上述字段一起冻结。`expected_state_revision` 表示领域内容版本，prepare、预算预留和只读操作不应自动推进它，否则任务刚准备就会被自身的账本写入标成 stale。首版串行写任务；后续并发按实际依赖 digest 检查冲突，不能只凭一个全局递增计数使所有兄弟任务相互失效。
+prepare 使用既有 request builder 和有效模型配置构造候选，结合固定 DSH renderer/terminal schema 完成真实 wire 计量、clamp 与必要重编，再冻结合同。dispatch 对最终组装请求重新比较；不能在不可变 `llm/stream` hook 内临时注入材料或就地改合同使其通过。
+
+`task_digest` 由 Python canonical serializer 计算，覆盖上述身份、限额以及引用对象的精确版本/摘要，排除摘要字段自身。TS 保留该值；结果记录由 Host 绑定原 `task_id`、epoch 与 `task_digest` 后回传，模型回显的标识不能替代真实 caller/claim 身份。任何材料或有效配置变化均产生显式新合同及 lineage，不修改已冻结记录。
+
+dispatch 前必须在 lease 内再次调用同一 reducer/预算 owner，核对 read-set、claim/fencing、unknown-send、剩余内容尝试及请求/token 额度，再原子持久化 reserve/started。已排队任务不得依据 prepare 时的旧余额发出请求。
+
+`expected_state_revision` 只描述领域内容版本，准备和记账不应使任务自发 stale。未来并发再按 read-set/digest 检查冲突。Research/plan/formalize 等角色在 WP5 分别组合其现有合同；可以共享传输标识基类，但不回到一份任意 `dict` 的通用任务真源。
 
 ### 9.0 结果合同必须能表达“需要材料”
 
@@ -511,6 +581,14 @@ Writer 负责 prose、detail occurrence 与适用的 formula consumption；Binde
 
 全文框架、术语定义和邻接衔接由小型共享视图提供；大证据从有界工具读取，不通过不断增加父会话长度解决。页、段落片段和 section 是执行/叙事的不同层级，不能让物理分页自行改写作者主线。
 
+### 9.3 technical digest 缺失与实际请求的抽取边界
+
+本轮最小调用证实：`compare_actual_request_to_page_contract` 已有冻结 `technical_bytes_digest` 时，payload 没有对应字段仍返回空失败集。**这证明 helper 不能独立承担完整 technical 校验，不等于现有生产路径已允许改写技术材料**：`_capturing_writer_caller` 还逐字比较真实 `shared_contexts` 与冻结 page。DSH 抽取不能只搬 helper 而丢掉外层保护。[C24]
+
+WP1a/WP1b 将该保护收敛到公共发送合同：Python/可信 adapter 对实际材料字节重算 `actual_technical_bytes_digest`，与冻结值比较；无法取得实际材料/有效摘要，或摘要不等，均发送前拒绝。若 wire schema 声明必需摘要字段，缺失即 schema/contract failure；不信模型自报摘要，也不以原样复制 expected digest 代替实测。
+
+新增**真实生产调用链**反例：缺材料或必需 actual digest、改材料但保留旧声明、改材料并同步伪造声明、repair 中改材料，均零 provider send；合法旧请求由 adapter 从真实字节补齐有效字段后仍通过。保持既有 cap 相等、空 scope、作者语义与 token accounting 检查，不消耗 content repair 来修预发送错误。
+
 ## 10. 现有代码如何拆，不再形成双 Agent 循环
 
 ### 10.1 关键障碍：同步 `_LLMCaller` 不是 DSH Agent
@@ -521,7 +599,7 @@ Writer 负责 prose、detail occurrence 与适用的 formula consumption；Binde
 
 ```text
 prepare_write_task(existing_inputs)
-    -> frozen task + actual model-facing TaskView + output schema
+    -> WriterTaskContractV1 + derived TaskView + terminal schema
 
 DSH native child executes the task
     -> model/tool request events + structured result
@@ -577,7 +655,7 @@ Writer 可以提出明确取证请求，查看当前 task 授权的证据、公�
 // 设计接口：任务与角色由 Code2Paper 绑定；返回 DSH 的真实请求类型。
 function makeRoleRequest(
   parent: Agent,
-  task: C2PTaskEnvelopeV1,
+  task: WriterTaskContractV1,
   scope: BoundTaskScope,
   signal: AbortSignal,
 ): SubagentStartRequest
@@ -589,15 +667,13 @@ function makeRoleRequest(
 
 以当前 `tools.view()` 实现为准，过滤作用于 global/ancestor 继承工具，child 自己注册的工具保留；`structured_output` 正依赖这个规则。不要把尚未注册的局部 terminal 工具写入 `toolFilter.allow`，这可能触发 unknown-name 校验。需用 smoke 证明继承的危险工具不可见/不可执行，而 terminal 工具仍可用。[D24]
 
-首版所有已接入角色使用 one-shot task + 有界修复/依赖续作；Research 的连续性由领域 checkpoint 和 TaskView 重建保证。后续如采用 continuable，须另验证其终态结构化输出与重连协议，不能把 inbox 已接收当成完成。不要把每个段落变成永久 resident child。原生子 Agent 只返回 closing message 并不证明它的产物被提交，父 Agent 应读取正式 `submit_result` 回执。
+角色接入后统一采用 one-shot task + 有界修复/依赖续作；首个 Writer PoC 仍限定一个请求且无自动 repair。WP5 的 Research 连续性由领域 checkpoint 和 TaskView 重建保证。后续如采用 continuable，须另验证其终态结构化输出与重连协议，不能把 inbox 已接收当成完成。不要把每个段落变成永久 resident child。原生子 Agent 只返回 closing message 并不证明它的产物被提交，Host/父视图应读取正式 `task.ingest` 回执。
 
 ### 11.1 第一版只有 Host 可以提交正式结果
 
-第一版 Writer/Editor 子 Agent 只获得读取、必要取证请求和 DSH 结构化返回所需的能力，不获得正式 `c2p_submit_result` 或 `c2p_export` 写权限。子 Agent 返回 `SubagentResult.structured` 后，Host 按已绑定 task/attempt 调用 Python ingest，产生正式 content receipt。这避免“子 Agent 提交一次、Host 又把 closing message 提交一次”的双提交。
+Writer 子 Agent 只返回 `WriterTaskResultV1`，不获得 prepare/claim/dispatch/ingest/export 权限。Host 按绑定的合同、epoch 和原始输出调用 Python `task.record_output` / `task.ingest`，由既有 assessor 产生 content receipt，§15.3 的事务同时绑定候选正文、验收和 authorship。terminal 工具成功或 closing message 都不是领域提交。
 
-主 Agent 的交互式手动提交通路可以保留同一个 `c2p_submit_result` facade，但它与自动 dispatch 的任务不能同时拥有活跃写 lease。后续支持 child 内部 validation feedback 时，必须定义独立的草稿检查/正式提交语义，不能把 validation probe 当成免费、无限次 content repair。
-
-手动提交通路也必须证明正文来自允许角色的已记录响应。人手或主 Agent 提供的任意文本只能作为独立编辑建议/输入，不能通过“Host 代提交”伪装成 Writer 产物。
+操作者的恢复/导出入口也使用相同 lease、身份和出处检查；手动文本只能作为另行记录的编辑输入，不能经 Host 代交而伪装成 Writer。第一版不另开主 Agent 手动提交通路。后续若增加草稿检查，必须计入明确预算，不能变成免费、无限次内容 repair。
 
 ### 11.2 `outputSchema` 的真实完成方式
 
@@ -607,19 +683,25 @@ function makeRoleRequest(
 
 结构化捕获有进程内状态。Host 必须在 child 释放前保存终态与模型输出证明；若 crash 发生在捕获后、Python ingest 前，应从已持久化的模型参数和成功工具结果重建，再复验 schema/领域合同。缺少足够日志时保留 unresolved，不猜测成功或自动再次生成。
 
+本机 `0.1.5-rc.3` 的额外约束：`outputSchema` 根必须为 object，同一节点不能同时声明 `type` 和 `oneOf`。H03 优先验证 object 根下 `result.oneOf` 的包装，Python 的完整领域结果约束不变。pi-ai 在 `toolcall_delta` 保留 `argumentsDelta`，但 `toolcall_end.arguments` 来自 `JSON.stringify`；Session 的 `tool/call.arguments` 不能直接充当原始 provider 字节。分别保留 argument stream、normalized terminal、parsed object 与 prose 的摘要及来源等级，未观测到完整 HTTP/SSE raw 就明确缺失。
+
+`whenIdle()`、`turn/end` 和工具观察事件不证明日志已经持久化。Host 需 await `sessions.flush`，确认有持久 listener 且来源记录可读，再获取 `task.record_output` 回执；异步 observer 的容错副作用不是提交门。以上均由真实运行包 mock 验证，不只阅读声明。[执行部分 01](dsh_execution_20260928/01_baseline_and_dsh_compatibility.md)
+
 ### 11.3 子任务绑定必须早于第一次请求
 
-`spawn.start()` 的驱动在返回 run handle 前已经可能开始 followup，不能拿到 child ID 后才装预算/权限门。首版每个 parent 同时仅允许一个 pending dispatch：先持久化 Host 的 task/epoch 预留，再在创建阶段的受等待生命周期钩子中以真实 parent/child 关系绑定；`agent/pre-step` 和 `llm/stream` 共同拒绝未绑定 child。模型 prompt 中的 task ID 不能建立该绑定。[D06][D19]
+`spawn.start()` 的驱动在返回 run handle 前已经可能开始 followup，不能拿到 child ID 后才装预算/权限门。首版每个 parent 同时仅允许一个 pending dispatch：先持久化 Host 的 task/epoch claim，再以真实 parent/child 关系完成受等待的创建绑定，随后才允许材料装配、工具访问与模型请求。模型 prompt 中的 task ID 不能建立该绑定。[D06][D19]
+
+实际 `0.1.5-rc.3` 中，公开 `agents.create({setup})` 的 setup 在 publication 前被 await；标准 `SubagentStartRequest` 没有调用方 setup/childId。`agent/created` 的同步异常可以 veto，但 Promise 不被 await，不能承担异步持久绑定。`agent/pre-step` 虽被 await，却在 `systemPrompt.assemble` 之后；它与 `llm/stream` 可拒绝未绑定请求，不能证明 prompt 材料已在正确身份下装配。
 
 这里串行的是创建与身份绑定窗口，绑定完成即释放创建互斥；已绑定 child 的实际执行仍可按 §15.6 并发。不要把创建锁持有到 `.result` 完成，也不能把 single pending dispatch 误写成永远只有一个活跃 child。
 
-WP2 必须用 mock 证明第一次请求已绑定、创建失败释放规则正确、任意子 Agent 工具不能另开未入账任务。如果标准 spawn 下无法可靠完成这一步，应实现公开 provider/factory seam 上的窄适配器，不依赖事后补日志。首版移除通用递归 subagent 调度工具，只允许受控 `c2p_dispatch_task`。
+WP2/H02 必须用 mock 证明首次材料装配和请求前已绑定、创建失败释放规则正确、任意子 Agent 工具不能另开未入账任务。如果标准 spawn 下无法可靠完成，应注册窄 subagent provider，内部调用现有 `agents.create({setup})`；保留已有 loop factory，第二次 `setFactory` 会冲突。driver 的 `attachStructuredRuntime` 是私有函数，不能假设公开 `startInProcessRun` 接受额外 setup 参数或导入私有 helper。窄 provider 需用公开 tools/systemPrompt/Session 接口重新证明相同 terminal、guard、取消及持久来源合同，不依赖事后补日志。首版移除通用递归 subagent 调度工具；仅 Host 私有 pump 可依据 Python claim 派发。
 
 ## 12. 工具兼容：复用浏览能力，保留取证语义
 
 ### 12.1 一期采用的低风险路径
 
-DSH 标准文件搜索、目录查看、必要 LSP 用于定位；Code2Paper 原有研究工具用于正式 read/capture，继续生成 `ResearchObservationV1`。现有协议包含 snapshot、obligation、authority、exact_span、input/output digest，且禁止“截断搜索 = 全部没找到”的错误结论。[C08]
+以下是 WP3c/WP5 扩展后的工具策略；首个单请求 Writer 只用已预载材料。DSH 标准文件搜索、目录查看、必要 LSP 用于定位；Code2Paper 原有研究工具用于正式 read/capture，继续生成 `ResearchObservationV1`。现有协议包含 snapshot、obligation、authority、exact_span、input/output digest，且禁止“截断搜索 = 全部没找到”的错误结论。[C08]
 
 这样既不需要把全部 DSH 工具重新实现一遍，也不需要一开始证明任意 shell 输出都能安全转换为代码证据。
 
@@ -691,11 +773,13 @@ README、SKILL、历史会话中的说法、Creator 生成代码的说明、web 
 
 一期 run root 放到用户选择的持久位置，不能依赖每条 bwrap 命令私有的 `/tmp`。DSH session storage 与 Code2Paper run root 都要有明确挂载；临时 `/tmp` 只用于可丢弃 scratch。
 
-### 14.1 冻结研究导入需要验证整个引用闭包
+### 14.1 复用现有 Research import 闭包校验
 
-首次审查的 `verify_research_import()` 只验证 checkpoint 身份字段存在并计算该文件摘要；§2.1 的并行身份/导入修改须另按其最终实现与回执核对。DSH 导入合同要求逐项校验 snapshot/tree、intent、schema、artifact bytes/semantic digest、evidence/claim 引用和 callback receipt；已有公共实现满足的部分直接复用，缺失部分再扩展。路径重映射保持内容身份，缺文件、摘要变化和跨 snapshot 引用均拒绝。输入没有完整闭包时可保留诊断材料，但不能进入正式证据 scope。[C02]
+`0918ee7` 已实现 `verify_research_import_closure`，不再把它描述成“仅检查几个 checkpoint 身份字段”。现有实现验证目标/snapshot、必需 authority 产物及摘要、facts/packets/claims 链、路径安全，并拒绝导入正文/发布/预算/活动指针等写作状态。DSH fork/import 直接消费它的可验证结论与具名拒绝原因，不在 TS 重写 import validator。[C23]
 
-fork 只导入可验证且本实验允许的研究证据，不导入旧正文、旧 authoring 成功状态或原 run 的剩余额度。历史调用标记为 `reused_evidence`，本 execution 发送另行记账。不同进程工作目录、部署 endpoint 的 `localhost` 含义、持久挂载和权限应写入兼容配置；不能假设容器内 `127.0.0.1:8006` 就是宿主模型。
+新增 bridge 的责任是把受验证引用映射为 task read-set，保留实际 schema/bytes/semantic digest 和 callback/upstream lineage。以缺文件、摘要变化、跨 snapshot、路径重映射和新增 DSH sidecar 引用分别验证现有 owner 的覆盖；某类新引用未被支持时扩展同一 owner 或拒绝，不从一个 `verifiable=true` 推断所有未来对象都已认证。
+
+fork 只导入本实验允许的研究证据，不导入旧正文、旧 authoring 成功状态或原 run 剩余额度。历史调用标记 `reused_evidence`，新 execution 发送另记。部署的持久挂载、受控路径和 endpoint `localhost` 含义写入兼容配置，不假设容器内 `127.0.0.1:8006` 一定是宿主模型。
 
 ## 15. RPC、并发、幂等和取消
 
@@ -715,13 +799,27 @@ mutation 幂等键绑定 `(execution, task, result_digest, validator_digest)`。
 
 `result_digest` 必须由 Host/Python 对实际结果重算；同一 task/epoch 至多一个正式终态提交，不同内容须有新的授权 epoch 或 task revision。先验证 caller/run 权限，再查已完成幂等键，最后做新提交的 revision 检查，避免“提交成功但回包丢失”的合法重试被新 revision 拒绝。只读 cursor 也绑定 artifact digest，翻页期间对象变化时明确 stale。
 
-### 15.3 单写者与两种日志
+### 15.3 不可变发布事务：首次 Writer PoC 之前完成
 
-领域写入始终串行化；Agent 是否并发受 §15.6 的显式开关控制。纯只读工具可按独立的工具执行策略并行，但只有真正不会修改父状态的读取才声明 concurrency-safe；任何工具内部模型调用都仍受后端请求上限约束。现有 `acquire_run_lease` 使用 `fcntl`，一期应以用户的 Linux 运行环境为目标，不能因为 DSH 有跨平台入口就声称整个插件已经支持 Windows 原生 Python。[C02][D05]
+领域写入继续使用现有 run lease 与索引体系。**WP1a 必须先修发布/registry 边界；首次 Writer prepare/ingest 和 DSH mock 闭环以它为前置，不能推迟到 WP4b。** DSH Session 是展示/交互日志，Python invocation 账本记录发送和恢复事实；正式 publication transaction 决定哪些产物可见，三者不能互相代替。
 
-领域提交与 DSH Session event 不构成跨进程原子事务。采用“先写不可变领域产物 + commit receipt，再投影到会话”的恢复规则；会话投影丢失时可按 commit id 重建。未获正式 commit receipt 的模型输出不能在 UI 标为 accepted。
+`0918ee7` 已有 producer registry 与 publication journal，但当前顺序为 `os.replace(temporary, target)` → register。第二代复用同一 target，若在 register 前中断，旧 active registration 未变而目标已是新字节，旧对象无法再正常解析。本轮临时探针已复现。`ArtifactRegistrationV1`/`ArtifactRegistryV1` 的 validator 还会在加载时重新计算并覆盖声明摘要，篡改 `upstream_refs` 可被接受。不能仅因文件名带 digest 或已有 journal 就把这两条边界标为完成。[C24][L05]
 
-这还要求**领域内部**的跨文件提交可恢复：在 lease 下写独立 staging generation，核对产物集合与摘要，持久化 transaction manifest/commit marker，再原子切换唯一 active 引用。每个 reader 只读该已提交 manifest 绑定的版本；逐个原子 rename 多个正文/sidecar 文件并不构成整体原子性。现有只读 artifact index 不是此事务存储，实现必须扩展同一索引体系，不能另建竞争真源。崩溃在 marker 前保留为未提交 staging，marker 后按 receipt 恢复，不重跑模型。
+**扩展原 owner 的发布协议：**
+
+1. 在 run lease 下核对调用权限、task/read-set/validator 身份、当前 active transaction 和 fencing token；分配新 generation/transaction ID。新文件采用 generation/content-addressed 路径，绝不覆盖旧 active 的字节。
+2. 写不可变正文、acceptance、authorship sidecar 及必要依赖；逐个验证 bytes/schema/semantic/upstream，持久化文件和目录。正文文本可先处于局部 accepted 或 pending_validation，但不能借此晋升全文发布状态。
+3. 写不可变 registration records，记录精确路径、bytes/semantic/upstream、producer/generation；写 `PublicationTransactionManifestV1`，绑定全部成员与 read-set、task epoch、validator 及 provenance。模型输出原始记录必须已经落盘。
+4. 完整验证后持久化 manifest/commit receipt 为“可激活”，**最后**在同一受保护临界区对 expected active generation + fencing token 做 CAS，再原子切换唯一 active 指针并同步目录。rename 本身不是 CAS；需要 lease/事务中的比较与陈旧 owner 拒绝。CAS 失败保留未激活对象，不能影响旧 active。
+5. reader 只从 active 指针解析 manifest 和其引用的不可变 registration，并重新校验声明摘要、成员字节及 upstream；返回这次验证的同一组字节。active 未切换前只见旧完整 generation，切换后只见新完整 generation。固定名 Markdown/JSON 如需兼容，只是提交后的导出投影，不作为权威读取入口。
+
+加载合同与创建合同分离：创建时可以封装摘要；加载时必须先保留磁盘声明值，重算比较后才构造对象。缺失、不等、record 缺失、指针内嵌记录与实际不可变文件不符、未知 schema 均 fail-closed，不通过 reseal 或目录扫描把修改重新认证。旧 registry 经具名 legacy reader/迁移导入新 generation，原归档不改字节，不伪装成新协议的已验证记录。
+
+跨文件提交的线性化点是 active CAS。manifest/receipt 已落盘但未激活时，恢复只在原 expected active、当前依赖和有效新 lease/fence 均满足时完成同一激活；旧 fence 的延迟 callback 必须拒绝。已激活但会话/图回执投影未完成时，从同一 receipt 重建投影，不重跑模型。未获完整且已激活提交证明的 UI 不显示正式 accepted。
+
+**前置故障矩阵须先建立一个完整 active g1，再发布 g2：**在每个成员写入、registration、manifest/receipt、CAS 前后及会话投影处注入崩溃；恢复只能见完整 g1 或完整 g2，无新正文配旧 sidecar、无旧 active 被覆盖成 invalid。再覆盖 upstream/digest 篡改、旧 Host fence、并发 expected-active 冲突和重复激活。只测空目录第一次发布不足以通过此门。
+
+一期以 Linux 单主机 `fcntl` lease 为目标；本协议复用并修正 `authoring_artifact_publication`、`authoring_artifact_registry`、`authoring_artifact_index`，不在 DSH 新建第二份正式产物真源。
 
 ### 15.4 取消语义
 
@@ -771,11 +869,11 @@ Agent 任务并发数和模型请求并发数可以不同：多个任务可做�
 
 开启时 run 的模型请求上限为该 run 的 `max_parallel_agents`，包括父 Agent 和辅助请求；后端再以自己的共享上限收紧。辅助请求不占新增叶任务名额，但不能越过 run/backend 请求队列。开关关闭时既不会删掉角色，也不会取消必要的独立验证。
 
-**模型侧限制落实在 §16.0 的实际 LLM seam。** 父 Agent、所有子 Agent、verify、重试、compaction 和 session-title 都使用同一共享请求队列。一次准入同时满足 run 限额和 backend group 限额；某个 run 关闭并发只收紧它自己的请求，不把其他 run 的上限也改成 1。需要整个本地服务串行时，在部署配置固定 `max_inflight_requests=1`，所有接入 run 合计受此限制。
+**模型侧限制落实在 §16.0 的实际 LLM seam。** 父 Agent、所有子 Agent、verify、重试、compaction 和 session-title 都使用同一 Python 准入权威。WP4a 为单 run 独占串行门，WP4b 为共享请求队列；一次准入同时满足 run 限额和 backend group 限额；某个 run 关闭并发只收紧它自己的请求，不把其他 run 的上限也改成 1。需要整个本地服务串行时，在部署配置固定 `max_inflight_requests=1`，所有接入 run 合计受此限制。
 
-一期支持同一 Linux 主机上的多个 DSH 进程：部署指定唯一、持久的 `backend_state_root`，由各 run 的 Python worker 访问同一 SQLite 请求队列/permit 表。准入用短事务原子检查 run/backend 两类计数，不采用层层持锁等待；Host 可取消地轮询或订阅 ticket 状态，worker 不占着 RPC 等模型。队列按 run 公平轮转、run 内 FIFO；授予后仍须复核绑定/预算才发送。租约持有者退出或超时不代表远端请求结束，未知发送须保留占用并冻结该资源组，确认后端静止后才结算，不能靠 TTL 自动释放。
+WP4b 才扩展到同一 Linux 主机上的多个 DSH 进程：部署指定唯一、持久的 `backend_state_root`，由各 run 的 Python worker 访问同一 SQLite 请求队列/permit 表。准入用短事务原子检查 run/backend 两类计数，不采用层层持锁等待；Host 可取消地轮询或订阅 ticket 状态，worker 不占着 RPC 等模型。队列按 run 公平轮转、run 内 FIFO；授予后仍须复核绑定/预算才发送。租约持有者退出或超时不代表远端请求结束，未知发送须保留占用并冻结该资源组，确认后端静止后才结算，不能靠 TTL 自动释放。
 
-共享数据库不载入其他 run 的论文/证据，只登记授权调度所需的请求与占用元数据。资源组内所有 model 别名和进程须使用同一配置身份；不接受不一致上限或各自私有数据库却声称全局限流。跨主机调度不在一期支持范围，须另接共享协调器才能声明同等保证；不支持的部署明确拒绝。其他模型客户端须接入该调度或使用独占后端，否则不能承诺整个服务仅一路请求。
+WP4b 的共享数据库不载入其他 run 的论文/证据，只登记授权调度所需的请求与占用元数据。资源组内所有 model 别名和进程须使用同一配置身份；不接受不一致上限或各自私有数据库却声称全局限流。跨主机调度不在一期支持范围，须另接共享协调器才能声明同等保证；不支持的部署明确拒绝。其他模型客户端须接入该调度或使用独占后端，否则不能承诺整个服务仅一路请求。
 
 有五个实现约束：
 
@@ -789,18 +887,19 @@ Agent 任务并发数和模型请求并发数可以不同：多个任务可做�
 
 **用户可见控制：** preset 设置页提供“Agent 并发”开关与开启时的并发数；CLI 设计提供互斥的 `--parallel-agents` / `--no-parallel-agents` 和 `--max-parallel-agents N`，配置文件保留上述字段。显式本次设置覆盖 preset 默认，实际模型请求数不能超过部署硬限制；Agent 任务上限可以大于后端请求上限，由队列协调。运行前摘要和 `c2p_state` 同时显示请求值、有效值、后端请求上限、活动任务和排队数，例如“Agent 并发：关闭（有效任务数 1）；本运行模型请求：1；后端共享上限：1”。开启 2 个任务而后端为 1 时明确显示“2 个任务，模型请求串行”。尚未实现并发调度的版本必须拒绝开启并说明原因，不能显示已开启却静默串行。
 
-首轮 PoC 串行；WP4a 完成显式配置、共享请求队列和 mock 并发/死锁反例，WP4b 再完成真实多任务调度。运行配置和调度器版本进入身份/运行清单；开关及上限在启动时冻结。运行中出现持续等待或 KV-cache 压力时允许有记录地降低有效上限并停止新派发、等待现有请求排空，不自动提高；用户提高并发或改为并行按新执行配置生效，历史回执不重写。
+首轮 WP4a/WP3a–b 只允许单 run、单 task、单在途请求；显式开关可见且固定关闭，开启返回 unsupported。以部署级独占锁/占用记录拒绝第二个接入进程；后端须由该试验独占，已有其他客户端则不能声称全局串行。unknown-send 留在 Python 账本并阻断重启后的新发送，不能仅因进程锁释放就重发。跨 run 共享 SQLite 公平队列、并发 wave、多个角色同时排队在 WP4b 实现和验收，不作为第一个 Writer 的前置。运行配置和调度器版本进入身份/运行清单；开关及上限在启动时冻结。运行中出现持续等待或 KV-cache 压力时允许有记录地降低有效上限并停止新派发、等待现有请求排空，不自动提高；用户提高并发或改为并行按新执行配置生效，历史回执不重写。
 
 ### 15.7 持久任务、Host 调度与图恢复
 
-**一个任务只由 Code2Paper 生成和验收，只由 DSH Host 派发和执行。** LangGraph 不等待 JS Promise，模型也不直接获得 `Command`、checkpoint 或任意 resume 权限。以下方法名是新 bridge 的私有协议设计：
+**一个任务只由 Code2Paper 生成和验收，只由 DSH Host 派发和执行。** 首版只实现单 Writer task/outbox/claim/result 往返；以下完整 LangGraph 主图交接及并发 wave 属于 WP5/WP4b，不前置到兼容性 spike。LangGraph 不等待 JS Promise，模型也不直接获得 `Command`、checkpoint 或任意 resume 权限。以下方法名是新 bridge 的私有协议设计：
 
 | Host 私有 RPC | 内核职责 / 返回 | 禁止行为 |
 |---|---|---|
 | `workflow.advance` | 在 run lease 下推进纯节点，至 interrupt/终态即返回任务 tickets 和当前流程状态 | 持有请求等待模型；隐式调旧 Python caller |
-| `task.claim` | 原子领取就绪 task，登记 attempt/claim generation 和 Host owner | 两个 Host 同时领取同一 epoch |
+| `task.prepare` | 从既有请求/索引 owner 生成 WriterTaskContractV1 和持久 outbox；相同 key 幂等 | 模型自报 scope/余额；暗中调用 LLM |
+| `task.claim` | 原子领取就绪 task，登记 attempt/claim generation 和 Host owner；dispatch 前再查账 | 两个 Host 同时领取同一 epoch；将 prepare 余额当作现值 |
 | `task.record_output` | 校验绑定，持久化实际 terminal 参数、响应和调用来源摘要 | 用 closing text 代替原始输出；宣布内容已接受 |
-| `task.ingest` | 复用 parser/assessor，返回验收回执或验证依赖；对应公共 submit 的受控后端 | 将需模型的 verifier 置空；由 Writer 自报 accepted |
+| `task.ingest` | 复用 parser/assessor，返回验收回执或验证依赖；仅 Host 可调用 | 将需模型的 verifier 置空；由 Writer 自报 accepted |
 | `workflow.resume` | 验证 task/receipt/read-set/checkpoint generation，恢复该等待节点并推进 | 接受模型编造的完成布尔值；重复应用过期 checkpoint |
 
 任务 key 绑定 `(execution, workflow_version, node, scope_digest, epoch)`；同 key prepare 重试得到同一 task。内容 repair 必须由 owner 路由和预算授权新 epoch，不能重启 child 后从零计数。claim generation 隔离旧 Host：失效 owner 的新请求和回调不能覆盖当前任务；有未知发送时先按 §15.5 对账，不自动换 owner 重发。
@@ -810,12 +909,12 @@ Agent 任务并发数和模型请求并发数可以不同：多个任务可做�
 桥接过程遵循以下顺序：
 
 1. prepare 将 task/outbox 持久化，再由独立等待节点返回 interrupt。创建任务本身无模型发送。图重放 prepare 时读取原 task；outbox 未进入可派发等待状态前不领取。
-2. run-owned Host pump 领取已就绪任务、取得任务名额，在 child 首请求前完成 §11.3 绑定。`ctx.subagents.start('spawn', ...)` 返回 run handle 后，独立跟踪 `.result`，当前工具/RPC 可以立即返回 ticket。`c2p_dispatch_task` 只是请求这个 pump 处理已授权任务，不再创建第二套派发入口。
+2. run-owned Host pump 领取已就绪任务、取得任务名额，在 child 首请求前完成 §11.3 绑定。`ctx.subagents.start('spawn', ...)` 返回 run handle 后，独立跟踪 `.result`，当前工具/RPC 可以立即返回 ticket。派发只发生在 Host 私有 pump，不注册模型可见的 dispatch 工具。
 3. `.result` 成功后先记录原始终态对象与来源，再提交领域验收。缺少必要 provenance 留作 unresolved；任务拒绝或需独立验证均保存具体状态。Verifier 是内核创建的受限任务，Writer 不自行创建有裁决权的 verifier。
 4. 正式领域 commit/验收 receipt 落盘后，Host 请求图恢复。`Command(resume=...)` 只携带回执引用；内核重新核对 receipt、task 和依赖。会话 UI 最后投影正式状态，不参与裁决。
 5. 图 checkpoint 与领域存储不假定跨库原子提交。若 commit 后、checkpoint 前崩溃，恢复重复 apply 同一 receipt，幂等返回既有结果；若只保存了模型结果，则重放验收。前置 outbox 与 checkpoint 不一致时由恢复器按 task key/等待状态协调，不因缺少会话事件而重发。
 
-DSH 固定版本的 one-shot run 提供异步 `result`；continuable 的返回值只表示 inbox 接受，且请求类型省略 `outputSchema`。因此首版选 **每个有界 epoch 使用 one-shot Agent**，其内部仍可多轮调用工具；需要补证/验证时以角色合同的暂停结果结束本次 child，逻辑任务保持依赖等待，依赖满足后用新的授权 epoch/任务版本和重建 TaskView 续作。复用逻辑 Research 状态不要求复用同一个 JS child。未知发送仍不得按“新会话”自动重跑。[D14][D26]
+DSH 固定版本的 one-shot run 提供异步 `result`；continuable 的返回值只表示 inbox 接受，且请求类型省略 `outputSchema`。因此首版选 **每个有界 epoch 使用 one-shot Agent**，首个 PoC 的内部请求上限为 1，WP3c 后才可在有限 epoch 中多轮调用工具；需要补证/验证时以角色合同的暂停结果结束本次 child，逻辑任务保持依赖等待，依赖满足后用新的授权 epoch/任务版本和重建 TaskView 续作。复用逻辑 Research 状态不要求复用同一个 JS child。未知发送仍不得按“新会话”自动重跑。[D14][D26]
 
 并发 wave 的待完成 task 集合在 prepare 时冻结，采用一个等待节点和一个聚合回执；每个结果单独入库，满足 wave 完成条件后再恢复该等待点。首版不靠动态数量的嵌套 interrupts 隐式配对 child；一个任务失败时停止受影响的新派发、对在途任务取消或排空，保留独立有效结果，并按 owner 路由处理。新 Research revision 导致 read-set 失效的任务不能再提交，是否重建由内核决定。
 
@@ -880,7 +979,11 @@ sequenceDiagram
 
 ## 16. 重试与预算：移交执行，不放弃账本
 
-**采用单一逻辑预算权威、多层事实来源。** Code2Paper 控制 task/section/run 的内容尝试、修复和研究续作额度；DSH 提供实际模型调用、传输恢复和工具执行事实。不要分别建立两个都自认为已经扣费完成的余额。
+**Python invocation 账本与 `reduce_invocation_recovery` 保持唯一预算/恢复权威。** DSH 提供原始请求、传输、响应、usage 和 terminal 事实，`request-accounting.ts` 仅实现 hook → RPC → receipt 映射，不能维护第二套 durable balance。DSH Session 的用量/状态只是从权威回执派生的展示投影。
+
+扩展现有事件 schema，绑定 `accounting_version`、execution/task/epoch、invocation/attempt、claim/fencing、adapter call ID、request digest、cause/purpose 与可得 provider ID。reserve、dispatch、settle、unknown、content attempt 都经 Python owner 持久化，同一 reducer 输出主因；事件按稳定 ID 幂等，关联冲突拒绝，存储失败不能先发送后补账。旧事件按原版本解释，不重写历史。
+
+Host 的 `request.reserve` 必须在 lease 内重读账本；只可在确定未 dispatch 时释放预留，在响应已落盘时复用既有本地结算/assessor；发送结果未知则保持 unknown 与资源占用。`remaining_content_attempts` 的 prepare 快照、DSH token UI 和会话是否 idle 都无权改变这些结论。[C23]
 
 | 计数 | 消耗时机 | 不可混淆为 |
 |---|---|---|
@@ -892,9 +995,9 @@ sequenceDiagram
 
 DSH `llm-pi-ai` 文档默认 provider retry 为 normal/5 次，retry executor 还支持 `always`；必须显式限制科学运行的 retryPolicy，禁止不设资源上限的 always 模式。读取的 retry 源码通过 `agent/request-error` 运行，记录 `llm/retry` 与 `llm/retry-started`；后者也不等价于一定已成功发送到网络。[D15][D17]
 
-首版可以把传输重试显式设为 0，先验证计费和恢复连接，再启用已记录的有限重试。这不是生产推荐永不重试，而是避免迁移期间隐藏的乘法预算。
+WP3a/WP3b 固定传输重试为 0，并关闭 compaction、session-title 与其他辅助模型调用，冻结 `max_model_requests=1`；任何未预期请求均在 LLM seam 被拒。WP3c 在新增故障矩阵与有限额度通过后再开放多步和相应辅助调用。这不是生产推荐永不重试，而是避免迁移期间隐藏的乘法预算。
 
-compaction 通过 `ctx.llm.stream` 发起辅助请求，携带 `sessionId` 和 `purpose='compaction'`；只统计 `c2p_dispatch_task` 或父 Agent message 会漏计。session-title 等辅助功能也要纳入，或在科研 preset 中关闭。需要在实际 LLM seam 和 Session settled facts 上关联 task/cause；绑定 run 内但无法归入 task 的调用计为 run auxiliary/unknown，完全无 run 绑定的调用拒绝发送。预算预留有限恢复/摘要空间，exhausted 时停止自动续作。[D18][D21]
+compaction 通过 `ctx.llm.stream` 发起辅助请求，携带 `sessionId` 和 `purpose='compaction'`；只统计 Host dispatch 或父 Agent message 会漏计。session-title 等辅助功能也要纳入，或在科研 preset 中关闭。需要在实际 LLM seam 和 Session settled facts 上关联 task/cause；绑定 run 内但无法归入 task 的调用计为 run auxiliary/unknown，完全无 run 绑定的调用拒绝发送。预算预留有限恢复/摘要空间，exhausted 时停止自动续作。[D18][D21]
 
 每次 request 已组装后检查：输入容量、输出预留、task 输出负荷、全 run 余额及有效模型身份。不能只使用 DSH 对未知模型的默认 262144 context/32768 max-output 来宣称本地模型支持这些容量；自托管模型应明确配置并实测。[C04][D15]
 
@@ -912,13 +1015,15 @@ compaction 通过 `ctx.llm.stream` 发起辅助请求，携带 `sessionId` 和 `
 
 `token-meter` 使用四字符约一 token 的启发式及 provider usage anchor，是上下文压力估算器，不是本地 Qwen chat template 的精确 tokenizer。准入必须测实际 messages、工具 schema、structured-output 指令和输出预留；usage 的 input/output/cache/reasoning 口径逐路由核实，缺 usage 不补 0、缓存命中不当作免费容量。[D20]
 
-全 run reservation 由单写者原子更新，含父 Agent、所有 children、重试与辅助调用；设置单 epoch 请求数、输入/输出总额、wall-clock、工具读取量。按 §15.6 先取得可取消的请求队列准入，再复核身份与预算并持久化 reserve/started，最后 dispatch。建议 PoC 首版串行；仓库“最多四个并发 run”只是外层上限，不代表模型请求或 Agent 自动允许四路并发。存储失败、身份漂移、计量失效时发送前拒绝；发生 dispatch 后的崩溃则保留未结算预留。
+全 run reservation 由单写者原子更新，含父 Agent、所有 children、重试与辅助调用；设置单 epoch 请求数、输入/输出总额、wall-clock、工具读取量。按 §15.6 先取得串行独占准入（WP4b 后为可取消的共享队列准入），再在 lease 内复核身份与当前账本，持久化 reserve/started，最后 dispatch。建议 PoC 首版串行；仓库“最多四个并发 run”只是外层上限，不代表模型请求或 Agent 自动允许四路并发。存储失败、身份漂移、计量失效时发送前拒绝；发生 dispatch 后的崩溃则保留未结算预留。
 
 ### 16.1 多步 Agent 会改变“内容尝试”的计数单位，必须显式版本化
 
 旧通路的一次 Writer caller 通常对应一次候选生成，不能原样推断新通路“每个 DSH 模型请求都消耗一次内容尝试”。新 child 可能先发两次工具调用再产文；若都按旧 2 次额度计数，会在写作开始前耗尽预算。反过来，把整个无限长 child 只算一次也不合法。
 
 设计采用新适配器的 `accounting_version=c2p-dsh-task-loop-v1`：保留每个真实 `provider_request_id`；一个 draft attempt 是一个 Host 授权、只能交付一个终态候选对象的 task execution epoch；同时强制该 epoch 的 `max_model_requests`、输入/输出 token 总额与总 draft attempts。格式失败或未完成输出也消耗该 epoch，不靠新建 child 清零。
+
+消费内容尝试须有实际发送事实；prepare/claim、schema/预算预发送拒绝与排队取消只留下诊断，不因分配 epoch 就消耗 content attempt。dispatch 后结果未知保留预留，不伪装成未发送；发送后的格式失败、未完成或 research_required 均保留相应 epoch 花费。
 
 旧归档仍按旧 `content_attempt_count` 解释，新报告同时输出 `draft_attempt_count`、`provider_send_count` 与实际费用，不把两个版本的“尝试数”直接比大小。当前 DSH driver 不自动 reprompt；模型在收到 schema 工具错误后继续生成仍消耗同一 epoch 的请求/token 额度。一次 `research_required` 终态保留该 epoch 的实际花费与尝试记录，后续 task revision 不重置 section/run 额度。[D19]
 
@@ -977,89 +1082,112 @@ DSH 的便利记忆能力也可能引入新的答案通道。实验的每个 cas
 
 尤其不能在整个 Code2Paper 开发仓库作为 cwd、可读全部 `artifacts/` 的会话里测生成任务；本轮审计会话能看到旧候选是诊断需要，不能让正式被评 Agent 继承这个对话。要做历史 run 导入，也只导入该实验条件允许的研究证据，不导入成稿答案。
 
-## 20. 最小纵向试验：先证明真正进入 DSH
+## 20. 最小纵向试验：先证明一个 Writer 真正进入 DSH
 
-首个 PoC 不做整仓大迁移，不先做丰富 UI，也不先并行化所有阶段。
+首个闭环是 **opt-in、单 run、单 Writer task、one-shot child、最多一个实际模型请求**；使用真实 DSH Loader/Agent loop 与可控 mock provider。关闭 transport retry、content 自动重试、compaction、session-title、递归 subagent 和模型可见派发工具。TaskView 预载本页全部必要材料，模型只用 typed terminal 返回；“one-shot”本身不等于一请求，必须由账本和 seam 的额度实际约束。
 
-输入：冻结 EBCAR 研究证据与当前新编译器产生的一个小型 Writer task。旧 16 段页用于事故回归；新任务必须经当前空槽处理和预算器产生，不能直接把旧 payload 原样重发并当作新设计。
+输入是当前内核从已验证冻结研究/公式/计划中生成的 `WriterTaskContractV1`。离线优先使用合法最小夹具；授权 live 再选择冻结 EBCAR 小任务。旧 16 段请求仅作反例，不能原样发送冒充新合同。
 
-前提：WP2 与 WP4a 的 mock 故障矩阵通过；固定模型已验证工具调用协议、计量与停止行为。真实运行前按仓库规定记录 `/health`、`/v1/models`、实际模型/容量、可用队列/KV-cache 状态及新输出目录；不记录密钥。前置失败不以反复重试取样绕过。
+### 20.1 无模型与 DSH mock 闭环
 
-步骤：
+前置顺序：WP0 重基线 → WP2 compatibility spike → WP1a 发布/registry 和完整发送边界 → WP1b 无模型 prepare/ingest → WP4a 单 run 绑定/账本/取消。
 
-1. Python `prepare_task` 返回具体作者语义、detail/公式/证据闭包与 schema。
-2. DSH `spawn` child 使用原生 loop 完成读取与写作。
-3. 回答进入现有结构解析/transaction 检查，产生正式内容回执。
-4. 注入一次材料不足，观察 child 提出有目标的研究请求而非编造。
-5. 在可控 mock/离线故障注入中覆盖错误 witness、重复提交、取消、摘要/恢复和 crash；有限 live 只验证模型/transport 的实际差异，避免为所有故障消耗真实模型。
-6. 交付一个正确标注状态的局部 draft、TaskView、DSH 调用 trace 与 C2P acceptance。
+1. Python 生成唯一合同和材料投影，DSH 消费，不允许 TS 手工替代作者/证据合同。
+2. 首请求之前绑定 child/task/epoch；Python lease 内重查余额/unknown/read-set，再允许 mock adapter dispatch。
+3. terminal 原始参数与 provider 来源先落盘，Python parser/assessor 接受合法 draft 或具名拒绝负例。
+4. 正文、acceptance、authorship sidecar 通过不可变 manifest 同一事务发布，保留正确的局部/pending 状态。
+5. 用 mock 覆盖缺材料、错误 witness、technical digest 缺失、cap 变化、重复 ingest、取消、unknown-send 及 g1→g2 各写点崩溃；证明无 Python 模型出口。
+6. `research_required` 终态仅记录有界补证需求并进入等待；WP5 前不自动驱动完整研究图。
 
-**通过标准：** 正确正例能被接受、负例仍被拒绝、原生 DSH 请求可见且没有隐藏 Python `LLMClient.complete()`、作者局部材料完整、重复提交不多扣费、恢复读到同一领域状态。这只能证明集成可行，不能宣称完整 Method 质量已提高。
+通过标准是一个合法正例可接受、异常请求零发送、内容负例仍拒绝、来源可追、恢复不重发/不重复扣费，以及 g1/g2 可见状态完整。它不宣布全文 Candidate、Verified、主图迁移或质量改善完成。
 
-## 21. 建议的执行工作包与提交顺序
+### 20.2 单独授权的小型 Qwen live
 
-以下工作包用于落实已确认的执行层分工，属于实施建议，不表示本轮已开始代码实施。WP0 同时核对默认流程合同；执行层迁移不得顺带改变默认业务流程。
+只有上述 mock 门通过、新执行代码/配置稳定、离线回执匹配实际 HEAD/source/validator/test plan，且获得本次 live 范围授权后，进入 WP3b。工具调用兼容验证所需请求也属于 live，不能以 capability probe 为名提前发送。
 
-| 工作包 | 具体文件/函数落点 | 交付与通过条件 |
+使用指定 `http://127.0.0.1:8006/v1` / `qwen38-27b-nvfp4`。发送前记录 `/health`、`/v1/models`、实际模型/context/输出上限、可用 queue/KV-cache 状态及新持久输出目录；冻结本次有限请求/token/时限和停止条件。最小样本一次 primary、无自动 retry；失败即按 owner 诊断，不无变化重采样。服务由该测试独占，不能靠关闭本 run 开关推断其他客户端都已停。
+
+记录真实 tool-calling、terminal 参数来源、usage/finish、取消与 tokenizer/wire 差异；这一次样本只证明限定集成能力。WP3c 再开放有界读取、多步工具和 compaction；WP4b 再做共享调度和并发；完整图与审计 §16.3 的 L1/L2/L3/盲评验收仍分别完成。
+
+## 21. 工作包与实际实施顺序
+
+保留 WP 编号便于对照旧稿，但以本表依赖为准：WP2 前移做能力 spike，WP1 拆分，WP3 拆分。**完整主图、共享公平队列和多步上下文不再是第一个 Writer 的前置；不可变发布、唯一账本和 unknown-send 硬门仍然前置。**
+
+| 顺序 / 工作包 | 修改落点 | 交付与通过条件 |
 |---|---|---|
-| WP0：固定证据基线 | 新 `integrations/dsh/compatibility.json`；现有 regression_20260917；§21.2 调用锚点 | 重新核对两个 SHA、§6.4 映射、模型能力/wire 差异、固定 fixtures、既有门与全部调用 owner；冻结 schema/任务额度；无模型调用 |
-| WP1：无 LLM 的领域门面与图交接 | 新 facade/protocol/worker/workflow_adapter/task_store；复用 identity/index/ledger/workload | `prepare/read/submit` 离线往返；真实适配器的 task/outbox、持久 interrupt/receipt 恢复；未知路由/缺 handler 拒绝；Python 网络出口拦截为零 |
-| WP2：原生 bundle 与窄工具 | 新 TS index/kernel-client/task-tools；role-dispatch mock | Loader smoke、schema 保真、child 首请求绑定、实际工具作用域一致、拒绝任意 path/method |
-| WP4a：首轮运行底座（前置） | identity/binding、workflow-driver、并发开关与共享 SQLite 请求队列、LLM waterfall、幂等提交与取消 | 零预算/未绑定零发送；两进程共享串行后端、父子/辅助请求无死锁；unknown-send 保留占用；局部 crash 重放验收 |
-| WP3：Writer 原生执行 | `build_publication_writer_request`、既有纯 parser/assessor；role-dispatch/result_ingest | 指定模型工具协议通过；DSH 子 Agent 产文且来源可追；只验收现有纯局部 draft 合同；需独立模型验证的状态保持 pending，不能冒称 final 通过 |
-| WP4b：完整恢复与多任务 | artifact index/事务 manifest；wave join；TS accounting/context/execution-policy；角色依赖 | 并发开/关、默认 2 任务/1 请求、跨 run 公平调度；compaction、restart、旧 claim 回调、配置漂移、并发冲突与跨文件提交矩阵通过 |
-| WP5：研究、规划、Formalizer 与 Realizer 原生化 | 被动 Research 图转换、意图/plan/formalization/realizer 任务及 Binder；独立 verifier；callback 拆分 | 保留 §6.4 全部节点/条件边及 Formalizer 后 Narrative 细化；§15.8 两条完整时序；补证、失效、账本与最终验证，禁止双模型循环 |
-| WP6：Editor/Rewrite 与 Figure | 现有 figure_planner/产品状态机；role adapters | 改写重新绑定；全文 Candidate/Verified 状态真实；同源图文交付；质量变化用盲评验证 |
-| WP7：受控评测与生产迁移评审 | 实验配置、质量报告、规范/迁移文档 | 默认流程保真，模型/输入/预算可比；盲评与回滚证据；生产入口切换另行评审，不自动冻结或切默认 |
+| 1 / WP0：重基线与能力盘点 | `compatibility.json`（新增）、§2/§21.2 owner、既有准入 | 记录代码基线/实际执行 HEAD、工作树/source digest、DSH 固定组成与 fixtures；确认已有 owner；冻结阶段边界后生成匹配的离线回执。后续代码变更须更新相应里程碑回执 |
+| 2 / WP2：DSH mock compatibility spike | TS Loader/role-dispatch/binding、terminal 与 LLM hook | 实际 Loader smoke；首请求绑定；原始 tool 参数及 response 来源；取消/静止；真实 LLM waterfall；移除隐式 retry/compaction/title；只用 mock，不依赖完整领域 worker |
+| 3 / WP1a：发布与注册/发送边界修复 | **现有** publication/registry/index/page-contract owner | g1→g2 全写点 crash；不可变正文/acceptance/authorship manifest、active CAS/fencing、磁盘声明摘要严格比较；公共技术字节检查不得丢失；不另起平行存储 |
+| 4 / WP1b：无模型 Writer prepare/ingest | 新 writer_contract/facade/protocol/result_ingest；既有 builder/assessor | 唯一 WriterTaskContractV1；合法正例与负例离线往返；Python 网络/LLM 出口零调用；读取版本固定，提交走 WP1a；不改主图 |
+| 5 / WP4a：最小运行合同 | 单 Writer task/outbox/claim、独占后端、Python 账本事件、取消 | 关闭并发，第二 run/进程拒绝；零额度/过期余额/未绑定零发送；未知发送重启后继续阻断；原始响应本地结算；无需共享公平调度器 |
+| 6 / WP3a：串行 DSH mock 纵向闭环 | role-dispatch + Host pump + prepare/ingest | §20.1 全链；一次原生请求、terminal 结果、局部回执与同事务产物；补证返回 waiting，未迁移主图不推进 |
+| 7 / WP3b：一次小型 Qwen live | 冻结 profile/实际 wire、匹配的离线回执 | **单独授权后**执行 §20.2；明确有限额度和停止条件；只确认单 Writer 集成，不等于 §16.3 质量验收 |
+| 8 / WP3c：多步工具与 compaction | 有界读取、context policy、同账本辅助事件 | 有限 epoch 内导航/产文；压缩后材料、取消与重放合同仍成立；工具错误/辅助请求均入账，不能出现免费调用 |
+| 9 / WP4b：共享调度与并发 wave | Python backend_scheduler、Host queue adapter、wave join | 显式开关；开启默认 2 任务/后端默认 1 请求；跨进程/别名公平与容量；并发/旧 fence 故障矩阵。沿用 WP1a 发布和同一余额账 |
+| 10 / WP5：完整 Research/Authoring 图迁移 | 实际图 handler/context/checkpoint、Research/plan/Formalizer/Realizer/verify/callback 及默认图必需的 Editor/Rewrite 最小真实 adapters | **先过 §6.5 主图准入门**，再逐角色替换执行；真实 Research 逐节点新进程恢复，移除 `last_result` 依赖；两条 §15.8 时序、失效和独立验证通过。G05 注册完整节点合同并实现其拥有的 Authoring/Editor/Rewrite；待 G06/G07 的验证/补证分支保持具名 pending。G08 才验全部 16 节点真实行为闭合，不留默认推进或待 WP6 补的基本角色 |
+| 11 / WP6：完整编辑、全文事务与 Figure 交付 | 已接角色的完整编辑场景、现有 composer/authorship/figure owner、正式输出路径 | 完成编辑权限与重验收口、全文发布事务接线、同源图文和正式全文 Candidate/Verified 状态；WP5 的流程/角色门不等于这些最终交付已经通过 |
+| 12 / WP7：受控评测与生产迁移评审 | benchmark 隔离、质量报告、规范/迁移文档 | 可比配置与成本、L1/L2/L3、指定盲评；默认入口切换、rollout 与 release freeze 单独评审 |
 
-执行依赖为 **WP0 → WP1 → WP2 → WP4a → WP3 → WP4b → WP5 → WP6 → WP7**。WP4a 是首次模型调用所需的最小合同，不能以后补账替代；WP3 成功后再扩展全产品能力。若只得到新外壳包住旧 caller，返回边界设计，不以增加工具数量宣布迁移成功。
+依赖为 **WP0 → WP2 → WP1a → WP1b → WP4a → WP3a →（单独 live 授权）WP3b → WP3c → WP4b → WP5 → WP6 → WP7**。可在未获 live 授权时继续不依赖真实模型的离线研究，但不能把 WP3b 标为完成或跳过其兼容门。任何已验证 owner 在重用时暴露新缺口，记录最小反例、修原 owner、补实际接线；不以减少义务或另建宽松管线推进。
 
-### 21.1 必须复用与必须扩展
+### 21.1 已有 owner 的复用与新增范围
 
-| 现有符号/模块 | 保留的行为 | 此次扩展 |
+| 现有符号/模块 | 直接保留 | 仅新增/修正的部分 |
 |---|---|---|
-| `build_run_open_identity` / `validate_run_open` | 身份准入及模式区分 | 绑定 DSH effective composition/模型/协议 |
-| `acquire_run_lease` | 单写者 | worker 生命周期与请求级串行提交 |
-| `build_artifact_index` / `entry_for` | 阶段当前对象与历史不覆盖 | 增加 producer 驱动的代际登记，支持任意合法 task revision |
-| `estimate_writer_output_workload` / `evaluate_page_contract` | 输入输出联合约束 | 实际 DSH wire、tokenizer 与经验证标定 |
-| `read_invocation_ledger_state` | content/transport 区别、耗尽诊断 | 接收原生 DSH 发送事实，不用文件名反推全部身份 |
-| `compile_author_intent_surfaces` / `compile_intent_content_digest` | 作者实际语义与摘要 | 到 TaskView 的无丢失映射 |
-| `project_intent_plan_to_narrative_v3` | 兼容投影 | 继续作为派生层，不暴露为另一个模型可选主计划 |
-| `_compact_writer_narrative_plan_for_llm` | 保护 writer-required 作者/段落字段 | 与新 renderer 共用明确字段规格和实际请求测试 |
-| `build_publication_writer_request` / `assess_publication_content_acceptance` | 生产请求与局部验收的共同入口 | TaskView/output 适配，不复制第二套 assessor |
-| `build_final_text_authorship_ledger` | 允许角色与正文逐字来源匹配 | DSH terminal 工具参数 → 生成 span 证明 |
-| `build_llm_semantic_verifier` / `build_proposition_semantic_aligner` | 独立于 Writer 的语义提案 | prepare/verify/merge 拆分，真实调用纳入同一预算 |
-| `execute_research_tool` | snapshot/authority/span/闭合底线 | 脱离 LangChain 包装，注册为 DSH tools |
-| `product_authoring_graph.py` | 默认阶段、条件边、owner 路由与依赖失效 | 从产物 overlay 补齐实际 handler；未知路由拒绝；用持久任务委托 DSH，缺 handler 不空推进 |
-| `research_graph.py` / `checkpointing.py` | Research 节点语义、checkpoint serializer 与恢复约束 | supervisor 提案外置；完整状态可从引用重建；显式持久 checkpointer，不依赖 `last_result` |
-| `fulfill_and_resume_writing_callbacks` | callback lineage、预算、影响范围与受影响章节续作 | 拆掉同步循环，把研究/模型重编/写作续作改成独立持久任务 |
-| `build_evidence_backed_figure_plan` | 支持的节点与边 | 从统一技术来源投影，同步正式文本版本 |
+| `open_authoring_execution` / `validate_run_open` / `acquire_run_lease` | 锁内身份/模式准入、单写者和异常释放 | DSH 实际 composition/协议身份、Host claim/fencing |
+| `verify_research_import_closure` | 研究输入闭包、路径/来源/摘要、禁止继承写作状态 | DSH handles/read-set 和实验允许材料；按新引用种类补覆盖 |
+| `reduce_invocation_recovery` / unified ledger | 统一恢复主因、unknown 保留、本地结算、内容尝试/预算 | DSH 事件 schema 与 accounting version；TS 仅 RPC adapter |
+| producer registry / publication journal / validated index | role/phase/generation、producer/upstream、字节读取与拒绝坏索引 | WP1a 修不可变成员/声明摘要验证、跨文件 manifest、CAS/fencing；不是“新增注册表” |
+| `canonical_failure_*` / `writer_repair_packet` | owner/action/escalation 和 bounded repair | 映射到 DSH typed result/Host 动作；未知 code 仍阻断 |
+| `evaluate_page_contract` / workload / `page_contract_recheck` | 联合分页、作者/空 scope/cap 相等、公式闭包 | 真正 DSH wire、technical 实测值必需、有限多步额度与计量 |
+| 实际 Writer builder / parser / assessor / composer | 原 request 和内容验收规则、单正文派生 | WriterTaskContractV1、terminal 来源适配和无模型 prepare/ingest |
+| `build_final_text_authorship_ledger` | 允许角色、原响应与逐字来源 | raw terminal 参数/JSON pointer → span；随正文/acceptance 原子发布 |
+| 独立 semantic verifier / proposition aligner | 既有语义规则与确定性 merge | WP5 外置 DSH verify；需要验证时 pending，不能置空放过 |
+| Authoring/Research 图与 callback owner | 阶段、合法依赖、owner/失效/预算 | WP5 严格 handler/route、context 持久重建、逐节点新进程恢复 |
+| Figure planner、质量报告与比较 | 同源事实、不可比/未测量状态 | 后续角色接入与端到端质量证据；首个 Writer 不承担全文图交付 |
 
 ### 21.2 本次已核对的抽取锚点
 
-以下绑定 **`4146010ac5c6ea21ace2bc0006741e4336242d1c`** 的源码快照，符号位置由 AST 提取并与该提交字节核对；不随其他工作修改当前文件而漂移。它们是抽取入口，不是已完成拆分的承诺。[C18–C22][L04]
+以下由当前 AST 定位，并确认文件与 **`0918ee7`** 对应源码相同；`d48b4e4` 仅文档变化。历史 [C18–C22] 行号保留原时点，这张表是实施查找入口。锚点不是已完成拆分的声明。[C23–C26]
 
-| 当前位置 | 作用与接入注意 |
+| 当前位置（符号:行） | 作用与接入注意 |
 |---|---|
-| `research_graph.py:3363` `build_research_subgraph` | 真实 Research 拓扑；拆模型提案、持久化上下文并保留条件边 |
-| `autonomous_method_agent.py:439` `build_product_research_runtime`、`:547` `run_product_research_phase` | 前者包含 intent enrichment；后者当前未传持久 checkpointer，不能原样作为新 adapter |
-| 同文件 `:1699` `build_product_planning` | 区分纯编译与可选模型 brief planner/对齐，不能整函数声明无 LLM |
-| `product_authoring_graph.py:807` `build_product_authoring_graph`、`:1136` `persist_product_authoring_state_from_writer` | 现有默认 handler/overlay 的局限；需实际节点实现与持久任务交接 |
-| `writing_callback_fulfillment.py:781` `fulfill_and_resume_writing_callbacks` | 拆回调验证、研究续作、重编和 Writer 恢复，保留 lineage/预算/影响范围 |
-| `publication_method_writer.py:2043` `_run_publication_method_writer_impl` | 大范围编排及闭包状态，不能整函数包装成无模型 worker |
-| 同文件 `:19004` `_run_unified_v2_formalizer_phase`、`:21288` `_build_narrative_plan_v3` | 实际调用分别在 `:2982` 和 `:3103`，先公式包再细化 Narrative；保留数据依赖 |
-| 同文件 `:22087` `_writer_section_inputs_v3` | 当前 Unified Writer 输入构造，保留 Narrative/author surfaces/页义务 |
-| `section_writer.py:1554` `build_publication_writer_request` | 生产请求构造；提取实际 TaskView，显式替换输出 transport 指令 |
-| 同文件 `:5781` `assess_publication_writer_response`、`:6063` `assess_publication_content_acceptance`、`:6083` `assess_publication_content_progress` | 生产局部验收/修复增益，单页脚本已共用；不能当全文 final gate |
-| `publication_method_writer.py:5962` 的 `write_publication_method_by_sections` 调用 | 当前同步 Writer 执行点，DSH 路径须绕开其内部模型/重试循环 |
-| 同文件 `:20058` `_run_unified_v2_realizer_phase`、`:27068` `_write_unified_v2_binder_receipts` | 前者有模型调用，后者做绑定验收；不合并为一个模糊“验证工具” |
-| 同文件 `:12622` `_maybe_validate_final_text`、`:26108` `_audit_proposition_alignment` | 可能调用独立模型；拆验证任务与确定性 merge |
-| 同文件 `:16085` `_rewrite_transaction_metrics` | 中间事务已有 `llm_config=None` 的确定性检查；最终 gate 仍保留 LLM 辅助 |
-| 同文件 `:26373` `_compose_candidate_markdown`、`:27569` `_write_publication_outputs` | 组装和发布结合 authorship、checkpoint 与结果状态，不单独输出 md 冒充成功 |
+| [research_graph.py](../src/code2paper/agentic/research_graph.py) `build_research_subgraph:3363` | WP5：持久重建 context，逐节点新进程恢复，保留真实拓扑。 |
+| [autonomous_method_agent.py](../src/code2paper/agentic/autonomous_method_agent.py) `build_product_research_runtime:439` | 意图/研究/规划仍有模型路径；不把整函数包装为无模型 RPC。 |
+| [autonomous_method_agent.py](../src/code2paper/agentic/autonomous_method_agent.py) `run_product_research_phase:547` | 意图/研究/规划仍有模型路径；不把整函数包装为无模型 RPC。 |
+| [autonomous_method_agent.py](../src/code2paper/agentic/autonomous_method_agent.py) `build_product_planning:1699` | 意图/研究/规划仍有模型路径；不把整函数包装为无模型 RPC。 |
+| [product_authoring_graph.py](../src/code2paper/agentic/product_authoring_graph.py) `run_product_authoring_graph:686` | 默认 handler/route 回退仅为现有行为，新 DSH 主图必须严格拒绝。 |
+| [product_authoring_graph.py](../src/code2paper/agentic/product_authoring_graph.py) `_graph_route:767` | 默认 handler/route 回退仅为现有行为，新 DSH 主图必须严格拒绝。 |
+| [product_authoring_graph.py](../src/code2paper/agentic/product_authoring_graph.py) `build_product_authoring_graph:807` | 默认 handler/route 回退仅为现有行为，新 DSH 主图必须严格拒绝。 |
+| [product_authoring_graph.py](../src/code2paper/agentic/product_authoring_graph.py) `persist_product_authoring_state_from_writer:1136` | 默认 handler/route 回退仅为现有行为，新 DSH 主图必须严格拒绝。 |
+| [writing_callback_fulfillment.py](../src/code2paper/agentic/writing_callback_fulfillment.py) `fulfill_and_resume_writing_callbacks:781` | 拆补证/重编/续作，保留 lineage、预算与失效。 |
+| [publication_method_writer.py](../src/code2paper/agentic/publication_method_writer.py) `_run_publication_method_writer_impl:2143` | 区分模型执行、纯编译、Binder、独立验证与发布；Writer PoC 仅抽局部合同。 |
+| [publication_method_writer.py](../src/code2paper/agentic/publication_method_writer.py) `_maybe_validate_final_text:12905` | 区分模型执行、纯编译、Binder、独立验证与发布；Writer PoC 仅抽局部合同。 |
+| [publication_method_writer.py](../src/code2paper/agentic/publication_method_writer.py) `_rewrite_transaction_metrics:16368` | 区分模型执行、纯编译、Binder、独立验证与发布；Writer PoC 仅抽局部合同。 |
+| [publication_method_writer.py](../src/code2paper/agentic/publication_method_writer.py) `_run_unified_v2_formalizer_phase:19287` | 区分模型执行、纯编译、Binder、独立验证与发布；Writer PoC 仅抽局部合同。 |
+| [publication_method_writer.py](../src/code2paper/agentic/publication_method_writer.py) `_run_unified_v2_realizer_phase:20341` | 区分模型执行、纯编译、Binder、独立验证与发布；Writer PoC 仅抽局部合同。 |
+| [publication_method_writer.py](../src/code2paper/agentic/publication_method_writer.py) `_build_narrative_plan_v3:21575` | 区分模型执行、纯编译、Binder、独立验证与发布；Writer PoC 仅抽局部合同。 |
+| [publication_method_writer.py](../src/code2paper/agentic/publication_method_writer.py) `_writer_section_inputs_v3:22384` | 区分模型执行、纯编译、Binder、独立验证与发布；Writer PoC 仅抽局部合同。 |
+| [publication_method_writer.py](../src/code2paper/agentic/publication_method_writer.py) `_audit_proposition_alignment:26405` | 区分模型执行、纯编译、Binder、独立验证与发布；Writer PoC 仅抽局部合同。 |
+| [publication_method_writer.py](../src/code2paper/agentic/publication_method_writer.py) `_compose_candidate_markdown:26670` | 区分模型执行、纯编译、Binder、独立验证与发布；Writer PoC 仅抽局部合同。 |
+| [publication_method_writer.py](../src/code2paper/agentic/publication_method_writer.py) `_write_unified_v2_binder_receipts:27365` | 区分模型执行、纯编译、Binder、独立验证与发布；Writer PoC 仅抽局部合同。 |
+| [publication_method_writer.py](../src/code2paper/agentic/publication_method_writer.py) `_write_publication_outputs:27880` | 区分模型执行、纯编译、Binder、独立验证与发布；Writer PoC 仅抽局部合同。 |
+| [publication_method_writer.py](../src/code2paper/agentic/publication_method_writer.py) `_capturing_writer_caller:4742` | 区分模型执行、纯编译、Binder、独立验证与发布；Writer PoC 仅抽局部合同。 |
+| [section_writer.py](../src/code2paper/llm/section_writer.py) `build_publication_writer_request:1666` | 实际请求和局部 assessor，不能替代全文最终门。 |
+| [section_writer.py](../src/code2paper/llm/section_writer.py) `assess_publication_writer_response:6009` | 实际请求和局部 assessor，不能替代全文最终门。 |
+| [section_writer.py](../src/code2paper/llm/section_writer.py) `assess_publication_content_acceptance:6314` | 实际请求和局部 assessor，不能替代全文最终门。 |
+| [section_writer.py](../src/code2paper/llm/section_writer.py) `assess_publication_content_progress:6334` | 实际请求和局部 assessor，不能替代全文最终门。 |
+| [authoring_execution_identity.py](../src/code2paper/agentic/authoring_execution_identity.py) `verify_research_import_closure:1287` | 已落地导入闭包 owner，直接复用。 |
+| [authoring_artifact_registry.py](../src/code2paper/agentic/authoring_artifact_registry.py) `load_artifact_registry:128` | 加载必须比较声明摘要并读取不可变 record；WP1a。 |
+| [authoring_artifact_registry.py](../src/code2paper/agentic/authoring_artifact_registry.py) `register_authoring_artifact:146` | 加载必须比较声明摘要并读取不可变 record；WP1a。 |
+| [authoring_artifact_publication.py](../src/code2paper/agentic/authoring_artifact_publication.py) `publish_artifact_transaction:190` | 已有 journal；固定路径覆盖窗口在 WP1a 修复。 |
+| [writer_attempt_ledger.py](../src/code2paper/agentic/writer_attempt_ledger.py) `reduce_invocation_recovery:329` | 唯一 invocation 恢复归约，不在 TS 重写。 |
 
-`scripts/run_unified_single_page_writer.py` 是已有 prepare/live/resume 诊断参考；不要把其中的私有 proxy、旧冻结路径或 `_LiveCaller` 整份搬进生产插件。可复用的 serializer/assessor 留在正式模块，脚本与新入口共同调用。
+`scripts/run_unified_single_page_writer.py` 仍只作 prepare/live/resume 诊断参考，不复制私有 proxy、旧路径或 `_LiveCaller` 进入生产插件。实际请求/验收 owner 留在正式模块，由脚本与新 facade 共同调用。Formalizer 回执完成后才细化依赖它的 Narrative，保持当前数据依赖。
 
 ## 22. 测试矩阵
+
+下列为待实施门，不是本轮已通过清单。WP2 只验证 DSH 能力；WP1a/1b/WP4a/WP3a 验收单 Writer mock；WP3c 才验多步/compaction，WP4b 才验共享并发，WP5 才验真实主图。每个工作包记录正例、反例、原 owner 和实际接线。
 
 ### 22.1 协议与权限
 
@@ -1067,6 +1195,7 @@ DSH 的便利记忆能力也可能引入新的答案通道。实验的每个 cas
 |---|---|
 | 不支持的协议版本/JSON Schema | 启动或调用前明确拒绝，不削弱 schema |
 | 不存在的 artifact handle / snapshot 外路径 | 拒绝，不能回退到任意宿主路径 |
+| 模型请求 prepare/dispatch/ingest/export 或伪造 research 补证写权限 | 工具不可见且 RPC 鉴权拒绝；Writer 只能 terminal 返回 typed gap |
 | 子 Agent 猜另一 run 的 execution/task id | 拒绝，不因模型提交 ID 获权 |
 | 子角色未显式 toolFilter | smoke 失败，不能默认继承父限制 |
 | 最小角色 allowlist + child 局部 terminal 工具 | 继承工具受限，`structured_output` 仍可完成；未知过滤名报错 |
@@ -1081,6 +1210,8 @@ DSH 的便利记忆能力也可能引入新的答案通道。实验的每个 cas
 |---|---|
 | 15 个空槽 + 1 grounded 的既有 fixture | 未解事项可追踪；不再强制生成 15 段虚构实现 |
 | 作者正文改变、story ID 不变 | TaskView 和有效摘要变化；旧接受结果失效 |
+| actual technical 摘要/材料缺失，或材料变更但声明摘要不变 | 公共发送边界从真实字节核验并拒绝，零 provider send；合法适配后的请求可通过 |
+| DSH clamp 后输出上限与编译不同 | 重编全部相关合同或阻断，不原地覆盖 frozen cap |
 | detail 与 atom 交叉置换 | 不自动当成等价 witness |
 | 同一 target 在不同 paragraph/stage 出现 | occurrence 不混淆 |
 | 改 `<` 为 `>`、改 sum 为 mean、遗漏条件 | 语义负例不被放行 |
@@ -1108,13 +1239,17 @@ DSH 的便利记忆能力也可能引入新的答案通道。实验的每个 cas
 | 同任务不同内容同幂等键 | 冲突失败 |
 | 两个子任务并发改同 section revision | 至多一个提交，另一个显式 stale |
 | prepare/reserve 写入运行日志 | 不改变内容 revision，不使本 task 自发 stale |
-| 跨文件提交各写入点 crash | 只暴露旧或完整新 generation，没有新正文配旧 sidecar |
+| 已有 active g1，再发布 g2，在成员/registration/manifest/receipt/CAS 各写点 crash | 只暴露完整 g1 或完整 g2，旧对象字节不变，无新正文配旧 sidecar；WP1a 前置 |
+| registration/upstream/声明 digest 被改，或 pointer 与不可变 record 不符 | 严格读取拒绝，不 reseal、不扫描重新认证 |
+| active CAS 冲突、旧 Host fence 延迟提交 | 拒绝 stale owner，保留旧 active 与原请求事实，不能覆盖 |
 | 取消发生在 commit 前/后 | 分别确认取消或返回原 commit，不能双重结算 |
 | Provider retry + content repair | 分项与总账一致，无隐形乘法预算 |
 | 摘要/辅助调用 | 单独计量，报告整体开销 |
 | provider 模型/上下文默认变更 | 检测实际配置漂移；拒绝混身份 |
 | 复用 45 个旧 receipt、当轮零发送 | 本次费用为 0；历史用量单列，不重复扣费 |
 | checkpoint 字段齐全但引用缺失/摘要错误 | import 拒绝；不以字段存在代替证据闭包 |
+| prepare 后额度已被消耗，DSH 仍携带旧 remaining 快照 | dispatch 在 lease 内重读同一账本并拒绝；零发送 |
+| 首版关闭 retry/compaction/title，仍有隐式辅助调用或第二个 run | 发送前明确拒绝；不能记作免费或默默排第二本队列 |
 | 0 预算、worker 账本写失败、辅助摘要并发争抢预算 | 发送前阻断；总预留不超 run 上限 |
 | usage 缺失或 adapter 内部重试 | 保留未知/独立记录；不报 0 tokens 或虚假精确 send 数 |
 | 并发关闭，父/子/verify/compaction 同时就绪 | 同一后端最多 1 个在途请求；角色功能完整，父等待子无死锁 |
@@ -1150,6 +1285,7 @@ DSH 的便利记忆能力也可能引入新的答案通道。实验的每个 cas
 | Unified Formalizer 与 Narrative 细化 | 公式包完成后才完成依赖它的计划细化；不能颠倒当前数据依赖 |
 | Research supervisor/critic 分工 | DSH 提案，内核 policy merge；deterministic critic 不增加模型请求；语义 callback 必须外置 |
 | prepare 后、interrupt checkpoint 前崩溃 | 同 task key 恢复 outbox，未确认等待前不派发；不重复创建 task/预算 |
+| 真实 Research 图逐节点跨进程 interrupt/resume | 从持久引用重建 context，结果/合法下一步与对照一致；不依赖 closure 活对象或 last_result，不重复副作用/发送 |
 | 跨进程恢复等待节点 | interrupt 前代码允许重执行但不发送；从原 receipt 恢复，实际适配器的网络出口保持受控 |
 | 领域 commit 后、图 checkpoint 前崩溃 | 幂等 apply 原 receipt，不重复提交/生成，不暴露混合 generation |
 | 旧 Host claim 的延迟回调 | fencing 检查拒绝覆盖当前状态；原发送事实保留用于对账 |
@@ -1194,37 +1330,53 @@ EBCAR 用于事故回归；DyG 类不同结构项目与第三个未用于调参�
 
 ## 25. 设计决议与下一步实施入口
 
-已确认方向为 **DSH 接管 Agent 执行，默认沿用现有 LangGraph 主流程，Code2Paper 保留领域内核和验收提交权威**。本轮选定保留 LangGraph 库和持久 checkpoint，以 task/outbox + interrupt/receipt 交接；主 Agent 在当前阶段和合法回退路径内自主执行，确定后继直接推进。节点映射覆盖实际 Research 图及全部 Authoring 节点，并补入真实 Unified 调用依赖，见 §6.4。
+保留已确认方向：**DSH 执行 Agent，LangGraph 保留默认业务阶段和合法回退，Code2Paper 保留领域权威、证据、验收和提交。** one-shot child、Candidate/Verified 分流、独立 verifier、benchmark 隔离、默认串行及禁止 TS 全量重写均保持。
 
-下一步实施入口为 **WP0 → WP1 → WP2 → WP4a → WP3 的单 Writer 纵向闭环**：先固定 schema/角色合同与额度，做真实 adapter 的离线暂停恢复、Loader 和请求准入，再验证指定模型的工具协议与局部写作。取得证据后扩展多任务、Research/规划、Formalizer/Realizer、独立验证与图文通路。无需再次讨论四项基本选型；工作包中的端到端故障、模型兼容和质量验证仍必须实际完成，生产切换不由本设计自动授权。
+下一步从 **WP0 基线盘点 → WP2 DSH mock compatibility spike** 开始，随后修原 publication/registry/发送合同 owner，形成 `WriterTaskContractV1` 无模型往返，再接单 run、单请求的 DSH Writer mock。不可变发布在首次 Writer 前完成；共享公平调度、并发 wave、完整图恢复按 §21 后置，不能反过来阻塞最小可验证闭环。
 
-并发默认关闭；开启默认 2 个独立任务，后端默认 1 个在途请求。run 开关与部署共享容量分别执行，首版采用同 Linux 主机共享 SQLite 队列，见 §15.6；两种模式使用相同依赖和质量合同。本轮交付是设计定案与库级可行性证据，未实施插件或开启 live。
+首版并发开关可见且默认关闭，未支持时开启必须拒绝；后续开启默认 2 个任务、后端默认 1 个请求。Python 账本是唯一 durable balance，DSH 只传事实与展示回执。操作者 export/配置/迁移、Host prepare/claim/ingest/resume、模型窄读取/terminal 三类接口保持分离。
+
+本轮仅修订设计和导航。部署探测与 Qwen live 需另按新实际身份、回执及授权范围执行；旧 4014 passed 继续作为 `0918ee7` 的代码对照证据，不授权当前 HEAD 的 live、主流程切换或质量结论。
 
 ## 26. 本次文档复核记录
 
-首次复核绑定 `3aa9db8...`；用户确认执行层分工时 HEAD 已前进到 `95c50b3...`。本轮逐项研究重新在 `4146010ac5c6ea21ace2bc0006741e4336242d1c` 建立读取快照，保存文件摘要和 AST 锚点。其他工作在研究期间继续修改/提交，本文不把这些后续变化或旧测试回执当成本次适配器验收。仓库改动范围只有本文与 `docs/README.md`。
+### 26.1 本轮重基线与审核意见处理（2026-09-27）
 
-本轮在 `2026-09-22T08:52:38Z` 读取 GitHub `commits/master`，仍为 `c36a83ff...`，版本 `0.1.7-alpha.1`；其提交时间为 `2026-09-22T04:12:33Z`。重新下载 21 个固定源码/说明文件，补查异步 subagent、生命周期、工具并发与 LLM seam；文档核验时另补 2 份来源副本，并修正 todo 源文件引用越界。没有安装或运行 DSH 源码。[L04]
+读取 HEAD 为 `d48b4e4b22c94c82b45d2179ba452d72b164102d`，代码基线为 `0918ee76d079b9392ec03400c0c4c9fdff5bc784`。核对 `git status --short`、提交范围和 `src/tests/scripts` 空差异，当前无未提交生产代码改动；已有子模块 dirty、草稿、原始 run 目录保留。既有离线回执绑定 `0918ee7`，本轮不生成新回执、不把文档 HEAD 宣称为已 live-ready。
 
-**新增的实际验证是 LangGraph 库级探针**，使用本机已有依赖，关闭 tracing 并阻断 socket 网络连接，不导入 Code2Paper 或调用模型。在三个独立 Python 进程执行：
+七项意见分别落实为：§2/§14.1/§21.1 的已有 owner 清单，§15.3/WP1a 的不可变事务前置，§9 的唯一 Writer 合同及实际技术字节门，§8 的三类接口，§16 的 Python 唯一账本，§20/§21 的窄闭环顺序，以及 §6.5/WP5 的主图独立门。早期 `4146010` 锚点仅保留在历史来源，当前抽取符号按 `0918ee7` 重定位。
+
+本轮零网络临时探针命令：
 
 ```bash
-python /tmp/c2p-dsh-decisions-20260922-96d0m5mc/probe_graph_handoff.py start
-python /tmp/c2p-dsh-decisions-20260922-96d0m5mc/probe_graph_handoff.py resume
-python /tmp/c2p-dsh-decisions-20260922-96d0m5mc/probe_graph_handoff.py inspect
+python /tmp/c2p-dsh-design-refresh-20260927-FMLsPb/probe_boundaries.py
 ```
 
-三次均退出 0：第一进程持久化 interrupt 后返回；第二进程读取同一 SQLite checkpoint，以模拟领域 receipt 恢复到 END；第三进程确认终态。观察到 prepare 执行 1 次、等待节点进入 2 次、receipt apply 1 次，网络尝试和模型调用均为 0。该结果支持选定 API 与“等待节点会重执行”的约束，**没有验证真实 DSH/Python 桥接、任务 outbox、共享队列、生产 commit、取消或模型兼容**。
+退出 0，复现三个限定事实：
 
-文档核验命令 `python /tmp/c2p-dsh-decisions-20260922-96d0m5mc/check_design.py` 退出 0：36 个本地链接、59 个来源定义、22 个固定符号锚点、Research 9 个/Authoring 16 个节点映射和下载来源的行号范围均通过；JSON/YAML/Python 示例完成语法解析，代码围栏完整。`git diff --check` 退出 0；未跟踪设计稿与本轮前副本的 `git diff --no-index --check` 退出 1、无诊断，表示存在差异且无空白错误。完整记录位于 `/tmp/c2p-dsh-decisions-20260922-96d0m5mc/verification.json`。
+| 探针 | 观察 | 对设计的影响 |
+|---|---|---|
+| g1 active 已建立，g2 复用路径，register 前故障 | active 仍指 g1，目标字节已为 g2，旧摘要不符，解析报 `artifact_active_ambiguous` | 不可变成员与 active 最后切换前置 WP1a |
+| 保留磁盘声明摘要，只改 registry 的 upstream_refs | load 成功且声明摘要被新计算值覆盖 | 创建/加载合同分离，严格比较不可变 registration 与指针 |
+| 冻结 technical digest，实际 payload 不提供该字段 | helper 返回空失败集 | 公共发送合同必须承接现有外层真实字节校验；不能把此 helper 反例扩大为已证明生产可绕过 |
 
-读取文件的哈希见该目录 `baseline.json`、`dsh-fetch.json` 与 `supplemental-dsh-sources.json`；临时文件只证明其绑定范围，主要设计决定和证据解释保留在本文。没有运行项目 pytest、live 或 Loader，不将 §22 的待实施矩阵登记为已通过。
+无源码修复、无模型调用、无项目 pytest。上述脚本的成功表示反例得到确认，不表示修复通过。主要事实已完整写入本节；临时目录仅为复现附属物，不要求其他会话依赖同一个 `/tmp`。[L05]
+
+DSH 官方固定链接在线读取未成功；使用此前保存的 `c36a83ff` 源码，21 份文件重新计算 SHA-256 均匹配 `dsh-fetch.json`，补读 terminal 捕获和 `llm/stream`。不宣称查询了最新 master，也未安装/启动 DSH。该限制不影响按固定版本规划 WP2，但 mock compatibility 仍是独立必过门。
+
+文档核验命令 `python /tmp/c2p-dsh-design-refresh-20260927-FMLsPb/check_design.py` 退出 0：87 个本地链接、64 个来源定义、30 个当前符号锚点、代码围栏、5 个 JSON/YAML/Python 示例及工作包前置顺序通过；`git diff --check` 退出 0。确认代码目录与基线相同、本轮只修改本文与 README；详细结果见同目录 `verification.json`，这些检查不代替项目测试或 DSH Loader。
+
+### 26.2 历史库级证据的保留范围
+
+2026-09-22 在 `4146010` 读取快照下，曾下载固定 DSH 源码并运行三进程 LangGraph 小探针（`start`/`resume`/`inspect`）。prepare 一次、等待节点进入两次、receipt apply 一次，网络/模型均为零；它证明所选 SQLite checkpoint / interrupt / Command API 的库级可行性。
+
+该探针没有验证真实 Research context、完整图、DSH Loader、Host outbox、发布、共享调度或模型兼容。历史细节与哈希保留在 [L04]；不得把它记为 WP2/WP5 已完成。旧设计审查使用的 `3aa9db8`/`95c50b3`/`4146010`、旧回执与旧候选亦按原时间边界解释。
 
 ---
 
 ## 来源索引：固定提交与阅读范围
 
-下列固定 SHA 链接保留原稿证据；`C11–C17`、`D18–D24`、`L01–L03` 来自首次补查，`C18–C22`、`D25–D27`、`L04` 为本轮逐项设计研究新增。新增本地链接的行号绑定 `4146010...` 快照，可由该提交恢复核对，链接打开的工作树可能已变化。本地未提交产物仅绑定其内容与历史运行，不能冒称 GitHub 已发布证据；代码、测试断言、历史回执及提交说明分别解释。
+固定 SHA 链接保留原稿证据；[C01–C22] 是历史读取范围，[C23–C26] 为本轮 `0918ee7` 当前 owner 与边界，[L05] 为本轮复核。当前本地行号按 §21.2 解释；链接打开的工作树以后仍可能变化。未推送本地提交不冒称 GitHub 已发布，源码、测试断言、历史回执与新执行结果分别解释。
 
 - **[P01] 项目目标与架构权威**：[07-19 总体设计](agentic_robust_langgraph_research_writing_design_2026-07-19.md)、[07-31 Writer 设计](publication_ready_method_writer_design_2026-07-31.md)、[08-17 主线计划](method_agent_master_agent_mainline_execution_repair_plan_2026-08-17.md)、[08-22 Candidate 修订](method_intent_first_authoring_redesign_2026-08-22.md)。原稿提到的“用户本轮提供总结”没有在本次任务中提供可独立核对的源文件，已取消其虚拟行号引用；benchmark 条件是本文提出的实验合同。
 - **[C01]** [首次审查提交：validator bundle 身份变更；测试数字为提交说明自述](https://github.com/hjcui98/code2paper/commit/3aa9db8d70e409ea3a3ecf47880bda7bea987298)
@@ -1248,7 +1400,7 @@ python /tmp/c2p-dsh-decisions-20260922-96d0m5mc/probe_graph_handoff.py inspect
 - **[C19]** `4146010...`：[Authoring overlay](../src/code2paper/agentic/product_authoring_graph.py) 的 16 个节点/边、默认 handler、`_graph_route:767`、`build_product_authoring_graph:807`、`persist_product_authoring_state_from_writer:1136`；后者不是完整内容驱动。
 - **[C20]** `4146010...`：[产品入口](../src/code2paper/agentic/autonomous_method_agent.py) `build_product_research_runtime:439`、`run_product_research_phase:547`、`build_product_planning:1699`、`_run_autonomous_method_agent_impl:3089`、`_run_writer_surface:4563`；读取意图 enrichment、研究/规划、Writer 与 callback 接线。
 - **[C21]** `4146010...`：[写作 callback 续作](../src/code2paper/agentic/writing_callback_fulfillment.py) `fulfill_and_resume_writing_callbacks:781`；[checkpoint 封装](../src/code2paper/agentic/checkpointing.py)；[仓库依赖范围](../pyproject.toml)。本机实际安装版本另在 [L04]，不能由依赖范围推断所有环境相同。
-- **[C22]** `4146010...`：[Unified Writer](../src/code2paper/agentic/publication_method_writer.py) 与[请求/验收函数](../src/code2paper/llm/section_writer.py)。§21.2 的新版锚点取代原 `3aa9db8...` 行号；明确 Formalizer 调用 `:2982` 先于 Narrative 细化 `:3103`。
+- **[C22]** `4146010...` 历史读取：[Unified Writer](../src/code2paper/agentic/publication_method_writer.py) 与[请求/验收函数](../src/code2paper/llm/section_writer.py)。当时 Formalizer 调用 `:2982` 先于 Narrative 细化 `:3103`；当前 `0918ee7` 抽取锚点已在 §21.2 重定位，不沿用旧行号施工。
 - **[D01]** [DSH 架构：公共服务、profile、SDK、会话与运行时分离](https://github.com/deepseek-ai/deepseek-harness/blob/c36a83ff6bb95e3f82cf79f9be7c724270a8aa61/docs/architecture.md)
 - **[D02]** [Creator 的持久插件开发 skill：实际开发、检查和安装流程](https://github.com/deepseek-ai/deepseek-harness/blob/c36a83ff6bb95e3f82cf79f9be7c724270a8aa61/packages/preset/agent-preset/skills/cordis-plugin-development/SKILL.md)
 - **[D03]** [Host plugin/bundle 契约：manifest、patch、apply、安装与热更新限制](https://github.com/deepseek-ai/deepseek-harness/blob/c36a83ff6bb95e3f82cf79f9be7c724270a8aa61/packages/preset/agent-preset/skills/cordis-plugin-development/references/host-plugin.md)
@@ -1286,3 +1438,9 @@ python /tmp/c2p-dsh-decisions-20260922-96d0m5mc/probe_graph_handoff.py inspect
 - **[L03]** [事故的机械质量报告](../artifacts/runs/2026-09-18-live-admission/quality-report-incident.json)：忠实性未测量，未提供新全文候选对照。
 - **[L04]** 本轮临时读取与探针记录：[源码/依赖/锚点清单](/tmp/c2p-dsh-decisions-20260922-96d0m5mc/baseline.json)、[DSH 固定源清单](/tmp/c2p-dsh-decisions-20260922-96d0m5mc/dsh-fetch.json)、[库级探针源码](/tmp/c2p-dsh-decisions-20260922-96d0m5mc/probe_graph_handoff.py)、[暂停回执](/tmp/c2p-dsh-decisions-20260922-96d0m5mc/probe/start.json)、[恢复回执](/tmp/c2p-dsh-decisions-20260922-96d0m5mc/probe/resume.json)、[跨进程终态检查](/tmp/c2p-dsh-decisions-20260922-96d0m5mc/probe/inspect.json)。结论和限制已写入 §26，不以临时目录存在代替生产证据。
 - **DSH 预览状态补充**：[固定提交 README](https://github.com/deepseek-ai/deepseek-harness/blob/c36a83ff6bb95e3f82cf79f9be7c724270a8aa61/README.md)。
+
+- **[C23] `0918ee7` 已有身份、导入与账本**：[身份/Research import 闭包](../src/code2paper/agentic/authoring_execution_identity.py)、[运行打开与锁内准入](../src/code2paper/agentic/autonomous_method_agent.py)、[统一恢复归约](../src/code2paper/agentic/writer_attempt_ledger.py)、[统一 invocation 账本](../src/code2paper/agentic/unified_invocation_ledger.py)、[canonical failure owner/action](../src/code2paper/agentic/publication_transaction_contract.py)。
+- **[C24] `0918ee7` 发布与发送边界**：[producer registry](../src/code2paper/agentic/authoring_artifact_registry.py)、[publication journal](../src/code2paper/agentic/authoring_artifact_publication.py)、[验证索引读取](../src/code2paper/agentic/authoring_artifact_index.py)、[页合同复核](../src/code2paper/agentic/page_contract_recheck.py)、[实际 Writer 外层](../src/code2paper/agentic/publication_method_writer.py)。本轮反例与外层字节保护的区别见 §9.3/§26.1。
+- **[C25] `0918ee7` 主图现状**：[Research context/构图](../src/code2paper/agentic/research_graph.py)、[Authoring route/default handler](../src/code2paper/agentic/product_authoring_graph.py)、[当前产品入口](../src/code2paper/agentic/autonomous_method_agent.py)。符号与行号见 §21.2；尚不等于 DSH 持久主图。
+- **[C26] 当前离线验收合同**：[页合同回归](../tests/regression_20260917/test_page_contract_recheck.py)、[真实 Writer 闭环测试](../tests/regression_20260922/test_authoring_contract_closure.py)、[多 detail 公式闭包 C04](../tests/regression_20260917/test_formula_dependency_closure.py)、[A–G 矩阵映射](../tests/regression_20260922/test_matrix_coverage.py)、[审计完成定义](Code2Paper_代码审计与修复执行方案_20260922.md)。历史修复的离线通过不覆盖新增 DSH 接线。
+- **[L05] 2026-09-27 重基线**：`0918ee7..d48b4e4` 代码目录无差异；[临时探针结果](/tmp/c2p-dsh-design-refresh-20260927-FMLsPb/probe-results.json)、[复现脚本](/tmp/c2p-dsh-design-refresh-20260927-FMLsPb/probe_boundaries.py)、[当前符号锚点](/tmp/c2p-dsh-design-refresh-20260927-FMLsPb/anchors.json)。关键结论已嵌入 §26.1，跨会话无法访问临时路径时以正文与固定代码重现。

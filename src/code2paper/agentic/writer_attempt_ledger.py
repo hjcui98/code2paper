@@ -298,6 +298,14 @@ def _resolve_invocation_directory(out_root: Path, invocation_id: str) -> tuple[P
     """
 
     ledger = Path(out_root) / "artifacts" / "06_authoring" / "invocations"
+    from code2paper.agentic.unified_invocation_ledger import invocation_dir
+    canonical = invocation_dir(ledger, invocation_id)
+    if canonical.is_dir():
+        for path in canonical.glob("attempt-*.json"):
+            payload, _error = _read_json_object(path)
+            if payload and payload.get("invocation_id") not in {None, "", invocation_id}:
+                return canonical, f"invocation_directory_identity_conflict:{invocation_id}"
+        return canonical, ""
     expected = invocation_id.replace(":", "-")
     exact = ledger / expected
     if exact.is_dir():
@@ -354,6 +362,47 @@ def reduce_invocation_recovery(
             limit=limit,
         )
 
+    if tuple(directory.glob("attempt-0001.dsh-event-*.json")):
+        from code2paper.agentic.unified_invocation_ledger import read_dsh_invocation_events
+        try:
+            facts = read_dsh_invocation_events(directory.parent, invocation_id)
+            if not facts or facts[0].kind != "reserve":
+                raise ValueError("dsh_reserve_missing")
+            from code2paper.integrations.dsh.unknown_abort_recovery import MARKER, read_disposition
+            disposition = read_disposition(directory, facts)
+            if tuple(path for path in directory.glob("attempt-*.json") if ".dsh-event-" not in path.name
+                     and not (path.name == MARKER and disposition is not None)):
+                raise ValueError("dsh_legacy_event_mix")
+        except (OSError, ValueError, KeyError, TypeError) as error:
+            return _recovery(invocation_id,state="ledger_corrupt",primary_cause="dsh_events_invalid",
+                limit=limit,blocks=(f"dsh_events_invalid:{type(error).__name__}",))
+        kinds = {fact.kind for fact in facts}
+        sends = int("adapter-attempt" in kinds)
+        counters = WriterAttemptCountersV1(event_seq=len(facts),provider_send_count=sends,
+            content_attempt_count=sends,rejected_before_send_events=(1,) if "proven-not-sent" in kinds else ())
+        expected = {"contract_digest": facts[0].contract_digest, "request_digest": facts[0].request_digest,
+                    "plan_digest": facts[0].plan_digest, "execution_id": facts[0].execution_id}
+        mismatches = tuple(key for key,value in (contract_digests or {}).items()
+                           if key not in expected or expected[key] != value)
+        if mismatches:
+            return _recovery(invocation_id,state="ledger_corrupt",primary_cause="dsh_contract_mismatch",
+                limit=limit,counters=counters,contract_mismatch=mismatches,blocks=("dsh_contract_mismatch",))
+        if "proven-not-sent" in kinds:
+            state, cause = "reserved_not_sent", "dsh_proven_not_sent"
+        elif disposition is not None:
+            state, cause = "send_outcome_unknown", "dsh_terminated_unknown_usage_quarantined"
+        elif "settlement" in kinds:
+            state, cause = "validation_pending", "dsh_settled_domain_validation_required"
+        elif "terminal" in kinds:
+            state, cause = "response_received_unsettled", "dsh_terminal_recorded"
+        else:
+            # A durable reserve can outlive a Host that entered transport but
+            # never recorded it. Unlike legacy started, it cannot prove unsent.
+            state, cause = "send_outcome_unknown", "dsh_reservation_not_reconciled"
+        return _recovery(invocation_id,state=state,primary_cause=cause,limit=limit,counters=counters,
+            unknown_reservation_attempts=(1,) if state == "send_outcome_unknown" else (),
+            last_provider_attempt=sends,evidence={"dsh_events":facts[-1].content_digest})
+
     events, unparsable = _attempt_event_files(directory)
     corrupt: list[str] = list(unparsable)
     sends = 0
@@ -373,6 +422,8 @@ def reduce_invocation_recovery(
     response_unsettled: list[int] = []
     response_missing: list[int] = []
     reserved_not_sent: list[int] = []
+    claim_conflicts: list[int] = []
+    damaged_attempts: set[int] = set()
     contract_mismatch: list[str] = []
 
     for attempt in sorted(events):
@@ -387,10 +438,39 @@ def reduce_invocation_recovery(
 
         code = str(completed_payload.get("delivery_rejection_code") or "")
         sent_flag = bool(completed_payload.get("sent_to_caller", True)) if completed_payload else None
-        if code.startswith("attempt_limit_exhausted:"):
+        # 回执声称未发送时，request/response 必须被读出来：文件在但损坏是账本事实，
+        # 不能因为没解析就当成"没有这份证据"。request 文件存在也不等于 HTTP 已送达。
+        if "request" in files:
+            _request_payload, request_error = _read_json_object(files["request"])
+            if request_error:
+                corrupt.append(request_error)
+                damaged_attempts.add(attempt)
+        if "response" in files:
+            _response_payload, response_error = _read_json_object(files["response"])
+            if response_error:
+                corrupt.append(response_error)
+                damaged_attempts.add(attempt)
+        persistent_send_evidence = "request" in files or "response" in files
+        # 冲突：持久回执自称未越过边界，但 request/response 证据存在（含损坏文件）。
+        # 不得记成明确未发、不得退款、不得把 request 文件当成发送成功或伪造 usage。
+        send_claim_conflict = (
+            bool(completed_payload) and sent_flag is False and persistent_send_evidence
+        )
+        if send_claim_conflict:
+            claim_conflicts.append(attempt)
+        # K04 收口：**发送前拒绝**必须是"回执自称未越过边界 + 没有任何 provider-request
+        # 证据"，而不是只认 `attempt_limit_exhausted:` 这一种前缀。真实合同拒发
+        # （页字节/材料/预算/模板等具名 code）以前会落进 `elif sent_flag` 之外的分支，
+        # 既不计数也不具名，invocation 级结论退化成"没有事件"。
+        pre_send_refusal = (
+            bool(completed_payload)
+            and sent_flag is False
+            and not persistent_send_evidence
+        )
+        if pre_send_refusal:
             rejected_before_send.append(attempt)
-            last_rejection = code
-            if ">" in code.rsplit(":", 1)[-1]:
+            last_rejection = code or last_rejection
+            if code.startswith("attempt_limit_exhausted:") and ">" in code.rsplit(":", 1)[-1]:
                 try:
                     limit = max(limit, int(code.rsplit(">", 1)[1]))
                 except ValueError:
@@ -409,13 +489,18 @@ def reduce_invocation_recovery(
             reserved_not_sent.append(attempt)
         if "response" in files and not completed_payload:
             response_unsettled.append(attempt)
-        pre_send_refusal = bool(code.startswith("attempt_limit_exhausted:")) or (
-            completed_payload and sent_flag is False
-        )
-        if completed_payload and "response" not in files and not pre_send_refusal:
+        if (
+            completed_payload
+            and "response" not in files
+            and not pre_send_refusal
+            and not send_claim_conflict
+        ):
             response_missing.append(attempt)
 
-        if "acceptance" in files:
+        if send_claim_conflict:
+            # 冲突 attempt 的验收记录不能把"自称未发送"结算成可复用成功。
+            pass
+        elif "acceptance" in files:
             acceptance_path = files["acceptance"]
             payload, error = _read_json_object(acceptance_path)
             if error:
@@ -439,8 +524,10 @@ def reduce_invocation_recovery(
                     codes = _acceptance_failure_codes(acceptance_path)
                     if codes:
                         failure_codes = codes
-        elif completed_payload and not code.startswith("attempt_limit_exhausted:"):
+        elif completed_payload and not pre_send_refusal and not send_claim_conflict:
             # 有可评价响应但缺少验收记录 → 待本地验收，不得当成接受。
+            # K04 收口：发送前拒绝**没有可评价响应**，不得进入"待本地验收"，否则调用方会
+            # 去本地结算一次从未发出的请求。
             unvalidated_attempts.append(attempt)
 
     # 本地验证重放（§B.5）：只认**当前 validator 身份**的重放；旧身份的重放不得复用。
@@ -452,6 +539,10 @@ def reduce_invocation_recovery(
             stale_replays.append(
                 f"stale_validation_replay:{record.attempt}:{record.validator_bundle_digest}"
             )
+            continue
+        # 矛盾发送事实或损坏证据不能被验收重放结算成可复用。
+        # 重放可以先于矛盾回执落盘；归约时以当前持久事实为准。
+        if record.attempt in claim_conflicts or record.attempt in damaged_attempts:
             continue
         # 无论接受与否，该 attempt 都已经结算过 → 不再是"待本地验收"。
         unvalidated_attempts = [a for a in unvalidated_attempts if a != record.attempt]
@@ -472,6 +563,15 @@ def reduce_invocation_recovery(
     if corrupt:
         state: AttemptRecoveryStateV1 = "ledger_corrupt"
         cause = "ledger_corrupt:" + ",".join(sorted(dict.fromkeys(corrupt))[:3])
+        accepted = False
+        primary_accepted = False
+    elif claim_conflicts:
+        # 回执与持久 request/response 冲突优先于验收重放：保留未知发送，不记成可复用。
+        state = "send_outcome_unknown"
+        cause = "send_claim_conflicts_with_persistent_evidence"
+        unknown_reservations = list(dict.fromkeys([*unknown_reservations, *claim_conflicts]))
+        accepted = False
+        primary_accepted = False
     elif accepted:
         state = "accepted_reusable"
         cause = "accepted_response_matches_contract" if not contract_mismatch else "accepted_but_contract_mismatch"
@@ -496,7 +596,15 @@ def reduce_invocation_recovery(
         cause = "request_persisted_without_completed"
     else:
         state = "reserved_not_sent"
-        cause = "reserved_without_send_boundary" if reserved_not_sent else "no_events"
+        # K04 收口：有真实事件时不得总结成 "no_events"。发送前拒绝是**具名**事实，
+        # 它既不消耗内容预算也不阻断合法再准入，因此状态仍是"可继续"，但原因必须点名。
+        cause = (
+            "presend_refusal_without_send"
+            if rejected_before_send
+            else "reserved_without_send_boundary"
+            if reserved_not_sent
+            else "no_events"
+        )
 
     return _recovery(
         invocation_id,
@@ -637,6 +745,24 @@ def publish_validation_replay(
         raise FileNotFoundError(f"invocation_directory_unresolved:{invocation_id}")
     if (directory / f"attempt-{attempt:04d}.content-acceptance.json").is_file():
         raise ValueError("validation_replay_refuses_to_shadow_historical_acceptance")
+    events, _unparsable = _attempt_event_files(directory)
+    files = events.get(int(attempt), {})
+    completed_payload: dict[str, Any] = {}
+    if "completed" in files:
+        completed_payload, completed_error = _read_json_object(files["completed"])
+        if completed_error:
+            raise ValueError("validation_replay_refuses_damaged_ledger")
+    for kind in ("request", "response"):
+        if kind in files:
+            _payload, evidence_error = _read_json_object(files[kind])
+            if evidence_error:
+                raise ValueError("validation_replay_refuses_damaged_ledger")
+    if (
+        completed_payload
+        and completed_payload.get("sent_to_caller") is False
+        and ("request" in files or "response" in files)
+    ):
+        raise ValueError("validation_replay_refuses_conflicting_send_evidence")
     path = validation_replay_path(directory, int(attempt), validator_bundle_digest)
     if path.is_file():
         raise ValueError("validation_replay_already_published")
@@ -768,18 +894,42 @@ def read_attempt_outcomes(
                 payload = json.loads(completed.read_text(encoding="utf-8"))
             except (OSError, ValueError):
                 payload = {}
+        request_damaged = False
+        response_damaged = False
+        if request.is_file():
+            _request_payload, request_error = _read_json_object(request)
+            request_damaged = bool(request_error)
+        if response.is_file():
+            _response_payload, response_error = _read_json_object(response)
+            response_damaged = bool(response_error)
+        persistent_send_evidence = request.is_file() or response.is_file()
+        send_claim_conflict = (
+            bool(payload)
+            and payload.get("sent_to_caller") is False
+            and persistent_send_evidence
+        )
         rejected_before_send = (
             bool(payload)
             and payload.get("sent_to_caller") is False
-            and str(payload.get("delivery_rejection_code") or "").startswith(
-                "attempt_limit_exhausted:"
-            )
+            and not persistent_send_evidence
         )
-
-        if rejected_before_send:
+        if send_claim_conflict or request_damaged or response_damaged:
+            # 损坏证据同样不能释放预留；request 文件本身不是已送达证明。
+            state = "send_outcome_unknown"
+            retained, replayable = True, False
+            detail = (
+                "回执声称未发送，但 request/response 证据存在或损坏："
+                "不退款、不盲重发、不把 request 文件记成发送成功"
+                if send_claim_conflict
+                else "request/response 证据损坏：保留预留，不退款、不盲重发"
+            )
+        elif rejected_before_send:
             state: AttemptOutcomeStateV1 = "rejected_before_send"
             retained, replayable = False, False
-            detail = "预算/合同拒绝，未发送；不消耗内容预算"
+            detail = (
+                "发送前拒绝，未越过 caller 边界；不消耗内容预算"
+                f"（code={str(payload.get('delivery_rejection_code') or '')[:120]}）"
+            )
         elif request.is_file() and not response.is_file():
             state = "send_outcome_unknown"
             retained, replayable = True, False

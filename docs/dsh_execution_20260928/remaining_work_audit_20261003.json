@@ -1,0 +1,1715 @@
+{
+  "schema_version": "c2p-dsh-remaining-work-review/1",
+  "as_of": "2026-10-03T11:39:04.895471+08:00",
+  "scope": "Original eight execution documents and all 49 task cards; remaining delivery repairs, validation gaps and later implementation guidance. No Gate-H/K decision.",
+  "head": "d48b4e4b22c94c82b45d2179ba452d72b164102d",
+  "prior_progress_audit": {
+    "as_of": "2026-10-03T11:28:49.556704+08:00",
+    "scope": "Progress and delivery consistency review; not a new full Gate-H decision",
+    "repository": "/home/cuihengjia/agent/Code2Paper copy",
+    "head": "d48b4e4b22c94c82b45d2179ba452d72b164102d",
+    "task_counts": {
+      "done": 2,
+      "in_progress": 9,
+      "planned": 38
+    },
+    "kernel_source_test_entries": 791,
+    "kernel_source_test_mismatches": [],
+    "owner_sealed_file_count": 26,
+    "owner_seal_mismatches": [],
+    "owner_results": {
+      "test-execution-identity.result.json": {
+        "status": "passed",
+        "exit_code": 0,
+        "passed": 24,
+        "failed": 0
+      },
+      "diff-check.result.json": {
+        "status": "passed",
+        "exit_code": 0
+      },
+      "check-compat-built.result.json": {
+        "status": "passed",
+        "exit_code": 0,
+        "tests": 92,
+        "passed": 92,
+        "failed": 0,
+        "skipped": 0,
+        "scope": "source-equivalence-only"
+      },
+      "b02-pytest.result.json": {
+        "status": "passed",
+        "exit_code": 0,
+        "passed": 24,
+        "failed": 0
+      },
+      "check-compat-delivery.result.json": {
+        "status": "passed",
+        "exit_code": 0,
+        "tests": 92,
+        "passed": 92,
+        "failed": 0,
+        "skipped": 0
+      },
+      "doctor.result.json": {
+        "status": "passed",
+        "exit_code": 0,
+        "schema_version": "c2p-dsh-development-environment-isolation/1",
+        "bytes_match": true,
+        "compat_composition_ready": true
+      }
+    },
+    "runtime_and_stage_identities": {
+      "0.2.0-rc.1+loop-origin.1": {
+        "staging_tree_sha256": "6f0c39cb850f16abc00cbdbe2a7474463e1b37e1159a31f4887421070f4c7546",
+        "staged_receipt_sha256": "bce226e5ada06691f063bc6cd5d5525470ad1b2b2a38ddf03c926814239183b3",
+        "receipt_frozen_runtime": {
+          "dsh_version": "0.2.0-rc.1+loop-origin.1",
+          "runtime_tree_sha256": "671daa1a7a06728d69a4bdec6da3d33a3616c4e788f63579ed07f3ae81e0e16c",
+          "package_lock_sha256": "67f3a677bb15ec9ef11aab15c24482cf053910ab5f67834223f6e96e70b3e3ba"
+        }
+      },
+      "0.2.0-rc.1+loop-origin.1-built": {
+        "staging_tree_sha256": "88341665e82274bdf8bb01ed159cd9001a2b43ef630aa8d6d51c1eaea03aadb9",
+        "staged_receipt_sha256": "c10d1bcaf0ca0a508cda255795609688f3d0824420733baa8cac7ee8fc722285",
+        "receipt_frozen_runtime": {
+          "dsh_version": "0.2.0-rc.1+loop-origin.1-built",
+          "runtime_tree_sha256": "3076d2fcdbf6b2b49167e8132ce9b5801d95079a36f9bd05af17302e8482be97",
+          "package_lock_sha256": "67f3a677bb15ec9ef11aab15c24482cf053910ab5f67834223f6e96e70b3e3ba"
+        }
+      }
+    },
+    "compatibility_declared_build": {
+      "outputs_digest": "9c00688b090ab3bb744ba83975e5ab447fe75fd61798906d15ba13fa4e750e95",
+      "build_receipt_sha256": "c10d1bcaf0ca0a508cda255795609688f3d0824420733baa8cac7ee8fc722285",
+      "staging_tree_sha256": "6f0c39cb850f16abc00cbdbe2a7474463e1b37e1159a31f4887421070f4c7546",
+      "staged_file_count": 18
+    },
+    "compatibility_source_hash_mismatches": [],
+    "declared_log_paths": {
+      "check_compat": {
+        "path": ".dsh-dev/run/w2-loop-origin-private-20261003-round9/check-compat.log",
+        "exists": false
+      },
+      "b02_python_matrix": {
+        "path": ".dsh-dev/run/w2-loop-origin-private-20261003-round9/b02-dev.log",
+        "exists": false
+      },
+      "doctor": {
+        "path": ".dsh-dev/run/w2-loop-origin-private-20261003-round9/doctor.log",
+        "exists": true
+      }
+    },
+    "active_peer": "/home/cuihengjia/agent/Code2Paper copy/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1-built/runtime/node_modules/@deepseek-ai",
+    "independent_types": {
+      "dsh-llm": {
+        "exit": 0,
+        "candidates": {
+          "0.2.0-rc.1+loop-origin.1": true,
+          "0.2.0-rc.1+loop-origin.1-built": true
+        },
+        "sha256": "320517790cd0770206834fbea83603e544b54f22dd1eb91000d1d5869fb1e20f"
+      },
+      "dsh-agent-loop": {
+        "exit": 0,
+        "candidates": {
+          "0.2.0-rc.1+loop-origin.1": true,
+          "0.2.0-rc.1+loop-origin.1-built": true
+        },
+        "sha256": "a3509f051a061ee2c6d6c7ac2fbf8f7d4a4acbce34dcfff9138557a84d7f2d40"
+      }
+    },
+    "independent_doctor_observed": {
+      "argv": [
+        "python",
+        "scripts/dsh_dev.py",
+        "--candidate",
+        "0.2.0-rc.1+loop-origin.1",
+        "doctor"
+      ],
+      "cwd": "/home/cuihengjia/agent/Code2Paper copy",
+      "exit": 1,
+      "output": "dsh-dev: the DSH/Cordis peer link does not point at the frozen runtime",
+      "recorded_from_completed_tool_call": true
+    },
+    "remaining_delivery_findings": [
+      {
+        "file": "integrations/dsh/dev/runtime-0.2.0-rc.1/loop-origin/evidence.md",
+        "line": 34,
+        "observation": "Current identity table still contains prior runtime/patch/build/staging/source hashes; command section contains mixed candidate receipt and stage."
+      },
+      {
+        "file": "integrations/dsh/dev/runtime-0.2.0-rc.1/loop-origin/interface-diff.md",
+        "line": 88,
+        "observation": "Current contract still describes removed take/entry-ack APIs."
+      },
+      {
+        "file": "integrations/dsh/compatibility.0.2.0-rc.1+loop-origin.1.json",
+        "line": 52,
+        "observation": "build_receipt_sha256 identifies source-built candidate while staging_tree_sha256 identifies delivery candidate; declared check_compat and B02 log paths do not exist."
+      }
+    ],
+    "next_steps": [
+      "Owner reconciles identities/API/log references and final explicit candidate environment, preserving history and separate built scope.",
+      "Independent full Gate-H differential review of corrected frozen candidate, including original positive/negative controls, lifecycle and dual-deployment binding.",
+      "Formal Gate-K recheck; preserve unchanged kernel component.",
+      "Document03 I01/C01/C00/C02/C03/C04; Gate-C; document04 serial Writer mock and durable worker; separately authorized L01 later."
+    ],
+    "production_sources_modified": false,
+    "full_runtime_suite_rerun_in_this_audit": false,
+    "live_model_calls": 0
+  },
+  "patch_rebuild_and_touched": {
+    "base_count": 26149,
+    "delivery_count": 26150,
+    "base_tree": "43490765da460c4300cd7ad8ec75dbc5d5e6dbda93b74e37466c6709c1ab359c",
+    "delivery_tree": "671daa1a7a06728d69a4bdec6da3d33a3616c4e788f63579ed07f3ae81e0e16c",
+    "actual_changed": [
+      "node_modules/@deepseek-ai/dsh-agent-loop/lib/index.js",
+      "node_modules/@deepseek-ai/dsh-agent-loop/lib/types/dispatch-origin.c2p.d.ts",
+      "node_modules/@deepseek-ai/dsh-agent-loop/lib/types/index.d.ts",
+      "node_modules/@deepseek-ai/dsh-llm/lib/index.js",
+      "node_modules/@deepseek-ai/dsh-llm/lib/types/index.d.ts"
+    ],
+    "manifest_touched": [
+      "node_modules/@deepseek-ai/dsh-agent-loop/lib/index.js",
+      "node_modules/@deepseek-ai/dsh-agent-loop/lib/types/index.d.ts",
+      "node_modules/@deepseek-ai/dsh-llm/lib/index.js",
+      "node_modules/@deepseek-ai/dsh-llm/lib/types/index.d.ts"
+    ],
+    "compat_touched": [
+      "node_modules/@deepseek-ai/dsh-agent-loop/lib/index.js",
+      "node_modules/@deepseek-ai/dsh-agent-loop/lib/types/index.d.ts",
+      "node_modules/@deepseek-ai/dsh-llm/lib/index.js",
+      "node_modules/@deepseek-ai/dsh-llm/lib/types/index.d.ts"
+    ],
+    "rebuild_exit": 0,
+    "rebuild_files": {
+      "node_modules/@deepseek-ai/dsh-agent-loop/lib/index.js": {
+        "present": true,
+        "equals_delivery": true,
+        "rebuilt_sha256": "f09442f3458faf88f608f66947d7372d7c9e33eba0cf0b6b342bd11e87891c8f",
+        "delivery_sha256": "f09442f3458faf88f608f66947d7372d7c9e33eba0cf0b6b342bd11e87891c8f"
+      },
+      "node_modules/@deepseek-ai/dsh-agent-loop/lib/types/dispatch-origin.c2p.d.ts": {
+        "present": true,
+        "equals_delivery": true,
+        "rebuilt_sha256": "baadf757589e385085d3d8409d1ef3d7dbc5ede84a114ad121d5a44484e36188",
+        "delivery_sha256": "baadf757589e385085d3d8409d1ef3d7dbc5ede84a114ad121d5a44484e36188"
+      },
+      "node_modules/@deepseek-ai/dsh-agent-loop/lib/types/index.d.ts": {
+        "present": true,
+        "equals_delivery": true,
+        "rebuilt_sha256": "a3509f051a061ee2c6d6c7ac2fbf8f7d4a4acbce34dcfff9138557a84d7f2d40",
+        "delivery_sha256": "a3509f051a061ee2c6d6c7ac2fbf8f7d4a4acbce34dcfff9138557a84d7f2d40"
+      },
+      "node_modules/@deepseek-ai/dsh-llm/lib/index.js": {
+        "present": true,
+        "equals_delivery": true,
+        "rebuilt_sha256": "1de608c92ae4c6e0ac942123478ccefec4286abafc98f01e04a256753ebcdf9a",
+        "delivery_sha256": "1de608c92ae4c6e0ac942123478ccefec4286abafc98f01e04a256753ebcdf9a"
+      },
+      "node_modules/@deepseek-ai/dsh-llm/lib/types/index.d.ts": {
+        "present": true,
+        "equals_delivery": true,
+        "rebuilt_sha256": "320517790cd0770206834fbea83603e544b54f22dd1eb91000d1d5869fb1e20f",
+        "delivery_sha256": "320517790cd0770206834fbea83603e544b54f22dd1eb91000d1d5869fb1e20f"
+      }
+    }
+  },
+  "smoke_selection_prelaunch": {
+    "requested_candidate": "0.2.0-rc.1+loop-origin.1",
+    "composition": "web",
+    "selected_candidate": null,
+    "selected_runtime": "/home/cuihengjia/agent/Code2Paper copy/.dsh-dev/runtime",
+    "selected_evidence_dir": "/home/cuihengjia/agent/Code2Paper copy/.dsh-dev/evidence",
+    "hardcoded_write_dir": "/home/cuihengjia/agent/Code2Paper copy/.dsh-dev/evidence",
+    "expected_runtime": "/home/cuihengjia/agent/Code2Paper copy/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1/runtime",
+    "actual_launch_performed": false
+  },
+  "tasks": [
+    {
+      "id": "B00",
+      "status": "done",
+      "depends_on": [],
+      "doc": "01_baseline_and_dsh_compatibility.md",
+      "title": "冻结实际开发输入与差异清单",
+      "paths": [
+        {
+          "path": "docs/dsh_execution_20260928/source_inventory.json",
+          "exists": true
+        },
+        {
+          "path": "integrations/dsh/compatibility.json",
+          "exists": true
+        }
+      ]
+    },
+    {
+      "id": "B01",
+      "status": "done",
+      "depends_on": [
+        "B00"
+      ],
+      "doc": "01_baseline_and_dsh_compatibility.md",
+      "title": "准备合法正例与旧路径特征测试",
+      "paths": [
+        {
+          "path": "tests/integrations/dsh/fixtures/",
+          "exists": true
+        },
+        {
+          "path": "tests/integrations/dsh/test_legacy_characterization.py",
+          "exists": true
+        },
+        {
+          "path": "tests/integrations/__init__.py",
+          "exists": true
+        },
+        {
+          "path": "tests/integrations/dsh/__init__.py",
+          "exists": true
+        }
+      ]
+    },
+    {
+      "id": "B02",
+      "status": "in_progress",
+      "depends_on": [
+        "B00"
+      ],
+      "doc": "01_baseline_and_dsh_compatibility.md",
+      "title": "扩展隔离环境与独立构建工具链",
+      "paths": [
+        {
+          "path": "scripts/dsh_dev.py",
+          "exists": true
+        },
+        {
+          "path": "scripts/dsh_dev_smoke.py",
+          "exists": true
+        },
+        {
+          "path": "integrations/dsh/dev/",
+          "exists": true
+        },
+        {
+          "path": "integrations/dsh/package.json",
+          "exists": true
+        },
+        {
+          "path": "integrations/dsh/package-lock.json",
+          "exists": true
+        },
+        {
+          "path": "integrations/dsh/tsconfig.json",
+          "exists": true
+        },
+        {
+          "path": "integrations/dsh/compatibility.0.2.0-rc.1.json",
+          "exists": true
+        }
+      ]
+    },
+    {
+      "id": "H01",
+      "status": "in_progress",
+      "depends_on": [
+        "B02"
+      ],
+      "doc": "01_baseline_and_dsh_compatibility.md",
+      "title": "真实 Loader、目标版本 preset 和作用域",
+      "paths": [
+        {
+          "path": "integrations/dsh/src/index.ts",
+          "exists": true
+        },
+        {
+          "path": "integrations/dsh/src/task-tools.ts",
+          "exists": true
+        },
+        {
+          "path": "integrations/dsh/cordis.patch.yml",
+          "exists": true
+        },
+        {
+          "path": "integrations/dsh/presets/",
+          "exists": true
+        },
+        {
+          "path": "integrations/dsh/tests/loader.test.ts",
+          "exists": true
+        },
+        {
+          "path": "integrations/dsh/dev/README.md",
+          "exists": true
+        },
+        {
+          "path": "integrations/dsh/package.json",
+          "exists": true
+        },
+        {
+          "path": "integrations/dsh/package-lock.json",
+          "exists": true
+        },
+        {
+          "path": "integrations/dsh/dev/runtime-0.2.0-rc.1/",
+          "exists": true
+        }
+      ]
+    },
+    {
+      "id": "H02",
+      "status": "in_progress",
+      "depends_on": [
+        "H01"
+      ],
+      "doc": "01_baseline_and_dsh_compatibility.md",
+      "title": "首个prompt与请求前可信绑定",
+      "paths": [
+        {
+          "path": "integrations/dsh/src/session-binding.ts",
+          "exists": true
+        },
+        {
+          "path": "integrations/dsh/src/role-dispatch.ts",
+          "exists": true
+        },
+        {
+          "path": "integrations/dsh/src/request-contract.ts",
+          "exists": true
+        },
+        {
+          "path": "integrations/dsh/tests/binding.test.ts",
+          "exists": true
+        },
+        {
+          "path": "docs/dsh_execution_20260928/h02_interface_freeze_020.md",
+          "exists": true
+        }
+      ]
+    },
+    {
+      "id": "H03",
+      "status": "in_progress",
+      "depends_on": [
+        "H02"
+      ],
+      "doc": "01_baseline_and_dsh_compatibility.md",
+      "title": "terminal schema、原始来源和持久化",
+      "paths": [
+        {
+          "path": "integrations/dsh/src/terminal-result.ts",
+          "exists": true
+        },
+        {
+          "path": "integrations/dsh/tests/terminal.test.ts",
+          "exists": true
+        },
+        {
+          "path": "integrations/dsh/tests/provenance.test.ts",
+          "exists": true
+        },
+        {
+          "path": "integrations/dsh/dev/H03_terminal_evidence.md",
+          "exists": true
+        }
+      ]
+    },
+    {
+      "id": "H04",
+      "status": "in_progress",
+      "depends_on": [
+        "H02"
+      ],
+      "doc": "01_baseline_and_dsh_compatibility.md",
+      "title": "真实LLM seam与取消能力探针",
+      "paths": [
+        {
+          "path": "integrations/dsh/src/request-accounting.ts",
+          "exists": true
+        },
+        {
+          "path": "integrations/dsh/tests/request-seam.test.ts",
+          "exists": true
+        },
+        {
+          "path": "integrations/dsh/tests/cancellation.test.ts",
+          "exists": true
+        }
+      ]
+    },
+    {
+      "id": "K01",
+      "status": "in_progress",
+      "depends_on": [
+        "B01",
+        "H03",
+        "H04"
+      ],
+      "doc": "02_kernel_publication_and_request_guards.md",
+      "title": "严格注册读取与完整来源身份",
+      "paths": [
+        {
+          "path": "src/code2paper/agentic/authoring_artifact_registry.py",
+          "exists": true
+        },
+        {
+          "path": "tests/regression_20260917/test_artifact_registry.py",
+          "exists": true
+        },
+        {
+          "path": "src/code2paper/agentic/authoring_execution_identity.py",
+          "exists": true
+        },
+        {
+          "path": "docs/dsh_execution_20260928/k01_registry_evidence.md",
+          "exists": true
+        }
+      ]
+    },
+    {
+      "id": "K02",
+      "status": "in_progress",
+      "depends_on": [
+        "K01"
+      ],
+      "doc": "02_kernel_publication_and_request_guards.md",
+      "title": "不可变多成员发布与CAS/fence",
+      "paths": [
+        {
+          "path": "src/code2paper/agentic/authoring_artifact_publication.py",
+          "exists": true
+        },
+        {
+          "path": "src/code2paper/agentic/authoring_execution_identity.py",
+          "exists": true
+        },
+        {
+          "path": "tests/integrations/dsh/test_publication_generation.py",
+          "exists": true
+        },
+        {
+          "path": "tests/regression_20260917/test_publication_transaction.py",
+          "exists": true
+        },
+        {
+          "path": "src/code2paper/agentic/authoring_artifact_registry.py",
+          "exists": true
+        }
+      ]
+    },
+    {
+      "id": "K03",
+      "status": "in_progress",
+      "depends_on": [
+        "K02"
+      ],
+      "doc": "02_kernel_publication_and_request_guards.md",
+      "title": "索引消费manifest与兼容读取接线",
+      "paths": [
+        {
+          "path": "src/code2paper/agentic/authoring_artifact_index.py",
+          "exists": true
+        },
+        {
+          "path": "src/code2paper/agentic/authoring_artifact_publication.py",
+          "exists": true
+        },
+        {
+          "path": "tests/regression_20260917/test_artifact_index.py",
+          "exists": true
+        },
+        {
+          "path": "src/code2paper/agentic/authoring_execution_identity.py",
+          "exists": true
+        }
+      ]
+    },
+    {
+      "id": "K04",
+      "status": "in_progress",
+      "depends_on": [
+        "B01",
+        "H03",
+        "H04"
+      ],
+      "doc": "02_kernel_publication_and_request_guards.md",
+      "title": "抽完整实际请求复核并封住缺失摘要",
+      "paths": [
+        {
+          "path": "src/code2paper/agentic/page_contract_recheck.py",
+          "exists": true
+        },
+        {
+          "path": "src/code2paper/agentic/publication_method_writer.py",
+          "exists": true
+        },
+        {
+          "path": "tests/regression_20260917/test_page_contract_recheck.py",
+          "exists": true
+        },
+        {
+          "path": "tests/regression_20260922/test_authoring_contract_closure.py",
+          "exists": true
+        },
+        {
+          "path": "src/code2paper/agentic/authoring_execution_identity.py",
+          "exists": true
+        },
+        {
+          "path": "src/code2paper/agentic/unified_context_compiler.py",
+          "exists": true
+        },
+        {
+          "path": "tests/integrations/dsh/test_legacy_characterization.py",
+          "exists": true
+        },
+        {
+          "path": "tests/integrations/dsh/fixtures/",
+          "exists": true
+        },
+        {
+          "path": "src/code2paper/agentic/formalization_agent.py",
+          "exists": true
+        },
+        {
+          "path": "tests/test_agentic_formalization_guards.py",
+          "exists": true
+        },
+        {
+          "path": "src/code2paper/agentic/unified_context_models.py",
+          "exists": true
+        },
+        {
+          "path": "tests/regression_20260917/test_ledger_recovery.py",
+          "exists": true
+        },
+        {
+          "path": "tests/regression_20260917/test_ledger_recovery_matrix.py",
+          "exists": true
+        },
+        {
+          "path": "src/code2paper/agentic/writer_attempt_ledger.py",
+          "exists": true
+        },
+        {
+          "path": "src/code2paper/agentic/unified_invocation_ledger.py",
+          "exists": true
+        }
+      ]
+    },
+    {
+      "id": "I01",
+      "status": "planned",
+      "depends_on": [
+        "K03",
+        "K04"
+      ],
+      "doc": "03_writer_contract_and_worker.md",
+      "title": "实际执行组成身份及运行字节校验",
+      "paths": [
+        {
+          "path": "src/code2paper/agentic/authoring_execution_identity.py",
+          "exists": true
+        },
+        {
+          "path": "src/code2paper/integrations/dsh/protocol.py",
+          "exists": false
+        },
+        {
+          "path": "integrations/dsh/compatibility.json",
+          "exists": true
+        },
+        {
+          "path": "tests/integrations/dsh/test_composition_identity.py",
+          "exists": false
+        }
+      ]
+    },
+    {
+      "id": "C01",
+      "status": "planned",
+      "depends_on": [
+        "I01"
+      ],
+      "doc": "03_writer_contract_and_worker.md",
+      "title": "唯一WriterTaskContract与跨语言wire合同",
+      "paths": [
+        {
+          "path": "src/code2paper/integrations/dsh/writer_contract.py",
+          "exists": false
+        },
+        {
+          "path": "src/code2paper/integrations/dsh/protocol.py",
+          "exists": false
+        },
+        {
+          "path": "tests/integrations/dsh/test_wire_schemas.py",
+          "exists": false
+        },
+        {
+          "path": "integrations/dsh/tests/wire.test.ts",
+          "exists": false
+        },
+        {
+          "path": "src/code2paper/agentic/authoring_execution_identity.py",
+          "exists": true
+        }
+      ]
+    },
+    {
+      "id": "C00",
+      "status": "planned",
+      "depends_on": [
+        "C01"
+      ],
+      "doc": "03_writer_contract_and_worker.md",
+      "title": "真实请求renderer与无模型准备握手",
+      "paths": [
+        {
+          "path": "integrations/dsh/src/writer-request.ts",
+          "exists": false
+        },
+        {
+          "path": "src/code2paper/integrations/dsh/protocol.py",
+          "exists": false
+        },
+        {
+          "path": "integrations/dsh/tests/writer-request.test.ts",
+          "exists": false
+        }
+      ]
+    },
+    {
+      "id": "C02",
+      "status": "planned",
+      "depends_on": [
+        "C00"
+      ],
+      "doc": "03_writer_contract_and_worker.md",
+      "title": "纯prepare与共用解析评估抽取",
+      "paths": [
+        {
+          "path": "src/code2paper/llm/section_writer.py",
+          "exists": true
+        },
+        {
+          "path": "src/code2paper/agentic/publication_method_writer.py",
+          "exists": true
+        },
+        {
+          "path": "src/code2paper/integrations/dsh/facade.py",
+          "exists": false
+        },
+        {
+          "path": "tests/integrations/dsh/test_writer_prepare_ingest.py",
+          "exists": false
+        },
+        {
+          "path": "src/code2paper/agentic/authoring_execution_identity.py",
+          "exists": true
+        }
+      ]
+    },
+    {
+      "id": "C03",
+      "status": "planned",
+      "depends_on": [
+        "C02"
+      ],
+      "doc": "03_writer_contract_and_worker.md",
+      "title": "可信结果ingest与局部事务",
+      "paths": [
+        {
+          "path": "src/code2paper/integrations/dsh/result_ingest.py",
+          "exists": false
+        },
+        {
+          "path": "src/code2paper/integrations/dsh/facade.py",
+          "exists": false
+        },
+        {
+          "path": "src/code2paper/agentic/final_text_authorship.py",
+          "exists": true
+        },
+        {
+          "path": "tests/integrations/dsh/test_result_provenance.py",
+          "exists": false
+        },
+        {
+          "path": "src/code2paper/agentic/authoring_execution_identity.py",
+          "exists": true
+        }
+      ]
+    },
+    {
+      "id": "C04",
+      "status": "planned",
+      "depends_on": [
+        "C03"
+      ],
+      "doc": "03_writer_contract_and_worker.md",
+      "title": "有界worker协议与最小权限facade",
+      "paths": [
+        {
+          "path": "src/code2paper/integrations/dsh/worker.py",
+          "exists": false
+        },
+        {
+          "path": "src/code2paper/integrations/dsh/protocol.py",
+          "exists": false
+        },
+        {
+          "path": "src/code2paper/integrations/dsh/facade.py",
+          "exists": false
+        },
+        {
+          "path": "tests/integrations/dsh/test_worker_protocol.py",
+          "exists": false
+        },
+        {
+          "path": "src/code2paper/agentic/authoring_execution_identity.py",
+          "exists": true
+        }
+      ]
+    },
+    {
+      "id": "R01",
+      "status": "planned",
+      "depends_on": [
+        "C04"
+      ],
+      "doc": "04_serial_writer_integration.md",
+      "title": "持久task/outbox/claim与单run租约",
+      "paths": [
+        {
+          "path": "src/code2paper/integrations/dsh/task_store.py",
+          "exists": false
+        },
+        {
+          "path": "src/code2paper/integrations/dsh/facade.py",
+          "exists": false
+        },
+        {
+          "path": "src/code2paper/agentic/authoring_execution_identity.py",
+          "exists": true
+        },
+        {
+          "path": "tests/integrations/dsh/test_task_recovery.py",
+          "exists": false
+        }
+      ]
+    },
+    {
+      "id": "R02",
+      "status": "planned",
+      "depends_on": [
+        "R01"
+      ],
+      "doc": "04_serial_writer_integration.md",
+      "title": "扩Python唯一账本接收DSH事实",
+      "paths": [
+        {
+          "path": "src/code2paper/agentic/unified_context_models.py",
+          "exists": true
+        },
+        {
+          "path": "src/code2paper/agentic/unified_invocation_ledger.py",
+          "exists": true
+        },
+        {
+          "path": "src/code2paper/agentic/writer_attempt_ledger.py",
+          "exists": true
+        },
+        {
+          "path": "src/code2paper/integrations/dsh/invocation_adapter.py",
+          "exists": false
+        },
+        {
+          "path": "tests/integrations/dsh/test_invocation_events.py",
+          "exists": false
+        },
+        {
+          "path": "src/code2paper/integrations/dsh/facade.py",
+          "exists": false
+        },
+        {
+          "path": "src/code2paper/integrations/dsh/worker.py",
+          "exists": false
+        },
+        {
+          "path": "src/code2paper/integrations/dsh/protocol.py",
+          "exists": false
+        },
+        {
+          "path": "src/code2paper/agentic/authoring_execution_identity.py",
+          "exists": true
+        }
+      ]
+    },
+    {
+      "id": "R03",
+      "status": "planned",
+      "depends_on": [
+        "R02"
+      ],
+      "doc": "04_serial_writer_integration.md",
+      "title": "Host私有pump与worker运行接线",
+      "paths": [
+        {
+          "path": "integrations/dsh/src/kernel-client.ts",
+          "exists": false
+        },
+        {
+          "path": "integrations/dsh/src/workflow-driver.ts",
+          "exists": false
+        },
+        {
+          "path": "integrations/dsh/src/execution-policy.ts",
+          "exists": false
+        },
+        {
+          "path": "integrations/dsh/src/request-accounting.ts",
+          "exists": true
+        },
+        {
+          "path": "integrations/dsh/tests/host.test.ts",
+          "exists": false
+        }
+      ]
+    },
+    {
+      "id": "R04",
+      "status": "planned",
+      "depends_on": [
+        "R03"
+      ],
+      "doc": "04_serial_writer_integration.md",
+      "title": "取消、失联与跨进程恢复",
+      "paths": [
+        {
+          "path": "src/code2paper/integrations/dsh/task_store.py",
+          "exists": false
+        },
+        {
+          "path": "src/code2paper/integrations/dsh/invocation_adapter.py",
+          "exists": false
+        },
+        {
+          "path": "integrations/dsh/src/kernel-client.ts",
+          "exists": false
+        },
+        {
+          "path": "integrations/dsh/src/workflow-driver.ts",
+          "exists": false
+        },
+        {
+          "path": "tests/integrations/dsh/test_host_crash_recovery.py",
+          "exists": false
+        },
+        {
+          "path": "src/code2paper/agentic/authoring_execution_identity.py",
+          "exists": true
+        }
+      ]
+    },
+    {
+      "id": "V01",
+      "status": "planned",
+      "depends_on": [
+        "R04"
+      ],
+      "doc": "04_serial_writer_integration.md",
+      "title": "串行单Writer真实DSH mock纵向闭环",
+      "paths": [
+        {
+          "path": "tests/integrations/dsh/test_serial_writer_e2e.py",
+          "exists": false
+        },
+        {
+          "path": "integrations/dsh/tests/serial-writer.test.ts",
+          "exists": false
+        },
+        {
+          "path": "integrations/dsh/tests/pi-ai-wire.test.ts",
+          "exists": false
+        }
+      ]
+    },
+    {
+      "id": "A01",
+      "status": "planned",
+      "depends_on": [
+        "V01"
+      ],
+      "doc": "04_serial_writer_integration.md",
+      "title": "修复实际测试覆盖回执并接入Node",
+      "paths": [
+        {
+          "path": "src/code2paper/cli/agentic_run.py",
+          "exists": true
+        },
+        {
+          "path": "src/code2paper/agentic/live_admission_preflight.py",
+          "exists": true
+        },
+        {
+          "path": "tests/integrations/dsh/test_dsh_admission.py",
+          "exists": false
+        },
+        {
+          "path": "src/code2paper/agentic/authoring_execution_identity.py",
+          "exists": true
+        }
+      ]
+    },
+    {
+      "id": "V02",
+      "status": "planned",
+      "depends_on": [
+        "A01"
+      ],
+      "doc": "04_serial_writer_integration.md",
+      "title": "opt-in操作入口与阶段准入接线",
+      "paths": [
+        {
+          "path": "integrations/dsh/src/cli.ts",
+          "exists": false
+        },
+        {
+          "path": "integrations/dsh/tests/cli.test.ts",
+          "exists": false
+        }
+      ]
+    },
+    {
+      "id": "L01",
+      "status": "planned",
+      "depends_on": [
+        "V02"
+      ],
+      "doc": "04_serial_writer_integration.md",
+      "title": "单独授权的小型Qwen兼容live",
+      "paths": [
+        {
+          "path": "tests/live/profiles/",
+          "exists": true
+        },
+        {
+          "path": "integrations/dsh/dev/",
+          "exists": true
+        },
+        {
+          "path": "/tmp/<fresh-task-run>/live-evidence/",
+          "exists": false
+        }
+      ]
+    },
+    {
+      "id": "M01",
+      "status": "planned",
+      "depends_on": [
+        "L01"
+      ],
+      "doc": "05_multistep_and_concurrency.md",
+      "title": "有界读取与证据权限",
+      "paths": [
+        {
+          "path": "src/code2paper/integrations/dsh/facade.py",
+          "exists": false
+        },
+        {
+          "path": "integrations/dsh/src/task-tools.ts",
+          "exists": true
+        },
+        {
+          "path": "tests/integrations/dsh/test_scoped_reads.py",
+          "exists": false
+        },
+        {
+          "path": "src/code2paper/agentic/authoring_execution_identity.py",
+          "exists": true
+        }
+      ]
+    },
+    {
+      "id": "M02",
+      "status": "planned",
+      "depends_on": [
+        "M01"
+      ],
+      "doc": "05_multistep_and_concurrency.md",
+      "title": "多步材料恢复与compaction计量",
+      "paths": [
+        {
+          "path": "integrations/dsh/src/context-policy.ts",
+          "exists": false
+        },
+        {
+          "path": "integrations/dsh/src/request-accounting.ts",
+          "exists": true
+        },
+        {
+          "path": "tests/integrations/dsh/test_multistep_context.py",
+          "exists": false
+        },
+        {
+          "path": "integrations/dsh/tests/context-replay.test.ts",
+          "exists": false
+        },
+        {
+          "path": "src/code2paper/agentic/authoring_execution_identity.py",
+          "exists": true
+        }
+      ]
+    },
+    {
+      "id": "M03",
+      "status": "planned",
+      "depends_on": [
+        "M02"
+      ],
+      "doc": "05_multistep_and_concurrency.md",
+      "title": "epoch预算与多步恢复验收",
+      "paths": [
+        {
+          "path": "tests/integrations/dsh/test_multistep_accounting.py",
+          "exists": false
+        },
+        {
+          "path": "integrations/dsh/tests/multistep.test.ts",
+          "exists": false
+        }
+      ]
+    },
+    {
+      "id": "P01",
+      "status": "planned",
+      "depends_on": [
+        "M03"
+      ],
+      "doc": "05_multistep_and_concurrency.md",
+      "title": "同主机共享后端调度",
+      "paths": [
+        {
+          "path": "src/code2paper/integrations/dsh/backend_scheduler.py",
+          "exists": false
+        },
+        {
+          "path": "src/code2paper/integrations/dsh/invocation_adapter.py",
+          "exists": false
+        },
+        {
+          "path": "tests/integrations/dsh/test_backend_scheduler.py",
+          "exists": false
+        },
+        {
+          "path": "src/code2paper/agentic/authoring_execution_identity.py",
+          "exists": true
+        }
+      ]
+    },
+    {
+      "id": "P02",
+      "status": "planned",
+      "depends_on": [
+        "P01"
+      ],
+      "doc": "05_multistep_and_concurrency.md",
+      "title": "显式并发开关与两类限额",
+      "paths": [
+        {
+          "path": "integrations/dsh/src/execution-policy.ts",
+          "exists": false
+        },
+        {
+          "path": "integrations/dsh/src/cli.ts",
+          "exists": false
+        },
+        {
+          "path": "integrations/dsh/src/artifact-view.ts",
+          "exists": false
+        },
+        {
+          "path": "tests/integrations/dsh/test_execution_policy.py",
+          "exists": false
+        },
+        {
+          "path": "src/code2paper/agentic/authoring_execution_identity.py",
+          "exists": true
+        }
+      ]
+    },
+    {
+      "id": "P03",
+      "status": "planned",
+      "depends_on": [
+        "P02"
+      ],
+      "doc": "05_multistep_and_concurrency.md",
+      "title": "固定wave、join与叶任务名额",
+      "paths": [
+        {
+          "path": "src/code2paper/integrations/dsh/task_store.py",
+          "exists": false
+        },
+        {
+          "path": "integrations/dsh/src/workflow-driver.ts",
+          "exists": false
+        },
+        {
+          "path": "tests/integrations/dsh/test_task_waves.py",
+          "exists": false
+        },
+        {
+          "path": "src/code2paper/agentic/authoring_execution_identity.py",
+          "exists": true
+        }
+      ]
+    },
+    {
+      "id": "P04",
+      "status": "planned",
+      "depends_on": [
+        "P03"
+      ],
+      "doc": "05_multistep_and_concurrency.md",
+      "title": "共享调度故障与公平性复核",
+      "paths": [
+        {
+          "path": "tests/integrations/dsh/test_scheduler_multiprocess.py",
+          "exists": false
+        },
+        {
+          "path": "integrations/dsh/tests/concurrency.test.ts",
+          "exists": false
+        }
+      ]
+    },
+    {
+      "id": "G01",
+      "status": "planned",
+      "depends_on": [
+        "P04"
+      ],
+      "doc": "06_langgraph_workflow_migration.md",
+      "title": "严格主图入场与合法路由",
+      "paths": [
+        {
+          "path": "src/code2paper/agentic/product_authoring_graph.py",
+          "exists": true
+        },
+        {
+          "path": "src/code2paper/integrations/dsh/workflow_adapter.py",
+          "exists": false
+        },
+        {
+          "path": "src/code2paper/agentic/checkpointing.py",
+          "exists": true
+        },
+        {
+          "path": "tests/integrations/dsh/test_workflow_admission.py",
+          "exists": false
+        },
+        {
+          "path": "src/code2paper/agentic/authoring_execution_identity.py",
+          "exists": true
+        }
+      ]
+    },
+    {
+      "id": "G02",
+      "status": "planned",
+      "depends_on": [
+        "G01"
+      ],
+      "doc": "06_langgraph_workflow_migration.md",
+      "title": "Research运行状态持久重建",
+      "paths": [
+        {
+          "path": "src/code2paper/agentic/research_graph.py",
+          "exists": true
+        },
+        {
+          "path": "src/code2paper/agentic/autonomous_method_agent.py",
+          "exists": true
+        },
+        {
+          "path": "src/code2paper/agentic/checkpointing.py",
+          "exists": true
+        },
+        {
+          "path": "tests/integrations/dsh/test_research_state_hydration.py",
+          "exists": false
+        },
+        {
+          "path": "src/code2paper/agentic/authoring_execution_identity.py",
+          "exists": true
+        }
+      ]
+    },
+    {
+      "id": "G03",
+      "status": "planned",
+      "depends_on": [
+        "G02"
+      ],
+      "doc": "06_langgraph_workflow_migration.md",
+      "title": "实际Research图逐节点恢复入场门",
+      "paths": [
+        {
+          "path": "tests/integrations/dsh/test_research_process_resume.py",
+          "exists": false
+        }
+      ]
+    },
+    {
+      "id": "G04",
+      "status": "planned",
+      "depends_on": [
+        "G03"
+      ],
+      "doc": "06_langgraph_workflow_migration.md",
+      "title": "Research提案、工具与语义边界外置",
+      "paths": [
+        {
+          "path": "src/code2paper/agentic/research_nodes.py",
+          "exists": true
+        },
+        {
+          "path": "src/code2paper/agentic/research_graph.py",
+          "exists": true
+        },
+        {
+          "path": "src/code2paper/integrations/dsh/facade.py",
+          "exists": false
+        },
+        {
+          "path": "integrations/dsh/src/task-tools.ts",
+          "exists": true
+        },
+        {
+          "path": "tests/integrations/dsh/test_research_dsh_execution.py",
+          "exists": false
+        },
+        {
+          "path": "src/code2paper/agentic/autonomous_method_agent.py",
+          "exists": true
+        },
+        {
+          "path": "src/code2paper/agentic/authoring_execution_identity.py",
+          "exists": true
+        }
+      ]
+    },
+    {
+      "id": "G05",
+      "status": "planned",
+      "depends_on": [
+        "G04"
+      ],
+      "doc": "06_langgraph_workflow_migration.md",
+      "title": "Authoring各角色原生DSH接线",
+      "paths": [
+        {
+          "path": "src/code2paper/agentic/publication_method_writer.py",
+          "exists": true
+        },
+        {
+          "path": "src/code2paper/integrations/dsh/workflow_adapter.py",
+          "exists": false
+        },
+        {
+          "path": "integrations/dsh/src/role-dispatch.ts",
+          "exists": true
+        },
+        {
+          "path": "tests/integrations/dsh/test_authoring_role_workflow.py",
+          "exists": false
+        },
+        {
+          "path": "src/code2paper/agentic/autonomous_method_agent.py",
+          "exists": true
+        },
+        {
+          "path": "src/code2paper/agentic/authoring_execution_identity.py",
+          "exists": true
+        }
+      ]
+    },
+    {
+      "id": "G06",
+      "status": "planned",
+      "depends_on": [
+        "G05"
+      ],
+      "doc": "06_langgraph_workflow_migration.md",
+      "title": "独立语义验证任务与确定性合并",
+      "paths": [
+        {
+          "path": "src/code2paper/agentic/publication_method_writer.py",
+          "exists": true
+        },
+        {
+          "path": "src/code2paper/integrations/dsh/result_ingest.py",
+          "exists": false
+        },
+        {
+          "path": "integrations/dsh/src/role-dispatch.ts",
+          "exists": true
+        },
+        {
+          "path": "tests/integrations/dsh/test_independent_verifier.py",
+          "exists": false
+        },
+        {
+          "path": "src/code2paper/agentic/authoring_execution_identity.py",
+          "exists": true
+        }
+      ]
+    },
+    {
+      "id": "G07",
+      "status": "planned",
+      "depends_on": [
+        "G06"
+      ],
+      "doc": "06_langgraph_workflow_migration.md",
+      "title": "callback补证与增量续作",
+      "paths": [
+        {
+          "path": "src/code2paper/agentic/writing_callback_fulfillment.py",
+          "exists": true
+        },
+        {
+          "path": "src/code2paper/integrations/dsh/workflow_adapter.py",
+          "exists": false
+        },
+        {
+          "path": "tests/integrations/dsh/test_callback_workflow.py",
+          "exists": false
+        },
+        {
+          "path": "src/code2paper/agentic/authoring_execution_identity.py",
+          "exists": true
+        }
+      ]
+    },
+    {
+      "id": "G08",
+      "status": "planned",
+      "depends_on": [
+        "G07"
+      ],
+      "doc": "06_langgraph_workflow_migration.md",
+      "title": "完整主图流程与角色恢复独立验收",
+      "paths": [
+        {
+          "path": "tests/integrations/dsh/test_full_workflow_recovery.py",
+          "exists": false
+        },
+        {
+          "path": "tests/integrations/dsh/test_no_hidden_python_llm.py",
+          "exists": false
+        }
+      ]
+    },
+    {
+      "id": "F01",
+      "status": "planned",
+      "depends_on": [
+        "G08"
+      ],
+      "doc": "07_editor_figure_and_delivery.md",
+      "title": "Editor/Rewrite全文编辑场景与权限收口",
+      "paths": [
+        {
+          "path": "src/code2paper/agentic/publication_method_writer.py",
+          "exists": true
+        },
+        {
+          "path": "src/code2paper/agentic/final_text_authorship.py",
+          "exists": true
+        },
+        {
+          "path": "integrations/dsh/src/role-dispatch.ts",
+          "exists": true
+        },
+        {
+          "path": "tests/integrations/dsh/test_editor_workflow.py",
+          "exists": false
+        },
+        {
+          "path": "src/code2paper/agentic/authoring_execution_identity.py",
+          "exists": true
+        }
+      ]
+    },
+    {
+      "id": "F02",
+      "status": "planned",
+      "depends_on": [
+        "F01"
+      ],
+      "doc": "07_editor_figure_and_delivery.md",
+      "title": "全文输出接入同一发布事务",
+      "paths": [
+        {
+          "path": "src/code2paper/agentic/publication_method_writer.py",
+          "exists": true
+        },
+        {
+          "path": "src/code2paper/agentic/authoring_artifact_publication.py",
+          "exists": true
+        },
+        {
+          "path": "tests/integrations/dsh/test_full_publication.py",
+          "exists": false
+        },
+        {
+          "path": "src/code2paper/agentic/authoring_execution_identity.py",
+          "exists": true
+        }
+      ]
+    },
+    {
+      "id": "F03",
+      "status": "planned",
+      "depends_on": [
+        "F02"
+      ],
+      "doc": "07_editor_figure_and_delivery.md",
+      "title": "同源Figure计划、渲染与正文一致性",
+      "paths": [
+        {
+          "path": "src/code2paper/agentic/figure_planner.py",
+          "exists": true
+        },
+        {
+          "path": "src/code2paper/integrations/dsh/workflow_adapter.py",
+          "exists": false
+        },
+        {
+          "path": "integrations/dsh/src/role-dispatch.ts",
+          "exists": true
+        },
+        {
+          "path": "tests/integrations/dsh/test_figure_workflow.py",
+          "exists": false
+        },
+        {
+          "path": "src/code2paper/agentic/authoring_execution_identity.py",
+          "exists": true
+        }
+      ]
+    },
+    {
+      "id": "F04",
+      "status": "planned",
+      "depends_on": [
+        "F03"
+      ],
+      "doc": "07_editor_figure_and_delivery.md",
+      "title": "操作者导出与状态展示",
+      "paths": [
+        {
+          "path": "integrations/dsh/src/artifact-view.ts",
+          "exists": false
+        },
+        {
+          "path": "integrations/dsh/src/cli.ts",
+          "exists": false
+        },
+        {
+          "path": "src/code2paper/integrations/dsh/facade.py",
+          "exists": false
+        },
+        {
+          "path": "tests/integrations/dsh/test_export_authority.py",
+          "exists": false
+        },
+        {
+          "path": "src/code2paper/agentic/authoring_execution_identity.py",
+          "exists": true
+        }
+      ]
+    },
+    {
+      "id": "Q01",
+      "status": "planned",
+      "depends_on": [
+        "F04"
+      ],
+      "doc": "08_quality_and_rollout.md",
+      "title": "完整跨语言离线准入",
+      "paths": [
+        {
+          "path": "src/code2paper/agentic/live_admission_preflight.py",
+          "exists": true
+        },
+        {
+          "path": "tests/integrations/dsh/test_dsh_admission.py",
+          "exists": false
+        },
+        {
+          "path": "integrations/dsh/tests/",
+          "exists": true
+        },
+        {
+          "path": "src/code2paper/agentic/authoring_execution_identity.py",
+          "exists": true
+        }
+      ]
+    },
+    {
+      "id": "Q02",
+      "status": "planned",
+      "depends_on": [
+        "Q01"
+      ],
+      "doc": "08_quality_and_rollout.md",
+      "title": "迁移行为等价与差异归因",
+      "paths": [
+        {
+          "path": "tests/integrations/dsh/test_execution_equivalence.py",
+          "exists": false
+        },
+        {
+          "path": "/tmp/<fresh-task-run>/evaluation-evidence/",
+          "exists": false
+        }
+      ]
+    },
+    {
+      "id": "Q03",
+      "status": "planned",
+      "depends_on": [
+        "Q02"
+      ],
+      "doc": "08_quality_and_rollout.md",
+      "title": "审计§16.3真实L1/L2/L3质量验收",
+      "paths": [
+        {
+          "path": "tests/live/profiles/",
+          "exists": true
+        },
+        {
+          "path": "docs/dsh_execution_20260928/quality-evaluation-protocol.md",
+          "exists": false
+        }
+      ]
+    },
+    {
+      "id": "Q04",
+      "status": "planned",
+      "depends_on": [
+        "Q03"
+      ],
+      "doc": "08_quality_and_rollout.md",
+      "title": "C0/C1/C2隔离评测与消融",
+      "paths": [
+        {
+          "path": "docs/dsh_execution_20260928/benchmark-protocol.md",
+          "exists": false
+        },
+        {
+          "path": "/tmp/<fresh-task-run>/evaluation-evidence/",
+          "exists": false
+        }
+      ]
+    },
+    {
+      "id": "Q05",
+      "status": "planned",
+      "depends_on": [
+        "Q04"
+      ],
+      "doc": "08_quality_and_rollout.md",
+      "title": "迁移评审、渐进切换与回滚演练",
+      "paths": [
+        {
+          "path": "docs/dsh_execution_20260928/",
+          "exists": true
+        },
+        {
+          "path": "integrations/dsh/dev/",
+          "exists": true
+        }
+      ]
+    }
+  ],
+  "implementation_input_count": 743,
+  "implementation_inputs_sha256": "95556acc65793c67f0d5524a747db3cfb068864c4737dcdc0a55412be9a023df",
+  "raw_evidence_root": "/tmp/c2p-consolidated-guidance-20261003-jh05854k",
+  "operations": {
+    "production_code_modified": false,
+    "owner_evidence_modified": false,
+    "active_peer_modified": false,
+    "live_model_calls": 0,
+    "new_full_runtime_suite": false,
+    "isolated_patch_rebuild_exit": 0,
+    "smoke_prelaunch_probe": "intercepted before any process or HTTP startup"
+  },
+  "finding_classification": {
+    "confirmed": [
+      "patch touched list omits fifth declaration file",
+      "compatibility build receipt and staging belong to different candidates",
+      "current delivery doctor fails because active peer selects built candidate",
+      "direct smoke entry ignores candidate environment and uses legacy evidence directory",
+      "current docs contain stale identities/API and broken log references; old doctor log staging differs from current staging"
+    ],
+    "validation_gaps": [
+      "new implementation has no new independent full Gate-H conclusion",
+      "C25 locally covers prepared mode; C26 locally covers dispose B then A recovery, not original dispose A then new B sequence or simultaneous prepared A/B"
+    ],
+    "future_work": "38 planned tasks remain in documents03-08; kernel K01-K04 component retained pending formal dependencies"
+  },
+  "documentation_verification": {
+    "argv": [
+      "python",
+      "/tmp/c2p-consolidated-guidance-20261003-jh05854k/validate_guidance.py"
+    ],
+    "cwd": "/home/cuihengjia/agent/Code2Paper copy",
+    "exit_code": 0,
+    "result": {
+      "checked_at_utc": "2026-10-03T04:01:43.328704+00:00",
+      "guide_sha256": "4cba14902ce7839dac14024d7813bf1939032cb4b23f0b62d1aa26e30e3e601e",
+      "task_count": 49,
+      "task_counts": {
+        "done": 2,
+        "in_progress": 9,
+        "planned": 38
+      },
+      "task_mapping_errors": [],
+      "checked_local_links": 19,
+      "broken_local_links": [],
+      "implementation_input_count": 743,
+      "implementation_changes": [],
+      "candidate_identity_checks": {
+        "0.2.0-rc.1+loop-origin.1": {
+          "runtime_tree_sha256": "671daa1a7a06728d69a4bdec6da3d33a3616c4e788f63579ed07f3ae81e0e16c",
+          "staging_tree_sha256": "6f0c39cb850f16abc00cbdbe2a7474463e1b37e1159a31f4887421070f4c7546",
+          "staged_receipt_sha256": "bce226e5ada06691f063bc6cd5d5525470ad1b2b2a38ddf03c926814239183b3",
+          "unchanged": true
+        },
+        "0.2.0-rc.1+loop-origin.1-built": {
+          "runtime_tree_sha256": "3076d2fcdbf6b2b49167e8132ce9b5801d95079a36f9bd05af17302e8482be97",
+          "staging_tree_sha256": "88341665e82274bdf8bb01ed159cd9001a2b43ef630aa8d6d51c1eaea03aadb9",
+          "staged_receipt_sha256": "c10d1bcaf0ca0a508cda255795609688f3d0824420733baa8cac7ee8fc722285",
+          "unchanged": true
+        }
+      },
+      "active_peer": "/home/cuihengjia/agent/Code2Paper copy/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1-built/runtime/node_modules/@deepseek-ai",
+      "active_peer_unchanged": true,
+      "new_document_whitespace_errors": [],
+      "git_diff_check_argv": [
+        "git",
+        "diff",
+        "--check"
+      ],
+      "git_diff_check_exit": 0,
+      "passed": true
+    }
+  }
+}

@@ -1,0 +1,23 @@
+# The `code2paper` agent preset, declared the 0.2 way: one
+# `@deepseek-ai/dsh-agent-preset` row whose `config.plugins` are the model-facing
+# rows an agent joined to this preset runs with.
+#
+# 0.1.5 discovered presets by scanning a `presets/<id>/agent.cordis.yml`
+# directory, configured through the registry's `roots`. That scan model is gone
+# in 0.2: a preset exists only once it is declared, so this file is listed in
+# `package.json` `dsh.bundle.patch` right after the bundle patch. Without the
+# declaration the registry answers "Unknown agent preset: code2paper".
+#
+# Rows here are mounted INSIDE an agent's scope: their registrations are visible
+# to that agent and unwind with it. A row that publishes a service into the root
+# realm is rejected by the preset mount, so anything process-global (the host
+# bridge) belongs in the bundle patch instead of here.
+- insert:
+    - id: preset-code2paper
+      name: '@deepseek-ai/dsh-agent-preset'
+      config:
+        id: code2paper
+        order: 10
+        plugins:
+          - id: code2paper-tools
+            name: '@code2paper/dsh-bundle/tools'

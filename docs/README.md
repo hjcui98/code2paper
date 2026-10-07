@@ -6,6 +6,18 @@
 
 ## 当前状态
 
+- [DSH M01–M03 独立验收及 P 段接续](dsh_execution_20260928/stage05_M_acceptance_20261007.md)：Gate-M PASS、28/49；当前完整2103/fresh cold1和实际多步/独立compaction/原账本/恢复释放证据闭合，审查读集释放。当前推进 P01–P04，保留 Gate-P/G0/G 阶段验收；资格限显式V2 Host API，normal JSON CLI仍V1。
+
+- [DSH L01 独立验收及 M 段接续](dsh_execution_20260928/stage04_L01_acceptance_20261006.md)：packet26 一次真实执行，合法 research_required → waiting、usage 8055/441、自然释放，独立 Gate-L PASS；25/49，实际 primary 13，正式进入 M01–M03。完整19实际1997及 fresh cold 1；旧14费用UNKNOWN保留。兼容验收不代表正文或 Verified 完成。以下 L01 返修记录为历史快照。
+
+- [DSH Gate-L 集中解阻与连续执行：原长期模块 §9](dsh_execution_20260928/stage04_06_long_module_execution_20261004.md#gate-l-unblock-20261005)：历史 Gate-L 解阻入口；当前已独立 PASS，M 段以本页首条和长期文档 C 段为准。该快照统一处理显式非thinking＋强制原生terminal、完整wire/服务端兼容、错误流计量及packet14具名恢复包，收口后一次完整/cold与独立QA；通过Gate-L再连续M/P/G。仅更新指导和接续字段，24/1/24、Gate-L FAIL、费用UNKNOWN/原owner held不变，未新增模型或恢复授权。
+
+- [DSH L01 packet14 错误流与 unknown 计量返修](dsh_execution_20260928/stage04_L01_provider_error_repair_evidence_20261005.md)：一次执行遭服务端grammar FSM错误，无usage/finish/tool。实际费用UNKNOWN，原owner held；独立Gate-L FAIL/436输入及读集释放。已实施显式非thinking与独立Writer预算、原发送门、错误流矩阵及具名UNKNOWN恢复合同；首次整包QA的U1–U3已修；完整10实际1867/cold1及原两reader通过，最终QA仅U4类型弱匹配并已释放读集，集中修复后新完整11待冻结；真实终止/独立操作授权仍缺。历史完整1819仅f82/5951，24/1/24。
+
+- [DSH L01 packet13 与原生工具选择返修（2026-10-05）](dsh_execution_20260928/stage04_L01_native_tool_choice_repair_evidence_20261005.md)：packet13领域FAIL，原费用7699/pending0、原owner自然完成释放、六条严格history、独立生命周期PASS及实际读集释放。最终tool-choice.2来源构建/wire对照、真实native三项和严格runtime审计通过；新完整/cold09待最终冻结，历史1803仅7f77/af9。24/1/24，Gate-L FAIL；新模型须fresh包具体一次授权。
+
+- [DSH L01 packet12 未注册工具返修（2026-10-05）](dsh_execution_20260928/stage04_L01_unknown_tool_repair_evidence_20261005.md)：一次授权已消耗、原领域FAIL。受信完成/诊断/历史退役路径经真实native、聚焦和保护克隆；独立代码/方案PASS/APPLIES及实际退役PASS、读集释放，原费用7648/pending0、canonical empty、原42非lease文件/14输入及7费用事实不变。当前关闭后冻结新完整/cold（05），历史1707仅9def/7b77；Gate-L FAIL、24/1/24，新模型必须fresh具体一次授权。
+
 - [Author Intent 主导的 Method Authoring 闭环修复执行文档（2026-09-16）](intent_spine_authoring_closure_repair_execution_2026-09-16.md)：
   绑定 `/tmp/c2p-production-entry-20260915-live10`，确认本次两节 `Sym:*` Candidate 的首因不是 intent
   缺失，而是 executable mechanism owner 被错误提升为 Narrative section owner：无 symbol owner 的 story
@@ -240,13 +252,40 @@
 
 ## 外部实现参考
 
-- [Code2Paper × DeepSeek Harness 插件集成设计（2026-09-22，本地复核修订）](code2paper_dsh_plugin_design_20260922.md)：
-  本轮以 `4146010` 快照重新核对流程代码、本地 09-18 产物和 DSH `c36a83ff` 的真实插件/LLM/子 Agent 接口；
-  补齐结构化工具输出、正文来源、独立验证、发送前预算、导入与事务恢复合同。
-  已确认 DSH 接管 Agent 执行，默认沿用现有 LangGraph 主流程，Code2Paper 保留领域内核、验收与提交；
-  主 Agent 在合法阶段和修复路径内行动。现已确定保留 LangGraph 库、持久任务与 interrupt/回执交接，
-  补齐节点映射和写作补证时序；并发默认关闭，开启默认 2 个任务，后端默认 1 个在途请求。
-  已做零网络库级跨进程恢复探针；插件接入、并发调度与模型兼容仍待实施验证，不授权生产切换。
+- [Code2Paper × DeepSeek Harness 插件集成设计（2026-09-22，09-28 执行拆分）](code2paper_dsh_plugin_design_20260922.md)：
+  代码对照基线为 `0918ee7`，文档读取 HEAD 为 `d48b4e4`，DSH 源码参考为 `c36a83ff`；4014 passed 回执仅绑定代码基线。
+  保留 DSH 执行 Agent、LangGraph 默认业务流程、Code2Paper 领域权威与验收提交；并发默认关闭。
+  实施收窄为兼容性 mock → 原 owner 的不可变发布/注册修复 → 唯一 Writer 合同无模型往返 → 单 run 串行 DSH mock，
+  再经单独授权验证小型 Qwen live；多步/compaction、共享调度与完整主图分别后置。
+  Python 账本唯一权威，模型/Host/操作者接口分离；真实 Research 图逐节点跨进程恢复是 WP5 独立门。
+  已有 `0.1.5-rc.3` [隔离环境](../integrations/dsh/dev/README.md) 保留为历史对照；2026-09-29 用户选定 `0.2.0-rc.1` 为新开发候选，
+  目标补丁开发候选已于2026-10-03通过下方独立Gate-B/H验收，并完成正式Gate-K登记；日常 `0.1.7-rc.2` 保持使用，不授权生产切换。
+- [Code2Paper × DSH 分阶段执行计划（2026-09-28）](dsh_execution_20260928/README.md)：
+  将总设计拆成 8 份执行文档、49 个单元；明确责任文件、依赖、首次派工、共享接口和验收门。
+  **2026-10-04 当前：[GC集中返修独立验收](dsh_execution_20260928/stage03_gc_repair_acceptance_20261004.md) Gate-C PASS，GC-1/2/3关闭。第01–03份完成，17 done /0 in_progress /32 planned。** 下一批扩大为[第04–06份长期模块](dsh_execution_20260928/stage04_06_long_module_execution_20261004.md)，23项连续责任，默认单主执行者、按需协作；§8可直接转交。先完成第04份七项离线工作，沿原Gate-R/V/L/M/P/G0/G接续到完整流程接线；具体live准入保持。计划扩大未计实现进度，下方旧裁决、派工和计数按各自时点解释。
+  2026-10-03 最新 owner：[第03份 GC集中返修新封存](dsh_execution_20260928/stage03_gc_repair_delivery_20261003.md)，submitted_for_independent_qa；原独立 CHANGES_REQUESTED 保留，待整包复验，第04份未启动。
+  2026-10-03 23:03 前次独立裁决：[第03份 r2 独立 Gate-C 验收与集中返修指令](dsh_execution_20260928/stage03_gate_c_review_and_batch_repair_20261003.md)。Gate-C CHANGES_REQUESTED；三组真实入口缺陷为 Unicode terminal 判定、旧材料 prepare、投影证据引用完整性。独立105/265/123/48及真worker主链通过；当前11 done /6 in_progress /32 planned。按新报告§3–§6一次返修并重新封存，第04份仍未启动，Gate-B/H/K已验结论保留。
+  2026-10-03 18:03 [四组返修独立验收与阶段接续](dsh_execution_20260928/stage_four_group_repair_acceptance_20261003.md)：Gate-B/H PASS，四组关闭；791份未变内核与既有component结论支撑正式Gate-K PASS。两侧原93、B02 48、身份24及原来源/生命周期、真实入口反例与正常smoke独立通过；201份封存和108990个归档成员核验一致。第01/02份完成，台账11 done / 38 planned；第03份具备前置但未实施，下面旧记录按原时点解释。
+  下一批按[第03份整批执行指令](dsh_execution_20260928/stage03_batch_execution_instructions_20261003.md)连续完成I01/C01/C00/C02–C04；§3/§4为两窗口责任，§5–§7为交接、测试和封存，§8可直接转发。发布派工文档未改变任务实现状态。
+  2026-10-03 16:05 [冻结整包独立 Gate-H 审查](dsh_execution_20260928/stage_whole_package_review_20261003.md)：两侧原93/0skip、来源各10/10、生命周期各3/3；交付B02 26/身份24/doctor/正常HTTP与独立types通过。GHS-1/GHS-2已关闭，剩余activate/audit失败边界、smoke staging绑定及交付/回归覆盖；Gate-H/K未过。1275输入/四runtime/peer未变并明确释放，窗口二按新报告§3–§4连续收口，窗口一保持791项未变内核。
+  2026-10-03 [全部剩余工作与整阶段修复指导](dsh_execution_20260928/remaining_work_and_batch_repair_guidance_20261003.md)集中核对第九轮 owner 交付、当前确定缺陷/验证缺口及后续 38 项 planned 工作；按整阶段连续修复，保持 Gate-H/K 未过与原任务依赖，不把指导或 owner 自测当作新验收结论。
+  保留 `0918ee7` 与隔离 `0.1.5-rc.3` 历史基线，新目标为 `0.2.0-rc.1` 候选；单 Writer 离线闭环优先，执行组成身份、真实测试覆盖回执各设独立任务，
+  完整 LangGraph 迁移、显式并发、审计 §16.3 及默认切换逐阶段验收。[B00 开发输入冻结](dsh_execution_20260928/b00_baseline_freeze.md)
+  已完成并经独立 QA 通过；旧版 PASS 保留，新候选 Gate-B/H/K/C 的范围见上方裁决。当前继续按整阶段负责：
+  一个主执行者依[长期模块](dsh_execution_20260928/stage04_06_long_module_execution_20261004.md)连续承担当前已激活阶段的Python、TS和联测，按需要拆分协作；
+  共享协议/validator与peer/build各始终一位实际写者，单人模式均由主执行者承担；原两窗口分工只是可选方案，
+  QA 按 [验证文档](dsh_execution_20260928/verification.md) 在完整阶段包就绪后启动独立验收，不常驻第三窗口；普通缺陷由原 owner 连续修复。
+  单元本地合同通过即可在阶段内继续开发；原 AT、独立 QA、depends_on 完成前置与 Gate-R/V 不减少。
+  2026-09-30 21:36 后，返修差分已实际验收：内核103项与K04/身份/真实调用方282项、原反例及实际consumer成立，owner4129完整全量日志/退出码已核对，K01–K04 component PASS。DSH74项与B02原目录23项、普通Web/compat真实HTTP通过，但公共同request引用和NO_ADAPTER回落仍可抢票，第01份CHANGES_REQUESTED，Gate-H/K未过；第03/04份未启动。
+  QA已结束并明确释放实际读集，完整裁决见[返修差分验收](dsh_execution_20260928/stage_repair_acceptance_20260930.md)与[DSH独立报告](dsh_execution_20260928/gate_h_repair_independent_review_20260930.md)。窗口一保持已验内核候选，窗口二连续完成原剩余AT；当前分支/环境/写权与两位接手者的完整指令见执行入口§3.7和裁决§5，历史§§3.3–3.6及旧报告保留；LEAD保持协调与裁决角色。
+  2026-10-01 R2历史裁决见[原报告](dsh_execution_20260928/stage_r2_acceptance_20261001.md)。11:36最新[返回闭包差分裁决](dsh_execution_20260928/stage_handle_acceptance_20261001.md)：owner84项已核对，独立原stream三个对照通过，原公开prepareCall仍能取闭包，H-R4真实exit1。Gate-H/K未过；QA已明确释放，窗口二续第01份来源及身份收口，窗口一只读调查已交付/保持component。当前安排见执行入口§3.9，原8份文档/49单元不变。
+  2026-10-01当前FAIL-CLOSED候选71pass/13skip，合法child也拒绝，H04/Gate-H仍未通过；[LEAD接口裁决§6](dsh_execution_20260928/h04_loop_origin_escalation_20261001.md)已授权窗口二新隔离runtime来源补丁候选，原43490765…树保留。按执行入口§3.10连续完成可信loop派发、全部原正反例/13项恢复与新身份冻结；ALS原样方案需补public prepared入口与不可变核验边界。窗口一保持已验内核，不重复调查/全量；无常驻QA。
+  2026-10-01 19:40当前[loop-origin.1独立裁决](dsh_execution_20260928/stage_loop_origin_acceptance_20261001.md)：新候选已实装，原H-R4公开prepareCall反例独立通过、合法child恢复；普通公开调用、公共NO_ADAPTER、旧manifest入口出现回归，源码/types/私有consume合同未齐。Gate-H仍CHANGES_REQUESTED，QA已明确释放实际读集，窗口二按执行入口§3.11连续整包返修；窗口一保持791条Python源/测试与六份原日志同身份的component，不重跑4129。以下阶段仍排队，原接口裁决§6继续有效。
+  2026-10-02当前[返修差分裁决与完整续派](dsh_execution_20260928/stage_loop_origin_repair_acceptance_20261002.md)：原86/0skip实测记录保留，独立LO1–3通过、固定源码/types实际交付；公开admit仍可被观察者预消费，交付与source-built均有真实失败及合法对照。Gate-H/K未过。1023输入/四棵runtime/peer不变、宿主进程核对完成后明确释放；窗口二按执行入口§3.12整包返修，窗口一保持已验内核。上批候选内raw根当前不可读，历史不补造，新证据封在稳定根。两窗口环境与后续第03/04完整分工见新裁决§§2–8。
+  2026-10-02 12:12最新[私有消费候选独立复核及完整返修接续](dsh_execution_20260928/stage_private_consumption_review_20261002.md)：交付原套件独立87/0skip、显式B02 24/doctor通过；两棵候选的prepared/fallback正对照通过，但同步internal/get仍能预消费公开entry-ack，公开Symbol.asyncIterator获取仍见外层来源，各2个真实失败；实际manifest/生成器漏列2份types。Gate-H/K未过。992输入/四runtime/peer未变并明确释放，窗口二按执行入口§3.13连续原整包返修，窗口一保持791源/测试未变的component。此前86/公开admit裁决保留历史范围，原8文档/49任务、后续03/04分工及所有门不变。
+  2026-10-02 14:48最新[能力门控候选独立复核与整包接续](dsh_execution_20260928/stage_capability_entry_review_20261002.md)：交付原87/0skip、显式B02 24/doctor独立通过；新探针交付4/5、源码构建3/5。公开resolver转发Proxy可截获真实capability并预消费，两侧合法child error/零RDSadapter；源码侧iterator获取仍见来源。四文件清单已修，当前身份/API声明未统一。Gate-H/K未过。本批1054输入/四runtime/peer未变且自身读集已释放；另有owner源码构建验证仍活跃，窗口二先收尾它再按执行入口§3.14连续原第01份整包。窗口一保持已验component，原8文档/49任务、03/04后续分工与所有门不变；更早记录按旧候选解释。
+  2026-10-02 22:10最新[模块级派发候选Gate-H独立审查](dsh_execution_20260928/stage_static_entry_gate_h_review_20261002.md)：两侧原套件各89/0skip，原三类反例、Web/compat HTTP、交付B02 24/doctor通过；公开`streamWithRegistration(...,true)`可取得受信派发并发送替换材料，销毁重建后合法回落失败，候选types非固定源码tsc输出，源码构建侧B02缺worker。Gate-H/K未过。1134输入/四runtime/peer未变，22:10:34明确释放、相关验证0；窗口二按执行入口§3.15连续原第01份整包，窗口一保持已验component，原8文档/49任务与所有门不变。
+  两阶段通过后才进入第 03/04 份 Writer 合同与串行闭环集成；live、完整主图和默认切换仍另过门。
 - [五个 Agent 仓库的代码级参考研究（2026-08-10）](reference_agent_framework_code_research_2026-08-10.md)：
   面向当前 Research Agent 与 Method Writer 目标，对 Hermes Agent、OpenClaw、OpenHands SDK、
   PydanticAI 和 PydanticAI Harness 的固定版本进行文件/核心代码级比较；属于架构参考，
@@ -300,3 +339,9 @@ R8 日志与临时产物用于诊断，不是长期文档。正式验收结论�
 4. 历史报告原则上不重写结论；若已过时，在顶部添加 superseded 提示。
 5. 不把 `/tmp` 路径、未结束日志或工作区测试通过数写成正式验收结论。
 6. 默认路线切换只能由 migration/cutover 门禁授权，不能由单次 R8 代替。
+
+- [Gate-H 四组集中返修 owner 提交（2026-10-03）](../integrations/dsh/dev/gate_h_repair_batch_20261003.md)：两侧原93项、来源/生命周期、B02 48项、正常smoke身份和完整输入封存已交；791份内核保持。owner submitted_for_independent_qa，Gate-H仍待独立复验，正式Gate-K与后续第03份等待。
+
+### DSH 当前实施证据（2026-10-04）
+
+第03份[GC返修新封存](dsh_execution_20260928/stage03_gc_repair_delivery_20261003.md)经[独立复验通过Gate-C](dsh_execution_20260928/stage03_gc_repair_acceptance_20261004.md)，I01/C01/C00/C02–C04登记done，GC-1/2/3关闭；49项为17 done/32 planned。QA于00:15:40+08明确释放读集，协调更新与受测身份分开记录。下一步按[第04–06份长期模块](dsh_execution_20260928/stage04_06_long_module_execution_20261004.md)推进，默认串行负责、协作按需，当前仅发布扩大后的计划；局部pending_validation义务保留，真实live仍单独准入。

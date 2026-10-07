@@ -1,4 +1,497 @@
+# Codex 工作记录（最新独立检查点）
+
+## 2026-10-04：扩为第04–06份长期模块，默认单主执行者、按需协作
+
+用户明确可以不并行，要求根据执行文档布置更大的长期模块。本轮核对原第04–08份、任务依赖、总设计§§20–22及实际路径/脚本，发布[第04–06份长期模块](../docs/dsh_execution_20260928/stage04_06_long_module_execution_20261004.md)：23项连续责任，22项离线与1项具体准入的L01，终点Gate-G完整流程接线。第04份七项仍为立即可实施范围；后续按原Gate-R/V/L/M/P/G0/G接续，未改AT/depends_on，也未跳过Gate-L。第07/08份九项为后续模块。
+
+默认一个主执行者可承担Python和TS全链；有稳定独立工作面才拆分。原两窗口表改为可选职责方案，共享Python协议/validator与peer/build始终各一位实际写者。实现人手可串行不删除P01–P04产品能力；默认产品parallel=false不变。独立QA在完整阶段包就绪后按需启动，可串行交接，不常驻。
+
+长指令逐段给出修改落点、完整失败矩阵、真实9/16节点恢复及角色要求、准入和证据/会话接续；§8为可直接转交的统一指令。同步两级导航、第04细则及第04–06原执行文档/verification；纠正已存在路径被标“拟新增”和未定义test:integration命令。本轮仅改计划/协调记录，不实施产品、不运行pytest/build/live，17 done/32 planned保持；验收报告与封存原字节保留。
+
+文档核验通过：23处新增链接/锚点存在，49项原任务除8处路径存在性标注外所有字段不变，第04–06份AT原文及verification门表不变；23项均planned，22项offline与L01 separate_live分类一致。相对2116项输入，只有9份协调文件和1份新增长期指令变化，其余源文件字节/metadata保持；`git diff --check` exit 0。完整前后快照、修改脚本与检查在 `/tmp/c2p-dsh-long-module-plan-20261004-seh65fat/verification.json`，没有重复运行产品测试。
+
+## 2026-10-04：第03份 GC 返修独立 Gate-C PASS，发布第04份完整指令
+
+用户提交两窗口联合冻结包要求验收与下一批指导。本轮未参与生产实现，完成GC-1/2/3和原六项AT的独立复验，三组关闭、Gate-C PASS，I01/C01/C00/C02–C04登记done。49项更新为17 done/0 in_progress/32 planned。完整[裁决](../docs/dsh_execution_20260928/stage03_gc_repair_acceptance_20261004.md)及[第04份整批指令](../docs/dsh_execution_20260928/stage04_batch_execution_instructions_20261004.md)已落地；后者含七项修改、全部必测反例、四次交接、实际命令、一次封存与§6可转发指令。本轮未启动04实现。
+
+本轮独立226专项、265原owner、165 TS/真实native、48 B02、只读typecheck/audit、12份完整schema/goldens字节对照通过；原Unicode12例全部一致。真实worker技术/作者/新revision、新cap重编零发送、34次原协议RPC、5组旧材料prepare以及99个拒绝反例/三终态提交恢复190次RPC均通过。owner4355全静态/3原live skip日志和冻结输入已核验，未声称独立重跑。全部精确命令/退出/日志/产物/源码/driver差分及释放证明封于 `.dsh-dev/run/stage03-gc-qa-20261004-oawiwmg/`，3541项清单SHA-256 `d80c04d777f11bd2585fba161918c80392fe071b2110186e0ebedbcbebecf46b`。
+
+owner34902项封存原字节、长度、链接和精确集合通过；窗口二三份日志的登记脱敏变换逐字节复算一致，五份已有协调输入和一份新增报告的封存后变化已分类，不掩盖代码漂移。2114项QA输入前后字节/metadata不变，最终composition相同；2026-10-04T00:15:40.644911+08:00明确释放，全部行为命令返回、相关宿主验证进程0，fake服务/child/worker清理完成。随后仅修改验收/派工和协调记录，保留生产代码/测试/构建/封存/分支HEAD及dirty基线，无真实模型调用。
+
+第04份R01→R02→R03→R04→V01→A01→V02具备实施前置但仍planned。窗口一Python/唯一账本/共享协议/validator/A01，窗口二TS/Host/CLI/唯一build-stage，联合V01；按完整离线包交Gate-R/V，不逐helper停工。L01具体live授权与pending_validation义务保留。
+
+协调登记后检查：仅九份已有协调文件和两份新增报告/指令变化，生产/测试/构建字节及其metadata未变；39处新增文档链接与锚点存在，49项原AT/依赖/责任路径和第03/04份AT原文未改，七项下一批及L01仍planned。`git diff --check` exit 0；3541项独立封存再次逐字节与精确集合核验通过。检查记录在 `/tmp/c2p-gate-c-gc-review-20261003-oawiwm_g/coordination-check.json` 与 `independent-seal-check.json`，不回写已封存证据。
+
+## 2026-10-03 23:03：第03份 r2 独立 Gate-C 验收，三组集中返修
+
+用户要求验收窗口一/二整包并给下一步完整指令。本轮未参与生产实现，依据原第03份、整批指令、interfaces/verification完成独立检查，裁决及完整两窗口指令见 [Gate-C报告](../docs/dsh_execution_20260928/stage03_gate_c_review_and_batch_repair_20261003.md)。Gate-C CHANGES_REQUESTED：GC-1 Unicode规则跨语言不同且真native terminal复现；GC-2旧revision/snapshot/fence材料被真worker prepare接受，之后ingest拒绝；GC-3合法已准备合同的projection/measurement/wire证据缺失损坏，新ingest仍发布pending_validation。
+
+本轮独立105专项、265原owner、123 TS、48 B02、audit及技术页/作者页/34次RPC/4096→1024新投影联测通过。4234/3live skip为核验过的owner r2全静态日志，未声称独立重跑。Unicode12例中2分叉；真terminal扩展11项9pass/2fail；旧材料与引用缺失均用新worker及无旧receipt的QA私有副本证明。精确argv/cwd/退出/日志/探针差分/源码输入和释放见 `.dsh-dev/run/stage03-gate-c-qa-20261003-w04q7791/`，2997项封存清单SHA-256为a897af2244e240b426c7199aaa0752e0064988c721c985da6847ca8e009beb58。
+
+2110输入前后字节及metadata不变，最终composition复核相同；owner r2 29279项、W2 135封存/72当前输入一致。23:03:47+08释放，所有行为命令返回、相关宿主验证进程0、假服务及句柄关闭。保留分支/HEAD/生产代码/测试/构建/owner封存；随后只写QA报告和协调文档/台账。当前11 done/6 in_progress/32 planned，H/K已验结论保留。纠正顶层协调“03未开始”与任务卡“已交付”的冲突。原第04份仍未启动，无真实模型/默认切换/提交。
+
+## 2026-10-03：第03份整批派工指令（文档工作，未启动实现）
+
+用户要求给出下一批依据和详细指令。本轮对照总设计§§8–10/14/15/21、原第03份、
+interfaces、verification及18:03独立H/K裁决，形成
+[完整指令](../docs/dsh_execution_20260928/stage03_batch_execution_instructions_20261003.md)。
+保留原I01→C01→C00→C02→C03→C04依赖与六项AT；逐项列修改落点、正反例、两窗口交接、
+真实worker最终演示、验证入口和统一submitted_for_independent_qa封存终点。
+窗口一单写Python/protocol/validator，窗口二单写TS/peer/lib/build-stage。
+
+读到interfaces顶部仍显示历史未放行，补当前裁决及0.2实际接口入口；旧记录保留历史范围。
+纠正I01文档把现有B00 compatibility.json标“拟新增”的路径假设：保留原文件，后续本批
+另记compatibility.stage03.json，仅作当前组成/证据索引，不替代现场校验或A01回执。
+同步第03份与两级README导航。没有修改生产代码、测试、候选、既有验收报告或任务台账，
+没有启动03实施、pytest、build/stage、模型调用或第04份。
+
+本轮文档检查记录根：`/tmp/c2p-stage03-instructions-20261003-yyn09237/`。
+新增23处相对文档链接全部存在；所列9个现有代码/回归入口存在，新增测试明确标待实施。
+`git diff --check` exit 0；任务台账、18:03独立报告、B00 compatibility.json字节未变，
+仍11 done / 38 planned，六项第03任务及其依赖保持。补充最终输入冻结顺序，避免把包含
+自身的engine摘要回填仓库JSON或在测试中更新文档造成未申明身份漂移。
+
+## 2026-10-03 18:03：四组返修独立验收，Gate-H / 正式 Gate-K PASS
+
+用户提交 submitted_for_independent_qa 冻结包；本chat未参与该批生产实现，完成独立复验，
+报告：[四组验收与阶段接续](../docs/dsh_execution_20260928/stage_four_group_repair_acceptance_20261003.md)，
+数据：[核查JSON](../docs/dsh_execution_20260928/stage_four_group_repair_acceptance_20261003.json)。
+原始根 `/tmp/c2p-gate-h-four-review-20261003-ciy9r4fd/`；原argv、内层退出、日志和前后输入齐全。
+
+两侧原11文件93/0skip、来源各10/10、生命周期各3/3，B02原目录48、执行身份24、doctor与原audit正反例、
+正常web/compat及env-only默认输出均通过。真实runtime只读视图下激活28条独立命令验证18次拒绝、
+合法双向切换和提交失败回滚。四组关闭；201份owner封存匹配，108615项owner前后输入相同，
+108990归档成员含52硬链接逐个核验。来源/runtime/types保持；本轮复核owner声明编译输入/封存并保留
+前一独立tsc结论，未冒称重新tsc。原791份内核保持，未重跑4129。
+
+109796主输入及3份补充driver前后一致，宿主1765进程扫描、相关验证PID0，18:03:42+08释放。
+设置诊断（tar硬链接、临时CLI缺profile、diff短index、普通sandbox进程视图）均保留并纠正，
+不是产品失败，未削弱原断言。测试未修改生产source/tests、peer、候选、owner证据，模型调用0。
+
+释放后独立登记Gate-B/H PASS；LEAD据原K01–K04 component、无剩余缺陷、791保持及已满足H前置登记
+正式Gate-K PASS，台账11 done / 38 planned。更新H02独立冻结及当前导航，历史owner sealed status不改。
+第03份仅标实施前置满足，未写实现或启动03–08/live/默认切换；共享Python单写与后续原门保持。
+
+释放后记录验证：`git diff --check` exit 0；22个新增报告/导航链接存在，JSON及新增文件空白检查通过。
+原49项依赖和AT逐项未变，除本次完成的9项外其余40张任务对象未变，后续38项仍planned。
+再次比较主读集，变化严格限于10份已登记协调文档，生产输入及owner封存无额外变化。
+结果见原始根 `documentation-validation.json`，持久摘要并入本次核查JSON。
+
+## 2026-10-03 16:05：冻结整包独立 Gate-H 审查与集中接续
+
+用户提交窗口二冻结整包并提请验收。本 chat 未参与该批实现，直接完成原第 01 份独立复验；
+报告：[冻结整包审查](../docs/dsh_execution_20260928/stage_whole_package_review_20261003.md)，
+持久数据：[核查 JSON](../docs/dsh_execution_20260928/stage_whole_package_review_20261003.json)。
+原始根 `/tmp/c2p-gate-h-whole-20261003-as7rfjgg/` 保存实际 argv、内层退出、原日志与反例。
+
+两侧原 11 文件 93/0skip、原来源边界各 10/10、销毁重建各 3/3；交付 B02 26、身份回归 24、
+doctor/audit 正例、正常 web/compat HTTP/退出均 exit 0。两包独立 tsc exit 0，三份声明与两候选同字节，
+257/385 声明编译依赖（含编译器实现/配置）前后保持；source patch/源码构建 JS 和五文件 touched 对应。
+owner 42 份封存核对通过；原内核 791 src/tests 未变，没有重跑 4129。93 个源节点逐一映射两侧日志，未匹配 0。
+
+独立实际反例：未修改的 toolchain activate 在临时副本中把 compiler/lock 漂移重新封入回执，
+verify 从拒绝变通过；错误 Node 目标导致失败前先改 peer。audit 的同一漏第五文件 manifest，
+基树在时拒绝、缺基树时 PASS。两种正常 smoke 的 staging_tree_sha256 均 null（字段名读取错误）。
+当前/历史文档、生产入口回归与完整冻结输入尚缺，集中列入报告四组；不把已过来源和生命周期重新列为失败。
+
+Gate-H CHANGES_REQUESTED、正式 K 等待。工具链/证据仍归窗口二同一整包连续返修；
+窗口一保持 component，03–08 不提前实施。审查中不改生产代码、原测试、候选、peer 或 owner 证据。
+最终 1275 项 bytes/inode/mtime、四 runtime/manifest 及 peer 前后相同，宿主扫描 1766 进程、
+相关验证 PID 0；2026-10-03 16:05:42+08 明确释放实际读集。释放后才写报告、索引及台账。
+
+初始外层 sandbox 的 NETLINK_ROUTE 拒绝与 QA probe 未映射入 /tmp 的前置失败均保留，
+修正运行环境后执行原断言，不算产品失败。实际命令入口与退出明细见报告 §5/核查数据；
+没有模型调用、安装、原包重建、Git 提交或合并。
+
+释放后的文档检查：`git diff --check` exit 0；新报告与六处导航的 10 个链接均存在，
+报告/台账 JSON 解析及新增文件空白检查通过。任务板原 49 张卡的内容和依赖逐项保持，
+仍为 2 done / 9 in_progress / 38 planned；仅更新有独立证据的缺陷处置、最新检查点和接续范围。
+检查结果保存于上述原始根的 `documentation-validation.json`。
+
+## 2026-10-03：全部剩余工作核查与整阶段修改指导
+
+用户要求一次给出全部未解决问题和详细修改指导，避免逐点续派。本轮核对原 8 份文档、49 张任务卡、
+第九轮交付证据和相关实际代码，形成
+[集中指导](../docs/dsh_execution_20260928/remaining_work_and_batch_repair_guidance_20261003.md)及
+[持久核查数据](../docs/dsh_execution_20260928/remaining_work_audit_20261003.json)。
+仅新增指导/核查数据并补仓库入口、第 01 份与执行入口导航；保留所有既有 dirty 内容和任务状态。
+这不是完整 Gate-H 独立验收，也不代替窗口二继续实现。
+
+确定差异：补丁实际变化五文件而 touched 只登记四个；跨候选 receipt/stage 拼接、活动 peer 属于 -built；
+正常 smoke 未消费候选环境且写旧 evidence 根；当前 API/身份文档与日志引用未同步；封存 doctor 的 staging
+不同于最终 staging。C25/C26 的部分场景与报告完整声明存在覆盖差距，按验证缺口登记，不冒称新实现已有
+实测漏洞。保留原类型/补丁正证据及 K01–K04 component；GHS-4 的 -built 仍仅声明源码等价范围。
+第 03–08 份 38 项 planned 全部映射到修改位置、依赖、行为判据和阶段终点；不提前改其代码或放行。
+
+本轮新增诊断：从 pristine 的原四文件复制到 fresh 根后执行
+`python integrations/dsh/dev/runtime-0.2.0-rc.1/loop-origin/loop-origin.patch.py /tmp/c2p-consolidated-guidance-20261003-jh05854k/patch-rebuild`
+退出 0，生成五文件均与 delivery 同字节。smoke 在 read_manifest 前截获候选选择，未启动进程/HTTP，
+确认合法候选环境仍落默认根。准确 argv、退出和结果保存在该 fresh 根，探针结果同时嵌入持久核查 JSON。
+前一进度核查的独立 tsc、doctor 与 owner 日志封存核对结果明确标作已有观察，没有冒称本轮重跑完整套件。
+
+文档及输入保持验证命令：
+`python /tmp/c2p-consolidated-guidance-20261003-jh05854k/validate_guidance.py`；
+覆盖 49 项状态/依赖与指导对应、本次新增链接、新文件空白、`git diff --check`、743 个读取实现输入、
+两候选 runtime/stage/receipt 和活动 peer 的前后保持；准确结果见同根 `guidance-validation.json` 及持久核查数据。
+该命令退出 0：49 项无映射差异、19 个本次相关链接有效、新文件空白及 `git diff --check` 通过；
+743 项读取实现输入无变化，两候选 runtime/stage/receipt 与活动 peer 保持原值。
+本轮没有运行模型/live、重建原 runtime、改 peer、重封 owner 证据、提交或合并，也没有新增阶段 PASS。
+
+## 2026-10-02 22:10：模块级派发候选独立 Gate-H 审查登记与原第 01 份整包续派（LEAD）
+
+独立 reviewer 的[集中审查](../docs/dsh_execution_20260928/stage_static_entry_gate_h_review_20261002.md)覆盖交付
+`392e4acf…` 与源码构建 `301a5e23…` 两侧：原套件各 89/0skip，原三类反例、Web/compat HTTP、交付 B02 24/doctor
+成立；GHS-1 公开 `streamWithRegistration(..., true)` 受信派发与 GHS-2 注册表生命周期两侧真实失败，GHS-3
+types 来源/全文身份、GHS-4 源码构建侧 B02 未闭合。Gate-H CHANGES_REQUESTED，正式 Gate-K 等待；
+读集 22:10:34+08 释放，相关验证进程 0。
+
+LEAD 未运行产品测试或验收，只登记 [README §3.15](../docs/dsh_execution_20260928/README.md)、
+[verification §18](../docs/dsh_execution_20260928/verification.md)、`docs/README.md` 索引与
+`task_board.json`：新 checkpoint（全部摘要逐项对照审查报告原文），旧 checkpoint/QA 完成记录/读集释放
+追加入历史，新增 GHS-1–4 open issue，PC-1/PC-2/CAP-1/CAP-3 记为已观察关闭，CAP-2 余项并入 GHS-3；
+任务状态仍为 2 done/9 in_progress/38 planned。派工：窗口二续原第 01 份整包，窗口一保持 component，
+第 03 份等实际 Gate-H 与正式 Gate-K。LEAD 受理时只读看到 owner 的 `w2-lo-repair3` 无 `.exit`/argv
+记录，源码构建与构建日志只在 `/tmp`；已列为下一交付包要求。
+
+## 2026-10-02（下午）：窗口二能力门控候选三项返修闭环（CAP-1/PC-2/CAP-2 + 残留验证收尾，写权释放）
+
+按[能力门控候选独立差分复核](docs/dsh_execution_20260928/stage_capability_entry_review_20261002.md)§4 连续完成：
+
+- **残留验证收尾（CAP-3）**：终止归属本窗口的 `-built` 原 11 文件套件残留进程
+  （PIDs 2202351/2202381/2202383/2202448，13:06 启动，C0 失败后挂起——根因是该次源码
+  构建缺 `preparedDispatchRecords.set` 注册，已在源码修复）；部分日志与说明封存至
+  `w2-loop-origin-private-20261001-182722/abandoned-verification-20261002/`。
+- **CAP-1（转发 Proxy 截获 capability）**：capability 不再经由任何可拦截调用路径。
+  loop 派发点改用静态模块导入的 `runLoopDispatch(options, preparedCall, capability)`
+  （dsh-llm 模块级函数；静态 ESM 导入不经 cordis resolver/getter，转发 Proxy 无法
+  插入）；入口第一动作做对象同一性校验，失败即隔离。真实实例经模块私有注册表
+  （构造时注册）与 prepared record 的 `runtime: this` 解析，不经代理。symbol-keyed
+  实例方法删除。回归 **C22**：internal/get listener 返回仅转发 Proxy、每个方法调用
+  尝试 `admitLoopDispatchOrigin(args[2])`——proxyAdmissions=0，合法 child completed
+  且 R/D/S 恰一次。
+- **PC-2（源码/补丁/-built 构造期隔离）**：源码工作树的隔离构造与交付 hunk 对齐
+  （waterfall 创建与 `Symbol.asyncIterator` 获取都在清空作用域内）。回归 **C23**：
+  listener 提供的自定义 `Symbol.asyncIterator` 工厂在清空作用域内执行
+  （seesOrigin=false），探针派发到达自身 provider，合法 child 各 1。
+- **CAP-2（身份统一）**：兼容清单/`_020`/interface-diff/evidence 全部更新为当前
+  实际身份（树 `392e4acf…`、补丁脚本 `eac2d8c5…`、源码补丁 `30133c39…`、receipt
+  `352551db…`、staging `904f6ecf…`、outputs `2aeceb7b…`、源码构建候选树 `301a5e23…`）；
+  manifest `touched` 列齐 4 文件；历史表述绑定旧树并注明。
+- **双侧验证**：交付候选 check:compat **89/89**（0 skip，含 C22/C23 新回归）、B02
+  **24 passed**、doctor exit0、`git diff --check` 干净；源码工作树 `pnpm install`/
+  两包 `tsc -b`/`build:lib:host` exit0（一次 OOM 崩溃与一次 typert 显式注解失败均已
+  修复并重跑成功）；源码构建产物换入 `-built` 候选（树 `301a5e23…`）后 89/89。
+  日志 `run/w2-lo-repair3/`。
+
+未动：原 0.2 树、旧 0.1.5、日常 0.1.7、Python 内核/validator、LEAD 台账、QA 权威根
+（`qa-capability-entry-20261002-hum96d19/` 未触碰）。未跑 live；Gate-H 未自行登记
+PASS，冻结候选待独立差分验收。写权释放：窗口一保持第02份；第03/04份等 Gate-H 与
+正式 Gate-K。
+
+
+
+## 2026-10-02 14:48：能力门控候选独立差分，原阶段继续返修
+
+当前执行入口 [README §3.14](../docs/dsh_execution_20260928/README.md)；
+[完整裁决](../docs/dsh_execution_20260928/stage_capability_entry_review_20261002.md)。
+交付实际树 0adaffc8、源码构建 dcf69658、patch f1a310cd/23ab6350、receipt a6c69d83、stage 66458c03。
+原交付 11 文件套件独立 87/0skip、显式 B02 24、只读 doctor/diff-check exit0；新边界探针
+交付 4/5、源码构建 3/5，实际 Node exit1。普通伪造 capability 观察者与四文件 touched 已修；
+公开 resolver 转发 Proxy 截获 symbol 调用实际能力并 admission 成功，两侧合法 child error/
+零 RDS/adapter；源码侧 iterator 获取仍见来源，owner 当前身份/API 声明有旧值。
+Gate-H CHANGES_REQUESTED、正式 K 等待；原 49 任务对象/AT/依赖不变，不启动03–08或live。
+
+本批权威根 `.dsh-dev/run/qa-capability-entry-20261002-hum96d19/`；1054 输入/四 runtime/peer
+未变，14:48:55+08 仅释放自己的读集，己方进程 0/命令全返回。另有此前 owner 源码构建
+原套件进程仍活跃（输出 /tmp/lo-built2-compat.log）；初次全局 closing 失败及归属证据保留，
+未终止他人进程、未登记全局清空/候选立即可写。窗口二先保存/收尾该运行、释放候选/peer，
+再按同一完整第01份连续修能力封闭路径、双侧源码隔离/构建、原AT/同child恢复与身份冻结。
+窗口一保持791源/测试未变的component。QA下一完整包按需再验，无产品/内核/peer/buildstage改动。
+本条及导航/台账在本轮读集释放后更新，下方 owner 声明及更早记录完整保留。
+
 # Codex 工作记录
+
+## 2026-10-02（午）：窗口二三项返修闭环（能力门控内部派发，写权释放）
+
+按独立验收三问题连续完成：
+
+- **问题1（entry-ack 被同步 internal/get hook 预消费）**：entry-ack 子作用域方案删除。
+  新设计为能力门控内部派发入口：来源作用域对象本身即能力（loop 私有 establish 创建，
+  建立即权威，无独立可消费状态），仅在 loop 自己的调用帧里作为实参传给
+  `LlmRuntime[loopDispatchEntry](options, preparedCall, capability)`（unique symbol
+  门控）；入口第一件事做对象同一性校验（转调 agent-loop 的
+  `admitLoopDispatchOrigin(capability)`，校验失败即走公开隔离路径）。entry 链上的
+  hook（internal/get、async hook）看不到实参，无法伪造/偷取/抢先。C21 更新为用
+  剩余公开面（peek + 伪造 capability 的 symbol entry + 受保护会话公开派发）实测：
+  admission 恒拒、观察者派发具名拒绝、合法 child completed 且 R/D/S/adapter 各 1。
+- **问题2（构造期隔离不完整）**：隔离构造包住 `Symbol.asyncIterator()` 的调用
+  （waterfall 创建与迭代器获取都在空 store 内），隔离对象的
+  `isolated[Symbol.asyncIterator]` 亦经清空式 runner 返回。
+- **问题3（manifest touched）**：`scripts/dsh_dev.py` 的 loop_origin_patch 生成器与
+  候选 manifest 按实际差分列齐 4 文件（2 JS + 2 types）。
+- **双侧验证**：交付候选 check:compat 87/87（0 skip）、B02 24 passed、doctor exit0；
+  源码工作树（commit `4878cdabd8…`）同步 v5（capability establish + symbol entry +
+  WeakMap prepared record + trusted 参数），`pnpm install`/两包 `tsc -b`/
+  `build:lib:host` exit0；源码构建产物换入 `-built` 候选（树 `dcf69658…`）后
+  check:compat 87/87。源码差分 `loop-origin-source.patch`（`23ab6350…`）。
+- **统一身份**：树 `a010ccdc…`、补丁脚本 `f1a310cd…`、receipt `a6c69d83…`、
+  staging `66458c03…`、outputs `2aeceb7b…`。日志 `run/w2-lo-repair2/`。`_020` 第七轮
+  合同节、interface-diff、evidence、兼容清单同步。证据封存根
+  `w2-loop-origin-private-20261001-182722/` 维持。
+
+未动：原 0.2 树、旧 0.1.5、日常 0.1.7、Python 内核/validator、LEAD 台账、QA 权威根。
+未跑 live；Gate-H 未自行登记 PASS，冻结候选待独立差分验收。写权释放：窗口一保持
+第02份；第03/04份等 Gate-H 与正式 Gate-K。
+
+
+## 2026-10-02 12:12：私有消费候选独立差分复核、集中返修与明确释放
+
+本次未参与该候选实现；只新增独立 QA 夹具/原始证据，释放实际读集后更新裁决文档/入口/台账。
+产品、原测试、runtime、peer、build/stage、Python 内核与 validator 未改。
+完整结论和一次接续指令：[私有消费独立复核](../docs/dsh_execution_20260928/stage_private_consumption_review_20261002.md)。
+
+- 实际交付树 a010ccdc/source-built7ae6af55、source12f33263、patch e2a8cd2a/419d5a8d、
+  receipt85a37546/stage950ba6d4/outputs2aeceb7b 均与交付清单匹配；两份 source-built JS
+  对应固定源码构建输出同字节，14 封存 hash 全匹配。
+- 原 11 文件 staging-only 套件独立 **87/87、0 skip、exit0**，C21 与同 child committed 恢复
+  通过。显式候选环境 `python -m pytest -q integrations/dsh/dev/tests` **24 passed、exit0**；
+  `python scripts/dsh_dev.py --candidate 0.2.0-rc.1+loop-origin.1 doctor` exit0，无 evidence 写入。
+- 两棵候选各独立 4 项，prepared/fallback 两合法正例通过；公开 Cordis `internal/get` 在
+  回落同步服务解析时成功 take entry-ack 一次，合法 child error、R/D/S/adapter 全 0；公开
+  custom iterable 的 `Symbol.asyncIterator()` 获取看到外层来源。各 **2 pass / 2 fail、真实
+  Node exit1**，未用 import error 或全拒绝正例充数。
+- 实际 inventory 4 文件差分，compatibility touched 列齐；实际 manifest 与
+  `loop_origin_setup` 生成器仍仅 2 JS，漏 2 types。将这三项集中作为 PC-1/2/3 返修，
+  Gate-H CHANGES_REQUESTED、正式 K 未过；49 个原任务对象全部保持。
+- 系统沙箱首轮阻止 bwrap socket，原 bootstrap 输出保留，后续自动审查允许在外层系统
+  沙箱外继续原只读/断网 bwrap。B02 首轮 runner 漏传候选而落历史默认，原失败保留并纠正；
+  两者不计产品缺陷。逐 argv/cwd/选择环境、inner exit、完整日志在本次候选外稳定根。
+- 新权威根 `.dsh-dev/run/qa-private-consume-20261002-7o8lt6bj/`；992 输入 byte/metadata、
+  四 runtime inventory 与 peer 前后同；791 已验 source/test 摘要未变，不重跑 4129。
+  宿主扫描 1780，相关验证 0/不可读 0、全部启动命令返回；**12:12:01+08 明确释放**，
+  before/after/closing 原文保存。后续文档与台账编辑发生在释放后。
+
+窗口二接回原第01份完整写权，连续修三个问题、原 AT/联合恢复、源码双侧/稳定验证/封存与
+重新冻结，完整包再独立 QA。窗口一保管 component；第03/04份原分工与实际 H/正式 K、C/R/V
+及单独 live 门不变。未跑 live、未自行开下一阶段或登记 PASS。
+
+## 2026-10-02（凌晨）：窗口二私有消费返修完成（公开预消费反例闭环，写权释放）
+
+按[返修差分裁决](docs/dsh_execution_20260928/stage_loop_origin_repair_acceptance_20261002.md)§4 连续完成：
+
+- **证据封存**：存活证据封存至 `.dsh-dev/run/w2-loop-origin-private-20261001-182722/`
+  （14 文件 + hash 清单 + EVIDENCE_SEAL.md）；首轮 `w2-lo-final/` 与
+  `qa-loop-origin-awkji3_e/` 因历史候选重建灭失，如实登记不补造。本轮候选重建
+  先移出 run/ 再原样移回，不删证据。QA 权威根 `qa-loop-origin-repair-0yrz6nyl/` 未触碰。
+- **私有消费兑现（LO-4-PRECONSUME 闭环）**：删除公开 `admitLoopDispatchOrigin`
+  （QA 实测 async hook 在 ALS.run 建 Promise 时同步执行、抢先消费阻断合法 child）。
+  一次性状态只在 agent-loop 模块私有域：来源作用域由私有 establish 建立（建立即权威）；
+  loop 自己的同步 stream entry 经私有 `enterLoopDispatchOrigin` 子作用域标记；
+  dsh-llm 仅读判定（peek + `takeLoopDispatchEntry`），对来源零变更。entry 调用链
+  从子作用域进入到判定全程同步、无 Promise 创建，任何 hook/listener 无法先于 loop
+  取走 ack。公共快照不含 request 对象（同一引用不能抢占）。
+- **公开入口隔离**：存活作用域内的公开派发（async hook、listener、预持 handle、
+  部署面）被清空式隔离——waterfall 创建与全部迭代都在空 store 内；普通公开流量
+  sibling 直通；公共 NO_ADAPTER 原语义与内部回落单次合法保持。
+- **回归**：新增 C21（公开 async-hook 观察者只用剩余公开面：peek + take + 受保护
+  会话公开派发——实测 takeSucceeded=0、观察者派发具名 `dispatch_origin_unproven`、
+  合法 child completed 且 R/D/S/adapter 各 1）；C13 期望更新为宿主具名拒绝
+  （`dispatch_origin_unproven`，零 reserve/adapter——runtime 已无公共消费可被重入）。
+- **双侧构建**：源码工作树（commit `4878cdabd8…`）同步 v4 设计；`pnpm install`、
+  两包 `tsc -b`、`pnpm run build:lib:host` exit0；源码构建产物换入 `-built` 候选
+  （树 `7ae6af55…`）后 check:compat 87/87（含 C21）。源码差分
+  `loop-origin-source.patch`（`419d5a8d…`）。
+- **验证（fresh）**：交付候选 check:compat **87/87**（0 skip，11 文件，含
+  `sandbox.test.ts` 2 项与 `staging.test.ts` 4 项——修正上批清单）、B02 **24 passed**、
+  doctor exit0、`git diff --check` 干净。日志 `run/w2-lo-repair/`。
+- **统一身份**：树 `a010ccdc…`、补丁脚本 `e2a8cd2a…`、receipt `85a37546…`、
+  staging `950ba6d4…`、outputs `2aeceb7b…`；manifest `touched` 按实际差分列齐 4 文件。
+  `_020` 身份表与第六轮合同节、interface-diff、evidence、兼容清单同步。
+
+未动：原 0.2 树、旧 0.1.5、日常 0.1.7、Python 内核/validator、LEAD 台账、QA 权威根。
+未跑 live；Gate-H 未自行登记 PASS，冻结候选待独立差分验收。写权释放：窗口一保持
+第02份；第03/04份等 Gate-H 与正式 Gate-K。
+
+
+## 2026-10-02 00:02：LEAD返修差分、公开预消费阻断、完整续派与明确释放
+
+owner86/0skip、B02dev24与doctor日志/身份已核对；独立LO1普通三入口、LO2公共NO_ADAPTER/native回落和LO3旧manifest读取通过，source固定commit/四文件及实际构建JS交付。LO4公共admit仍改一次性状态：公开async_hooks观察者拿admitted、合法child error/零RDSadapter；交付及source-built均实际exit1，各有合法completed/四项1正对照。GateH仍CHANGES_REQUESTED、正式K未过；不将改名oracle作为私有消费完成。
+
+只写独立QA夹具/证据与LEAD裁决文档/台账，没有产品/原测试/runtime/peer/buildstage/Pythonvalidator改动。791Python源码/测试及九份原运行文件未变，不重跑4129。1023输入metadata/四runtime/peer前后同，宿主1754相关0/不可读0、全部命令返回；00:02:16+08明确释放实际读集，canonical根`.dsh-dev/run/qa-loop-origin-repair-0yrz6nyl/`。
+上批候选内QA/owner根当前不存在，移除原因/时间未核实；原历史保留、不伪补，窗口二先将当前证据封到候选外。原01/§6完整写权恢复，连续私有native消费与公开入口隔离、真实反例/原AT/联合恢复、sourcebuild/finalcheck/冻结交付；窗口一只保管component，无早开C/R。两门满足后原03整阶段，再GateC后原04，正式R/V与单独live不减少。
+
+完整环境/即时派工/后续分工：[本批裁决](../docs/dsh_execution_20260928/stage_loop_origin_repair_acceptance_20261002.md)。原8份执行文档49tasks全对象不变，本轮更新顶层checkpoint/issue disposition/closing/history；QA结束，无常驻reviewer。
+
+## 2026-10-01（晚）：窗口二 loop-origin.1 验收返修完成（LO-1/2/3/4 闭环，写权释放）
+
+按[验收返修指令](docs/dsh_execution_20260928/stage_loop_origin_acceptance_20261001.md)连续完成四项：
+
+- **LO-1**：admission 改四值 oracle（`absent/admitted/refused/external`）；存活作用域内发起的
+  公开派发（三入口 + 部署面）经清空式隔离返回，隔离以逐 `next()/return()/throw()` 再入空 store
+  实现（首版只在创建 iterator 时包作用域，listener body 在迭代期仍见外层 origin——探针实测后纠正）。
+  新增 C19：listener 内三入口向另一 provider 各成功一次，合法 child R/D/S 恰一次并 completed。
+- **LO-2**：公开 `prepareCall` 恢复原 NO_ADAPTER 拒绝（移除回落 handle hunk）；loop 内部回落经
+  公开 `llm.stream` 在 origin run 内 admitted 恰一次。新增 C20（(a) 具名拒绝无 handle；(b) 回落
+  R/D/S=1 completed）。
+- **LO-3**：`read_manifest` patched 字段检查仅在候选 id 带 `+` 时生效；B02 新增
+  `test_unpatched_manifests_keep_the_original_format`（0.1.5-rc.3 与 0.2.0-rc.1 旧格式实测加载）；
+  漂移/缺新身份/不一致拒绝保留。
+- **LO-4**：新导出以 runtime 自身 `.d.ts` 声明（补丁域扩为 4 文件），Host 移除 unknown 断言；
+  公共 `consumeLoopDispatchOrigin` 移除 → 单次 admission oracle + 清空式隔离 runner；
+  源码交付：monorepo `deepseek-ai/deepseek-harness` tag `dsh-v0.2.0-rc.1`
+  （commit `4878cdabd87d4041bdaff61d04c966883b9fd07a`，克隆 `.dsh-dev/sources/loop-origin-020/`），
+  窄改 4 源文件，源码差分 `loop-origin-source.patch`（`80ffbdd8…`）；`pnpm install`、两包
+  `tsc -b`、`pnpm run build:lib:host` 全部 exit0；源码构建产物换入验证候选
+  `0.2.0-rc.1+loop-origin.1-built`（树 `eb4625a6…`，manifest 记 provenance）后
+  check:compat 86/86 —— 行为等价。evidence 修正：11 文件 86 项全列，日志权威
+  `run/w2-lo-rework/`。
+
+验证（返修轮 fresh）：交付候选 check:compat **86/86**（0 skip）、B02 **24 passed**、doctor exit0；
+日志 `run/w2-lo-rework/`。统一身份：树 `5f340b3a…`、补丁脚本 `9c98b720…`、receipt `bec54f92…`、
+staging `3981269e…`、outputs `8be3cd0a…`。identity/docs 同步：`_020` 身份表与第五轮合同节、
+`interface-diff.md`、`evidence.md`、`compatibility.0.2.0-rc.1+loop-origin.1.json`。
+
+未动：原 0.2 树、旧 0.1.5、日常 0.1.7、Python 内核/validator、LEAD 台账、QA 证据根。未跑 live；
+Gate-H 未自行登记 PASS，候选待独立差分验收。写权释放：窗口一保持第02份已验内核；第03/04份
+仍等 Gate-H 放行。
+
+## 2026-10-01 19:40：LEAD独立loop-origin.1验收、集中返修与明确释放
+
+候选已实际落地，peer指向0.2.0-rc.1+loop-origin.1，runtime1e0e6fa2；基树434与旧默认7e8未改。
+owner84/0skip、B02dev23、doctor0日志已核对；原H-R4独立32次publicprepare均拒绝，合法child
+completed，R/D/S/adapter各一次。没有重处理此前后台完成通知。
+独立原11文件83pass/一个QA RUN_ROOT断言fail exit1；按原launcher环境只复验sandbox2pass exit0。
+驱动路径/沙箱/closing语法失败记录保留并纠正，未误归产品或覆写真实exit。
+新增LO1普通public流及两类prepared继承ambient来源误拒，LO2公共NO_ADAPTER被改为返回handle，
+LO3旧manifest遭新必需字段拒绝；LO4固定源码/原生构建/types及公共consume不满足既有§6合同。
+GateH仍CHANGES_REQUESTED，正式GateK未过；下方owner交付是实现者结果，其“其他窗口可开始
+第03份只读之外工作”不是LEAD授权。791Python源/测试及六份原日志未变，component保留。
+
+只写独立QA夹具/证据与LEAD裁决文档/台账；未改产品/原测试/peer/buildstage/runtime/validator。
+宿主1750进程中相关验证0、不可读0，全部启动命令返回；912受测输入、三棵runtime和peer
+before/after同身份。19:40:04+08明确释放实际读集；窗口二直接接回原第01份+§6窄源码写权，
+连续修LO1–4、原正反例/联合恢复，最终稳定checkcompat/B02/doctor/身份与写权释放，再独立QA。
+窗口一保管已验内核，无新返修/重复调查/全量/提前C/R。第03/04仍等实际H/K，无live/默认切换。
+
+完整裁决：[loop-origin.1验收](../docs/dsh_execution_20260928/stage_loop_origin_acceptance_20261001.md)。
+证据与精确closing：`.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1/run/qa-loop-origin-awkji3_e/`。
+原8文档/49任务、AT/依赖/形式状态全部不改，原日志/报告和release历史保留。
+
+
+## 2026-10-01：窗口二 loop-origin.1 完整阶段交付（写权释放）
+
+按[接口裁决 §6](docs/dsh_execution_20260928/h04_loop_origin_escalation_20261001.md)与执行入口 §3.10
+连续完成第01份 loop-origin.1 阶段。候选 `.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1/`：
+base `43490765…`（pristine 0.2.0-rc.1，未动）→ patched `1e0e6fa2…`；manifest 分离
+`dsh_version=0.2.0-rc.1+loop-origin.1` / `upstream_dsh_version=0.2.0-rc.1` / `source_kind=local-patched`，
+runtime package 版本保持上游不改。补丁域仅 `dsh-agent-loop`+`dsh-llm` 两文件逐字节 hunk
+（脚本 `26d1d835…`，可重建 via `loop-origin-setup`）。
+
+实现要点（实测）：cordis waterfall 的 listener wrapper 是惰性 async generator，body 在迭代时
+执行，仅在"创建 iterator"外套 ALS.run 会在任何 listener/adapter 前关闭作用域（middleware 实测
+origin=undefined）——因此 origin run 作用域扩展到整个 step 流消费，admission 同步先于 listener；
+公开 prepared/回落 handle 均从该入口进入（prepareCall 不再抛 NO_ADAPTER，返回冻结回落 handle）。
+作用域内存活重入由 runtime 以 `DISPATCH_ORIGIN_CONSUMED` 具名拒绝；作用域外/部署面冒名由 Host
+拒绝（新增 root 面只读 guard：cordis 只运行组合 ctx 自身 hooks，受保护 agent listener 看不到
+部署面派发——S2 的 impersonation/foreign-route 由 guard 具名拒绝）。核验经同一模块实例的
+`currentLoopDispatchOrigin`（staging 与 runtime realpath 实测一致），runtime-checked 属性读，
+未补丁 runtime 按名拒绝。
+
+验证（全部本轮 fresh 实测，日志在候选 `run/w2-lo-final/`）：
+- `npm --prefix integrations/dsh run check:compat` exit0，**84/84 pass，0 skip**
+  （原 13 项 skip 全部恢复为真实执行；原被改成合法也拒的 S2/C9 等正例恢复）。
+- `python -m pytest -q integrations/dsh/dev/tests` exit0，**23 passed**（B02 目录）。
+- `python scripts/dsh_dev.py --candidate '0.2.0-rc.1+loop-origin.1' doctor --evidence` exit0。
+- build receipt `b01543a9…`，staging tree `241639f9…`，outputs `68260b9d…`。
+
+身份与证据：`integrations/dsh/dev/runtime-0.2.0-rc.1/loop-origin/{interface-diff.md,evidence.md}`、
+`integrations/dsh/compatibility.0.2.0-rc.1+loop-origin.1.json`、
+`docs/dsh_execution_20260928/h02_interface_freeze_020.md`（顶部身份表已改为 loop-origin.1 实测，
+base 值保留对照）。测试修订：cancellation（C13/C14 改为捕获 runtime 具名 throw、C14b 以
+post-legal 为基线）、joint-child（候选 id 断言、移除与 before() 重复的第二次 wait-window 攻击——
+terminal 工具 concludeTurn 后不存在第二个 prepareCall 窗口）、request-seam（S2 部署面拒绝诊断
+接受 guard 具名文本、外路由接受 guard 先拒）、B02 隔离测试（分离 manifest 合同：upstream 版本
++ upstream_dsh_version）、staging.test.ts（runtime 版本以 upstream_dsh_version 为字节权威）。
+
+未动：原 0.2 候选树、旧 0.1.5、日常 0.1.7、Python 内核/validator、旧报告与失败日志。
+未跑 live API，未登记 Gate-H PASS；候选待独立 QA。窗口二本轮写入范围见
+`loop-origin/evidence.md` §5，写权释放：其他窗口可开始第03份只读准备之外的工作。
+
+## 2026-10-01：R2候选独立验收与立即接续
+
+LEAD只读验收，未写产品。独立83pass/B02整目录23pass/受影响identity29pass；内核原Python
+输入/测试/完整日志身份不变，保留component PASS，不重跑4129。旧公开listener同对象/复制/延迟
+变体拒绝，合法child各一次；公开prepareCall和排入微任务仍各能先领能力，裸RDS/adapter1，
+合法child error。Gate-H仍CHANGES_REQUESTED，Gate-K及正式done不通过。
+
+原QA会话两次自动内容检查中断后由未参与实现LEAD接手，83已返回不重复启动。原隔离
+bwrap权限失败保存，获原隔离执行权限后真实负向probe各exit1；无裸跑/live。宿主明确
+检查0匹配/0不可读，903输入/27owner日志/2678独立输入/runtime26149项全同，2026-10-01T00:54:43.353019+08:00
+明确释放全部读集。证据.dsh-dev/run/qa-r2-acceptance-20261001-d4gkwv4k/；本批完整裁决docs/dsh_execution_20260928/stage_r2_acceptance_20261001.md。
+
+窗口二继续原第01份整阶段，优先闭合两个首次认领来源，缺公开能力时交最小接口证据；
+窗口一保持候选，只读准备第03份。第03份及第04份完整派工排队，实际Gate-H/K/C前置满足
+才生效，不新增任务、驻QA或平行领域owner。保留dirty分支及所有旧报告、失败日志。
+
+
+## 2026-09-30：返修候选差分验收与21:36后接续裁决
+
+- LEAD仅协调、独立只读内核验证和文档台账；没有修改产品源码/测试、锁、peer、build/stage
+  或日常环境。分支/HEAD仍codex/agentic-p4-benchmark-cutover / d48b4e4b，未提交树保留。
+- DSH独立原test:compat74/74、B02原dev整个目录23/23，均exit0；私有同字节profile普通
+  Web/compat真实HTTP与各四资源200、模型0、进程返回/端口关闭。未QA重build/stage。
+- 原F1具名/F3/F4同步/F5与准备等待旧F2修复成立；H04公共同request引用及真正
+  NO_ADAPTER回落同signal复制/不同messages仍各可裸RDS/adapter一次并使原child失败。
+  第01份仍CHANGES_REQUESTED，完整原AT缺项由原Window2连续整包返修。
+- LEAD原六内核模块103 passed、K04/身份/真实调用方282 passed，均exit0；原replay/
+  manifest独立脚本exit0；实际Writer在有效矛盾回执下以unknown相位原因零发送、doctor
+  同首因，损坏request具名拒绝/accepted=false/保留预留。全量4129/3原live skips/12subtests
+  完整owner日志/argv/.exit已核对，不重复全量。K01–K04 component PASS、正式Gate-K等待H。
+- 追加QA driver的前置/字段/receipt诊断语义假设与一项未启动产品的命令失败全保留；
+  原非零exit没有改成0或裁为产品缺陷。actual_consumer_review、correction记录和最终
+  corrupt continuation exit0与late-conflict已通过行为分别收口，不以失败整命令宣告成功。
+- 新裁决[stage_repair_acceptance_20260930.md](../docs/dsh_execution_20260928/stage_repair_acceptance_20260930.md)；
+  独立报告原文SHA98d05925…，历史原报告与第一次失败不覆盖。
+  仓库证据镜像.dsh-dev/run/qa-stage-repair-review-20260930-y7m330na/，manifest410文件。
+- 901输入/35owner记录及DSH2618输入/runtime26149项前后全同；DSH明确21:30:09释放，
+  LEAD21:36:51释放。宿主精确QA/CLI匹配0、不可读0、所有命令返回，无pending；共享profile
+  本批未写。日常安装前hash仍N/A，不倒填历史。
+- 49任务原status/依赖/AT/责任域保留；记录component/原具名反例关闭与两条新来源发现，
+  不自登正式Gate-H/K/done。当前窗口一保持已验候选、窗口二继续原完整阶段，QA结束按需
+  再启。第03/04份、RPC、live、默认/日常切换、commit/merge/push未放行。
+
+## 2026-09-30：完整 Python / DSH 0.2 候选独立验收与 LEAD 集中裁决
+
+- 范围：LEAD 保持协调/裁决角色，没有修改产品源码、测试、配置、peer、锁、build 或 stage。
+  两位新实施者已交完整原阶段包并释放写权，按现有执行文档启动一次独立验收；不建新计划、
+  不配置常驻 QA，不开启第03/04份、live、日常更新或默认切换。
+- 分支/HEAD仍为 `codex/agentic-p4-benchmark-cutover` /
+  `d48b4e4b22c94c82b45d2179ba452d72b164102d`，保留 dirty 树与旧运行目录。
+- DSH 由独立 QA 对冻结候选复跑原隔离 `test:compat`，11文件71 pass/0 fail/0 skip，
+  exit0；不重复 build/stage。完整 owner `check:compat` / doctor 日志与真实源/产物回执
+  已核对，runtime实算仍 `43490765…`，旧默认仍 `7e8f199b…`，peer未变。
+- LEAD独立 `python -m pytest -q -rs -p no:cacheprovider --basetemp <新鲜QA根>` 对原六个
+  内核模块99 passed，exit0，19.08s。owner完整全量 argv/log/.exit=0已核对：
+  4125 pass、3既有live skips、12 subtests。没有重复运行全量，也没有启动live。
+- 额外原owner反例真实失败：同validator验收重放将矛盾发送事实变成accepted_reusable，
+  含合法重放先落盘的对照；reader验证后重读被替换manifest，返回g2成员却标g1权威摘要。
+  三个反例的真实断言退出码均为1。追加探针初轮缺PYTHONPATH是QA夹具失败，保留后续v2。
+- DSH额外反例：H03损坏日志仍committed/null event直接抛异常；H04公开withInitiator
+  准备期抢票、全局requestDepth误拒合法B、同步iterator.return异常遗漏具名终态；
+  B02 CLI cwd仍旧workspace，普通Web未就绪、原Python矩阵20pass/2夹具适配失败。
+  探针exit0仅表示实际观察完成，不把反例失败写成合同通过。
+- 完整裁决与集中连续返修：[stage_acceptance_20260930.md](../docs/dsh_execution_20260928/stage_acceptance_20260930.md)。
+  独立报告原文副本SHA `804a83aac5a1ded1d3b192a1e0629312efcf92a240b437a8c2ec81719377b29c`。
+  两包CHANGES_REQUESTED，Gate-H/K未过；K01–K04与B02/H01–H04仍in_progress，不以计数自登done。
+- before/after与原始日志保存在仓库可见
+  `.dsh-dev/run/qa-stage-review-20260930-izdz_5y3/`；899输入/30owner日志字节相同。
+  DSH2618输入字节/inode相同，仅两个目标profile cordis.yml被真实CLI烟测改了mtime。
+  该副作用单列，未还原掩盖，不宣称完整metadata冻结一致。
+- QA 19:01:54+08明确结束并释放完整读集；宿主closing精确QA/目标CLI匹配0、不可读0，
+  全部QA子进程已wait返回，无待写输出。LEAD内核命令亦已全部返回。窗口一、二直接
+  接回各自原完整阶段集中返修，不逐缺陷派工；新完整冻结候选再按需独立差分验收。
+- LEAD仅更新执行入口、第01/02份、verification、台账、仓库文档索引与本记录，保存两份
+  新验收报告；49任务的ID/status/依赖/AT/责任域保持不变。链接和差分收尾检查另存QA根。
 
 ## 2026-09-16：P0–P6 产品集成闭环（未 V4 默认 cutover，未 P7 live）
 
@@ -5117,3 +5610,1855 @@ budget failure`）作为 DSH（DeepSeek Harness）接入**之前**的代码对�
 - 本轮文档提交（审计方案、DSH 插件设计、`docs/README.md` 索引项）不改动 `src/`、`tests/`、
   `scripts/` 的任何字节，因此**代码语义**仍等同 `0918ee7`；但 `docs/` 参与引擎 source
   digest，提交后 digest/commit 会变化，回执需按上一条重新生成。
+
+## 2026-09-27 基于本机 DSH 的隔离开发环境
+
+授权范围：用户要求先搭建隔离环境，依据已有 DSH 开发且不影响日常使用。本轮只完成环境、
+启动/检查工具及操作说明，没有实现业务 bridge、调用模型、提交 Git 或切换默认产品入口。
+开始时 HEAD 为 `d48b4e4`；保留已有两份文档修改、子模块 dirty、草稿和原始 run 目录。
+
+实际发现的日常安装是 `/home/cuihengjia/.npm/_npx/1e7f6d9597241db0` 下的已构建 npm 软件，
+DSH `0.1.5-rc.3`，231 个 `dsh*` 包版本一致，原 profile 模块链接指向该安装；日常 home 为
+`/home/cuihengjia/.dsh`。依据最新用户要求，实际开发目标采用这个版本；设计中的
+`c36a83ff / 0.1.7-alpha.1` 明确降为源码研究参考，不能借用其 commit 标记当前 npm 树。
+
+新增 `scripts/dsh_dev.py`、`scripts/dsh_dev_smoke.py` 和 `integrations/dsh/dev/` 说明/离线 patch；
+`.gitignore` 忽略整个 `.dsh-dev/`。运行包/lock/25,478 文件与链接已独立复制，无共享硬链接；
+Node 使用原可执行文件 `v25.8.2`，每次启动检查版本。启动器固定独立 home/profile/workspace，
+过滤继承的凭据与 DSH/Node 运行参数，并强制 bubblewrap 根目录只读、开发目录可写；无隔离
+则拒绝启动。原端口 `3080`、`19387` 及模型端口 `8006` 明确拒绝；默认开发端口 `3081`。
+模型适配器、模型重试/标题、遥测及 Web 搜索等按实际安装的 plugin ID 关闭，未拷贝凭据。
+没有创建 Python worker 环境或修改既有 Python 依赖；它们属于后续接入工作。
+
+验证及证据（当前环境的新增观测，不借用历史 pytest 计数）：
+
+- `python scripts/dsh_dev.py setup`：exit 0，复制后的完整树与来源字节/相对链接完全一致。
+- `python scripts/dsh_dev.py doctor`：exit 0，25,478 项完整摘要通过、共享原安装 inode 为 0，
+  bubblewrap 内原 home 只读。开发 home 实际写入/删除临时 canary 通过。
+- `python scripts/dsh_dev.py config`：exit 0，真实 launcher 生成组合树，离线关闭项落在实际
+  plugin ID 上。`python -m py_compile scripts/dsh_dev.py scripts/dsh_dev_smoke.py`：exit 0。
+- `python scripts/dsh_dev_smoke.py`：exit 0，真实 Web 首页及 4 个 JS/CSS 资源均 HTTP 200，
+  无模型对话；测试结束后监听端口关闭。测试进程由 SIGTERM 结束（子进程 exit -15），
+  脚本按检查结果 exit 0。初次外层沙箱阻止本地 listen（EPERM）；随后使用工具批准的本地
+  监听权限重验，脚本内 bubblewrap 文件系统隔离未移除。
+- 负例检查 exit 0：保留端口被拒、重复 setup 拒绝覆盖、继承的 `DSH_HOME` 不能指向日常
+  home、API key/`NODE_OPTIONS` 不传给子进程、`HOME` 值保持原样。
+- 原安装再次全量摘要与复制基线一致；原 home 的 15 个配置/凭据/插件配置文件未变。
+  初始“全部 home 文件不变”检查发现另一个项目的会话和投影缓存共 2 个文件发生更新，
+  因此不声称所有会话静止，也没有回滚它们。原目录在开发进程内只读是归因边界；日常会话
+  更新不作为开发环境失败或修复目标。
+- `git diff --check`：exit 0。未跑全项目 pytest，未生成新的离线准入回执，未触碰 `src/`、
+  `tests/` 中的业务实现。
+
+持久操作说明：`integrations/dsh/dev/README.md`。本机原始证据：`.dsh-dev/manifest.json`、
+`runtime-inventory.json`、`evidence/doctor.json`、`evidence/composed-config.yaml`、
+`evidence/web-smoke.json`、`evidence/web-smoke.redacted.log`、`evidence/launcher-checks.json`、
+`evidence/everyday-preservation.json`；临时前置记录 `/tmp/c2p-dsh-env-20260927-_08f6ry6/`。
+认证启动 URL/cookie 只留在测试内存，写入的日志已去除 URL；原配置/凭据只存摘要与元信息。
+
+剩余：WP2 针对实际 `0.1.5-rc.3` 验证自定义插件 Loader、首请求绑定、terminal 参数来源、
+取消与 LLM seam；未据环境启动声称这些兼容门完成。业务代码对照基线仍是 `0918ee7`，本轮
+新增脚本与文档会影响实际 engine identity；历史回执不能批准后续 DSH live。
+
+## 2026-09-28 DSH 接入的实现单元拆分与团队执行计划
+
+授权范围：用户要求以总设计为意图，由负责人充分调查 `0918ee7` 和本机 DSH，拆分执行
+文档、责任任务与步骤。本轮完成规划交付；没有开始业务改码、模型调用或主流程迁移。
+用户明确授权团队分工，安排三个只读调查/复核职责：DSH 兼容、Python 内核、流程质量；
+主 Agent 统一写文档。不使用 skill，不委托外部通信，不提交、切分支或改日常 DSH。
+
+基线核对：HEAD 仍为 `d48b4e4b22c94c82b45d2179ba452d72b164102d`；逐文件比较 802 个
+已跟踪 `src/`、`tests/`、`scripts/` 文件与 `0918ee76d079b9392ec03400c0c4c9fdff5bc784`
+字节一致。前轮未跟踪的两份开发脚本、开发 README/patch 单列；没有称工作树干净。
+DSH 实际为隔离 npm 快照 `0.1.5-rc.3`，Node `v25.8.2`，upstream SHA 未知；研究参考
+`c36a83ff / 0.1.7-alpha.1` 不能给本机包盖章。保留子模块 dirty、草稿、原 run 目录及
+原有文档修改。历史 4014 测试回执仍只属于 `0918ee7`，本轮未重新执行或生成回执。
+
+交付 `docs/dsh_execution_20260928/`：8 份阶段执行文档、总入口、共享接口、验收矩阵、
+机器可读任务表、源码/运行包清单，共 13 个文件。49 个任务均有 owner/reviewer、依赖、
+独占文件范围、实施步骤、交付和具名 AT；B00 为 ready，其余 planned，无任务标成已实现。
+总设计继续约束方向，执行文档细化工程流程；任务粒度是可审查单元，不强制一个单元一个提交。
+`docs/README.md` 增加入口，总设计补 §0.5 并修正实际安装接口和阶段边界。
+
+关键设计收口：
+
+- 默认业务流程仍是 LangGraph，DSH 执行 Agent，Python 保留领域/账本/验收/提交权威；
+  显式并发开关默认关闭，所有主/子/verify/辅助请求受 run 与 backend 两级限制。
+- 实际包是 `dsh-agent-presets`，按目录扫描 `agent.cordis.yml`；Host service、preset 工具和
+  child 绑定分层。`agent/created` 不 await Promise，`pre-step` 晚于 prompt assemble；
+  标准 spawn 无法证明创建期绑定时，H02 以公开窄 provider 验证，不调用私有 helper。
+- I01 只交付统一组成身份原语；C02/R03/R04/A01 分别验证 prepare/dispatch/resume/receipt
+  接线，避免反向依赖。实际加载 JS、运行包、lock、Node、preset、schema 都绑定；不能只
+  比 Git 可见源码。新增裁决任务按已落地文件更新原 validator 来源清单并做摘要变化反例。
+- C00 单独承担真实请求 renderer 和自有无模型投影握手，依赖 C01 schema，供 C02 计量/
+  clamp/重编后冻结。公开 assemble 与最终 provider wire 分别记录；真实 pi-ai 对隔离假
+  HTTP/SSE 服务的测试前置到 Gate-C/Gate-V，不拿自建 mock adapter 代替真实转换证明。
+- raw argument stream、normalized terminal、parsed object 与 prose 来源分别记录；
+  pi-ai 会重新序列化最终参数；必须 await Session flush。取消只在独立 cleanupSignal 下
+  `waitForExit` 返回 true 时确认 provider 范围静止；未知发送保留占用并暂停整个资源组。
+- K02 在原 registry 拆 record 准备/active 激活，用持久 fence 和多成员 manifest；K02+K03
+  经真实 reader 验证已有 g1 后 g2 每个写点故障。C03 局部事务与 F02 全文输出接线分开。
+  parser、assessor、composer 和 invocation reducer 保持原 owner 共用。
+- A01 先复现再修原准入 CLI：当前小 pytest 目标仍可默认登记全部必测 labels；该结论本轮
+  为静态代码发现，未运行反例。新覆盖必须由实际 Python/Node 子命令及报告派生，读取重算，
+  测试前后核对身份；不以增加一个 Node label 代替执行，不否定既有 4014 日志本身。
+- 幂等回执绑定 execution、实际 result、validator；每个 task/epoch 至多一个正式终态，
+  换有效 key 不能提交第二个不同结果。授权→已有回执→新提交 revision 检查顺序保留。
+- G01–G03 是主图入场修复，G05 实现所拥有的角色并前置基本 Editor/Rewrite，待 G06/G07
+  的验证/补证分支具名 pending。G08 才验全部 16 节点真实行为和恢复；F01 收口完整编辑
+  场景，F02/F03/F04 交付全文事务、图和导出，不能以默认 handler 推进冒充迁移。
+- 小 Qwen live、审计 §16.3 L1/L2/L3、盲评和默认切换分别设门；当前计划不批准任何 live。
+  C1/C2 共用独立评价端与数据访问边界，不能按 C2 专用回执存在性评分。
+
+交叉复核修正了：子门“全 AT”导致的循环前置、I01/H03 对未来接口的反向依赖、renderer
+无人负责、registry 提前激活、RPC 到账本漏接责任、validator 清单维护责任、重复终态约束、
+组级 unknown 冻结、共享配置/请求槽释放、Authoring 实际入口和 Figure authority 反例。
+DSH/内核复核在修订后无剩余阻断；流程组最后指出 G05 不应提前要求 G06/G07 已完成，已按
+上段分开 G05/G08 验收并同步总设计与任务表。以上是文档复核，不是实现测试通过。
+
+本轮验证（只做文档与代码状态检查）：
+
+- `python /tmp/c2p-dsh-plan-20260928-hvrzaco7/build_plan.py`：exit 0，生成 8 阶段、49 任务、
+  13 文件；生成脚本留临时目录，不进入生产源码。
+- `python /tmp/c2p-dsh-plan-20260928-hvrzaco7/validate_plan.py`：exit 0；49 唯一任务/AT、
+  依赖 DAG 无环、任务卡/台账/验收映射一致、WP 覆盖齐全、120 本地链接有效、25 个引用的
+  既有 pytest 文件存在、Markdown fence/新增文件空白检查通过。
+- 同检查复算 14 个 Python 源文件摘要/40 个符号锚点、12 个 DSH 实际包文件摘要一致；
+  前轮 4 个开发环境文件摘要未变。只核对源码和已存在测试路径，没有执行这些测试。
+- `git diff --exit-code 0918ee76d079b9392ec03400c0c4c9fdff5bc784 -- src tests scripts`：
+  exit 0，已跟踪业务/测试/脚本未改；`git diff --check`：exit 0。
+- 未运行 pytest/Node 实现套件、未启动服务、未调用模型、未修改 frozen runtime/日常 home，
+  未重生成离线回执。新文档改变工作树身份，后续 live 仍须按最终冻结执行状态重新准入。
+
+原始规划记录：`/tmp/c2p-dsh-plan-20260928-hvrzaco7/{inventory.json,validation.json}`。
+持久基线与摘要清单见 `docs/dsh_execution_20260928/source_inventory.json`；后续开发入口是
+同目录 `README.md` 的 B00→B01/B02 派工步骤，不把本轮规划写成业务已完成。
+
+## 2026-09-28 B00 由负责人执行、独立 QA 复核并放行 B01/B02
+
+针对用户询问负责人任务如何分配，按既有执行计划由当前主 Agent 承担 B00，内核复核 Agent
+独立验收；三个实施窗口不争抢同一份基线清单。范围仅开发输入冻结及台账交接，无业务接入。
+
+实测 802 个已跟踪 src/tests/scripts 文件的路径集合、mode、Git blob和SHA-256与0918一致，
+HEAD仍为d48b4e4；两个新增环境脚本单列。复算原安装与隔离runtime全部25,478条目
+（25,468文件、10相对链接）一致，普通文件无共享inode；231个DSH包均为0.1.5-rc.3。
+Node v25.8.2、实际可执行字节、8个配置来源及历史4014回执均绑定；9个尚缺组件明确记录
+不存在，未伪造bundle build、worker lock或上游commit，也未读取日常home凭据/会话。
+
+新增 `integrations/dsh/compatibility.json`，完整冻结对象存入执行目录source_inventory.json的
+`b00_freeze`；原规划快照保留。冻结摘要为
+`abb0b4324de04f94c9c8f393d750f74d781530469d4b62d1d2ba0e13b3f72099`。
+可读证据与责任分配见 `docs/dsh_execution_20260928/b00_baseline_freeze.md`。
+基线冻结不把仓库设只读，不等于release freeze；后续改动登记新阶段输入，运行准入仍归I01等任务。
+
+准确命令与结果：
+
+- `python /tmp/c2p-dsh-b00-20260928-0gijha3h/freeze_baseline.py`：exit0，生成唯一输入观测。
+  首次命令因Git默认转义中文路径导致分类断言失败（写出观测之前），改用`--name-only -z`后通过。
+- `python /tmp/c2p-dsh-b00-20260928-0gijha3h/check_baseline.py`：exit0，重算冻结摘要、compact
+  manifest映射、802代码文件/25,478运行条目/8配置/9缺项及历史回执；五种内存篡改破坏冻结摘要。
+  反例只验证记录覆盖，不是未来I01发送门测试。原始结果在同目录verification.json。
+- QA / kernel_execution_units独立重算上述输入、清单映射与缺项，返回PASS，无阻断项；未写文件、
+  启动服务或调用模型。负责人据此把B00记done，B01/B02记ready，其余46项仍planned。
+- `git diff --exit-code 0918ee76d079b9392ec03400c0c4c9fdff5bc784 -- src tests scripts` 与
+  `git diff --check`：exit0。文档链接、49任务DAG及状态/依赖复核通过。
+
+未安装依赖、未执行pytest/Node集成或live、未探测8006、未改日常DSH、未提交Git或生成新离线
+准入回执。此次只放行B01/B02离线实施，Gate-B仍需它们完成，Gate-H和live均未获放行。
+
+## 2026-09-28 B01/B02 独立验收、修正与 Gate-B 放行
+
+用户提交 B02 验收和 H04 API 校准/交接缺口。LEAD 安排两个独立复核：B01 的真实夹具接线，
+B02 的环境、工具链与 staging；复现后由原任务 owner 修正，负责人和独立 QA 再验收。
+最终裁决、精确命令引用和后继责任见
+`docs/dsh_execution_20260928/b01_b02_acceptance.md`。
+
+B02 除测试发现/typecheck 遗漏外，复核确认 frozen runtime 在 DEV 可写挂载内、非 CLI
+runtime 漂移未在启动前拒绝、worker 继承安装重定向/凭据、Node 测试绕隔离及并发 staging
+混代等问题。修复限制在原 ENV 路径：统一 sandbox argv、完整 runtime 校验、净化环境、
+测试私有网络与文件级串行；固定 build receipt 及 staged 字节对应，失败保留旧安装。
+check:compat 顺序为 typecheck→build→stage→test，独立 test:compat 不重封漂移。
+根 .gitignore 增加 node_modules/lib/dev-toolchain-build 三个精确忽略目录，lock/源码/测试仍可提交。
+
+B01 首轮 39 项通过但缺 Formalizer 完成正例。新增验收的修前 4 项失败；夹具补可读合成源，
+调用原 execute_formalizer_invocation_plan 默认 parser/validator，由原 owner 生成 accepted
+包和 complete receipt，再经原 Writer builder/splice/Binder。新增正例及三项具名拒绝，
+未手造 accepted；receipt golden 明示观测投影，完整执行回执另存，不能批准生产。
+
+实际验证：
+
+- LEAD 独立 `python -m pytest -q -p no:cacheprovider --basetemp
+  /tmp/c2p-dsh-lead-acceptance-20260928-ks_qwck5/b01-pytest
+  tests/integrations/dsh/test_legacy_characterization.py`：exit 0，43 passed，输入前后摘要相同。
+  记录：该根 `b01-independent.json` / `b01-pytest.log`。实施者相邻四套 84 passed，四种
+  hash seed 重建 golden 一致；原三个 golden 字节保留，见 B01_formalizer_repair_evidence.md。
+- B02 独立 QA：两份 dev/tests 共 22 passed、toolchain:verify、check:compat（6 项 Node）、
+  doctor 和 diff-check 均 exit 0。19 项源文件集合/字节前后相同，重建生成物一致；独立
+  多文件混代、伪自洽 staging、receipt 发布失败回滚三项探针通过。
+  完整 argv/退出码/日志摘要：`/tmp/c2p-dsh-b02-independent-final-20260928-g53ve4_j/verification.json`。
+- 实施者真实新测试失败/类型错误探针均按预期 exit 1，清理后恢复 exit 0；含源码的独立
+  package 真 build/stage 成功；零模型 Web smoke 首页及四资源成功、端口释放。QA 核对同源
+  smoke 不重复启动。见 `/tmp/c2p-b02-handoff-fix-d2735bdd/final-results.json` 及追加修复报告。
+  外层工具最初拒绝网络命名空间，获准后仍保留 bwrap/私有网络通过；没有无隔离降级。
+- 负责人文档/台账/49 单元 DAG、链接、忽略规则、B00 历史记录不变及旧跟踪业务文件对照检查，
+  记录于 `/tmp/c2p-dsh-lead-acceptance-20260928-ks_qwck5/handoff-validation.json`。
+
+现 B00/B01/B02 done，Gate-B PASS，H01 ready，其余 45 项 planned。H02 必交真实导出、
+mock claim/request recorder 与资源责任冻结记录，H03/H04 才能并行；兼容阶段不等待 C/R
+生产 RPC，生产持久性在 R01–R03 复验。共享 build/stage/验收窗口由一人控制。
+B01-D1 页身份/叙述顺序漂移由 K04 修原 compiler 并反转特征测试，阻断 Gate-K；G1 同归 K04，
+G2 非空 atom 场景归 C02。没有把特征测试通过当作这些生产缺口已关闭。
+
+HEAD 仍 d48b4e4；src 生产代码未修改。B00 冻结及 compatibility.json 的 null build 观测
+保持历史身份，I01 另生成正式组成。未重装工具链/worker，未调用真实模型或 live，未刷新
+准入回执、未提交/推送、未启动 H01 实施；日常 DSH/runtime 维持原字节与使用入口。
+
+## 2026-09-28 H01 独立验收通过、负责人放行窗口一实施 H02
+
+本条续记 H01 后续进展，不改前条历史阶段的结论。H01 首轮提交后，负责人/内部协作者曾
+介入修复；用户明确要求负责人只做指挥后，内部实施已停止，未回滚已有工作。窗口一接管
+已有修改并完成补强及 boot 后异常清理，窗口三独立复验，负责人本轮只读核对证据并更新
+设计/交接/任务台账；未改实现、未新建内部实施任务、未运行产品测试或构建。
+
+裁决：AT-H01 PASS；H01 done，H02 ready，H03/H04 保持 planned。共 4 done / 1 ready /
+44 planned，Gate-H 尚未通过。持久裁决、完整身份、N1–N5 非阻断备注和各窗口指令见
+`docs/dsh_execution_20260928/h01_acceptance.md`；H02 接口冻结要求仍以 h02_h04_handoff.md 为准。
+
+证据来源为窗口三的 `/tmp/c2p-dsh-h-qa-w3-20260928/reviews/H01_verification.json` 与
+`H01_verification_pass2.json`，原始日志在 `.dsh-dev/run/qa-w3-20260928/h01-recheck/`。
+两遍 check:compat exit 0（16/16）、独立 R1–R6 exit 0（8/8）、无标记恢复 exit 0（16/16）；
+注入运行自行 exit 1，分别 9.577/9.534 秒，非 timeout 强杀，端口释放并独立拒连，标记/私有
+目录清理；doctor、stage --check、diff-check 均 0。未变的 Python 套件按已绑定证据未重复跑。
+
+负责人本轮以 Python 只读复算：两份 QA JSON 引用的 23 个日志/产物摘要均相符，当前 26 个
+受测源文件与相同 before/after 快照一致，无差异。loader.test.ts 为 4e6e6699…，构建回执
+ea2289b1…，staging 回执 3a671640… / staged 树 abe6365d…，runtime 7e8f199b…。
+原三项缺口及 LEAD 的清理缺口均关闭。N1 的历史 profile 写者仍未知；冻结 CLI prepareProfile
+无条件重写空 root 的静态机制不能当作历史事件归因。N2 硬杀未测，N3 快照写元数据增强交给
+窗口三的新 H02 QA 工具，不重写 H01 历史证据。
+
+窗口一按第 01 部分实施 session-binding/role-dispatch/binding.test，并形成真实导出、mock
+claim/request recorder 及资源责任的接口记录。窗口三先准备独立反例，拿到冻结交付才接管
+构建与复核；窗口二等待 H02 接口通过后实施 H04。H02 只验证创建前回执/创建期绑定时序，
+生产持久性由 R01–R03 复验。用户的“负责人不自行修复”职责已写入阶段入口和台账。
+
+本轮只更新 docs 与本记录。文档检查脚本
+`/tmp/c2p-dsh-h01-acceptance-20260928-e8e7gcf9/validate_handoff.py` 完成：49 个任务/任务卡
+一致，DAG 无环，159 个链接有效，B00/compatibility 历史身份未变，Git 补丁空白及旧跟踪
+代码对照通过。另复算 26 个 H01 源输入仍一致，7 份交接文档无尾随空白。原始检查记录为
+同目录 `handoff-validation.json`，证据核对为 `artifact-review.json`。未重跑实现套件，
+未提交/推送，未更改日常 DSH、frozen runtime 或旧准入回执；新增文档不构成 live 授权。
+
+## 2026-09-28 H02 候选审查、接口补齐与三窗口派工
+
+负责人本轮只读源码/冻结 runtime 并更新执行文档；未修改实现、候选接口记录或构建，未运行
+Node/pytest/模型测试，未启动内部实施 Agent。当前 H02 的 session-binding 6324fbde…、
+role-dispatch 87cc8fef…、binding.test 91957e6b… 与最新交付相符，已进入构建回执 173c846d…；
+窗口二/三较早的“文件不存在/尚未构建”描述已过时。23/23 等结果仅引用窗口一交付，非本轮
+独立重跑；H01 原验收不变，H02 尚无窗口三正式 PASS。
+
+裁决与可转发指令：docs/dsh_execution_20260928/h02_review_directive.md。H02 为 in_progress，
+interface_status=changes_requested_not_frozen。静态确认 L1 缺完整 request recorder 合同、
+L2 真实导出要求 caller 而示例/宽松替代类型绕开此要求；L3 旧父绑定省略 fence hint、L4 任意
+provider 覆盖先 start 后查绑定，由窗口一先最小复现、修原 owner，窗口三独立验证，本轮未
+将静态路径宣称为运行反例。追加 request-contract.ts 为窗口一的共享类型 owned path，
+窗口二审查消费语义；不在 H02 提前实现 H04 middleware 或 Python 持久账本。
+
+真实 runtime 静态校正：prepared 通路才有 adapterStream 第二次 config 比较，比较不含
+messages/tools；markAgentLoopRequest 仅标记，真实 loop 另行冻结 header/messages/request，
+自己持有 prepared call，且 NO_ADAPTER 分支可回落 direct stream。公开 llm/stream hook 无
+prepared handle 参数，不要求 H02 传递不存在的公开对象。H04 增完整装配摘要和真实 loop
+观测，分别验证裸 API 特征、回执前后/next 前后的材料约束和 direct/fallback 硬门；C00/V01
+wire 校验保留。H03 的 Session flush 责任恢复为本阶段兼容证明，R/A 后续接生产持久路径。
+
+窗口一持 H02 修订与 build/stage 写权；窗口二只读合同/实验设计；窗口三准备 QA 探针，
+重新冻结后才开最终验收窗口。QA 快照加入 inode/mtime；构建阶段与只读测试阶段分开，
+元数据变化具名报告。验收窗口覆盖的执行文档也停写；H02 PASS 且接口冻结后才放行 H03/H04。
+
+负责人文档验证：/tmp/c2p-dsh-h02-lead-review-20260928-dujd3wwv/validate_handoff.py，exit 0；
+49 任务/任务卡一致、DAG 无环、170 链接有效，4 done / 1 in_progress / 44 planned，
+B00/compatibility 历史记录不变，git diff --check 与旧跟踪业务代码对照均 exit 0。
+candidate-before/after.json 核对 12 项实现/测试/配置/候选接口/构建/staging 字节未变；
+执行 Markdown 空白检查通过。仅 docs 与本记录变化；无 live、提交/推送或日常 DSH 操作。
+
+## 2026-09-28 H02 第二轮候选接收、窗口三正式 QA 接管
+
+负责人只读核对第二轮 H02 源码/测试/接口、窗口二附件和窗口三 v2 计划，未改实现、未运行
+产品测试/构建、未启动内部实施。当前 session-binding 86cf5bcf…、role-dispatch 466fba99…、
+request-contract d133fc43…、binding.test 5f37582e…、接口文档 84321b6a… 均与窗口一报告相符。
+构建回执 03c7ccff… 的 src_inputs 全匹配；staging 回执 9baa607d… 绑定该构建，14 个 staged
+文件的集合、大小与逐文件摘要均匹配。27/27 沿用实施者报告，不冒充负责人或独立 QA 实测。
+
+当前派工及设计校准写入 docs/dsh_execution_20260928/h02_qa_handoff.md。H02 改为 review，
+candidate_status=frozen_for_review，interface_status=review_pending；接口最终批准冻结须在
+独立验收后，不能作为 QA 开始的前置。窗口三获得正式验收和独占构建窗口，窗口一/二保持
+共享输入冻结；H03/H04 尚未放行。L1–L4 记为实施者已报告修复、待独立复核，未直接关闭。
+
+QA 用 C-H02-1…14/S1–S5，更新双消费者并要求新文档正向编译，旧 expect-doc-fail 仅保留历史
+反例；按取消阶段区别 claim-aborted/creation-aborted。H02 验 recorder 可消费，真实请求
+middleware 硬门归 H04，避免形成循环依赖。诱饵 provider 用真实 child 验清理，并分别记录
+前置绑定时序与失败后清理，不以 dispose 计数冒充前置门。候选文档示例在 root.dispose 之后
+reserve 的静态顺序问题已交 QA 登记，等待汇总后定向修订，不在验收窗口抢改候选。
+
+窗口二附件的 API 特征发现保留；结构化 SessionBinding 类型不证明对象可信来源，RequestBindingRef
+可由 Host 派生，运行时必须核对当前 binding。附件草稿遗漏 dispatch、访问字符串 requestRef.digest、
+拒绝时静默结束流，不能当可编译实现模板；由窗口二按已交付真实类型重写设计。reserve 失败的零
+派发靠本次真实控制流/独立计数证明，不靠自报 not-sent；unknown 保持不退款/不自动重发。
+Agent/handle 静止、adapter 请求结束、托管子进程退出区分范围，无此类子进程时可具名不适用。
+
+文档验证脚本 /tmp/c2p-dsh-h02-qa-handoff-20260928-lf0mmsvc/validate_handoff.py exit 0：
+49 任务/卡片一致、DAG 无环、176 链接有效，4 done / 1 review / 44 planned；历史 B00 与
+compatibility.json 不变；git diff --check、旧跟踪业务代码对照均 exit 0。candidate-before/
+after.json 核对 14 项候选源码/测试/配置/接口/构建/环境回执字节未变。
+本轮仅更新规划文档、台账及本记录；写完后暂停改动 QA 快照覆盖的输入。无 live、提交或推送。
+
+## 2026-09-28 H02 正式 QA 证据复审：I2 仍阻断，交回窗口一
+
+窗口三报告 AT-H02 PASS 并释放验证窗口；负责人本轮只读核对正式 JSON、原始日志、最终探针
+及 H04 消费方案附件，没有运行产品测试/构建或修改实现。QA JSON sha256 为
+921ba816cbcf9ce6c3e6f77284dfb0bf369f13632b68210ed39263f38adfb57a；16 项候选输入与
+21 个日志/记录/最终工具摘要均匹配。证据复算记录为
+/tmp/c2p-dsh-h02-gate-review-20260928-6jm6yv7n/evidence-review.json。
+
+LEAD 不采纳整体 PASS：C-H02-11 原始 binding_final.log 明确记录
+decoyPromptDeliveredBeforeBinding=true，同时 decoyDisposeCalls=1。当前前置门只比较公开
+bindingProtocol 字符串，诱饵经真实创建并 followup 后才被 backstop 清理。前者已经违反
+首次材料投递前绑定，后者仅证明失败后清理；上一轮 h02_qa_handoff.md §2.4 明确不能互抵。
+实际窄 provider 的正常创建期绑定等独立通过事实保留，QA 原报告/日志不改写。
+
+最新裁决和派工写入 h02_qa_handoff.md §5–6。H02 回 in_progress，review_result 为
+CHANGES_REQUESTED，interface_status=changes_requested_not_frozen；台账另保留
+qa_reported_verdict=PASS 和判定分歧依据。I2 是原 L4 的未闭合硬门，不新增工作包；I1
+文档生命周期问题同轮交回窗口一。窗口一修正式注册 provider 对象/Host/bindings 归属准入，
+协议仿冒须 start/prompt/child/claim/adapter 全零；保留合法自定义名及独立 backstop 清理。
+窗口三保留原证据、追加判定修订，拿到新冻结后针对性复验；H03/H04 尚未放行。
+
+窗口二只读修订 H04 草稿：不能以请求自报/缺失 sessionId 退出受保护计量；实际返回的
+dispatch 回执必须验证，不以请求与自身比较代替；等待回执后 next 前再次检查取消/当前绑定/
+真实摘要，未知输出上限不填 0；next/iterator 异常、提前 return、abort 和清理失败必须有界
+处理及留下准确结算/unknown 事实。统一正文与 C1–C5 的资源范围口径。这些归既有 H04 AT，
+不要求 H02 先实现 middleware，也不改 Python 唯一账本或冻结 runtime。
+
+负责人只更新规划/台账/本记录。文档检查脚本
+/tmp/c2p-dsh-h02-gate-review-20260928-6jm6yv7n/validate_handoff.py exit 0：49 任务卡/台账
+一致、DAG 无环、179 链接有效、4 done / 1 in_progress / 44 planned；历史 B00/compatibility
+记录不变，git diff --check 及旧跟踪业务对照 exit 0。candidate-before/after 核对 16 项
+候选输入不变，原 QA JSON 摘要不变；无 live、Git 提交/推送或日常 DSH 操作。
+
+## 2026-09-28 H02 第三轮：I2 关闭，仅剩 I1 文档异常清理
+
+负责人只读核对第三轮修订报告、freeze3/recheck_l4.log 及其 runner 输出/探针摘要，未重跑
+产品测试或修改实现。日志 sha256 942ee0cadecfe21c1a0eb8e7433f3d9167c60a4fc4d1d7897acc5d6130e0a9fb，
+5/5 exit 0：协议仿冒零 start/prompt、错误归属与撤销/替换前置拒绝、合法自定义名创建期绑定、
+已准入 provider 创建期取消无残留。接受 I2 关闭，第三轮代码与原有通过证据保留。
+
+当前代码为 role-dispatch c8758e10…、session-binding 404f7984…、binding.test 59835929…；
+构建回执 989b2076…、staging 回执 a44dec24…。第三轮开窗清单的 15 项输入与当前比较，
+唯一差异是接口文档：开窗 cfdb9e8a…，实际 before/after 快照及 closing identity 已为
+314bfd69…（与当前及窗口一交付一致）。UNCHANGED 只证明 17:43:09–17:44:09 快照区间，
+不能据此称整轮都是 cfdb9e8a…。原报告中 1389 字符/755、929 偏移不适用当前示例。
+
+当前 §5 块为 1475 字符，reserve 位于 872、root.dispose 位于 1451，先请求后释放已修正。
+剩余 I1 为异常清理：dispatchRole 在 try 外；run.dispose 抛错会跳过同 finally 中 root.dispose。
+这些是文档示例控制流问题，不重新开启 I2 或生产实现。指令写入 h02_qa_handoff.md §7：
+窗口一只修改该示例，用内外清理作用域保证两处异常也尝试 root 清理；窗口三按新文档及
+代码块摘要定向复核类型/异常分支和证据身份，不运行 build/stage/兼容全套或旧 Python 套件。
+H02 保持 in_progress，接口待最终批准；H03/H04 尚未开工。
+
+窗口二的合同澄清已采纳并记入 §8：DispatchReceipt 通过已接受 ReservationReceipt 关联
+binding；估量版本/来源由 H04 包装与证据承载，不为此改 H02 合同。scope 必须验证真实来源，
+不能仅据请求 ID 查表；lastStage 按实际观测，inner.next 不等于 adapter-entered；本地一次
+finalize 尝试不声称 durable exactly-once。其余既定 H04 约束保留，待准入后实施。
+
+只读证据与身份差异记录：/tmp/c2p-dsh-h02-i1-closeout-20260928-khtbt3nc/review.json。
+同目录 validate_handoff.py exit 0：49 任务卡/台账一致、DAG 无环、182 链接有效；4 done /
+1 in_progress / 44 planned；B00/compatibility 历史记录不变；git diff --check、旧业务对照
+exit 0。candidate-before/after 核对 15 项候选/构建/配置字节未变。本轮仅改规划文档、台账
+与本记录，未代修接口示例、未执行产品测试/构建、无 live 或 Git 提交/推送。
+
+## 2026-09-28 H02 最终验收通过，H03/H04 并行放行
+
+LEAD 本轮只读复算最终 QA 报告、原始日志和候选身份；未启动内部实施 Agent，未修改实现、
+测试、lock、受测接口文档或构建/staging。最终接口文档为
+0ba7f1ce88e834706bae45039ab934c4e42ffde23119da96a747b01a7345e9c5；§5 代码块按去掉
+末尾一个 LF 的规则为 1602 字符、e3ead04eeb53ef77945f9cfda9174379550c8f2a0e719449c9ea0a50a0e5d7dd。
+其余代码与第三轮相同：session-binding 404f7984、role-dispatch c8758e10、request-contract
+d133fc43、binding.test 59835929；构建回执 989b2076、staging a44dec24、staged 树 525f0b45。
+
+QA 修订报告 §7 本次摘要为 1505e56315d84918bca5d3e8626aac859de2cfbf168f9955d7fb7ddfd35e037e。
+负责人核对 12 个日志/探针/报告引用、50 个源清单文件与 14 个 staged 文件，均匹配。
+I2 保留第三轮及最终 R-1…R-5 独立 5/5 证据；I1 按最终双消费者编译与嵌套 finally 静态控制流
+关闭，不声称额外执行了文档消费者三种故障注入。机制 5/5；旧绑定探针 8/9、exit 1 如实保留，
+唯一被取代的 C-H02-11 期望由前置零启动及已准入故障清理分别覆盖，不把该旧日志标为全绿。
+第三轮 check:compat 27/27 与未受影响的 Python 证据继续引用，本轮不重跑产品套件。
+
+裁决写入 docs/dsh_execution_20260928/h02_acceptance.md：AT-H02 PASS、H02 done、接口
+frozen；H03/H04 ready。窗口一按原 owned paths 实施 terminal/raw/flush，窗口二实施请求
+计量/scope/prepared/取消；窗口三准备独立反例、冻结后验收。H04 最新消费方案接受，先实测
+Agent scope 可观测性，再落实稳定回执快照、最后异步等待后复核及准确的终态/静止事实。
+不再要求提交同内容方案；不扩 H02 合同或 TS 持久余额。共享构建由窗口一协调，双方暂停
+受测输入修改后才可执行；正式验收窗口交给窗口三。Gate-H 仍待 H03/H04，未授权 live。
+
+同步任务板、文档入口和当前交接状态，历史 QA 指令保留并标注已由最终裁决取代。
+只读复算与文档验证输出位于 /tmp/c2p-dsh-h02-acceptance-20260928-g7a2s_v2/。
+validate_handoff.py exit 0：49 任务卡/台账一致、DAG 无环、199 链接有效，5 done / 2 ready /
+42 planned；B00/compatibility 历史记录不变；git diff --check、旧跟踪业务对照 exit 0。
+candidate-before/after 的 15 项候选、配置、接口和构建摘要完全相同。本轮只改规划与验收记录，
+无模型调用、日常 DSH 操作、Git 提交或推送。
+
+## 2026-09-28 H03 候选接收与 H04 实施审查、构建窗口重排
+
+用户交付 H03 12/12、当前组合 45/49，以及 H04 部分实现与路由/scope 推断。LEAD 只读核对
+源码、冻结 runtime 的公开实现和已有日志，没有执行构建/产品测试或代修。H02 五项受测输入
+仍与最终验收相同。当前 H03 terminal-result b8084ba8、terminal.test d63a4d84、provenance
+a98b75d7；H04 request-accounting 22886cef、request-seam 54943fd9、cancellation 68583e84；
+构建回执 3fa4c2e5、outputs 55ab7e28、staging bf2cb46c、树 f441dbf3（18 文件）。
+构建 src_inputs 的 7 个源码及 staged 的 18 个文件字节/长度均相符，不据此证明历史构建无并发写者。
+
+裁决与步骤写入 docs/dsh_execution_20260928/h03_h04_review_directive.md。H03 登记 review，
+H04 in_progress，Gate-H 未通过。静态发现：scope 探针在裸派发前已 dispose child，且未创建
+第二个 child，不能证明 live child/兄弟隔离；agentOptions 实际已沿 dispatchRole、窄 provider
+及运行时 resolver 传递，零 adapter/stopReason:error 尚不足定位丢路由。禁止用 stock spawn
+启动后补绑定。H04 还缺最后一次 dispatch await 后 abort/fence 复核；终态记录不在 finally，
+break 可漏记录，return 无界且吞错；stop 无 usage 被补零；inputTokens 恒为 0；parts 未冻结、
+dispatch 仍传原 receipt；C1 未等 reserve 入场，C2 可空跑通过且空字符串不清除 refusal。
+这些按静态事实交 owner 复现，不宣称 LEAD 已运行最小反例。
+
+窗口三先在双方明确暂停输入写入后对 H03 做定向独立复核，优先跨 session/request 同 callId
+来源、损坏/冲突恢复、不同工具的 terminal 后副作用、准确 flush 接口与落盘故障。
+区分 SessionStore.flush(session) 的 boolean 与 backend.flush() 的 void；后台已落盘时不能
+仅凭未显式 flush 断定 unresolved。H03 最小 fixture 暂不装常驻 preset。当前 h03-verify.log
+为空，其他检查需真实非空日志支持，不为此重跑旧 Python/smoke。
+
+QA 释放后，窗口一修 H03 发现，窗口二继续 H04 并接管下一轮唯一共享 build/stage 写权。
+窗口二可在自己的 request-accounting.ts 实现必要的公开 Host 路由包装门，不能将漏计延后或
+让 mock adapter 自带拒绝来制造通过。仍不改 runtime/日常 DSH，不维护 TS 持久余额。
+每次构建前双方暂停受测源码/测试/配置修改，正式验收再次冻结完整双方输入。
+
+证据根 /tmp/c2p-dsh-h03-h04-lead-review-20260928-jtfkzgit/：review.json 绑定原日志摘要及
+静态发现；candidate-before/after 的 32 项受保护输入完全相同。validate_handoff.py exit 0：
+49 任务卡/台账一致、DAG 无环、209 链接有效；5 done / 1 review / 1 in_progress / 42 planned；
+B00/compatibility 历史记录不变，git diff --check 与旧跟踪业务对照 exit 0。仅更新审查/执行
+文档、台账和本记录；无新产品测试、模型调用、Git 提交或推送。
+
+## 2026-09-28 H03 修复轮静态审查与短定向复验派工
+
+用户同时交回 H03 修复交付、H04 冻结/纠偏计划和绑定首轮的 QA CHANGES_REQUESTED。
+LEAD 先按字节区分两候选：首轮 b8084ba8/a98b75d7；当前 c4a2d98b/99b8b5b4，
+terminal.test 仍 d63a4d84。当前构建 026f81e3、outputs 2e66ab2e、staging 7009bee8、
+树 f2175e64（18 文件）；H04 三文件 22886cef/54943fd9/68583e84 未变。
+只读复算构建 src/asset/config/output 清单及 18 个 staged 文件均相符；核对旧 QA 三个日志
+引用摘要。已有 owner 日志 h03-fixes.log 是 15/15，h03-fix-check.log 是 52/48/4。
+这些是读取既有证据，不是本轮由 LEAD 新执行的产品验证。
+
+H03 两项原发现仍 OPEN：拆分存储后 raw(callId) 仍取 latestByCall，提交端未关联所属流；
+迭代正常结束不证明完整，冻结 runtime 会把 adapter 抛错转换成正常迭代结束的 finish/error。
+rebuild 仅凭可选 data.error 缺失判成功，忽略真实 tool-result.isError；缺字段/坏嵌套类型、
+schemaDigest 和来源状态校验不全；未校验 parsed/normalized 与同一真实成功调用对应；
+重复记录仅比 terminalId/parsedDigest 且只校验首条，可能忽略后续冲突或损坏记录。
+上述属于原 R-H03-1/2 的静态剩余边界，未运行新行为反例，不冒称已复现。
+
+当前指令追加于 docs/dsh_execution_20260928/h03_h04_review_directive.md §6，历史 §1–5
+保留。窗口三在双方暂停输入期间先做当前候选短定向复验；不重建、不重跑已知四项失败的
+兼容全套或未受影响的 Python/CLI/smoke。释放后，窗口一修 H03 剩余项；窗口二按已经接受
+的 S1–S7 计划继续实施，不必等 H03 最终 PASS。下一轮共享 build/stage 仍仅窗口二持有，
+每次构建前双方暂停受测输入写入。通用 iterator.return 没有标准 AbortSignal 参数，超时
+停止等待不证明底层已退出；清理须分别记录资源取消、实际静止与 unsettled。
+
+H03 保持 review、H04 in_progress、Gate-H 未通过；任务板保留首轮 QA 候选与日志身份。
+联合验收须后续冻结同一组合候选，在同一真实绑定 child 内验 terminal + accounting，
+不得由两个分立 fixture 或 15/15 折抵。LEAD 本轮仅编辑指令、文档入口、台账及本记录，
+未改实现/测试/锁文件/构建产物，未调用模型、提交或推送。
+静态审查与文档验证证据根：/tmp/c2p-dsh-h03-fix-lead-review-20260928-9ub1iigi/。
+validate_handoff.py exit 0：49 任务卡/台账一致、依赖 DAG 无环、210 个文件链接有效；
+5 done / 1 review / 1 in_progress / 42 planned。B00/compatibility 历史记录未变；
+git diff --check 与旧跟踪业务代码对照 exit 0。candidate-before/after 的 32 项受保护输入
+完全相同，18 个 staged 文件再次逐字节匹配。本轮未触碰窗口一/二的交付字节或旧 QA 证据。
+
+## 2026-09-28 H03 短复验 CHANGES_REQUESTED 登记，恢复双窗口实施
+
+窗口三交回修复轮 QA。LEAD 只读核对 JSON 83d8b0e4、报告 f860282a、探针 28898f70 与
+三条日志引用；受测 c4a2d98b/d63a4d84/99b8b5b4/802813d3、构建 026f81e3、staging
+7009bee8、树 f2175e64（18 文件）与磁盘相符，H01/H02/H04 输入未变。日志 b2e41d66
+为独立探针 11 项、6 pass、5 fail、exit 1；fb6024c3 为 owner 套件 15/15、exit 0；
+ca938ba0 记录 bytes 与 inode/mtime 分类比较 UNCHANGED，0 差异。未由 LEAD 运行产品测试。
+
+接受 CHANGES_REQUESTED：跨流不拼接、版本拒绝、摘要矛盾拒绝、无 tool/call 拒绝四个行为
+点保留关闭；R-H03-1a/1b/2a/2b/2c 均改记已独立复现、OPEN，其中 normalized=null
+真实抛 TypeError。仍未测的 abort/break/截断、调用与参数/turn/step 对应、其他坏字段、
+重复记录的 raw/prose/callId/版本变体等逐项保留，不以五个已执行样例折抵整个 §6.2。
+
+读 QA 探针同时发现正例局限：F1c 的 finish reason 是字符串 completed，经 unknown 强转，
+缺真实 per-call 完成事实；F2f 的 call/normalized 为 {result:{}}，parsed 却为完整 draft，
+tool/result 缺 turn/step、构造事件无 seq。不能把这两个观测到的成功当合法正例证明。
+交窗口三从真实成功路径建立基准，单字段变异并断言拒绝原因，防止无关拒绝令错误修复过门。
+保留原探针/报告；其 window 时间 19:35–19:55 与快照 22:12–22:13 的差异请追加更正，
+当前缺陷绑定摘要与日志，不以不一致的时钟值证明独占；此项不阻塞 owner 继续实施。
+
+当前指令追加至 h03_h04_review_directive.md §7。H03 从 review 回 in_progress，窗口一
+按字段/恢复对应/逐条校验→协议完整性→来源归属真实接线修原 owner；H04 继续 in_progress，
+窗口二立即执行已接受的 S1–S7，不等 H03 最终 PASS，并持有下一轮唯一 build/stage 写权。
+每次构建、stage 和消费共享 staging 的测试期间，双方暂停受测输入写入。窗口三现只准备
+自有 QA 夹具和未测矩阵，等待下一冻结候选；Gate-H 仍需同一绑定 child 联合接线与回归。
+
+本轮仅更新指令、执行/验收入口、任务台账和此记录；不改实现、测试、锁文件、构建产物或
+旧 QA 文件。证据及原报告/探针/日志副本在
+/tmp/c2p-dsh-h03-fix-qa-handoff-20260928-pnh4hbws/，未运行模型、构建、产品套件或 Git 提交。
+validate_handoff.py exit 0：49 卡片/台账一致、DAG 无环、213 文件链接有效；5 done /
+2 in_progress / 42 planned，B00/compatibility 历史记录未变，git diff --check 与业务基线
+对照均 exit 0。32 项受保护输入前后相同；六项原 QA 报告/探针/日志与读取时副本逐字节相同。
+
+## 2026-09-28 按验证依赖重排工作：统一 TS 收口，提前启动 K04
+
+用户指出当前并行未带来效率，要求负责人决策并使用已有执行文档。LEAD 读取任务依赖、
+第 01/02 份计划、验证矩阵、最新 H03/H04 源码身份及既有日志，仅作规划，不运行产品验证。
+确认 H03 新源码 3fcc5e99、两测试 86bb93ad/d7c0cc13、证据 36cdb16c；私有日志
+5e206521 是 21/21。H04 主模块/seam 测试仍 22886cef/54943fd9，取消夹具改为38976204；
+owner 报告 C0/S7 6/6 及漏传 agentOptions 根因，不归因 H02。共享 build 026f81e3/
+staging 7009bee8 仍含旧 H03 c4a2d98b；当前源码尚无完整共享候选。QA v2 cff43330
+只准备，未冒记正式验收。私有 H03 结果和局部取消结果不折抵完整 AT。
+
+原分工只分文件，没有分开 TS 编译/staging、可信来源及验收依赖。调度重排直接写回
+docs/dsh_execution_20260928/README.md §3.1、第01份当前交付批次、第02份K04启动安排、
+verification.md；历史审查指令保留反例，头部标明旧双 TS 写者调度失效，不再追加另一套
+日常指挥文档。总设计 §0.5 的执行计划引用同步说明开发与验收顺序的区别。
+
+窗口二一次性接管窗口一当前 H03 交付，独占 H03/H04 原 owned paths 和共享 build/stage，
+另授权一份 H04_request_evidence.md 批次证据。先联合正常路径，再完成全 AT/矩阵，最后
+统一 check:compat 交窗口三，不逐子测试等待 LEAD。H03 的请求 sessionId 不是独立可信
+来源证据，H03 capture 与 H04 请求门须在同一绑定 child 闭合来源与冒用隔离。
+窗口三保持独立，候选前固定合法正例和精确拒绝码；坏第二条记录先报自身错误，不强制
+所有变体都报 conflicting-records，不机械双跑已失效旧 probe。正式 QA 冻结批次读集。
+
+窗口一停止 TS 写入，领取第02份 K04，状态 ready。显式增加唯一开发前置例外
+implementation_depends_on=[B01]：已有 Python 页合同/编译器/caller 可用 B01 夹具独立
+实施，不依赖新 DSH hook。原 depends_on=[B01,H03,H04] 和 completion_gate=Gate-H
+保留，K04 不能提前 done，Gate-K 明确仍需 Gate-H；后续 I/C/R 顺序不变。窗口一持有
+K04 Python 路径及相关 authoring_execution_identity validator 清单写权；K01–K03 仍 planned。
+Node 读集之外的 Python 开发可并行，真正读取到相关身份的检查只短冻结对应文件，不能
+忽略漂移或删读集。历史0918/B00/回执不改标，正常DSH、默认主流程和并发开关均未改变。
+
+本轮只改执行/设计引用、台账及本记录，未改实现、测试、依赖、构建产物或 QA 工件。
+证据根 /tmp/c2p-dsh-work-allocation-20260928-v3zzdpb7/，保存当前40项受保护输入及
+依赖调整理由；没有模型调用、构建、产品测试、Git提交或推送。
+文档/台账验证 exit 0：49 张任务卡一致、DAG 无环、219 文件链接有效，5 done /
+2 in_progress / 1 ready / 41 planned。验证器分别检查开发启动和完成前置，限定提前例外
+只能是 K04/B01，完成仍保留 B01/H03/H04 与 Gate-H；K04 与 H03/H04 owned paths 无交集。
+B00/compatibility 历史记录未变；git diff --check 与已跟踪业务基线对照 exit 0。
+40 项受保护源码、测试、配置、构建、QA 输入前后相同；本轮未代修任何窗口的实现。
+
+
+## 2026-09-29 下一批分工：先证明 DSH 来源，K04 独立复核与条件启动 K01
+
+LEAD 按用户要求只做只读诊断、调度、执行文档和台账；未代写实现、未派内部实现 Agent，
+未运行产品测试、构建、CLI/smoke、模型或 live，未提交/推送。保留三个现有窗口及历史证据。
+当前 runtime/隔离环境不更换，不重做 H01/H02，原 DSH 正常使用边界不变。
+
+只读核对 H03 当前源码 3fcc5e99、H04 source 22886cef、cancellation 38976204，build
+7eade607 / outputs 030521bf / staging c4b75942 / tree e97b48a8。owner 的四套件
+8+13+5+6=32/32 不等于同 child 联合接线；seam 测试当前 a7732cd5，证据表仍记
+54943fd9，要求分别绑定基线与 S1 测量身份，未自行重跑或改写 owner 证据。
+LlmRuntime 实现的 streamWithRegistration 在自身 ctx 发射 waterfall，与 owner 三个同时
+存活 child 都观察到兄弟和裸派发的 S1 结果一致；旧 scope 授权假设撤回。adapter 包装尚须
+证明授权签发来源，不能在全局 hook 凭自报 ID 发证再以此认证。窗口二先交真实 bound-child
+正例、裸请求冒用/重放等反例和可信来源链，再收口 S3–S6、H03 capture 和同 child 联合路径。
+公开能力确实不足时交最小断点证据，不自行改运行时/loop factory；成功则直接继续，不逐步待批。
+
+K04 owner 已交 120+10 的局部结果，代码摘要与报告一致；状态由 ready 更新为 review，
+B01-D1/G1 保持 owner 已修、独立关闭待证据。窗口三现在对冻结 K04 集中复核，不空等尚未
+就绪的 Gate-H。静态发现的验收证据疑问包括：跨 seed 探针只比较页信息、未覆盖实际 Writer
+请求和紧预算多页；两种计划对照同时改变 ID 集，不能单独证明顺序；helper 无 envelope
+比较，legacy 兜底须核对实际 caller。上述是 QA 任务，本轮未跑反例，不冒称新运行时缺陷。
+Formalizer 当前已重算 technical_payload 并严格比摘要和 payload，不因其独立入口就扩写权。
+QA 的 H03 R6 校准为该调用匹配 block-end 的完成事实，finish 单列；完整 P1 正例保留，
+已完成 A 后 B 失败不得回溯否定 A；terminal 成功与持久提交继续独立验证。
+
+窗口一在 K04 QA 期间只读准备 K01，负责收到汇总缺口后的补齐。K04 本单元全部 AT 独立
+PASS 且实际 Python/identity 读集释放后，按条件授权直接开发 K01，仅 registry/test/
+validator 清单和专属 k01_registry_evidence.md。K01 与 K04 的开发前置为 B01，完成前置
+仍为 B01/H03/H04 + Gate-H；K01 目前 planned，K02/K03 无提前例外，C/R/后续门不跳过。
+窗口二仍为唯一 TS/build/stage 写者，窗口三同一时间验一个批次；已开 K04 批次正常收口，
+真正就绪的 Gate-H 使用下一个 QA 窗口。跨线身份读取单列短冻结，保留完整读集。
+
+调度直接更新执行入口 §3.1、第01份当前批次、第02份当前安排、verification、task_board，
+同步 docs/README、总设计 §0.5 及旧 H02 交接文档的调度替代提示；没有另建日常指挥文档。
+证据根 /tmp/c2p-dsh-next-allocation-20260929-vs7beab9/：review.json、保护输入前后快照、
+文档验证器和 handoff-validation.json。验证 exit 0：49 张卡/台账一致、DAG 无环、222 链接
+有效，5 done / 2 in_progress / 1 review / 41 planned；K01 条件与 K04 待验收状态一致。
+67 项受保护实现/测试/构建/接口/QA 输入与本轮开始时相同；已跟踪 src/tests/scripts 的
+现有补丁摘要 1b3469e2 前后相同。B00/compatibility 历史记录保持原字节；git diff --check 0。
+因 K04 已是授权业务变更，本轮验证“LEAD 未改现有补丁”，不再错误要求整个工作树仍等于0918。
+
+## 2026-09-29 · K04-G1–G7 收口（窗口一接班）
+
+接管前按第 02 份"最新检查点"核对冻结清单：首轮 10 个哈希全部命中，PMW `92161500…` 与
+closure `bfa9acd4…` 即文档记载的 G1 修复检查点。保留 G1（待 QA），本轮完成 G2 六类实际
+请求变异、G3 legacy envelope owner、G4 义务多重集守恒、G5 顺序家族判定、G6 实测摘要 spy 与
+旧摘要出处、G7 Formalizer 发送前/no-send/合法复用；K01 未开工。
+
+口径修正已落实：六例反例都保持**冻结合同**（来自合法 primary、不重算），只改实际发送侧，
+并且合法初次发送与被变异的 repair **分开计数**（`primary_arrivals==1`、`repair_arrivals==0`）。
+首轮"在构造点无差别变异"的失败实验不再计入证据。
+
+产品侧改动：`unified_context_compiler.py`（G4 具名守恒阻断）、
+`formalization_agent.py`（G7 no-send 回执来源、无请求不发行回执、reader 区分未实测）、
+`page_contract_recheck.py`（仅注释改成可验证 owner 结论）；
+`unified_context_models.py` 为**范围偏差**（R02 owned，planned）：`ActualRequestReceiptV2`
+只把 `actual_technical_bytes_digest` 从无条件必填移出（accepted 仍必填），否则
+"缺可重算材料"的 fail-closed 分支无法落盘。需 LEAD 登记到 R02。
+
+验证：第 02 份 7 文件命令 140 passed；受影响 6 套件 539 passed；本轮定向选择器
+20 passed；`git diff --check` 0；重新生成夹具仅 provenance.json 变，4 个页面 fixture 逐字节未变。
+证据与未测项见 `tests/integrations/dsh/fixtures/K04_evidence.md` §6–15。K04 未 done（`B01,H03,H04`
+与 Gate-H 不变），G1 与全部 AT 仍待 QA 独立复验。
+
+## 2026-09-29 · K04 第二轮写权释放与交付身份（窗口一，本轮自立释放）
+
+**本轮释放取代上一窗口的释放。** 上一窗口的释放绑定的是 G1 检查点（PMW `92161500…`、
+closure `bfa9acd4…` 且无 G2–G7 交付），不能代替本轮释放；本节绑定的是本轮交付字节。
+
+### 1. 写权释放声明
+
+* **本轮最后一次写入就是本节**（写入 `.agent/implementation.md`）。写入完成后本窗口
+  **不再写任何路径**：不改代码、测试、夹具、证据、台账或执行文档。
+* **无待写缓冲区**：本节列出的全部改动都已落盘；没有待生成的产物、没有半成品分支、
+  没有待补的测试。工作树即为交付物，未做也不申请 `git add/commit/merge/push`。
+* **释放的交付身份**（与 `.dsh-dev/run/w1-k04-release/L8_identity_and_scope.log` 一致）：
+
+| 文件 | SHA-256 |
+|---|---|
+| `src/code2paper/agentic/page_contract_recheck.py` | `62a01ead78569966853f506eba19ca7c5f3dc9dc26b5bd79627f04ea62899e24` |
+| `src/code2paper/agentic/publication_method_writer.py` | `921615007246ca5681bdc27502e16a4284f72b2929a9820df569b8ed2fbe647e` |
+| `src/code2paper/agentic/unified_context_compiler.py` | `9855889eafa812f8ca521883290c7e72d9b9acf2e5e518cf3fa5b40d0cb296a5` |
+| `src/code2paper/agentic/authoring_execution_identity.py` | `8d2718e27a2c51513b4fcc7794ec339e5bd2472780e3540ca77a4b0e00e6f9be` |
+| `src/code2paper/agentic/formalization_agent.py` | `d847263419657dce2d992d5a0f20fc9bfafad8e317fbdec3e000ff57a8dca738` |
+| `src/code2paper/agentic/unified_context_models.py` | `99fbce7e7532a3b399a152b48d4e499a3db08f30440df880fcde155eb1156340` |
+| `tests/regression_20260917/test_page_contract_recheck.py` | `bc0b5d2494bb97691e0fdc45b8572cbdb46a10452b31c74c41d0f25aff2150d5` |
+| `tests/regression_20260922/test_authoring_contract_closure.py` | `5e9d278b6b2198f59782c3d54ff31c8c7bb8a543304574d0d5d9247ff3609d42` |
+| `tests/integrations/dsh/test_legacy_characterization.py` | `b54c73478963d23c1293f9c2251a7c37dedeb9c8f29bc7ec3107ad4f134e1d1c` |
+| `tests/integrations/dsh/fixtures/join_page_probe.py` | `bfd6c8c266ad908d00a46fd244a8bb62e9daa52cdf65ed1dbf97dba672276739` |
+| `tests/integrations/dsh/fixtures/page_split_probe.py` | `554fa1a7417f621c15dab17fff5bf69ff2c42293f50fbafc475d89959b2662e2` |
+| `tests/integrations/dsh/fixtures/legacy_fixture_builder.py` | `c10673a99387e185501dfd6bfd58cb5839e1896928801c8b4b29446661a0645d` |
+| `tests/integrations/dsh/fixtures/golden/provenance.json` | `0e3545979d0034d32bae7bd3454b4c550d9228cb2bc91b4ebc30676aac6b7cda` |
+| `tests/integrations/dsh/fixtures/README.md` | `f6a4d2fa77490e007cee92c2f015c914d248653bd9c987461bf668da7cdec464` |
+| `tests/integrations/dsh/fixtures/K04_evidence.md` | `3e9e01fb9b878e7076fa9a18ccdd57185313bf993183d27f030bfd1abf548adc` |
+| `tests/test_agentic_formalization_guards.py` | `374f4096042b528ea729c34e46d5b0922d1ebdc5fe2b78d35a56cc10c4add401` |
+
+* 四个页面 fixture 未变：`d1311afe…`（legal）、`fbcd999d…`（author_no_atom）、
+  `edb25f5d…`（invalid_counterexamples）、`d4c60b43…`（completed_formalizer）。
+* **K01–K03 独占路径零改动**（`git diff --name-only` 对 registry/publication/index 为空）。
+  `authoring_execution_identity.py` 本轮未改，仍为首轮 `8d2718e2…`。
+* QA 一旦正式接管，其实际读集即冻结；本窗口不再改任何被读字节。
+
+### 2. 完整读集（本轮实际读过；只读，不含写权推断）
+
+执行文档与台账（LEAD 维护，只读）：`docs/dsh_execution_20260928/02_kernel_publication_and_request_guards.md`、
+`…/README.md`、`…/interfaces.md`、`…/verification.md`、`…/task_board.json`（K04 卡）；
+`docs/README.md`（仅 grep K04 行）。
+
+产品代码（读法：全文件 / 区段 / grep）：`src/code2paper/agentic/page_contract_recheck.py`（全）、
+`publication_method_writer.py`（区段 4700–5660、6290–6410、21190–21270、23000–23060 + grep）、
+`unified_context_compiler.py`（区段 1583–1620、1759–2415、2785–2825、2985–3040、4226–4286 + grep）、
+`unified_context_models.py`（区段 600–719、1170–1230、1480–1609 + grep）、
+`unified_invocation_ledger.py`（区段 1295–1454）、
+`formalization_agent.py`（区段 2395–2620、2700–3200、3195–3300 + grep）、
+`llm/section_writer.py`（区段 1680–1755、3060–3140；属 C02/C03 领域，仅读）、
+`agentic/method_architect.py`（区段 7915–7950）、
+`agentic/authoring_execution_identity.py`（仅 grep）、`agentic/mechanism_context_pages.py`（仅 grep 命中）。
+
+测试与夹具：`tests/regression_20260922/test_authoring_contract_closure.py`、
+`tests/regression_20260917/test_page_contract_recheck.py`、
+`tests/integrations/dsh/test_legacy_characterization.py`、
+`tests/integrations/dsh/fixtures/{K04_evidence.md,README.md,legacy_fixture_builder.py,join_page_probe.py,completed_formalizer_fixture.py}`、
+`tests/integrations/dsh/fixtures/golden/provenance.json`、`…/golden/legal_page_with_atoms.json`（脚本内读取）、
+`tests/test_agentic_formalization_guards.py`、`tests/test_agentic_publication_method_writer_unified.py`、
+`tests/regression_20260917/incident_archive.py`（经测试导入）、`.gitignore`（仅 grep）。
+
+运行根（列出/读写）：`.dsh-dev/run/w1-k04-g2/`（探针，未跟踪）、`.dsh-dev/run/w1-k04-release/`（本轮日志，未跟踪）、
+`.dsh-dev/run/qa-w3-k04/`（仅列出）。
+
+**跨线只读登记**：读了 LEAD 的 docs/台账与 `section_writer.py`（C02/C03 领域），均只读、未写；
+`unified_context_models.py`（R02，planned）是本轮**唯一**越出 K04 独占范围的写入，理由与影响见
+`K04_evidence.md` §13，需 LEAD 登记追认，本窗口不再改动。未读 TS/`integrations/dsh/` 源码、
+未读凭据或会话内容。
+
+### 3. 本轮实际命令与日志路径/摘要
+
+复现脚本（逐条含真实命令）：`.dsh-dev/run/w1-k04-release/run_verification.sh`，
+SHA-256 `7a16468a9aa8f51137685d9be36418e35a3d523d4847a9c41d478c5e06cbab58`。
+日志根：`/home/cuihengjia/agent/Code2Paper copy/.dsh-dev/run/w1-k04-release/`（未跟踪；新鲜任务根，
+不依赖沙箱私有 /tmp）。
+
+| 日志 | 命令要点 | 退出码 | 结果 | 日志 SHA-256 |
+|---|---|---|---|---|
+| `L1_doc_command.log` | 第 02 份所列 7 个文件 | 0 | **140 passed** | `9da96404f3f196864f748f722658436f0193c60687ee1d02c7e939cd5f360b0a` |
+| `L2_affected_suites.log` | regression_20260917 + regression_20260922 + 4 个受影响套件 | 0 | **539 passed**（含 L1，不相加） | `a4f6d4e7abe36e5edbfe64cdcf952e8d637e37700c646579f061009ba2636a97` |
+| `L3_round2_selector.log` | 4 个文件 `-k "g2_ or g3_ or g4_ or g5_ or g6_ or g7_"` | 0 | **20 passed**, 145 deselected | `bdde8ba9a87c0fe7b97662d90fd739c41788de0da6e42e57be8764f65b8e7765` |
+| `L4_compileall.log` | `python -m compileall -q src tests` | 0 | 无输出 | `2fb4c88b7858c641ad133b2148ea154db49c6a38ed623b6d1a97b60bed77cdd7` |
+| `L5_git_diff_check.log` | `git diff --check` | 0 | 无空白问题 | `d9fa0603076ec4a9ef02736cce0481b41de92e8cf7609304225d89fc1d1c57aa` |
+| `L6_golden_regeneration.log` | 重新生成夹具 + 前后 sha256 | 0 | 5 个文件前后逐字节一致（4 页面 + provenance） | `f9f0a2bb79e3aaca7a5d14808b829658cdd8373fa30c8a4410f34c4cfb4c3646` |
+| `L7_join_page_families.log` | G5 家族探针 ×4（`PYTHONHASHSEED=0`） | 0 | 默认 `page:806ec3e8…`/`sha256:d8776c5d…`；`narrative`→`p10,p2`/`page:ebe2e9d4…`；两个集合族不变 | `ddc9dac4f1c446dd174446bdfbfe198d4bd1a0607338cbe727a3c8920a53e822` |
+| `L8_identity_and_scope.log` | 16 项候选 sha256 + `git diff --stat` + K01–K03 空证明 + `git status --short` | 0 | 见上表；K01–K03 未改 | `4c658160fae6ab8f29b69d948044ccb9971574fdc9c0a328f74bd0007f5533ab` |
+
+每个日志同目录另有 `<name>.exit`（内容 `0`，SHA-256 `9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa`）。
+
+**未持久化的观测（如实登记，不倒造日志）**：G7 的"修前/修后对照"是会话内临时还原两行修复后
+跑 `tests/test_agentic_formalization_guards.py -k g7`（修前该用例失败、恢复后通过），当时未落日志；
+本节不声称有日志。QA 可用 `K04_evidence.md` §12 记录的两行差异自行复现，本窗口不再改源码。
+
+### 4. 交接状态与未决
+
+* K04 仍 `in_progress` / `review_result=CHANGES_REQUESTED`：本轮不自批、不登记 done，
+  `docs/dsh_execution_20260928/` 与 `task_board.json` 的裁决与 `candidate_status` 更新归 LEAD；
+  G1 与全部 AT 待 QA 独立复验。
+* 完成前置不变：`depends_on=[B01,H03,H04]`、目标 Gate-H；Gate-K 未过。
+* 未测边界与恢复办法见 `K04_evidence.md` §15（TS/CLI/live、HTTP 层零发送、K01–K03 实现、
+  索引/发布路径未动）。
+* **K01 继续只读准备**：本轮未开工、未写 registry/identity 相关路径，也未新增
+  `VALIDATOR_BUNDLE_SOURCES` 条目；其启动条件（K04 全部 AT 与阻断项独立关闭、读集释放）
+  仍未满足，保持只读。
+
+## 2026-09-29 · K04 第三批（GAP-1/2/3 合并补证）写权释放
+
+**本批为“证据批”：零生产改动。** 只新增/修改两份账本**测试**、一个夹具探针与夹具 README；
+产品文件（`unified_context_compiler` / `formalization_agent` / `unified_context_models` /
+`page_contract_recheck` / `publication_method_writer` / `authoring_execution_identity`）
+哈希与第二批逐字相同（见证据 §16.8 与 N4 日志）。
+
+### 交付内容
+
+* 片段 A（GAP-1+3 合并）：`test_ledger_recovery_matrix.py::build_gap13_artifact_runs` 用生产
+  owner 一次性生成**同一组**四个真实持久产物（拒发+空实测摘要 / 无回执 / 真子进程崩溃
+  `os._exit(9)` 的未知发送 / 合法接受），报告落在会话级基目录，两份账本测试**复读同一份报告**；
+  先后经过 `read_invocation_ledger_state`、`read_attempt_outcomes`、
+  `reduce_invocation_recovery`、`build_resume_preflight`、`unsettled_reservations`、
+  `unsettled_started_attempt_records`（预算视角）与真实入口重跑。
+* 片段 B（GAP-2）：`fixtures/formula_family_probe.py` 在真实编译器/页请求上给出**非空**
+  `formula_obligation_ids` 与 `formula_package_ids`（各 2 个），分别只变一个家族顺序，三层报告
+  （Narrative 序与闭包关联 / 冻结与重算身份 / scope 与整体 binding contract）。
+* 两个**已复现但未修**的缺口按第 02 份要求登记最小反例 + 具体 owner，未扩成 R02：
+  writer_attempt_ledger 的发送前拒绝诊断分类过窄；未知发送重跑把根因包成下游 realizer 预算错误。
+
+### 本批身份（写权释放）
+
+| 文件 | SHA-256 |
+|---|---|
+| `tests/regression_20260917/test_ledger_recovery.py` | `d9d8d180cf3d764ed9356d537d9fa3073e9c5210a05b47bc0749ede369817132` |
+| `tests/regression_20260917/test_ledger_recovery_matrix.py` | `605b3d772776b043fc3760f082997c439cc0ab1dc5037d28923b730a79a6381b` |
+| `tests/integrations/dsh/fixtures/formula_family_probe.py` | `547a5e672ca71c54cf82b269ebaec11ea8e0c5cfd287841011a10e362516a989` |
+| `tests/integrations/dsh/fixtures/page_split_probe.py` | `23727000329b788859036de11fca5659a4d8fa518b1a87815ea487611dd83f64` |
+| `tests/integrations/dsh/test_legacy_characterization.py` | `5ac6690d055817f1458fce957775266a1b338db9760c5a211962b7611338e172` |
+| `tests/integrations/dsh/fixtures/README.md` | `c4805fc912fcb30c7f07c6d66acdc0156935f9f4bd80b7065c5a687e3991479a` |
+| `tests/integrations/dsh/fixtures/K04_evidence.md` | `7592484a3d796b586fd928fbbd874df72e4fab85e4e7655fab2ba0a67d4a3f40`（§16 全部写入后；本记录自身的哈希见交接消息） |
+
+* **本轮释放声明**：写入本节后本窗口**不再写任何路径**；无待写缓冲区、无待补测试、无未落盘产物。
+  未执行 `git add/commit/merge/push`。
+* K01–K03 独占路径零改动（N4 空证明）；四个页面 fixture 与 `provenance.json` 本批未变。
+* 证据与复现：`tests/integrations/dsh/fixtures/K04_evidence.md` §16；补证根
+  `.dsh-dev/run/w1-k04-gap/`（`run_gap_batch.sh` `05c314f1…`，N1 7 passed / N2 145 passed /
+  N3 文档补丁 0 / N4 身份）。**未执行**第二批的 `run_verification.sh`，原日志未被覆盖。
+* QA 复验入口：`pytest -q tests/regression_20260917/test_ledger_recovery.py
+  tests/regression_20260917/test_ledger_recovery_matrix.py
+  tests/integrations/dsh/test_legacy_characterization.py -k "gap1 or gap2 or gap3 or gap13"`。
+* K04 仍未 done、未 component PASS：原前置 `B01,H03,H04` 与目标 Gate-H 不变；K01 继续只读准备。
+
+## 2026-09-29 · Python 内核阶段（K04 收口 → K01 → K02 → K03）写权释放
+
+按第 02 份执行文档连续完成四个单元；本记录给出范围、身份、验证与释放。详细证据：
+[`docs/dsh_execution_20260928/kernel_stage_evidence.md`](../docs/dsh_execution_20260928/kernel_stage_evidence.md)、
+[`docs/dsh_execution_20260928/k01_registry_evidence.md`](../docs/dsh_execution_20260928/k01_registry_evidence.md)、
+[`tests/integrations/dsh/fixtures/K04_evidence.md`](../tests/integrations/dsh/fixtures/K04_evidence.md) §16。
+
+### 1. K04 收口（原两个账本问题）
+
+* **真实发送前拒绝的分类与计数**（`writer_attempt_ledger.py`）：判据改为"回执自称未越过边界
+  **且**没有 provider-request 证据"。真实合同拒发现在被计成 `rejected_before_send`、
+  进入 `rejected_before_send_events`、带出 `last_rejection_code`，不再落进
+  `unvalidated_attempts`（没有可评价响应不该被要求本地结算），invocation 级原因由
+  `no_events` 改为 `presend_refusal_without_send`；状态仍是可继续（`release_the_reservation`）。
+* **unknown-send 不被下游掩盖**（`publication_method_writer.py`）：相位边界用同一归约结论
+  检查每个必需页，`send_outcome_unknown` / `ledger_corrupt` 直接 `blocked`，reason 为
+  `writer_phase_boundary_blocked:…primary_cause=send_outcome_unknown:…downstream_not_run=realizer,…`，
+  不再让 realizer 的"预算被压负"取代 writer 根因。
+
+### 2. K01 / K02 / K03
+
+* **K01**：创建封摘要与加载验摘要分离（加载先比声明值，不借模型 validator 重封损坏值），
+  按声明摘要交叉核对磁盘不可变 record、pointer 与 schema；`registration_id` 绑定
+  producer/upstream/schema/完整逻辑内容；同逻辑内容幂等（返回原 record），同 ID 不同来源与
+  同路径不同内容拒绝；旧 `1.0` 走具名只读 reader（不迁移/不重写/不重封）。
+* **K02**：`stage_publication_members`（内容寻址 + 文件/目录 fsync + 媒体类型）→
+  `build_publication_manifest`（成员集合 + 读集 + 导出投影 + 自封摘要）→
+  `commit_publication_generation`（`reserved→validated→committed→registered`，**先持久后切换**）→
+  `switch_publication_active`（flock 临界区内比较 expected-active **与持久单调 fence**，不符即
+  `PublicationCasError` 且不写）。`prepare_artifact_registration` /
+  `activate_artifact_registration` 拆开了不可变 record 与 active 切换，消除内部抢先激活旁路。
+  派生 `build_publication_receipt` 可从已持久 manifest/指针/journal 重建，重放不新生产物。
+* **K03**：索引以**持久发布 active 指针**为权威（注册表只提供来源身份）；已提交未切换的下一代
+  只能是 `superseded`，仅"已准备未激活"的 manifest 也可见；读取在同一次读取里复算 manifest、
+  全部成员字节与不可变 registration，按媒体返回 `members`/`member_digests`/`member_media`；
+  投影损坏不改权威 active，修投影不重提交；旧注册表默认 fail-closed + 显式只读开关。
+  **未声称全文 Writer 已事务化**（`publication_method_writer.py:27974` 仍分别写
+  Markdown/authorship/checkpoint，归 C03/F02）。
+
+### 3. 验证与身份
+
+* 最终代码/测试状态聚焦批（补证根 `.dsh-dev/run/w1-kernel-stage-final/`，脚本
+  `.dsh-dev/run/w1-kernel-stage/run_kernel_stage.sh` `e3be04ec…`）：S1 K04 27 passed、
+  S2 K01 15 passed、S3 K02 8 passed、S4 K02+K03 真实 reader 24 passed、
+  S5 真实调用方/身份 89 passed；S6 `git diff --check` 0（修掉一处多余空行）+ 文档链接 0 悬挂；
+  S7 身份清单。全部 exit 0。
+* 同代码状态全量静态套件 `python -m pytest -q -p no:randomly`：**4114 passed, 3 skipped,
+  12 subtests passed**，exit 0（既有平台跳过项，无 error/超时）。
+* `VALIDATOR_BUNDLE_SOURCES` 10 项、`failure_code` 空，bundle digest
+  `sha256:bb9b903872d0233bc9f7108fc41d62653b312a2ff5d43fdea66333f07901a8ec`；新入清单
+  `page_contract_recheck.py`（K04）、`authoring_artifact_registry.py`（K01）、
+  `authoring_artifact_publication.py`（K02）。
+* **本轮释放声明**：写入本节后本窗口不再写任何路径；未执行 `git add/commit`；
+  `docs/dsh_execution_20260928/task_board.json`、`verification.md` 未触碰（LEAD owned）；
+  K04/K01/K02/K03 均未自批 done，Gate-K/Gate-H 前置与验收要求不变。
+* QA 复验入口：`pytest -q tests/regression_20260917/test_artifact_registry.py
+  tests/integrations/dsh/test_publication_generation.py
+  tests/regression_20260917/test_artifact_index.py
+  tests/regression_20260917/test_publication_transaction.py
+  tests/regression_20260917/test_ledger_recovery.py
+  tests/regression_20260917/test_ledger_recovery_matrix.py`。
+
+## 2026-09-30 · LEAD 接管：旧 QA closing 登记、整阶段续工与 DSH 检查点 3
+
+当前请求限定 LEAD 负责规划、接口/写权、台账和门裁决，产品实现由两个现有 owner 完成。
+沿 docs/README → DSH 执行入口 §§3.3–3.4 → 第 01/02 份、verification、interfaces 接管；
+保留 8 份文档和 49 个单元，不新增协作体系、实施 Agent 或常驻 QA。
+
+### 交接与裁决
+
+- 读取旧 QA closing `80b1a4afec437713597ba4e703439cf8cc2ecec0fa4f74d1ef3dd42cba53b408`，
+  §§2–4 明确无待写缓冲区/存活验证、释放本批 Python 读集并结束；closing 八项输入摘要
+  全部匹配。原三份 component 报告与交付索引的完整摘要仍与 verification §7 一致。
+- 13:20:10（Asia/Shanghai）以授权的宿主只读 `/proc` 检查本用户 122 个进程，相关 QA/
+  项目验证匹配 0、不可读 0；排除本次检查与祖先，未保存原始 argv/环境变量、未发送信号。
+  沙箱内 `/proc` 只见本次检查自身，未用于证明宿主无相关任务。明确释放加身份/宿主检查
+  足以完成交接，窗口一直接连续做第 02 份 §4.2，不逐项等待。
+- closing 中仍残留的三项“未声明/批后修订”和旧 runner/stage 建议继续按已生效裁决纠正；
+  不重开身份争议、不改旧报告。`authoring_execution_identity.py` 在明确 Python 释放表内，
+  仅由窗口一在原阶段串行维护；窗口二仍独占 TS/peer/build/stage。
+- 读取 DSH 恢复检查点 3，摘要
+  `a528487ea5ceba144807d76ba1345f0c8cc49c8bf2c5651a2493f5516d90ecc0`：owner 报告
+  loader10/10、binding11/11、provenance13/13、request-seam6/6、cancellation6/6（1.70s），
+  terminal0/8；typecheck/build/stage/config 报告 exit0。只读确认
+  `request-accounting.ts` 的封闭摘要清单含 `toolHistory`，没有重跑这些套件。
+- 窗口二继续 V4、完整 H04 来源/等待期/双 child/清理、组成保护及同 child 持久恢复联合
+  证明；合法 S2 转绿不关闭全部 AT。完整同候选交付后才按需独立验收，未取得新完整候选。
+  Gate-H/Gate-K 未通过，内核 CHANGES_REQUESTED 保持；第 03/04 份和 live 未启动。
+
+### 证据、文件范围与验证入口
+
+新鲜只读检查证据根：`/tmp/c2p-dsh-lead-handoff-20260930-vf8i1ndu/`，含
+`inspection_before.json`（HEAD d48b4e4、863 项实现域文件清单和 QA 报告摘要）、
+`qa_process_check.json`、旧报告读取副本、`dsh_checkpoint_at_takeover.md` 与
+`task_board_before.json`。原 QA 报告/日志、旧 runtime 和 owner 检查点未被改写。
+
+本轮只更新 docs/README、DSH 执行 README、第 01/02 份、verification、task_board 及本记录。
+台账保存上一 DSH 检查点和旧 owner 报告；49 项原 status/depends_on/implementation_depends_on/
+owned_paths/acceptance/AT/completion_gate 全部保留。新增的是已确认的读集释放、写权接回与
+owner 检查点，不刷新离线回执或登记独立 PASS。
+
+本会话可调用工具未提供向原窗口派发消息的能力，未取得原 owner 的续工回执；持续授权和
+完整阶段指令已登记于同一执行入口供接续，不能将本次文档登记写成实施者已执行。
+产品源码/测试/fixture/依赖/构建不由 LEAD 写入；产品测试、构建、模型/live 次数均为 0。
+文档与台账校验、链接和 patch hygiene 的结果在下方追加，不以历史 4114 或 owner 数量替代。
+
+### 本轮文档验证结果
+
+- `python /tmp/c2p-dsh-lead-handoff-20260930-vf8i1ndu/validate_records.py`：exit 0。
+  49 个唯一单元/AT、依赖无环，原任务状态/依赖/责任文件/验收语义与完成门保持；187 个本地
+  链接可解析，零悬挂。863 项实现域文件前后相同；本次读取的五份旧 QA 报告未变，保存的
+  DSH 检查点与记录摘要相符、读取期间原检查点未变。结果为同根 `validation.json`。
+- `git diff --check`：exit 0，stdout/stderr 空；原始结果与状态在同根
+  `git_diff_check.log` / `git_diff_check.exit`。该命令只检查 tracked patch，因此另对五个
+  未跟踪的 LEAD 文档/台账运行 `git diff --no-index --check -- /dev/null <file>`。
+- 初次未跟踪检查 runner 错把 no-index 的“有差异”exit 1 当成必须 exit 0，runner exit 1；
+  五份命令实际均无 whitespace 诊断，原结果保存于 `untracked_patch_hygiene.json`，未覆盖。
+  `python /tmp/c2p-dsh-lead-handoff-20260930-vf8i1ndu/check_untracked_hygiene.py`：exit 0；
+  独立的故意 trailing-space 对照报具名诊断/exit 3，确认区别后纠正 runner 判据。
+  更正与逐命令状态保存于 `untracked_patch_hygiene_v2.json`，不将首次 runner 失败写成通过。
+
+以上仅文档/台账和交接检查，不构成产品套件、独立 component/Gate-H/Gate-K 验收。
+
+### 2026-09-30 · 转回实施报告后的续工安排与仓库内释放清单
+
+用户转回窗口二 checkpoint3（46/54 owner 结果）及窗口一按旧 pending 记录停写的报告，要求
+下一步完整指令。LEAD 重读当前执行 README、verification §8 和台账，确认释放已登记。
+在 verification §8.1 与 `read_set_release_record` 补入实施窗口可直接读取的 33 条确切路径：
+候选12、validator来源10、证据文档2、历史K04读集16及另外两条原ledger责任路径去重；
+原读集/报告不改，清单不倒填历史运行身份，也不新增依赖源的任意修改权。
+
+closing 输入、日志目录和原报告摘要引用一并登记，跨会话私有 `/tmp` 不再成为重新等待的
+前提。窗口一直接在新鲜 rework 根连续完成第02份 §4.2；窗口二连续完成 V4、完整 H04
+AT 映射/缺项、组成保护、同 child 联合恢复、完整候选与接口冻结包。后继 QA 仍只在完整
+候选就绪时独立集中启动，普通缺陷集中反馈给原 owner 连续返修。
+
+H03 是现有六套件的剩余失败，组成/联合/冻结/独立 Gate-H 仍未完成；任务状态、依赖、AT
+及 Gate-H/K 不变。当前收到的是转回报告，未收到释放后的开工/完整候选回执；LEAD 未改
+产品实现、未运行产品测试/build/live、未启动新实施者或常驻 QA。
+
+本轮文档/台账校验 exit 0：49 项原合同/状态/依赖不变、33 条释放路径均存在，历史 K04
+read-set 摘要保持；189 个本地链接零悬挂。`git diff --check` exit 0；五份未跟踪文档/
+台账的 `git diff --no-index --check -- /dev/null <file>` 为预期差异 exit 1、诊断为空。
+新证据根 `/tmp/c2p-dsh-lead-continuation-20260930-7taqcc8q/` 的 `validation.json` 与
+`hygiene.json` 保存范围、逐命令实际 argv/退出码和结果，没有覆盖上一轮检查记录。
+
+### 2026-09-30 · 按当前代码起点补全新负责人交接
+
+用户要求续工考虑实际代码与进度，并给新接手者完整分支/环境/文档/命令。LEAD 14:41
+只读检查实际 source/test/launcher/manifest/peer，未修改产品实现或运行 build/test/live。
+分支 `codex/agentic-p4-benchmark-cutover`，HEAD `d48b4e4b22c94c82b45d2179ba452d72b164102d`；
+保留现有 dirty 内容和子模块。当前 Python 3.13.9、Node v25.8.2、npm 11.11.1，peer 解析
+指向0.2；目标包/manifest身份读取确认，runtime全树没有重新计算或作独立通过裁决。
+
+源码确认 toolHistory 与 direct/prepared gate 已有，不重做检查点3的首因定位；terminal
+tool/来源/flush/新进程测试也已有，缺口在 loggedCalls 的旧嵌套结果读取。S1 已有全局扇出
+对照，S2 裸请求反例则在合法结束后且不带signal，复制/重放使用独立授权对象；原 H04
+等待期同signal/两个child真实计量仍待覆盖。当前第二回执等待后缺最后复核、settled缺usage
+补零、inner.return无显式deadline、授权以provider+digest排队，按原S3–S6合同返修/验证。
+kernel旧格式夹具改新pointer版本、竞争为顺序CAS、crash为本进程异常，原完整返修包保留。
+
+新增实际 B02 接线发现：toolchain.mjs 虽按 C2P_DSH_DEV_ROOT 选root，但其
+launcherEnvironment不传候选变量，Python stage/test argv无--candidate；Python默认
+仅读取 C2P_DSH_CANDIDATE。完整npm链会选择旧默认根，不能据外层env断言全链0.2。
+未运行该链尝试写旧stage，也未断言旧字节已被改变。窗口二应先在原driver补传和拒绝错配，
+修好前使用显式0.2 launcher；目标pyworker也尚缺，旧worker不能顶替。两份_020冻结交付
+文件与建议w1-kernel-rework根本次不存在；缺run根不构成开工阻塞或单独否定其他根的工作。
+
+完整交接写入既有执行README §3.5，保留新LEAD角色、实施替代的单写者交接、两阶段持续
+任务、严格门、版本隔离、现有命令入口。同步第01份和文档入口，修正README §6旧释放措辞。
+台账global checkpoint已为3但stage_assignments内仍为2，现保留旧值入history并同步；
+没有按测试数改49项状态/AT/依赖或通过Gate。独立QA旧批已结束，下批仍按完整候选触发。
+
+本次输入/863个实现域文件摘要与修改前文档保存在
+`/tmp/c2p-dsh-lead-code-handoff-20260930-wd5ya4k8/`；inspection.json区分代码事实、
+覆盖不足与owner运行结果。未派新实施Agent、未使用此前拒绝的skill、未发送外部消息。
+
+交接校验 exit 0：863个实现域文件字节未变，49个task对象（含状态/依赖/AT）未变，
+释放记录保持；嵌套checkpoint与global最新记录一致；140个所查本地链接零悬挂。
+`git diff --check` exit 0；三份未跟踪阶段文档/台账的 no-index check 为预期差异
+exit 1且无诊断。实际argv/退出码、范围与结果落盘于同根validation.json。
+
+### 2026-09-30 · 用户澄清为两个新实施者分别接窗口一和窗口二
+
+此前把“新的人接手”默认解释成新LEAD，用户明确纠正：替换的是两条实施线，当前LEAD
+保持协调/裁决身份。现更正执行README §3.5、文档入口与台账new_implementation_handoff：
+新窗口一接原第02份Python整包返修、代码/测试/证据写权；新窗口二接原第01份完整0.2阶段，
+独占TS/peer/toolchain/build/stage/目标环境。两者不能改LEAD台账/裁决或越界覆盖另一线。
+
+已登记QA读集释放和原46/54证据均保持，不把实施者更换记成已开始修改或新验收。原写者
+应停止对应责任域，交当前dirty字节、运行进程、构建/测试回执；尚未收到旧写者停止或
+新实施者开工回执。不借QA释放推定原实现进程已经结束，也不重建QA等待门。窗口一不等
+Gate-H才返修/提交component，正式Gate-K约束不变。窗口二保留检查点3并在完整阶段补
+候选传递/worker、V4、完整H04、组成/生命周期、同child恢复和冻结交付。
+
+17:07只读重核实际分支/HEAD、peer和关键源码身份，关键源码与上次快照相同，目标worker
+及两份冻结文件仍不存在。未执行产品测试/build/live、未创建新实施Agent或新聊天，任务
+状态和产品边界不变。修改前文档/台账与核验基线保存在
+`/tmp/c2p-dsh-lead-two-window-handoff-20260930-ydb2qrof/`。
+
+本次交接更正校验exit0：49个task对象、读集释放、LEAD模式及Gate-H/K状态保持；
+863个实现域文件仍与前次代码核对一致；140个本地链接零悬挂。tracked diff check exit0，
+两份未跟踪文档/台账no-index检查为差异exit1且无诊断；实际结果保存同根validation.json。
+
+## 2026-09-30 · 窗口一新实施者接管（Python 内核整包返修）
+
+身份：窗口一实施者，负责第 02 份 K04→K01→K02→K03 返修、测试与阶段证据。LEAD 台账与裁决不改。
+起点：分支 `codex/agentic-p4-benchmark-cutover`，HEAD `d48b4e4b22c94c82b45d2179ba452d72b164102d`。
+Python：`/home/cuihengjia/miniconda3/bin/python` 3.13.9。
+接管核对：责任路径无第二个 pytest/写者；日常 `dsh web` 与仓库外服务未动。QA 读集按 verification §8.1 已释放。
+未 pull/reset/clean、未切分支、未 commit。返修证据根：`.dsh-dev/run/w1-kernel-rework/`。
+
+### 返修完成与本批写权释放
+
+详细矩阵、23/12 身份和日志见
+`docs/dsh_execution_20260928/kernel_stage_evidence.md` §9。
+本批改了冲突归约、相位原因、发布崩溃退出/权威解析、索引只认发布指针，以及对应测试。
+registry 与 execution identity 源码未改。真实 1.0 由冻结 `0918ee76` owner 在隔离子进程生成。
+
+可审计全量：`.dsh-dev/run/w1-kernel-rework/run-S1sPM01x/full_static.log`，
+`.exit` 为 0，4125 passed / 3 skipped / 12 subtests。三次跳过都是既有
+`CODE2PAPER_RUN_LIVE_LLM` 门。聚焦 99 passed，退出码 0。`first_failure.txt` 不存在。
+
+**写权释放**：本记录写入后停止修改第 02 份责任路径。不自登 PASS/done，不申报 Gate-K，
+未 commit，未改 LEAD 台账。
+
+### K-1/K-2 返修与再次释放
+
+验收重放不再把矛盾发送或损坏账本结算成 `accepted=true`。reader 在消费 manifest
+前核对声明摘要、复算摘要和发布权威。证据见 kernel_stage_evidence.md §10。
+新鲜根 `.dsh-dev/run/w1-kernel-rework/run-uBEIctQW/`：聚焦 103 passed，全量
+4129 passed / 3 skipped / 12 subtests，两份 `.exit` 都是 0。
+
+**写权释放**：本段写入后再次停止第 02 份责任路径的修改。不自登 PASS/done。
+
+## 2026-09-30 · 窗口一保管已验内核候选
+
+按执行入口 §3.7 与第 02 份 §4.4 保管 K01–K04 component 候选。核对证据 §10 的六份源码/测试摘要、
+`run-uBEIctQW` 的聚焦日志 `6becd0ea…` 与全量日志 `4bd9f61b…`，以及两份 `.exit` 均为 0。
+HEAD 仍是 `d48b4e4b`。没有新的内核缺陷，未重跑套件，未改源码、测试、validator 清单或上述日志。
+正式 done 与 Gate-K 仍等 LEAD 在 Gate-H 之后裁决。
+
+第 03 份尚未实施。后续只能消费现有入口，不能另建发布、索引或账本：
+`reduce_invocation_recovery` / `publish_validation_replay`，
+`stage_publication_members` / `commit_publication_generation` / `switch_publication_active` /
+`verify_publication_generation` / `bind_publication_manifest_bytes`，
+`read_artifact_validated`，`load_artifact_registry` / `load_legacy_artifact_registry`，
+以及 `VALIDATOR_BUNDLE_SOURCES`。C03 的局部正文事务走 K02 publication owner；全文仍是 F02。
+`publication_method_writer.py` 在 C02 开工前保持本候选字节。共享清单增补仍由 LEAD 串行分配。
+
+LEAD 确认（2026-09-30 22:25 后）：候选保管继续，不重复调查、不重跑全量、不提前改
+C/R 模块或 validator 清单。C02 约束补记：旧 caller、本地结算
+（`_settle_recorded_writer_attempt`）与新 facade 必须共用原
+decode/splice/parser/assessor 路径；结算现在缺 decode/splice，属抽取时必改项。
+
+## 2026-10-02 · 保管续核与后续阶段衔接登记
+
+只读复核对账：六份候选源码/测试与 `run-uBEIctQW` 两份日志摘要全部命中，HEAD 仍
+`d48b4e4b`，责任路径无运行中 pytest 写者。第 02 份 component PASS 继续保管；
+未改 `publication_method_writer.py`、validator 清单，未创建 C/R 模块，未重跑全量。
+复用清单（2026-09-30 23 时交付）继续有效，不重复调查。当前施工只在窗口二，
+本窗口无新增工作。
+
+后续派工（Gate-H/正式 Gate-K 满足后立即接续，本记录仅登记衔接）：
+
+- 第 03 份窗口一序列：I01 composition 身份与严格校验 → C01 唯一 Python
+  合同/schema/goldens → C00 补齐所需 Python 协议字段 → C02 抽取共用
+  解析/decode/splice/评估并接旧 caller、本地结算、facade → C03 可信 ingest、
+  局部发布事务、来源与幂等 → C04 有界 worker、最小权限 facade。
+  Python 协议与 validator 单写权在窗口一；canonical digest 仍由 Python 计算。
+  窗口二提供 runtime/loader/build 清单、wire 消费、真实 renderer/投影、
+  跨语言 fixture、真实绑定 raw terminal 与 worker 接线。完整联合包验 Gate-C。
+- 第 04 份（Gate-C 后）：窗口一 R01 持久 task/outbox/claim、R02 原账本与真实
+  RPC、R04 Python 恢复、A01 真实覆盖回执；V01 与窗口二联合完成单 run 串行
+  单 Writer 一个 mock 请求的真实闭环与新进程恢复。原 Gate-R/V 保留，Python
+  仍是唯一预算与恢复权威。live、全文事务、完整主图迁移及默认切换不提前。
+
+## 2026-10-03 · Gate-H 四组集中返修 owner 提交
+
+范围遵循 stage_whole_package_review_20261003 §§3–4。修 activate 的 active 安装基线先验与 target 字节/身份/回执先验、临时文件准备及提交异常回滚；setup/audit 共用 pristine-base 身份和五文件改动域；smoke 修实际 staging tree 字段并核 staged receipt、前后不变及默认路径；新增真实入口反例，重写无效字典断言。固定源码模块头与当前 capability API 对齐，source patch 重登记（87941d84…）；runtime、声明及 Python 内核保持。
+
+精确命令与原始退出在 `/tmp/c2p-gate-h-repair-20261003-final/`；稳定封存 `.dsh-dev/run/w2-gate-h-repair-20261003-final/`；durable 当前入口 `integrations/dsh/dev/gate_h_repair_batch_20261003.md`。source-built→delivery 串行 activate/build/stage 后，以 review_driver 的真实 launcher/只读 peer+staged receipt view 执行两侧原11文件93节点，各 exit0、93pass/0fail/0skip；两侧来源10/10、生命周期3/3 exit0；ops_driver 实际 B02目录46passed、执行身份24passed、doctor/audit正常入口及 web/compat正常smoke均 exit0；HTML/assets200、端口关闭、0模型 turn、tree/receipt identity一致。独立 types_audit 两包 tsc exit0，三声明同字节，257/385编译读集保持。git diff --check exit0。
+
+108,614项完整输入的 bytes/link/inode/mtime 前后完全一致（before/after清单SHA均 d4780640…），原791份内核baseline全匹配。首套suite外层封存汇总误用TAP格式，后续封存内核计数误用764项操作快照，均属driver/清单选择修正，原始内层结果保留且产品输入不改，不重复成功suite；诊断与正确闭环在新包内登记。新 archive 输入逐成员核摘要，完整保存原测试、fixture、driver、运行包及工具链/worker输入，不用seal代替受测清单。初始外层EPERM获准宿主执行后保持项目bwrap自身隔离；无模型调用。
+
+owner状态 submitted_for_independent_qa，不自批 Gate-H；正式 Gate-K等待、第03–08未实施，49项仍2done/9进行/38待实施。分支/dirty基线保持，无commit/merge/reset，原4129未重跑。后续由独立reviewer复验四组，Gate-H通过后LEAD正式确认Gate-K。当前交付不是产品完工或默认切换。
+
+
+### 同日 r2 · 目标 Node executable 前置身份修复与当前冻结
+
+r1 46项提交已完整封存，保留为历史。收口发现 manifest 指定的 Node executable 未在 activate 前读取：补存在、与当前执行 Node 同字节及实际版本检查；新实际 Node/Python wrapper 反例覆盖缺路径、同版本伪 executable，失败链接/两回执仍原样。当前提交改为 `/tmp/c2p-gate-h-repair-20261003-final-r2/` 与稳定 `.dsh-dev/run/w2-gate-h-repair-20261003-final-r2/`；runtime/types/build/stage 未变。
+
+本轮两侧原93/0fail/0skip、来源10/10、生命周期3/3均exit0，B02实际48passed、执行身份24passed、doctor/audit及正常Web/compat均exit0；108615项前后bytes/link/inode/mtime完全相同（清单SHA a14e3ebf…），原791份内核保持，0模型调用。补源码侧已完成suite之后复制probe时误解引用symlink，Node在断言前缺依赖；保留失败raw/输入并恢复原peer symlink，再完成所有反例。before差异仅probe peer复制目录，source/test/driver/runtime/receipts不变；probe-setup-input-closure.json证明，不覆盖失败raw。最终peer为delivery。原类型独立编译读集、输出及driver同字节保留；完整归档108990个输入（含375个增补声明编译读集）与封存清单核验。owner仍submitted_for_independent_qa，独立Gate-H待裁决，正式Gate-K/第03份等待，49项实际2done/9in_progress/38planned不变。
+
+### 2026-10-03 Stage03 窗口一：I01/C01/C02–C04（实施中）
+
+用户明确按 stage03_batch_execution_instructions_20261003.md §3 分配；Gate-H/K 依据最新独立裁决已放行。保留原 dirty 树，不提交/切分支。Python/protocol/validator/compatibility.stage03 单写；窗口二独占 C00/TS/build/stage。活动交接在 docs/dsh_execution_20260928/stage03_window1_handoff_20261003.md，本次运行根 /tmp/c2p-stage03-w1-20261003。
+
+I01 抽取原开发 inventory 为 stdlib runtime_inventory（开发 CLI 不需初始化领域包），原 inventory wire 保持；production composition 另绑定实际位置/解析字节/树/Node/配置以及原 engine、validator。CLI 合成测试副本补入其真实新增源码依赖。C01 导出严格模型/原 canonical/字节与语义两类摘要的 goldens。同步 Writer 原 structured_caller 的 decode/splice/normalize 已抽为 parse_publication_writer_response；同步/本地未结算响应共用，本地 settlement 保留当前完整 private section。新 facade 仍等真实 C00 组成与投影联验，未把 helper 自测当准入。
+
+C03 候选保存 raw/normalized/parsed 分层，可信受控上下文由 Host 注入；局部原 publication owner/reader 提交正文/acceptance/authorship/raw/provenance，同 task/epoch 唯一终态，授权先于缓存，新副作用才核当前 revision/fence。C04 候选 private stdio 固定 RPC，有界 frame/chunk、bootstrap 与模型字段分权，R claim/reserve/dispatch 明确 unavailable。
+
+阶段开发观察（均不能外推最终 Gate-C）：i01-c01.log exit 0 / 28 passed；parser-extraction.log exit 0 / 191 passed；three-path.log 修复测试对 outputs 的误用后 exit 0 / 8 passed（含真实编译 Formalizer+atom 与合法作者页）。provenance-b02.log 18 个 provenance 已通过；B02 旧默认候选 lock 与本批构建不同、合成 CLI 源依赖未拷贝导致三失败，逐项修复/切正确候选。worker.log 12 passed / 1 setup error：移动中的 TS 改变 engine identity，prepare/handshake 按设计拒绝 composition_drift；最终稳定后重测，未放宽身份。B02 candidate 回归还遇 Node spawnSync python EPERM，隔离临时副本的原入口回归请求自动审查的沙箱外执行；保留原日志，不把拒绝当 PASS。
+
+compatibility.stage03.json 先登记版本和外部 evidence 定位，不回填被自身覆盖的 engine/composition 摘要；最终测试身份写外部根。最终状态、精确 argv/cwd/环境/退出与 AT 索引待同批冻结收口。
+
+收口修复（新代码，待最终稳定身份验证）：I01树根原/解析位置与symlink关系纳入；inventory前后原engine/validator复算，拒绝混合状态。Formalizer逐包实际adapt输出匹配（含latex/绑定/qualifier全部字段），缺receipt拒绝；原adapt/schema来源加入validator。C01增research_required正向、0.0/0e0 Counter、float/bool Literal1原字节goldens，窗口二修TS词法保持。开发联合joint-6、author-2、cap-recompile-1已真实通过；因以上明确修复释放旧读集，不能借旧receipt声明最终相同身份。旧全静态4211passed/3skipped，指定owner265passed，新增82passed均保留历史日志；最终验证/联测/封存外部位置预先固定。未运行8006/真实provider，未实施R01/R02/R03或全局完成。
+
+Stage03提交前复读返修：旧final-delivery包保留历史，撤为superseded_input（独立Gate-C未验，未宣告PASS）。
+新作用ingest缺合同→当前revision/snapshot/fence/validator的绑定；修复为check_contract_current，新增完整identity/
+read-set/material/config/schema/epoch比较，freeze绑定fence。已提交合法receipt缓存仍先于新作用状态检查。
+新测试覆盖fresh Host借旧合同的三状态、五身份反例与合法缓存恢复；最后r2读集与所有观察证据重生成。
+原final 91/265/4220 static、TS123都仅证明上一代码状态；TS/build无修改，下一Python校验/联合另冻结，
+保持sameepoch唯一终态和pending_validation，不弱化已有原owner gate。
+
+Stage03窗口一最终r2：submitted_for_independent_qa，索引 .dsh-dev/run/stage03-w1-20261003/final-delivery-r2/delivery-index.json。
+最终精确命令与实际source前后快照见checks/commands.json：105focused、265原owner、4234全静态/3非本批live skips/7warnings/12subtests；compileall/diff-check均0，五步骤source一致。
+C00最终TS123/0skip、唯一最终stage来自窗口二；r2技术和合法无atom作者页真实Loader/loop/fake wire→worker prepare/record/ingest→原publication reader和封存reader同代读回，domain pending_validation。
+cap4096→1024原owner新plan/section/config/identity/projection，2次C00观测先完成，领域prepare网络/LLM哨兵下零发送；34真workerscope/权限/来源/冲突/runtime拒绝与cache恢复通过。
+封存29279文件/链接全部长度/SHA复核，release核所有相关worker进程组静止、fake server关闭、parent/child/bindings释放。旧final-delivery保留历史，被r2替代。
+最终读集显式释放后只更新协调/状态文档；当前engine因文档变化不同于封存8be7fe…，不得复用旧合同作新作用许可；代码/测试/fixture/runtime不改。
+独立Gate-C待QA；不自批Gate-R/V/A/G/F/L、产品完成、默认切换/D5/发布，不调用8006/真实provider。不commit/merge/reset，原dirty保留。
+
+## Stage03 Gate-C 集中返修（2026-10-03，窗口一）
+
+独立裁决 CHANGES_REQUESTED，执行 stage03_gate_c_review_and_batch_repair_20261003.md。
+保持 11 done / 6 in_progress / 32 planned，不进入第04份。r2 和 QA 封存不变。
+GC-1：全 Unicode scalar census 确认旧 Pydantic/Rust `\\S` 的 25 个 White_Space 码点；
+所有 Identifier 改为有版本的显式字符集规则，完整 exporter 覆盖八模型、native/enforcement、
+character-rules 和双向 goldens。窗口二单写 TS/实际构建。
+GC-2：check_frozen_current 复用在 render、初次 prepare、owner recompile 后及返回前，
+校 revision/snapshot/fence、scope、身份与实际完整 refs/request/page/manifest；内容 revision 不混入记账序号。
+GC-3：NEW ingest 在授权/输出完整性/合法缓存分支之后，复用 C02 投影、真实 wire 和本地计量核对；
+所有 JSON refs 的 bytes/length/scope/media/semantic/schema 与跨绑定复核。完整14项依赖以
+LocalWriterDependencyClosureV1 写入 provenance，原 publication manifest read_set 同步记录；
+仍复用原 parser/assessor/authorship/generation/reader，局部 pending_validation。
+测试结构：原 pre-C00 局部 ingest fixture 改为完整可核对的明确 UNIT test-double 引用图；
+不会把它当真实 C00 证据。真实 DSH/pi-ai 假 HTTP/SSE、真实 worker 和原 reader 另走 fresh joint。
+新 stdio lifecycle fixture 只在测试子进程注入外部 Host 状态变化/owner callback，不新增生产开关。
+源内记录到此；最终命令、结果、代码状态、原日志、AT矩阵及释放写新 ignored 证据根
+`.dsh-dev/run/stage03-gc-repair-w1-20261003/`。开发期 source_unstable 与 fixture 修正日志保留，
+仅稳定输入结果用于新提交；owner 自测不改独立 Gate-C 裁决。
+
+
+### Stage03 GC修复最终封存与释放（2026-10-03 23:46）
+
+owner完整返修 submitted_for_independent_qa；独立Gate-C未自授PASS，仍11 done/6 in_progress/32 planned，第04份未启动。
+最终专项226、原owner265、全静态4355/3原live skip/12 subtests、TS165、B02 48、audit/typecheck/build/stage/compileall/diff-check均exit0。
+精确argv/cwd/runner/exit/耗时/source前后与原log在新包 checks/commands.json；全部新静态验证绑定同一11b8bf42…冻结engine。
+真实技术页/作者页、新revision/fence owner正常freeze、新cap原owner重编、旧材料prepare、34原RPC、三终态99拒绝/3合法提交与缓存恢复/190RPC均通过。
+真实FEFF和ASCII来自新native raw capture并由真实worker record_output通过；NEL非法拒绝与12真terminal双向对照见窗口二新包。
+新封存34902文件/链接全部长度/hash/实际链接与文件集合复读一致，清单SHA ac40483b1cdaca1759906df205410f0f45cbb4b3a7919a4242aad6c07fa8e852。
+最终身份、validator、composition与完整AT/GC矩阵见 docs/dsh_execution_20260928/stage03_gc_repair_delivery_20261003.md 和新 delivery-index。
+释放2026-10-03T23:46:17.464627+08:00；原reader在档案复读，全部行为命令返回、worker进程组消失、Session/绑定/假服务关闭、端口可重绑；真实模型0、prepare发送0。
+释放后仅更新本实施记录/报告/README/task_board/compatibility协调文件，当前engine会改变并另记ignored post-release-coordination.json；旧包不改标给当前树，原r2与独立QA包保持原字节。
+
+
+## 2026-10-04 · DSH长期模块阶段A启动（单主执行者）
+
+执行 stage04_06_long_module_execution_20261004.md 与第04份细则。当前只激活阶段A；保留当前dirty基线、HEAD/分支，无reset/commit/merge，无真实模型调用。运行根 `/tmp/c2p-dsh-stage04-20261004-ud6x5a4s`，start-state.json记录启动身份。R01 in_progress，其余任务依原前置连续推进；独立Gate-R/V尚未提交，done仍17/49。
+
+新增task_store.py：SQLite FULL同步短事务/原run lease、稳定task/epoch/outbox、私有随机claim能力与独立claim fence、固定epoch起点、child绑定、取消、新进程读取及同一终态引用。task_store没有费用余额；不按PID/TTL回收claim。原lease新增scoped_run_lease，借用同进程租约时不释放owner的锁。facade新增具名durable模式，worker私有claim/resume/bind/cancel/read已接线；原stage03模式不允许生产claim。原ingest合法缓存仍先授权，新作用另验有效claim。新增裁决源纳入VALIDATOR_BUNDLE_SOURCES。
+
+开发验证：`python -m pytest -q tests/integrations/dsh/test_task_recovery.py` exit0，5passed，3.30s，证明双Host barrier只有一个claim及跨进程epoch保持等原语；仅原语自测，不能记完整AT-R01。第一次联测 `python -m pytest -q tests/integrations/dsh/test_task_recovery.py tests/integrations/dsh/test_worker_protocol.py tests/integrations/dsh/test_result_provenance.py` exit1，146passed/1setup error，175.52s。原因是我在该验证进行中修改worker，原组成门正确拒绝composition_source_unstable；没有放宽门。随后先完成全部编辑，再冻结输入重验，原失败保留。新增真实worker生命周期用例使用已验compiler的UNIT投影材料，只证明RPC持久链，不冒充V01真provider闭环。
+
+R01尚缺完整后端独占/恢复事实；R02预算与发送事件、R03实际Host、R04完整崩溃、V01/A01/V02仍待连续实现。下一动作：固定当前输入，运行新worker领取恢复与原C04/来源回归，再扩原统一账本。当前无常驻协作者，Python与TS/build写权均为root；独立QA在完整阶段包冻结后启动。
+
+
+### 同日阶段A持续开发 · R01/R02真实私有RPC
+
+先冻结编辑再验证：r01-worker-command.json / r01-worker-regression.log exit0，148passed（178.83s），覆盖新增真实worker领取/绑定/取消及新进程恢复和原C04/来源规则。后续补原run lease覆盖整个durable worker mutation，防止校验与publication提交之间取消；新增同主机具名后端持久独占原语，不按进程退出清除。backend_state_root/resource_key为显式operator组成配置；完整release/实际provider清理合同仍待R03/R04，不把保守占用当完整恢复交付。
+
+R02新增DshInvocationEventV1和原统一账本内fsync持久事件，事件顺序/绑定/重复ID/冲突/引用损坏fail-closed。read_run_budget_state与reduce_invocation_recovery继续唯一裁决：reserve崩溃保守unknown；缺usage保留预留；适配器入口与dispatch-recorded不升级为HTTP到达；真实usage幂等；独立域验证仍pending。invocation_adapter接原材料/14依赖/模型profile/预算/claim/epoch期限与实际assembly重读；真实worker allowlist/schema接reserve/dispatch/settle/mark_unknown。adapter入口permit只能消费一次，恢复模式拒绝新dispatch；迟到事实可本地记账，原receipt缓存先授权，新作用另验live claim。发送格式失败通过有raw/Session引用的finish观察结算费用，不给出domain acceptance。
+
+确切日志/argv/cwd/退出：r01-r02-rpc-command.json（65passed/28.81s/exit0）；r02-expanded-command.json（69passed/39.75s/exit0）。新增真实RPC反例包括实际assembly漂移、缺读取依赖、错epoch、取消、二次permit、原账本已有完成费用耗尽、真实目录写失败、跨worker恢复禁止派发、usage冲突以及格式失败费用保持；与旧恢复矩阵、身份及原worker receipt缓存回归同跑。projection、prior费用、format-failure Session都是明确UNIT材料；尚未经过R03真实DSH或V01隔离provider，不作为AT-R02完整通过或独立PASS。compileall聚焦及diff-check均0。
+
+代码/测试基线保留，所有运行输出在fresh /tmp根。新增task_store/invocation_adapter/unified_invocation_ledger裁决源加入原validator闭合集合；只增已存在文件。R01/R02仍in_progress，17/49done不变；当前root独写Python/TS/build。接着R03固定argv/env/cwd的真实DSH subprocess kernel-client及Host recorder，不暂停逐helper等待派工。实际回收、所有崩溃点、V01/A01/V02和完整阶段冻结/独立QA尚待完成；8006请求0。
+
+### 同日R03持续接线（尚未提交独立验收）
+
+新增kernel-client.ts（真实DSH subprocess、固定operator argv/cwd/env、1MiB JSONL、严格帧/ID、RPC超时和迟到响应墓碑、fresh cleanup signal）、workflow-driver.ts（Python私有claim/request recorder及真实单Writer子任务pump）、execution-policy.ts（阶段A默认串行且拒绝parallel=true）。role-dispatch在未发布的child setup内await真实Python绑定；request-accounting新增实际assembly引用与真正适配器入口permit hook，不增加预算余额。Host原Session persistence flush后归档原events与raw，再由原worker record_output/ingest；真实Session tuple与normalized bytes在Python重核，原Python新增私有task.ingest_key提供幂等键，TS不另造算法。transport对照只允许合同已列的signal/sessionId/messages.id/createdAt，文本、tools、配置仍逐项保留。
+
+新RPC新进程receipt重读自测22passed/34.69s（绑定上述后续transport改动前）；TS typecheck/build/stage exit0，25构建输出。真实DSH subprocess测试1passed/5974.73ms，生产worker领取/绑定/退出/新进程恢复/取消；该测试明确UNIT composition/projection，不是V01 provider PASS。精确观察写fresh根r03-development-observations.json；后续正式冻结需完整原日志与SHA矩阵。开发失败保留：外层sandbox不允许bwrap建loopback（经auto-review已授权在外层外运行原offline launcher）；相对路径在launcher包cwd不成立（改绝对路径）；locked pyworker不带pytest（去掉fixture生成链的pytest依赖，未安装/改锁）。测试Web URL输出需关闭实际web-runtime行；最新修正尚待复验。模型调用0。
+
+R01/R02/R03均in_progress，done17不变；无常驻协作者，全部行为命令已返回，DSH测试context/managed worker已清理。下一动作为真实组成与C00观察驱动的完整Host/provider离线闭环，补失败费用/取消/epoch期限与R04逐崩溃点；再完成V01/A01/V02及整阶段全静态和独立Gate-R/V。仅StageA已激活，未越过L01准入。
+
+### R03实际provider闭环及R04恢复前置（持续开发，未提交QA）
+
+原来源/缓存回归r03-python-regression.log：165passed/206.94s/exit0。真实host-provider.test.ts已用实际Loader/peer/bundle/build/stage/Node/Python树冻结组成、真实DSH subprocess及原worker；C00隔离校准明确单列，task正式发送另计1次。真实pi-ai→假HTTP/SSE→raw/normalized Native Session→原Parser/Publication/Reader得到blocked receipt；原账本call_count=1/spent_input_tokens=17/pending=0。r03-real-provider-retained.log exit0/65078.92ms；后续测试专用guard worker只包装原main拒绝Python LLM/socket，先实际负probe，再计正式运行0模型/0网络。r03-real-provider-sentinel.log exit0/64010.37ms，sentinel闭合state=closed。原始运行根provider-retained-001/002在fresh /tmp包中，不是当前后续代码的PASS。
+
+实际namespace发现启动器的/tmp为tmpfs，早期未共享测试产物退出即消失，不用其缺失产物背书。scripts/dsh_dev.py因此增--output-root：只允许新建canonical /tmp任务子目录，显式单目录bind，原runtime/源码只读及--unshare-net不变；不写HOME，不改变默认launcher根。新增隔离边界反例，r03-cancel-limits.log共25passed/39.45s/exit0。私有task.limits由原合同返回固定epoch起点/限额，Host派生不可重置的AbortSignal；取消写原账本cancel且保留未结费用。
+
+R04当前决策：领取回包丢失不要求保存私有capability明文。TaskStore持久格式现为dsh-task-store/3（本阶段未发布版本；旧开发样本不迁移/重标）；持久存capability digest/claim lineage。可信私有task.recover在原run lease内更新claim fence，只给settlement-only，不延长epoch、不释放backend、不发新请求；旧Host mutation被新fence拒绝，reserve/dispatch再核durable grant_mode。新claim可绑定原费用事实的claim digest，不能给另一scope造费用或新派发。当前权限恢复聚焦r04-recovery-source.log 26passed/46.04s/exit0，但尚非AT-R04完整矩阵。
+
+为terminal后/record_output前崩溃建立原始源持久点：TerminalArgumentCapture在真实block-end后、交付Native执行前await私有raw sink，raw octets落盘并记录task.capture_raw，只准本epoch一个不可变源、既有reservation和实际child/session/request绑定。Session/native成功证据flush后才record_output/ingest；Python还核同call的成功tool/result及completed turn/end，防止把normalized失败源恢复成成功。该新增raw sink和store/3仍待实际DSH重build/stage及恢复矩阵，不能沿用002的旧PASS。R01–R04 in_progress，17/49不变；下一动作先冻结这批输入，复验实际raw sink，再扩完整崩溃点、局部draft/author/research_required和清理，随后A01/V02。StageB模型准入未触发，8006调用0。
+
+### R04真实进程中断与V01技术页前置（持续开发，未提交QA）
+
+新私有request.status仅返回原reservation/reducer及原RecordedWriterOutput引用；Host recoverStoredOutput换发settlement-only凭证，已有输出只走原ingest_key/ingest，只有原始源时从实际Session persistence只读加载原events并归档。恢复不创建Agent、不进入adapter；Python仍核成功Native tool/result与completed turn/end，缺源不把normalized重序列化当raw。
+
+r04-local-replay.log exit0，26passed/44.52s；r04-cuts-typecheck/build/stage最终exit0（初次typecheck拒绝测试直接.ts字面导入，改为实际URL动态导入，未改变compiler配置）。r04-real-provider-cuts.log exit0，3场景/237109.97ms：before-record、after-record、after-ingest分别在实际DSH管理的worker进程terminate后启动全新worker，丢弃旧私有capability并本地恢复。同一场景只有隔离C00校准1次+task派发1次，恢复新增发送0；原reader费用call_count=1/spent17/pending0。完整请求/SSE、Session/raw、result/cleanup、原SQLite/账本在provider-recovery-004三个fresh根，全部guard闭合state=closed、正式Python model/network计数0，假服务关闭后实际端口重绑定成功。该证据绑定当时源，随后fixture身份改动不能回填其身份。
+
+新增test_host_crash_recovery.py：prepare后/reserve后/dispatch-recorded后/adapter-entry后实际SIGKILL worker并全新进程恢复，固定epoch、旧凭证失效、仅结算权限、未知预留不退款/不重发。此为内核journal矩阵，注入adapter-entry不是实际HTTP发送证明。初次4failed是断言用了不存在的错误名称task_settlement_only，修为实际task_recovery_cannot_dispatch后4passed/17.86s/exit0；原失败保留。随后fixture profile/model改为实际受控配置摘要、target绑定原archive source manifest、intent/claims绑定实际narrative/section材料、snapshot绑定archive，不再用标签摘要占位；这些身份仍明确controlled_offline_fixture，不宣称真实模型能力。r04-material-identities.log exit0，30passed/62.05s。
+
+增加serial-writer.test.ts与serial-writer-research.test.ts复用同一实际链，技术draft使用原Formalizer fixture的provider原始placeholder正文，不搬运Binder后的文本；尚待实际运行。toolchain test:compat新增fresh --output-root传递，使递归发现的实际Host测试使用相同单目录隔离并保留产物；该toolchain修改待新build/stage和B02复验。R04仍缺terminal未flush/取消provider未知/父退子活与迟到/漂移完整矩阵，V01作者页和拒绝矩阵、A01/V02仍待实现。下一步冻结输入运行真实technical draft/research_required，再完成同阶段缺项；保持17/49，无独立PASS、无8006调用。
+
+### V01技术页/typed gap实际闭环与A01首个修复（持续开发）
+
+v01-terminal-typecheck/build/stage最终exit0。provider-terminal-005首次运行在发送前被严格Python model_validate拒绝requests列表（tuple_type），并暴露测试cleanup在bootstrap失败时读取不存在sentinel的额外错误；保持schema，改由model_validate_json(canonical_json_bytes(...))进入协议，并让cleanup把未启动sentinel具名null。原失败日志v01-real-provider-terminals.log保留。新根provider-terminal-006，v01-real-provider-terminals-repaired.log exit0，2场景/159886.12ms。technical draft来自原完成Formalizer材料的Writer placeholder原始文本，通过实际DSH/pi-ai/native/raw/原assessor/公式splice/Binder/authorship/publication，原receipt为pending_validation；research_required同链为waiting，不触发自动补证/第二请求。两者各C00校准1+正式task1、原费用17/调用1、恢复0新增发送、Python出口哨兵0、假服务端口释放。领域均未提升Verified。fixture身份现在绑定实际受控profile/model和原archive/narrative/section材料。
+
+A01已重现默认覆盖漏洞并先取消build_offline_suite_receipt的默认完整四组test_plan_ids。单节点成功仅保留该命令passed，missing_test_plan_ids完整返回缺项；旧显式历史scope保留。test_dsh_admission.py首两个反例及原live_admission回归：a01-no-default-coverage.log，20passed/7.13s/exit0。这不是完整A01：原CLI版本化计划、actual Python/Node/CLI发现/报告、前后身份冻结、consumer复算/拒绝篡改，以及V02最终计划还未落地。新增文件只登记此范围，不拿该PASS作全套准入。
+
+V01/A01进入in_progress；累计done仍17。当前无运行测试/模型进程；root持有Python/TS/build写权，独立QA未启动。接着实现机器报告和计划，同时完成作者无atom及错误内容/Unicode/预算/取消的同链V01矩阵；R04剩余父退子活/未知清理/late响应仍是实质未测项。
+
+### A01实际机器报告与单目录路由（持续开发）
+
+新增pytest_reporter.py，显式-p加载，记录实际解释器argv/cwd/rootdir、selected/discovered/deselected节点、setup/call/teardown及collection errors；缺call/phase、skip/error/not-run不会被passed覆盖。新增suite-reporter.mjs记录native Node metadata与enqueue/dequeue/pass/fail/summary（含skip/todo），保留文件容器的真实per-file summary。offline_admission.py只读重核报告字节SHA/长度、实际命令/cwd、发现集合/阶段/节点和计数；不凭summary或label造覆盖。新增三个已落地report/reader文件进入原VALIDATOR_BUNDLE_SOURCES。尚未有具名计划/聚合consumer/CLI v2准入，不能将这些reader视为A01已完成。
+
+a01-actual-reports.log：11passed/4.62s/exit0，实际Python subprocess包括通过/失败/skip/零/collection失败；实际Node no-isolation用于外层sandbox内report-reader单元覆盖，正式DSH保持原launcher进程隔离。另一次真实Node子进程开发检查（require_escalated只为外层spawn限制，不联网）读回passed1/failed1/skipped1/exit1，consumer拒绝；两个正常节点真实process报告exit0并原reader读回tests2。原默认sandbox Node --test子进程失败日志保留，native no-isolation与真实process的差异明确，非候选DSH联测证据。机器报告目前为开发级，不替代完整冻结计划。
+
+scripts/dsh_dev.py新增--report-path，必须直接位于新--output-root内、canonical且未存在；Node双reporter保留spec原日志与机器JSONL。同一--unshare-net/源码runtime只读/精确目录bind保留。toolchain递归test:compat自动生成fresh root及node-events.jsonl。a01-machine-route.log exit0，12passed/23deselected/4.72s；只聚焦reader与目录路由，明确不称全B02/全suite通过。下一步新build/stage后用同launcher验证实际报告文件、完成版本化计划及原CLI和consumer接线，再补V01作者/拒绝/R04完整矩阵和V02。当前无运行测试；无8006调用，17/49。
+
+### A01具名计划及V01作者页实际闭环（持续开发）
+
+实际launcher机器报告：a01-report-build/stage exit0；a01-real-launcher-report.log exit0，原wire 52场景/18499.99ms。报告器通过同一网络隔离launcher生成JSONL，原Python reader复算52个actual节点和native per-file completion，与source/runtime实际Node v25.8.2一致。中途读未完成文件被offline_node_file_not_passed拒绝，完整退出后才被接纳；没有把尾部summary缺失当成功。
+
+新增suite_plan.py版本legacy-offline/2、dsh-stage04-offline/2，绑定实际递归发现文件SHA、原argv/cwd、public有效配置、engine/validator/组成、candidate与report路径。DSH必需Python/Node/CLI文件缺失则启动前具名拒绝，当前test_serial_writer_e2e.py/pi-ai-wire.test.ts/cli.test.ts等尚缺，不能造当前DSH完整准入。原budget/fee来源未改变。verify_suite_reports开始按固定计划与每个实际report/log引用、前后身份复算；还待原CLI runner及Receipt V2接线、完整反例和实际全套。a01-versioned-plans.log exit0，13passed/4.73s，为计划和报告开发检查，不是全A01。
+
+按模块§2的稳定独立工作面，协作者author_fixture只写新author_page_fixture.py/test_author_page_material.py，已交回写权，5个原compiler/freeze/parser/assessor材料检查passed（协作者命令和exit0已收到，未冒充独立QA）。共享Python协议/validator及TS/build一直为root。作者fixture保留原完整archive/narrative/writer manifest中的technical obligations，原executor的无任务Formalizer结果仅说明作者scope不需要公式，provider.raw来自原offline_provider_response，未用Binder后文本。
+
+主执行者将该材料接同一真实DSH链：v01-author-typecheck/build/stage exit0；provider-author-008（带actual Node机器报告），v01-real-provider-author.log exit0，1场景/79456.13ms，author draft为pending_validation；新进程失去旧cap后恢复同receipt，额外发送0；原ledger调用1/费用17，sentinel closed/正式model与network0，假provider端口释放。原archive历史source_manifest标签只在fixture retained，其任务target身份封实际archive digest+原标签，明确controlled fixture，不提升生产事实权威。
+
+当前无运行测试/DSH进程。后续修report对pytest9实际subtests的显式phase记录（失败仍保留），报告artifact限32MiB而worker JSONL仍1MiB，然后继续A01聚合/CLI与V01拒绝/停止、R04完整矩阵。done仍17，无8006调用/独立PASS。
+
+### A01聚合consumer及原CLI接线（持续开发，未提交QA）
+
+原OfflineSuiteReceiptV1新增schema_version=2.0路径（保留显式1.0 legacy），machine_plan/machine_runs/coverage_failure_code；matches对V2重算实际计划、子报告/原日志SHA/长度、所有节点覆盖、parent counts/config/plan/output摘要，不能相信passed或手填labels。新build_machine_offline_suite_receipt从原reports构造，少suite、坏report/source漂移均failed，历史V1不升级DSH许可。pytest9 native SubtestReport显式记录subtest phase并保留失败；32MiB仅用于机器报告artifact，私有worker帧仍1MiB。
+
+新增suite_runner.py，先重建注册plan，再一次执行每个suite；原Python/validator前后捕获，不重发，独立deadline、owned process group timeout清理只让验证failed，不退款领域费用。Node仍由原网络隔离launcher；真实candidate/root从冻结stage metadata与bootstrap现场匹配，public配置闭合，API密钥不进计划/报告。新owner文件加入原validator来源。原record-offline-receipt默认注册legacy计划，显式--pytest-target仍仅partial并前后核engine/validator；dsh-stage04须当前operator bootstrap/candidate且阶段必测文件齐全，缺项启动前拒绝。当前Dsh完整计划仍因实际缺文件而未执行/未通过。
+
+开发验证：a01-subtests-plans.log exit0，15passed/5.92s；a01-aggregate-development.log exit0，16passed/6.57s；a01-machine-receipt.log exit0，34passed/12.69s；a01-cli-preregression.log exit0，34passed/12.57s；a01-original-cli.log exit0，36passed/14.81s；a01-config-closed.log exit0，36passed/14.59s。聚合正例是UNIT engine树上的真实四个pytest节点，不是当前项目全套回执；包含receipt统计伪造、少suite、同label替换命令、源码/validator/config漂移、日志篡改。实际原CLI单节点只给scope partial/1passed/零coverage labels，DSH缺bootstrap实际CLI exit2且不生成回执。实际源码未有完整V2执行证据，runner timeout/执行中漂移及DSH全部Node失败/CLI情形仍需完成。
+
+当前无运行命令/协作者，root继续独写全部共享代码与构建。stage最新v01-author构建尚未包含后续A01源码身份，历史008证明仅限其当时输入；下一次实际DSH须重新冻结当前组成。下一动作补runner实际失败/timeout、CLI聚合与V01负例/R04取消恢复；随后V02及最终全套/独立QA。17/49保持，8006调用0，无PhaseB–F正式集成。
+
+### V01真实正文拒收费用与A01 runner失败检查（持续开发）
+
+原Parser/assessor抛出的WriterContentRejection保持原拒绝原因；只有原worker捕获该拒绝且原账本已有可信usage，才生成kernel-ingest-rejection费用事实并在原invocation_adapter结算。私有RPC不接受domain_rejection许可，不生成领域receipt、不commit正文；格式/绑定/证据门仍原裁决。v01-rejection-python.log：python -m pytest -q tests/integrations/dsh/test_invocation_events.py tests/integrations/dsh/test_task_recovery.py，exit0，26passed/44.78s。
+
+v01-rejection-typecheck/build/stage最终exit0。第一次typecheck因只设candidate而未设对应C2P_DSH_DEV_ROOT被peer核对拒绝；补原规定的两个环境变量后通过，未重装/换peer。真实同一offline launcher的pi-ai-wire.test.ts：v01-real-provider-rejection.log exit0，1passed/75101.10ms，provider-rejection-009/stage04-provider-hma9Qe；实际原Binder拒绝formula_placeholder_missing，task cancelled/receipt null，original ledger call_count1/spent17/pending0/completed_receipt_count0。新worker丢旧cap恢复拒绝task_mutation_closed，模型发送仍C00校准1+正式1/恢复0；cleanup sentinel closed/model0/network0，假provider端口实际重绑定。完整原始机器报告/Session/raw/wire/SQLite/账本和refusal保留。后续仅加断言明确拒绝原因，并补report读取上限，未把本历史PASS回填新source identity。
+
+A01 runner开发反例a01-runner-failures.log：test_dsh_admission.py，exit0，21passed/10.44s，包括实际Popen deadline清理和运行期间源码漂移，UNIT隔离identity不是当前完整suite。当前完整DSH计划仍缺test_serial_writer_e2e.py/cli.test.ts；A01/V02及R04清理矩阵未完成，独立QA未启动，17/49与8006调用0不变。当前root单写共享源码/构建，无协作者在写。
+
+### A01当前legacy实际聚合与V01 Unicode边界开发
+
+新增read_bound_report声明长度必须1..32MiB，只读取length+1快照并核digest，超长/增长/前缀匹配不能触发无界读取或通过；Node artifact同上限，worker frame不变。a01-bounded-report.log：python -m pytest -q tests/integrations/dsh/test_dsh_admission.py，22passed/10.27s/exit0。
+
+原CLI首次执行当前完整legacy-offline/2：python -c 'from code2paper.cli.agentic_run import method_agent_main; raise SystemExit(method_agent_main())' record-offline-receipt --suite-plan legacy --out /tmp/c2p-dsh-stage04-20261004-ud6x5a4s/legacy-plan-011-receipt.json --output-root /tmp/c2p-dsh-stage04-20261004-ud6x5a4s/legacy-plan-011 --timeout-seconds 1800，cwd当前root，a01-actual-legacy-plan.log exit0；四组真实发现报告606passed/77.78s，schema2.0/passed True/failure empty。结束后原consumer matches当前engine/validator为True；只证明legacy具名范围，不准入DSH。后续源码/本文改变后该receipt成为历史绑定样本，不能拿旧身份许可当前入口。
+
+v01-unicode-typecheck/build/stage exit0。provider-unicode-010首次实际链失败invalid_unicode（v01-real-provider-unicode.log，1failed/57730.49ms）；测试将一个UTF-16 surrogate pair切成两个独立JSON delta，使Native Session中出现单独surrogate，严格wire门拒绝；cleanup worker scope true/sentinel closed0/假port重绑定。未放松门，也不将失败计通过。合法正例改为raw tool JSON中的ASCII surrogate escape中途分delta，同时真实HTTP响应write在中文UTF-8字节中途断开；尚待同一实际链复验。独立API只读发现确认Agent.whenIdle/dispose、worker.waitForExit均不证明in-process/远端provider停止；R04未完成，不释放unknown backend占用。仍17/49，无8006调用。
+
+### V01 Unicode合法边界复验与V02准入owner前置
+
+v01-unicode-repaired-typecheck/build/stage exit0（一次root目录npm未指定prefix退出254，改用原npm --prefix integrations/dsh命令后通过；无peer变更）。v01-real-provider-unicode-repaired.log exit0，1passed/76905.92ms；provider-unicode-012/stage04-provider-hRHreZ实际HTTP中文UTF-8分字节及raw JSON ASCII surrogate escape分delta，原raw/Native Session/strict parser/receipt保存同一中文、emoji、组合字符与换行。typed blocked，original fees17/call1/pending0，新worker恢复0新发送；机器报告和cleanup同根保留。没有给单独surrogate放宽strict gate。
+
+协作者python_host_e2e只写新test_serial_writer_e2e.py，已归还写权，未执行测试/构建/stage。该Python入口拟调用同一实际offline launcher和host-provider.test.ts，再核原机器报告与receipt/预算/恢复/cleanup；当前待主执行者实际执行，不称V01全范围PASS。
+
+新增host_admission.py只读owner，绑定原I01实际composition和A01 schema2.0 dsh-stage04-offline/2真实机器覆盖，对candidate/runtime/effective config/bootstrap/engine/validator/source/report/log重核；平行true具名unsupported，artifact限32MiB、错误不回显bootstrap/secret，返回model_execution_authorized=False，不是live许可/模型permit。已加入原validator来源闭合，compileall及diff-check0；尚待V02 TS操作入口、正负测试及最终DSH全计划回执。该新增文件尚非完成CLI，也未启动模型。当前所有命令已返回，StageA仍in_progress/17done，无8006调用。
+
+### V01 Python入口实际执行结果
+
+主执行者审核并运行新test_serial_writer_e2e.py：python -m pytest -q -s tests/integrations/dsh/test_serial_writer_e2e.py（外层auto-review准许嵌套bwrap命名空间，内层禁网/源码runtime只读不变），v01-python-actual-host-e2e.log exit0，1passed/82.91s。完整链产物/tmp/c2p-dsh-python-e2e-hxvqvlez，实际launcher argv/Node metadata/native节点/manifest均重核，一次C00校准+一次正式blocked Writer、原receipt/费用17/恢复0新发送、cleanup guard closed0及假port释放。仅当前blocked入口场景，不给未测矩阵或CLI完整PASS。协作者写权已释放；当前无运行命令。下一步V02真正opt-in操作入口和准入正负情形，R04父退子活/unknown/迟到完整矩阵仍缺；阶段A6项in_progress，17done不变。
+
+### V02 opt-in实际接线与持久恢复输入检查（持续开发）
+
+新增cli.ts：必须experimentalDsh=true，默认parallel=false/true unsupported；admit命令调用原Python host_admission只读进程，对schema2.0完整dsh-stage04覆盖/当前组成配置重核，坏回执先于bootstrap读取具名拒绝。executeExperimentalWriter真实接startKernelWorker→initialize→prepare→KernelAuthority→runSingleWriter→close，不伪造claim/预算/assessor；准入不是模型许可或live授权，默认产品驱动未切换。当前可执行命令只有只读admit，完整operator run boot入口仍待接通及正例验证，不能登记V02完成。
+
+协作者cli_negative_tests只写新cli.test.ts并交还写权：21个实际staged Node executable的选项/legacy/partial/missing/malformed回执拒绝，检查输出及任务根无变化；未启动测试/build/stage，不能计QA。root独写所有协议、validator、TS/build。TaskStore恢复读取新增JS安全fence边界、state/grant_mode集合及严格claim_lineage格式/数量/唯一性检查，阻止坏持久库换发权限；六个实际SQLite篡改/重开拒绝反例已落地，待聚焦执行。上述文件已compile/typecheck局部检查，尚无完整current CLI/DSH通过证据。
+
+任务板仅V02进入in_progress，现在17done/7in_progress/25planned；StageA完整验收未提交，live0。下一动作冻结当前输入，先跑原task/recovery/admission及CLI可执行负例，再接operator完整run与剩余provider取消/unknown矩阵；最终A01必须重跑当前完整计划。
+
+### V02实际拒绝矩阵及完整operator run接线（持续开发，尚待验证）
+
+v02-admission-task-inputs.log：python -m pytest -q tests/integrations/dsh/test_task_recovery.py tests/integrations/dsh/test_dsh_admission.py，exit0，36passed/17.76s。v02-entry-final-typecheck/build/stage exit0；同一offline launcher实际staged cli.test.ts在cli-refusals-013生成机器报告，v02-actual-cli-refusals.log exit0，21passed/9368.08ms。legacy/partial坏回执在bootstrap之前拒绝，选项非法/parallel=true及unknown均无新任务根产物；这是实际只读admit命令负例，不是完整V02正例。cli.ts与execution-policy.ts新增已落地裁决源进入原validator bundle；旧证据按其旧绑定解释。
+
+后续补齐可执行run及scripts/dsh_dev.py writer实验命令：离线原owner先重核A01/I01和冻结operator launch；启动器保持unshare-net，原prepared task_root可写，bootstrap/launch/receipt与各实际子报告/日志在任务bind之后逐文件只读覆盖，新output为task根fresh direct child。Node实际Loader/profile/公开PiAi adapter→原executeExperimentalWriter闭环，offline policy在operator overlays之后应用，Web URL打印关闭。原bootstrap严格closed字段仅添加可选版本化DshHostLaunchBindingV1；新CLI run必须有该绑定且A01 bootstrap_digest覆盖其bytes_digest/path/length，原worker启动再读固定source核bytes。未给旧bootstrap或offline回执增加live授权，原默认产品路径不改。
+
+当前新增run/worker metadata/launcher读写边界还未实际验证；一次TS类型失败是公开AdapterRegistrationHandle被窄化成普通disposer（缺replace），改为原公开ReturnType后最新typecheck0。新增worker绑定source变化/长度/摘要/extra field拒绝和readonly input边界检查待执行。此前scope读取曾写错bootstrap.context.scope及run_root，已按原bootstrap.scope/artifact_root修正，不能将尚未跑的run当作通过。下一步冻结并验证该批，再补operator准备/最终A01与实际完整CLI正例、剩余R04/V01矩阵。17done/7in_progress/25planned，live0。
+
+### V02最新入口检查、A01有界artifact与真实取消场景（持续开发）
+
+上一批 v02-operator-bootstrap-boundaries.log：原worker protocol/task recovery/admission/dev isolation聚焦命令 exit1，91passed/2deselected/1failed（98.44s）。失败为test_frozen_runtime_has_no_development_dependencies选择旧default root，其package-lock与历史安装身份不匹配；没有重装或改default。只对该失败节点设置规定candidate与C2P_DSH_DEV_ROOT重验，v02-selected-candidate-runtime.log exit0，1passed/4.46s。v02-operator-final-typecheck/build/stage exit0；同offline launcher的cli-operator-refusals-014，v02-operator-actual-cli.log exit0，22passed/9577.91ms，包括run缺冻结launch拒绝。完整operator run正例仍未验证，不登记V02完成。
+
+本轮suite_runner改为1MiB分块流式完整摘要，保留真实artifact长度，原consumer仍拒绝>32MiB。读前/后inode,size,mtime,ctime及路径身份核对，非regular/增长/替换均失败，不使用截断前缀冒充完整日志。host_admission新增nested composition类型/绝对路径检查；writer launcher在原准入后有界重读bootstrap/receipt并匹配准入摘要。a01-streaming-artifacts.log首次exit1，29passed/2failed：流式hash遗漏原digest_bytes的sha256:前缀，真实receipt consumer正确拒绝；修正前缀后a01-streaming-artifacts-fixed.log exit0，31passed/10.17s，包括实际runner成功/timeout/source drift、超大日志完整记录但消费拒绝及坏nested结构。
+
+后续runSingleWriter新增内部AbortController，异常先abort实际delegated transport再task.cancel，不把dispose/idle视为provider停止。新增serial-writer-cancel实际链场景：仅隔离fake HTTP provider，C00后正式请求到达即取消且provider未给usage/terminal，拟验证新worker读取cancelled、无receipt、原pending预留不变、恢复0发送和Python出口哨兵。尚待typecheck/build/stage和真实launcher执行；不宣称R04/V01全矩阵或独立PASS。当前root独写共享代码、无其他写者，17done/7in_progress/25planned，8006调用0。
+
+### R04实际取消复验及operator准备入口
+
+r04-cancel-typecheck/build/stage exit0。首次launcher因传相对tests路径从repo cwd解析不存在，在启动前exit1（provider-cancel-015，没有模型/Host）；改实际绝对路径后provider-cancel-016真实链exit1，1failed/62148.27ms：已完成正式HTTP到达/取消/原pending保留，但恢复无raw时给kernel_receipt_invalid。原预算门没有放行。root修recoverStoredOutput为缺captured_source时kernel_recorded_output_not_ready，不造raw或重发。r04-cancel-repair-typecheck/build/stage exit0；provider-cancel-017真实同链exit0，1passed/63406.01ms（r04-actual-provider-cancel-repaired.log）。原ledger call_count1/pending_input_tokens6602/spent0/completed_receipt_count0/provider_usage_status partial；正式请求到达后abort，fake provider仍监听，任务cancelled/receipt null，新worker丢cap恢复具名不可恢复、ledger逐字段相同、额外send0。结束worker scope独立wait true、guard closed/model0/network0、fake port实际重绑定。未以client abort/worker done当provider静止，也未释放unknown占用。
+
+按长期模块授权拆出稳定独立tests工作面，协作者provider_scope_process_tests只新增provider-scope.test.ts后释放写权，没有执行/build/stage。两条真实ctx.subprocess场景拟检验父正常退出而同范围survivor heartbeat仍增长、独立wait false，再terminate/abort后全新cleanupSignal true。该fixture只证明本地owned helper范围，不证明远端模型provider；API throw/忽略signal等场景仍未覆盖。root审核文件及r04-scope-operator-typecheck exit0，尚待实际执行。
+
+root为完整CLI正例补测试专用operator preparation模式（正常suite默认关闭）：同Host/C00形成真实projection后证明task_not_prepared，冻结launch并将其SHA/length绑定原bootstrap，关闭初始worker；等外部原A01真实全套receipt后调用实际staged cliMain(run)，重新Loader/公开PiAi/原worker闭环，任务epoch从准入后prepare开始。实际config/overlay/profile/offline policy进入I01额外文件来源，test-only sentinel严格只准原worker及host_admission两个固定owner且禁止Python模型/socket。准备模式尚未实际跑，不伪造full passed receipt，不称V02正例完成。DSH固定必需Node集合新增取消/范围测试，最终计划仍须在源码冻结后真实生成。当前无运行测试或协作者写权，下一动作build/stage后执行真实范围场景，再准备operator+最终A01；StageA全矩阵/独立QA仍待，17done/7in_progress/25planned，live0。
+
+R04范围实际执行补记：r04-scope-operator-build/stage exit0；同offline launcher provider-scope-018/r04-actual-managed-provider-scope.log exit0，2passed/2933.06ms。原observations分别记录direct_outcome正常0、wait false/signal aborted、全新cleanup wait true/signal非aborted，heartbeat实际增长再停止；无模型/worker或退款声明。并行独立原Python协议/准入回归a01-operator-protocol-regression.log exit0，64passed/87.06s。上述测试期间无源码/文档写入；root已释放读集，所有命令退出。
+
+准备模式通过launcher新显式test --operator-package传递私有开关，闭合为当前candidate+fresh output+单个actual host-provider.test.ts，普通suite不继承任意C2P测试环境，也不会等待外部receipt。该新flag尚未执行；下一动作先完成operator package准备与实际原A01全计划，在同一离线网络命名空间里跑staged cliMain。外层scripts writer命令仍需单独验证readonly mounts及完整操作路径，不能把同进程cliMain测试冒充外层命令通过。StageA其余错公式/atom/ref/漂移及API异常清理矩阵也仍未完整。
+
+### 当前A01完整计划首次启动及安全停机（未通过）
+
+operator-package-019同实际offline launcher --operator-package，已真实C00、task.read拒绝task_not_prepared、写operator-ready.json/launch绑定并关闭初始worker，未启动正式Writer epoch。根/tmp/.../operator-package-019/stage04-provider-mUHyx7，v02-operator-package.log保留原ready路径。原record-offline-receipt --suite-plan dsh-stage04 --candidate 0.2.0-rc.1+loop-origin.1 --dsh-bootstrap该root/bootstrap.json --out该root/operator-offline-receipt.json --output-root该root/a01-full --timeout-seconds1800启动当前注册完整计划（a01-current-full-dsh.log），Python已真实执行至63%后由owner终止，不形成通过回执/完整机器报告，不把进度计验收。
+
+运行期间只读检查发现旧H01/H02等Host fixture沿共享offline.patch boot，但未覆盖runtime web-app默认printUrl=true，会打印临时认证URL。在Node套件启动前终止本轮，未改冻结来源来让旧计划通过。第一次默认sandbox进程扫描看不到已escalated的owned进程；随后auto-review批准按精确本任务receipt/report/runroot绑定在外层终止owned runner/pytest process group及两个operator Node进程。runner terminal143，operator launcher terminal1，正式模型send0、任务仍未prepare；不能把异常退出当范围/费用释放证据。
+
+释放读集后共享offline.patch只增加web-runtime printUrl=false/openBrowser=false，原所有模型/retry/title/telemetry禁用保留，原日常profile未修改。原CLI DSH bootstrap与stage读取也已复用原准入owner有界reader/类型检查。旧operator包绑定此改动之前源码/overlay，必须新鲜准备，不能拿019续当前组成或修改其回执身份。下一动作检查共享overlay及launcherflag，再新root准备、重新完整A01和实际CLI；R04/V01剩余矩阵、外层writer挂载正例及独立Gate-R/V仍待。17done/7in_progress/25planned、8006调用0、PhaseB–F未正式集成。
+
+共享offline overlay修复后，原真实loader.test.ts+provider-scope.test.ts通过同launcher复验：offline-overlay-020/offline-overlay-actual-loader.log exit0，12passed/6289.71ms。原profile/staging字节保持、模型出口0、父退子活与独立cleanup仍通过；日志检查无dsh web:认证URL输出。原bounded CLI接线test_dsh_admission.py再次exit0，31passed/10.21s（a01-bounded-original-cli.log）；compileall及diff-check0。全部本轮tool handles已返回，无协作者写权。新operator package/完整DSH计划须用下一fresh根重建；019未通过且已终止，不能复用其当前身份，未生成准入成功或正式Writer发送。
+
+### A01当前完整DSH实际结果与收敛修复（持续开发）
+
+新operator-package-021/stage04-provider-Cq7fX6（v02-operator-package-current.log）实际C00及task_not_prepared检查通过，私有准备模式闭合冻结launch，不提前启动300s epoch。原CLI完整dsh-stage04-offline/2，a01-current-full-dsh-second.log terminal1：Python1020passed/466.91s，机器报告实际selected/discovered各1020、deselected0；Node实际200场景，199passed/1failed/0skip/0cancel。真实blocked/draft技术及作者页/research_required/Unicode/取消、三崩溃点lost-cap新worker恢复均在同一当前冻结代码运行。取消原pending6602/spent0/receipt null/恢复0send，其余正常样本费用17/pending0/恢复0send；非法内容样本领域receipt null但费用17结算。
+
+唯一Node失败是dev/toolchain/sandbox.test.ts旧断言C2P_DSH_RUN_ROOT必须candidate/run，拒绝了已交付的fresh /tmp输出；实际网络/只读条件尚未执行到该断言后。原builder保持fail-closed，receipt passedFalse/coverage_failure_code offline_suite_binding_invalid。等待的operator实际cliMain run因此先于bootstrap prepare具名host_admission_full_dsh_receipt_required拒绝（terminal1），原正式task未启动/发送0；不手改回执、父计数或过滤失败。完整报告/原日志/每个真实场景结果都保留，未给Gate-R/V PASS。
+
+读集全部释放后，root修sandbox测试为严格检查实际selected绝对canonical root，默认仍candidate/run；显式输出必须/tmp/task目录，actual root writable、源码runtime readonly、scrubbed env及only lo断言保留。另补原host_admission要求launch config_path/每个overlay都直接属于原I01 files读集，不能用有效composition_digest替未冻结Loader输入授权；当前正例已冻结这些实际输入。新增合法冻结/不同config/不同overlay/相对路径/坏类型反例。该批待typecheck、原admission聚焦及actual默认/显式输出两条launcher复验。当前无live测试/协作者写权，下一新scope才能生成当前A01成功回执；021属于失败且历史输入绑定，未完成CLI正例。17done/7in_progress/25planned，8006调用0。
+
+该批修复复验：a01-fresh-root-typecheck.log exit0；a01-launch-read-set.log（test_dsh_admission.py）exit0，32passed/10.20s；真实launcher同sandbox.test.ts显式输出sandbox-explicit-022及原candidate默认run分别exit0，2passed/162.09ms及2passed/159.31ms（a01-actual-fresh-root.log、a01-actual-default-root.log）。原source/runtime W_OK拒绝、credential/proxy scrub、only-lo、local fixture server均执行并保留。读取失败021原dsh-tasks.sqlite3（mode=ro）实际tasks count0，确认拒绝在任务创建前；未将失败回执改passed。
+
+当前所有计划/Host/聚焦工具handle均terminal，无独立QA读集/协作者写权。原完整021虽然Python1020和Node其余199行为已观察，仍整体失败，不是当前修复代码的成功准入。源码和文档修复后必须新的operator scope/A01机器报告，不能从旧报告改argv/计数/身份凑成功；剩余V01/R04矩阵及外层writer正例继续按原阶段交付。17/49不变，未处理具体L01 live准入。
+
+### Stage A recovery and real Host fault matrix (2026-10-04, continuing)
+
+- Added `tests/integrations/dsh/test_host_recovery_boundaries.py`: real private worker/process ownership, 14 parent cases and 56 prepared-read-set subtests. Explicit UNIT projections/Session and injected adapter observations do not prove provider arrival or native Session behavior. All 14 bound references are damaged/restored at reserve and adapter-entry; original fees remain unchanged. Includes wrong epoch, cancelled original epoch late fee-only settlement, composition drift, and authorized original receipt replay.
+- Initial command `python -m pytest -q tests/integrations/dsh/test_host_recovery_boundaries.py` exited 1: 12 passed, 56 subtests passed, 2 failed in 76.90s. Original replay still unnecessarily read the damaged private section to locate its reservation.
+- Repaired original `invocation_adapter.py`: local recorded request resolution uses the durable captured request ID and its original plan row, validates claim lineage/contract/epoch tuple; reserve and adapter-entry still require complete current read-set/composition. No second fee ledger or weakened send gate.
+- Regression `python -m pytest -q tests/integrations/dsh/test_host_recovery_boundaries.py tests/integrations/dsh/test_invocation_events.py` exited 0: 32 passed, 56 subtests passed in 115.18s; `/tmp/c2p-dsh-stage04-20261004-ud6x5a4s/a-recovery-boundaries-repaired.log`.
+- Extended actual Host/provider fixture and six wrappers: foreign formula package, foreign atom witness, cap drift, zero Writer call budget (original frozen profile/envelope), and missing/corrupt original raw capture. Provider arrival counts distinguish C00 calibration from formal dispatch. Raw damage cannot grant domain completion or clear original occupancy simply by restoring bytes. These new Host scenarios have NOT yet passed execution.
+- Registered the new Python recovery file and all six Host fault wrappers in the mandatory full DSH offline plan. Current selected candidate typecheck/build passed; stage pending at this record. No full A01 replacement receipt, independent Gate-R/V, L01 authorization, live probe, or Stage A completion. Task board remains 17/49 done.
+
+- Actual selected-candidate stage exited 0. Six real Host tests via original `scripts/dsh_dev.py test` in fresh `host-fault-matrix-023` exited 1: 3 passed / 3 failed, zero skip/cancel, 356.88s. Foreign formula, raw corruption, and raw absence passed. Atom was correctly rejected by original `publication_paragraph_transaction_failed:unknown_atom_witness` (test expected a different owner name). Cap drift and zero budget had actual native Session errors `writer_cap_mismatch` and `unified_invocation_budget_exceeded:calls:writer:1>0`, with no formal HTTP arrival; Host masked both as `host_single_terminal_required`.
+- Repaired `workflow-driver.ts` to retain the first actual trusted pre-request/adapter gate error when native Agent resolves without a terminal. No domain authority comes from this error; the same cancellation and cleanup owners apply. Corrected atom expectation to the actual original transaction owner. Added actual Host composition drift of the per-task frozen config, refusing before claim/provider, restoring config only for a fresh reader. New seventh wrapper mandatory in A01. Repair rerun pending; full A01 and independent acceptance still incomplete.
+
+- Fresh actual Host repair run `host-fault-matrix-024` exited 1: atom/cap passed; budget/composition failed (183.88s). Budget error originates at the real Python `reserve`, after pre-request material recording; extended the same private Host error retention across actual recorder reserve/dispatch calls. Composition refusal correctly left the durable task in `outbox` (no claim); corrected the expected state from `prepared`. Strengthened cap scenario to mutate the actual native stream request's maxTokens after C00, retaining the original immutable projection. All three boundary cases rerun pending; no gate completion.
+- Mandatory-plan regression `python -m pytest -q tests/integrations/dsh/test_dsh_admission.py` exited 0 (32 passed, 10.21s). A preceding mistaken command also named nonexistent `test_offline_cli_plan.py`: exit 4/no tests; not counted as verification. Logs `a-fault-plan-admission*.log` preserve both.
+
+- Fresh three-boundary run `host-fault-matrix-025` exited 1 (109.08s): zero budget and actual frozen config drift passed. Stronger cap test failed because the actual native GenerateOptions object is immutable; attempted property assignment threw before the accounting seam. This is test construction failure, not proof of a cap-gate pass. Replaced that injection with the public `agent/request` configuration waterfall returning a changed cap; actual native stream and frozen projection remain observable. Cap alone pending rerun.
+
+- Actual public waterfall cap run `host-cap-waterfall-026` exited 0: 1 passed (original launcher, real candidate, private worker, real native stream). Frozen cap is 4096, actually observed formal native request cap is 4095, Host returns original `writer_cap_mismatch`, provider arrivals remain C00-only (formal sends 0), no reservation/cost/receipt, fresh worker reads cancelled state. Typecheck and patch hygiene exit 0. All seven new Host fault behaviors now have actual passing evidence across their bound runs; complete current A01, full static regression, executable positive CLI and independent whole-Stage-A Gate-R/V still pending. No 8006 probes or live calls.
+
+- Full static attempt 027 was interrupted with exit 2 after a launcher mistake: --basetemp parent directory had not been created, so tmp_path fixtures raised FileNotFoundError (63 passed, 193 fixture errors, 3 live tests deselected, 66.45s). Only the owned pytest process matching exact argv and unique 027 path received SIGINT; its tool handle is terminal. No result is accepted from this attempt. Fresh 028 parent is explicitly created before the corrected full static run, with live_llm excluded and selected candidate environment.
+
+### Stage A current full static checkpoint (2026-10-04)
+
+- Corrected full static command (selected candidate environment, fresh explicitly-created parent): `python -m pytest -q -m 'not live_llm' --basetemp /tmp/c2p-dsh-stage04-20261004-ud6x5a4s/phaseA-static-028/pytest --junitxml /tmp/c2p-dsh-stage04-20261004-ud6x5a4s/phaseA-static-028/static.xml`. Exit 0: **4448 passed, 3 deselected, 7 warnings, 68 subtests passed in 1329.87s**. Log `a-current-full-static-corrected.log`; actual JUnit under `phaseA-static-028`. Deselection is explicit live_llm exclusion, not a full DSH coverage receipt. The earlier 027 fixture-directory failure remains separate and rejected.
+- `python -m compileall -q src tests` exit 0; `git diff --check` exit 0. No model probe/call. A read-only exact-argv process diagnostic found no matching process because pytest had already exited; no signal was sent by that diagnostic and no quiescence/model claim was inferred.
+- `/tmp/c2p-dsh-stage04-20261004-ud6x5a4s/phaseA-seven-fault-evidence-index.json` binds individual passing historical runs for all seven faults to original result/cleanup/provider-observation bytes and lengths. All seven actual cleanup records observed worker scope exit and rebind of their own fake provider port, Python sentinel model/network calls zero. Raw damaged results retain their original pending fee/reservation and no domain receipt; known content refusals settle cost but do not publish accepted domain output. These are scoped observations, not remote-model scope proof or independent gate completion.
+- Next is a fresh actual original full `dsh-stage04` A01 receipt and bound positive CLI package. Source/docs remain frozen during those identity-sensitive runs. Old full 021 failed receipt cannot be reused. Complete Stage A independent Gate-R/V remains pending; task board **17/49 done** unchanged, long module active, Stage B L01 and formal C–F integration unadmitted.
+
+### A01 full attempt 029 and executable proof repair
+
+- Fresh original full dsh-stage04 attempt 029 exited 1; genuine receipt passed=false, exit_code=124, offline_suite_binding_invalid. Python machine run exited 0 (1035 passed, 56 subtests); Node run exhausted the shared 1800-second whole-plan deadline after 186 observed passes, before raw_missing and final summaries. This is incomplete coverage, not a passing stage. Engine, validator and composition before/after remained identical; original operator admission refused (exit 2) and its SQLite tasks count remains 0. Both runner/operator handles terminal; no unknown occupancy was released from elapsed time or process exit. Bound originals remain under operator-package-029/stage04-provider-TNC748/a01-full.
+- Read-only CLI scope audit (phasea_cli_scope_audit) distinguishes direct cliMain operation contract, actual executable entry, and outer writer mounts. Replaced the operator fixture function call with asynchronous actual staged Node cli.js invocation, observing OS exit code, original receipt and fresh-worker readback while its own fake HTTP remains responsive. It preserves unshare-net and key scrubbing; no arbitrary environment forwarding to the outer launcher or NODE_OPTIONS injection. The outer writer end-to-end positive is not claimed by this fixture.
+- Operator preparation wait increased from 2400 to 4800 seconds solely to allow a complete original offline suite. Next full-suite total harness deadline is 4200 seconds (original CLI default 7200); task epoch/300-second Writer deadline, usage budgets, retry zero, mandatory discovery and fail-closed admission unchanged. Current test change requires new source binding/fresh package and receipt. Independent whole-stage Gate-R/V and L01 remain pending; count remains 17/49.
+
+- Actual physical operator mount test via selected-candidate pytest exited 0 (1 passed/25 deliberately unselected, 2.01s), a-actual-operator-mounts.log. Inside real bubblewrap, all five task-root input/report/log files reject append with EROFS, own probe output writes successfully, repository/runtime readonly and network only lo. This proves mount boundary only, not outer Writer domain execution.
+- API-fault injection and executable negatives in fresh host-wait-cli-030 exited 1: 22 executable negatives passed, cancellation test failed solely on its new resend refusal expectation (task_claim_held observed, expected task_mutation_closed). Actual injected wait error rejected close and retained pending6602/spent0, fake provider still listening; original claim remains held and blocks fresh claim before mutation-state check. Corrected test to original task_claim_held owner; rerun pending. Actual provider quiescence is not inferred from API injection or worker exit.
+
+- Corrected actual cancellation/wait-API-fault run host-wait-fault-031 exited 0 (1 passed, 0 failed/skipped/cancelled, 66.38s), a-wait-fault-corrected.log. close throws under injected wait failure with its own fresh bounded cleanup signal; original fee state remains pending6602/spent0 and receipt null, original claim refuses resend, new worker settlement-only recovery sends zero. The real fake provider stays listening/unfinished until separate fixture-owner cleanup; cleanup of worker/helper ranges is not remote-model proof. Prior 030 expectation failure is retained separately.
+- All current tool handles and scope reviewer are terminal/released. Freeze current source/docs for fresh operator package 032 and full A01 at total suite timeout4200 seconds. Actual executable positive is a separate same-frozen-code operation result after original A01 admission; normal suite discovery is not claimed as execution of private operatorMode. Full static 028 is historical full-static evidence of production changes; subsequent additions are test-only, with current full A01 covering all altered tests. Complete independent AT matrix and whole-stage Gate-R/V remain required. No live model authorization/probe or later-stage integration.
+
+### Stage A independent review and mandatory V02 coverage repair
+
+- Fresh 032 original full A01 exited 0: Python1036 passed/56 subtests (546.33s), native Node207 passed/0 fail/skip/cancel (1324.66s), original receipt1243 passed, engine/validator/composition before/after equal. Separate actual staged cli.js run OS0 completed full original admission/Host, task epoch after admission, C00 calibration1/formalHTTP1, original blocked receipt and fresh-worker readback. Source pin c565d75054928cb4498885b0bd919978b68050d771d2a0216fb71a7193c60566, validator82476b1d399bc3fc165f4501e0f2dabe5e668df524c5eada47429c8031a93724. External finalized package phaseA-submission-032 indexes1379 artifacts; its first external indexing attempt failed on metadata rows without type, repaired as report-format handling only, then exited0. No production source changed during the package.
+- Independent review /tmp/c2p-dsh-independent-stageA-20261004-rv/review.md: **Gate-R PASS; Gate-V CHANGES_REQUESTED**. Independent Python82+56subtests, nativeNode28, actualoutermount1 all exit0; whole source/validator/composition and1379 evidence items stable. Only finding QA-V02-COVERAGE-1: actual CLI positive was outside final A01 machine plan, so missing/failed positive would not invalidate its passed flag. All reviewer handles terminal, owned verification processes0, complete read-set explicitly released. Root accepts and repairs; 032 remains its original historical scope/identity, not promoted or rebound. Whole-stage A not complete; board17/49 unchanged, no live grant/probe/C-F.
+- Repair decision: retain normal entry full-final-receipt-required. Add a separately named complete core verification scope and narrow offline qualification entry, bound to actual OS network namespace and frozen loopback provider plus original registered launcher/Host/fee/domain chain. Core proof cannot grant normal entry, live or final Gate-V. Original suite owner starts actual operator preparation, runs Python+Node core, records core evidence, waits for actual executable qualification/report/ledger/reader/cleanup, then aggregates **all three actual runs** into final stage receipt. Final plan/consumer must reject missing/failing/skipped/tampered/foreign CLI run, output, ledger, source or cleanup. No test-env authority, stub admission or bare operator-result audit node. Modified owner/validator require fresh source-bound core/operation/final execution; old032 is not reusable current admission.
+- Implementation ownership remains root for shared Python protocol/validator/plan/runner/CLI parent; TS CLI/fixture may be delegated only after concrete interface is recorded, with no shared build/stage writes during tests. Production runtime/SDK/sampling are unchanged by this repair. Current L01 profile compatibility/tokenizer differences remain unverified and unapproved; prepare concrete scope only after Stage A closure.
+
+### Stage A / V02 independent finding repair — 033 implementation, verification pending
+
+Independent 032 verdict remains Gate-R PASS / Gate-V CHANGES_REQUESTED (QA-V02-COVERAGE-1), bound to its unchanged historical artifacts. Reviewer released all input files. Current repair implements registered `dsh-stage04-core/3` and `dsh-stage04-offline/3`: the original CLI owns fresh isolated preparation, captures actual parent network namespace, executes the complete core suites, writes a genuine original core certificate, and waits for the actual staged `cli.js qualify` process and native Node machine report. The final plan requires Python, Node and node-cli runs. Normal `admit`/`run` still require the final scope; core qualification additionally requires a distinct actual OS network namespace with loopback only and frozen literal loopback provider routes. Neither certificate is a model authorization.
+
+New original validators `qualification.py`, `operator_evidence.py`, `operator_suite.py` are registered only after landing. Final aggregation binds exact launch/ready/bootstrap/core/result/stdout/stderr/sentinel/cleanup/database bytes plus complete original run and budget dependency trees. It reuses the original budget reader and a read-only TaskStore observation using the original metadata/row guards/decoder; observation does not create task stores, leases, journals or grants. Missing executable coverage, source changes, incomplete/tampered manifests or unfinished native outcomes remain failures. Local cleanup evidence does not prove a real provider stopped or refund unknown work.
+
+Observed this repair: focused `python -m pytest -q tests/integrations/dsh/test_qualification.py tests/integrations/dsh/test_dsh_admission.py tests/integrations/dsh/test_task_recovery.py` exit0, 77 passed / 18.94s, log `/tmp/c2p-dsh-stage04-20261004-ud6x5a4s/v02-repair-focused-033.log`; includes actual bwrap network namespace test and unchanged database observation test. Initial TS typecheck found TS2322 (indexed JsonValue undefined); fixed by returning already validated qualification scope literal. Subsequent typecheck exit0 (`v02-ts-fix-typecheck.log`), actual build exit0 (`v02-repair-build-033.log`), candidate-only stage exit0 (`v02-repair-stage-033.log`). No default candidate replacement, no L01/8006/probe/model request. No new whole-stage PASS asserted. Task board remains 17/49; Stage A seven items require fresh complete machine chain, regression and independent review before done.
+
+The next fresh source freeze includes this record. Full static and managed Stage A verification outputs will be written only to fresh `/tmp` paths. During those reads no source, docs, stage or composition input edits are allowed; subsequent necessary repairs first require all affected owned readers to finish/release, then create a new bound evidence run. The 032 receipts will not be relabeled or rebound.
+
+### Stage A / V02 033 review blockers, original failed run, and fresh-target repair
+
+The independent early review `/tmp/c2p-dsh-v02-prereview-033/stage04-v02-code-review.md` found four evidence defects plus a cold-entry architectural blocker. Managed 033 was deliberately stopped through only its positively identified owned core subprocess groups; the original manager remained alive to record the actual failure and clean its own operator. Original CLI terminal exit1, final receipt `passed=False`, `coverage_failure_code=offline_required_suite_missing`, no positive final coverage/cold normal result. Exact owned-process/stop records remain under the 033 `/tmp` root. No model run or L01 probe occurred. The separate full static reader finished normally: `C2P_DSH_CANDIDATE=0.2.0-rc.1+loop-origin.1 C2P_DSH_DEV_ROOT='<repo>/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1' python -m pytest -q -m 'not live_llm'`, exit0, **4479 passed / 3 deselected / 7 warnings / 68 subtests / 1311.93s**, `v02-repair-full-static-033.log`. This result binds pre-034 source and is not the final current qualification. All those readers released before repairs.
+
+Already repaired: final original accounting requires successful status, empty failure codes, completed=1/pending=0, validated usage with no missing receipt/call/token facts, positive spend and no pending tokens; sentinel must have the recognized schema and closed state with strict integer zero counters; the recorded Python owner must equal the frozen launcher. The expensive complete core verification is isolated in one private helper solely to permit bounded semantic UNIT regressions. The top-level final validator tests use real byte/tree identities, original TaskStore APIs, and original invocation-event/ledger APIs, and rebind bytes after semantic mutations so failed status is genuinely reached. `test_operator_evidence.py` exit0 **27 passed / 3.16s**, `v02-semantic-focused-034.log`; its upstream UNIT isolation is not a passing complete certificate or native-run artifact. Actual bad original plan data produces `status=fail` while preserving call1/spent70/pending0, demonstrating the previously missed rejection condition.
+
+The further HIGH blocker is confirmed in the normal CLI path: the 033 final certificate binds the already-terminal qualifier bootstrap. Normal root claim then fails; changing to a fresh task/bootstrap fails the exact certificate/config binding. Terminal replay is not a cold operational positive. The next in-direction repair retains conjunctive gates rather than relaxing fact or receipt matching:
+
+- Original final A01 coverage revalidates its exact immutable source/validator/native suites/qualifier artifact dependencies on every use.
+- A versioned explicit stable authority projection contains all registered runtime file/tree identities, versions/protocol, candidate, and the exact qualified model/options/provider configuration/backend resource. Missing or unknown composition keys fail. Target-local launch/config/overlay files and task/artifact/backend roots are not silently deleted from identity; they are fully frozen and validated by a separate original Python target-specific admission, including original full read-set, projection/measurement, budget envelope and empty durable initial state.
+- A fresh target requires the exact qualified offline model/options/baseURL/backend resource and an actual distinct loopback-only OS namespace. A different live profile requires the separate L01 permit; neither environment flags nor the Stage A certificate authorize 8006/Qwen.
+- The qualifier must exit and complete native reporting/cleanup before coverage issuance. A second fixed isolated package then rebinds the exact same numeric fake-provider port in its fresh namespace, creates a distinct execution/root, consumes the genuine final coverage, and runs the actual normal `cli.js run` with original target admission before task/epoch creation.
+- A separately registered cold-use companion binds the coverage, target permit, actual command/native report, original receipt/reader/ledger/provider/ns/sentinel/cleanup. It cannot be recursively included in the certificate it consumes. The original CLI’s overall success requires both complete coverage and this cold normal result; Gate-V evaluates both. Unknown/missing/failed companions remain failed, not Stage A completion.
+
+This repair follows original Python composition, fee and domain owners and preserves the single-request Stage A scope. No shared scheduling, multi-step or Research/Authoring migration is advanced across its prerequisite gates. The task board remains **17/49** until the complete current Stage A package obtains independent Gate-R and Gate-V PASS.
+
+### Stage A / V02 034 fresh-target and cold-use implementation (acceptance pending)
+
+Current repair landed original-owner `target_admission.py`, registered `coverage_use.py`, read-only original artifact/task/backend APIs, and normal CLI `DshTargetAdmissionV1` consumption. The immutable complete certificate is checked twice against original qualified materials; the fresh target separately rebuilds original input/projection/read-set/envelope and requires empty task/budget state. Exactly three owned local files follow the explicit byte/overlay relocation contract; all twenty shared files, three runtime trees, versions/protocol, model/options/provider route/backend resource remain exact authority. The normal fake provider binds the exact qualified numeric loopback port in a new OS namespace. Original `record-offline-receipt` now requires complete final coverage and the separate actual cold normal use; both consume one whole CLI deadline. Native coverage cannot recurse through its own consumer. Missing deadline or companion remains failure.
+
+Observed: focused original owner 034b command `python -m pytest -q tests/integrations/dsh/test_operator_evidence.py tests/integrations/dsh/test_target_admission.py tests/integrations/dsh/test_dsh_admission.py tests/integrations/dsh/test_qualification.py tests/integrations/dsh/test_task_recovery.py` exit0 **143 passed / 19.94s**, `/tmp/c2p-dsh-stage04-20261004-ud6x5a4s/v02-owner-focused-034b.log`; initial034 failed18 predicates because extracted helper lacked local task_root and target wrapper checked launch before core/fullscope. Both repaired; initialfailed log retained. Native TS typecheck/build exit0; build outputs digest `5a75080dd954791480b99d7a918022d2b5ea64648766b5b34f91f0976b1f1444`, candidate-only stage exit0 build receipt `eded0ab3d07b2f0e64aa05dbf9deae4067e7982d4659fad2861f9e9d867562f0`. Current build targets only existing loop-origin candidate; no default cutover.
+
+Actual native CLI negatives: original `python scripts/dsh_dev.py --candidate 0.2.0-rc.1+loop-origin.1 test --output-root /tmp/c2p-dsh-stage04-20261004-ud6x5a4s/native-cli-034b --report-path /tmp/c2p-dsh-stage04-20261004-ud6x5a4s/native-cli-034b/node-events.jsonl <repo>/integrations/dsh/tests/cli.test.ts`, exit0 **25 passed / 0 failed/skipped/cancelled / 11.07s**, `native-cli-034b.log`. Initial filesystem-sandbox invocation denied NETLINK_ROUTE before any native test; original offline launcher reran with approved escalation, preserving unshare-net/read-only mounts. New `test_coverage_use.py`: `python -m pytest -q tests/integrations/dsh/test_coverage_use.py` exit0 **87 passed / 1.12s**, explicitly UNIT schema/rejection contracts, no manufactured complete certificate/native proof.
+
+New target integration test uses actual bwrap loopback-only namespace and original I01/frozen artifacts/input/projection/task/backend/ledger APIs. Only upstream complete-certificate checker is UNIT-isolated; syntax-only upstream fixture is never coverage evidence. Corrected focused six cases exit0 **6 passed / 14.74s**, `/tmp/c2p-target-admission-unit-fixed.log`: readonly admission, model/options/provider drift, actual prepared task and original spent budget refusal; byte and mtime inventories unchanged across admission. Initial sandbox denied namespace creation; next run discovered prepare fixture had not invoked original TaskStore.prepare, repaired only the fixture, retained initial failed observations. These six cases were incorrectly written over the existing39-case untracked test file; recovery is in progress and integration is being separated into `test_target_admission_integration.py`. Existing invariant coverage must be restored before final source freeze.
+
+No current whole-stage acceptance is claimed. Full static033 remains historical; fresh complete current machine chain, cold normal companion and independent Gate-R/V remain pending. Count **17/49**, no L01 probe/model/live grant, no formal C-F integration.
+
+034 pre-review freeze: original39-case test file restored exactly from original worker creation history, 9012bytes SHA256 `8ce532130dc2375357e162cfedefda4704f1ac4440c5903348c91156dc81f713`; preserved `/tmp/c2p-target-admission-original.py`. Integration cases moved to independent file, helper import updated. Actual combined focused `python -m pytest -q tests/integrations/dsh/test_target_admission.py tests/integrations/dsh/test_target_admission_integration.py` exit0 **45 passed / 14.99s**, `/tmp/c2p-target-admission-restored-and-integration.log`. Mandatory original plan includes both plus coverage-use UNIT tests, not invented native proof. Final repaired owner checks `python -m pytest -q tests/integrations/dsh/test_operator_evidence.py tests/integrations/dsh/test_dsh_admission.py tests/integrations/dsh/test_qualification.py tests/integrations/dsh/test_task_recovery.py` with selected candidate env, exit0 **104 passed / 19.95s**, `v02-owner-final-focused-034.log`. Compileall scoped src/tests DSH and `git diff --check` exit0. All focused readers terminal/released. Freeze current code/docs/build/stage for independent target/companion pre-review; source may change only after reviewer explicit release. Fresh whole-chain and full static still pending, no current full Stage A PASS.
+
+### Stage A / V02 034 independent BLOCK and production mount repair
+
+Independent pre-review `/tmp/c2p-dsh-v02-target-companion-prereview-034/stage04-v02-code-review.md` returned BLOCK/REQUEST_CHANGES on frozen ef88e7e/aef85c79 and released all reads before edits. HIGH1: `--tmpfs /tmp` masks final certificate/qualified bootstrap/core/report/output/original run and budget dependencies from the cold normal launcher; focused target UNIT uses another mount shape and did not prove this production boundary. HIGH2: public `dsh_dev.py writer` calls fresh target admission before unshare-net, deterministically failing the OS namespace guard, and then selects bare pyworker instead of frozen guarded launcher. MEDIUM: schema helper tests do not replace real launcher closure tests. These are accepted defects, not successful cold-normal evidence. Full-chain execution deliberately withheld until repairs.
+
+Repair ownership: root owns original Python validator list, coverage transport helper, plan and records; cli_negative_tests owns scripts/dsh_dev.py and affected integrations/dsh/dev/tests/test_development_environment_isolation.py / test_dsh_admission.py tests, with no TS/build/validator edits. `offline_inputs.py` now calls the exact original full-qualified certificate/I01 verifier in the ordinary namespace solely to derive transport dependencies; it grants no target/Host/model/task authority. Enumerated read-only closure includes actual reports/output, every operation evidence file, full original run/budget directories plus bound leaves, and full I01 files/trees. Fresh task admission remains inside the actual isolated normal CLI. No namespace guard or fact gate is removed; the exact frozen guarded launcher is passed to execution. Physical production sandbox tests must prove the closure is readable/readonly and unrelated /tmp hidden while only the fresh task root is writable.
+
+Root bounded transport UNIT verification `python -m pytest -q tests/integrations/dsh/test_offline_inputs.py` exit0 **14 passed / 1.06s**. Only pure closure enumeration and genuine default failed-receipt rejection are tested; transport fixtures have no passing certificate schema/flag, native report or grant. Full native operation remains pending. Validator registration includes actual new helper; mandatory Python plan includes actual new test file. Stage A remains incomplete, count17/49 unchanged, goal active, no L01/model/probe/C-F formal integration.
+
+035 launcher repair observed: original `sandbox_command` now mounts canonical read-only files/directories and rejects directory ancestors of writable target roots; registered normal test launch passes complete closure before output creation. Public writer parent verifies only complete original coverage and immutable target I01/launch transport; no parent target admission. Actual inner normal CLI performs the full original fresh-task/ns gate before Host boot using exact frozen launcher. All shared runtime and qualified proof mounts are readonly; only the owned target root remains writable. Affected worker tests route the complete closure and explicitly fail if parent calls either normal admission function. Worker focused routing4pass/23deselected1.21s; returned all files before root physical run.
+
+Root actual physical/routing command `C2P_DSH_CANDIDATE=0.2.0-rc.1+loop-origin.1 C2P_DSH_DEV_ROOT='<repo>/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1' python -m pytest -q integrations/dsh/dev/tests/test_development_environment_isolation.py -k 'operator_inputs_are_readonly or writer_parent_transports or node_machine_report_route or scoped_output_bind or actual_operator_mounts'` exit0 **5 passed / 22 deselected / 3.16s**, `/tmp/c2p-dsh-stage04-20261004-ud6x5a4s/v02-physical-closure-035.log`. Real original bwrap retains external/tmp certificate and nested directory under tmpfs, rejects append/create/delete with EROFS, hides unrelated/tmp, observes onlylo and readonlysource/runtime, and writes fresh ownedoutput. This is physical transport evidence only, not fabricated coverage/native Writer success. No TS changes/rebuild since current staged034 bytes; no model/live probe. Complete genuine managed finalcoverage→coldnormal chain and whole-stage independent gates still pending. Refreeze all source/docs/stage after this record for same independent reviewer.
+
+### Stage A / V02 035 runtime authority blocker and 036 full profile/bundle repair
+
+Independent 035 review `/tmp/c2p-dsh-v02-target-companion-prereview-035/stage04-v02-code-review.md` confirmed all034HIGH/MEDIUM repaired, then found a HIGH composition gap: actual `loadProfileDirectory` reads package.json/cordis.patch.yml and the normal executable imports stagedcli/transitive modules not directly bound by prior partial I01; broad DEV_ROOT writable mount could change them after parent staging check. Reviewer released all reads before repair.
+
+Current authority schema explicitly adds `host_profile_package`, `host_profile_patch` and complete `host_profile_runtime`, `staged_bundle` trees; the stable shared projection now binds22files and5trees plus the same3explicitrelocatablelocals. Real Host fixture supplies the actual candidate profile directory and complete staged bundle. Original generic I01 inventories and hashes their actual members; runtime projection compares complete entries/digests, no new filtering or known-answer authority. Offline original sandbox remounts all candidate DSH_HOME/profiles and existing PYWORKER read-only afterDEV_ROOT mutable state bind and refuses writableoutput overriding a protected directory. Setup/install offlineFalse unaffected. Worker ownership remainedscript+devtests only; returned all writes before verification; root owned targetconstants/nativefixture/newdrifttests/sharedvalidator/records. No new fee/domain owner.
+
+Observed `C2P_DSH_CANDIDATE=0.2.0-rc.1+loop-origin.1 C2P_DSH_DEV_ROOT='<repo>/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1' python -m pytest -q tests/integrations/dsh/test_offline_inputs.py tests/integrations/dsh/test_target_admission.py tests/integrations/dsh/test_target_admission_integration.py integrations/dsh/dev/tests/test_development_environment_isolation.py -k 'not actual_app_sandbox and not development_runtime and not runtime_manifest and not compatibility and not generated_profile and not smoke'`, exit0 **92passed / 2deselected / 25.08s**, `v02-runtime-closure-focused-036.log`. Includes actual physicalprofiles/staged CLI/transitive/Pythonreadonly EROFS and unknownprofilefilecreate refusal, complete closure mount/tmpfs proof, and original I01 genuinebyte drift for profilepackage/profilepatch/stagedcli/transitivemodule/newmodule. Drift tests separately assert treeidentity changed while engine/validator equal so refusal is genuinely runtime-material drift. Target original39 grows to41 via two new stablefiles; six readonlyoriginaltarget integrationcases remainactualnamespace tests. Native TypeScript typecheck exit0 `v02-runtime-typecheck-036.log`; changes are fixture-only on TS side, existing staged034productionlib bytes unchanged, no new default/stage activation.
+
+Actual offline original Host under readonly profiles/Python, fullnewI01, and isolated fakeprovider: `python scripts/dsh_dev.py --candidate 0.2.0-rc.1+loop-origin.1 test --output-root /tmp/c2p-dsh-stage04-20261004-ud6x5a4s/native-runtime-036 --report-path /tmp/c2p-dsh-stage04-20261004-ud6x5a4s/native-runtime-036/node-events.jsonl <repo>/integrations/dsh/tests/host-provider.test.ts`, exit0 **1passed /0failed/skipped/cancelled /78.34s**, `native-runtime-036.log`; actual technicalblocked original receipt with fresh-process recovery. Original reader observed statuspass/call1/completed1/spent17/pending0 and cleanupwritten. This is single native regression scope, not current complete certificate/cold-normal/gate proof. Outputactualroot `native-runtime-036/stage04-provider-T8onl0`. No model/probe/L01, no formalC-F. WholeAcode-review/fullstatic/genuinefinalcoverage→coldnormal/independentGateR-V pending; board17/49 unchanged.
+
+### Stage A / V02 036 Python identity blocker and 037 repair
+
+Independent036 `/tmp/c2p-dsh-v02-target-companion-prereview-036/stage04-v02-code-review.md` confirmed035profile/stagedruntime repairs; sole remaining HIGH: frozen guarded launcher executes candidate pyworker/bin/python while I01 omitted the interpreter alias/canonicaltarget andpyvenv.cfg. Reviewer explicitly released all reads before changes. Added stable `python_executable` from the actual guarded command path and `python_environment` from actual pyvenv.cfg. Original I01 captures alias/path/resolvedtarget/content/symlink facts; exact shared authority now contains24stablefiles/5trees andsame3localrelocation. Original fullclosure resolves and readonlymounts the canonicalbinary/config, while completevenvreadonly protects the invoked alias. Actual nativefixture supplies these real paths, not inferredversions. Foundation hostfilesystem remains originalreadonlyroot.
+
+Bounded UNIT originalI01 drift negatives now separately retarget the Python symlink to equalbytes, mutate canonicalinterpreterbytes, and changevenvconfig. Each asserts changedoriginalfileidentity with equalengine/validator and actualoriginal `composition_drift`, no passingcertificate/Host fabricated. Focused `C2P_DSH_CANDIDATE=0.2.0-rc.1+loop-origin.1 C2P_DSH_DEV_ROOT='<repo>/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1' python -m pytest -q tests/integrations/dsh/test_offline_inputs.py tests/integrations/dsh/test_target_admission.py tests/integrations/dsh/test_target_admission_integration.py` exit0 **71passed /17.21s**, `v02-python-identity-focused-037.log`. Typecheck exit0 `v02-python-identity-typecheck-037.log`. Source changes are originalauthority/nativefixture/tests; stagedproductionlib034unchanged. Compileall scopedsrc/scripts/tests anddiffhygiene exit0. Refreeze after thisrecord for boundedindependentreview; fullstatic/genuinecompletecoverage+coldnormal/wholeGateR-V remainpending. Count17/49, no model/live/L01probe, noC-Fformalchanges.
+
+
+### Stage A / V02 037 observed full verification and 038 qualifier transport repair
+
+Frozen037 source72bc7360b967ac3cd0701274f4559e75b4946f77242c5eddc2883af984ce059f / validator67c0a800ed33673659e8c80e4a1641fb86d8636cbe9ac4c2a0f28d579dafbc57 independently APPROVE in /tmp/c2p-dsh-v02-target-companion-prereview-037/stage04-v02-code-review.md. On that unchanged source, candidate-bound `python -m pytest -q -m 'not live_llm'` exit0: 4664passed,3live-deselected,7warnings,68subtests,1329.87s; log v02-final-full-static-037.log under /tmp/c2p-dsh-stage04-20261004-ud6x5a4s. Source and validator after full static matched frozen037 exactly. These are observed static results, not whole-stage acceptance.
+
+Original `method_agent_main record-offline-receipt --suite-plan dsh-stage04 --candidate 0.2.0-rc.1+loop-origin.1 --out /tmp/c2p-dsh-stage04-20261004-ud6x5a4s/managed-final-037-receipt.json --output-root /tmp/c2p-dsh-stage04-20261004-ud6x5a4s/managed-full-037 --timeout-seconds 4200` exit1: complete Python1254passed/56subtests/568.19s and nativeNode210passed/0fail/skip/cancel/1336.681512s. Original operator-core-receipt.json passed=true,exit0,passed_count1464. Actual staged CLI qualify exited2 with host_admission_receipt_stale_or_incomplete; original final receipt passed=false/offline_suite_binding_invalid, cold-normal not executed. No failed receipt is promoted to success. All manager/core/qualifier readers released. Original TaskStore.observe_initial after failure confirms zero prepared tasks; original read_run_budget_state confirms call_count0,spent0,pending0,statuspass. Actual cleanup records worker scope quiescent, own fake port rebound and closed sentinel model/networkcalls0. External phaseA-current-running-037.json now records terminal failure and original observations.
+
+Cause: qualifier sandbox starts before core, overlays /tmp, and originally mounts only operator child. The later core certificate inside operator child is visible but its sibling report/output dependencies are hidden by tmpfs. Repair transports the fixed managed output parent readonly before overlaying its operator child writable. cli_negative_tests owned only scripts/dsh_dev.py and dev isolation tests and released after verification; root owns operator_suite.py, suite_plan.py and plan assertion. --qualification-root is private operator-package-only, canonical existing /tmp direct parent of operator output, excludes /tmp itself. Generic readonly ancestor/equal-output rejection remains; this flag grants no certificate/Host/model authority. Manager and frozen plan bind identical exact qualification-root argv. Full original core validation remains mandatory.
+
+Worker scope UNIT5passed/25deselected/0.11s and actual late-publication bwrap1passed/29deselected/1.08s, exit0 after original sandbox required approved escalation: proof created by parent AFTER namespace start is readable, append/unlink/mkdir on proof parent EROFS, operatorchild writable, unrelated/tmp hidden. Root combined `C2P_DSH_CANDIDATE=0.2.0-rc.1+loop-origin.1 C2P_DSH_DEV_ROOT='<repo>/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1' python -m pytest -q tests/integrations/dsh/test_dsh_admission.py tests/integrations/dsh/test_qualification.py integrations/dsh/dev/tests/test_development_environment_isolation.py` exit0:93passed/27.10s, qualification-transport-focused-038.log. No production TS changes/rebuild/stage activation. Fullstatic037 remains historical after this bounded launcher/plan/test repair; next complete registered current core covers changed files. Refreeze038 and independently review transport before fresh actual final-plus-cold-normal chain. Whole StageA GateR/V, L01 and formalC-F pending; board17/49 unchanged, no model authorization/probe/call.
+
+
+### Stage A / V02 038 genuine qualifier success, final cleanup refusal and 039 producer ordering repair
+
+On freeze038 source731917f0df7cbaaaffb66520f59ba1a0f0303042bf391a10e67d76e567a3ed9f / validator4673413ad3e99497006095046dbd063a121a96cc5fec97f8989efb87cae22d5e, original candidate-bound fullstatic `python -m pytest -q -m 'not live_llm'` exit0:4664passed/3live-deselected/7warnings/68subtests/1355.14s; v02-final-full-static-038.log. Source/validator after static exactly match freeze, usable/not unstable. Original managed record-offline-receipt command from037 with fresh managed-full-038/managed-final-038-receipt.json and whole4200s deadline exit1:Python1256passed/56subtests/568.30s; nativeNode210passed/0fail/skip/cancel/1342.23426488s; actual staged CLI qualifier OS0 and native1passed/0fail/skip/cancel (2013.372283743s including core wait). The parent RO proof transport now works. Original final certificate still passed=false/offline_operator_cleanup_unverified, cold-normal not executed. Manager/static/qualifier handles terminal; no failed evidence rewritten. Original readback shows terminal blocked receipt/call1/completed1/spent17/pending0, no supported/Verified publication.
+
+Cause is producer observation order: actual qualifier closed its worker, then the fixture opened a fresh readback worker, saved sentinel.state=installed into operator-result.json before closing readback; after hook and actual sentinel correctly recorded closed. Original validator strictly requires all three final copies closed/equal and correctly refused. Fix ONLY integrations/dsh/tests/host-provider.test.ts: shared closedPythonSentinel awaits original KernelClient.close (positive worker exit; false wait throws), then asserts original sentinel schema/closed/probe_refused/zero model+networkcalls. Actual executable branch observes it after original task/budget readback; common native positive/refusal branch observes it after fresh-worker stored-output recovery. after hook still independently closes Host/fiber/server and proves fake port rebind; no validator, fees, claim, runtime profile, production TS/JS, build/stage or content logic changed.
+
+Focused actual native `C2P_DSH_CANDIDATE=0.2.0-rc.1+loop-origin.1 C2P_DSH_DEV_ROOT='<repo>/.dsh-dev/candidates/0.2.0-rc.1+loop-origin.1' python scripts/dsh_dev.py --candidate 0.2.0-rc.1+loop-origin.1 test --output-root /tmp/c2p-dsh-stage04-20261004-ud6x5a4s/native-close-observation-039 --report-path /tmp/c2p-dsh-stage04-20261004-ud6x5a4s/native-close-observation-039/node-events.jsonl <repo>/integrations/dsh/tests/host-provider.test.ts` exit0:1passed/0fail/skip/cancel/80.555124783s. Original readonly TaskStore/read_run_budget_state verify terminal/call1/spent17/pending0; actual result/cleanup/sentinel all closed and byte-value equal. native-close-observation-result-039.json binds observations. This is a single real native closure regression, not a complete certificate or normal CLI proof. Candidate-bound `npm --prefix integrations/dsh run typecheck` exit0, native-close-typecheck-039.log; gitdiff hygiene exit0. No rebuild/stage required; production artifacts unchanged.
+
+Read-only cryptographic source-delta proof source-delta-before-record-039.json reconstructs original038 engine digest by replacing ONLY current untracked host-provider fixture digest with its original source_files digest from actual038 plan; reproduced source731917... exactly and validator unchanged. Thus every other dirty source entry and HEAD were unchanged before this administrative record. Original038 composition stable24files and all5trees exactly equal current focused native inputs. Current source before record2c7c7f72c7a935faec92085f342438fbefbc854681b8d3b6a9af3fd98dda40de. This proof is metadata-only, never a reissued/granted certificate; original failed038 remains failed. Request independent review of using fullstatic038 as historical unchanged-Python broad coverage plus current focused/native/core evidence, avoiding another redundant broadstatic run for this fixture-only repair. Final gate decides adequacy; no source label/count is relabelled current. New complete managed core+actual qualification+cold-normal still required on039 frozen source.
+
+At explicit later user request, only8006 health/models were read: bothHTTP200, modelqwen38-27b-nvfp4 at2026-10-04T03:59:00Z; runtime-health-user-request-038.json, inference0. L01 scope/caps still need concrete execution package and authorization; existing offline permit grants no live authority. Read-only L01 preparation indexes current locked adapter fields, tracked sampling/thinking differences, original model-owned tokenizer, oneprimary/no retry and stop conditions. Read-only timing diagnosis found cleanup0.236-0.318s and no safe removable fixedwait; identity/RPC hypothesis not profiled, no new tests/signals/modification. Board17/49, wholeStageA GateR/V pending, no formalB-F integration, model inference0.
+
+
+### Stage A 039 complete actual acceptance; Stage B preparation
+
+Source sha256:1ea010226f4ed4f68619c59c5ebfbda599feed2543de80d9842d57c48d301b76, validator sha256:4673413ad3e99497006095046dbd063a121a96cc5fec97f8989efb87cae22d5e: candidate-bound fullstatic `python -m pytest -q -m 'not live_llm'` exit0,4664passed/3live-deselected/68subtests/1348.07s, log /tmp/c2p-dsh-stage04-20261004-ud6x5a4s/v02-final-full-static-039.log. Original `method_agent_main record-offline-receipt --suite-plan dsh-stage04 --candidate 0.2.0-rc.1+loop-origin.1 --out /tmp/c2p-dsh-stage04-20261004-ud6x5a4s/managed-final-039-receipt.json --output-root /tmp/c2p-dsh-stage04-20261004-ud6x5a4s/managed-full-039 --timeout-seconds 4200` exit0,actualPython1256/nativeNode210/actualCLIqualifier1,originalcertificate passed=true1467, separate fresh cold-normal1 passed; original budget1/1/17/0. typecheck/compileall/diffhygiene exit0,source and validator before/after unchanged. All verification handles terminal. Seven genuine semantic refusals restored originalbytes and originalcertificate stillpasses. Sealed1484-entry package unchanged.
+
+Independent /tmp/c2p-dsh-independent-stageA-039/review.md SHA2561f9bf679a9f84ace25b3ba71e7dd7185fc8b6c13a9edf1dfd9032bc52f09076a independently rechecked allmanifest/originalcertificate/cold-normal, allsevenAT PASS,GateR/V PASS,CLEAR/APPROVE,no blockers,QA-V02-COVERAGE-1 closed. All reads explicitlyreleased. Root records seven done and L01 offline preparation in_progress:24done/1inprogress/24planned, report docs/dsh_execution_20260928/stage04_stageA_acceptance_20261004.md. Administrative updates occur afterrelease and do notrelabel currentworkspace as039source or mutate acceptedpackage. No additionalfullsuite forstatusdocs. L01 concrete driver/input/options/meter/caps/deadline/currentreceipt/authorization remain; inference0; formalC-F await originalgates.
+
+### L01 private development runner and current-admission preparation
+
+Implemented integrations/dsh/dev/l01_worker.py,l01.mjs,l01_launch.py and explicit tests/live/profiles/qwen38_dsh_l01.json within L01 scope. Original Worker/Facade/request-meter injection, task/claim/backend/fee/ingest owners reused; no dependency patch or production DSH rebuild. Original validator source inventory extended with three actual private execution/admission sources. Only identity-source registration extends original production-file scope. New private meter rejects wrong wire/model/origin, unsafe/over-cap counts and host use of offline placeholders. Focused original identity + new meter tests26 passed/exit0. Initial development failures were original fixture import, Loader config-relative dependency resolution, missing explicit public local credential route and OpenAI developer-role mapping; no real API/model calls, original wire validator correctly refused mismatch. Native isolation05 now exit0: actual Qwen adapter wire roles system/user,temperature.6,reasoning_effort low,thinking_token_budget1024,cap4096, no top_p/top_k; calibrationfake1/formalfake1,original blocked receipt and fee settlement. This proof binds its own source before subsequent shared-backend/unique-execution and monitor additions, not final protocol acceptance.
+
+Protocol docs/dsh_execution_20260928/stage04_L01_execution_protocol_20261004.md fixes one primary,0retry/probe/repair/title/compact,input32768/output4096/context131072,request180s,streamidle60s, exact original model tokenizer/non-generating preflight and rawusage/finish/unknown stops. Current DSH sampling differs from Python profile and is explicit; no equivalence claimed. Shared backend root is selected candidate backend-admission, one canonical model endpoint key, unique fresh run execution id. All scope/source/docs work completed before final offline06/packet01/new current full certificate; their status still pending here. Source will remain frozen during those executions. No extra broad fullstatic rerun; required current original registered certificate remains mandatory. Board24done/1inprogress/24planned, inference0; concrete live authorization pending, formalC-F await GateL.
+
+
+L01 final native06 and packet01 completed exit0 on source0d8591da048e225f563f47a9ce5db8bed435c16300b063e8380c2776ca677982/validatora51a16c8000e79adaaba2e0f4c58a306eef5517a4ac451a0069ba0783b24e611. Native06 original blocked receipt,call_count1/completed_call_count1/spent17/pending0 (completed_receipt_count0 is a distinct original counter); worker closed/probe-refused/model0/network0. Packet01 SHA07905257135e6ad641a114d818f1d100d3f73f43f5c58c88ccfc27082fb7fb22,10boundfiles match,zero epoch/model. Readonly8006 health/models/metrics at05:48:06UTC all200,exactmodel/running0/waiting0/KV0. No tokenize/inference. Self-review identified native06 incorrectly acquired the actual model resource key in shared state; original SerialBackendAdmission deliberately has no release. No old row or fee altered. Correct private dev preparation to isolated-fake resource/local backend for offline formal proof and canonical candidate live-backend-admission/openai fixedkey for actual packets; selected authority provenance explicit fake versus operator-designated runtime. Old seeded row is a proven zero-model isolated fake observation, not a hidden unknown remote run; preserved. Original current admission01 manager interrupted viaSIGINT,exit130; its originalfinally runs before any new source mutation. Preserve incomplete reports. Final protocols now offline07/packet02/admission02; sourcefreeze and current certificate pending these corrected bytes, not relabel old successes.
+
+## 2026-10-04 L01 actual single live FAIL and bounded in-direction repair
+
+Current packet02/current original admission02 completed before the real run: 1476 passed and fresh normal-use exit0, original coverage/current source/validator bindings independently recomputed; source ad6c2522e663b676e89ea755883c3062625496dfe8dbdd62fd45d19781a27acd, validator1b417fb237fab1fd4a9a5a0d9e058739b9a5ef54d01613289d5a91426b7b8b14. User explicitly authorized the frozen one-primary scope. `python integrations/dsh/dev/l01_launch.py live --output /tmp/c2p-dsh-l01-packet-20261004-02 --receipt /tmp/c2p-dsh-l01-admission-20261004-02/receipt.json --authorization /tmp/c2p-dsh-l01-operator-authorization-20261004.json` exit1, session36363 terminal: HTTP200/usage7332input+851output/finish tool_calls, tokenizer7344; source/runtime/model not switched, no retry. Original schema also rejects raw result string with extra trailing brace. OriginalWorker cleanup/sentinel closed, probe refused, model/network0; provider stream ended; post-request readonly health200/metrics200 idle0/KV0. No local receipt/publication. Original read_run_budget_state call1/completed0/spent0/pending7344; canonical backend owner remains original execution. Prior permit consumed, no new live authorized.
+
+Independent Gate-L report /tmp/c2p-dsh-independent-stageB-20261004-01/review.md SHA be075dc242f23ae13587b21feb7cffb5b361a88e11e7e412e0b22da458d7cbeb and recovery-addendum.md SHA5fca5f2e2b0ea21b8f4f69a32f16353023e0e2a74428af0b9e5f540ca4be6d3b: FAIL/BLOCK/REQUEST_CHANGES, all reads released. Manifest29424/655571351bytes matches; task/run SQLite was included, canonical backend needs immutable readback. Board24done/1inprogress/24planned; C-F gate unchanged.
+
+Repair ownership stays original fee/schema/admission/dev owners: l01_worker tokenizer_request mirrors installed chat-template top-level effort override and explicit enable_thinking priority, meter/2 refuses old/1. Actual local AutoTokenizer/local_files_only reproduce old7344 versus7332; draft maps saved wire to7332, API/model0. Native redundant type+oneOf experiment was refused by actual DSH JsonSchemaError before any fake formal request; preserve failed /tmp/c2p-dsh-l01-stream-failure-20261004-01. Replace with supported schema description, keep all3branches/full guard, no string acceptance or response trimming. Export sync also retains original Python's existing optional Session capture field in OutputEnvelope; old schema lacked it. l01.mjs retains first stream failure plus secondary Host exception, creates original readonly owner-readback; l01_launch only permits explicit fault fixture in unshare-net offline mode.
+
+R04 completion gap revealed by actual failure: task_store.SerialBackendAdmission.release_observed_finish privately validates closed single-task scope, original ledger terminal/settlement/usage-bound finish refs and nonempty raw/Session, no pending/failure, atomic exact-owner compare-delete and immutable SQLite release history; stale replay cannot delete new owner. This is original admission lifecycle, not scheduler/second fee ledger. Tests actual original worker/event reducer and reopened SQLite; no live backend release executed. No PID/TTL/private-root workaround.
+
+Exact focused command `PYTHONDONTWRITEBYTECODE=1 python -m pytest -q integrations/dsh/dev/tests/test_l01_meter.py tests/integrations/dsh/test_host_recovery_boundaries.py tests/integrations/dsh/test_task_recovery.py tests/integrations/dsh/test_wire_schemas.py` exit0, /tmp/c2p-dsh-l01-repair-focused-final-20261004.log:107passed/56subtests/107.24s. Earlier53-case command had one composition_source_unstable failure because root edited source while it ran; invalidated that observation and reran on stable source, not a gate repair. Native annotation change then isolated focused meter/branch checks19passed/1.07s, /tmp/c2p-dsh-l01-repair-meter-final-20261004.log. compileall relevant4 files exit0; Node --check and git diff --check exit0. No productionTS changed, build inputs remain unchanged, no rebuild/stage repeated.
+
+`python integrations/dsh/dev/l01_launch.py offline --offline-stream-failure --output /tmp/c2p-dsh-l01-stream-failure-20261004-02` expected exit1 (session74508 terminal): fake calibration1/formal1, exact primary AssertionError missing/duplicate raw usage refused (secondary host_single_terminal_required), actual_model_inference_requests0. Original readbackcall1/completed0/pending6640, taskcancelled/receiptNone, worker closed/refusal sentinel0; isolated fake closed. This demonstrates first-error preservation and conservative fee retention, not compatibility acceptance. Fresh normal offline08/packet03/current certificate03 remain to execute on the post-record frozen source; no claim PASS yet.
+
+Recovery script /tmp/c2p-dsh-l01-recovery-20261004-01/launch.py and recover.py bind SHA-verified old source overlays (no host rollback), preserve exact SSE args/Session and original cancelled task, settlement-only originalWorker RPC, no network/model and no backend release. Automatic approval review rejected the command BEFORE process creation: durable shared ledger settlement/consuming pending budget was not explicitly authorized. Concrete question submitted; no started.json/recovery process, ledger unchanged. Do not retry without explicit answer or bypass rejection. Archived old schema reconstructed only under exact historicalSHA (OutputEnvelope old omitted optional session_capture_ref); source overlays additionally preserve later administrative writes so original composition remains verifiable. New repair not independently accepted; current source/certificate must be frozen and revalidated before any new primary.
+
+
+### L01 release completion — independent findings and owner repair, 2026-10-04
+
+The source58/validator8fd repair was independently BLOCKed. Report `/tmp/c2p-dsh-independent-stageB-repair-20261004-01/review.md` SHA bddfdaefc3f92b36e78158c9c21bb20ee72a3ada48794c18fc0f0f9ad5099aef: arbitrary caller finish flag/nonempty artifacts, no normal successful release wiring, incomplete usage-status checks, and active task-board authorization reuse drift. Its registered managed03 manager was deliberately interrupted by exact-argv SIGINT after Python1281/56subtests/585.30s passed; original finally exited130 and its complete receipt was NOT produced. Preserve partial logs; no full suite PASS or current admission claimed. Earlier unsafe broad process match found two candidates and asserted before any signal; refined executable+exactoutput match interrupted only PID29847. Taskboard explicitly now says the earlier one-primary authorization was consumed and cannot be reused.
+
+The first private RPC/native Session repair was independently BLOCKed again (`/tmp/c2p-dsh-independent-stageB-release-repair-20261004-01/review.md` SHA0a03c6b8ab5fcf27b45159cd400ed5566bdf2dde1806cd546dc817365ba9c0bc): hidden Facade.authorize reacquire, forgeable recovery observation, nonpersistent quiescence ref, finally first-error masking, and insufficient raw/Session ordering binding. Its focused original71/56subtests/204.84s and TS typecheck passed, but those do not close the findings. Read sets released before the next edits.
+
+Current code keeps the original TaskStore/ledger/Host/gatedAdapter owners. Only an executing live claim can register `backend.observe_quiescence`, after actual Session/raw flush and observed usage, before terminal/settlement. It verifies the real SessionFileV4 streamed args/block/finish/usage/order against original capture/request/fees and persists the artifact ref with original claim digest/fence in the original task row (additive private record; old readonly rows decode None). No arbitrary artifact or recovery claim can mint this owner record. Standard success/rejection consumes the same stored fact through `backend.release`; new-worker recoverStoredOutput reads its bound ref and releases after original settlement/closed task. Unknown/cancel/throw without natural adapter completion keeps occupancy. Facade status/replay/settlement are readonly owner observations; only outbox execute claim acquires, and retirement history prevents reacquiring an old owner. CAS never changes another run's owner. Primary errors remain primary; cleanup/settlement/release errors are recorded as secondary.
+
+Original Worker RPC-focused `/tmp/c2p-dsh-l01-release-repair-owner-focused-20261004-02.log`:11passed/46.84s; after persistence/order repair, `/tmp/c2p-dsh-l01-release-repair-owner-focused-20261004-03.log`:14passed/62.72s (15deselected), covering duplicate RPC release, closed claim refusal, released status/recovery without INSERT, different new-owner safety, recovery cannot mint via artifact.record, real new Worker at quiescence/terminal/settlement cuts, malformed/misbound/incomplete Session rejection. These are explicitly UNIT owner/format checks, not actual provider/native evidence. Four candidate TS typecheck attempts: initial `scripts/dsh_dev.py typecheck` is unsupported CLI syntax (exit2, no runtime); proper candidate-bound npm typecheck02/03/04 each exit0. Relevant compileall/diff hygiene exit0. Native normal/first-error/fresh CLI and final complete certificate remain pending at this record. Added real native assessor-rejection + release-fault regression to mandatory Node plan. One necessary TS build/stage follows changed production Host code; no full-repo static rerun.
+
+The original failed live remains bound to ad6/1b417, one real primary consumed, Gate-L FAIL, original cancelled/no receipt/pending7344/shared backend held. The prepared original-owner settlement-only recovery was rejected before process creation by automatic approval; its specific user authorization remains pending. No recovery, canonical release, second model call, or formal C–F integration has occurred. Additional original source/build/test bytes were archived and verified against the old sealed manifest before replacement; old-runtime verification/recovery must restore the exact old read-only composition, not relabel new source as old.
+
+### L01 current complete certificate04 report identity failure, 2026-10-04
+
+The independent owner-release code review is CLEAR/APPROVE on source b734054a1e54c65d628fdca3452b9597646785ca6f8c73c9cfeee0c46f30c6fd / validator6fe7dc78197d6e9530942c315214eafc96de2f786d631f9f1eef212cdece87ed; all reads released. Original managed complete admission04 session15283 exited1. Actual Python1290/56subtests passed in636.67s and nativeNode211 passed,0fail/skip/cancel in1479.684s, with unchanged before/after identities. Original machine verifier then refused offline_node_duplicate: pi-ai-wire.test.ts and writer-release-failure.test.ts both enqueue host-provider.test.ts:317 with the same invalid_content/receipt name. The waiting CLI qualifier was stopped by the original manager (exit-15), cold-normal not executed. Receipt04 passed=false; no current complete admission is claimed.
+
+Repair stays within the original test owner: append the backend-release-failure scenario to that native test name, preserve every registered test and all duplicate/missing/outcome assertions in the original machine reader. Also close the independent LOW by recording receipt_identical=false for actual content-refused/no-receipt paths. No production Host, parser, fee, schema, build or staging behavior changes; no rebuild needed. Next verification is the actual two colliding original native entry files through the existing isolated launcher, then one fresh original complete certificate on the final frozen source. Preserve failed04 and obsolete packet04 as historical bound artifacts. Original failed live ledger remains cancelled/no receipt/pending7344/backend owned (fresh readonly recheck /tmp/c2p-dsh-l01-original-owner-current-readonly-20261004.json); explicit local settlement authorization still pending, no canonical mutation or new model request. Progress24/49 and Gate-L FAIL remain unchanged.
+
+
+### 2026-10-04 — L01 必要 legacy owner retirement 修复（未执行原任务）
+
+原一次授权请求 Gate-L 仍 FAIL，24/49；C–F 未正式启动。certificate05 已为必要旧 owner 生命周期缺口取消，exit 130，未形成有效证书；packet05 因源码变化失效。不得把局部通过记为 Gate-L PASS。
+
+新增 operator-only `legacy_retirement.py`，由 SerialBackendAdmission 显式入口调用，不进入 Worker RPC 或模型工具。要求已复核方案和明确 settlement+retirement 授权，绑定原 packet/manifest/producer/SSE/error Session/cleanup、原 request/contract/frozen identity，且原 Worker 先完成 cancelled settlement-only 结算。原账本 pending/missing usage 必须零；同一原 owner 事务 CAS + 独立 legacy release history，幂等重放，拒绝 owner 再占用和不同 owner，保留 cancelled/无内容回执、不铸 provider_quiescence、不调用模型。修复 reserve.contract_digest 应对照存储合同 task_digest，而非 ArtifactRef semantic_digest 的绑定错误。
+
+验证：`python -m pytest -q tests/integrations/dsh/test_legacy_retirement.py`，exit 0，11 passed /21.62s，原始日志 `/tmp/c2p-dsh-legacy-focused05-20261004.log`；UNIT 只证明实现性质，不证明实际旧 owner 退役。`git diff --check` exit 0。原封存 registry 逐字恢复并匹配 manifest，51 文件及三个原目录只读 overlay；`python /tmp/c2p-dsh-l01-recovery-20261004-01/verify_launch.py` exit 0，原 ad6c/1b417/a726 身份恢复，网络/模型/任务/预算/后端写入均零。实际 transport-only 原始 SSE/Session/usage 与封存 manifest 校验通过，产物 `/tmp/c2p-dsh-l01-legacy-retirement-package-20261004-01/readonly-transport-check.json`，未造授权/未退役。独立代码复核已送 `/tmp/c2p-dsh-independent-legacy-retirement-code-20261004-01`，结果待回。
+
+尚需独立复核与必修问题修复、最终源码冻结/注册证书与正常冷入口、可审查的原任务 settlement+retirement 执行包及用户授权、原 owner 实际执行结果，再另行批准新有界真实请求。此前自动审批拒绝原预算结算；尚未改写该预算或清除原占用。
+
+
+### 2026-10-04：必要旧 owner 退役实现的独立复核与集中修复
+
+独立代码复核 `/tmp/c2p-dsh-independent-legacy-retirement-code-20261004-01/review.md` 为 BLOCK/REQUEST_CHANGES，已释放全部读集；三项必修为旧错误 Session 的 transport-only 边界、两类 release_history 行与回执/key 的绑定、以及可变外部执行脚本/argv/mount 的授权绑定。另补 task/bootstrap/原 claim lineage 交叉绑定。没有执行原任务。
+
+集中修复后，legacy Session 拒绝任何 block-end/native completion，按原 reserve.reserved_input_tokens 与实际 usage 动态精确匹配 tokenizer mismatch 错误；原 bootstrap.scope、封存实际 child/session binding 与 claim_lineage 首个执行 claim 必须一致。原 bootstrap 的 child/session 启动前占位值不能冒充实际绑定，实际校验使用 attestation.task_binding 与原错误 Session。两类 history 均验证严格schema/self-digest/行key/key projection；legacy replay 必须等于当前完整 binding，所有历史行均先校验，冲突或损坏继续拒绝。
+
+封存 plan 增加七类外部文件 binding 和精确 settlement/retirement argv。组合入口只运行已复核授权中的命令，先校验全部脚本/计划，started guard 禁止盲重跑；退役原任务目录 RO，仅现存 .run_lease.lock 最小 RW，canonical backend 为退役写入目标，产物位于任务专属 /tmp。入口和计划准备脚本语法校验通过，准备命令不执行副作用、不造授权。
+
+稳定源码下验证：`python -m pytest -q tests/integrations/dsh/test_legacy_retirement.py tests/integrations/dsh/test_host_recovery_boundaries.py`，exit0，45 passed/56 subtests，189.22s；原日志 `/tmp/c2p-dsh-legacy-focused08-20261004.log`。覆盖 Session block-end/其他错误/计量改变、key损坏/不同binding/正常schema损坏、封存可执行文件漂移、bootstrap/child/lineage错配，以及原正常 release/跨进程结算恢复。此前focused07在源码修复期间出现 composition_drift，属非冻结运行，保留失败日志，不用于当前验收。`git diff --check` exit0。当前真实历史 transport 用修复后校验器只读验证通过，实际模型/原 task/原 budget/原 backend 新写入均0。
+
+下一步交当前源码、实际 attestation 和精确执行 plan 做差分独立复核，再冻结当前完整注册证书与正常冷入口。组合结算+退役须明确用户授权，真实新增 primary 须另有最终 packet 的具体授权。当前24/49，Gate-L仍FAIL，C–F正式前置不变。
+
+
+#### 2026-10-04 — 第二次差分复核后的最后一个封存边界修复
+
+`/tmp/c2p-dsh-independent-legacy-retirement-code-20261004-02/review.md` 保留BLOCK，已关闭H1/H2/M1及精确挂载；剩余H3为执行前必须重验四份manifest的成员字节/目录闭包及其与sealed overlay argv的等价投影，读集已全部释放。新增 `verify_execution_mounts` 在每次 `verify_package` 内实际读回所有成员SHA/长度，严格schema/canonical path/唯一target/目录exact files+dirs，拒绝symlink与额外/缺失；settlement命令必须按目录再文件的封存投影以RO挂载，拒绝遗漏、重复、RW替代与后续覆盖。旧Node目录manifest增加historical_path字段，逐项对照原sealed evidence manifest后规范化，不改任何归档源码。实际147个归档成员及精确命令投影的只读校验通过，未执行命令。
+
+UNIT执行脚本改用与att producer不同的文件以隔离新plan边界；claim反例保留原lineage长度和末项，只替换首claim；新增成员修改/缺失/额外以及RO→RW命令错配反例。`python -m pytest -q tests/integrations/dsh/test_legacy_retirement.py` exit0，17 passed/52.99s，原日志 `/tmp/c2p-dsh-legacy-focused09-20261004.log`。原正常退役/恢复代码自focused08以来未改，45/56的原证明仍按其身份引用，不无变化重跑；`git diff --check` exit0。packet06离线prepare exit0，但其源码身份早于H3最后修复，未授权且不作为当前live准入。原预算与owner仍未修改，新真实模型请求0。待最终差分独立复核及当前完整注册证书、明确原本地结算+退役授权和后续fresh packet授权；24/49、Gate-L FAIL不变。
+
+
+最后投影差分：独立03复核发现后置子路径挂载遗漏（实际plan无此挂载），读集已释放。修复为显式解析v1实际bwrap挂载语法；未知挂载语法拒绝。非projection挂载不能是受验目录/文件的后代，基础祖先挂载只允许在受验projection覆盖之前，受验目录+文件自身组合保留。新增后置bind/ro-bind/try/dev-bind/tmpfs反例；actual plan的内存子挂载探针全部拒绝、执行0，产物 `actual-command-overlap-negative-check.json`。当前所属文件 `python -m pytest -q tests/integrations/dsh/test_legacy_retirement.py` exit0，17 passed/52.92s，日志 `/tmp/c2p-dsh-legacy-focused10-20261004.log`。原normal release源码未改。完成本次修复后再次冻结最终执行plan，交最后差分独立复核；真实授权仍未增加，原费用/owner未写入，Gate-L FAIL和24/49不变。
+
+
+### 2026-10-04 — 已授权结算完成，退役仅续作，不重跑原结算
+
+用户明确授权「本地结算及原占用退役」，原授权记录为 `/tmp/c2p-dsh-l01-legacy-retirement-package-20261004-01/user-authorization-record.json`。组合原命令 exit1：原 ad6c Worker 已完成本地结算（settlement.log、recovery/after.json），call/completed=1/1、spent=7332、pending=0、usage validated；task 仍 cancelled/无内容回执/无 provider_quiescence。退役在原子释放之前拒绝，旧 owner 仍 held，原因是 actual request 与 calibration 的本地 session/message ID 不同；新增模型及 tokenize 请求均0。保留原 execution-started 和执行日志，禁止重复结算。
+
+同范围修复复用原 reserve owner 的不可变 WriterWireEquivalenceV1.transport_whitelist 与 _assembly_material；重新绑定原实际 request digest、归档 calibration loop 和逐字 provider wire，只有原合同明确声明的传输字段可不同，正文/tools/options 不放宽。另修正常冷入口的机器验证：自然结束已释放的 backend 必须 empty，并证明原 TaskStore quiescence、完整 Session/raw/usage/settlement 及 exact normal release history，不能继续要求 owned 或只靠 empty 放行。
+
+当前聚焦命令 `python -m pytest -q tests/integrations/dsh/test_legacy_retirement.py tests/integrations/dsh/test_coverage_use.py` exit0，106 passed/62.61s，日志 `/tmp/c2p-dsh-legacy-cold-repair-focused13-20261004.log`。包含原 frozen whitelist 的允许/未声明字段/模型材料改变和 held/真实正常 history/缺 history 反例。原 packet02 材料及 native cold06 正常 release 凭据用当前 helper 只读校验通过。certificate06 原核心 passed=true（Python1307/56 subtests、Node211、operator1），但 cold companion 因旧 owned 比较拒绝，manager exit1；不能作为当前完整准入。两项修复后须最终差分复核和一份当前注册完整证书，不重验旧 A 或全仓静态。
+
+退役续作包 `/tmp/c2p-dsh-l01-legacy-retirement-package-20261004-02` 保留原 attestation、原用户授权来源与已完成结算事实，仅运行修复后的 retirement command；不改变已授权 effects，不再请求同一退役批准。新真实 primary 仍须最终 fresh packet 的具体授权，原 primary 已消费。当前24/49，Gate-L仍FAIL，C–F按原前置继续。
+
+
+### 2026-10-04 — packet09 已执行、结清及独立拒绝；源绑定合同集中修复
+
+已按用户对 packet09 的明确授权执行一次 native DSH primary，命令 `python integrations/dsh/dev/l01_launch.py live --output /tmp/c2p-dsh-l01-packet-20261004-09 --receipt /tmp/c2p-dsh-l01-admission-20261004-08/receipt.json --authorization /tmp/c2p-dsh-l01-operator-authorization-20261004-09.json`，exit1，原始 driver-live.log/failure.json 保留。health/models/metrics均200；1次tokenize、1次primary、0 retry/repair；HTTP200、usage7359输入/891输出、finish tool_calls，tokenizer一致，额度内。原TaskStore cancelled/无domain receipt、有合法provider_quiescence；原预算call/completed1/1、spent7359、pending0；canonical backend empty及原strict normal release成立；Worker退出/Python模型与网络0。独立 `/tmp/c2p-dsh-independent-l01-live09-review-20261004-01/review.md` 为 Gate-L FAIL，已释放全部读集。原packet02结算7332/pending0及原占用退役已在package02实际完成并独立PASS，不能再结算或退役。
+
+此前当前源码182f90/validator0a393的完整certificate08实际exit0（1521，Python1309/56 subtests、Node211、operator1、独立冷入口1），原完整及cold reader均PASS；只证明该绑定源码的离线准入，不证明live内容接受。该证书随以下源码修复成为历史证据，后续准入须重新冻结。
+
+拒绝根因是L01测试材料准备：required atom没有closed atom→detail归属，且语义锚仅为内部标识“step for mech_rescale”，detail没有可验证自己的锚；自然缩放正文和公式不足以通过原exact witness门。修复 completed_formalizer_fixture 的required目标，从原archive所属detail/witness atom派生归属/摘录/锚，L01 opt-in可读语义由已接受、绑定同detail和操作的原code_verified Formalizer explanation派生；同一required detail也有明确源语义合同，全部detail/atom/formula义务保留。facade的单请求终态指令明确Writer原schema所需的detail witness与唯一正文substring；Python仍负责atom Binder、原parser/assessor和公式splice，无额外模型辅助。
+
+必要范围偏差：补充源锚后原通用词汇匹配可把`a times z`误判为源`a * x`，故修复原publication_transaction_contract的简单双标识符源乘法检查；从源AST读取实际操作数，必须在同一乘法关系内，拒绝缺/换操作数、换加法、否定、附加乘除。任意源名称适用，无项目事实/路径/答案进入generic生产代码；不修改旧validation_stage、matching阈值、过滤声明或降低义务。该共享validator已在原VALIDATOR_BUNDLE_SOURCES，内容变化自然更新身份。旧packet09永远保持拒绝，不按新输入回填接受。
+
+验证：原六文件聚焦链 `python -m pytest -q tests/integrations/dsh/test_l01_binding_contract.py tests/integrations/dsh/test_writer_prepare_ingest.py tests/test_agentic_detail_atom_binder_and_trace_v2.py tests/regression_20260917/test_witness_relation_matrix.py tests/regression_20260917/test_witness_projection.py tests/regression_20260917/test_publication_transaction.py` exit0、66 passed/8.81s，日志 `/tmp/c2p-dsh-l01-contract-regression-20261004-02.log`；补任意操作数/额外乘除反例后新文件 `python -m pytest -q tests/integrations/dsh/test_l01_binding_contract.py` exit0、21 passed/1.51s，日志 `/tmp/c2p-dsh-l01-contract-focused-20261004-03.log`。早期诊断/失败输出保留，不冒充新结果；无新增API/tokenize/真实模型调用。
+
+接着同范围独立审查修复、冻结当前完整离线准入与fresh packet，再集中处理下一次具体live授权。当前24/49，L01 in_progress/Gate-L FAIL；C–F只读准备已有真实9/16节点及接口清单，正式接线仍按原前置。无需再次启动A验收或无变化全仓测试。
+
+
+#### 2026-10-04 — 独立binding审查后的完整乘法关系修复
+
+独立 `/tmp/c2p-dsh-independent-l01-binding-repair-review-20261004-01/review.md` 指出HIGH：局部关系正则遗漏`a*x-z`、`a*x squared`、`twice a*x`，原parser/assessor三者实际误接受；CHANGES_REQUESTED，读集释放。已按原owner修复为完整源AST表达式或有界完整正文关系证明；不能用局部匹配证明没有附加算术，未知词法/系数/幂/减法保留拒绝。源标识符大小写及拼写保持，x/X/xs不互换；不扩展semantic阈值，不删义务，不重跑live。
+
+当前六文件同命令exit0，78 passed/8.95s，原日志 `/tmp/c2p-dsh-l01-contract-regression-20261004-03.log`；新增三个独立反例、附加幂与变量大小写/复数反例，原20 prepare/settlement链及旧Binder/关系矩阵/投影/事务仍通过。前66/21结果按修前身份保留。完整注册证书尚未因这次修复启动，避免在审查必修未关闭时反复跑全计划；接着提交最终差分复核后再一次冻结当前准入和fresh packet。
+
+### 2026-10-05：packet10 只读现状核查与完整接续指导
+
+用户要求核实现有长期模块并细化缺漏。A独立Gate-R/V保留，项目24done/1in_progress/24planned，模块7/23done，L01未通过，C–F仅具名研究。packet10原授权一次调用HTTP200、7463/1182，原账本费用结清但backend仍held、领域无receipt。只读原WriterTaskResultV1复现缺schema_version；原_verify_native_quiescence准确在task_store.py:290拒绝Session blocked。真实native tool/result先出现schema_invalid，后端错误遮住该首因；raw与Session分片同字节，normalized仅表示不同且JSON等价。原输出另有inline公式取代要求占位符，未绕过schema做领域接受。
+
+核查命令：PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=src python .dsh-dev/run/l01-packet10-status-20261005/verify_packet10.py，exit0；原费用/backend只读reader与owner读回一致，engine前后fb26901f…4698f、validator36fb99bd…28a7f。未跑产品套件/模型/网络，未改变任务、账本、backend、生产代码或runtime。本次不是完整独立Gate-L裁决。
+
+完整指导：docs/dsh_execution_20260928/stage04_L01_packet10_repair_and_continuation_20261005.md；原始运行安全副本与verification/current-progress/doc-sync输入清单在.dsh-dev/run/l01-packet10-status-20261005/。要求一次修terminal/formula合同、native拒绝完成/释放、错误分层、历史exact-owner恢复和整包验证，并细化C的多请求/aux身份与D的每请求permit，再按原G0/G推进。packet10旧内容保持失败；已消费primary不得重发；已有normal-release授权不重复询问，相同scope之外的迁移先完成可审查方案。
+
+本次核查时外部index仍source_writes_allowed=false、live10 running字段已过时；没有代其他reviewer释放。文档修订先封存为pending-doc-sync.patch，实际主写者须在当前独立QA读集释放后核对输入并合并；本记录进入主文件时不自动构成新的release证明。同步文档后下一份证书必须绑定最终完整身份。不能借本次修改回填或重标旧certificate09/StageA039。无默认切换、D5或发布。
+
+## 2026-10-05 L01 packet10 complete repair batch
+
+Scope: execution-guidance §8; five L01 repair groups, followed by independently gated M/P/G stages. Independent packet10 post-live QA is FAIL and actual readsets released: /tmp/c2p-dsh-independent-packet10-postlive-20261005-01/readset-release.json. Six pending-doc inputs matched, git apply --check exit0; patch merged after release. Prior dirty baseline sealed under /tmp/c2p-dsh-l01-repair-20261005-main-01/baseline.json. packet10 original raw/fees/receipt/backend unchanged; no model calls and no new grant. Original handle97648 unavailable on this host; original log reports exit1; never restart it. Progress stays24/49. Main executor owns Python, TS, tests, build and records.
+
+本批五组代码、native离线反例和历史隔离证明已集中实现，详细变更、原命令/退出码/日志、基线与剩余门记录于 docs/dsh_execution_20260928/stage04_L01_repair_batch_evidence_20261005.md。注册suite升core/4、offline/4；完整certificate尚未跑，待独立必修关闭后统一冻结。packet10正式owner仍held，未执行迁移；新primary仍0，不沿用已消费授权。保持24/1/24及Gate-L未通过。
+
+2026-10-05本批后续实际结果：独立代码/具体恢复方案 /tmp/c2p-dsh-independent-l01-repair-code-20261005-01/review.md PASS、全部读集释放；21项新增模块完整反例独立exit0，原producer和真实原包只读完成proof通过。按原normal-finish release授权执行具名迁移一次，exit0，句柄21502回收；正式package /tmp/c2p-dsh-l01-native-retirement-package-20261005-01。原canonical backend empty，原task/DB/费用7463spent/0pending及领域失败不变，receipt/quiescence均null，provider/tokenize0。独立迁移结果复核根 /tmp/c2p-dsh-independent-l01-native-retirement-result-20261005-01（按实际report验收）。完整suite core/4/offline/4的具体最终manager与机器入口已经写入整批证据doc；将冻结当前完整身份后运行原manager及fresh cold，不再边改docs边跑certificate。最终运行结果保存在外部执行索引与fresh证书/原reader，Gate-L仍FAIL，新primary仍需fresh包具体授权。
+
+最终封存前：正式历史迁移独立结果报告实际PASS，读集释放，原reader及所有history/原账本/task/raw一致性通过；不以backendempty代替Gate-L。五组修复代码/方案与迁移结果两次独立复核均关闭，无生产代码新改动。
+
+最终complete01实际exit1（source5fd/validator3f8），Python1384/56passed、Node214pass/1fail，cold未执行。失败是新增backend断言时点错误：故障注入旧kernel held，但健康新worker已依原registered finish合法释放后误预期owned。生产未改，修测试为旧故障后立即exact-held、恢复后empty+原严格finish/history证明，两个真实native focused exit0，2pass/0skip/172.153s，typecheck exit0。独立delta02 PASS并释放读集，98项生产/validator源SHA不变。failed01留档；当前最终fresh complete/cold采用 /tmp/c2p-dsh-l01-admission-20261005-02，完整命令同证据doc，仅更换fresh路径；冻结后结果只写外部机器记录/执行索引。当前source因测试与docs变化须新统一证书，不复用旧Python报告或旧身份。没有新的provider/tokenize，Gate-L仍FAIL。
+
+
+## 2026-10-05 packet11 ordinary text-stop repair (active)
+
+Final previous repair identity engine1ccece86/validator3f8: complete02 1600 and fresh cold passed both original readers; manager48049 exit0 reaped. Final independent material review CLEAR/all actual readsets released in `/tmp/c2p-dsh-independent-l01-final-admission-packet11-20261005-01`. User explicitly granted packet11 SHA65f941c1/plan7a02a897 once via question call_hYeoNWJfJmkVrNL3KOeBjETj; original launch94723 exit1 reaped, primary1/tokenize1/aux0/retry0. Actual SSE returned ordinary content fenced JSON, no tool_calls; usage7596/1309 total8905, finishstop. Original ledger usage persisted, no terminal/settlement, spent0/pending7596/backendowned/taskcancelled/domainnull. Original bytes and failure retained. Independent postlive `/tmp/c2p-dsh-independent-l01-packet11-postlive-20261005-01` Gate-L FAIL/all actual readsets released. No new inference authorized; M/P/G not integrated.
+
+Root owns same-direction repair at `/tmp/c2p-dsh-l01-text-stop-repair-20261005-01` preserving responsible-file baseline. Add named private rejected-text completion proof, keep Writer tool/domain gates strict, check missing terminal before callId decoding, keep text provenance separate, natural stop fees/release independent of domain outcome. New helper verifies actual Session, native compact stream/block/usage/finish order, exact original request config/tools, scope and ledger, active-execute registration. Old tool completion and packet02/10 migrations unchanged. Pending original packet11 history recovery needs distinct reviewed operator procedure for its still-pending observed fees; no canonical mutation yet.
+
+Observed verification: initial typecheck01 exit1 due putBytes media type declaration; fixed same owner's declaration for existing Worker text/plain support. typecheck02/build01/stage01 exit0. New proof01 37passed1.05s, then strengthen structural negatives to require_settlement=false so stale terminal refs cannot mask assertions. First actual native01 exit1 (original3023 reaped), composition_source_unstable before formal dispatch: root added unit test while bound scenario was running. Preserve failure; close current source before rerunning fresh native02, no source edits during run. All results are offline, fake provider only. Full/cold must be regenerated only after entire new repair/docs/tests/operator plan close.
+
+Follow-up observed results: proof02 37passed1.08s (structural negatives verify pre-settlement proof). native02 original3931 exit1: model source legitimately contains provider/model/replayState; strict whole-source equality was wrong. Helper now checks kind=model and exact provider/model from frozen original request, keeps stream/usage/order gates. Original failed02 Session verified read-only with corrected helper; no state rewrite. proof03 37passed1.06s. Actual native03 `/tmp/c2p-dsh-l01-native-text-stop-20261005-03`, handle89012 exit0 reaped, 1pass/0fail/0skip72.046s: ordinary text stays rejected, captured_source/domainreceipt null, usage17 paid/pending0/backendempty, original strict release reader PASS, fresh Worker zero additional sends. Focused04 `python -m pytest -q tests/integrations/dsh/test_text_rejection_completion.py tests/integrations/dsh/test_host_recovery_boundaries.py tests/integrations/dsh/test_coverage_use.py` handle23566 exit0 reaped,170passed/56subtests214.32s. No source edits during native03 or focused04.
+
+Readonly original packet11 recovery preparation at `/tmp/c2p-dsh-l01-text-stop-recovery-preparation-20261005-01/readonly-preparation.json` binds original task/ledger/budget/grant/plan/wire/SSE/Session and archived producer bytes. Distinct read-only historical transport helper now implemented: exact single stop/DONE, plain content and reasoning only, usage/order/model/index, original attempt/error stream and sequence match. Its external prototype verified original7596/1309 SSE and error Session (text1667bytes,reasoning3185bytes), no mutations. Operator full request/claim/fees/grant/identity binding, idempotent crash-safe settlement+exact-owner history transaction and independent review still pending; no new recovery execution or live grant.
+
+Historical proof/operator update: `text_stop_transport_proof.py` + distinct `text_stop_recovery.py` use sealed old packet/plan/grant/producer/wire/SSE/Session and exact task/claim/ledger, original request projection whitelist, observed usage and current implementation identity. Operator records distinct historical settlement evidence, adds exactly immutable accounting terminal/settlement through original publisher, keeps task DB/claim/raw/domain/provider_quiescence unchanged. Owner/history delete transaction remains atomic; event cuts resume/idempotently spend once. New class history reader added without relaxing packet02/native-tool categories. Original real packet11 readonly full binding PASS, draft attestation under recovery-preparation.
+
+Operator06 exit1 fixture composition not imported (no migration); operator07 exit1 minimal UNIT loop has no provider, fixture direct indexing failed (no migration). Test fixture now reflects its original minimal loop with optional provider, production checks unchanged. operator08 16passed67.18s; tightened launch/start/exact original authorization/tokenizer and whole-run budget checks, operator09 106passed75.64s (new three Python files), original7680 exit0 reaped. Real original-data isolation01 uses read-only root/unshare-net, only independent run/backend copies mounted RW at original paths. Fixture review/grant are explicitly simulation only. Original82949 exit0 reaped; clone paid7596/pending0 and history-released exact owner under engine55c4c450/validatored25. No canonical mutation, no model/tokenize call.
+
+Current documentation entries/task_board synced to packet11 consumed/FAIL/held-pending and retain packet10 history. Generic terminal instructions explicitly prohibit JSON/code fences in ordinary assistant content instead of native c2p_terminal invocation; full schema/formula/witness/source obligations retained, no known-answer injection. This prompt change happens before future freeze/full; not a claim that future model must comply. Need final focused/native regression on closed code/docs, isolation command refreshed to final identity, actual independent code/plan/scope review+release before same-grant original fee/release operation; result QA before final new full/cold/live packet.
+
+
+Current text-stop final verification and recovery closure: focused10 original42977 reaped exit0,183pass219.64s; native04 original17352 reaped exit0,2pass/0fail/0skip149.624s, no code edits during either. Current protected original-data isolation02 original29237 reaped0, enginef61/validator7b77; 35 original files RO, clone spent7596/pending0/backendempty, real original unchanged. Independent code/plan review439 inputs PASS, original-grant APPLIES and actual release in /tmp/c2p-dsh-independent-l01-text-stop-code-plan-20261005-01. Actual canonical original effect operation original52748 reaped0 under exact reviewed wrapperfb5121/plan17bbbc; original35files/taskDB/claim/raw/SSE/Session/domain and prefix5 unchanged, operator evidence+accounting terminal/settlement only, spent7596/pending0/backendempty. Actual independent result /tmp/c2p-dsh-independent-l01-text-stop-migration-result-20261005-01 PASS361 inputs, all four history original readers pass and old three histories unchanged; real readsets explicitly released before docs closure. No model/tokenizer, no new live grant, GateLFAIL/progress24/1/24. Final full/cold must bind newly closed source/docs identity and original manager/readers; do not reuse previous1600 or f61 identity after docs changes. Planned fresh final output /tmp/c2p-dsh-l01-admission-20261005-03, command: PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=src python -c 'from code2paper.cli.main import main; raise SystemExit(main())' method-agent record-offline-receipt --out /tmp/c2p-dsh-l01-admission-20261005-03/receipt.json --suite-plan dsh-stage04 --output-root /tmp/c2p-dsh-l01-admission-20261005-03/managed --candidate 0.2.0-rc.1+loop-origin.1 --timeout-seconds 7200. After source freeze results only external. Fresh actual Gate-L and concrete new one-time live authorization remain pending; M/P/G require Gate-L PASS and release.
+
+Before any complete03 launch, readonly version scan found2 current plan assertions and1 insufficient UNIT receipt fixture still /4. Updated only these3 version literals to currentcore/5+offline/5, retained core/4 andoffline/2 negative admission test. Focused `test_dsh_admission.py test_target_admission_integration.py` original53668 reaped exit0,49pass25.19s, log version-delta11.log; no production change/newmodel. Original03 source-freeze marked superseded-before-execution and retained, no full run. New actual final fresh output reserved /tmp/c2p-dsh-l01-admission-20261005-04 with same original manager argv replacing03→04. Version/doc delta independent read-only closure precedes final freeze/full; subsequent outputs external only.
+
+
+## 2026-10-05 packet12 malformed native tool rejection repair (active)
+
+Final complete04 current9def/validator7b77 passed1707+freshcold1 and both original readers; original manager33395/readers55834 reaped0. Independent final material review498inputs CLEAR/preparation only, actual readsets released. User explicitly granted packet12 SHAfe48f5/plan cde246 once through call_ZGnx5G3Z9MXflYbKGx1l1Jtw; auth87dcd4ca, no reuse. Original live44943 reaped exit1, primary1/tokenize1/retryrepairaux0; actualHTTP200 input7648/output1221/total8869, finish_tool_calls. Raw function name exactly '"c2p_terminal"\n<parameter' with args{}; originalSession unknown-tool call/result ToolNotFoundError UNKNOWN_TOOL then blocked turn. Host correctly refused terminal, but diagnostic incorrectly called it ordinary_model_text/raw0. Original fee7 facts already spent7648pending0; taskcancelled/capturedsource/domainreceipt/providerquiescencenull/backendownedpacket12. Original bytes/failure preserved; no tool-name trimming or args repair, no resend authorization. Independent postlive367inputs /tmp/c2p-dsh-independent-l01-packet12-postlive-20261005-01 GateLFAIL/all actual readsets released. Cannot distinguish model serialization/server parser from current artifacts alone; optional public runtime config record requested, no server changes or extra calls.
+
+Root owns same-direction unknown-tool diagnosis and private native-finish release repair; baseline /tmp/c2p-dsh-l01-unknown-tool-repair-20261005-01/baseline.json preserves responsible files. New distinct unknown-tool completion proof binds active execute/private naturalfinish, exact Session/blocks/deltas/request/tools/source/usage and original UNKNOWN_TOOL result; cannot be a terminal candidate, registered tool, caller finish or recovery-only observation. Host preserves exact names/args in diagnostic JSON separately from ordinary text. Original packet12 recovery must be a distinct sealed operator reviewed original naturalfinish/exact-owner procedure, no TaskDB/providerquiescence/fee mutation and no second settlement. Current code changes are under implementation; tests/build/native/independent review/full not yet observed. New model request needs substantively fixed actual request/runtime and fresh concrete packet grant; lifecycle-only change cannot justify unchanged-wire lucky resend. GateLFAIL/progress24/1/24; M/P/G formal implementation gated.
+
+Unknown-tool initial verification: typecheck01 failed before compiler because default DEV_ROOT expected different peer symlink; kept current links, reran with explicit candidate/root. typecheck02 original39284 reaped exit1 due test isObject helper unimported; replaced assertion with native object check. typecheck03 original21887 reaped0. Focused proof01 original2099 reaped0,91pass1.20s (unknown54 + existingtext37), no native/model calls. Register new actualPython/node entries, core6/offline6; synchronize current version assertions+UNIT fixture while retaining old core4/offline2 negatives before final run. New active unknown proof has exact UNKNOWN_TOOL result/source/order and exact model request/offered tools, all compact blocks/args/usage/naturalfinish; oldtext/registeredtool contracts unchanged. Preparing build/stage and actual native3-path regression with no source edits during bound run; current canonical still packet12owned/fees7648paid, no operator execution.
+
+
+Unknown-tool verification completed: proof02 original91994 exit0 58pass; typecheck03 original21887/build01 original75774/stage01 exit0. Native01 original58585 reaped0,3pass/0fail/0skip225570.860ms, engineb641/validatorf22 frozen throughout, log /tmp/c2p-dsh-l01-unknown-tool-repair-20261005-01/native01.log. Pure Session checker extraction preserves active private authority and adds distinct operator-only unknown-native-tool-retirement/1; no historical active quiescence or fee/task/source mint. Retirement01 fixture failed21 due UNIT projection lacking provider; retirement02 failed1 due unjustified child/session identity equality; corrected fixture to preserve absent optional provider and enforce separate bound child/nonempty and exact Session id (no equality invention). Retirement03 original16316 reaped0,21pass85.73s. New SSE representation negatives plus old native retirement and unknown proof retirement04 original41460 reaped0,116pass169.67s. Proof03 original99754 reaped0,95pass1.17s preserves text-stop.
+
+Protected original-data clone /tmp/c2p-dsh-l01-unknown-tool-history-clone-20261005-01 original44142 reaped0 at engine4fc333/validatorfe1d8e: whole rootRO/networkunshared, only cloned canonical backend mapping and cloned lease mapping RW, explicit UNIT review/auth fixtures (not canonical authority). Actual original packet12 typed read-only proof passes; clonebackendempty/five strict history rows;59 protected original bindings unchanged, canonical still packet12owned, no model/tokenize/additional fee/source writes. Actual canonical independent code/plan/scope review and readset release pending. New operator schema does not weaken old four histories. Current final full/cold pending;1707 proves historical9def/7b77 only.
+
+User supplied historical server script/template/log under /data1/users/cuihengjia/qwen3.8-modelopt. Script/log record qwen3_xml + qwen3 reasoning, no explicit --chat-template; file template defaultsXML. Current GET tokenizer_info/server_info both404; current on-disk historical vllm parser bytes and model directory cannot prove currently loaded server config. Initial commentary inferred XML prohibition incorrectly; immediate actualwire correction records no such prohibition. New generic terminal instruction specifies exact function-name value, excludes quotes/whitespace/markup/parameter tags from identifier, preserves arguments schema and backend serialization. This is a targeted request-material repair, not a response-name rewrite or proven server root cause. Runtime unchanged, no new inference authorization or resend; final live still requires fresh sealed packet and specific grant after all review/full/cold gates.
+
+
+Unknown-tool canonical closure: independent code/plan525actualinputs PASS/APPLIES and actual readsets released (/tmp/c2p-dsh-independent-l01-unknown-tool-code-plan-20261005-01), exact plan6238d36/wrapper43d24f executed original98467 reaped0 at4362/af9. Root scope record derives old actualpacket12 grant, not new inference consent. Original42nonlease files/14attestedinputs and all7fees/taskview/claim/source/receipt/quiescencenull unchanged; originalleaseprotocol PID only, canonicalempty, five strict histories, old4byteidentical. Actual independent result364inputs PASS/allreadsets released (/tmp/c2p-dsh-independent-l01-unknown-tool-migration-result-20261005-01). Receipt89055036. Focusedcontract05 original93910 reaped0,133pass2.11s. All documentation/taskboard/current indexes now packet12 recovered lifecycle/domainFAIL, counts24/1/24. Oldnative b641 and protectedclones4fc/4362 keep own bindings; full1707 is historical9def only.
+
+Final complete/cold new fresh root /tmp/c2p-dsh-l01-admission-20261005-05. Command: PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=src python -c 'from code2paper.cli.main import main; raise SystemExit(main())' method-agent record-offline-receipt --out /tmp/c2p-dsh-l01-admission-20261005-05/receipt.json --suite-plan dsh-stage04 --output-root /tmp/c2p-dsh-l01-admission-20261005-05/managed --candidate 0.2.0-rc.1+loop-origin.1 --timeout-seconds 7200. This doc records planned exact command only; actual handle/exit/results/source identity stored externally after freezing. After original manager reaped0 validate original complete coverage_readonly_inputs and fresh cold validate_coverage_use with validate-final-certificate.py and require independent final material review/readset release. Do not modify source/docs/tests during bound run or review; do not repeat unmodified full or TS build/stage. No new live until fresh actual packet material and specific usergrant. Gate-L FAIL still bars formal M/P/G.
+
+
+## 2026-10-05：packet13 一次执行及 native 工具选择返修
+
+用户对 packet13（packet `2eb2c5eeeeebbb6a192c8754060c7aec91bed9cc94cd806ec733dff319ad361a`、plan `3d13cc46b66039667cd6456cb36410d8571f87bd9549d000f0a9a53e1170fc97`）明确一次批准，原授权记录位于 `/tmp/c2p-dsh-l01-packet-20261005-13/user-authorization-record.json`，没有复用 packet12。新完整05原59877 exit0：Python1585+56 subtests、Node217、operator1，共1803；fresh cold1，原reader69726 exit0，独立材料505输入CLEAR/all released，均绑定关闭前7f77/af9身份。本节更新以后，不能把这些历史身份结果自动升级为当前新源验证。
+
+原发送前只读检查45089 exit1（默认sandbox socket denied，未调用模型/tokenize）；原network只读检查75178 exit0。核验固定packet/plan/frozenfiles/7f77-af9、原完整与cold reader、原空backend/目标zero budget、health/models/metrics200且running/waiting/KV0。原授权live argv：`PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=src python integrations/dsh/dev/l01_launch.py live --output /tmp/c2p-dsh-l01-packet-20261005-13 --receipt /tmp/c2p-dsh-l01-admission-20261005-05/receipt.json --authorization /tmp/c2p-dsh-l01-operator-authorization-20261005-13.json`；原handle86098已reaped exit1，原sandbox/10秒监控，实际primary1/tokenize1/auxiliary0/retry0/repair0。HTTP200/stop，usage7699/1359/9058；普通JSONwrapper文本1190bytes，tool_calls0，不得解析正文JSON或arguments字符串补造native工具来源。Host首因host_single_terminal_required/ordinary_model_text，secondarynull/cleanup[]。原Taskcancelled/captured_source=null/receipt=null，原DshRejectedTextProviderQuiescenceV1登记，7费用事实唯一spent7699/pending0，正常exact-owner释放、canonical empty。原日志/SSE/Session/费用/Task保持。
+
+独立实际post-live `/tmp/c2p-dsh-independent-l01-packet13-postlive-20261005-01`：382实际输入，Gate-L FAIL、生命周期PASS；所有6历史严格读回通过、旧5不变，本人全部实际读集明确释放，7f77/af9于读集释放稳定。无需历史恢复或再结算。阶段仍24done/1in_progress/24planned，正式M/P/G不能越Gate-L。授权13已消耗，不能重发或额外probe。
+
+当前可复现接口缺口：pi-ai openai-completions支持toolChoice，但原DSH PiAiAdapter/profile不把选择送至wire。`/tmp/c2p-dsh-l01-packet13-tool-choice-investigation-20261005-01`为隔离fake-fetch探索（非生产来源、非服务端能力证明）；probe03 exit0和validated-probe exit0证实只添加named tool_choice、其他wire字段一致；negative-probe02 exit0证实profile schema、12错误配置、4缺失/错误/重复tool选择、策略不可变和零fetch。前两次导出/schema读取fixture错误原日志保留。没有真实模型或tokenize。
+
+返修方向：新增可重建、exact-hunk generic native tool-choice patch，显式profile选择/不可变snapshot、仅已支持API且声明工具匹配才可发送；未配置保持旧wire，原native adapter/stream decoder/私有origin/费用及领域合同不变。源patch初稿 `integrations/dsh/dev/runtime-0.2.0-rc.1/tool-choice/tool-choice.patch.py`已写，仅作用fresh copied runtime；原候选runtime及原13产物未改。尚未完成新candidate接线、source build等价、实际Loader/native/费用正反例、当前完整/cold/独立验收与fresh packet，未授权新live。下一步先完成这些实现/验证及材料，不以该原型或历史1803代新准入；当前8006 parser/template仍未证实，不能宣称model-vs-parser根因唯一。
+
+
+Native tool-choice final closure (packet13 remains domainFAIL): source compile27263 caught unsupported neutral SimpleStreamOptions.toolChoice typing; finalcandidate2 uses public samplingParams.tool_choice with validated policy only. Isolated actualsource tsc84801 reaped0, exactapplycheck, originalsource unchanged, sourcebuiltnegative16 / original-vs-final-vs-sourcebuilt wire equivalence PASS; scope client/source only, not fullpackage equivalence or current server capability. Actual candidate2 setup68617/pyworker72130/typecheck86332/build42008 allreaped0, stage/audit0; runtime b451ebbf551eba55ecb72b1c0bf9aa0f11338418eca51e12558ffcd3c34744b4. Registered three original native finalcandidate2 scenarios72888 reaped0, actualnamedwire/draft accept/wrongformula reject/text reject/fees/naturalrelease/newprocessreader; output /tmp/c2p-dsh-l01-tool-choice-native-regression-20261005-04. Earlier neutralcandidate1 native76006 retains own historical binding. Candidate1 npm14234 lacked offline config (network not proven absent); candidate2 offline=true npm install0, pyworker exact6lockedwheels noindex. All earlier failed attempts retained in investigation logs. Final docs/taskboard now packet13 failed with original spent7699/pending0/backendempty/sixhistory rows and independent actual lifecyclePASS/readsetreleased; counts24/1/24/GateLFAIL. Freshcomplete/cold06 pending after sourceclosure; no newmodel/tokenize/grant. FormalM/P/G retain each independent gate.
+
+Final admission source closure: added actual native-selection trusted admission sources to validator bundle (scripts/dsh_dev, base helper/finalparams patches/finalcandidate contract). Both original L01 launchers forbid backend aliases and retain oldcanonical root even when field omitted; explicitnull refused. Current focused identity/backend/oldGateH tests80418 reaped1:39pass/two default sandbox spawnSync Python EPERM, preserved log. Only two affected actualisolatedactivation tests88556 reaped0:2pass1.73s. L01 original Qwen profile offline51327 reaped0:actual blocked localreceipt/private nativecompletion/17spent/pending0/backendempty; 0realmodel/tokenize. Bound validatorfc116 at run; Node explicitnull guard and currentdocs closure afterwards do not retag this artifact. New complete06 will bind final current source, full registered discovery and cold companion.
+
+Complete06 interrupted honestly: pre-run review missed original serial E2E hardcoded old candidate; discovered from actual registered source while originalmanager running. Exact originalmanager2303223 plus six descendants only SIGTERM, allseven actual/proc absent; toolhandle37498 reaped143; no certificate/cold and frozen source unchanged throughout. Evidence /tmp/c2p-dsh-l01-admission-20261005-06/interruption.json; never counted passing. Original E2E now uses frozen plan candidate with old standalone default, all original assertions retained. Currentcandidate2 original98919 reaped0,1pass (exact log final-serial-e2e-candidate2.log). No production native behavior changed. Newfreshcomplete/cold07 after recordsclosure. Readonly escalated currentprocess verification now proves servingPID3597064 owns127.0.0.1:8006 socket3832216482, CUDA_VISIBLE_DEVICES2, qwen38 modeldir /data1/users/cuihengjia/qwen3.8-modelopt, qwen3_xml/qwen3 parserargs, maxmodel131072/noexplicitchat-template; loaded templatebytes still not proved. Strict allowlist outputs only, no secret or service mutation/no model/tokenize. Prior uncertainty retains its historical bound scope.
+
+Full07 original33100 reaped1: actualPython1597pass/56subtests/1fail1033.05s, oldcandidate smoke positive strict staging failure; Node/cold notexecuted; fullreceipt false/offline_required_suite_missing. Original operator observe_initial+budget readback confirms0task/call/spent/pending; originalmanager owns finally process-group stop, no fabricated cleanup artifact. Only affected smoke positive now captures plan candidate before deliberate env conflicts; 70503reaped0,1pass7.11s, all original assertions retained. Additional registeredNode candidate-gate scan finds original joint-child/cancellation onlyold1/built; added exactfinal2 to apply entire existing acceptance, no arbitrary suffix/prototype1 accepted, no assertion omitted. Actualoriginal native99157reaped0,31pass/0fail/skip/cancel24966.29241ms. Finaltypecheck40136/audit37857reaped0; productionTS/buildinputs unchanged so no rebuild of oldhistoricalruntime/staging. Source/docs close nowfreshcomplete/cold08 only; original06/07 remain failed histories. InstalledcurrentvLLM read-only8bindings confirms on-disk named protocol path and renderer-before-adjust semantics; no loaded-code attestation, no actualmodel/tokenize or servicechanges.
+
+完整08原manager43570回收exit1，Python1598通过/56subtests、Node220断言通过/0失败；原机器reader因三个新增场景与旧场景名称重复拒绝offline_node_duplicate，原receipt仍false、cold未执行。source-freeze保留45e94/5951身份及失败事实。修复仅在原host-provider场景标题加入named native tool selection区分，原reporter/reader及全部断言不改。六个旧/新场景原2702回收exit0，6通过/0失败skipcancel，484845.683935ms；原validate_node_report实际接受六个独立ID，证据/tmp/c2p-dsh-l01-tool-choice-name-regression-20261005-01/original-reader-result.json。最终typecheck25827回收exit0；生产TS输入未改，无重复build。关闭当前记录后使用fresh完整/cold09；未授权packet14，Gate-L FAIL，24/1/24。
+
+## 2026-10-05 packet14 实际流内错误与 unknown 返修（进行中）
+当前完整09原33501回收exit0：1819/freshcold1，原reader31459回收0，enginef82/validator5951；packet14准备23422/原readback44880均0，独立747输入CLEAR/all实际读集release。用户明确一次grant call_Fk0MPkeZYT67BUCdZ9bOFXCg；packetd20fd9、plan967f4c、auth4a37e135，前检6648回收0，原exactlive15585回收exit1，1primary/1tokenize/0retryrepairaux。162SSEframes部分reasoning后InternalServerError500/DONE，无实际usage/finish/tools；同request实际server日志xgrammar/scheduler终止拒绝tokens[13,198,248069]，不等于自然finish。原Session PI_AI_ERROR，无assistant/message/工具；原taskcancelled/source/receipt/quiescencenull，canonical exact14 owned、旧6history不变。SDK默认usage0/0误登记validated/terminal/settlement，原reader spent0pending0/completed1不是远端实际零费用；未知费用及首因缺口P1/P2必须修。独立postlive436输入Gate-L FAIL/all实际读集release (/tmp/c2p-dsh-independent-l01-packet14-postlive-20261005-01)。自然finish释放授权DOES_NOT_APPLY，不能按idle/DONE/SDK零值释放原14或改写旧账本。
+Root同方向修复：排除SDK零input默认usage，缺usage错误流markunknown保留reservation；Kernel/Python禁止默认zerousage/非自然finish完成凭据；Host报告nativeprovidererror及原Session，L01首因保留SSEerror。新增真实PiAi HTTP流内error/DONE native场景、跨进程unknown费用/held/refuse-resend/release反例及原RPC反例，suite版本8。旧14费用、task及原产物不重写，旧full09只历史f82/5951；新source完整/cold尚未验证。任何新abort/unknown恢复副作用必须先具体方案/隔离验证/独立审查及单独授权，14当前授权不适用。Gate-L FAIL/24-1-24，M/P/G仍门控。
+
+packet14错误返修观测补充：native02原37051回收exit0，31pass/76039.992619ms，含原30cancellation和真实PiAi error/DONE；L01 offline89326回收exit1为预期严格拒绝，原reader pending7134/spent0/completed0/provider_usage partial/task cancelled/null/backend held、首因SSE error。两者绑定fee0/80963，不回填最终refinement身份。最终guard只拒input0且output0，保留cached输入input0/output>0；typecheck04原61467、build02原80485/stage02均0，focused03原52352回收0，68pass/56subtests272.57s。新增实际RPC cached使用正例。当前完整/cold尚未执行；下一完整fresh10在所有源/docs关闭后运行core/offline8并独立验收。
+历史14恢复裁决：原seven费用事实和旧six history均保持；当前日志终止不是受信自然完成，真实usage/持久绑定完成凭据缺失，normal-finish旧grant不适用。依执行指令4.4保持exact14 held；不直接DELETE/改resource/默认费用退款/伪造abort类型。任何服务端变更或具名abort退役须先具体合同/隔离验证/独立审查及其授权，未实际执行；请求可用原provider计量与持久abort记录路径，同时继续离线完整验证。
+
+关闭前最后cached输入RPC正例：原66781回收exit0，1pass/23deselected5.03s，input0/output3通过原publisher保留、未伪造finish/settlement；最终源码/docs冻结用于fresh完整/cold10，结果只写外部。生产TS/build输入未再改动，无重复build/stage。
+
+
+## Gate-L whole unblock closure (2026-10-05)
+
+按原长期模块§9直接实施，本批新model/tokenize/service/canonical操作均0，24/1/24与七次live/Gate-L FAIL保持。完整实施、文件责任、具体命令/原句柄退出、失败历史与范围见 `docs/dsh_execution_20260928/stage04_L01_provider_error_repair_evidence_20261005.md`。
+
+非thinking profile、worker、native calibration与原Facade发送前合同绑定显式模板false，具名原生terminal不变。共享Formalizer reserve保持1024，Writer measurement reserve0单独绑定descriptor/model/composition；不改原义务和修复预算，不新增runtime补丁。真实Loader/PiAi/Session/worker覆盖正常缺usage、有usage缺finish、断流、真正请求后timeout，pending/held/null domain/跨进程0重发均核验。原L01整链先发现provider_options_mismatch/0发送（93642回收1），补精确原发送门后74526回收1是预期SSE500拒绝，原reader PASS/pending7133/partial/held。
+
+UNKNOWN operator合同严格绑定immutable plan/review/termination/newgrant与exact owner；保守input32768/output4096责任、old run永久禁续；immutable disposition先fsync再typed history+exact delete原子事务；original receipt reader交叉核验identity/task/budget，11组重算摘要攻击拒绝。保护原14七场景25545回收0，原DB/run文件不变。真正stop/迁移未执行；正向模拟confirmation/grant不是真实授权。实际8006同epoch3process/GPU2/MTP2、原request日志、白名单非秘密配方已只读绑定；全共享服务stop/restart和distinct迁移授权仍缺。
+
+集中独立审查1104输入CHANGES_REQUIRED/U1-U3已释放实际读集，随后同批修。当前聚焦：71652回收0/48pass95.30s；94932回收0/45pass17.78s；67411历史原native35pass；新增26587回收1/3pass1fail（timeout脚本误要求错误回执），修脚本44995回收0/1pass71824ms；7574 typecheck05回收0；本机grammar76694回收0；原native非thinking prepare73499回收0。初始digest前缀与toolchain选root失败保留，不当成验收。
+
+所有代码/配置/合同/文档在完整10前关闭，原registered版本10生成当前完整及fresh cold，路径 `/tmp/c2p-dsh-l01-admission-20261005-10`，状态/身份/运行句柄写sole-writer `/tmp/c2p-dsh-l01-repair-execution-index-20261004-01.json`。本文关闭时未启动10；full09仅旧f82/5951历史。验证和独立整包审查期间源/文档冻结，随后需要真实恢复、新packet具体一次授权；同类grammar错误则转8006专项。Gate-L独立PASS/readset释放后继续M/P/G各门，不做default/D5/rollout宣告。
+
+
+### 2026-10-06 Gate-L 最终独立审查 U4 集中修复
+
+完整10原13886回收0：Python1640及56subtests/Node226/operator1，共1867，fresh cold1；原两reader80140回收0，109路径，fced96d6…/f466801c…稳定。最终独立审查 `/tmp/c2p-dsh-independent-l01-unblock-final-20261006-01` 绑定1606实读输入、U1–U3闭合，只剩U4授权与终止subject嵌套bool/int弱等值，全部实际readsets明确released/retained[]后才修源码。
+
+责任文件仅unknown_abort_recovery.py及其测试，加相关状态文档：canonical JSON字节类型保真绑定authorization/review/subject/process/scope/marker/receipt，strict approved True及owner/scope校验；新增9项拒绝路径，无操作权限扩大。历史正常完成授权仍不适用。真实合法内容receipt与费用settlement分离保持；缺usage依然UNKNOWN/pending/不能quiescence或release，不强制销毁真实内容receipt。
+
+首轮focused01原67354回收exit1，31 passed/1 failed/130.86s。主执行者期间写文档触发既有fixture request.reserve的composition_source_unstable；9新增反例均通过。记录并修正验证安排，先把全部文档收口冻结，再重跑 `/tmp/c2p-dsh-l01-unblock-u4-focused02.log`；其后新完整 `/tmp/c2p-dsh-l01-admission-20261006-11`、fresh cold、原两reader与独立QA。当前收口时均未开始，实际结果/身份/句柄/退出写外部 `/tmp/c2p-dsh-l01-repair-execution-index-20261004-01.json`，验证期不再改源或本文。旧完整10保留原绑定历史，不重贴当前证书。新最终保护原14克隆输出 `/tmp/c2p-dsh-l01-packet14-abort-isolation-20261006-04`，绑定同一新冻结身份；simulation不授权真实stop/retirement。
+
+项目24/1/24、七次真实live、Gate-L FAIL；原packet14 actualUNKNOWN/held、七fees六history/raw/task/source不变。实际终止确认、服务owner配方确认、独立操作review、distinct stop/restart/retirement grants均缺，模型/tokenize/服务/canonical新增副作用0。按长期§9完成合法恢复和新包具体授权后才新请求；若仍grammar同类，转8006专项不再提示试错。
+
+
+## 2026-10-06 packet16 native-stop与Writer witness返修（用户已解除源码冻结）
+
+packet14实际具名UNKNOWN退役及独立验收PASS；8006按原配方GPU2重启ready。packet15仅tokenize1、primary0，因新history依赖在/tmp沙箱不可见被claim拒绝。外部精确20文件RO传输方案独立CLEAR，原595/c458源码身份保持；用户明确授权packet16+transport一次，原句柄42929回收exit1。packet16实际primary1/tokenize1/retry0：HTTP200/native c2p_terminal成功、usage7705/392/8097、唯一stop/DONE；领域paragraph/witness验收拒绝。六fees已settled7705/pending0/completed1，原16仍held且quiescence未登记，历史仅原7且不变；14UNKNOWN32768/4096仍保留。独立实际QA585输入FAIL且读集释放：/tmp/c2p-dsh-independent-l01-packet16-postlive-20261006-01。
+
+用户明确回复“解除冻结，按具体方案开发验证”，记录与未应用草案原包：/tmp/c2p-dsh-packet16-diagnosis-20261006-01。当前实施三项：原native工具stop完成凭据/释放、Writer完整operands/operator/result关系witness、exact-owner历史正常完成恢复合同。最小三文件草案已应用，新增真实native stop成功/领域拒绝两种隔离测试正在实施；所有source/数学/Formula/atom门保留。新代码须新identity+staging+必要完整/cold+独立QA，不复用完整11标签。此次没有新模型授权、未重发16、未修改canonical permit或服务。原纯content三variant仍拒绝，不能伪造原候选成功；原底层native Session proof真实stop通过、伪finish/foreignsession拒绝，只是读取证明，不是authority。后续结果继续由sole-writer外部索引记录。
+
+
+### 2026-10-06 packet16 解除冻结后 native stop/语义/恢复开发
+
+按用户“解除冻结，按具体方案开发验证”实施，当前没有新模型或canonical release权限。
+修改真实registered terminal stop登记/分型、原release组合；原native证明门保持。
+模型投影保留canonical语义/条件/极性并保持Binder witness归属；新增独立历史native stop
+operator，保留task/six fees/raw/old history，review/auth/current identity/prior history摘要
+与exact owner CAS绑定。新增required套件/11与真实native两个用例。
+原60聚焦PASS、83原边界PASS/56subtests；原typecheck/build/stage退出0。
+首次focused native两个用例一通过、一因源码并发修改composition_source_unstable失败，
+该轮不用于冻结验收；后续稳定身份验证与保护克隆详见外部本批绑定产物。
+`/tmp/c2p-dsh-packet16-diagnosis-20261006-01/writer-owner-feedback.json`由原parser/assessor/
+paragraph repair/WriterSectionRepairPacket builder产生，owner writer_content/action
+writer_content_repair/attempt1；原响应仍拒绝且字节不变，不是接受回执或新正文。
+完整11仅旧身份，不重标签；后续新完整/cold/独立审查与具体恢复包独立收口。
+
+本批稳定native stop两个原Loader场景PASS，历史恢复最终聚焦32 PASS，保护克隆PASS，
+canonical task/raw/七history逐字不变。独立恢复代码/方案原0e63/4fd8身份PASS/APPLIES、
+457绑定及actual readset release：/tmp/c2p-dsh-independent-l01-native-stop-recovery-20261006-01。
+完整12出现两处test_dsh_admission计划版本断言仍/10；已知失败下对精确原offline pytest
+发送SIGINT，原manager失败终止并保留失败/中断/teardown诊断，未跑Node/cold，不记为PASS。
+两处期望同步/11；生产代码无其他修改。原12与QA保持原身份，新完整13及最终独立审查
+须重新绑定最新测试身份。所有正式canonical review/auth仍待具体验收；new provider/tokenize=0。
+# 2026-10-06 packet16 返修：完整13的 UNIT 协议夹具同步
+
+完整13原session40094观察到六个失败。单文件原隔离诊断 `tests/integrations/dsh/test_target_admission_integration.py`（session22258，exit1，6 failed/13.73s）及完整13原pytest报告确认，同一UNIT synthetic upstream fixture仍声明offline/10，当前真实target admission在进入UNIT seam前按offline/11拒绝。上一轮只同步了suite-plan的两个版本断言，遗漏了这处夹具。仅同步该UNIT fixture的版本，不改变其故意不完整性质、mock边界、真实准入门或六种target反例。原pytest1486580收到具名SIGINT，manager40094 reaped/exit1；完整13receipt passed=false、offline_required_suite_missing，Node/cold未运行，保留原失败及停止记录于 `/tmp/c2p-dsh-l01-admission-20261006-13/`，不改标为PASS。
+
+既有独立预审500项输入记录位于 `/tmp/c2p-dsh-independent-l01-native-stop-final-20261006-01/`，真实读集已释放；其557/4fd代码/恢复包预审PASS及prepared17 CLEAR均保留原身份，完整/cold不可用。此次同步后绑定新身份集中完整/cold及最终独立验证，不复用557证书、恢复plan或prepared17；无新真实模型/tokenize、服务动作或canonical释放。用户原解除冻结的开发验证范围持续有效。后续恢复具体包仍需最终明确操作决定，fresh live仍需一次具体授权，Gate-L仍FAIL。
+# 2026-10-06 packet16 返修：完整14机器证书的重复身份拒绝
+
+原完整14 manager62468已reaped/exit1。原Python1682+56 subtests、Node228行为测试全部通过；完整receipt仍passed=false/passed_count0、failure=offline_node_duplicate，operator子进程被原manager终止，cold未执行。严格原reader按(file,line,column,name,nesting)拒绝重复，实际两个native stop wrapper与default draft/wrong_atom_binding名称碰撞。仅共享host-provider test title对实际nativeFinish=stop增加后缀；保留真实执行、严格唯一性/summary/来源门，不去重报告、不改标旧结果、不缩减required。原2bbb/4fd完整14、native stop两个原persisted readback均保持历史身份。聚焦真实Node及原机器reader/全局身份检查后重新冻结完整15；旧R3计划、prepared17不能换标签，实际16恢复和fresh live另形成新身份具体包后才审批。无原run/canonical/服务变更、无真实model/tokenize，Gate-L仍FAIL。
+
+### 2026-10-06 最新用户 steering：身份差异采用差异验证，停止全量重跑循环
+
+用户明确要求精简流程、快速解决并推进。完整14原始行为Python1682+56subtests、
+Node228均通过，原certificate仍为duplicate FAIL；两例测试名修复后真实native-stop
+DSH成功/拒绝恢复均PASS、session71499实际reaped/exit0。不启动完整15重复相同行为。
+新增仅离线core复用通路，原报告保持历史绑定，差异审查覆盖当前验证层，Node按
+entry-file保留来源；实际operator和cold需fresh执行，非继承成功。新差异验证只跑
+相关reader/closure/operator测试。无canonical释放或新增模型/tokenize授权。
+
+
+### 2026-10-06 L01 native schema/required witness 接续
+
+- 当前用户要求必要live直接执行、身份差异不重复确认；具体一次包及真实依据仍记录。
+- packet16具名退役实际PASS，原数据与费用保留。packet21一次1+1，7819/565，schema_invalid、正常释放。
+- server-default省略SDK的strict:false，真实Qwen/XGrammar保留完整schema；actual SDK零网络及CPU完整grammar通过，未改runtime/服务。
+- 完整15：原Python1716/Node228/operator1，共1945；fresh cold1；session93810 exit0/reaped，81871a/569636，无source漂移。独立材料CLEAR/读集释放。
+- packet22：session94180 exit1/reaped，1+1、7815/223，原生stop及原usage/释放正常；原raw合法schema但缺witness，原required_target_contract拒绝。独立Gate-L FAIL/103 inputs，读集retained[]；当前backendempty/10严格history，旧14UNKNOWN保留。
+- 当前负责writer_contract.py原native发射要求、writer-request.ts双schema guard及wire.test.ts遗漏字段反例；旧publication schema、语义/公式/来源门不变，当前验证中，未冒充完成。
+- 产物：/tmp/c2p-dsh-schema-compat-20261006-01；/tmp/c2p-dsh-packet22-live-operation-20261006-01；/tmp/c2p-dsh-witness-emission-20261006-01。typecheck/build/stage均实际exit0；Node两次报告路径/fresh目录前置拒绝均零测试/零模型，node02为实际聚焦执行。
+- 继续：必要验证/独立门后一次有变化fresh；Gate-L PASS才正式M/P/G，已收齐只读M01–M03接口准备。
+
+### 2026-10-06 L01 Witness 合同独立发现 W23-1 与原 owner 修复
+
+复用现有独立 QA（不新开代理）确认：packet23 的实际 paragraph_transaction_required 提示要求 Binder 提供所有 exact witnesses，而 DSH terminal 要求 Writer detail witness；native description 也未区分 Binder-owned atom。读集已释放 retained[]，原独立报告保留于 `/tmp/c2p-dsh-independent-l01-packet23-current-20261006-01/`，没有材料 CLEAR。最小修复仅在原 facade.TERMINAL_INSTRUCTION 明确前面的 Binder 指令只适用于 atom/internal sidecar，Writer 必须覆盖 frozen witness_contract.targets 中的 required detail，即使 rendered_detail_ids 空或省略；native description 同步限定 Writer-owned targets。通用 writer_skill、旧 raw、原内容/公式/语义/来源门不变。原 test_l01_binding_contract 增加真实 task payload 的 owner 分工反例。
+
+完整16因上述新发现受控提前停止两个固定离线测试进程组（2175108/2175129，SIGTERM）；原 session56388 已 reaped/exit1，两个 terminal exit -15，原 receipt passed=false/offline_suite_binding_invalid，cold 未执行，不记 PASS。没有真实模型调用、服务操作或占用恢复。上一轮 Node 聚焦57/55PASS/2 source_unstable（运行中写文档造成）仍保留；最终稳定整包覆盖原两负例，不修改断言。packet23仅prepare/零模型，保留为修前快照；修后使用fresh24，不重写旧包。避免先完成已知有冲突的旧整包再重跑，修复收口后才冻结运行一次最终完整/cold，独立验收后按当前任务授权直接一次 changed live，不再身份确认。新聚焦/整包/CPU及最终材料结果将在外部绑定原始产物中记录，当前不预报通过。
+
+
+### 2026-10-06 packet24 实际结论与有界算术 owner 修复
+
+原完整17实际1948通过（1717 Python、230 Node、1原operator）、fresh cold1，原session51924 exit0/reaped；7c7a15fb379f698b66f9954093444b5155892b5980a66a1e22aa01f6d3636fde / d01ff787d5a664adf2a2207ea0b7ed6f761b95aa535084a8362e272b29fc38cb。独立最终材料CLEAR且读集释放。packet24按当前用户同范围live任务指令具体一次，session15871 exit1/reaped；1 primary+1 tokenize，真实usage8009/324/8333，native stop注册、完整schema与detail witness存在；spent8009/pending0、原owner自然释放、canonical empty/11严格history，旧14费用UNKNOWN保留。没有重发或服务修改。
+
+独立实际Gate-L FAIL：原exact source `return a * x`，闭合semantic为scalar a/input x/output y；原witness为完整主动句“multiplies … by …, yielding …”。anchor与condition/polarity均通过，仅原算术表达语法拒绝，不能把reported condition_or_polarity标签当作真实极性丢失。原失败/raw不改、不倒签。独立证据及实际读集释放：`/tmp/c2p-dsh-independent-l01-packet24-postlive-20261006-01/`。当前在原publication_transaction_contract owner增加单一source AST双标识符乘法的完整主动句，结果和operand roles由closed semantic contract导出，全句匹配；没有项目答案注入。新完整parser/assessor正负例及泛化符号反例验证中，旧完整17仅历史绑定，不冒充新代码验收。
+
+用户明确普通无破坏性决策直接执行，沿同范围修复/必要验证/独立阶段验收/fresh changed25推进，不再增加身份确认流程。源码修复涉及实际内容判定，收口后一次必要当前完整/cold；保留旧失败、质量门、一次请求及预算。Gate-L PASS后连续M01–M03→P01–P04→G01–G08，分别独立验收。当前24/49、Gate-L FAIL、actual primaries11。
+
+本批复验：原完整 parser/assessor及算术/条件/极性/绑定/Writer/Method质量八套聚焦，`PYTHONPATH=src:. PYTHONDONTWRITEBYTECODE=1 python -m pytest -q tests/integrations/dsh/test_l01_binding_contract.py tests/regression_20260917/test_witness_relation_matrix.py tests/regression_20260917/test_witness_projection.py tests/test_agentic_detail_atom_binder_and_trace_v2.py tests/test_llm_section_writer.py tests/test_agentic_method_authoring_p0_closure.py tests/test_agentic_14_vertical_tests.py tests/regression_20260922/test_invariants_i1_i10.py`，session47084 exit0/reaped，277 passed/7.81s；`git diff --check` exit0。首次仅算术补丁的actual24零网络复核仍missingatom，保留失败diagnostic；进一步定位Binder只从整句找atom，没有利用Writer已供完整detail子句。原Binder现在仅同detail_id、唯一原文子串、detail约束和atom独立锚点/约束均通过时复用，不裁切/改文，不借用sibling，不降低匹配阈值。新增八反例覆盖wronginput/result/foreign/detail与atom source disagree/重复/无witness；整体formula postfix原parser/assessor例通过。
+当前actual24原raw零网络原owner复验 accepted=true、atom1、formula1、authority0/failures[]，路径 `/tmp/c2p-dsh-active-product-20261006-01/actual24-current-owner-diagnostic-binder.json`；原24 live失败与immutable raw保持。独立代码审查待结束，最终一次完整18/cold及fresh25尚未开始，不预报PASS。代码/文档收口后验证期只写外部/tmp产物。
+
+
+### 2026-10-06 packet25 实际领域拒绝与 native cardinality 修复
+
+本批原完整18实际1988（Python1757/56 subtests、Node230、原operator1）、fresh cold1全部通过，session11872 exit0/reaped，source b552057c84434a6d5c0cbbd762b31127723ae2265723c4773b9a5f9d16213dba / validator b0413693986e8b9834d1bf890c5cd76d60812d57519d632926b9865506b71915。独立算术/Binder CODE_PASS，真实原24 private refs/raw全链离线接受，仅诊断，不倒签旧失败；最终材料独立CLEAR/183输入并全部读集释放。
+
+packet25在当前直接live范围下具体once执行，原session78607 exit1/reaped；1 primary+1 tokenize，8009/301/8310、HTTP200/native stop注册、spent8009/pending0/completed1。唯一实际content rejection为required_target_contract，raw950B/aaea08f2f14948ade4e7df272895c4058161a95bf86b005b929ad3e214d6ff1c，witnesses=[]。未把尚未正式评估的formula作为额外失败。独立 actual Gate-L FAIL/105输入，12严格history与旧11不变，canonical empty，旧14 UNKNOWN pending32768/1/completed0保留。报告 `/tmp/c2p-dsh-independent-l01-packet25-postlive-20261006-01/`；实际direct/transitive读集已released retained[]。没有重试、重发、服务变更。
+
+当前最小接线修复：从原kernel冻结的model-visible Writer detail targets派生每paragraph native witnesses.minItems与明确paragraph_id scope；Binder atom/private exact anchors不进入schema。原DSH基础typed schema helper不支持minItems，但公开raw register/schemaOf在native mode原样携带参数schema。本项目writer-request仅认可并严格检查这一有限extension（array/safe nonnegative integer），其余结构仍由原DSH helper验证；原parseWire在concludeTurn前强制minItems，原完整schema/领域门保持。没有SDK/runtime补丁、正文注入或承认自报target事实。混合optional paragraph不被错误要求提供witness；同样target数量不代替内容/每target验证。
+
+原96聚焦PASS（session45466 exit0/reaped/11.08s）；完整18保留历史绑定，当前业务变化未冒充已完整验收。新增真实C00原Loader/loop/pi-ai fakewire与empty witness拒绝用例、CPU actual grammar和独立审查待收口。首次typecheck未指定candidate，原peer selection门拒绝exit1，零测试/构建/模型；改用既定candidate/dev root精确配置，未修改环境绕门。继续只做有实际变化的fresh26，不复用25计划或旧授权、不重复身份确认。24/49，Gate-L仍FAIL。
+
+
+WC-1 收口：首次真实 C00/host-provider 聚焦 native02 保留 20 PASS / 3 FAIL（session14081 exit1/reaped），原因是合法冻结合同的 required_detail_ids 非空、visible targets 为空，第一版只读后者。独立审查 BLOCK/WC-1 已释放全部读集。当前 native witness 数量统一由 required_detail_ids 与 required visible detail targets 的去重并集派生；paragraphs.minItems 同步覆盖原合同全部冻结段落要求。可选 detail 不被提升为 required，原完整内容门不变。新 default fixture 与重复来源反例补齐；三文件聚焦 session38470 exit0/reaped，98 passed/9.75s；git diff --check exit0。下一步原 DSH 同组 fresh native03、fresh CPU grammar、独立 WC-1 关闭后再集中一次最终完整19/cold；当前没有新 live、没有服务或 canonical 变更。
+
+
+WC-1 独立关闭 CODE_PASS：fresh native03 原真实 Loader/loop/pi-ai 两文件23 PASS/0 FAIL/skip/cancel，session93065 exit0/reaped，103068ms；typecheck session19506 exit0/reaped。fresh probe02 仅 prepare/零模型分词网络，actual wire SHA256 7636d6bbb394ac75d72641fd2dc9bf66856f54c1b2baaea7e621a67fd0b67124；部署 xgrammar 实际 builtin CPU编译 PASS、原 builtin bytes4543784a…不变，无 loaded-instance success 冒认。独立报告 /tmp/c2p-dsh-independent-l01-witness-cardinality-20261006-02/ CODE_PASS/WC-1 closed，原23 report严格reader、原24 raw/current schema诊断合法、原25空witness与空paragraph拒绝、optional与去重/Binder排除均核验，21实际输入读集全部释放 retained=[]。旧24/25 actual FAIL保持，当前Gate-L仍FAIL。
+修复收口，此后当前完整19/cold与fresh26材料验证期间不再改源码/文档；只有/tmp外部产物。当前12严格history/20只读证明已由原reader收集，backend empty、旧14 UNKNOWN责任不变。一次当前完整19/cold结束及独立材料CLEAR后直接按当前同范围任务指令执行changed fresh26，无重试/服务变更/身份确认。
+
+
+## 2026-10-06 Gate-L 独立 PASS，接续 M01–M03
+
+实际 packet26 单次 primary/tokenize，8055/441，原生 research_required/waiting；原费用结算与 exact-owner 自然释放。独立129输入验收 PASS，实际读集 released/retained=[]。完整19 1997 + cold1 属于冻结76d964/5326ac身份。L01 done、25/49、累计13次primary；正文未验证、旧14费用UNKNOWN保留。当前直接实现 M 的原生工具读取、Session材料恢复和同账本epoch控制，完成后独立Gate-M，不再做身份类确认或另抽L样本。任务细节及来源见 stage04_L01_acceptance_20261006.md。
+
+### M 段首批实现（尚未 Gate-M 验收）
+
+新增 scoped_reads.py：同一 TaskStore SQLite 保存具名 read-set/发行句柄/累积调用与实际返回字节，原 owner claim/session/snapshot/revision/fence 检查；RPC 仅接受 grant/range，不开放发行或路径。task-tools.ts 原注册表提供 V2 可用 c2p_read，耗尽要求停止 owner loop。V1工具面不改。当前真实 Python 聚焦12通过，包括双进程竞争、Worker RPC重启、摘要种类不能由模型改标、原始JSON包装UTF-8字节计量；这不证明V2真实循环已接通。
+
+新增 context-policy.ts：真实 Session append/surface derive，原材料四类及源摘要匹配，summary不能满足，替换后明确恢复并await flush；恢复后重新度量/同原账本及真正V2循环接通仍待完成。context-replay.test.ts 使用实际 Session replacement/replay，不冒充真实compaction辅助调用验收。新裁决文件纳入 validator 来源清单。
+
+一次合并聚焦运行发生43 PASS/1 setup composition_drift：期间修改 scoped_reads.py 引起绑定测试读取不同身份；属于本次验证安排错误，不是接受结果。停止跨测试改源码，首批收口后重新运行受影响的原测试，不另跑L全量/live。
+
+首批收口后实际验证：`python -m pytest -q tests/integrations/dsh/test_scoped_reads.py tests/integrations/dsh/test_worker_protocol.py` 45 PASS/92.38s/exit0/session68499；随后增加 read_grant composition 复核后，`python -m pytest -q tests/integrations/dsh/test_scoped_reads.py` 最新12 PASS/exit0/session56472。原构建与stage最新exit0/session97788；实际隔离Node `context-replay.test.ts` 首轮1PASS/1FAIL（测试漏 original sourceEventSeqs），按原Session合同补真实shadowed节点引用；fresh output02最新2PASS/0FAIL/exit0/session14972，无skip/cancel/todo，实际事件报告在 `/tmp/c2p-dsh-m-context-native-20261006-02/events.jsonl`。原始失败报告保留。日志及进度 `/tmp/c2p-dsh-m01-m03-development-20261006-01/`。
+
+接续明确：M01/M02均仍未标完成、Gate-M未裁决；V2真实循环/最终assembly材料守卫/每请求稳定ID及原账本累积预算/真实DSH compaction辅助调用/epoch唯一terminal/source-bound多步恢复仍需接通。不要将两个Session测试称作完整compaction验收；不再为L compatibility抽样。用户允许普通低风险决定直接执行，不重新询问身份授权。
+
+### M 段 V2 合同与原账本 epoch 控制（2026-10-06，未验收）
+
+新增 WriterEpochLimitsV2/WriterTaskContractV2 与 FrozenWriterInputV2，明确版本选择；原V1 Literal[1]与单请求入口保留。冻结时标准化限制，合同版本/限制必须对应原冻结对象；共用原内容owner及全部schema/witness/formula质量门。私有 context.materials RPC 返回完整原 request.input_payload 对应TaskView、原请求ref及task/session/snapshot/revision，不另写材料编译器、不给摘要事实权限。新增 epoch_accounting.py 只读原 DshInvocationEventV1 和原reducer，累计已花费/未结算输入输出与请求数，证明not-sent不收model/content debit，unknown不当零；不建第二费用账本。
+
+新增 epoch_tools.py 在原TaskStore数据库记录不可变原ArtifactRef支持的工具来源/候选准入，所有raw候选在内容guard前登记；第一次非法terminal仍消耗唯一候选，第二个保存拒绝来源并关闭epoch；跨进程互斥、不重置额度、摘要/跨session/request及篡改原来源拒绝。原真实 TerminalArgumentCapture block-end 的await回调已增加显式V2登记分支，V1行为保留。新Python裁决来源进入原validator清单。
+
+实际验证：最新40 PASS/41.45s/exit0/session38786/reaped；原隔离启动器真实Node 3 PASS/exit0/session4260/reaped（Session替换/恢复/replay + 原V1技术draft与新进程receipt恢复），没有skip/cancel/todo。typecheck/build/stage实际exit0。原core reader在默认沙箱的Node子进程只给文件容器事件，6项失败；允许真实本机子进程的原命令复验23 PASS/exit0，不改reader或重写失败。命令、源文件SHA及原日志见 `/tmp/c2p-dsh-m01-m03-development-20261006-01/v2-foundation-evidence.json`。全部handles已回收，未新增真实模型、修改服务或操作canonical旧占用。
+
+下一步仍是正式M整段：动态V2实际请求/发送门和逐请求度量、原账本辅助role计划、独立绑定compaction子会话且保留Writer绑定、所有请求自然完成/原owner释放与unknown恢复、真实多步及强制compaction集成和独立Gate-M。**本批只是基础与回归验证，不能称V2模型循环或真实compaction已接通，M01–M03不标完成。** V2发送目前仍被原单请求adapter的V1解析/sequence限制拒绝，不能通过覆盖V1 max_model_requests绕过。当前总25/49、Gate-L历史独立PASS，必要普通可逆决策直接做，不重复身份类确认；旧14费用UNKNOWN不改变。
+
+## 2026-10-06 · M 原生压缩事务与实际材料/读取接线
+
+直接完成普通实现选择，无新增确认、真实模型调用或后台恢复操作。Gate-L 保留独立 PASS，25/49；Gate-M 仍未验收。
+
+- 原 Worker 新增私有 `context.read_grants`：仅原公开 Writer TaskView 导航，额度来自冻结 V2 合同；重复发放不重置计数，V1/取消拒绝，不开放私有 section/read-set/golden。
+- 原 `KernelAuthority.persistChildBinding` 在实际子会话装入原材料恢复、源标记请求检查及有界读取；读取失败合入 epoch abort，后续实际请求记录/准入拒绝。当前 V2 发送门仍保留拒绝，不能宣称实际多步已接通。
+- `EpochCompactionEngine` 只定制实际 DSH `BasicCompactionEngine.summarize`；保持原压缩事务/日志/替换策略。私有 authority 回调要求独立 child、真实 usage、自然耗尽、原 settlement ref；不走直接 llm.stream 或伪造 parent `llmStreamCall`，隐式重试拒绝，每个原 transaction 只消费一次。该回调尚未接到生产辅助发送器。
+
+新观测：`python -m pytest -q tests/integrations/dsh/test_multistep_context.py tests/integrations/dsh/test_scoped_reads.py tests/integrations/dsh/test_worker_protocol.py` exit 0，49 passed / 104.19s，session 7550 terminal/reaped。后续仅 TS 压缩 cache/cap 校验及 TS 测试调整，未改变这些 Python 逻辑；不声明跨版本全量身份验收。
+
+最终 candidate typecheck/build/stage exit 0，sessions 66212/38245 terminal/reaped。原隔离启动器实际执行 `epoch-compaction.test.ts context-replay.test.ts serial-writer.test.ts`（命令使用绝对路径），fresh `/tmp/c2p-dsh-m-compaction-20261006-02/events.jsonl`：12 passed / 0 failed / 0 skip，exit 0，session 87788 terminal/reaped；11 为实际 SDK 压缩/Session 与明示的辅助回执 stand-in，1 为原 V1 实际 native 假 provider 正文及新进程恢复。不能替代实际 V2 辅助 child/原账本证据。compileall exit 0。
+
+可续跑结果与当前源码 hashes：`/tmp/c2p-dsh-m01-m03-development-20261006-01/native-compaction-and-read-wiring-evidence.json`。剩余集中在动态 V2 每步 wire/计量/原账本发送、真正 compaction child/辅助计划、整个 epoch 正常完成与原 owner 释放；收口后再做阶段独立验收。
+
+
+## 2026-10-07 · M 动态请求准入与逐步完成登记（Gate-M 未验收）
+
+直接实施可逆决策，不增加身份审批、真实模型请求或 canonical owner 操作。原 Gate-L 独立 PASS / 25/49 保留；M01–M03 不以测试数量标完成。
+
+- 新 `step_admission.py` 和原 Worker 私有 measure/reserve-step 接线：原 SDK 实际动态 wire 与原冻结选项/系统/完整材料/工具 schema 对照、重新 tokenizer 计量；按稳定 sequence 在原唯一调用账本注册累计计划及预留。未知/未完成费用拒绝下一步；实际双进程争同 sequence 只有一方得到原预留，不增加第二余额库。
+- 新 `step-renderer.ts` 在独立本地 HTTP 接收器观察实际 SDK native serializer，不寻址真实模型；禁止隐式 retry/外部端点，拒绝伪 usage/生成结果。实际新增工具历史进入第二个 wire，原模型端点到达数 0。
+- 实际 SDK 发现 `defineTool` 隐式参数对象根为 open，和 Kernel 预期不一致。现关闭其原编译 schema 对象，同时作用于实际注册 wire 与 SDK execute validator；未知路径参数在执行前拒绝，未放宽 read-set 或质量门。
+- 新 `step_completion.py`：V2 每步完成须原预留/request digest、原材料 ref、原 Session/header/context、完整 native delta/block/usage/finish、step/end、工具调用/返回及原 pre-schema 参数来源全部相符。第二请求不得复用第一请求的 Session，旧 V1 完成凭证不适用于 V2。`KernelAuthority` 接入真实子会话的 pre-step：上一导航步 Session flush 与原费用结算先于下一步；terminal 留给原 ingest，拒绝继续生成。尚未提供完整 V2 driver/整 epoch release，因此不能称真实多步已跑通。
+
+实际命令与结果：Python 新完成 fixture 首轮 12 PASS/12 FAIL/exit1（fixture 缺 provider；补实际模型字段，未改生产校验）。修复后 24 PASS/104.51s/exit0/session5150；增加同 assembly 旧 Session 复用反例后 25 PASS/107.63s/exit0/session45152。再收口真实 read-first 工具注册顺序并增加 native 原始来源/工具 end 矩阵，聚焦 6 PASS/25 deselected/27.85s/exit0/session83724。这些 Python Session 为明示 UNIT fixture；不冒充实际 SDK 多步。
+
+原隔离 Node 首轮 step-renderer + serial-writer：3 PASS/1 FAIL/exit1/session79699；其中原 V1 技术正文/新进程恢复 PASS，失败为上述 SDK schema 差异。修复后 fresh `/tmp/c2p-dsh-m-step-renderer-20261007-01/events.jsonl`：实际 SDK 3 PASS/0 FAIL/exit0/session2141，无skip/cancel/todo，真实模型请求0。当前 pre-step TS 接线 typecheck exit0/session76348；build exit0/session95105（outputs digest cfdbf3e54c90b212029aa7589bce8125bfd729b5811baad52030b9c0fca0d5c8），stage exit0。compileall、git diff --check exit0。全部启动 handles terminal/reaped；未重跑 L 全量或 live。
+
+逐项证据、当前源 SHA 与准确未完事项：`/tmp/c2p-dsh-m01-m03-development-20261006-01/dynamic-step-admission-and-completion-evidence-20261007.json`。下一步直接接完整 `runMultistepWriter`、最终全 epoch 受信 quiescence/原 owner 释放及真正独立 compaction child/原辅助预算，完成整体实际循环与恢复，再交独立 Gate-M；普通身份变化不再请求授权。README 的旧“当前”解阻入口已标历史，旧14费用 UNKNOWN 不变。
+
+
+## 2026-10-07 · 实际两步 Writer、整 epoch 释放与新进程恢复已接通
+
+在前一批证据后继续实现，没有请求身份授权。增加显式 `runMultistepWriter`，原 `runSingleWriter` 保留 V1 两消息/单步门；新增 `epoch_completion.py`，逐项核对整个 SDK Session 和原请求/工具来源/费用事实，再由原 `SerialBackendAdmission` 事务记录 `DshEpochSerialBackendReleaseV2` 释放，unknown/未完成拒绝。原 V1 验证抽成同语义 helper、历史 reader 增加严格 V2 版本；未操作 canonical 后端或旧14费用。
+
+实际 SDK 接线发现并修复三处边界：恢复/导航采用真实 `PreStepDecision.messages` admitted batch，由 SDK 在 system 后写日志，发送前 flush，不修改 provider body，也不容忍 system 降成 user；唯一 system 首位/逐字 guard 保留。仅冻结非thinking DeepSeek 可接实际 serializer 的空 reasoning_content，占位本身全部计量，非空/其他角色拒绝。Session header/context 按原 SDK 变化日志继承最新原值，每个请求另以真实 assistant ordinal、自己的实际 assembly/wire、usage 与工具 raw 源校验，不能复用旧完成证明。
+
+fresh 实际联测 `/tmp/c2p-dsh-m-actual-loop-20261007-06/events.jsonl` exit0/session59705/reaped：1 PASS / 0 FAIL / 0 skip / 89.0986s。实际 Loader/SDK/原pi-ai HTTP及原Python Worker：一次 calibration＋两步 task，实际具名导航 read → 原生 terminal → 原质量 assessor/Publications → 整 epoch 自然原 owner 释放 → 全新 Worker 恢复同 receipt，新增发送0。原 reducer usage34输入/22输出，requests2/pending0，backend empty，domain pending_validation。全部 provider 为隔离假服务，不是 Qwen live、normal CLI cutover、Verified 或 Gate-M。
+
+原 V1 单步正文与新进程恢复在 output01 PASS（该组合exit1源于另一个新V2 test失败）。output01–05 失败均保留：system顺序、SDK角色变换、空reasoning占位、变化日志、测试错用不存在的输出统计字段；未篡改旧结果。output05已实际完成两步并释放，只在恢复前的测试字段断言失败，output06补完真实新进程恢复。
+
+最终受影响反例：`python -m pytest -q tests/integrations/dsh/test_dynamic_wire_compat.py tests/integrations/dsh/test_step_admission.py::test_completed_session_cannot_close_a_new_request_with_identical_assembly tests/integrations/dsh/test_epoch_completion.py` exit0/session98732/reaped，9 PASS/43.43s；其中 Session 为明示UNIT fixture，original Worker/SQLite实际运行。最终 typecheck exit0/session26011；build exit0/session11919，outputs333cc401b465e83ca802260b87fa084d449441194f5a64fe04c63aa1cc8f2250，stage/compileall/hygiene exit0。
+
+当前 source SHA、准确命令和边界见 `/tmp/c2p-dsh-m01-m03-development-20261006-01/actual-multistep-owner-release-and-recovery-evidence-20261007.json`。下一批集中真正独立 compaction child＋原辅助 role plan/fees、强制压缩整体联测及剩余 normal V2/读取 revision 合同，再收口阶段必要验证和独立 Gate-M。整体25/49不变，任务不按单个成功样本提前标完成；没有新增真实模型/服务变更/旧占用恢复。
+
+
+## 2026-10-07 · 独立 compaction child 与强制压缩完整联测收口，进入 Gate-M 阶段验证
+
+真实 SDK 流程已完成“导航 read → 独立 compaction child → 原生 Writer terminal”，沿原 TaskStore、RunInvocationBudgetEnvelope、调用 journal/reducer 与 exact-owner release；辅助 child 不覆盖原 Writer binding。原 Kernel 私有发行 transaction/input/prompt/cap 绑定，compaction 无工具/plain text，独立角色显式声明；所有实际 wire 重新序列化、计量并经同发送门。真实压缩后原完整材料通过 Session 记录恢复，最终实际 provider payload 逐项核对。原 V1 路径保留，公开 Host API 显式 V2 分流，正常 JSON CLI 仍 V1，未默认切换。
+
+Python 聚焦 session39439 exit0/reaped，95 passed/253.75s（后续持久 invalidation 尚未包含）；真实 Node 五文件 session46571 exit0/reaped，14 passed/0 failed/0 skip/234.1867s。其中11为实际 SDK/Session 加明示回执 stand-in；3为实际 provider/原 Worker：强制压缩3请求51/33/pending0、整 epoch 原owner自然释放与新 Worker恢复0新增发送；未声明压缩预算实际辅助发送0/末步Writer0，原17/11费用保留、fake owner held；原V1单Writer及新进程恢复通过。证据 `/tmp/c2p-dsh-m01-m03-development-20261006-01/actual-compaction-epoch-evidence-20261007.json`，actual events `/tmp/c2p-dsh-m-stage-native-20261007-01/events.jsonl`。typecheck4371/build29438/stage exit0，outputs6ded3d8380f2e7d1d69b1df2a6901eb0be70b5bbe986b59872ef1d471e7dd131；随后 Python owner 边界变化需当前阶段复验，不复用旧完整身份。
+
+M01 补实：原 TaskStore 增加仅撤销旧视图的 content_invalidations 元数据；原 Python owner 提交原 ResearchPromotionLedger 的完整 claim_promoted 链后，revision/fence各递增1，immutable promotion ref 持久化。Worker 默认current_state读取原持久指针；无模型RPC发行/晋升、无新的事实许可、不更新原claim/binding/receipt或费用。新内容仍须原编译/freeze及新epoch。真实正在运行/重启Worker均拒绝旧read和旧context.materials，未完整晋升拒绝；最新 scoped+target unit 57 passed/12.31s/exit0/session32381。首次新test错误遗漏contract_ref出现schema_invalid，保留13pass/1fail，修正测试参数后复验通过。
+
+完整验证计划12新增M全部必需Python/Node文件，缺文件预先拒绝；不把旧plan11当新完整证明。计划/任务恢复聚焦57pass/6fail/session86169，6项全因默认沙箱拒绝 bwrap NETLINK_ROUTE，正在原命令允许实际隔离namespace复验；不修改测试/门绕过。当前Gate-M未独立裁决，25/49不变。未新增Qwen调用、修改服务、canonical占用或旧14 UNKNOWN费用。
+
+阶段计划12补充记录：session36216 原隔离目标准入6 passed/16.06s/exit0/reaped；diff-check/compileall exit0。完整首次入口误用通用module（43668 exit2）及未安装console script（exit127），均没有启动测试；随后正确method-agent函数入口87384开始原managed计划。阶段复核发现新晋升模型research_promotion.py未列validator来源，已SIGINT中止该未完成套件（87384 exit130/reaped），并具名停止它留下的pytest group54831，原operator由finally关闭。/tmp/.../m-stage-admission-20261007-01保留中断事实，不计PASS。清理后仅新增原research_promotion.py来源（不修改其逻辑），再在fresh02集中一次完整验证；不得冒充旧计划11/上一中断identity已通过。
+
+独立M-E1：原QA /tmp/c2p-dsh-independent-m01-m03-20261007-01 235输入原strict report reader拒同名重复节点，原verify_epoch_quiescence实际3请求51/33RO复核通过，缺aux/缺step/重复step拒，未声明role0aux0final/17原费用保留。current02 argv亦包含四个同名draft entry，必不可认证，因此原3485 SIGINT exit130/reaped、具名pytest group61711停止，operatorfinally关闭；保留partial log不作通过。QA明确全读集released/retained=[]。仅host-provider真实title增加multistep/forced compaction/undeclared auxiliary budget实际模式，不改strict reader或任何业务门。先复验实际四entry聚合+原strict reader，成功后一次fresh03完整计划12/cold，避免末尾才拒报告。
+
+
+## 2026-10-07 · Gate-M 独立 PASS，接续 P01–P04
+
+原 complete03 session96522 实际 exit0/reaped，Python1853+56subtests、Node249、operator1，共2103；fresh cold1。原 CLI record-offline-receipt dsh-stage04/candidate tool-choice.2，root `/tmp/c2p-dsh-m-stage-admission-20261007-03`。独立 final QA 原严格 complete/cold reader接受，3462绑定输入、proof36706 exit0/reaped，全部直接/传递readsets released/retained=[]。M-E1 title-only修复的当前4入口strict4复验通过；六项namespace失败在原隔离命令复验6pass，未弱化门。
+
+M01–M03 done，28/49；正式P01 in_progress。详细范围、原身份和证据见 `docs/dsh_execution_20260928/stage05_M_acceptance_20261007.md`。实际强制compaction3请求51/33/原owner释放、新Worker0发送；持久旧scope撤销闭合。没有新Qwen/tokenize/service/canonical操作，旧14UNKNOWN保留；normal JSON CLI仍V1，V2 Host API资格不是默认cutover/Verified。P批以唯一同主机根的SQLite队列/permit元数据实现全run/alias限额、公平和unknown阻断，费用继续原reducer；保留Gate-P独立门，不重复当前全量。

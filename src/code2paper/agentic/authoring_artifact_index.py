@@ -11,6 +11,7 @@ mtime/字典序猜当前对象"的读者都会拿到过期或空对象。
 
 from __future__ import annotations
 
+import base64
 import hashlib
 import json
 from collections.abc import Mapping
@@ -204,10 +205,20 @@ class ArtifactIndexEntryV1(BaseModel):
     file_bytes_digest: str = ""
     upstream_digests: dict[str, str] = Field(default_factory=dict)
     detail: str = ""
-    #: 审计 §F.1：条目来自 producer 注册还是 legacy 扫描。
-    discovery: Literal["legacy_scan", "producer_registration"] = "legacy_scan"
+    #: 审计 §F.1：条目来自 producer 注册、legacy 扫描，还是 K02 的一代产物 manifest。
+    discovery: Literal[
+        "legacy_scan", "producer_registration", "publication_generation"
+    ] = "legacy_scan"
     #: producer 注册时声明的 upstream 引用（identity/digest 形式，原样保留）。
     upstream_refs: tuple[str, ...] = ()
+    #: K03：一代产物的持久恢复状态（uncommitted / committed_unswitched / switched / invalid）。
+    publication_recovery: str = ""
+    #: K03：该代 manifest 绑定的不可变成员路径（权威成员存储，导出只是投影）。
+    publication_members: tuple[str, ...] = ()
+    #: K03：该代冻结的读集。
+    publication_read_set: tuple[str, ...] = ()
+    #: K03：active 指针的 fence 计数（同一 (role, phase) 的切换次数）。
+    publication_fence: int = 0
 
 
 class AuthoringArtifactIndexV1(BaseModel):
@@ -477,40 +488,102 @@ def _registry_entries(
     root: Path,
     *,
     by_role_phase: dict[tuple[str, str], list[ArtifactIndexEntryV1]],
+    allow_legacy_registry: bool = False,
 ) -> tuple[list[ArtifactIndexEntryV1], dict[str, str]]:
-    """把 producer 注册表投影成索引条目（审计 §F.1）。"""
+    """把 producer 注册表投影成索引条目（审计 §F.1）。
+
+    K03：旧 ``1.0`` 注册表只能由**具名只读 reader** 读取；``allow_legacy_registry=True``
+    时显式走该路径并把"legacy 只读"写进条目 detail，默认仍是 fail-closed。
+    """
 
     from code2paper.agentic.authoring_artifact_registry import (
         REGISTRY_DIR_NAME,
         REGISTRY_POINTER_NAME,
         ArtifactRegistryError,
         load_artifact_registry,
+        load_legacy_artifact_registry,
     )
 
+    legacy_read_only = False
     try:
         registry = load_artifact_registry(root)
     except ArtifactRegistryError as exc:
-        entry = ArtifactIndexEntryV1(
-            logical_role="authoring_artifact_registry",
-            phase="research",
-            path=f"artifacts/{REGISTRY_DIR_NAME}/{REGISTRY_POINTER_NAME}",
-            status="invalid",
-            detail=str(exc),
-        )
-        by_role_phase.setdefault(
-            ("authoring_artifact_registry", "research"), []
-        ).append(entry)
-        return [entry], {}
+        if allow_legacy_registry and "legacy_requires_named_reader" in str(exc):
+            try:
+                registry = load_legacy_artifact_registry(root)
+                legacy_read_only = True
+            except ArtifactRegistryError as legacy_exc:
+                return _registry_failure_entry(
+                    root, by_role_phase, str(legacy_exc), REGISTRY_DIR_NAME,
+                    REGISTRY_POINTER_NAME,
+                )
+        else:
+            return _registry_failure_entry(
+                root, by_role_phase, str(exc), REGISTRY_DIR_NAME,
+                REGISTRY_POINTER_NAME,
+            )
     entries: list[ArtifactIndexEntryV1] = []
     active: dict[str, str] = {}
-    for registration in registry.active_registrations():
+    # K03：一代产物由**持久 active 指针**决定谁是当前对象；注册表只负责来源身份。
+    publication_active: dict[str, tuple[str, int]] = {}
+    try:
+        from code2paper.agentic.authoring_artifact_publication import (
+            load_active_publication_pointer,
+        )
+
+        pointer = load_active_publication_pointer(root)
+        for key, digest in pointer.active.items():
+            if digest:
+                publication_active[key] = (digest, int(pointer.fences.get(key, 0)))
+    except Exception:  # noqa: BLE001 - 指针不可读时按"没有代 active"处理，逐条仍会核对
+        publication_active = {}
+
+    # 一代产物的候选集合**不止注册表 active**：已提交未切换的下一代也要可见
+    # （标 superseded），否则索引会以为"没有这一代"，旧 active 反而丢了。
+    generation_registrations = [
+        item
+        for item in registry.registrations
+        if "publication_generations" in str(item.path)
+    ]
+    candidates = {
+        item.registration_id: item for item in registry.active_registrations()
+    }
+    for item in generation_registrations:
+        candidates.setdefault(item.registration_id, item)
+    generation_keys: set[str] = set()
+    for registration in sorted(
+        candidates.values(),
+        key=lambda row: (row.key(), int(row.generation), row.registration_id),
+    ):
+        key = registration.key()
+        generation_entry = _publication_generation_entry(
+            root,
+            registration=registration,
+            publication_active=publication_active,
+        )
+        if generation_entry is not None:
+            entry = generation_entry
+            entries.append(entry)
+            by_role_phase.setdefault((registration.logical_role, registration.phase), []).append(
+                entry
+            )
+            generation_keys.add(key)
+            if entry.status == "active":
+                active[key] = entry.path
+            continue
+        if key in generation_keys:
+            # 该 key 由一代产物接管：非一代注册不得抢占 active。
+            continue
         entry = _classify_artifact_entry(
             root,
             role=registration.logical_role,
             phase=registration.phase,
             generation=registration.generation,
             relative=registration.path,
-            detail=f"registered by {registration.producer or 'producer'}",
+            detail=(
+                "registered by " + (registration.producer or "producer")
+                + ("; legacy registry read-only (schema 1.0)" if legacy_read_only else "")
+            ),
             discovery="producer_registration",
             registered_bytes_digest=registration.file_bytes_digest,
             registered_semantic_digest=registration.semantic_digest,
@@ -525,7 +598,252 @@ def _registry_entries(
             active[registration.key()] = ""
         else:
             active[registration.key()] = entry.path
+    # K03：持久事实是磁盘上的 manifest + 权威 active 指针。仅"已准备未激活"的下一代
+    # （崩溃在 active 切换之前）不会出现在注册表 active 里，但必须作为 superseded 可见。
+    seen_generation_digests = {
+        item.semantic_digest for item in entries if item.discovery == "publication_generation"
+    }
+    for entry in _disk_generation_entries(
+        root,
+        registry=registry,
+        publication_active=publication_active,
+        seen_digests=seen_generation_digests,
+    ):
+        entries.append(entry)
+        by_role_phase.setdefault((entry.logical_role, entry.phase), []).append(entry)
+        key = f"{entry.logical_role}:{entry.phase}"
+        generation_keys.add(key)
+        if entry.status == "active":
+            active[key] = entry.path
+    # 有一代产物、但没有任何一代是 active：显式不可解析，不回退到别的候选。
+    for key in generation_keys:
+        active.setdefault(key, "")
     return entries, active
+
+
+def _registration_record_for(
+    root: Path, *, role: str, phase: str, generation: int
+) -> dict[str, Any]:
+    """按 (role, phase, generation) 找已准备的不可变 registration record（尽力而为）。"""
+
+    from code2paper.agentic.authoring_artifact_registry import registry_dir
+
+    matches = sorted(
+        registry_dir(root).glob(f"registration.{role}.{phase}.g{int(generation)}.*.json")
+    )
+    for candidate in matches:
+        try:
+            payload = json.loads(candidate.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            continue
+        if isinstance(payload, Mapping):
+            return dict(payload)
+    return {}
+
+
+def _disk_generation_entries(
+    root: Path,
+    *,
+    registry: Any,
+    publication_active: dict[str, tuple[str, int]],
+    seen_digests: set[str],
+) -> list[ArtifactIndexEntryV1]:
+    """枚举磁盘上的一代 manifest：manifest → record → 权威 active 的一致读取。"""
+
+    from code2paper.agentic.authoring_artifact_publication import (
+        publication_generation_dir,
+        recover_publication_generation,
+        verify_publication_generation,
+    )
+
+    directory = publication_generation_dir(root)
+    if not directory.is_dir():
+        return []
+    produced: list[ArtifactIndexEntryV1] = []
+    for path in sorted(directory.glob("generation.*.json")):
+        relative = str(path.relative_to(root))
+        try:
+            payload = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            payload = None
+        if not isinstance(payload, Mapping):
+            produced.append(ArtifactIndexEntryV1(
+                logical_role="",
+                phase="",
+                path=relative,
+                status="invalid",
+                detail="publication_manifest_half_written",
+                discovery="publication_generation",
+                publication_recovery="invalid",
+            ))
+            continue
+        role = str(payload.get("logical_role") or "")
+        phase = str(payload.get("phase") or "")
+        generation = int(payload.get("generation") or 0)
+        digest = str(payload.get("content_digest") or "")
+        if digest and digest in seen_digests:
+            continue
+        if digest:
+            seen_digests.add(digest)
+        state, failures, manifest_digest = recover_publication_generation(
+            root, role=role, phase=phase, generation=generation
+        )
+        registration = _registration_record_for(
+            root, role=role, phase=phase, generation=generation
+        )
+        members = tuple(
+            str(item.get("path") or "")
+            for item in (payload.get("members") or ())
+            if isinstance(item, Mapping) and str(item.get("path") or "")
+        )
+        key = f"{role}:{phase}"
+        active_digest, fence = publication_active.get(key, ("", 0))
+        if failures or not manifest_digest:
+            status: ArtifactStatusV1 = "invalid"
+            detail = "publication_generation_invalid:" + ",".join(failures[:4])
+        elif active_digest == manifest_digest:
+            remaining = verify_publication_generation(root, manifest_digest)
+            if remaining:
+                status = "invalid"
+                detail = "publication_generation_invalid:" + ",".join(remaining[:4])
+            else:
+                status = "active"
+                detail = f"publication_generation_active:{state}:members={len(members)}"
+        else:
+            status = "superseded"
+            detail = f"publication_generation_not_active:{state}"
+        produced.append(ArtifactIndexEntryV1(
+            logical_role=role,
+            phase=phase,
+            schema_version=str(payload.get("schema_version") or ""),
+            generation=generation,
+            path=relative,
+            status=status,
+            semantic_digest=str(
+                registration.get("semantic_digest") or manifest_digest or digest
+            ),
+            file_bytes_digest=str(
+                registration.get("file_bytes_digest")
+                or ("sha256:" + hashlib.sha256(path.read_bytes()).hexdigest())
+            ),
+            detail=detail,
+            discovery="publication_generation",
+            upstream_refs=tuple(
+                str(item) for item in (registration.get("upstream_refs") or ())
+            ),
+            publication_recovery=state,
+            publication_members=members,
+            publication_read_set=tuple(
+                str(item) for item in (payload.get("read_set") or ())
+            ),
+            publication_fence=int(fence),
+        ))
+    return produced
+
+
+def _registry_failure_entry(
+    root: Path,
+    by_role_phase: dict[tuple[str, str], list[ArtifactIndexEntryV1]],
+    detail: str,
+    registry_dir_name: str,
+    pointer_name: str,
+) -> tuple[list[ArtifactIndexEntryV1], dict[str, str]]:
+    entry = ArtifactIndexEntryV1(
+        logical_role="authoring_artifact_registry",
+        phase="research",
+        path=f"artifacts/{registry_dir_name}/{pointer_name}",
+        status="invalid",
+        detail=str(detail),
+    )
+    by_role_phase.setdefault(("authoring_artifact_registry", "research"), []).append(entry)
+    return [entry], {}
+
+
+def _publication_generation_entry(
+    root: Path,
+    *,
+    registration: Any,
+    publication_active: dict[str, tuple[str, int]],
+) -> ArtifactIndexEntryV1 | None:
+    """把一代产物 manifest 投影成索引条目；非一代注册返回 ``None``。
+
+    只有**持久 active 指针**指向的 manifest 才是当前对象：已提交未切换的下一代
+    （``committed_unswitched``）如实标为 ``superseded``，绝不因为"manifest 已存在"
+    就抢走 active —— 旧 active 永不被半成品覆盖。
+    """
+
+    from code2paper.agentic.authoring_artifact_publication import (
+        publication_generation_dir,
+        recover_publication_generation,
+        verify_publication_generation,
+    )
+
+    relative = str(registration.path)
+    if "publication_generations" not in relative:
+        return None
+    generation_dir = publication_generation_dir(root)
+    path = root / relative
+    key = registration.key()
+    state, failures, manifest_digest = recover_publication_generation(
+        root,
+        role=registration.logical_role,
+        phase=registration.phase,
+        generation=int(registration.generation),
+    )
+    active_digest, fence = publication_active.get(key, ("", 0))
+    members: tuple[str, ...] = ()
+    read_set: tuple[str, ...] = ()
+    schema_version = ""
+    if path.is_file():
+        try:
+            payload = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            payload = None
+        if isinstance(payload, Mapping):
+            schema_version = str(payload.get("schema_version") or "")
+            members = tuple(
+                str(item.get("path") or "")
+                for item in (payload.get("members") or ())
+                if isinstance(item, Mapping) and str(item.get("path") or "")
+            )
+            read_set = tuple(str(item) for item in (payload.get("read_set") or ()))
+    registration_digest = str(registration.semantic_digest or "")
+    is_active = bool(active_digest) and (
+        active_digest == registration_digest or active_digest == manifest_digest
+    )
+    if failures or not manifest_digest:
+        status: ArtifactStatusV1 = "invalid"
+        detail = "publication_generation_invalid:" + ",".join(failures[:4])
+    elif not is_active:
+        status = "superseded"
+        detail = f"publication_generation_not_active:{state}"
+    else:
+        remaining = verify_publication_generation(root, active_digest)
+        if remaining:
+            status = "invalid"
+            detail = "publication_generation_invalid:" + ",".join(remaining[:4])
+        else:
+            status = "active"
+            detail = (
+                f"publication_generation_active:{state}:members={len(members)}"
+            )
+    return ArtifactIndexEntryV1(
+        logical_role=registration.logical_role,
+        phase=registration.phase,
+        schema_version=schema_version,
+        generation=int(registration.generation),
+        path=relative,
+        status=status,
+        semantic_digest=registration_digest or manifest_digest,
+        file_bytes_digest=registration.file_bytes_digest,
+        detail=detail,
+        discovery="publication_generation",
+        upstream_refs=registration.upstream_refs,
+        publication_recovery=state,
+        publication_members=members,
+        publication_read_set=read_set,
+        publication_fence=int(fence),
+    )
 
 
 def build_artifact_index(
@@ -534,6 +852,7 @@ def build_artifact_index(
     execution_identity_digest: str = "",
     reference_digests: dict[str, str] | None = None,
     index_revision: int = 1,
+    allow_legacy_registry: bool = False,
 ) -> AuthoringArtifactIndexV1:
     """扫描已知产物并给出分阶段 active 指针（只读）。
 
@@ -560,7 +879,9 @@ def build_artifact_index(
         by_role_phase.setdefault((role, phase), []).append(entry)
 
     registry_entries, registry_active = _registry_entries(
-        root, by_role_phase=by_role_phase
+        root,
+        by_role_phase=by_role_phase,
+        allow_legacy_registry=bool(allow_legacy_registry),
     )
     # 同一 (role, phase, path) 同时被扫描与注册命中时，保留注册条目（唯一权威），
     # 避免同一份内容在索引里出现两种 discovery 结论。
@@ -767,6 +1088,12 @@ class ValidatedArtifactReadV1(BaseModel):
     #: 同一份字节里读到声明值，未复算）/ bytes_only（该产物不带语义摘要）。
     semantic_digest_verification: str = "bytes_only"
     payload: Any = None
+    #: K03：一代产物读取时，**在同一次读取里重算过**的成员载荷（member_id → payload）。
+    members: dict[str, Any] = Field(default_factory=dict)
+    #: K03：成员字节摘要（member_id → sha256），与 members 同一次读取产生。
+    member_digests: dict[str, str] = Field(default_factory=dict)
+    #: K03：成员媒体类型（member_id → media_type）；Markdown 返回文本、bytes 返回 base64。
+    member_media: dict[str, str] = Field(default_factory=dict)
     #: 审计 §F.3：空产物是否合法、为什么为空、哪些任务 not_applicable。
     empty_disposition: EmptyArtifactDispositionV1 | None = None
 
@@ -807,6 +1134,161 @@ def _reseal_semantic_digest(role: str, phase: str, payload: Any) -> str:
     return str(getattr(instance, "content_digest", "") or "")
 
 
+def _immutable_registration_record_matches(
+    root: Path,
+    *,
+    role: str,
+    phase: str,
+    manifest_digest: str,
+) -> bool:
+    """注册表 active 尚未切到这一代时，仍承认已落盘且自洽的不可变 record。"""
+
+    from code2paper.agentic.authoring_artifact_registry import registry_dir
+
+    found = False
+    directory = registry_dir(root)
+    if not directory.is_dir():
+        return False
+    for path in sorted(directory.glob(f"registration.{role}.{phase}.g*.json")):
+        try:
+            payload = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, ValueError) as exc:
+            raise ArtifactIndexError(
+                f"artifact_registration_record_unreadable:{path.name}"
+            ) from exc
+        if not isinstance(payload, Mapping):
+            continue
+        if str(payload.get("semantic_digest") or "") != manifest_digest:
+            continue
+        if str(payload.get("logical_role") or "") != role or str(payload.get("phase") or "") != phase:
+            continue
+        declared = str(payload.get("content_digest") or "")
+        recomputed = digest_json(
+            {key: value for key, value in payload.items() if key != "content_digest"}
+        )
+        if not declared or recomputed != declared:
+            raise ArtifactIndexError(
+                f"artifact_registration_record_digest_mismatch:{path.name}"
+            )
+        found = True
+    return found
+
+
+def _read_verified_publication(
+    out_root: str | Path,
+    role: str,
+    phase: str,
+    manifest_path: Path,
+    manifest_digest: str,
+    *,
+    required_units: int | None,
+) -> ValidatedArtifactReadV1:
+    """按发布权威 manifest 重算成员；不采用注册表 active 或派生索引挑代。"""
+
+    from code2paper.agentic.authoring_artifact_publication import (
+        PublicationManifestV1,
+        bind_publication_manifest_bytes,
+        verify_publication_generation,
+    )
+    from code2paper.agentic.authoring_artifact_registry import (
+        ArtifactRegistryError,
+        load_artifact_registry,
+    )
+
+    failures = verify_publication_generation(out_root, manifest_digest)
+    if failures:
+        raise ArtifactIndexError(
+            f"artifact_generation_invalid:{role}:{phase}:" + ";".join(failures)
+        )
+    try:
+        registry = load_artifact_registry(Path(out_root).expanduser().resolve())
+    except ArtifactRegistryError as exc:
+        raise ArtifactIndexError(
+            f"artifact_registration_unavailable:{role}:{phase}:{exc}"
+        ) from exc
+    matching = [
+        item
+        for item in registry.by_id().values()
+        if item.logical_role == role
+        and item.phase == phase
+        and item.semantic_digest == manifest_digest
+    ]
+    if not matching and not _immutable_registration_record_matches(
+        Path(out_root).expanduser().resolve(),
+        role=role,
+        phase=phase,
+        manifest_digest=manifest_digest,
+    ):
+        raise ArtifactIndexError(
+            f"artifact_registration_drift:{role}:{phase}:{manifest_digest}"
+        )
+    raw = manifest_path.read_bytes()
+    actual_file_digest = "sha256:" + hashlib.sha256(raw).hexdigest()
+    payload, binding_failures = bind_publication_manifest_bytes(raw, manifest_digest)
+    if binding_failures:
+        raise ArtifactIndexError(
+            f"artifact_manifest_digest_mismatch:{role}:{phase}:"
+            + ";".join(binding_failures)
+        )
+    try:
+        manifest = PublicationManifestV1.model_validate(payload)
+    except ValueError as exc:
+        raise ArtifactIndexError(f"artifact_unparsable_at_read:{role}:{phase}") from exc
+    if manifest.content_digest != manifest_digest:
+        raise ArtifactIndexError(
+            f"artifact_manifest_digest_mismatch:{role}:{phase}:"
+            f"resealed={manifest.content_digest}:authority={manifest_digest}"
+        )
+    members: dict[str, Any] = {}
+    member_digests: dict[str, str] = {}
+    member_media: dict[str, str] = {}
+    root = Path(out_root).expanduser().resolve()
+    for member in manifest.members:
+        member_raw = (root / member.path).read_bytes()
+        digest = "sha256:" + hashlib.sha256(member_raw).hexdigest()
+        if digest != member.file_bytes_digest:
+            raise ArtifactIndexError(
+                f"artifact_member_bytes_changed_since_read:{role}:{phase}:"
+                f"{member.member_id}"
+            )
+        media = str(member.media_type)
+        if media == "text/markdown":
+            try:
+                members[member.member_id] = member_raw.decode("utf-8")
+            except UnicodeDecodeError as exc:
+                raise ArtifactIndexError(
+                    f"artifact_member_not_utf8:{role}:{phase}:{member.member_id}"
+                ) from exc
+        elif media == "application/octet-stream":
+            members[member.member_id] = base64.b64encode(member_raw).decode("ascii")
+        else:
+            try:
+                members[member.member_id] = json.loads(member_raw.decode("utf-8"))
+            except (UnicodeDecodeError, ValueError) as exc:
+                raise ArtifactIndexError(
+                    f"artifact_member_unparsable:{role}:{phase}:{member.member_id}"
+                ) from exc
+        member_digests[member.member_id] = digest
+        member_media[member.member_id] = media
+    return ValidatedArtifactReadV1(
+        logical_role=role,
+        phase=phase,
+        path=str(manifest_path),
+        schema_version=str(payload.get("schema_version") or ""),
+        status="active",
+        file_bytes_digest=actual_file_digest,
+        semantic_digest=manifest_digest,
+        semantic_digest_verification="generation_members_recomputed",
+        payload=payload,
+        members=members,
+        member_digests=member_digests,
+        member_media=member_media,
+        empty_disposition=assess_empty_artifact(
+            role, phase, payload, required_units=int(required_units or 0)
+        ),
+    )
+
+
 def read_artifact_validated(
     index: AuthoringArtifactIndexV1,
     role: str,
@@ -825,7 +1307,39 @@ def read_artifact_validated(
 
     审计 §F.3：``required_units`` 给出该阶段冻结的必需单元数；空产物在该阶段需要
     单元时直接 typed block，并把"为什么为空 / 哪些任务 not_applicable"写进返回结果。
+
+    一代产物的当前对象只认持久发布 active 指针。注册表 active 与派生索引可以分歧，
+    reader 不按它们挑代。
     """
+
+    from code2paper.agentic.authoring_artifact_publication import (
+        PublicationError,
+        resolve_publication_authority_manifest,
+    )
+
+    try:
+        authority = resolve_publication_authority_manifest(
+            out_root, role=role, phase=phase
+        )
+    except PublicationError as exc:
+        raise ArtifactIndexError(
+            f"artifact_publication_authority_unreadable:{role}:{phase}:{exc}"
+        ) from exc
+    if authority is not None:
+        manifest_path, manifest_digest = authority
+        if expected_digest and expected_digest != manifest_digest:
+            raise ArtifactIndexError(
+                f"artifact_digest_mismatch:{role}:{phase}:"
+                f"{manifest_digest}!={expected_digest}"
+            )
+        return _read_verified_publication(
+            out_root,
+            role,
+            phase,
+            manifest_path,
+            manifest_digest,
+            required_units=required_units,
+        )
 
     path = resolve_artifact(
         index,
@@ -854,6 +1368,17 @@ def read_artifact_validated(
     except (UnicodeDecodeError, ValueError):
         if entry.status != "valid_empty":
             raise ArtifactIndexError(f"artifact_unparsable_at_read:{role}:{phase}")
+    if entry.discovery == "publication_generation":
+        # 没有发布指针时才落到索引条目（指针存在的路径已在函数开头返回）。
+        return _read_verified_publication(
+            out_root,
+            role,
+            phase,
+            path,
+            entry.semantic_digest,
+            required_units=required_units,
+        )
+
     verification = "bytes_only"
     if entry.semantic_digest:
         resealed = _reseal_semantic_digest(role, phase, payload)

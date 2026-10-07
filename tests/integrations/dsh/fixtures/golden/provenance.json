@@ -1,0 +1,124 @@
+{
+  "characterized_gaps": [
+    {
+      "evidence": "tests/integrations/dsh/test_legacy_characterization.py::test_missing_measured_technical_digest_is_refused_by_the_helper",
+      "evidence_original": "tests/integrations/dsh/test_legacy_characterization.py::test_absent_actual_technical_digest_is_not_detected_by_the_helper（B01 特征记录，已由上面的 K04 回归取代；原日志保留）",
+      "fix": "公共复核改为接收调用方从**实际材料字节重算**的摘要（actual_technical_bytes_digest）；声明字段不再替代重算，有冻结摘要而重算值缺失时 fail-closed（technical_bytes_unknown）",
+      "fixed_by": "K04",
+      "id": "B01-G1",
+      "owner": "K04",
+      "real_send_point_evidence": "tests/regression_20260922/test_authoring_contract_closure.py::test_technical_bytes_digest_mismatch_is_refused_before_the_provider",
+      "status": "fixed_by_K04",
+      "summary": "compare_actual_request_to_page_contract 曾只在**实际 payload 自己声明**技术字节摘要时才比较它；unified V2 writer 页请求的 input_payload 不声明该字段，因此缺少外层逐字比较时，改技术材料不会被这一步发现"
+    },
+    {
+      "evidence": "tests/integrations/dsh/test_legacy_characterization.py::test_atom_obligation_is_carried_by_the_detail_not_a_separate_target",
+      "id": "B01-G2",
+      "owner": "C02",
+      "status": "characterized_by_B01_not_fixed_here",
+      "summary": "该单一detail样例的witness_contract.targets为空且required_atom_count=0；只证明当前detail-only target集合，不证明非空atom义务已经闭合。C02须补非空atom合同正反例，并保留合法header页无atom语义"
+    }
+  ],
+  "determinism": {
+    "requirement": "每个 writer 页恰好一个语义段落",
+    "why": "B01 夹具的页都是单段落，因此不经过多段落累加路径；多段落页的Narrative 保序由 K04 修复并在 test_legacy_characterization 的跨 seed 回归中验证（原缺陷见 known_defects 的 B01-D1）"
+  },
+  "fixture_owned_inputs": [
+    "synthetic MechanismContextSetV1 (mech_rescale / d:rescale)",
+    "synthetic NarrativePlanV3 (MA-L1 机制段 + MA-N1 作者无 atom 段)",
+    "offline deterministic provider (tests/integrations/dsh/fixtures, no network)"
+  ],
+  "generated_by": "tests/integrations/dsh/fixtures/legacy_fixture_builder.py",
+  "golden_digests": {
+    "author_no_atom_page": "sha256:fbcd999db298437c3c39454f2a83e1e1c375bb2b69b33ba189bf2284aea59ddc",
+    "completed_formalizer_page": "sha256:d4c60b43bb4c6c994a8db48790b3ad3dea3483dfaa2c3fe3933737f486d3d1c8",
+    "invalid_counterexamples": "sha256:edb25f5da93eeb772b5cb65124d77da538eca6f1802ca19a99bf3d8ae823d32e",
+    "legal_page_with_atoms": "sha256:d1311afe693187d1455dec8cc7cd4511e294b5f18a4e21dcd49625c9a5e01a06"
+  },
+  "golden_historical_digests": {
+    "author_no_atom_page": {
+      "digest": "sha256:fbcd999db298437c3c39454f2a83e1e1c375bb2b69b33ba189bf2284aea59ddc",
+      "note": "同上：同一份 B01 交接记录里的独立登记。",
+      "source": "tests/integrations/dsh/fixtures/B01_formalizer_repair_evidence.md",
+      "source_kind": "b01_handoff_record",
+      "source_sha256": "sha256:6efdcac9729f37954779c8e437687fa38e8fdb12055d92363c86a8fb99b6901d",
+      "status": "attested"
+    },
+    "completed_formalizer_page": {
+      "digest": "sha256:d4c60b43bb4c6c994a8db48790b3ad3dea3483dfaa2c3fe3933737f486d3d1c8",
+      "note": "未证明：该 golden 的摘要只在当前 provenance.json 中出现过，工作树与 git 历史都没有更早的独立出处。按 K04-G6 如实标未证明，不倒造历史 hash；若后续找到出处，登记新出处并重验。",
+      "source": "",
+      "source_kind": "",
+      "source_sha256": "",
+      "status": "not_proven"
+    },
+    "invalid_counterexamples": {
+      "digest": "sha256:edb25f5da93eeb772b5cb65124d77da538eca6f1802ca19a99bf3d8ae823d32e",
+      "note": "同上：同一份 B01 交接记录里的独立登记。",
+      "source": "tests/integrations/dsh/fixtures/B01_formalizer_repair_evidence.md",
+      "source_kind": "b01_handoff_record",
+      "source_sha256": "sha256:6efdcac9729f37954779c8e437687fa38e8fdb12055d92363c86a8fb99b6901d",
+      "status": "attested"
+    },
+    "legal_page_with_atoms": {
+      "digest": "sha256:d1311afe693187d1455dec8cc7cd4511e294b5f18a4e21dcd49625c9a5e01a06",
+      "note": "B01 形式化修复交接记录里逐字登记的旧摘要；与夹具字节相互独立。",
+      "source": "tests/integrations/dsh/fixtures/B01_formalizer_repair_evidence.md",
+      "source_kind": "b01_handoff_record",
+      "source_sha256": "sha256:6efdcac9729f37954779c8e437687fa38e8fdb12055d92363c86a8fb99b6901d",
+      "status": "attested"
+    }
+  },
+  "known_defects": [
+    {
+      "deadline": "closed before Gate-K by K04; narrative order preserved across hash seeds",
+      "evidence": "tests/integrations/dsh/test_legacy_characterization.py::test_join_page_identity_and_narrative_order_are_stable_across_hash_seeds",
+      "evidence_original": "tests/integrations/dsh/test_legacy_characterization.py::test_join_page_identity_is_not_stable_across_hash_seeds（B01 特征记录，已由上面的稳定性回归取代；原日志保留）",
+      "fix": "unified_context_compiler 的分页累加器由 set 改为保序去重列表（_ordered_unique_strings），flush 与合并全程保持 Narrative 顺序",
+      "fixed_by": "K04",
+      "id": "B01-D1",
+      "identity_scope": "material/page/task contract identity, not runtime composition digest",
+      "owner_file": "src/code2paper/agentic/unified_context_compiler.py",
+      "status": "fixed_by_K04",
+      "summary": "extend_writer_worksets_from_narrative_plan 生成的多段落页，其 technical_payload['paragraph_ids'] 顺序来自 set 迭代，同一输入在不同 PYTHONHASHSEED 下得到不同 page_id / 摘要",
+      "summary_original": "extend_writer_worksets_from_narrative_plan 生成的多段落页，其 technical_payload['paragraph_ids'] 顺序来自 set 迭代，同一输入在不同 PYTHONHASHSEED 下得到不同 page_id / 摘要"
+    }
+  ],
+  "legacy_verified": {
+    "note": "AT-B01：旧夹具的全局 Verified 为空，只能证明页级局部门，不能当作新桥已正确验证的证据",
+    "publication_ready": false,
+    "source": "run_publication_method_writer(authoring_context_mode='unified') 实测",
+    "verified_complete": false,
+    "verified_validation_status": "not_run"
+  },
+  "not_from_this_fixture": [
+    "real provider HTTP/SSE bytes",
+    "Verified / candidate acceptance",
+    "任何真实项目答案：夹具材料是合成的 rescale 机制，不是仓库数据集"
+  ],
+  "real_owners": [
+    "code2paper.agentic.formalization_agent.execute_formalizer_invocation_plan",
+    "code2paper.agentic.formalization_agent.validate_mechanism_formula_package",
+    "code2paper.agentic.formalization_agent.adapt_mechanism_formula_package_to_legacy",
+    "code2paper.llm.response_schemas.UnifiedFormalizerResponseV2",
+    "code2paper.agentic.publication_transaction_contract.splice_formula_placeholders",
+    "code2paper.agentic.unified_context_compiler.build_unified_context_archive_v2",
+    "code2paper.agentic.unified_context_compiler.build_consumer_workset_manifest_v2",
+    "code2paper.agentic.unified_context_compiler.extend_writer_worksets_from_narrative_plan",
+    "code2paper.agentic.unified_context_compiler.build_consumer_invocation_plan_v1",
+    "code2paper.agentic.unified_context_compiler.consumer_response_json_schema",
+    "code2paper.agentic.publication_method_writer._writer_section_inputs_v2",
+    "code2paper.llm.section_writer.build_publication_writer_request",
+    "code2paper.llm.section_writer.assess_publication_writer_response",
+    "code2paper.llm.section_writer.assess_publication_content_acceptance",
+    "code2paper.agentic.publication_transaction_contract.assess_paragraph_transaction",
+    "code2paper.agentic.publication_transaction_contract.bind_paragraph_witnesses",
+    "code2paper.agentic.publication_transaction_contract.validate_paragraph_binding_response",
+    "code2paper.agentic.page_contract_recheck.compare_actual_request_to_page_contract",
+    "code2paper.llm.response_schemas.try_parse_structured_response_with_trace",
+    "code2paper.agentic.final_text_claims._sentence_spans",
+    "code2paper.agentic.publication_method_writer.run_publication_method_writer"
+  ],
+  "schema_version": "b01-legacy-characterization/1",
+  "task": "B01"
+}

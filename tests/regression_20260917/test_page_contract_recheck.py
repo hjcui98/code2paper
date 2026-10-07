@@ -17,6 +17,8 @@ from code2paper.agentic.page_contract_recheck import (
     capture_page_contract_snapshot,
     compare_actual_request_to_page_contract,
 )
+from code2paper.agentic.digest import canonical_json_bytes
+from code2paper.export.run_manifest import hash_text
 
 from . import incident_archive
 
@@ -34,6 +36,26 @@ def _payload() -> dict:
     return json.loads(json.dumps(request["input_payload"]))
 
 
+def _measured_technical_digest(payload: dict) -> str:
+    """从 payload 的**实际材料字节**重算技术字节摘要（与真实 Writer 调用点同规则）。
+
+    真实调用点取 ``shared_contexts`` 的第一个元素并按 Mapping 规范化；这里镜像该规则，
+    因此测试里的"声明值"与"重算值"是两件独立的事。
+    """
+
+    contexts = payload.get("shared_contexts") or ()
+    raw = contexts[0] if len(contexts) == 1 else b""
+    if isinstance(raw, bytes):
+        data = bytes(raw)
+    elif isinstance(raw, str):
+        data = raw.encode("utf-8")
+    elif isinstance(raw, dict):
+        data = canonical_json_bytes(dict(raw))
+    else:
+        data = b""
+    return hash_text(data.decode("utf-8")) if data else ""
+
+
 def _compare(payload: dict, **overrides):
     snapshot = _snapshot()
     kwargs = {
@@ -41,6 +63,8 @@ def _compare(payload: dict, **overrides):
         "payload": payload,
         "max_output_tokens": snapshot.max_output_tokens,
         "is_repair": False,
+        # K04：真实调用点总是传入从实际材料重算的摘要。
+        "actual_technical_bytes_digest": _measured_technical_digest(payload),
     }
     kwargs.update(overrides)
     return compare_actual_request_to_page_contract(snapshot, **kwargs)
@@ -920,3 +944,206 @@ def test_repair_cannot_change_author_material_without_replanning() -> None:
     payload["narrative_plan"]["paragraphs"][0]["reader_goal"] = "rewritten in a repair"
     failures = _compare(payload, is_repair=True)
     assert f"{ACTUAL_PAGE_CONTRACT_MISMATCH}:author_surface" in failures, failures
+
+
+# --------------------------------------------------------------------------- #
+# K04：技术字节摘要必须来自实际材料重算（缺摘要/改材料/伪造声明）
+# --------------------------------------------------------------------------- #
+
+
+def _frozen_snapshot():
+    """带冻结技术字节摘要的快照：真实路径由编排层从 page.technical_bytes_digest 注入。"""
+
+    snapshot = _snapshot()
+    assert snapshot is not None
+    payload = _payload()
+    measured = _measured_technical_digest(payload)
+    assert measured, "事故夹具必须有可重算的技术材料"
+    return snapshot.model_copy(update={"technical_bytes_digest": measured}), payload, measured
+
+
+def test_missing_measured_digest_is_refused_instead_of_skipped() -> None:
+    """K04 缺陷：旧实现读 payload 声明值，且实际值为空时**直接跳过**比较。"""
+
+    snapshot, payload, measured = _frozen_snapshot()
+    failures = compare_actual_request_to_page_contract(
+        snapshot,
+        invocation_id=INCIDENT_INVOCATION,
+        payload=payload,
+        max_output_tokens=snapshot.max_output_tokens,
+        actual_technical_bytes_digest="",
+    )
+    assert failures == (f"{ACTUAL_PAGE_CONTRACT_MISMATCH}:technical_bytes_unknown",)
+
+
+def test_declared_digest_cannot_stand_in_for_the_measured_material() -> None:
+    """payload 声明了正确的旧摘要、实际材料已变：声明值不能替代重算。"""
+
+    snapshot, payload, measured = _frozen_snapshot()
+    changed = json.loads(json.dumps(payload))
+    changed["shared_contexts"][0]["atoms"][0]["content_digest"] = "sha256:tampered"
+    # 声明字段仍写着冻结摘要（伪造/保留旧 hash）。
+    changed["technical_bytes_digest"] = measured
+    failures = compare_actual_request_to_page_contract(
+        snapshot,
+        invocation_id=INCIDENT_INVOCATION,
+        payload=changed,
+        max_output_tokens=snapshot.max_output_tokens,
+        actual_technical_bytes_digest=_measured_technical_digest(changed),
+    )
+    assert failures == (f"{ACTUAL_PAGE_CONTRACT_MISMATCH}:technical_bytes",)
+
+
+def test_repair_that_changes_material_is_refused() -> None:
+    snapshot, payload, measured = _frozen_snapshot()
+    changed = json.loads(json.dumps(payload))
+    changed["shared_contexts"][0]["atoms"][0]["content_digest"] = "sha256:repair-drift"
+    failures = compare_actual_request_to_page_contract(
+        snapshot,
+        invocation_id=INCIDENT_INVOCATION,
+        payload=changed,
+        max_output_tokens=snapshot.max_output_tokens,
+        is_repair=True,
+        actual_technical_bytes_digest=_measured_technical_digest(changed),
+    )
+    assert f"{ACTUAL_PAGE_CONTRACT_MISMATCH}:technical_bytes" in failures
+
+
+def test_legal_legacy_contract_without_a_frozen_digest_still_passes() -> None:
+    """合法旧请求：冻结契约早于摘要注入，可信适配器从 bytes 补实测值后放行。"""
+
+    snapshot = _snapshot()
+    assert snapshot is not None and not snapshot.technical_bytes_digest
+    payload = _payload()
+    # 实测值由调用方从实际材料重算（不是 payload 的声明字段）。
+    assert _compare(payload) == ()
+    assert _compare(payload, actual_technical_bytes_digest="") == ()
+
+
+def test_legal_request_with_backfilled_measurement_passes() -> None:
+    """合法旧请求：可信适配器从 bytes 补实测字段后，同一公共复核放行。"""
+
+    snapshot, payload, measured = _frozen_snapshot()
+    assert compare_actual_request_to_page_contract(
+        snapshot,
+        invocation_id=INCIDENT_INVOCATION,
+        payload=payload,
+        max_output_tokens=snapshot.max_output_tokens,
+        actual_technical_bytes_digest=measured,
+    ) == ()
+    # 声明的 payload 字段即使缺失，也不影响重算放行（旧档案没有该字段）。
+    without_declaration = json.loads(json.dumps(payload))
+    without_declaration.pop("technical_bytes_digest", None)
+    without_declaration.pop("page_bytes_digest", None)
+    assert compare_actual_request_to_page_contract(
+        snapshot,
+        invocation_id=INCIDENT_INVOCATION,
+        payload=without_declaration,
+        max_output_tokens=snapshot.max_output_tokens,
+        actual_technical_bytes_digest=_measured_technical_digest(without_declaration),
+    ) == ()
+
+
+# --------------------------------------------------------------------------- #
+# K04-G5/G6：家族顺序语义（Narrative 序列 vs 纯集合 ID）与"同材料只换顺序"对照
+# --------------------------------------------------------------------------- #
+#
+# 判据（不是"所有 sorted 都是缺陷"）：
+# * Narrative 段落序列承担渲染语义 → 必须保留计划顺序，重排即契约变更；
+# * detail/obligation/package/修辞 ID 是**集合**族 → scope 按排序集合比较，重排同一集合
+#   不构成新的授权；
+# * 技术材料字节按**有序**字节重算 → 材料内任何列表重排都是材料身份变更（G6 对照）。
+
+
+def _reorder_only(payload: dict, path: tuple[str | int, ...]) -> dict:
+    """只反转目标列表的元素顺序（多重集逐字不变），返回被改的 payload。"""
+
+    changed = json.loads(json.dumps(payload))
+    node: Any = changed
+    for key in path[:-1]:
+        node = node[key]
+    target = list(node[path[-1]])
+    assert len(target) >= 2, f"顺序对照需要至少两个元素：{path}"
+    node[path[-1]] = list(reversed(target))
+    return changed
+
+
+def test_g6_material_order_is_part_of_the_measured_identity() -> None:
+    """G6：同一材料只换顺序 → 重算摘要改变，具名 ``technical_bytes`` 拒绝。"""
+
+    payload = _payload()
+    frozen_measured = _measured_technical_digest(payload)
+    assert frozen_measured
+
+    # 事故归档的页材料里 detail_ids 有 7 项：只反转它的顺序。
+    changed = _reorder_only(payload, ("shared_contexts", 0, "detail_ids"))
+    before = payload["shared_contexts"][0]["detail_ids"]
+    after = changed["shared_contexts"][0]["detail_ids"]
+    assert sorted(before) == sorted(after) and before != after
+    changed_measured = _measured_technical_digest(changed)
+    assert changed_measured and changed_measured != frozen_measured
+
+    snapshot = _snapshot().model_copy(
+        update={"technical_bytes_digest": frozen_measured}
+    )
+    failures = compare_actual_request_to_page_contract(
+        snapshot,
+        invocation_id=INCIDENT_INVOCATION,
+        payload=changed,
+        max_output_tokens=snapshot.max_output_tokens,
+        actual_technical_bytes_digest=changed_measured,
+    )
+    assert failures == (f"{ACTUAL_PAGE_CONTRACT_MISMATCH}:technical_bytes",), failures
+    # 冻结契约没有被这次顺序改变重算。
+    assert snapshot.technical_bytes_digest == frozen_measured
+
+
+def test_g5_narrative_paragraph_sequence_is_an_ordered_contract() -> None:
+    """G5：Narrative 段落序列重排 → 段落顺序具名拒绝（集合相同也不放行）。"""
+
+    payload = _payload()
+    rows = payload["narrative_plan"]["paragraphs"]
+    assert len(rows) >= 2
+    changed = json.loads(json.dumps(payload))
+    changed["narrative_plan"]["paragraphs"] = list(reversed(rows))
+    changed["narrative_plan"]["page_paragraph_ids"] = list(
+        reversed(payload["narrative_plan"]["page_paragraph_ids"])
+    )
+    assert sorted(
+        str(row["paragraph_id"]) for row in changed["narrative_plan"]["paragraphs"]
+    ) == sorted(str(row["paragraph_id"]) for row in rows), "只换顺序，段落集合不变"
+
+    failures = _compare(changed)
+    assert any(
+        item.startswith(f"{ACTUAL_PAGE_CONTRACT_MISMATCH}:paragraph_ids")
+        for item in failures
+    ), failures
+    assert f"{ACTUAL_PAGE_CONTRACT_MISMATCH}:author_surface" in failures, failures
+
+
+def test_g5_set_family_reorder_is_not_a_scope_change() -> None:
+    """G5：纯集合族（detail/公式 ID）重排 → 不是新的授权；但整体合同摘要仍按序列绑定。
+
+    这里明确记录判定：scope 逐项按**排序集合**比较，因此同一集合重排不产生 ``scope:``
+    失败；``binding_contract_digest`` 仍把序列化顺序计入身份，于是重排会被整体摘要拦下。
+    这是 fail-closed（不放行任何新授权），本轮不为了"容忍重排"放松冻结身份。
+    """
+
+    payload = _payload()
+    binding = payload["binding_contract"]
+    assert len(binding["allowed_detail_ids"]) >= 2
+    changed = json.loads(json.dumps(payload))
+    changed["binding_contract"]["allowed_detail_ids"] = list(
+        reversed(binding["allowed_detail_ids"])
+    )
+    assert sorted(changed["binding_contract"]["allowed_detail_ids"]) == sorted(
+        binding["allowed_detail_ids"]
+    )
+
+    failures = _compare(changed)
+    assert not any(
+        item.startswith(f"{ACTUAL_PAGE_CONTRACT_MISMATCH}:scope:") for item in failures
+    ), failures
+    assert f"{ACTUAL_PAGE_CONTRACT_MISMATCH}:binding_contract" in failures, failures
+    # 材料本身逐字未变，因此技术字节门不参与。
+    assert not any("technical_bytes" in item for item in failures), failures

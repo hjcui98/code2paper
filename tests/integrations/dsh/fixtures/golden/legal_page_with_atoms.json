@@ -1,0 +1,513 @@
+{
+  "formed_from": {
+    "archive_digest": "sha256:b2ce781148cb6d3ff927902e825af7582d875aa1899f11b5197c957a216e73c3",
+    "formalizer_obligation_ids": [
+      "ob:rescale"
+    ],
+    "invocation_plan_digest": "sha256:caf4a180a7bfd0ee718e450c5af7ae8c6432016c09f385cd38feca3767f0b7c9",
+    "narrative_plan_id": "plan:b01-legacy",
+    "writer_manifest_digest": "sha256:9abfee7b781aeeb390d79dcec0b8989e441070fa27148e65ff9b5403debe2bbc"
+  },
+  "heading": "Rescaling",
+  "invocation": {
+    "invocation_id": "inv:writer:MA-L1:page:2754e27d404a39599269da8a5fadd49b926a6e5059650933b0c99e5ca64d75ab",
+    "is_repair": false,
+    "max_output_tokens": 4096,
+    "page_id": "page:2754e27d404a39599269da8a5fadd49b926a6e5059650933b0c99e5ca64d75ab",
+    "role": "writer",
+    "task_ids": [
+      "MA-L1"
+    ],
+    "workset_id": "workset:section:MA-L1"
+  },
+  "observed_local_gate": {
+    "binder_transaction_valid": true,
+    "content_accepted": true,
+    "metrics": {
+      "authority_failures": [],
+      "authority_violation_count": 0,
+      "failures": [],
+      "formula_consumed_count": 0,
+      "formula_exact_body_count": 0,
+      "invalid_count": 0,
+      "invalid_witness_count": 0,
+      "missing": [],
+      "missing_atom_count": 0,
+      "required_atom_count": 0,
+      "required_target_count": 1,
+      "valid_atom_count": 0,
+      "valid_paragraph_count": 1,
+      "valid_target_count": 1
+    },
+    "writer_transaction_valid": true
+  },
+  "offline_response": {
+    "paragraph_ids": [
+      "MA-L1_p1"
+    ],
+    "parse_trace_operations": [],
+    "parsed_ok": true,
+    "raw_text": "{\"section_id\": \"MA-L1\", \"heading_text\": \"Rescaling\", \"section_markdown\": \"This paragraph states that the frozen anchor step for mech_rescale is realized by return values * factor, and keeps every claim on the material it was given.\", \"paragraphs\": [{\"paragraph_id\": \"MA-L1_p1\", \"paragraph_markdown\": \"This paragraph states that the frozen anchor step for mech_rescale is realized by return values * factor, and keeps every claim on the material it was given.\", \"rendered_detail_ids\": [\"d:rescale\"], \"deferred_detail_ids\": [], \"used_formula_package_ids\": [], \"witnesses\": [{\"witness_kind\": \"detail\", \"target_id\": \"d:rescale\", \"exact_text\": \"step for mech_rescale\"}]}], \"completed_rhetorical_moves\": []}"
+  },
+  "page": {
+    "atom_ids": [
+      "detail:d:rescale"
+    ],
+    "content_digest": "sha256:6826b5c36ff5aa14c6c2cf27a115a696c4d3373658195414dad7cdea169ed11c",
+    "mechanism_id": "mech_rescale",
+    "page_id": "page:2754e27d404a39599269da8a5fadd49b926a6e5059650933b0c99e5ca64d75ab",
+    "page_kind": "technical",
+    "technical_bytes_digest": "sha256:d29aa425fa575ce31da7be85e478733f3caf214c6124a4a781f12551d5966f9d",
+    "technical_bytes_sha256": "sha256:d29aa425fa575ce31da7be85e478733f3caf214c6124a4a781f12551d5966f9d",
+    "technical_payload": {
+      "archive_digest": "sha256:b2ce781148cb6d3ff927902e825af7582d875aa1899f11b5197c957a216e73c3",
+      "atoms": [
+        {
+          "_atom_id": "detail:d:rescale",
+          "_atom_kind": "detail",
+          "activation_basis_ids": [],
+          "active_path_status": "active_default",
+          "author_statements": [],
+          "claim_kind": "implementation",
+          "conditions": [],
+          "detail_id": "d:rescale",
+          "evidence_authority": "unresolved",
+          "exact_excerpts": [],
+          "formalizable": false,
+          "formalizable_signatures": [],
+          "formula_role": "",
+          "importance": "core",
+          "mismatch_reason": "",
+          "operands": [
+            "values",
+            "factor"
+          ],
+          "order_index": 0,
+          "polarity": "unknown",
+          "predecessor_detail_ids": [],
+          "predicate": "rescale",
+          "primary_mechanism_id": "mech_rescale",
+          "publication_policy": "clean_candidate",
+          "result": "rescaled_values",
+          "role": "transformation",
+          "semantic_atom": "step for mech_rescale",
+          "shape_or_type_hints": [],
+          "shared_with_mechanism_ids": [],
+          "source_brief_ids": [],
+          "source_claim_ids": [],
+          "source_equation_ids": [],
+          "source_facet_ids": [],
+          "source_fact_ids": [],
+          "source_kind": "unknown",
+          "source_obligation_ids": [],
+          "source_operation_ids": [
+            "op:rescale"
+          ],
+          "source_span_ids": [],
+          "subject": "",
+          "successor_detail_ids": [],
+          "witness_atoms": [
+            {
+              "atom_id": "atom:rescale",
+              "atom_kind": "operation",
+              "content_digest": "sha256:df4d63aef70f37b4772343bf604c3fea15009e732ac1f781caf8310135df43b1",
+              "exact_excerpts": [
+                "return values * factor"
+              ],
+              "required": true,
+              "required_conditions": [],
+              "required_polarity": "unknown",
+              "semantic_anchor": "step for mech_rescale",
+              "source_anchor_ids": [],
+              "source_operation_ids": [
+                "op:rescale"
+              ]
+            }
+          ]
+        }
+      ],
+      "detail_ids": [
+        "d:rescale"
+      ],
+      "formula_obligation_ids": [],
+      "formula_package_ids": [],
+      "formula_package_source_detail_ids": {},
+      "mechanism_header": {
+        "importance": "core",
+        "mechanism_id": "mech_rescale",
+        "mechanism_name": "Rescale mechanism",
+        "purpose": "Explain the rescaling step.",
+        "scientific_role": "core_model"
+      },
+      "obligation_ids": [
+        "MA-L1"
+      ],
+      "paragraph_ids": [
+        "MA-L1_p1"
+      ],
+      "projection_proof": {
+        "detail:d:rescale": "detail:d:rescale"
+      },
+      "section_id": "MA-L1"
+    },
+    "token_estimate": 473
+  },
+  "page_contract_frozen": {
+    "author_surface": [
+      {
+        "paragraph_id": "MA-L1_p1",
+        "reader_goal": "",
+        "rhetorical_goal": "core_transformations",
+        "role": "core_transformations"
+      }
+    ],
+    "declared_in_payload": 0,
+    "declared_technical_bytes_digest": "",
+    "effective_max_output_tokens": 4096,
+    "effective_technical_bytes_digest": "sha256:d29aa425fa575ce31da7be85e478733f3caf214c6124a4a781f12551d5966f9d",
+    "scope": {
+      "allowed_detail_ids": [
+        "d:rescale"
+      ],
+      "allowed_formula_obligation_ids": [],
+      "allowed_formula_package_ids": [],
+      "required_detail_ids": [
+        "d:rescale"
+      ],
+      "required_rhetorical_moves": []
+    }
+  },
+  "paragraphs": [
+    {
+      "closed_target_keys": [
+        "detail:d:rescale"
+      ],
+      "exact_excerpts": [
+        {
+          "exact_text": "step for mech_rescale",
+          "role": "writer_declaration_anchor",
+          "source": "page.shared_contexts atoms[].witness_atoms[].semantic_anchor",
+          "target_id": "d:rescale",
+          "target_kind": "detail"
+        },
+        {
+          "exact_text": "return values * factor",
+          "role": "binder_exact_excerpt",
+          "source": "page.shared_contexts atoms[].exact_excerpts[0]",
+          "target_id": "d:rescale",
+          "target_kind": "atom"
+        }
+      ],
+      "observed": {
+        "binder_response_validation": {
+          "errors": [],
+          "unbound": [],
+          "valid_witnesses": []
+        },
+        "final_bound": {
+          "binder_attached_witnesses": [
+            {
+              "exact_text": "step for mech_rescale",
+              "target_id": "d:rescale",
+              "witness_kind": "detail"
+            }
+          ],
+          "derived_rendered_detail_ids": [
+            "d:rescale"
+          ],
+          "failure_codes": [],
+          "status": "valid",
+          "valid": true,
+          "witnessed_by_kind": {
+            "detail": [
+              "d:rescale"
+            ],
+            "formula": []
+          }
+        },
+        "writer_content": {
+          "failure_codes": [],
+          "missing_by_kind": {},
+          "status": "valid",
+          "valid": true
+        }
+      },
+      "plan_row": {
+        "content_digest": "sha256:cc1c24b95f6227850cc57a7fa4c78082b0b09d6dc4a4403adef4563373d6416e",
+        "formula_obligation_ids": [],
+        "formula_package_ids": [],
+        "mechanism_id": "mech_rescale",
+        "optional_detail_ids": [],
+        "paragraph_id": "MA-L1_p1",
+        "reader_goal": "",
+        "required_detail_ids": [
+          "d:rescale"
+        ],
+        "role": "core_transformations",
+        "section_id": "MA-L1",
+        "shared_detail_refs": [],
+        "suggested_depth": "standard",
+        "transition_from": "",
+        "transition_to": "",
+        "witness_contract": {
+          "paragraph_id": "MA-L1_p1",
+          "rhetorical_goal": "core_transformations",
+          "schema_version": "1.0",
+          "targets": []
+        }
+      },
+      "required_targets": {
+        "detail": [
+          "d:rescale"
+        ],
+        "formula": []
+      },
+      "response": {
+        "paragraph_id": "MA-L1_p1",
+        "paragraph_markdown": "This paragraph states that the frozen anchor step for mech_rescale is realized by return values * factor, and keeps every claim on the material it was given.",
+        "rendered_detail_ids": [
+          "d:rescale"
+        ],
+        "witnesses": [
+          {
+            "exact_text": "step for mech_rescale",
+            "target_id": "d:rescale",
+            "witness_kind": "detail"
+          }
+        ]
+      },
+      "sentence_claim_map": [
+        {
+          "claim_kind": "author_prose",
+          "declared_detail_ids": [
+            "d:rescale"
+          ],
+          "sentence": "This paragraph states that the frozen anchor step for mech_rescale is realized by return values * factor, and keeps every claim on the material it was given.",
+          "target_keys": [
+            "detail:d:rescale"
+          ]
+        }
+      ]
+    }
+  ],
+  "prompt_template_id": "unified_writer_page_v2",
+  "request": {
+    "author_surface_digest": "sha256:8836f8d330f75b6aebad8bd4739474b9a431183398533d5727ac8a1c7ef8e699",
+    "binding_contract_digest": "sha256:2293a9ebab167cf89958ff6e7b2010ffe2f2599ff2eff153dc200b85b431755a",
+    "input_payload": {
+      "binding_contract": {
+        "allowed_detail_ids": [
+          "d:rescale"
+        ],
+        "allowed_formula_obligation_ids": [],
+        "allowed_formula_package_ids": [],
+        "atom_binding": {
+          "instruction": "Do not treat atom witness declarations as completed binding. The deterministic Binder attaches exact atom substrings after the Writer paragraph content is accepted.",
+          "owner": "binder",
+          "required_atom_count": 0
+        },
+        "required_detail_ids": [
+          "d:rescale"
+        ],
+        "required_rhetorical_moves": []
+      },
+      "candidate_partial_handoff": [],
+      "formula_generation_policy": "consume_only",
+      "formula_packages": [],
+      "formula_placeholders_required": false,
+      "heading": "Rescaling",
+      "narrative_plan": {
+        "content_digest": "sha256:9d6a9d7bbb7c33ed4612c9f0c84c7b8c630e683d3edda767a5b2ef99cc01f58c",
+        "heading": "Rescaling",
+        "mechanism_ids": [
+          "mech_rescale"
+        ],
+        "page_id": "page:2754e27d404a39599269da8a5fadd49b926a6e5059650933b0c99e5ca64d75ab",
+        "page_paragraph_ids": [
+          "MA-L1_p1"
+        ],
+        "paragraphs": [
+          {
+            "content_digest": "sha256:cc1c24b95f6227850cc57a7fa4c78082b0b09d6dc4a4403adef4563373d6416e",
+            "formula_obligation_ids": [],
+            "formula_package_ids": [],
+            "mechanism_id": "mech_rescale",
+            "optional_detail_ids": [],
+            "paragraph_id": "MA-L1_p1",
+            "reader_goal": "",
+            "required_detail_ids": [
+              "d:rescale"
+            ],
+            "role": "core_transformations",
+            "section_id": "MA-L1",
+            "suggested_depth": "standard",
+            "transition_from": "",
+            "transition_to": "",
+            "witness_contract": {
+              "paragraph_id": "MA-L1_p1",
+              "rhetorical_goal": "core_transformations",
+              "schema_version": "1.0",
+              "targets": []
+            }
+          }
+        ],
+        "section_id": "MA-L1"
+      },
+      "output_contract": "PublicationMethodSectionOutputV1",
+      "paragraph_transaction_required": true,
+      "section_id": "MA-L1",
+      "shared_context_metadata": [
+        {
+          "archive_digest": "sha256:b2ce781148cb6d3ff927902e825af7582d875aa1899f11b5197c957a216e73c3",
+          "invocation_max_output_tokens": 4096,
+          "mechanism_id": "mech_rescale",
+          "page_bytes_digest": "sha256:d29aa425fa575ce31da7be85e478733f3caf214c6124a4a781f12551d5966f9d",
+          "page_digest": "sha256:6826b5c36ff5aa14c6c2cf27a115a696c4d3373658195414dad7cdea169ed11c",
+          "page_id": "page:2754e27d404a39599269da8a5fadd49b926a6e5059650933b0c99e5ca64d75ab",
+          "page_index": 0,
+          "page_manifest_digest": "sha256:9abfee7b781aeeb390d79dcec0b8989e441070fa27148e65ff9b5403debe2bbc",
+          "section_id": "MA-L1",
+          "task_ids": [
+            "MA-L1"
+          ],
+          "technical_bytes_digest": "sha256:d29aa425fa575ce31da7be85e478733f3caf214c6124a4a781f12551d5966f9d",
+          "v2_page_id": "page:2754e27d404a39599269da8a5fadd49b926a6e5059650933b0c99e5ca64d75ab",
+          "writer_invocation_id": "inv:writer:MA-L1:page:2754e27d404a39599269da8a5fadd49b926a6e5059650933b0c99e5ca64d75ab",
+          "writer_prompt_digest": "sha256:a818862558c61a56f9125a10121afb64da87d074a18bf5cb5c50b0fff67ad791"
+        }
+      ],
+      "shared_contexts": [
+        {
+          "archive_digest": "sha256:b2ce781148cb6d3ff927902e825af7582d875aa1899f11b5197c957a216e73c3",
+          "atoms": [
+            {
+              "_atom_id": "detail:d:rescale",
+              "_atom_kind": "detail",
+              "activation_basis_ids": [],
+              "active_path_status": "active_default",
+              "author_statements": [],
+              "claim_kind": "implementation",
+              "conditions": [],
+              "detail_id": "d:rescale",
+              "evidence_authority": "unresolved",
+              "exact_excerpts": [],
+              "formalizable": false,
+              "formalizable_signatures": [],
+              "formula_role": "",
+              "importance": "core",
+              "mismatch_reason": "",
+              "operands": [
+                "values",
+                "factor"
+              ],
+              "order_index": 0,
+              "polarity": "unknown",
+              "predecessor_detail_ids": [],
+              "predicate": "rescale",
+              "primary_mechanism_id": "mech_rescale",
+              "publication_policy": "clean_candidate",
+              "result": "rescaled_values",
+              "role": "transformation",
+              "semantic_atom": "step for mech_rescale",
+              "shape_or_type_hints": [],
+              "shared_with_mechanism_ids": [],
+              "source_brief_ids": [],
+              "source_claim_ids": [],
+              "source_equation_ids": [],
+              "source_facet_ids": [],
+              "source_fact_ids": [],
+              "source_kind": "unknown",
+              "source_obligation_ids": [],
+              "source_operation_ids": [
+                "op:rescale"
+              ],
+              "source_span_ids": [],
+              "subject": "",
+              "successor_detail_ids": [],
+              "witness_atoms": [
+                {
+                  "atom_id": "atom:rescale",
+                  "atom_kind": "operation",
+                  "content_digest": "sha256:df4d63aef70f37b4772343bf604c3fea15009e732ac1f781caf8310135df43b1",
+                  "exact_excerpts": [
+                    "return values * factor"
+                  ],
+                  "required": true,
+                  "required_conditions": [],
+                  "required_polarity": "unknown",
+                  "semantic_anchor": "step for mech_rescale",
+                  "source_anchor_ids": [],
+                  "source_operation_ids": [
+                    "op:rescale"
+                  ]
+                }
+              ]
+            }
+          ],
+          "detail_ids": [
+            "d:rescale"
+          ],
+          "formula_obligation_ids": [],
+          "formula_package_ids": [],
+          "formula_package_source_detail_ids": {},
+          "mechanism_header": {
+            "importance": "core",
+            "mechanism_id": "mech_rescale",
+            "mechanism_name": "Rescale mechanism",
+            "purpose": "Explain the rescaling step.",
+            "scientific_role": "core_model"
+          },
+          "obligation_ids": [
+            "MA-L1"
+          ],
+          "paragraph_ids": [
+            "MA-L1_p1"
+          ],
+          "projection_proof": {
+            "detail:d:rescale": "detail:d:rescale"
+          },
+          "section_id": "MA-L1"
+        }
+      ]
+    },
+    "page_contract_snapshot": {
+      "attempt": 0,
+      "author_surface_digest": "sha256:8836f8d330f75b6aebad8bd4739474b9a431183398533d5727ac8a1c7ef8e699",
+      "binding_contract_digest": "sha256:2293a9ebab167cf89958ff6e7b2010ffe2f2599ff2eff153dc200b85b431755a",
+      "invocation_id": "inv:writer:MA-L1:page:2754e27d404a39599269da8a5fadd49b926a6e5059650933b0c99e5ca64d75ab",
+      "max_output_tokens": 0,
+      "page_id": "page:2754e27d404a39599269da8a5fadd49b926a6e5059650933b0c99e5ca64d75ab",
+      "paragraph_ids": [
+        "MA-L1_p1"
+      ],
+      "request_digest": "",
+      "scope": {
+        "allowed_detail_ids": [
+          "d:rescale"
+        ],
+        "allowed_formula_obligation_ids": [],
+        "allowed_formula_package_ids": [],
+        "required_detail_ids": [
+          "d:rescale"
+        ],
+        "required_rhetorical_moves": []
+      },
+      "section_id": "MA-L1",
+      "source_path": "",
+      "technical_bytes_digest": ""
+    },
+    "prompt_sha256": "sha256:a818862558c61a56f9125a10121afb64da87d074a18bf5cb5c50b0fff67ad791",
+    "prompt_template_id": "unified_writer_page_v2",
+    "response_schema_paragraph_id_enum": [
+      "MA-L1_p1"
+    ],
+    "response_schema_sha256": "sha256:524d1b09185c06ff08e367f008cd66f1ad97972c75b0741ffbdfb7773503b9ba"
+  },
+  "scenario": "legal_page_with_atoms",
+  "section_id": "MA-L1",
+  "verified": {
+    "global_verified_complete": false,
+    "global_verified_status": "not_run",
+    "local_gate": "writer_content+final_bound page transaction"
+  }
+}

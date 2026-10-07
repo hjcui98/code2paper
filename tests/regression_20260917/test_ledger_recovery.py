@@ -8,6 +8,8 @@ from __future__ import annotations
 
 import json
 
+import pytest
+
 from code2paper.agentic.writer_attempt_ledger import (
     RESUME_EXHAUSTED_INVOCATION,
     build_resume_preflight,
@@ -294,3 +296,128 @@ def test_repair_accepted_page_is_complete_but_not_primary_accepted() -> None:
     assert repaired.accepted is True
     assert repaired.primary_accepted is False
     assert repaired.exhausted is False
+
+
+# --------------------------------------------------------------------------- #
+# K04-GAP-1 / GAP-3：同一组真实产物的**恢复策略**（预留与前置检查）
+# --------------------------------------------------------------------------- #
+#
+# 产物与消费者与 `test_ledger_recovery_matrix.py` 的 GAP 组**同一组**：
+# `build_gap13_artifact_runs` 把报告写在会话级基目录，第二次调用只复读，不重造账本。
+
+
+from .test_ledger_recovery_matrix import (  # noqa: E402  (复用同一组真实产物)
+    build_gap13_artifact_runs,
+)
+
+
+@pytest.fixture(scope="module")
+def gap13(tmp_path_factory) -> dict:
+    return build_gap13_artifact_runs(tmp_path_factory.getbasetemp() / "k04-gap13")
+
+
+def test_gap13_presend_refusal_and_unknown_send_keep_opposite_reservation_policy(
+    gap13,
+) -> None:
+    """GAP-3：明确未发送不保留预留；结果未知必须保留。两种形态不得互相折抵。"""
+
+    from code2paper.agentic.unified_invocation_ledger import (
+        unsettled_started_attempt_records,
+    )
+    from code2paper.agentic.writer_attempt_ledger import (
+        read_attempt_outcomes,
+        reduce_invocation_recovery,
+        unsettled_reservations,
+    )
+
+    invocation = gap13["invocation"]
+
+    class _Invocation:
+        def __init__(self, invocation_id: str) -> None:
+            self.invocation_id = invocation_id
+            self.max_input_tokens = 0
+            self.role = "writer"
+
+    class _Plan:
+        def __init__(self, invocation_id: str) -> None:
+            self.invocations = (_Invocation(invocation_id),)
+
+    def _budget_view(run_root) -> list:
+        return list(
+            unsettled_started_attempt_records(
+                run_root / "artifacts" / "06_authoring" / "invocations",
+                _Plan(invocation),
+            )
+        )
+
+    # (a) 明确未发送的合同拒发：不保留预留、不进预算视角、可重新准入。
+    run_root_a = gap13["a"]["run_root"]
+    assert unsettled_reservations(run_root_a, invocation) == ()
+    assert _budget_view(run_root_a) == []
+    refused_outcomes = {
+        item.attempt: item for item in read_attempt_outcomes(run_root_a, invocation)
+    }
+    assert refused_outcomes[2].reservation_retained is False
+    refused_state = read_invocation_ledger_state(run_root_a, invocation)
+    assert refused_state.counters.content_attempt_count == 1
+    assert refused_state.content_attempts_remaining == 1
+    refused_recovery = reduce_invocation_recovery(
+        run_root_a, invocation, content_attempt_limit=2
+    )
+    # 明确未发送：允许释放预留，且不得把拒发记成内容失败。
+    assert "release_the_reservation" in refused_recovery.allowed_actions
+    assert "count_it_as_a_content_failure" in refused_recovery.forbidden_actions
+    assert build_resume_preflight(
+        run_root_a, [invocation], execution_id="gap13-a"
+    ).allowed is True
+
+    # (c) 结果未知的真实崩溃：保留预留、进预算视角、禁止"当成未发送/静默重试"。
+    run_root_c = gap13["c"]["run_root"]
+    assert [item.attempt for item in unsettled_reservations(run_root_c, invocation)] == [1]
+    records = _budget_view(run_root_c)
+    assert [item.attempt for item in records] == [1]
+    assert records[0].planned_input_tokens > 0
+    unknown_outcomes = read_attempt_outcomes(run_root_c, invocation)
+    assert unknown_outcomes[0].reservation_retained is True
+    unknown_recovery = reduce_invocation_recovery(
+        run_root_c, invocation, content_attempt_limit=2
+    )
+    assert unknown_recovery.unknown_reservation_attempts == (1,)
+    assert {"assume_not_sent", "silently_retry"} <= set(
+        unknown_recovery.forbidden_actions
+    )
+    # 结果未知：只允许对账，**不允许**把预留当未发送释放掉。
+    assert "reconcile_if_the_provider_supports_it" in unknown_recovery.allowed_actions
+    assert "release_the_reservation" not in unknown_recovery.allowed_actions
+
+    # 两种形态在同一组消费者上给出相反结论（不是因为"都不许重发"）。
+    assert refused_outcomes[2].reservation_retained is not unknown_outcomes[0].reservation_retained
+    assert refused_state.accepted is False and unknown_recovery.accepted is False
+    assert refused_state.counters.provider_send_count == 1  # 只有真正的首次发送
+    assert unknown_recovery.counters.provider_send_count == 0  # 崩溃没有回执可计
+
+
+def test_gap13_preflight_alone_does_not_clear_an_unknown_send(gap13) -> None:
+    """GAP-3：前置检查只回答"是否耗尽"；未知发送必须由归约结论阻断，不能被它放行。"""
+
+    from code2paper.agentic.writer_attempt_ledger import (
+        build_resume_preflight,
+        reduce_invocation_recovery,
+    )
+
+    invocation = gap13["invocation"]
+    run_root_c = gap13["c"]["run_root"]
+
+    preflight = build_resume_preflight(run_root_c, [invocation], execution_id="gap13-c")
+    assert preflight.allowed is True, "未耗尽：前置检查按设计放行相位"
+
+    recovery = reduce_invocation_recovery(
+        run_root_c, invocation, content_attempt_limit=2
+    )
+    assert recovery.state == "send_outcome_unknown"
+    assert recovery.accepted is False
+    assert recovery.unknown_reservation_attempts == (1,)
+    assert "reconcile_if_the_provider_supports_it" in recovery.allowed_actions
+    assert "release_the_reservation" not in recovery.allowed_actions
+    assert {"assume_not_sent", "silently_retry"} <= set(recovery.forbidden_actions)
+    # 结论：恢复入口必须同时消费归约结论；只凭前置检查放行会变成"缺回执=未调用=可重发"。

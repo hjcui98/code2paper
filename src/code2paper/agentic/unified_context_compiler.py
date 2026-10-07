@@ -243,6 +243,15 @@ class UnifiedCompilerError(ValueError):
 # ---------------------------------------------------------------------------
 
 
+def _ordered_unique_strings(values: Iterable[Any]) -> list[str]:
+    """按**出现顺序**去重非空字符串（审计 §C.1 / 不变量 I5 / B01-D1）。
+
+    叙述顺序是页身份的一部分：这里刻意不排序，也不依赖 set 迭代顺序。
+    """
+
+    return list(dict.fromkeys(str(item) for item in values if str(item).strip()))
+
+
 def _qualified_atom_id(kind: str, raw_id: Any) -> str:
     """Return one canonical namespace prefix for an archive entity ID.
 
@@ -2377,6 +2386,40 @@ def fit_narrative_plan_to_page_budget(
                     "formula_package_ids": list(fragment_packages),
                 })
 
+            # K04-G4：**义务/公式包多重集**必须在分片间守恒，不能只数 target。
+            # 真实反例：同一段落里 ob1 有 formula target、ob3 没有；分片后 ob3 不出现在
+            # 任何分片，而 target 多重集仍然守恒（旧实现因此 failures 为空、静默丢义务）。
+            # 这里按输入行与全部分片比较完整多重集；未经授权的消失具名阻断。
+            # 合法排除需要显式合同前置与可验证的授权变更——当前合同没有这种前置，
+            # 所以本函数不放行"少一个义务"的分片结果，也不替上游兜底。
+            fragment_obligation_counts = Counter(
+                str(obligation_id)
+                for entry in diagnostics["split_paragraphs"]
+                if entry["paragraph_id"] == paragraph_id
+                and entry["section_id"] == section_id
+                for obligation_id in entry["formula_obligation_ids"]
+            )
+            fragment_package_counts = Counter(
+                str(package_id)
+                for entry in diagnostics["split_paragraphs"]
+                if entry["paragraph_id"] == paragraph_id
+                and entry["section_id"] == section_id
+                for package_id in entry["formula_package_ids"]
+            )
+            for family, row_ids, fragment_counts in (
+                ("obligation", row_obligations, fragment_obligation_counts),
+                ("package", row_packages, fragment_package_counts),
+            ):
+                expected_counts = Counter(str(value) for value in row_ids)
+                if expected_counts == fragment_counts:
+                    continue
+                failures.append(
+                    f"paragraph_split_{family}_contract_not_conserved:"
+                    f"{paragraph_id}:"
+                    f"missing={sum((expected_counts - fragment_counts).values())}:"
+                    f"duplicated={sum((fragment_counts - expected_counts).values())}"
+                )
+
         revised_sections.append(NarrativeSectionPlanV3(
             section_id=section_id,
             heading=str(getattr(section, "heading", "")),
@@ -2921,14 +2964,17 @@ def extend_writer_worksets_from_narrative_plan(
                 ((), residual_atoms or set(required_atoms), set(), set(), set())
             )
 
+        # 审计 §C.1 / 不变量 I5 / B01-D1：段落顺序是**叙述顺序**。累加器必须是保序
+        # 结构——旧实现用 set 累加，flush/合并时的迭代顺序取决于 PYTHONHASHSEED，
+        # 于是同一输入在不同进程里得到不同的 page_id 与技术字节摘要。
         chunks: list[
-            tuple[list[str], set[str], set[str], set[str], set[str]]
+            tuple[list[str], list[str], list[str], list[str], list[str]]
         ] = []
         current_atoms: list[str] = []
-        current_paragraph_ids: set[str] = set()
-        current_detail_ids: set[str] = set()
-        current_obligation_ids: set[str] = set()
-        current_package_ids: set[str] = set()
+        current_paragraph_ids: list[str] = []
+        current_detail_ids: list[str] = []
+        current_obligation_ids: list[str] = []
+        current_package_ids: list[str] = []
 
         def _payload(
             chunk: Sequence[str],
@@ -2981,10 +3027,10 @@ def extend_writer_worksets_from_narrative_plan(
                 chunks.append(
                     (
                         list(current_atoms),
-                        set(current_paragraph_ids),
-                        set(current_detail_ids),
-                        set(current_obligation_ids),
-                        set(current_package_ids),
+                        list(current_paragraph_ids),
+                        list(current_detail_ids),
+                        list(current_obligation_ids),
+                        list(current_package_ids),
                     )
                 )
 
@@ -3061,16 +3107,16 @@ def extend_writer_worksets_from_narrative_plan(
                 # 先拆页；输入看起来装得下不代表一次事务写得完（事故页 16 段）。
                 or (
                     paragraph_limit > 0
-                    and len(set(candidate_paragraph_ids)) > paragraph_limit
+                    and len(candidate_paragraph_ids) > paragraph_limit
                 )
             )
             if candidate_over_budget and current_atoms:
                 _flush_current()
                 current_atoms = []
-                current_paragraph_ids = set()
-                current_detail_ids = set()
-                current_obligation_ids = set()
-                current_package_ids = set()
+                current_paragraph_ids = []
+                current_detail_ids = []
+                current_obligation_ids = []
+                current_package_ids = []
                 candidate_atoms = group_atom_ids
                 candidate_paragraph_ids = list(paragraph_ids)
                 candidate_payload = _payload(
@@ -3093,7 +3139,7 @@ def extend_writer_worksets_from_narrative_plan(
                     )
                     or (
                         paragraph_limit > 0
-                        and len(set(candidate_paragraph_ids)) > paragraph_limit
+                        and len(candidate_paragraph_ids) > paragraph_limit
                     )
                 )
             if candidate_over_budget:
@@ -3114,7 +3160,7 @@ def extend_writer_worksets_from_narrative_plan(
                     max_input_tokens=max_page_input_tokens,
                     request_tokens=candidate_request_tokens,
                     max_request_input_tokens=int(max_request_input_tokens or 0),
-                    paragraph_count=len(set(candidate_paragraph_ids)),
+                    paragraph_count=len(candidate_paragraph_ids),
                     paragraph_limit=paragraph_limit,
                 )
                 raise UnifiedCompilerError(
@@ -3124,10 +3170,18 @@ def extend_writer_worksets_from_narrative_plan(
                     f"largest atoms {contributions}",
                 )
             current_atoms = candidate_atoms
-            current_paragraph_ids.update(paragraph_ids)
-            current_detail_ids.update(detail_ids)
-            current_obligation_ids.update(obligation_ids)
-            current_package_ids.update(package_ids)
+            current_paragraph_ids = _ordered_unique_strings(
+                [*current_paragraph_ids, *paragraph_ids]
+            )
+            current_detail_ids = _ordered_unique_strings(
+                [*current_detail_ids, *detail_ids]
+            )
+            current_obligation_ids = _ordered_unique_strings(
+                [*current_obligation_ids, *obligation_ids]
+            )
+            current_package_ids = _ordered_unique_strings(
+                [*current_package_ids, *package_ids]
+            )
         _flush_current()
         result: list[ConsumerTechnicalPageV2] = []
         for (

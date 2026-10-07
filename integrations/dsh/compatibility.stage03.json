@@ -1,0 +1,54 @@
+{
+  "schema_version": "c2p-dsh-stage03-inputs/1",
+  "protocol_version": "c2p-dsh/1",
+  "candidate": "0.2.0-rc.1+loop-origin.1",
+  "status": "independently_accepted",
+  "python_owner": "window-one",
+  "ts_build_stage_owner": "window-two",
+  "wire_schema_root": "integrations/dsh/wire-v1",
+  "window_one_runtime_evidence": "/tmp/c2p-stage03-gc-repair-w1-20261003",
+  "window_one_archive": ".dsh-dev/run/stage03-gc-repair-w1-20261003/final-delivery",
+  "window_two_evidence": ".dsh-dev/run/stage03-gc-repair-w2-20261003/final-window-two",
+  "final_identity_and_results_are_external": true,
+  "gate_c": "PASS",
+  "model_scope": "local-fake-http-sse-only",
+  "production_claim_reserve_pump": "unavailable",
+  "superseded_development_archive": ".dsh-dev/run/stage03-w1-20261003/final-delivery",
+  "delivery_index": ".dsh-dev/run/stage03-gc-repair-w1-20261003/final-delivery/delivery-index.json",
+  "read_set": "Independent QA frozen inputs released 2026-10-04T00:15:40.644911+08:00;2114 source entries and actual composition unchanged through verification. Later coordination registration changes engine identity; old contracts keep their bound identity.",
+  "domain_status": "pending_validation",
+  "owner_submission_status": "submitted_for_independent_qa",
+  "independent_review": "docs/dsh_execution_20260928/stage03_gc_repair_acceptance_20261004.md",
+  "independent_evidence": ".dsh-dev/run/stage03-gc-qa-20261004-oawiwmg",
+  "required_repairs": [],
+  "r2_history": {
+    "window_one_archive": ".dsh-dev/run/stage03-w1-20261003/final-delivery-r2",
+    "window_two_evidence": ".dsh-dev/run/stage03-20261003-w2",
+    "delivery_index": ".dsh-dev/run/stage03-w1-20261003/final-delivery-r2/delivery-index.json",
+    "gate_c": "CHANGES_REQUESTED",
+    "independent_evidence": ".dsh-dev/run/stage03-gate-c-qa-20261003-w04q7791"
+  },
+  "owner_submission_report": "docs/dsh_execution_20260928/stage03_gc_repair_delivery_20261003.md",
+  "owner_repair_verification": "all_original_AT_and_GC_1_2_3_passed_on_frozen_inputs",
+  "current_repair_review": "PASS",
+  "independent_review_history": [
+    {
+      "gate_c": "CHANGES_REQUESTED",
+      "independent_review": "docs/dsh_execution_20260928/stage03_gate_c_review_and_batch_repair_20261003.md",
+      "independent_evidence": ".dsh-dev/run/stage03-gate-c-qa-20261003-w04q7791",
+      "required_repairs": [
+        "GC-1",
+        "GC-2",
+        "GC-3"
+      ]
+    }
+  ],
+  "closed_repairs": [
+    "GC-1",
+    "GC-2",
+    "GC-3"
+  ],
+  "independently_accepted_at": "2026-10-04T00:15:40.644911+08:00",
+  "next_stage_instructions": "docs/dsh_execution_20260928/stage04_batch_execution_instructions_20261004.md",
+  "next_stage_status": "original04_ready_not_started"
+}

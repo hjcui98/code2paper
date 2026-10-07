@@ -25,6 +25,7 @@ import hashlib
 import json
 import os
 import subprocess
+from contextlib import contextmanager
 from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -68,8 +69,82 @@ VALIDATOR_BUNDLE_SOURCES: tuple[str, ...] = (
     "src/code2paper/agentic/unified_context_compiler.py",
     "src/code2paper/agentic/mechanism_context_pages.py",
     "src/code2paper/agentic/writer_attempt_ledger.py",
+    "src/code2paper/agentic/unified_invocation_ledger.py",
     "src/code2paper/agentic/authoring_artifact_index.py",
     "src/code2paper/agentic/paragraph_prose_composer.py",
+    # K04：发送前 page contract 复核的裁决逻辑（技术字节摘要必须来自实际材料重算）。
+    "src/code2paper/agentic/page_contract_recheck.py",
+    # K01：注册表加载校验与完整来源身份的裁决逻辑（创建封摘要 / 加载验摘要分离）。
+    "src/code2paper/agentic/authoring_artifact_registry.py",
+    # K02：一代产物的成员/manifest 复核、媒体校验与 CAS/fence 激活的裁决逻辑。
+    "src/code2paper/agentic/authoring_artifact_publication.py",
+    "src/code2paper/agentic/authoring_execution_identity.py",
+    "src/code2paper/agentic/digest.py",
+    "src/code2paper/integrations/dsh/protocol.py",
+    "src/code2paper/integrations/dsh/runtime_inventory.py",
+    "src/code2paper/integrations/dsh/writer_contract.py",
+    "src/code2paper/integrations/dsh/artifacts.py",
+    "src/code2paper/integrations/dsh/facade.py",
+    "src/code2paper/integrations/dsh/result_ingest.py",
+    "src/code2paper/integrations/dsh/worker.py",
+    "src/code2paper/integrations/dsh/local_meter.py",
+    # M01: original sealed promotion validation participates in old-view withdrawal.
+    "src/code2paper/agentic/research_promotion.py",
+    "src/code2paper/integrations/dsh/task_store.py",
+    "src/code2paper/integrations/dsh/scoped_reads.py",
+    "src/code2paper/integrations/dsh/epoch_accounting.py",
+    "src/code2paper/integrations/dsh/epoch_tools.py",
+    "src/code2paper/integrations/dsh/step_admission.py",
+    "src/code2paper/integrations/dsh/auxiliary_admission.py",
+    "src/code2paper/integrations/dsh/step_completion.py",
+    "src/code2paper/integrations/dsh/epoch_completion.py",
+    "integrations/dsh/src/epoch-compaction.ts",
+    "integrations/dsh/src/step-renderer.ts",
+    "src/code2paper/integrations/dsh/legacy_retirement.py",
+    "src/code2paper/integrations/dsh/native_rejection_retirement.py",
+    "src/code2paper/integrations/dsh/native_stop_retirement.py",
+    "src/code2paper/integrations/dsh/text_rejection_completion.py",
+    "src/code2paper/integrations/dsh/unknown_tool_completion.py",
+    "src/code2paper/integrations/dsh/unknown_tool_retirement.py",
+    "src/code2paper/integrations/dsh/unknown_abort_recovery.py",
+    "src/code2paper/integrations/dsh/text_stop_transport_proof.py",
+    "src/code2paper/integrations/dsh/text_stop_recovery.py",
+    "src/code2paper/integrations/dsh/invocation_adapter.py",
+    "src/code2paper/integrations/dsh/offline_admission.py",
+    "src/code2paper/integrations/dsh/core_reuse.py",
+    "src/code2paper/integrations/dsh/host_admission.py",
+    "src/code2paper/integrations/dsh/qualification.py",
+    "src/code2paper/integrations/dsh/operator_evidence.py",
+    "src/code2paper/integrations/dsh/operator_suite.py",
+    "src/code2paper/integrations/dsh/target_admission.py",
+    "src/code2paper/integrations/dsh/coverage_use.py",
+    "src/code2paper/integrations/dsh/offline_inputs.py",
+    "src/code2paper/integrations/dsh/suite_plan.py",
+    "src/code2paper/integrations/dsh/suite_runner.py",
+    "src/code2paper/integrations/dsh/pytest_reporter.py",
+    "integrations/dsh/src/cli.ts",
+    "integrations/dsh/src/execution-policy.ts",
+    "integrations/dsh/src/workflow-driver.ts",
+    "integrations/dsh/src/task-tools.ts",
+    "integrations/dsh/src/context-policy.ts",
+    "integrations/dsh/src/writer-request.ts",
+    "integrations/dsh/dev/toolchain/suite-reporter.mjs",
+    # L01 private bootstrap/token-meter/admission and exact-wire live guards.
+    "integrations/dsh/dev/l01_worker.py",
+    "integrations/dsh/dev/l01.mjs",
+    "integrations/dsh/dev/l01_launch.py",
+    # Guarded native-selection runtime and its trusted admission inputs.
+    "scripts/dsh_dev.py",
+    "integrations/dsh/dev/runtime-0.2.0-rc.1/tool-choice/tool-choice.patch.py",
+    "integrations/dsh/dev/runtime-0.2.0-rc.1/tool-choice/native-params.patch.py",
+    "integrations/dsh/compatibility.0.2.0-rc.1+loop-origin.1+tool-choice.2.json",
+    "src/code2paper/agentic/final_text_authorship.py",
+    "src/code2paper/llm/response_schemas.py",
+    "src/code2paper/llm/section_writer.py",
+    "src/code2paper/agentic/publication_method_writer.py",
+    "src/code2paper/agentic/formalization_agent.py",
+    "src/code2paper/agentic/method_argument_models.py",
+    "src/code2paper/agentic/unified_context_models.py",
 )
 
 #: 引擎指纹排除项：运行产物、缓存、密钥、数据库不进身份（方案 §5.2）。
@@ -1045,6 +1120,19 @@ def capture_target_identity(repo_path: str | Path) -> TargetRepoIdentity:
     )
 
 
+@contextmanager
+def scoped_run_lease(out_root: str | Path, *, execution_id: str, blocking: bool = False):
+    """Borrow an existing same-process lease without releasing its owner's lock."""
+    key = str(Path(out_root).expanduser().resolve())
+    previous = _HELD_LEASES.get(key)
+    lease = acquire_run_lease(out_root, execution_id=execution_id, blocking=blocking)
+    try:
+        yield lease
+    finally:
+        if lease is not previous:
+            lease.release()
+
+
 def acquire_run_lease(
     out_root: str | Path,
     *,
@@ -1736,3 +1824,94 @@ __all__ = [
     "RUN_LEASE_FILE",
     "RUN_LEASE_HELD",
 ]
+
+
+# I01: the original development inventory algorithm, now reusable by production
+# consumers. The inventory wire remains unchanged; composition additionally
+# fingerprints resolved file bytes and absolute Loader resolution positions.
+def runtime_inventory(root: Path) -> dict[str, dict[str, str | int]]:
+    from code2paper.integrations.dsh.runtime_inventory import runtime_inventory as inventory
+    return inventory(root)
+
+
+@dataclass(frozen=True)
+class CompositionSpecV1:
+    """Host-owned locations, pinned before use; no model paths are accepted.
+
+    Installation paths are part of identity in V1, including Loader and peer
+    positions. Relocation needs a new composition rather than hidden rewriting.
+    Trees must be dedicated immutable code trees, never a home/cache/session.
+    """
+    files: Mapping[str, Path]
+    trees: Mapping[str, Path]
+    effective_config: Mapping[str, Any]
+    upstream_source_sha: str | None = None
+
+
+_COMPOSITION_FILES = frozenset({
+    "loader", "peer", "bundle_source", "bundle_lock", "build_input", "bundle_js",
+    "build_receipt", "stage", "node", "preset", "persona", "tool_schema", "renderer",
+    "python_dependencies", "worker", "tokenizer", "meter",
+})
+_COMPOSITION_TREES = frozenset({"runtime", "dependencies", "python_runtime"})
+
+
+def capture_execution_composition(spec: CompositionSpecV1, *, engine_root: str | Path | None = None) -> dict[str, Any]:
+    """Read actual running bytes, preserving engine and validator identities."""
+    if not _COMPOSITION_FILES.issubset(spec.files) or not _COMPOSITION_TREES.issubset(spec.trees):
+        raise ValueError("composition_sources_missing")
+    if not {"model", "options", "worker_version", "renderer_version", "tokenizer_version", "meter_version"}.issubset(spec.effective_config):
+        raise ValueError("composition_config_missing")
+    engine = capture_engine_source_snapshot(engine_root)
+    validator = capture_validator_bundle_snapshot(engine_root)
+    if not engine.is_usable or not validator.is_usable:
+        raise ValueError("composition_engine_or_validator_unavailable")
+    files: dict[str, Any] = {}
+    for name, location in sorted(spec.files.items()):
+        path = Path(location).absolute()
+        try:
+            resolved = path.resolve(strict=True)
+            digest, unstable = _hash_file(resolved)
+            if unstable or not digest.startswith("sha256:"):
+                raise ValueError("composition_source_unstable")
+            files[name] = {"path": str(path), "resolved_path": str(resolved), "digest": digest,
+                           "symlink": os.readlink(path) if path.is_symlink() else None}
+        except OSError as error:
+            raise ValueError(f"composition_source_missing:{name}") from error
+    trees = {}
+    for name, location in sorted(spec.trees.items()):
+        try:
+            location = Path(location).absolute()
+            path = location.resolve(strict=True)
+            from code2paper.integrations.dsh.runtime_inventory import runtime_inventory as scoped_inventory
+            entries = scoped_inventory(path, linked_roots=tuple(Path(value) for value in spec.trees.values()))
+            # Every internal symlink resolves to bytes that are themselves in
+            # the inventory; both relationship and target content are covered.
+            trees[name] = {"path": str(location), "resolved_path": str(path),
+                           "symlink": os.readlink(location) if location.is_symlink() else None,
+                           "digest": digest_json(entries), "entries": entries}
+        except OSError as error:
+            raise ValueError(f"composition_source_missing:{name}") from error
+    # Inventory can be long. Do not seal a mixture of source states from the
+    # beginning and end of a concurrent edit/build.
+    engine_after = capture_engine_source_snapshot(engine_root)
+    validator_after = capture_validator_bundle_snapshot(engine_root)
+    if (not engine_after.is_usable or not validator_after.is_usable
+            or engine_after.source_digest != engine.source_digest or validator_after.digest != validator.digest):
+        raise ValueError("composition_source_unstable")
+    values = {"schema_version": "ExecutionCompositionV1", "path_identity": "absolute-resolution-v1",
+              "engine_digest": engine.source_digest, "validator_digest": validator.digest,
+              "upstream_source_sha": spec.upstream_source_sha, "files": files, "trees": trees,
+              "effective_config": dict(spec.effective_config)}
+    values["composition_digest"] = digest_json(values)
+    return values
+
+
+def validate_execution_composition(spec: CompositionSpecV1, expected: Mapping[str, Any], *, engine_root: str | Path | None = None) -> dict[str, Any]:
+    payload = {key: value for key, value in expected.items() if key != "composition_digest"}
+    if digest_json(payload) != expected.get("composition_digest"):
+        raise ValueError("composition_digest_mismatch")
+    actual = capture_execution_composition(spec, engine_root=engine_root)
+    if actual != dict(expected):
+        raise ValueError("composition_drift")
+    return actual

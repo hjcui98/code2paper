@@ -787,6 +787,11 @@ _WRITER_TARGET_FIELDS = (
     "target_kind",
     "detail_id",
     "required",
+    "semantic_atom",
+    "required_polarity",
+    "required_conditions",
+    "render_policy",
+    "authority_lane",
 )
 
 
@@ -794,10 +799,9 @@ def _compact_writer_target_contract_for_llm(value: Any) -> dict[str, Any]:
     """Keep only the closed target identity needed to organize a page.
 
     The complete witness contract remains on ``WriterSectionInput`` for the
-    post-call binder.  The page's immutable technical payload is separately
-    visible to the model, so repeating semantic atoms, anchors, and exact
-    excerpts in every paragraph/target contract only inflates the request and
-    creates a second surface that can drift from the page.
+    post-call binder. Keep canonical reader semantics and conditions: a later
+    source-validated Formalizer refinement need not occur in the earlier
+    technical page. Exact excerpts and internal anchors remain Binder-private.
     """
 
     if hasattr(value, "model_dump"):
@@ -864,6 +868,7 @@ def _compact_writer_witness_contract_for_llm(value: Any) -> Any:
     }
     targets = value.get("targets") or ()
     writer_targets: list[dict[str, Any]] = []
+    semantic_requirements: list[dict[str, Any]] = []
     binder_owned = 0
     if not isinstance(targets, (str, bytes)):
         for raw_target in targets:
@@ -872,11 +877,18 @@ def _compact_writer_witness_contract_for_llm(value: Any) -> Any:
                 continue
             if str(target.get("target_kind") or "") == "atom":
                 binder_owned += 1
+                # Prose remains Writer-owned even when locating its exact
+                # atom substring belongs to Binder. Project the existing
+                # canonical semantics; never synthesize a replacement claim.
+                if target.get("semantic_atom"):
+                    semantic_requirements.append(target)
                 continue
             writer_targets.append(target)
     compact["targets"] = writer_targets
     if binder_owned:
         compact["binder_owned"] = {"owner": "binder", "target_count": binder_owned}
+    if semantic_requirements:
+        compact["semantic_requirements"] = semantic_requirements
     return compact
 
 
@@ -5097,6 +5109,379 @@ def _normalize_publication_paragraph_transaction(
     }), []
 
 
+def parse_publication_writer_response(
+    response: LLMResponse,
+    *,
+    request: LLMRequest,
+    private_section: WriterSectionInput | None,
+    binder_caller: _LLMCaller | None = None,
+    base_config: LLMConfig | None = None,
+    binder_call_id_prefix: str = "LLM-publication-paragraph-binder",
+    recovery_traces: list[dict[str, Any]] | None = None,
+    binder_traces: list[GenerationCallTrace] | None = None,
+    parsed_outputs_by_section: dict[str, list[PublicationMethodSectionOutputV1]] | None = None,
+    request_state_key: str = "",
+) -> LLMResponse:
+    """One decode/recovery/splice/normalize owner for caller, ingest and replay.
+
+    This is local and deterministic unless a legacy caller explicitly supplies
+    its declared Binder. Unified V2 semantic verification remains an external,
+    pending task; local binding never grants a supported semantic verdict.
+    """
+    recovery_traces = recovery_traces if recovery_traces is not None else []
+    binder_traces = binder_traces if binder_traces is not None else []
+    parsed_outputs_by_section = parsed_outputs_by_section if parsed_outputs_by_section is not None else {}
+    if response.blocked_reason or not (response.text or "").strip():
+        # Preserve the owning client/provider failure. Attempting JSON
+        # recovery on an empty blocked response hides the actionable
+        # cause behind a secondary schema-parse error.
+        return response
+    scoped_section_id = str(request.input_payload.get("section_id") or "")
+    private_payload = private_section.prompt_payload if private_section is not None else {}
+    # A content repair is allowed to return only the failed paragraph(s).
+    # The outer Writer loop merges that representation with the incumbent
+    # section; the normal first-pass contract still requires every planned
+    # paragraph.
+    content_repair_request = isinstance(
+        request.input_payload.get("writer_section_repair"), Mapping
+    )
+    private_graph = (
+        private_section.argument_graph if private_section is not None else {}
+    )
+    normalized_text, bridged_fields = _decode_publication_binding_tokens(
+        response.text,
+        private_payload.get("binding_contract") or {},
+    )
+    normalized_text, research_bridge_fields = _decode_publication_research_requests(
+        normalized_text,
+        section_id=scoped_section_id,
+        argument_graph=private_graph or {},
+    )
+    normalized_text, callback_bridge_fields = _decode_publication_callback_moves(
+        normalized_text,
+        resolution=request.input_payload.get(
+            "writing_research_callback_resolution"
+        ) or {},
+    )
+    parsed, recovery, error = try_parse_structured_response_with_trace(
+        normalized_text,
+        PublicationMethodSectionOutputV1,
+    )
+    recovery_traces.append({
+        "section_id": str(request.input_payload.get("section_id") or ""),
+        "binding_bridge_fields": bridged_fields,
+        "research_request_bridge_fields": research_bridge_fields,
+        "callback_move_bridge_fields": callback_bridge_fields,
+        **recovery.model_dump(mode="json"),
+    })
+    if parsed is None:
+        return LLMResponse(
+            text="",
+            response_hash=response.response_hash,
+            blocked_reason=f"publication_section_schema_failed:{error}",
+            cached=response.cached,
+            response_mode=response.response_mode,
+            finish_reason=response.finish_reason,
+            token_usage=_failed_response_token_usage(response),
+            provider_finish_reason=response.provider_finish_reason,
+            thinking_chars=response.thinking_chars,
+            provider_diagnostics=response.provider_diagnostics,
+        )
+    parsed = _sanitize_publication_output_overlap(parsed)
+    expected_scoped_section_id = scoped_section_id or (
+        private_section.section_id if private_section is not None else ""
+    )
+    parsed = _recover_casefold_publication_section_id(
+        parsed,
+        expected_section_id=expected_scoped_section_id,
+        recovery_sink=recovery_traces,
+    )
+    formula_placeholder_failures: list[str] = []
+    if (
+        isinstance(private_payload, dict)
+        and private_payload.get("formula_placeholders_required")
+    ):
+        from code2paper.agentic.publication_transaction_contract import (
+            splice_formula_placeholders,
+        )
+
+        formula_packages = tuple(
+            item for item in (private_payload.get("formula_packages") or ())
+            if isinstance(item, Mapping)
+        )
+        package_ids = {
+            str(item.get("package_id") or "").strip()
+            for item in formula_packages
+            if str(item.get("package_id") or "").strip()
+        }
+        paragraph_owner_ids: dict[str, set[str]] = {}
+        for package in formula_packages:
+            package_id = str(package.get("package_id") or "").strip()
+            consumer_id = str(package.get("consumer_paragraph_id") or "").strip()
+            if not package_id:
+                formula_placeholder_failures.append("formula_package_id_missing")
+            if not consumer_id:
+                formula_placeholder_failures.append(
+                    f"formula_package_without_consumer:{package_id or 'unknown'}"
+                )
+            paragraph_owner_ids.setdefault(consumer_id, set()).add(package_id)
+        parsed_transactions = list(parsed.paragraphs or ())
+        parsed_ids = {
+            str(item.paragraph_id or "").strip() for item in parsed_transactions
+        }
+        for consumer_id in paragraph_owner_ids:
+            if (
+                consumer_id
+                and consumer_id not in parsed_ids
+                and not content_repair_request
+            ):
+                formula_placeholder_failures.append(
+                    f"formula_package_consumer_missing:{consumer_id}"
+                )
+        replaced_transactions: list[PublicationMethodParagraphOutputV1] = []
+        for transaction in parsed_transactions:
+            paragraph_id = str(transaction.paragraph_id or "").strip()
+            insertion_witnesses: list[dict[str, str]] = []
+            replaced, failures = splice_formula_placeholders(
+                transaction.paragraph_markdown,
+                formula_packages,
+                required_package_ids=paragraph_owner_ids.get(paragraph_id, ()),
+                allowed_package_ids=paragraph_owner_ids.get(paragraph_id, ()),
+                witness_sink=insertion_witnesses,
+            )
+            if failures:
+                recovered_transaction, recovered_package_ids = (
+                    _recover_exact_formula_block_representation(
+                        transaction,
+                        missing_failures=failures,
+                        formula_packages=formula_packages,
+                    )
+                )
+                if recovered_package_ids:
+                    transaction = recovered_transaction
+                    replaced = transaction.paragraph_markdown
+                    failures = tuple(
+                        failure for failure in failures
+                        if not (
+                            str(failure).startswith(
+                                "formula_placeholder_missing:"
+                            )
+                            and str(failure).split(
+                                "formula_placeholder_missing:", 1
+                            )[1].strip() in set(recovered_package_ids)
+                        )
+                    )
+                    recovery_traces.append({
+                        "section_id": scoped_section_id,
+                        "paragraph_id": paragraph_id,
+                        "operation": "recover_existing_canonical_formula_block",
+                        "package_ids": list(recovered_package_ids),
+                    })
+            formula_placeholder_failures.extend(
+                f"{paragraph_id}:{failure}" for failure in failures
+            )
+            transaction_updates: dict[str, Any] = {
+                "paragraph_markdown": replaced,
+            }
+            # The placeholder is the Writer-side consumption signal.
+            # Restore the corresponding package declaration here after
+            # successful verbatim insertion; the model is not required
+            # to copy an internal package id into its response.  This is
+            # representation repair only—the later Binder still needs
+            # an exact formula witness in the resulting body.
+            if not failures:
+                existing_keys = {
+                    (witness.witness_kind, witness.target_id)
+                    for witness in transaction.witnesses
+                }
+                recovered_witnesses = [
+                    PublicationContentWitnessV1.model_validate(witness)
+                    for witness in insertion_witnesses
+                    if (witness["witness_kind"], witness["target_id"]) not in existing_keys
+                ]
+                if recovered_witnesses:
+                    transaction_updates["witnesses"] = [
+                        *transaction.witnesses, *recovered_witnesses,
+                    ]
+                    recovery_traces.append({
+                        "section_id": scoped_section_id,
+                        "paragraph_id": paragraph_id,
+                        "operation": "bind_formula_placeholder_occurrences",
+                        "witnesses": [w.model_dump(mode="json") for w in recovered_witnesses],
+                    })
+                transaction_updates["used_formula_package_ids"] = list(
+                    dict.fromkeys([
+                        *(
+                            str(value).strip()
+                            for value in transaction.used_formula_package_ids
+                            if str(value).strip()
+                        ),
+                        *sorted(paragraph_owner_ids.get(paragraph_id, ())),
+                    ])
+                )
+            replaced_transactions.append(transaction.model_copy(update=transaction_updates))
+        section_markdown = parsed.section_markdown
+        if not parsed_transactions:
+            section_markdown, failures = splice_formula_placeholders(
+                section_markdown,
+                formula_packages,
+                required_package_ids=package_ids,
+                allowed_package_ids=package_ids,
+                require_all=True,
+            )
+            formula_placeholder_failures.extend(failures)
+        if not formula_placeholder_failures:
+            parsed = parsed.model_copy(update={
+                "paragraphs": replaced_transactions,
+                "section_markdown": section_markdown,
+            })
+    if formula_placeholder_failures:
+        section_id = str(request.input_payload.get("section_id") or parsed.section_id or "")
+        preserved_text = str(parsed.section_markdown or "").strip()
+        if not preserved_text and parsed.paragraphs:
+            preserved_text = "\n\n".join(
+                str(item.paragraph_markdown or "").strip()
+                for item in parsed.paragraphs
+                if str(item.paragraph_markdown or "").strip()
+            )
+        parsed_outputs_by_section[request_state_key] = [
+            parsed.model_copy(update={"section_id": section_id})
+        ]
+        return LLMResponse(
+            text=preserved_text,
+            response_hash=response.response_hash,
+            blocked_reason=(
+                "publication_section_binding_failed:formula_placeholder:"
+                + ";".join(dict.fromkeys(formula_placeholder_failures))
+            ),
+            cached=response.cached,
+            response_mode=response.response_mode,
+            finish_reason=response.finish_reason,
+            token_usage=_failed_response_token_usage(response),
+            provider_finish_reason=response.provider_finish_reason,
+            thinking_chars=response.thinking_chars,
+            provider_diagnostics=response.provider_diagnostics,
+            metadata=parsed,
+        )
+    section_id = str(request.input_payload.get("section_id") or parsed.section_id or "")
+    transaction_required = bool(
+        isinstance(private_payload, dict)
+        and private_payload.get("paragraph_transaction_required")
+    )
+    if private_section is not None:
+        is_v2_page_request = any(
+            isinstance(item, Mapping)
+            and str(item.get("v2_page_id") or "").strip()
+            for item in (
+                private_payload.get("shared_context_metadata", ())
+                if isinstance(private_payload, Mapping)
+                else ()
+            )
+        )
+        parsed, paragraph_failures = _normalize_publication_paragraph_transaction(
+            parsed,
+            section=private_section,
+            require_transactions=transaction_required and not content_repair_request,
+            # V2 Binder calls are not hidden inside a Writer page
+            # invocation.  The V2 orchestration layer owns any declared
+            # Binder phase; keep the low-level compatibility Binder out
+            # of the actual V2 request stream.
+            binder_caller=(None if is_v2_page_request else binder_caller),
+            binder_base_config=base_config,
+            binder_trace_sink=binder_traces,
+            binder_recovery_sink=recovery_traces,
+            binder_call_id_prefix=binder_call_id_prefix,
+        )
+    else:
+        paragraph_failures = []
+    if paragraph_failures:
+        # Preserve the model-authored Candidate body while marking the
+        # transaction incomplete.  The owner repair path can now see the
+        # actual incumbent text and attempt a scoped semantic correction;
+        # no invalid paragraph is ever counted as rendered.
+        parsed_outputs_by_section[request_state_key] = [
+            parsed.model_copy(update={"section_id": section_id})
+        ]
+        return LLMResponse(
+            text=parsed.section_markdown,
+            response_hash=response.response_hash,
+            blocked_reason=(
+                "publication_paragraph_transaction_failed:"
+                + ";".join(paragraph_failures)
+            ),
+            cached=response.cached,
+            response_mode=response.response_mode,
+            finish_reason=response.finish_reason,
+            token_usage=_failed_response_token_usage(response),
+            provider_finish_reason=response.provider_finish_reason,
+            thinking_chars=response.thinking_chars,
+            provider_diagnostics=response.provider_diagnostics,
+            metadata=parsed,
+        )
+    if not transaction_required and not str(parsed.section_markdown or "").strip():
+        return LLMResponse(
+            text="",
+            response_hash=response.response_hash,
+            blocked_reason="publication_section_schema_failed:section_markdown_empty",
+            cached=response.cached,
+            response_mode=response.response_mode,
+            finish_reason=response.finish_reason,
+            token_usage=_failed_response_token_usage(response),
+            provider_finish_reason=response.provider_finish_reason,
+            thinking_chars=response.thinking_chars,
+            provider_diagnostics=response.provider_diagnostics,
+        )
+    grounding_contract = private_payload.get("grounding_contract") or {}
+    contract_failures = _publication_contract_failures(
+        parsed,
+        expected_section_id=section_id,
+        contract=private_payload.get("binding_contract") or {},
+        allow_subset=bool(
+            isinstance(grounding_contract, dict)
+            and grounding_contract.get("callback_required")
+        ),
+    )
+    hard_failures = _hard_publication_binding_failures(contract_failures)
+    if hard_failures:
+        return LLMResponse(
+            text="",
+            response_hash=response.response_hash,
+            blocked_reason=(
+                "publication_section_binding_failed:"
+                + ";".join(hard_failures)
+            ),
+            cached=response.cached,
+            response_mode=response.response_mode,
+            finish_reason=response.finish_reason,
+            token_usage=_failed_response_token_usage(response),
+            provider_finish_reason=response.provider_finish_reason,
+            thinking_chars=response.thinking_chars,
+            provider_diagnostics=response.provider_diagnostics,
+        )
+    partition_meta = request.input_payload.get("writer_context_partition")
+    if partition_meta:
+        parsed_outputs_by_section.setdefault(request_state_key, []).append(
+            parsed.model_copy(update={"section_id": section_id})
+        )
+    else:
+        parsed_outputs_by_section[request_state_key] = [
+            parsed.model_copy(update={"section_id": section_id})
+        ]
+    return LLMResponse(
+        text=parsed.section_markdown,
+        response_hash=response.response_hash,
+        blocked_reason=response.blocked_reason,
+        cached=response.cached,
+        response_mode=response.response_mode,
+        finish_reason=response.finish_reason,
+        token_usage=response.token_usage,
+        provider_finish_reason=response.provider_finish_reason,
+        thinking_chars=response.thinking_chars,
+        provider_diagnostics=response.provider_diagnostics,
+        metadata=parsed,
+    )
+
+
 def write_publication_method_by_sections(
     base_config: LLMConfig,
     sections: Iterable[WriterSectionInput],
@@ -5171,358 +5556,13 @@ def write_publication_method_by_sections(
 
     def structured_caller(config: LLMConfig, request: LLMRequest) -> LLMResponse:
         response = caller(config, request)
-        if response.blocked_reason or not (response.text or "").strip():
-            # Preserve the owning client/provider failure. Attempting JSON
-            # recovery on an empty blocked response hides the actionable
-            # cause behind a secondary schema-parse error.
-            return response
-        scoped_section_id = str(request.input_payload.get("section_id") or "")
-        request_state_key = _request_state_key(request.input_payload)
-        private_section = private_sections_by_key.get(request_state_key)
-        private_payload = (
-            private_section.prompt_payload if private_section is not None else {}
-        )
-        # A content repair is allowed to return only the failed paragraph(s).
-        # The outer Writer loop merges that representation with the incumbent
-        # section; the normal first-pass contract still requires every planned
-        # paragraph.
-        content_repair_request = isinstance(
-            request.input_payload.get("writer_section_repair"), Mapping
-        )
-        private_graph = (
-            private_section.argument_graph if private_section is not None else {}
-        )
-        normalized_text, bridged_fields = _decode_publication_binding_tokens(
-            response.text,
-            private_payload.get("binding_contract") or {},
-        )
-        normalized_text, research_bridge_fields = _decode_publication_research_requests(
-            normalized_text,
-            section_id=scoped_section_id,
-            argument_graph=private_graph or {},
-        )
-        normalized_text, callback_bridge_fields = _decode_publication_callback_moves(
-            normalized_text,
-            resolution=request.input_payload.get(
-                "writing_research_callback_resolution"
-            ) or {},
-        )
-        parsed, recovery, error = try_parse_structured_response_with_trace(
-            normalized_text,
-            PublicationMethodSectionOutputV1,
-        )
-        recovery_traces.append({
-            "section_id": str(request.input_payload.get("section_id") or ""),
-            "binding_bridge_fields": bridged_fields,
-            "research_request_bridge_fields": research_bridge_fields,
-            "callback_move_bridge_fields": callback_bridge_fields,
-            **recovery.model_dump(mode="json"),
-        })
-        if parsed is None:
-            return LLMResponse(
-                text="",
-                response_hash=response.response_hash,
-                blocked_reason=f"publication_section_schema_failed:{error}",
-                cached=response.cached,
-                response_mode=response.response_mode,
-                finish_reason=response.finish_reason,
-                token_usage=_failed_response_token_usage(response),
-                provider_finish_reason=response.provider_finish_reason,
-                thinking_chars=response.thinking_chars,
-                provider_diagnostics=response.provider_diagnostics,
-            )
-        parsed = _sanitize_publication_output_overlap(parsed)
-        expected_scoped_section_id = scoped_section_id or (
-            private_section.section_id if private_section is not None else ""
-        )
-        parsed = _recover_casefold_publication_section_id(
-            parsed,
-            expected_section_id=expected_scoped_section_id,
-            recovery_sink=recovery_traces,
-        )
-        formula_placeholder_failures: list[str] = []
-        if (
-            isinstance(private_payload, dict)
-            and private_payload.get("formula_placeholders_required")
-        ):
-            from code2paper.agentic.publication_transaction_contract import (
-                splice_formula_placeholders,
-            )
-
-            formula_packages = tuple(
-                item for item in (private_payload.get("formula_packages") or ())
-                if isinstance(item, Mapping)
-            )
-            package_ids = {
-                str(item.get("package_id") or "").strip()
-                for item in formula_packages
-                if str(item.get("package_id") or "").strip()
-            }
-            paragraph_owner_ids: dict[str, set[str]] = {}
-            for package in formula_packages:
-                package_id = str(package.get("package_id") or "").strip()
-                consumer_id = str(package.get("consumer_paragraph_id") or "").strip()
-                if not package_id:
-                    formula_placeholder_failures.append("formula_package_id_missing")
-                if not consumer_id:
-                    formula_placeholder_failures.append(
-                        f"formula_package_without_consumer:{package_id or 'unknown'}"
-                    )
-                paragraph_owner_ids.setdefault(consumer_id, set()).add(package_id)
-            parsed_transactions = list(parsed.paragraphs or ())
-            parsed_ids = {
-                str(item.paragraph_id or "").strip() for item in parsed_transactions
-            }
-            for consumer_id in paragraph_owner_ids:
-                if (
-                    consumer_id
-                    and consumer_id not in parsed_ids
-                    and not content_repair_request
-                ):
-                    formula_placeholder_failures.append(
-                        f"formula_package_consumer_missing:{consumer_id}"
-                    )
-            replaced_transactions: list[PublicationMethodParagraphOutputV1] = []
-            for transaction in parsed_transactions:
-                paragraph_id = str(transaction.paragraph_id or "").strip()
-                insertion_witnesses: list[dict[str, str]] = []
-                replaced, failures = splice_formula_placeholders(
-                    transaction.paragraph_markdown,
-                    formula_packages,
-                    required_package_ids=paragraph_owner_ids.get(paragraph_id, ()),
-                    allowed_package_ids=paragraph_owner_ids.get(paragraph_id, ()),
-                    witness_sink=insertion_witnesses,
-                )
-                if failures:
-                    recovered_transaction, recovered_package_ids = (
-                        _recover_exact_formula_block_representation(
-                            transaction,
-                            missing_failures=failures,
-                            formula_packages=formula_packages,
-                        )
-                    )
-                    if recovered_package_ids:
-                        transaction = recovered_transaction
-                        replaced = transaction.paragraph_markdown
-                        failures = tuple(
-                            failure for failure in failures
-                            if not (
-                                str(failure).startswith(
-                                    "formula_placeholder_missing:"
-                                )
-                                and str(failure).split(
-                                    "formula_placeholder_missing:", 1
-                                )[1].strip() in set(recovered_package_ids)
-                            )
-                        )
-                        recovery_traces.append({
-                            "section_id": scoped_section_id,
-                            "paragraph_id": paragraph_id,
-                            "operation": "recover_existing_canonical_formula_block",
-                            "package_ids": list(recovered_package_ids),
-                        })
-                formula_placeholder_failures.extend(
-                    f"{paragraph_id}:{failure}" for failure in failures
-                )
-                transaction_updates: dict[str, Any] = {
-                    "paragraph_markdown": replaced,
-                }
-                # The placeholder is the Writer-side consumption signal.
-                # Restore the corresponding package declaration here after
-                # successful verbatim insertion; the model is not required
-                # to copy an internal package id into its response.  This is
-                # representation repair only—the later Binder still needs
-                # an exact formula witness in the resulting body.
-                if not failures:
-                    existing_keys = {
-                        (witness.witness_kind, witness.target_id)
-                        for witness in transaction.witnesses
-                    }
-                    recovered_witnesses = [
-                        PublicationContentWitnessV1.model_validate(witness)
-                        for witness in insertion_witnesses
-                        if (witness["witness_kind"], witness["target_id"]) not in existing_keys
-                    ]
-                    if recovered_witnesses:
-                        transaction_updates["witnesses"] = [
-                            *transaction.witnesses, *recovered_witnesses,
-                        ]
-                        recovery_traces.append({
-                            "section_id": scoped_section_id,
-                            "paragraph_id": paragraph_id,
-                            "operation": "bind_formula_placeholder_occurrences",
-                            "witnesses": [w.model_dump(mode="json") for w in recovered_witnesses],
-                        })
-                    transaction_updates["used_formula_package_ids"] = list(
-                        dict.fromkeys([
-                            *(
-                                str(value).strip()
-                                for value in transaction.used_formula_package_ids
-                                if str(value).strip()
-                            ),
-                            *sorted(paragraph_owner_ids.get(paragraph_id, ())),
-                        ])
-                    )
-                replaced_transactions.append(transaction.model_copy(update=transaction_updates))
-            section_markdown = parsed.section_markdown
-            if not parsed_transactions:
-                section_markdown, failures = splice_formula_placeholders(
-                    section_markdown,
-                    formula_packages,
-                    required_package_ids=package_ids,
-                    allowed_package_ids=package_ids,
-                    require_all=True,
-                )
-                formula_placeholder_failures.extend(failures)
-            if not formula_placeholder_failures:
-                parsed = parsed.model_copy(update={
-                    "paragraphs": replaced_transactions,
-                    "section_markdown": section_markdown,
-                })
-        if formula_placeholder_failures:
-            section_id = str(request.input_payload.get("section_id") or parsed.section_id or "")
-            preserved_text = str(parsed.section_markdown or "").strip()
-            if not preserved_text and parsed.paragraphs:
-                preserved_text = "\n\n".join(
-                    str(item.paragraph_markdown or "").strip()
-                    for item in parsed.paragraphs
-                    if str(item.paragraph_markdown or "").strip()
-                )
-            parsed_outputs_by_section[request_state_key] = [
-                parsed.model_copy(update={"section_id": section_id})
-            ]
-            return LLMResponse(
-                text=preserved_text,
-                response_hash=response.response_hash,
-                blocked_reason=(
-                    "publication_section_binding_failed:formula_placeholder:"
-                    + ";".join(dict.fromkeys(formula_placeholder_failures))
-                ),
-                cached=response.cached,
-                response_mode=response.response_mode,
-                finish_reason=response.finish_reason,
-                token_usage=_failed_response_token_usage(response),
-                provider_finish_reason=response.provider_finish_reason,
-                thinking_chars=response.thinking_chars,
-                provider_diagnostics=response.provider_diagnostics,
-                metadata=parsed,
-            )
-        section_id = str(request.input_payload.get("section_id") or parsed.section_id or "")
-        transaction_required = bool(
-            isinstance(private_payload, dict)
-            and private_payload.get("paragraph_transaction_required")
-        )
-        if private_section is not None:
-            is_v2_page_request = any(
-                isinstance(item, Mapping)
-                and str(item.get("v2_page_id") or "").strip()
-                for item in (
-                    private_payload.get("shared_context_metadata", ())
-                    if isinstance(private_payload, Mapping)
-                    else ()
-                )
-            )
-            parsed, paragraph_failures = _normalize_publication_paragraph_transaction(
-                parsed,
-                section=private_section,
-                require_transactions=transaction_required and not content_repair_request,
-                # V2 Binder calls are not hidden inside a Writer page
-                # invocation.  The V2 orchestration layer owns any declared
-                # Binder phase; keep the low-level compatibility Binder out
-                # of the actual V2 request stream.
-                binder_caller=(None if is_v2_page_request else caller),
-                binder_base_config=base_config,
-                binder_trace_sink=binder_traces,
-                binder_recovery_sink=recovery_traces,
-                binder_call_id_prefix=call_id_prefix,
-            )
-        else:
-            paragraph_failures = []
-        if paragraph_failures:
-            # Preserve the model-authored Candidate body while marking the
-            # transaction incomplete.  The owner repair path can now see the
-            # actual incumbent text and attempt a scoped semantic correction;
-            # no invalid paragraph is ever counted as rendered.
-            parsed_outputs_by_section[request_state_key] = [
-                parsed.model_copy(update={"section_id": section_id})
-            ]
-            return LLMResponse(
-                text=parsed.section_markdown,
-                response_hash=response.response_hash,
-                blocked_reason=(
-                    "publication_paragraph_transaction_failed:"
-                    + ";".join(paragraph_failures)
-                ),
-                cached=response.cached,
-                response_mode=response.response_mode,
-                finish_reason=response.finish_reason,
-                token_usage=_failed_response_token_usage(response),
-                provider_finish_reason=response.provider_finish_reason,
-                thinking_chars=response.thinking_chars,
-                provider_diagnostics=response.provider_diagnostics,
-                metadata=parsed,
-            )
-        if not transaction_required and not str(parsed.section_markdown or "").strip():
-            return LLMResponse(
-                text="",
-                response_hash=response.response_hash,
-                blocked_reason="publication_section_schema_failed:section_markdown_empty",
-                cached=response.cached,
-                response_mode=response.response_mode,
-                finish_reason=response.finish_reason,
-                token_usage=_failed_response_token_usage(response),
-                provider_finish_reason=response.provider_finish_reason,
-                thinking_chars=response.thinking_chars,
-                provider_diagnostics=response.provider_diagnostics,
-            )
-        grounding_contract = private_payload.get("grounding_contract") or {}
-        contract_failures = _publication_contract_failures(
-            parsed,
-            expected_section_id=section_id,
-            contract=private_payload.get("binding_contract") or {},
-            allow_subset=bool(
-                isinstance(grounding_contract, dict)
-                and grounding_contract.get("callback_required")
-            ),
-        )
-        hard_failures = _hard_publication_binding_failures(contract_failures)
-        if hard_failures:
-            return LLMResponse(
-                text="",
-                response_hash=response.response_hash,
-                blocked_reason=(
-                    "publication_section_binding_failed:"
-                    + ";".join(hard_failures)
-                ),
-                cached=response.cached,
-                response_mode=response.response_mode,
-                finish_reason=response.finish_reason,
-                token_usage=_failed_response_token_usage(response),
-                provider_finish_reason=response.provider_finish_reason,
-                thinking_chars=response.thinking_chars,
-                provider_diagnostics=response.provider_diagnostics,
-            )
-        partition_meta = request.input_payload.get("writer_context_partition")
-        if partition_meta:
-            parsed_outputs_by_section.setdefault(request_state_key, []).append(
-                parsed.model_copy(update={"section_id": section_id})
-            )
-        else:
-            parsed_outputs_by_section[request_state_key] = [
-                parsed.model_copy(update={"section_id": section_id})
-            ]
-        return LLMResponse(
-            text=parsed.section_markdown,
-            response_hash=response.response_hash,
-            blocked_reason=response.blocked_reason,
-            cached=response.cached,
-            response_mode=response.response_mode,
-            finish_reason=response.finish_reason,
-            token_usage=response.token_usage,
-            provider_finish_reason=response.provider_finish_reason,
-            thinking_chars=response.thinking_chars,
-            provider_diagnostics=response.provider_diagnostics,
-            metadata=parsed,
+        key = _request_state_key(request.input_payload)
+        return parse_publication_writer_response(
+            response, request=request, private_section=private_sections_by_key.get(key),
+            binder_caller=caller, base_config=base_config,
+            binder_call_id_prefix=call_id_prefix,
+            recovery_traces=recovery_traces, binder_traces=binder_traces,
+            parsed_outputs_by_section=parsed_outputs_by_section, request_state_key=key,
         )
 
     normalized_sections = [

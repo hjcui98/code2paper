@@ -37,6 +37,7 @@ from code2paper.agentic.unified_context_models import (
     ActualRequestReceiptV2,
     ConsumerInvocationPlanV1,
     InvocationAttemptStartedV1,
+    DshInvocationEventV1,
     sha256_digest,
 )
 
@@ -64,8 +65,105 @@ def _atomic_write_text(path: Path, text: str) -> None:
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
     temp_path = path.parent / f".{path.name}.tmp-{os.getpid()}"
-    temp_path.write_text(text, encoding="utf-8")
+    with temp_path.open("w", encoding="utf-8") as stream:
+        stream.write(text)
+        stream.flush()
+        os.fsync(stream.fileno())
     os.replace(temp_path, path)
+    directory_fd = os.open(path.parent, os.O_RDONLY | os.O_DIRECTORY)
+    try:
+        os.fsync(directory_fd)
+    finally:
+        os.close(directory_fd)
+
+
+def _check_dsh_event_append(events, event):
+    if (not events and event.kind != "reserve") or (events and event.kind == "reserve"):
+        raise ValueError("dsh_reserve_sequence_invalid")
+    if events:
+        for key in ("execution_id", "task_id", "task_epoch", "claim_digest", "request_digest",
+                    "contract_digest", "plan_digest", "consumer_role", "attempt"):
+            if getattr(events[0], key) != getattr(event, key):
+                raise ValueError("dsh_event_binding_conflict")
+    kinds = {item.kind for item in events}
+    if event.kind in kinds and event.kind not in {"cancel", "send-outcome-unknown"}:
+        raise ValueError("dsh_event_kind_duplicate")
+    if "proven-not-sent" in kinds or "settlement" in kinds:
+        raise ValueError("dsh_request_already_final")
+    if event.kind in {"dispatch-recorded", "adapter-attempt"} and kinds & {"cancel", "send-outcome-unknown"}:
+        raise ValueError("dsh_new_dispatch_after_stop_or_unknown")
+    if event.kind == "adapter-attempt" and "dispatch-recorded" not in kinds:
+        raise ValueError("dsh_adapter_before_dispatch")
+    if event.kind == "proven-not-sent" and kinds & {"adapter-attempt", "dispatch-confirmed", "terminal", "usage"}:
+        raise ValueError("dsh_not_sent_conflicts_with_observation")
+    if event.kind in {"dispatch-confirmed", "usage", "terminal"} and "adapter-attempt" not in kinds:
+        raise ValueError("dsh_observation_before_adapter")
+    if event.kind == "settlement" and not {"terminal", "usage"} <= kinds:
+        raise ValueError("dsh_settlement_without_terminal_usage")
+
+
+def read_dsh_invocation_events(ledger_root: Path, invocation_id: str) -> tuple[DshInvocationEventV1, ...]:
+    """Validate immutable event order, binding and idempotency identities."""
+    directory = invocation_dir(ledger_root, invocation_id)
+    events = []
+    previous = ""
+    identity = None
+    ids = set()
+    for sequence, path in enumerate(sorted(directory.glob("attempt-0001.dsh-event-*.json")), 1):
+        if path.name != f"attempt-0001.dsh-event-{sequence:06d}.json":
+            raise ValueError("dsh_event_sequence_gap")
+        payload = json.loads(path.read_text(encoding="utf-8"))
+        if set(payload) != {"schema_version", "invocation_id", "sequence", "previous_digest", "event"}:
+            raise ValueError("dsh_event_record_schema_invalid")
+        event = DshInvocationEventV1.model_validate_json(json.dumps(payload["event"]))
+        if (payload["schema_version"] != "dsh-event-record/1" or payload["invocation_id"] != invocation_id
+                or type(payload["sequence"]) is not int or payload["sequence"] != sequence
+                or payload["previous_digest"] != previous or event.invocation_id != invocation_id or event.attempt != 1):
+            raise ValueError("dsh_event_record_binding_invalid")
+        binding = tuple(getattr(event, key) for key in ("execution_id", "task_id", "task_epoch", "claim_digest",
+            "request_digest", "contract_digest", "plan_digest", "consumer_role"))
+        if identity is not None and binding != identity:
+            raise ValueError("dsh_event_binding_conflict")
+        identity = binding
+        if event.event_id in ids:
+            raise ValueError("dsh_event_id_duplicate")
+        ids.add(event.event_id)
+        previous = event.content_digest
+        _check_dsh_event_append(events, event)
+        if event.evidence_ref is not None:
+            from code2paper.integrations.dsh.artifacts import ArtifactStore, TaskScope
+            from code2paper.integrations.dsh.writer_contract import ArtifactRefV1
+            from code2paper.integrations.dsh.protocol import parse_model
+            from code2paper.agentic.digest import canonical_json_bytes
+            ref = parse_model(canonical_json_bytes(event.evidence_ref), ArtifactRefV1)
+            store = ArtifactStore(Path(ledger_root).parent.parent.parent,
+                TaskScope(event.execution_id,event.task_id,event.task_epoch))
+            store.read_json(ref)
+        events.append(event)
+    return tuple(events)
+
+
+def publish_dsh_invocation_event(ledger_root: Path, event: DshInvocationEventV1) -> Path:
+    """Append under the original run lease; no second budget store is created."""
+    from code2paper.agentic.authoring_execution_identity import scoped_run_lease
+    root = Path(ledger_root)
+    run_root = root.parent.parent.parent
+    if root != run_root / "artifacts" / "06_authoring" / "invocations":
+        raise ValueError("dsh_ledger_root_invalid")
+    with scoped_run_lease(run_root, execution_id=event.execution_id, blocking=True):
+        events = read_dsh_invocation_events(root, event.invocation_id)
+        for sequence, prior in enumerate(events, 1):
+            if prior.event_id == event.event_id:
+                if prior != event:
+                    raise ValueError("dsh_event_id_conflict")
+                return invocation_dir(root, event.invocation_id) / f"attempt-0001.dsh-event-{sequence:06d}.json"
+        _check_dsh_event_append(events, event)
+        sequence = len(events) + 1
+        path = invocation_dir(root, event.invocation_id) / f"attempt-0001.dsh-event-{sequence:06d}.json"
+        _atomic_write_text(path, _dump({"schema_version": "dsh-event-record/1", "invocation_id": event.invocation_id,
+            "sequence": sequence, "previous_digest": events[-1].content_digest if events else "",
+            "event": event.model_dump(mode="json")}))
+        return path
 
 
 def _atomic_write_bytes(path: Path, payload: bytes) -> None:
@@ -875,6 +973,51 @@ def read_run_budget_state(ledger_root: Path) -> dict[str, Any]:
                         f"{type(exc).__name__}"
                     )
 
+    # DSH requests live in this same ledger. The existing recovery reducer
+    # owns their send/unknown classification; task_store has no debit fields.
+    dsh_usage_missing: list[str] = []
+    dsh_unknown_dispositions: list[str] = []
+    if root.is_dir():
+        for directory in sorted(path for path in root.iterdir() if path.is_dir()):
+            event_files = sorted(directory.glob("attempt-0001.dsh-event-*.json"))
+            if not event_files:
+                continue
+            try:
+                invocation_id = json.loads(event_files[0].read_text())["invocation_id"]
+                from code2paper.agentic.writer_attempt_ledger import reduce_invocation_recovery
+                recovery = reduce_invocation_recovery(root.parent.parent.parent, invocation_id)
+                if recovery.state == "ledger_corrupt":
+                    raise ValueError("dsh_recovery_corrupt")
+                facts = read_dsh_invocation_events(root, invocation_id)
+                if invocation_dir(root, invocation_id) != directory:
+                    raise ValueError("dsh_event_directory_mismatch")
+                reserve = facts[0]
+                role = reserve.consumer_role
+                kinds = {fact.kind for fact in facts}
+                covered_primary.add((reserve.plan_digest, invocation_id))
+                if "proven-not-sent" in kinds:
+                    continue
+                usage = next((fact for fact in facts if fact.kind == "usage"), None)
+                from code2paper.integrations.dsh.unknown_abort_recovery import read_disposition
+                disposition = read_disposition(directory, facts)
+                if disposition is not None:
+                    page_pending[role] = page_pending.get(role, 0) + disposition['input_liability']
+                    page_pending_calls[role] = page_pending_calls.get(role, 0) + 1
+                    dsh_usage_missing.append(f"{invocation_id}:1")
+                    dsh_unknown_dispositions.append(disposition['content_digest'])
+                elif "settlement" in kinds:
+                    page_spent[role] = page_spent.get(role, 0) + usage.usage_input_tokens
+                    page_completed_calls[role] = page_completed_calls.get(role, 0) + 1
+                else:
+                    retained = max(reserve.reserved_input_tokens, usage.usage_input_tokens if usage else 0)
+                    page_pending[role] = page_pending.get(role, 0) + retained
+                    page_pending_calls[role] = page_pending_calls.get(role, 0) + 1
+                if "adapter-attempt" in kinds and usage is None:
+                    dsh_usage_missing.append(f"{invocation_id}:1")
+            except (OSError, ValueError, KeyError, TypeError, AttributeError) as exc:
+                failures.append(f"unified_dsh_events_corrupt:{directory.name}:{type(exc).__name__}")
+    provider_usage_missing_receipts.extend(dsh_usage_missing)
+
     auxiliary_spent: dict[str, int] = {}
     auxiliary_pending: dict[str, int] = {}
     auxiliary_completed_calls: dict[str, int] = {}
@@ -984,6 +1127,8 @@ def read_run_budget_state(ledger_root: Path) -> dict[str, Any]:
     committed_input_tokens = sum(committed_by_role.values())
     return {
         "status": "fail" if failures else "pass",
+        **({'dsh_unknown_disposition_receipts': dsh_unknown_dispositions}
+           if dsh_unknown_dispositions else {}),
         "failure_codes": list(dict.fromkeys(failures)),
         "spent_input_tokens_by_role": spent_by_role,
         "pending_input_tokens_by_role": pending_by_role,
@@ -1058,6 +1203,8 @@ def check_run_budget_before_send(
 
     state = read_run_budget_state(Path(ledger_root))
     failures = list(state.get("failure_codes") or ())
+    if state.get('dsh_unknown_disposition_receipts'):
+        failures.append('unified_run_quarantined:unknown_provider_usage')
     role_name = str(role or "").strip()
     if not role_name:
         failures.append(f"{UNIFIED_INVOCATION_BUDGET_MISSING}:role_missing")

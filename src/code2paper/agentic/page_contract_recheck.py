@@ -262,6 +262,7 @@ def compare_actual_request_to_page_contract(
     section_id: str = "",
     max_output_tokens: int = 0,
     is_repair: bool = False,
+    actual_technical_bytes_digest: str = "",
 ) -> tuple[str, ...]:
     """比较**实际**请求与冻结契约；返回失败码（空元组 = 一致）。
 
@@ -270,6 +271,9 @@ def compare_actual_request_to_page_contract(
     * 段落集合与顺序必须逐一相等：追加/删除/重排都拒绝。
     * 明细/公式/修辞 scope 必须相等（repair 允许附带 repair packet，但不允许改 scope）。
     * 输出上限不得超过冻结值。
+    * 技术字节摘要按**调用方从实际材料字节重算**的值比较
+      （``actual_technical_bytes_digest``）；payload 里声明的摘要不能替代重算，
+      重算缺失而契约有冻结值时 fail-closed（K04：旧实现读声明值且空值直接跳过）。
     """
 
     if snapshot is None:
@@ -316,14 +320,27 @@ def compare_actual_request_to_page_contract(
         actual_contract = binding_contract_digest(payload)
         if actual_contract != snapshot.binding_contract_digest:
             failures.append(f"{ACTUAL_PAGE_CONTRACT_MISMATCH}:binding_contract")
-    if snapshot.technical_bytes_digest:
-        actual_technical = str(
-            (payload or {}).get("technical_bytes_digest")
-            or (payload or {}).get("page_bytes_digest")
-            or ""
-        )
-        if actual_technical and actual_technical != snapshot.technical_bytes_digest:
+    # K04：技术字节必须由调用方从**实际材料字节**重算后传入。这里不再读取 payload
+    # 里的声明值（声明可以随材料一起被改），也不再把"实际值缺失"当作"无法比较"而放行。
+    frozen_technical = str(snapshot.technical_bytes_digest or "")
+    measured_technical = str(actual_technical_bytes_digest or "")
+    if frozen_technical:
+        if not measured_technical:
+            # 缺材料/缺重算值：无法证明实际发送的技术字节与冻结契约一致 → 发送前拒绝。
+            failures.append(
+                f"{ACTUAL_PAGE_CONTRACT_MISMATCH}:technical_bytes_unknown"
+            )
+        elif measured_technical != frozen_technical:
             failures.append(f"{ACTUAL_PAGE_CONTRACT_MISMATCH}:technical_bytes")
+    # 冻结契约本身没有摘要时，这里没有可比对象，因此不产出技术字节失败码。这**不是**
+    # unified lane 的兼容路径：真实 Writer 调用点会用冻结页
+    # （``ConsumerTechnicalPageV2``，其摘要由模型从页 bytes 重算）把冻结值补上，而页与
+    # invocation 两个 owner 都拒绝空材料身份，所以"冻结侧确实无摘要"的 unified 形态是
+    # 结构性不可达的（G3 构造拒绝回归）。会走到这一分支的只可能是具名 legacy reader，
+    # 它必须自带逐字/envelope 级别的材料比较；本函数不替它放行未验证材料。
+    # 合法旧**请求**（payload 不声明摘要）由调用方从实际 bytes 重算实测值，
+    # 与上面注入的冻结值比较后照常放行——K04 关闭的是**实际侧**的空值跳过，
+    # 不是给旧契约新增一个追溯性的必填字段。
     frozen_cap = int(snapshot.max_output_tokens or 0)
     if frozen_cap:
         actual_cap = int(max_output_tokens or 0)

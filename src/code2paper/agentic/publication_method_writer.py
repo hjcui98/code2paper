@@ -2045,6 +2045,7 @@ def _settle_recorded_writer_attempt(
     ledger_root: Path,
     invocation_id: str,
     validator_bundle_digest: str = "",
+    private_section: WriterSectionInput | None = None,
 ) -> tuple[bool, tuple[str, ...], str, Any] | None:
     """用账本里**已落盘**的请求/响应做本地结算（审计 §B.5/§G.3）。
 
@@ -2094,37 +2095,32 @@ def _settle_recorded_writer_attempt(
         payload = request_record.get("input_payload")
         if not isinstance(payload, Mapping):
             continue
-        metadata, _error = try_parse_structured_response(
-            response_text, PublicationMethodSectionOutputV1
-        )
-        if metadata is None:
-            continue
-        section = WriterSectionInput(
+        from code2paper.llm.section_writer import parse_publication_writer_response, assess_publication_content_acceptance
+        section = private_section or WriterSectionInput(
             section_id=str(payload.get("section_id") or ""),
             heading=str(payload.get("heading") or ""),
             publication_mode=True,
+            argument_graph=dict(payload.get("argument_graph") or payload.get("narrative_plan") or {}),
             prompt_payload=dict(payload),
         )
-        response = LLMResponse(
-            text=response_text,
-            response_hash=str(response_record.get("response_digest") or ""),
-            metadata=metadata,
+        from code2paper.llm.client import LLMRequest
+        request = LLMRequest(prompt_template_id="local-settlement", prompt="", input_payload=dict(payload))
+        response = parse_publication_writer_response(
+            LLMResponse(text=response_text, response_hash=str(response_record.get("response_digest") or "")),
+            request=request, private_section=section,
         )
-        assessment = assess_publication_writer_response(section, response)
-        failures = [
-            str(item) for item in (assessment.get("missing") or ())
-        ]
-        for key in ("invalid_count", "invalid_witness_count", "authority_violation_count"):
-            if int(assessment.get(key, 0) or 0):
-                failures.append(key)
-        for paragraph in metadata.paragraphs or ():
-            body = "\n".join(
-                line for line in paragraph.paragraph_markdown.splitlines()
-                if not re.match(r"^\s*#", line)
-            )
-            if not any(char.isalnum() for char in body):
-                failures.append("paragraph_body_not_substantive")
-        accepted = not failures
+        metadata = response.metadata
+        if metadata is None:
+            # Invalid persisted output is a rejected local result, never a new send.
+            failures = [str(response.blocked_reason or "transaction_metadata_missing")]
+            accepted = False
+        else:
+            accepted, assessment = assess_publication_content_acceptance(section, response)
+            failures = list(assessment.get("failures") or ())
+            if response.blocked_reason:
+                failures.insert(0, str(response.blocked_reason))
+                accepted = False
+        response_text = response.text
         publish_validation_replay(
             # publish_validation_replay 接收 run 根（它自己解析 invocation 目录）。
             Path(ledger_root).parent.parent.parent,
@@ -3702,6 +3698,16 @@ def _run_publication_method_writer_impl(
                     request_token_estimator=_estimate_writer_page_request,
                     max_request_input_tokens=writer_request_cap,
                 )
+                if unified_writer_workset_manifest is None:
+                    # G1：严格 unified 下 manifest 缺失必须是**具名**发送前拒绝，而不是让后续
+                    # stage 以 AttributeError 收场（崩溃后的兜底阻断不算合同拒绝）。
+                    from code2paper.agentic.unified_context_models import (
+                        UNIFIED_UNPLANNED_ACTUAL_REQUEST as _unplanned_code,
+                    )
+
+                    raise ValueError(
+                        f"{_unplanned_code}:missing_writer_workset_manifest"
+                    )
 
                 # Re-materialize every final page against the complete manifest.
                 # This closes the digest loop: page splitting can change the
@@ -4736,6 +4742,55 @@ def _run_publication_method_writer_impl(
                 )
                 return blocked_result, _write_result_only(out_root, blocked_result)
 
+            # K04 收口（GAP-3）：**发送结果未知**的必需页也必须在相位边界具名阻断。
+            # 它保留着未结算预留（不得当零成本），若继续往下跑，Realizer 会先因为"预算被
+            # 压成负数"报出无关错误，把 writer 的真实根因掩盖掉。这里用同一个归约结论
+            # （`reduce_invocation_recovery`）在进入任何后续角色之前返回 blocked，
+            # 并显式声明下游未运行。账本损坏同样在此 fail-closed。
+            # 同 validator 的验收重放不能把矛盾发送或损坏证据变成 accepted_reusable；
+            # 归约仍停在这两个状态，这里才会阻断缓存复用和下游。
+            _writer_invocation_index = {
+                str(getattr(item, "invocation_id", "")): item
+                for item in unified_writer_plan.invocations
+                if str(getattr(item, "invocation_id", ""))
+            }
+            from code2paper.agentic.writer_attempt_ledger import (
+                reduce_invocation_recovery,
+            )
+
+            for _invocation_id in _required_invocation_ids:
+                _invocation = _writer_invocation_index.get(_invocation_id)
+                _recovery = reduce_invocation_recovery(
+                    out_root,
+                    _invocation_id,
+                    content_attempt_limit=max(
+                        1, int(getattr(_invocation, "max_attempts", 0) or 0)
+                    ),
+                )
+                if _recovery.state not in {
+                    "send_outcome_unknown",
+                    "ledger_corrupt",
+                }:
+                    continue
+                blocked_result = PublicationWriterRunResultV1(
+                    status="blocked",
+                    plan_digest=plan.content_digest,
+                    claim_digest=claims.content_digest,
+                    blocked_reason=(
+                        "writer_phase_boundary_blocked:"
+                        "blocked_by_stage=writer:"
+                        f"primary_cause={_recovery.state}:"
+                        f"cause={_recovery.primary_cause}:"
+                        f"invocation={_invocation_id}:"
+                        f"unknown_reservations="
+                        f"{list(_recovery.unknown_reservation_attempts)}:"
+                        f"blocks={list(_recovery.blocks)}:"
+                        "downstream_not_run="
+                        "realizer,binder,section_composition,publication_audit"
+                    ),
+                )
+                return blocked_result, _write_result_only(out_root, blocked_result)
+
         # 审计 §C.6：每个 invocation 的冻结契约只解析一次（同一进程内复用）。
         _page_contract_cache: dict[str, Any] = {}
 
@@ -4752,9 +4807,43 @@ def _run_publication_method_writer_impl(
             )
             base_caller = llm_caller or _default_llm_caller
             if not v2_rows or unified_writer_workset_manifest is None:
-                # This branch is retained for shadow/compatibility callers;
-                # the production unified path always carries exactly one V2
-                # page metadata row after _publication_section_partitions.
+                # G1：**严格 unified 意图下不允许按"缺字段"自动降级**。缺 V2 页元数据或
+                # 缺 workset manifest 时，旧实现直接走 base_caller 把请求发出去（连同
+                # 页合同/技术字节复核一起绕过）。legacy/shadow 只能由可信入口
+                # （authoring_context_mode）显式选择，不能由请求内容决定。
+                if str(effective_mode) == "unified":
+                    from code2paper.agentic.unified_context_models import (
+                        UNIFIED_UNPLANNED_ACTUAL_REQUEST as _unplanned_code,
+                    )
+
+                    missing = (
+                        "missing_v2_page_metadata"
+                        if not v2_rows
+                        else "missing_writer_workset_manifest"
+                    )
+                    section = (
+                        str(payload.get("section_id") or "")
+                        if isinstance(payload, Mapping)
+                        else ""
+                    )
+                    reason = f"{_unplanned_code}:{missing}:{section}"
+                    unified_v2_writer_page_request_records.append({
+                        "invocation_id": "",
+                        "section_id": section,
+                        "page_id": "",
+                        "actual_technical_bytes_digest": "",
+                        "expected_technical_bytes_digest": "",
+                        "expected_request_envelope_digest": "",
+                        "actual_request_envelope_digest": "",
+                        "accepted": False,
+                        "request_failures": [reason],
+                    })
+                    from code2paper.export.run_manifest import hash_text
+                    return LLMResponse(
+                        text="",
+                        response_hash=hash_text(""),
+                        blocked_reason=reason,
+                    )
                 return base_caller(config, request)
 
             from code2paper.agentic.mechanism_context_models import (
@@ -4955,6 +5044,10 @@ def _run_publication_method_writer_impl(
                     section_id=actual_section_id,
                     max_output_tokens=actual_max_output,
                     is_repair=is_writer_content_repair,
+                    # K04：技术字节摘要由本调用点从**实际材料字节**重算后传入
+                    # （``actual_page_bytes`` 来自 payload 的 shared_contexts）。
+                    # 声明值不能替代重算，缺重算值时公共复核 fail-closed。
+                    actual_technical_bytes_digest=actual_page_digest,
                 )
             )
             request_failures.extend(
@@ -5129,6 +5222,11 @@ def _run_publication_method_writer_impl(
                     ledger_root=Path(ledger_root),
                     invocation_id=invocation_id,
                     validator_bundle_digest=_validator_bundle_digest,
+                    private_section=next((
+                        item for item in writer_inputs
+                        if item.section_id == actual_section_id
+                        and str(item.prompt_payload.get("unified_v2_page_id") or "") == str(page.page_id)
+                    ), None),
                 )
                 if settled is not None and settled[0]:
                     accepted_text, _failures, accepted_metadata = (

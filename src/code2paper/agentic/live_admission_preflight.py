@@ -88,6 +88,9 @@ class OfflineSuiteReceiptV1(BaseModel):
     test_plan_ids: tuple[str, ...] = ()
     test_plan_digest: str = ""
     output_digest: str = ""
+    machine_plan: dict[str, Any] | None = None
+    machine_runs: tuple[dict[str, Any], ...] = ()
+    coverage_failure_code: str = ""
 
     def matches(
         self,
@@ -98,6 +101,28 @@ class OfflineSuiteReceiptV1(BaseModel):
         required_test_plan: tuple[str, ...] = (),
     ) -> bool:
         """回执必须绑定同一引擎/规则/配置/测试集合身份；否则"之前跑过"不能当作现状。"""
+
+        if self.schema_version == "2.0":
+            from code2paper.agentic.digest import digest_json
+            from code2paper.integrations.dsh.offline_admission import verify_suite_reports
+            try:
+                if self.machine_plan is None or self.coverage_failure_code:
+                    return False
+                coverage=verify_suite_reports(self.machine_plan,list(self.machine_runs))
+                if (self.machine_plan['engine_digest'] != snapshot.source_digest
+                        or self.machine_plan['validator_digest'] != self.validator_bundle_digest
+                        or self.test_plan_digest != self.machine_plan['plan_digest']
+                        or self.effective_config_digest != digest_json(self.machine_plan['effective_config'])
+                        or self.output_digest != digest_json([run['output_digest'] for run in self.machine_runs])
+                        or self.test_plan_ids != tuple(coverage['test_plan_ids'])
+                        or self.passed_count != coverage['passed_count'] or not self.passed
+                        or self.exit_code != 0 or self.failed_count or self.error_count):
+                    return False
+            except Exception:
+                # Malformed/missing reports and changed sources never give admission.
+                return False
+        elif self.schema_version != "1.0" or self.machine_plan is not None or self.machine_runs:
+            return False
 
         if (
             self.engine_source_digest != snapshot.source_digest
@@ -154,7 +179,7 @@ def build_offline_suite_receipt(
     engine_snapshot: EngineSourceSnapshot | None = None,
     validator_bundle_digest: str | None = None,
     effective_config_digest: str = "",
-    test_plan_ids: Sequence[str] = REQUIRED_OFFLINE_TEST_PLAN,
+    test_plan_ids: Sequence[str] = (),
 ) -> OfflineSuiteReceiptV1:
     """从一次离线全链运行的实际结果构造回执（结果来自真实输出，不接受声明值）。"""
 
@@ -188,6 +213,33 @@ def build_offline_suite_receipt(
         test_plan_digest=_digest_text("\n".join(sorted(plan_ids))),
         output_digest=_digest_text(output),
     )
+
+
+def build_machine_offline_suite_receipt(*, plan: dict[str, Any], runs: list[dict[str, Any]],
+        engine_snapshot: EngineSourceSnapshot) -> OfflineSuiteReceiptV1:
+    """Build V2 from bound real reports; partial or drifting runs stay failed."""
+    from code2paper.agentic.digest import digest_json
+    from code2paper.integrations.dsh.offline_admission import verify_suite_reports
+    from code2paper.integrations.dsh.protocol import ProtocolError
+    failure=""
+    coverage={'passed_count':0,'test_plan_ids':[]}
+    try:
+        if not engine_snapshot.is_usable or engine_snapshot.unstable or engine_snapshot.source_digest != plan['engine_digest']:
+            raise ProtocolError('offline_engine_changed')
+        coverage=verify_suite_reports(plan,runs)
+    except (ProtocolError,OSError,ValueError,KeyError,TypeError,IndexError) as error:
+        failure=error.code if isinstance(error,ProtocolError) else 'offline_report_unavailable_or_invalid'
+    receipt=OfflineSuiteReceiptV1(schema_version='2.0',passed=not failure,
+        exit_code=0 if not failure else next((run['exit_code'] for run in runs
+            if type(run.get('exit_code')) is int and run['exit_code'] != 0),1),
+        passed_count=coverage['passed_count'],engine_commit_sha=engine_snapshot.commit_sha,
+        engine_source_digest=engine_snapshot.source_digest,worktree_dirty_entry_count=len(engine_snapshot.entries),
+        validator_bundle_digest=plan['validator_digest'],effective_config_digest=digest_json(plan['effective_config']),
+        test_plan_ids=tuple(coverage['test_plan_ids']),test_plan_digest=plan['plan_digest'],
+        output_digest=digest_json([run.get('output_digest','') for run in runs]),
+        command='versioned offline plan: '+plan['version'],machine_plan=plan,machine_runs=tuple(runs),
+        coverage_failure_code=failure)
+    return receipt
 
 
 def write_offline_suite_receipt(

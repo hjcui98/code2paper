@@ -1,0 +1,64 @@
+{
+  "schema_version": "c2p-dsh-development-compatibility/1",
+  "purpose": "Window-2 owner candidate for DSH 0.2.0-rc.1. Not a Gate-H acceptance and not a replacement for compatibility.json.",
+  "status": "submitted_for_independent_qa",
+  "candidate": "0.2.0-rc.1",
+  "dev_root": ".dsh-dev/candidates/0.2.0-rc.1",
+  "head": "d48b4e4b22c94c82b45d2179ba452d72b164102d",
+  "branch": "codex/agentic-p4-benchmark-cutover",
+  "dsh": {
+    "version": "0.2.0-rc.1",
+    "source_kind": "npm-registry-install",
+    "runtime_tree_sha256": "43490765da460c4300cd7ad8ec75dbc5d5e6dbda93b74e37466c6709c1ab359c",
+    "package_lock_sha256": "67f3a677bb15ec9ef11aab15c24482cf053910ab5f67834223f6e96e70b3e3ba",
+    "peer_link": ".dsh-dev/candidates/0.2.0-rc.1/runtime/node_modules/@deepseek-ai"
+  },
+  "protected_environments": {
+    "default_runtime": {
+      "version": "0.1.5-rc.3",
+      "runtime_tree_sha256_prefix": "7e8f199b67027944",
+      "path": ".dsh-dev/runtime"
+    },
+    "everyday_install": "not modified by this delivery"
+  },
+  "build": {
+    "outputs_digest": "2a27b7b99f908b932d1bea2c79438f8a0e36a19b4feabbe6259f1e18363446bd",
+    "build_receipt_sha256": "0c06c8f128e69045507677335d331138f76ddf8aa3246c6b15fd4e8211be144a",
+    "staging_tree_sha256": "6d1b600374071d22d5dfac072f8eedbd944a5ad00191a6deaeb6e973bea79405",
+    "staged_file_count": 18
+  },
+  "pyworker": {
+    "path": ".dsh-dev/candidates/0.2.0-rc.1/pyworker",
+    "lock": "integrations/dsh/dev/pyworker-requirements.lock",
+    "packages": 6,
+    "domain_import": "code2paper"
+  },
+  "check_compat": {
+    "command": "npm --prefix integrations/dsh run check:compat",
+    "candidate_args": ["--candidate", "0.2.0-rc.1"],
+    "tests": 84,
+    "pass": 71,
+    "fail": 0,
+    "skipped": 13,
+    "exit": 0,
+    "log": ".dsh-dev/candidates/0.2.0-rc.1/run/w2-r2-20260930-224211/check-compat-fc.log",
+    "note": "FAIL-CLOSED candidate after H-R4: no claiming closure exists, every dispatch on a protected session is refused by name; the 13 skips are the wait/cancel/cleanup matrix blocked on the loop-origin interface ruling (h04_loop_origin_escalation_20261001.md). Not a Gate-H acceptance."
+  },
+  "b02_python_matrix": {
+    "command": "python -m pytest -q integrations/dsh/dev/tests",
+    "passed": 23,
+    "exit": 0,
+    "log": ".dsh-dev/candidates/0.2.0-rc.1/run/w2-r2-20260930-224211/b02-dev-fc.log"
+  },
+  "sources_sha256": {
+    "integrations/dsh/src/index.ts": "d322f53c707bed1bfa7ad4b86fb59fec153dc8f8f1267abee69d31f2271c2f2a",
+    "integrations/dsh/src/task-tools.ts": "0ed976fe58e527e1101cc94f4124f18460e65b0fcf4030eed78cd839665a37b9",
+    "integrations/dsh/src/session-binding.ts": "404f7984d01b51073a6f8f5941f56c9f594161be563a215f09b4ff2403348952",
+    "integrations/dsh/src/role-dispatch.ts": "06c7376ef589530def2e32205387fe7ceb8816efd28c6a85007dd05eba6b2e07",
+    "integrations/dsh/src/request-contract.ts": "5ad7a07ee1b895af01ab6098b387e2c163b1ad7348dab3420dce7cf05557ccc3",
+    "integrations/dsh/src/request-accounting.ts": "9c6718060149239fc4d48fe81724bd8511efbd18e6f4c5b271c99d0e3dab963a",
+    "integrations/dsh/src/terminal-result.ts": "5ef6174659140fc1b1098e01456223a296296796dfdfef52daa12133ea918ecb",
+    "integrations/dsh/dev/toolchain/toolchain.mjs": "870bc8ca0bb906e3c20fe26174b0bb34f29742e4e46c8e4a4be2f5502a645979",
+    "scripts/dsh_dev.py": "f5233069e88e0b2cb410ace8c29cc87d0fd44b5458fa306751ba7a76f1ca2795"
+  }
+}

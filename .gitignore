@@ -21,12 +21,18 @@ workspace/
 checkpoints/
 checkpoint/
 .cache/
+.dsh-dev/
 .agent-team/
 .omo/
 
 # Local OpenCode dependencies are reproducible from package-lock.json and
 # should not be committed with the repository.
 .opencode/node_modules/
+
+# Isolated DSH development dependencies and reproducible build output.
+/integrations/dsh/node_modules/
+/integrations/dsh/lib/
+/integrations/dsh/dev/toolchain/build/
 
 .env
 .env.*

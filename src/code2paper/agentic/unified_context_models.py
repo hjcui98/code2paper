@@ -1442,6 +1442,60 @@ class UnifiedLiveAdmissionV1(BaseModel):
 # ---------------------------------------------------------------------------
 
 
+class DshInvocationEventV1(BaseModel):
+    """Host-private transport facts in the existing invocation ledger.
+
+    Every event carries the same frozen request/claim binding. Missing usage
+    remains absent. These facts never grant domain acceptance or authorship.
+    """
+    model_config = ConfigDict(extra="forbid", strict=True, frozen=True)
+
+    schema_version: Literal["dsh-invocation-event/1"] = "dsh-invocation-event/1"
+    event_id: str = Field(min_length=1, max_length=256)
+    kind: Literal["reserve", "dispatch-recorded", "adapter-attempt", "dispatch-confirmed",
+                  "proven-not-sent", "send-outcome-unknown", "usage", "terminal", "cancel", "settlement"]
+    invocation_id: str = Field(min_length=1)
+    attempt: int = Field(ge=1)
+    execution_id: str = Field(min_length=1)
+    task_id: str = Field(min_length=1)
+    task_epoch: int = Field(ge=0)
+    claim_digest: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
+    request_digest: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
+    contract_digest: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
+    plan_digest: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
+    consumer_role: str = Field(min_length=1)
+    source: Literal["kernel", "host-adapter"]
+    reserved_input_tokens: int = Field(default=0, ge=0)
+    reserved_output_tokens: int = Field(default=0, ge=0)
+    usage_input_tokens: int | None = Field(default=None, ge=0)
+    usage_output_tokens: int | None = Field(default=None, ge=0)
+    evidence_ref: dict[str, Any] | None = None
+    reason: str = ""
+    content_digest: str = ""
+
+    @model_validator(mode="after")
+    def _validate_event(self):
+        if self.kind == "reserve":
+            if self.source != "kernel" or self.reserved_input_tokens <= 0 or self.reserved_output_tokens <= 0:
+                raise ValueError("dsh_reserve_fact_invalid")
+        elif self.reserved_input_tokens or self.reserved_output_tokens:
+            raise ValueError("dsh_reservation_amount_outside_reserve")
+        if self.kind == "usage":
+            if self.source != "host-adapter" or self.usage_input_tokens is None or self.usage_output_tokens is None:
+                raise ValueError("dsh_usage_fact_invalid")
+        elif self.usage_input_tokens is not None or self.usage_output_tokens is not None:
+            raise ValueError("dsh_usage_outside_usage_event")
+        if self.kind in {"usage", "terminal", "dispatch-confirmed", "proven-not-sent", "settlement"} and not self.evidence_ref:
+            raise ValueError("dsh_event_evidence_required")
+        if self.kind in {"send-outcome-unknown", "cancel"} and not self.reason:
+            raise ValueError("dsh_event_reason_required")
+        expected = sha256_digest(canonical_json_bytes(self.model_dump(mode="json", exclude={"content_digest"})))
+        if self.content_digest and self.content_digest != expected:
+            raise ValueError("dsh_event_content_digest_mismatch")
+        object.__setattr__(self, "content_digest", expected)
+        return self
+
+
 class InvocationAttemptStartedV1(BaseModel):
     """Durable start marker for one attempt of one invocation."""
 
@@ -1548,7 +1602,13 @@ class ActualRequestReceiptV2(BaseModel):
             "workset_id",
             "mechanism_id",
             "page_id",
-            "actual_technical_bytes_digest",
+            # K04: ``actual_technical_bytes_digest`` is deliberately **not** in
+            # this list.  A request refused before send may have no measurable
+            # page material at all (the recomputation is impossible), and an
+            # empty value is then the honest "not measured" record.  It is
+            # still mandatory for an accepted delivery (below), and the ledger
+            # additionally requires it to equal the frozen page digest before
+            # a delivery may count as accepted.
             "actual_request_envelope_digest",
             "model_identity_digest",
             "upstream_archive_digest",

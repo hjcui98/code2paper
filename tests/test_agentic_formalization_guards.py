@@ -2120,3 +2120,261 @@ def test_condition_binding_rejects_operator_and_scope_changes() -> None:
     assert _condition_statement_matches(
         "!alpha", "When !alpha, the output is computed."
     )
+# --------------------------------------------------------------------------- #
+# K04-G7：Formalizer 发送前校验、no-send 回执来源与合法缓存复用
+# --------------------------------------------------------------------------- #
+#
+# 窄范围复核（K04 授权）：原 Formalizer caller/receipt consumer。
+#   * 发送前校验必须真的在 provider 之前（反例：改实际请求 → 零发送 + 具名拒绝）；
+#   * no-send 尝试不得发行一条把**计划存储摘要**写成 actual 的回执；
+#   * reader 不得因此把未实测材料当作已验证；
+#   * 合法缓存复用不得被强制变成重发，也不得放松成"未验证也复用"。
+
+
+def _g7_plan_and_material():
+    """复用已完成 Formalizer 夹具的真实 material/manifest/plan（只替换 provider 输出）。"""
+
+    from tests.integrations.dsh.fixtures import completed_formalizer_fixture as fixture
+    from tests.integrations.dsh.fixtures import legacy_fixture_builder as builder
+
+    archive, obligation, _source_digest, _source_manifest = fixture._material()
+    envelope = builder._budget_envelope()
+    manifest = builder.build_consumer_workset_manifest_v2(
+        archive,
+        {"mech_rescale": (obligation,)},
+        max_page_input_tokens=envelope.max_page_input_tokens,
+        max_obligations_per_page=envelope.max_obligations_per_page,
+    )
+    plan = builder.build_consumer_invocation_plan_v1(
+        manifest,
+        envelope,
+        phase="formalizer",
+        max_attempts=1,
+        profile_digest=envelope.profile_digest,
+        model_identity_digest=envelope.model_identity_digest,
+        model_context_tokens=131072,
+    )
+    return archive, obligation, manifest, plan, envelope
+
+
+def _g7_provider_row() -> str:
+    return json.dumps({"results": [{
+        "obligation_id": "ob:rescale",
+        "latex": "y = a * x",
+        "prose_explanation": "The output y is the scalar a times the input x.",
+        "symbol_definitions": [["y", "rescaled output"], ["a", "scalar factor"], ["x", "input"]],
+        "material_conditions": [],
+        "assumptions": [],
+    }]}, ensure_ascii=False)
+
+
+def _g7_run(*, ledger_root=None, mutate=None, caller_available: bool = True, monkeypatch=None):
+    from code2paper.agentic.formalization_agent import execute_formalizer_invocation_plan
+    from code2paper.llm import client as llm_client
+    from code2paper.llm.client import LLMConfig, LLMProvider
+
+    archive, obligation, manifest, plan, envelope = _g7_plan_and_material()
+    calls: list[Any] = []
+
+    def provider(_config, request):
+        calls.append(request)
+        raw = _g7_provider_row()
+        return LLMResponse(text=raw, response_hash="sha256:g7-formalizer", finish_reason="stop")
+
+    if mutate is not None:
+        # 真实构造点在 `_run_one` 内部执行 `from code2paper.llm.client import LLMRequest`，
+        # 因此在 client 模块上替换同名构造器即可只改"caller 看到的可变请求对象"。
+        real_request = llm_client.LLMRequest
+
+        def request_factory(**kwargs):
+            payload = kwargs.get("input_payload")
+            if (
+                isinstance(payload, dict)
+                and kwargs.get("prompt_template_id") == "unified_formalizer_page_v2"
+            ):
+                mutated = json.loads(json.dumps(payload, ensure_ascii=False))
+                mutate(mutated)
+                kwargs = {**kwargs, "input_payload": mutated}
+            return real_request(**kwargs)
+
+        monkeypatch.setattr(llm_client, "LLMRequest", request_factory)
+
+    execution = execute_formalizer_invocation_plan(
+        plan=plan,
+        workset_manifest=manifest,
+        archive=archive,
+        obligations_by_id={obligation.obligation_id: obligation},
+        llm_config=LLMConfig(
+            provider=LLMProvider.NONE, model="g7-offline", max_output_tokens=4096, cache=False
+        ),
+        caller=provider if caller_available else None,
+        max_attempts=1,
+        ledger_root=ledger_root,
+        budget_envelope=envelope,
+        model_identity_digest=envelope.model_identity_digest,
+        run_digest=archive.content_digest,
+    )
+    return execution, calls, manifest, plan
+
+
+def _g7_page_digest(manifest, row) -> str:
+    page_id = str(row.get("page_id") or "")
+    page = manifest.page_by_id(page_id) if page_id else None
+    return str(getattr(page, "technical_bytes_digest", "") or "")
+
+
+def test_g7_mutated_actual_request_is_refused_before_the_formalizer_provider(
+    tmp_path: Path, monkeypatch
+) -> None:
+    """G7 反例/对照：改实际请求 → provider 零调用且具名拒绝；合法请求恰好一次并被接受。"""
+
+    # 正对照：同一夹具、同一调用点，不改动时合法请求恰好发送一次并被接受。
+    control, control_calls, control_manifest, _plan = _g7_run(
+        ledger_root=tmp_path / "control"
+    )
+    assert len(control_calls) == 1, "合法 formalizer 请求必须恰好发送一次"
+    assert control.accepted_packages, "合法请求必须产出被接受的公式包"
+    assert control.assertion_failures == (), control.assertion_failures
+    sent = [row for row in control.receipts if row.get("sent_to_caller") is True]
+    assert sent, control.receipts
+    for row in sent:
+        measured = str(row.get("actual_technical_bytes_digest") or "")
+        assert measured, row
+        assert measured == _g7_page_digest(control_manifest, row), row
+
+    # 反例：只改实际请求里的页技术材料（同一构造点、单变量）。
+    def _change_page_material(payload: dict) -> None:
+        page_payload = payload.get("technical_payload")
+        assert isinstance(page_payload, dict)
+        page_payload["mutated_by_adapter"] = True
+
+    mutated, mutated_calls, mutated_manifest, _plan = _g7_run(
+        ledger_root=tmp_path / "mutated",
+        mutate=_change_page_material,
+        monkeypatch=monkeypatch,
+    )
+    assert mutated_calls == [], "改材料的 formalizer 请求不得发给 provider"
+    assert mutated.accepted_packages == ()
+    failures = " ".join(
+        [*mutated.task_failures]
+        + [
+            str(item)
+            for row in mutated.receipts
+            for item in (row.get("task_failures") or ())
+        ]
+    )
+    assert "formalizer_pre_send_rejected" in failures, failures
+    assert "unified_actual_page_bytes_mismatch" in failures, failures
+    # no-send 回执必须自称未越过边界，actual 是**从请求重算**的值而不是计划存储值。
+    no_send = [row for row in mutated.receipts if row.get("sent_to_caller") is False]
+    assert no_send, mutated.receipts
+    for row in no_send:
+        assert row.get("delivery_status") == "rejected", row
+        measured = str(row.get("actual_technical_bytes_digest") or "")
+        assert measured, row
+        assert measured != _g7_page_digest(mutated_manifest, row), (
+            "no-send 回执不得把计划里的存储摘要写成本次实测"
+        )
+
+
+def test_g7_attempt_without_a_request_publishes_no_receipt_and_no_stored_digest(
+    tmp_path: Path,
+) -> None:
+    """G7：请求根本没构造出来时不发行回执 —— 不得把计划存储摘要写成本次实测。"""
+
+    execution, calls, _manifest, _plan = _g7_run(
+        ledger_root=tmp_path / "no-caller", caller_available=False
+    )
+    assert calls == []
+    assert execution.receipts == (), execution.receipts
+    assert execution.actual_main_calls == 0
+    assert execution.accepted_packages == ()
+    assert any(
+        "formalizer_request_error" in str(item) for item in execution.task_failures
+    ), execution.task_failures
+    # reader：没有任何回执可以冒充"页材料已验证"；唯一断言失败是诚实的"计划调用未发生"。
+    assert not any(
+        "actual_page_bytes" in str(item) for item in execution.assertion_failures
+    ), execution.assertion_failures
+    assert any(
+        "actual_main_calls_mismatch" in str(item)
+        for item in execution.assertion_failures
+    ), execution.assertion_failures
+
+
+def test_g7_verified_cache_reuse_does_not_resend_or_reseal(tmp_path: Path) -> None:
+    """G7：已验证缓存复用不重发；复用沿用原回执，不新造一条实测记录。"""
+
+    ledger_root = tmp_path / "ledger"
+    first, first_calls, _manifest, _plan = _g7_run(ledger_root=ledger_root)
+    assert len(first_calls) == 1
+    assert first.accepted_packages
+    first_receipts = list(first.receipts)
+    assert first_receipts
+
+    second, second_calls, _manifest2, _plan2 = _g7_run(ledger_root=ledger_root)
+    assert second_calls == [], "已验证缓存复用不得重发 provider 请求"
+    assert second.accepted_packages, "复用必须恢复已接受公式包"
+    assert second.actual_main_calls == 0
+    assert set(second.trace.get("reused_invocation_ids") or ()) == {
+        row["invocation_id"] for row in first_receipts
+    }, second.trace
+    # 复用沿用原回执字节，不重新封印成一条新的"本次实测"。
+    assert [row.get("content_digest") for row in second.receipts] == [
+        row.get("content_digest") for row in first_receipts
+    ]
+    assert second.assertion_failures == (), second.assertion_failures
+
+
+def test_g7_sent_but_unmeasured_receipt_is_not_read_as_verified(
+    tmp_path: Path,
+) -> None:
+    """G7：已发送但**无法实测**页材料的回执必须具名"未实测"，不得读成已验证。
+
+    provider 在返回前改动 caller 看到的请求对象（删掉页材料）—— 这正是
+    ``_inspect_actual_request`` 存在的理由。发送已经发生，所以不能撤单；能做的是：
+    回执 rejected、actual 记为空（未实测）、reader 具名指出未实测，并且不产生任何可接受包。
+    """
+
+    from code2paper.agentic.formalization_agent import execute_formalizer_invocation_plan
+    from code2paper.llm.client import LLMConfig, LLMProvider
+
+    archive, obligation, manifest, plan, envelope = _g7_plan_and_material()
+    calls: list[Any] = []
+
+    def provider(_config, request):
+        calls.append(request)
+        payload = getattr(request, "input_payload", None)
+        assert isinstance(payload, dict)
+        payload.pop("technical_payload", None)
+        raw = _g7_provider_row()
+        return LLMResponse(
+            text=raw, response_hash="sha256:g7-formalizer", finish_reason="stop"
+        )
+
+    execution = execute_formalizer_invocation_plan(
+        plan=plan,
+        workset_manifest=manifest,
+        archive=archive,
+        obligations_by_id={obligation.obligation_id: obligation},
+        llm_config=LLMConfig(
+            provider=LLMProvider.NONE, model="g7-offline", max_output_tokens=4096, cache=False
+        ),
+        caller=provider,
+        max_attempts=1,
+        ledger_root=tmp_path / "sent-unmeasured",
+        budget_envelope=envelope,
+        model_identity_digest=envelope.model_identity_digest,
+        run_digest=archive.content_digest,
+    )
+    assert len(calls) == 1, "本次尝试确实越过了 caller 边界"
+    assert execution.accepted_packages == ()
+    sent = [row for row in execution.receipts if row.get("sent_to_caller") is True]
+    assert sent, execution.receipts
+    for row in sent:
+        assert row.get("delivery_status") == "rejected", row
+        assert str(row.get("actual_technical_bytes_digest") or "") == "", row
+    assert any(
+        "actual_page_bytes_unmeasured" in str(item)
+        for item in execution.assertion_failures
+    ), execution.assertion_failures
